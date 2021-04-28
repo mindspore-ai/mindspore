@@ -187,7 +187,7 @@ class Profiler:
             "bp_point": bp_point,
             "training_trace": "on",
             "task_trace": "on",
-            "aic_metrics": "PipeUtilization",
+            "aic_metrics": "ArithmeticUtilization",
             "aicpu": "on",
             "profile_memory": profile_memory
         }
