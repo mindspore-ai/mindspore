@@ -25,10 +25,8 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
-#include "ops/return.h"
-#include "ops/make_tuple.h"
+#include "tools/converter/ops/ops_def.h"
 #include "ops/tensor_list_stack.h"
-#include "ops/tuple_get_item.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
 
@@ -342,7 +340,7 @@ STATUS OnnxModelParser::ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, 
   std::vector<AnfNodePtr> return_inputs;
   if (onnx_graph.output_size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
@@ -391,7 +389,7 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
     MS_LOG(ERROR) << "parameter has null.";
     return RET_NULL_PTR;
   }
-  auto returnPrim = std::make_shared<ops::Return>();
+  auto returnPrim = std::make_shared<lite::Return>();
   if (returnPrim == nullptr) {
     MS_LOG(ERROR) << "new Return failed";
     return RET_NULL_PTR;
@@ -510,7 +508,7 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const F
         return RET_ERROR;
       }
       abstract_list.emplace_back(abstract_tensor);
-      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+      auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
         MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;

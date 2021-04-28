@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
-#include "ops/constant.h"
+#include "tools/converter/ops/ops_def.h"
 #include "tools/common/tensor_util.h"
 
 namespace mindspore {
@@ -46,7 +46,7 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
 }
 
 ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Constant>();
+  auto prim = std::make_unique<lite::Constant>();
 
   for (const auto &attr : onnx_node.attribute()) {
     if (attr.name() == "sparse_value") {

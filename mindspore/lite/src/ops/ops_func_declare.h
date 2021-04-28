@@ -39,7 +39,6 @@
 #include "ops/batch_to_space_nd.h"
 #include "ops/bias_add.h"
 #include "ops/binary_cross_entropy.h"
-#include "ops/black_box.h"
 #include "ops/broadcast_to.h"
 #include "ops/broadcast.h"
 #include "ops/cast.h"
@@ -50,7 +49,6 @@
 #include "ops/custom_predict.h"
 #include "ops/custom_extract_features.h"
 #include "ops/concat.h"
-#include "ops/constant.h"
 #include "ops/constant_of_shape.h"
 #include "ops/control_depend.h"
 #include "ops/cos.h"
@@ -92,14 +90,11 @@
 #include "ops/logical_not.h"
 #include "ops/logical_or.h"
 #include "ops/logical_xor.h"
-#include "ops/loop.h"
 #include "ops/lp_normalization.h"
 #include "ops/lrn.h"
 #include "ops/lsh_projection.h"
 #include "ops/lstm.h"
-#include "ops/make_tuple.h"
 #include "ops/mat_mul.h"
-#include "ops/matrix_diag.h"
 #include "ops/max_pool.h"
 #include "ops/maximum.h"
 #include "ops/merge.h"
@@ -108,13 +103,11 @@
 #include "ops/mod.h"
 #include "ops/mul.h"
 #include "ops/neg.h"
-#include "ops/net_output.h"
 #include "ops/non_max_suppression.h"
 #include "ops/not_equal.h"
 #include "ops/one_hot.h"
 #include "ops/ones_like.h"
 #include "ops/pad.h"
-#include "ops/permute.h"
 #include "ops/prelu.h"
 #include "ops/prior_box.h"
 #include "ops/proposal.h"
@@ -127,7 +120,6 @@
 #include "ops/relu6.h"
 #include "ops/reshape.h"
 #include "ops/resize.h"
-#include "ops/return.h"
 #include "ops/reverse_sequence.h"
 #include "ops/reverse_v2.h"
 #include "ops/rfft.h"
@@ -169,7 +161,6 @@
 #include "ops/tensor_list_stack.h"
 #include "ops/tile.h"
 #include "ops/transpose.h"
-#include "ops/tuple_get_item.h"
 #include "ops/unique.h"
 #include "ops/unstack.h"
 #include "ops/unsqueeze.h"
@@ -291,7 +282,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Ceil);
 FUNC_MSOP2SCHEMAOP_DECLARE(Clip);
 FUNC_MSOP2SCHEMAOP_DECLARE(Concat);
 FUNC_MSOP2SCHEMAOP_DECLARE(ControlDepend);
-FUNC_MSOP2SCHEMAOP_DECLARE(Constant);
 FUNC_MSOP2SCHEMAOP_DECLARE(ConstantOfShape);
 FUNC_MSOP2SCHEMAOP_DECLARE(Conv2DBackpropFilterFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(Conv2DBackpropInputFusion);
@@ -350,7 +340,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LRN);
 FUNC_MSOP2SCHEMAOP_DECLARE(LshProjection);
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTM);
 FUNC_MSOP2SCHEMAOP_DECLARE(L2NormalizeFusion);
-FUNC_MSOP2SCHEMAOP_DECLARE(MakeTuple);
 FUNC_MSOP2SCHEMAOP_DECLARE(MatMul);
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum);
 FUNC_MSOP2SCHEMAOP_DECLARE(MaximumGrad);
@@ -384,7 +373,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Reciprocal);
 FUNC_MSOP2SCHEMAOP_DECLARE(ReduceFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(Reshape);
 FUNC_MSOP2SCHEMAOP_DECLARE(Resize);
-FUNC_MSOP2SCHEMAOP_DECLARE(Return);
 FUNC_MSOP2SCHEMAOP_DECLARE(ReverseSequence);
 FUNC_MSOP2SCHEMAOP_DECLARE(ReverseV2);
 FUNC_MSOP2SCHEMAOP_DECLARE(Rfft);
@@ -432,7 +420,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(TensorListStack);
 FUNC_MSOP2SCHEMAOP_DECLARE(TileFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(TopKFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(Transpose);
-FUNC_MSOP2SCHEMAOP_DECLARE(TupleGetItem);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unique);
 FUNC_MSOP2SCHEMAOP_DECLARE(UnsortedSegmentSum);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unsqueeze);

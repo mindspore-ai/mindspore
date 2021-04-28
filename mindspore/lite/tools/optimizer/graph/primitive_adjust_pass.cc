@@ -21,7 +21,6 @@
 #include <string>
 #include "ops/batch_norm.h"
 #include "ops/elu.h"
-#include "ops/depthwise_conv2d.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
@@ -85,7 +84,6 @@ using mindspore::ops::kNameConv2D;
 using mindspore::ops::kNameConv2DBackpropFilter;
 using mindspore::ops::kNameConv2DBackpropInput;
 using mindspore::ops::kNameConv2dTranspose;
-using mindspore::ops::kNameDepthWiseConv2D;
 using mindspore::ops::kNameDiv;
 using mindspore::ops::kNameElu;
 using mindspore::ops::kNameExp;
@@ -571,7 +569,6 @@ REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropInput, MoveAttrMapCommon<ops::Conv2DBackpropInputFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2D, MoveAttrMapConv2D)
-REGIST_PRIMITIVE_ADJUST(kNameDepthWiseConv2D, MoveAttrMapConv2D)
 REGIST_PRIMITIVE_ADJUST(kNameConv2dTranspose, MoveAttrMapCommon<ops::Conv2dTransposeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)

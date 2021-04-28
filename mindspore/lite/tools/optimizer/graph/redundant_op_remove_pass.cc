@@ -18,8 +18,8 @@
 #include <memory>
 #include <vector>
 #include "include/errorcode.h"
+#include "tools/converter/ops/ops_def.h"
 #include "ops/depend.h"
-#include "ops/make_tuple.h"
 
 namespace mindspore::opt {
 namespace {
@@ -95,7 +95,7 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
   if (ProcessDependencyWithTwoNodes(func_graph, cnode, false) == lite::RET_OK) {
     return lite::RET_OK;
   }
-  auto make_tuple_prim = NewValueNode(std::make_shared<ops::MakeTuple>());
+  auto make_tuple_prim = NewValueNode(std::make_shared<lite::MakeTuple>());
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   manager->Replace(cnode->input(0), make_tuple_prim);

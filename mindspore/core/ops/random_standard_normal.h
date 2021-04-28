@@ -32,17 +32,13 @@ class RandomStandardNormal : public PrimitiveC {
   RandomStandardNormal() : PrimitiveC(kNameRandomStandardNormal) {}
   ~RandomStandardNormal() = default;
   MS_DECLARE_PARENT(RandomStandardNormal, PrimitiveC);
-  void Init(const int64_t seed, const int64_t seed2);
+  void Init(int64_t seed, int64_t seed2);
 
-  void set_seed(const int64_t seed);
-  void set_seed2(const int64_t seed2);
-
+  void set_seed(int64_t seed);
+  void set_seed2(int64_t seed2);
   int64_t get_seed() const;
   int64_t get_seed2() const;
 };
-
-AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
 using PrimRandomStandardNormalPtr = std::shared_ptr<RandomStandardNormal>;
 }  // namespace ops
 }  // namespace mindspore

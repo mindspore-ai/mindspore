@@ -29,9 +29,8 @@
 #include "mindspore/core/ops/op_utils.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/depend.h"
-#include "ops/make_tuple.h"
+#include "tools/converter/ops/ops_def.h"
 #include "ops/quant_dtype_cast.h"
-#include "ops/tuple_get_item.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -313,8 +312,8 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     }
 
     RemoveIfDepend(cnode);
-    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameTupleGetItem ||
-        prim->name() == mindspore::ops::kNameMakeTuple) {
+    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::lite::kNameTupleGetItem ||
+        prim->name() == mindspore::lite::kNameMakeTuple) {
       continue;
     }
     if (prim->name() == "make_tuple") {
@@ -329,7 +328,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       break;
     }
     if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn)) {
-      node->name = mindspore::ops::kNameReturn;
+      node->name = mindspore::lite::kNameReturn;
       ret = SetGraphoutputIndex(cnode, subgraph_index, meta_graphT, node.get());
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetOpOutputN failed";

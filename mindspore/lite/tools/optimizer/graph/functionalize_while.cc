@@ -19,9 +19,7 @@
 #include <deque>
 #include "tools/optimizer/graph/functionalize_while.h"
 #include "include/errorcode.h"
-#include "ops/make_tuple.h"
-#include "ops/return.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "tools/converter/ops/while.h"
 #include "tools/common/tensor_util.h"
 
@@ -215,7 +213,7 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
           return RET_ERROR;
         }
         abstract_list.emplace_back(abstract);
-        auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+        auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
         if (tuple_get_item_prim_ptr == nullptr) {
           MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
           return RET_NULL_PTR;
@@ -346,7 +344,7 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphInput() {
 }
 
 STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
-  auto return_prim_ptr = std::make_shared<ops::Return>();
+  auto return_prim_ptr = std::make_shared<lite::Return>();
   if (return_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
@@ -491,7 +489,7 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
                                                                 "_cnode");
   }
 
-  auto return_prim_ptr = std::make_shared<ops::Return>();
+  auto return_prim_ptr = std::make_shared<lite::Return>();
   if (return_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
@@ -506,7 +504,7 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
     return_cnode->add_input(tmp_output[0]);
   } else {
     std::vector<AnfNodePtr> make_tuple_inputs = tmp_output;
-    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
       return RET_NULL_PTR;

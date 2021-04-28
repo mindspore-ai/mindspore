@@ -32,7 +32,6 @@ class AbsGrad : public PrimitiveC {
   AbsGrad() : PrimitiveC(kNameAbsGrad) {}
   ~AbsGrad() = default;
   MS_DECLARE_PARENT(AbsGrad, PrimitiveC);
-  void Init() {}
 };
 }  // namespace ops
 }  // namespace mindspore

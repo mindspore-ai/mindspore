@@ -39,22 +39,20 @@ class GRU : public PrimitiveC {
   }
   ~GRU() = default;
   MS_DECLARE_PARENT(GRU, PrimitiveC);
-  void Init(const bool bidirectional = false, const int64_t cell_depth = 1, const float keep_prob = 1.0,
-            const float cell_clip = -1.0, const int64_t num_proj = 0, const bool time_major = true,
-            const bool reset_after = true, const bool is_training = true,
-            const ActivationType activation = ActivationType::TANH,
-            const GateOrderMode gate_order = GateOrderMode::RZH);
+  void Init(bool bidirectional = false, int64_t cell_depth = 1, float keep_prob = 1.0, float cell_clip = -1.0,
+            int64_t num_proj = 0, bool time_major = true, bool reset_after = true, bool is_training = true,
+            ActivationType activation = ActivationType::TANH, GateOrderMode gate_order = GateOrderMode::RZH);
 
-  void set_bidirectional(const bool bidirectional);
-  void set_cell_depth(const int64_t cell_depth);
-  void set_keep_prob(const float keep_prob);
-  void set_cell_clip(const float cell_clip);
-  void set_num_proj(const int64_t num_proj);
-  void set_time_major(const bool time_major);
-  void set_reset_after(const bool reset_after);
-  void set_is_training(const bool is_training);
-  void set_activation(const ActivationType activation);
-  void set_gate_order(const GateOrderMode gate_order);
+  void set_bidirectional(bool bidirectional);
+  void set_cell_depth(int64_t cell_depth);
+  void set_keep_prob(float keep_prob);
+  void set_cell_clip(float cell_clip);
+  void set_num_proj(int64_t num_proj);
+  void set_time_major(bool time_major);
+  void set_reset_after(bool reset_after);
+  void set_is_training(bool is_training);
+  void set_activation(ActivationType activation);
+  void set_gate_order(GateOrderMode gate_order);
 
   bool get_bidirectional() const;
   int64_t get_cell_depth() const;
@@ -68,8 +66,6 @@ class GRU : public PrimitiveC {
   GateOrderMode get_gate_order() const;
 };
 
-AbstractBasePtr GRUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args);
 using PrimGRUPtr = std::shared_ptr<GRU>;
 }  // namespace ops
 }  // namespace mindspore

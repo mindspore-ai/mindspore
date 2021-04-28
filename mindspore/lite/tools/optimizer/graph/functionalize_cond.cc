@@ -20,9 +20,7 @@
 #include <deque>
 #include <unordered_set>
 #include "include/errorcode.h"
-#include "ops/make_tuple.h"
 #include "tools/converter/ops/ops_def.h"
-#include "ops/return.h"
 
 namespace mindspore::opt {
 
@@ -147,7 +145,7 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
   }
 
   if (!CheckPrimitiveType(node, prim::kPrimSwitch)) {  // graph is not empty
-    auto return_prim_ptr = std::make_shared<ops::Return>();
+    auto return_prim_ptr = std::make_shared<lite::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
       return nullptr;

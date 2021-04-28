@@ -23,9 +23,7 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
-#include "ops/return.h"
-#include "ops/make_tuple.h"
-#include "ops/tuple_get_item.h"
+#include "tools/converter/ops/ops_def.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
 
@@ -264,7 +262,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
   caffeInspector.InspectModel(caffe_model_);
   if (caffeInspector.GetGraphOutput().size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
+    auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
@@ -283,7 +281,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
-    auto return_prim_ptr = std::make_shared<ops::Return>();
+    auto return_prim_ptr = std::make_shared<lite::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
@@ -295,7 +293,7 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     cnode->set_fullname_with_scope("Return");
     res_graph_->set_return(cnode);
   } else {
-    auto returnPrim = std::make_shared<ops::Return>();
+    auto returnPrim = std::make_shared<lite::Return>();
     if (returnPrim == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
@@ -435,7 +433,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
       return RET_ERROR;
     }
     abstract_list.emplace_back(abstract);
-    auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+    auto tuple_get_item_prim_ptr = std::make_shared<lite::TupleGetItem>();
     if (tuple_get_item_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new TupleGetItem failed";
       return RET_NULL_PTR;
