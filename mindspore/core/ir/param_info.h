@@ -72,6 +72,7 @@ class ParamInfo {
     this->be_cloned_ = true;
     this->be_cloned_index_.push_back(index);
     clone->init_in_server_ = this->init_in_server_;
+    clone->ClearParameter();
     return clone;
   }
 
@@ -88,6 +89,7 @@ class ParamInfo {
   void set_cache_shape(const std::vector<int64_t> &cache_shape) { cache_shape_ = cache_shape; }
   ParameterPtr parameter() { return parameter_; }
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
+  void ClearParameter() { parameter_ = nullptr; }
 
  private:
   std::string name_{"Parameter"};
