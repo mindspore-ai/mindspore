@@ -609,3 +609,6 @@ class ParameterTuple(tuple):
 
     def __parameter_tuple__(self):
         """For parse check."""
+
+    def __del__(self):
+        self.param_info = None
