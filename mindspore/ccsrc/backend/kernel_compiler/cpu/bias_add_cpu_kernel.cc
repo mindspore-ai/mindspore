@@ -16,28 +16,44 @@
 
 #include "backend/kernel_compiler/cpu/bias_add_cpu_kernel.h"
 
+#include <functional>
+
 namespace mindspore {
 namespace kernel {
+constexpr size_t kBiasAddMinDim = 2;
+constexpr size_t kBiasAddMaxDim = 5;
+constexpr size_t kBiasAddInputNum = 2;
+
 void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  data_shape_ = input_shape_.size();
-  if (input_shape_.size() < 2) {
-    MS_LOG(EXCEPTION) << "Input tensor's rank must be at least 2 for 'BiasAdd' Op, but input tensor's rank is "
-                      << input_shape_.size();
+  bias_param_.ndim_ = input_shape_.size();
+  if (bias_param_.ndim_ < kBiasAddMinDim || bias_param_.ndim_ > kBiasAddMaxDim) {
+    MS_LOG(EXCEPTION) << "Input tensor's rank must be in closed interval [2,5] for 'BiasAdd' Op,"
+                         "but input tensor's rank is "
+                      << bias_param_.ndim_;
   }
   if (bias_shape_.size() != 1) {
     MS_LOG(EXCEPTION) << "Bias's rank must be 1 for 'BiasAdd' Op, but bias' rank is" << bias_shape_.size();
   }
-  if (input_shape_[1] != bias_shape_[0]) {
-    MS_LOG(EXCEPTION) << "Bias shape not match, bias shape must be equal to C channel's shape";
+  if (input_shape_[bias_param_.ndim_ - 1] != bias_shape_[0]) {
+    MS_LOG(EXCEPTION) << "Bias shape [" << bias_shape_[0] << "] not match, it must equal C channel's shape:["
+                      << input_shape_[bias_param_.ndim_ - 1] << "]";
   }
+
+  for (size_t i = 0; i < bias_param_.ndim_; ++i) {
+    bias_param_.in_shape0_[i] = input_shape_[i];
+    bias_param_.in_shape1_[i] = 1;
+    bias_param_.out_shape_[i] = input_shape_[i];
+  }
+
+  bias_param_.in_shape1_[bias_param_.ndim_ - 1] = input_shape_[bias_param_.ndim_ - 1];
 }
 
 bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 2 || outputs.size() != 1) {
+  if (inputs.size() != kBiasAddInputNum || outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "inputs outputs size not supoort";
   }
 
@@ -45,46 +61,15 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   auto bias_addr = reinterpret_cast<float *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
-  if (input_shape_.size() > 2) {
-    size_t hw_size = 1;
-    for (size_t i = 2; i < input_shape_.size(); ++i) {
-      hw_size *= input_shape_[i];
-    }
+  size_t data_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1LL, std::multiplies<int>());
 
-    size_t c_size = input_shape_[1];
-    for (size_t n = 0; n < input_shape_[0]; ++n) {
-      for (size_t c = 0; c < c_size; ++c) {
-        size_t offset = n * c_size * hw_size + c * hw_size;
-        size_t hw = 0;
-#ifdef ENABLE_AVX
-        constexpr size_t C8NUM = 8;
-        size_t hw8 = hw_size / C8NUM * C8NUM;
-        const float *in_ptr = src_addr + offset;
-        float *out_ptr = output_addr + offset;
-        for (; hw < hw8; hw += C8NUM) {
-          __m256 src_r1 = _mm256_loadu_ps(in_ptr);
-          __m256 bias_r2 = _mm256_set1_ps(bias_addr[c]);
-          __m256 dst_r3 = _mm256_add_ps(src_r1, bias_r2);
-          _mm256_storeu_ps(out_ptr, dst_r3);
+  std::vector<float> buffer_in(data_num, 0);
+  std::vector<float> buffer_bias(data_num, 0);
+  float *tile_in = &buffer_in.at(0);
+  float *tile_bias = &buffer_bias.at(0);
 
-          in_ptr += C8NUM;
-          out_ptr += C8NUM;
-        }
-#endif
-        for (; hw < hw_size; ++hw) {
-          output_addr[offset + hw] = src_addr[offset + hw] + bias_addr[c];
-        }
-      }
-    }
-  } else {
-    size_t n_offset = 0;
-    for (size_t n = 0; n < input_shape_[0]; ++n) {
-      for (size_t c = 0; c < input_shape_[1]; ++c) {
-        output_addr[n_offset + c] = src_addr[n_offset + c] + bias_addr[c];
-      }
-      n_offset += input_shape_[1];
-    }
-  }
+  // BroadcastAdd always returns NNACL_OK, so no need to check return val.
+  (void)BroadcastAdd(src_addr, bias_addr, tile_in, tile_bias, output_addr, data_num, &bias_param_);
   return true;
 }
 }  // namespace kernel
