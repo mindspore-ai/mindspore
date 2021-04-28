@@ -15,10 +15,16 @@
 """
 Accelerating.
 
-Provide auto accelerating for network, such as Less BN.
+Provide auto accelerating for network, such as Less BN, Gradient Freeze.
 """
+from .acc import *
+from .base import *
 from .less_batch_normalization import *
 from .grad_freeze import *
 
-__all__ = ['LessBN', 'FreezeOpt', 'CONTINUOUS_STRATEGY', 'INTERVAL_STRATEGY',
-           'split_parameters_groups', 'generate_freeze_index_sequence']
+
+__all__ = ['AutoAcc',
+           'OptimizerProcess', 'ParameterProcess',
+           'LessBN',
+           'GradientFreeze', 'FreezeOpt', 'freeze_cell',
+           'GradientAccumulation']

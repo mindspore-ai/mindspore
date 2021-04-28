@@ -46,6 +46,18 @@ def _init_allreduce_operators(length, split_indices):
     return op_list
 
 
+def _init_allreduce_operators_by_parameters(parameters):
+    """ initialize allreduce communication operators by parameters"""
+    op_list = ()
+    for parameter in parameters:
+        comm_fusion = parameter.comm_fusion
+        op = AllReduce('sum', GlobalComm.WORLD_COMM_GROUP)
+        op.add_prim_attr('fusion', comm_fusion)
+        op.add_prim_attr('index', comm_fusion)
+        op_list = op_list + (op,)
+    return op_list
+
+
 @reduce_opt.register("Tensor", "Bool", "Function", "Function", "Bool", "Tensor")
 def _tensors_allreduce(degree, mean, allgather, allreduce, allreduce_filter, grad):
     """
@@ -334,7 +346,7 @@ class DistributedGradReducer(Cell):
         256.0
     """
 
-    def __init__(self, parameters, mean=True, degree=None, fusion_type=1):
+    def __init__(self, parameters, mean=True, degree=None, fusion_type=1, param_fusion=False):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
         if degree is None:
@@ -351,6 +363,9 @@ class DistributedGradReducer(Cell):
         if is_parallel_optimizer and split_indices:
             self.split_fusion = True
             self.op_list = _init_allreduce_operators(len(parameters), split_indices)
+        elif param_fusion:
+            self.split_fusion = True
+            self.op_list = _init_allreduce_operators_by_parameters(parameters)
         else:
             self.split_fusion = False
             self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
