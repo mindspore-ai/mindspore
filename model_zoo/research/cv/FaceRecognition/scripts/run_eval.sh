@@ -41,6 +41,6 @@ mkdir ${EXECUTE_PATH}/log_inference
 
 cd ${EXECUTE_PATH}/log_inference || exit
 env > ${EXECUTE_PATH}/log_inference/face_recognition.log
-python ${EXECUTE_PATH}/../eval.py &> ${EXECUTE_PATH}/log_inference/face_recognition.log &
+python ${EXECUTE_PATH}/../eval.py --config_path=${EXECUTE_PATH}/../inference_config.yaml &> ${EXECUTE_PATH}/log_inference/face_recognition.log &
 
 echo "[INFO] Start inference..."

@@ -84,7 +84,6 @@ The entire code structure is as following:
   │   │   ├── head.py                       // head unit
   │   │   ├── resnet.py                     // resnet architecture
   │   ├── callback_factory.py               // callback logging
-  │   ├── config.py                         // parameter configuration
   │   ├── custom_dataset.py                 // custom dataset and sampler
   │   ├── custom_net.py                     // custom cell define
   │   ├── dataset_factory.py                // creating dataset
@@ -94,6 +93,15 @@ The entire code structure is as following:
   │   ├── lrsche_factory.py                 // learning rate schedule
   │   ├── me_init.py                        // network parameter init method
   │   ├── metric_factory.py                 // metric fc layer
+  ── utils
+  │   ├── __init__.py                       // init file
+  │   ├── config.py                         // parameter analysis
+  │   ├── device_adapter.py                 // device adapter
+  │   ├── local_adapter.py                  // local adapter
+  │   ├── moxing_adapter.py                 // moxing adapter
+  ├─ base_config.yaml                       // parameter configuration
+  ├─ beta_config.yaml                       // parameter configuration
+  ├─ inference_config.yaml                  // parameter configuration
   ├─ train.py                               // training scripts
   ├─ eval.py                                // evaluation scripts
   └─ export.py                              // export air model
@@ -163,6 +171,47 @@ The entire code structure is as following:
       sh run_distribute_train_beta.sh ./rank_table_8p.json
       ```
 
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    - base model
+
+      ```python
+      # (1) Add "config_path='/path_to_code/base_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on base_config.yaml file.
+      #          Set "is_distributed=1" on base_config.yaml file.
+      #          Set other parameters on base_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "is_distributed=1" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (4) Set the code directory to "/path/FaceRecognition" on the website UI interface.
+      # (5) Set the startup file to "train.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
+
+    - beta model
+
+      ```python
+      # (1) Copy or upload your trained model to S3 bucket.
+      # (2) Add "config_path='/path_to_code/beta_config.yaml'" on the website UI interface.
+      # (3) Perform a or b.
+      #       a. Set "enable_modelarts=True" on beta_config.yaml file.
+      #          Set "is_distributed=1" on base_config.yaml file.
+      #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on beta_config.yaml file.
+      #          Set "checkpoint_url=/The path of checkpoint in S3/" on beta_config.yaml file.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "is_distributed=1" on the website UI interface.
+      #          Add "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+      #          Add "checkpoint_url=/The path of checkpoint in S3/" on default_config.yaml file.
+      # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (5) Set the code directory to "/path/FaceRecognition" on the website UI interface.
+      # (6) Set the startup file to "train.py" on the website UI interface.
+      # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (8) Create your job.
+      ```
+
 You will get the loss value of each epoch as following in "./scripts/data_parallel_log_[DEVICE_ID]/outputs/logs/[TIME].log" or "./scripts/log_parallel_graph/face_recognition_[DEVICE_ID].log":
 
 ```python
@@ -187,6 +236,24 @@ sh run_eval.sh [USE_DEVICE_ID]
 
 You will get the result as following in "./scripts/log_inference/outputs/models/logs/[TIME].log":
 [test_dataset]: zj2jk=0.9495, jk2zj=0.9480, avg=0.9487
+
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluation as follows:
+
+```python
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Add "config_path='/path_to_code/inference_config.yaml'" on the website UI interface.
+# (3) Perform a or b.
+#       a. Set "weight='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on default_config.yaml file.
+#       b. Add "weight='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (5) Set the code directory to "/path/FaceRecognition" on the website UI interface.
+# (6) Set the startup file to "eval.py" on the website UI interface.
+# (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (8) Create your job.
+```
 
 ### Convert model
 

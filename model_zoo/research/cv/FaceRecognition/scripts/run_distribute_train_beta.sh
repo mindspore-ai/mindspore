@@ -59,6 +59,7 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > ${EXECUTE_PATH}/log_parallel_graph/face_recognition_$i.log
     python ${EXECUTE_PATH}/../train.py \
+    --config_path=${EXECUTE_PATH}/../beta_config.yaml \
     --train_stage=beta \
     --is_distributed=1 &> ${EXECUTE_PATH}/log_parallel_graph/face_recognition_$i.log &
 done
