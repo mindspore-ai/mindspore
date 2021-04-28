@@ -43,8 +43,7 @@ uint64_t GetTimeUs();
 
 bool IsSupportSDot();
 
-bool IsSupportFloat16();
-#if defined(__arm__)
+#ifdef __ANDROID__
 uint32_t getHwCap(int hwcap_type);
 #endif
 

@@ -368,6 +368,8 @@ bool OpenCLRuntime::SetFp16Enable(bool enable) {
   return fp16_enable_ == enable;
 }
 
+bool OpenCLRuntime::IsSupportFloat16() { return support_fp16_; }
+
 int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &program_name,
                                const std::string &kernel_name, const std::vector<std::string> &build_options_ext) {
   std::string build_option = default_build_option_;

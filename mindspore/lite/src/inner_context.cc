@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
+#ifdef __ANDROID__
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#endif
 #include "src/inner_context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #ifdef SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
+#endif
+#ifdef SUPPORT_GPU
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 
 namespace mindspore::lite {
@@ -127,13 +134,18 @@ bool InnerContext::IsCpuFloat16Enabled() const {
 }
 
 bool InnerContext::IsGpuFloat16Enabled() const {
+#ifdef SUPPORT_GPU
   if (!IsGpuEnabled()) {
     return false;
   }
-  if (!IsSupportFloat16()) {
+  opencl::OpenCLRuntimeWrapper wrapper;
+  if (!wrapper.GetInstance()->GetFp16Enable()) {
     return false;
   }
   return GetGpuInfo().enable_float16_;
+#else
+  return false;
+#endif
 }
 
 bool InnerContext::IsCpuEnabled() const { return IsUserSetCpu(); }
@@ -201,6 +213,26 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
   } else {
     return iter->device_info_.npu_device_info_;
   }
+}
+
+// Support CPU backend to judge whether it supports Float16.
+bool InnerContext::IsSupportFloat16() const {
+  bool status = false;
+
+#if defined(ENABLE_ARM64)
+#if defined(__ANDROID__)
+  int hwcap_type = 16;
+  uint32_t hwcap = getHwCap(hwcap_type);
+  if (hwcap & HWCAP_FPHP) {
+    MS_LOG(DEBUG) << "Hw cap support FP16, hwcap: 0x" << hwcap;
+    status = true;
+  } else {
+    MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
+    status = false;
+  }
+#endif
+#endif
+  return status;
 }
 
 }  // namespace mindspore::lite

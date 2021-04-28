@@ -70,6 +70,7 @@ class OpenCLRuntime {
   GpuInfo GetGpuInfo();
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
+  bool IsSupportFloat16();
   bool GetSVMEnable() const { return svm_enable_; }
   void SetSVMEnable(bool enable) { svm_enable_ = enable; }
   const std::vector<size_t> &GetWorkItemSize() const { return max_work_item_sizes_; }

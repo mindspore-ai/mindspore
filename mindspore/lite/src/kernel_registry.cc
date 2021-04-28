@@ -96,23 +96,7 @@ int KernelRegistry::RegKernel(const std::string &arch, const std::string &vendor
   return RET_OK;
 }
 
-int KernelRegistry::Init() {
-#ifdef ENABLE_ARM64
-  if (mindspore::lite::IsSupportSDot()) {
-    MS_LOG(INFO) << "The current device supports Sdot.";
-  } else {
-    MS_LOG(INFO) << "The current device NOT supports Sdot.";
-  }
-#endif
-#ifdef ENABLE_FP16
-  if (mindspore::lite::IsSupportFloat16()) {
-    MS_LOG(INFO) << "The current device supports float16.";
-  } else {
-    MS_LOG(INFO) << "The current device NOT supports float16.";
-  }
-#endif
-  return RET_OK;
-}
+int KernelRegistry::Init() { return RET_OK; }
 
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.vendor == kBuiltin) {

@@ -286,10 +286,6 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
 
 int CpuFp16SubGraph::PreProcess() {
 #ifdef ENABLE_FP16
-  if (!mindspore::lite::IsSupportFloat16()) {
-    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
-    return RET_ERROR;
-  }
   int ret;
   for (auto tensor : this->in_tensors_) {
     MS_ASSERT(tensor != nullptr);
@@ -350,10 +346,6 @@ int CpuFp16SubGraph::PreProcess() {
 
 int CpuFp16SubGraph::PostProcess() {
 #ifdef ENABLE_FP16
-  if (!mindspore::lite::IsSupportFloat16()) {
-    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
-    return RET_ERROR;
-  }
   int ret;
   for (auto tensor : this->out_tensors_) {
     MS_ASSERT(tensor != nullptr);

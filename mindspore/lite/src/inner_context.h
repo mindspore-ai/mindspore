@@ -65,6 +65,8 @@ struct InnerContext : public Context {
 
   bool IsUserSetNpu() const;
 
+  bool IsSupportFloat16() const;
+
 #if SUPPORT_NPU
 
  private:
