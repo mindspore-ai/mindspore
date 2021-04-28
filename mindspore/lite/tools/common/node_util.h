@@ -26,6 +26,7 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -401,6 +402,8 @@ static STATUS TransFilterFormat(schema::TensorT *tensor, kTransFilterType type) 
 }
 
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat);
+
+size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag = false);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H

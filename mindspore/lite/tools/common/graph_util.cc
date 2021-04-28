@@ -495,13 +495,21 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
       MS_ASSERT(prim != nullptr);
+      if (prim->src_t == TypeId::kNumberTypeUInt8) {
+        if (preTensor->dataType == TypeId::kNumberTypeUInt8) {
+          toAddTensor->quantParams.front()->zeroPoint -= 128;
+        } else {
+          preTensor->quantParams.front()->zeroPoint += 128;
+        }
+      } else if (prim->dst_t == TypeId::kNumberTypeUInt8) {
+        if (preTensor->dataType == TypeId::kNumberTypeInt8) {
+          toAddTensor->quantParams.front()->zeroPoint += 128;
+        } else {
+          preTensor->quantParams.front()->zeroPoint -= 128;
+        }
+      }
       preTensor->dataType = prim->src_t;
       toAddTensor->dataType = prim->dst_t;
-      if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
-        preTensor->quantParams.front()->zeroPoint += 128;
-      } else if (prim->src_t == TypeId::kNumberTypeInt8 && prim->dst_t == TypeId::kNumberTypeUInt8) {
-        toAddTensor->quantParams.front()->zeroPoint += 128;
-      }
     }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
@@ -565,13 +573,21 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
       MS_ASSERT(prim != nullptr);
+      if (prim->dst_t == TypeId::kNumberTypeUInt8) {
+        if (postTensor->dataType == TypeId::kNumberTypeUInt8) {
+          postTensor->quantParams.front()->zeroPoint -= 128;
+        } else {
+          toAddTensor->quantParams.front()->zeroPoint += 128;
+        }
+      } else if (prim->src_t == TypeId::kNumberTypeUInt8) {
+        if (postTensor->dataType == TypeId::kNumberTypeUInt8) {
+          toAddTensor->quantParams.front()->zeroPoint -= 128;
+        } else {
+          postTensor->quantParams.front()->zeroPoint += 128;
+        }
+      }
       postTensor->dataType = prim->src_t;
       toAddTensor->dataType = prim->dst_t;
-      if (prim->src_t == TypeId::kNumberTypeInt8 && prim->dst_t == TypeId::kNumberTypeUInt8) {
-        toAddTensor->quantParams.front()->zeroPoint += 128;
-      } else if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
-        postTensor->quantParams.front()->zeroPoint += 128;
-      }
     }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;

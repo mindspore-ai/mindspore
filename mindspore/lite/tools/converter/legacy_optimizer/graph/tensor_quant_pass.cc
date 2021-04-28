@@ -25,29 +25,15 @@
 
 namespace mindspore::lite {
 namespace {
-STATUS PreHandleQuantDtypeCast(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
-  for (auto &node : graph->nodes) {
-    if (node == nullptr || node->primitive == nullptr) {
-      MS_LOG(ERROR) << " node or node->primitive is nullptr";
-      return RET_ERROR;
-    }
-    if (node->primitive->value.type == PrimitiveType_QuantDTypeCast) {
-      auto attr = node->primitive->value.AsQuantDTypeCast();
-      auto &inputTensor = graph->allTensors.at(node->inputIndex.front());
-      inputTensor->dataType = attr->src_t;
-      auto &outputTensor = graph->allTensors.at(node->outputIndex.front());
-      outputTensor->dataType = attr->dst_t;
-
-      if (attr->src_t == TypeId::kNumberTypeUInt8) {
-        attr->src_t = TypeId::kNumberTypeInt8;
-      }
-      if (attr->dst_t == TypeId::kNumberTypeUInt8) {
-        attr->dst_t = TypeId::kNumberTypeInt8;
-      }
-    }
+bool TensorNeedQuant(const std::unique_ptr<TensorT> &tensor) {
+  if (!quant::TensorQuantParamsInited(*tensor)) {
+    return false;
   }
-  return RET_OK;
+  if (tensor->dataType != TypeId::kNumberTypeFloat32 && tensor->dataType != TypeId::kNumberTypeFloat &&
+      tensor->dataType != TypeId::kNumberTypeUInt8 && tensor->dataType != TypeId::kTypeUnknown) {
+    return false;
+  }
+  return !tensor->data.empty();
 }
 
 STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) {
@@ -73,7 +59,6 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
     weightQauntParam->zeroPoint -= 128;
     tensor->quantParams.clear();
     tensor->quantParams.emplace_back(weightQauntParam.release());
-    TensorDataType::GetInstance()->UpdateTensorType(index, TypeId::kNumberTypeUInt8);
   }
   tensor->dataType = TypeId::kNumberTypeInt8;
   if (tensor->data.empty()) {
@@ -174,23 +159,15 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
 
 STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  auto status = PreHandleQuantDtypeCast(graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "pre adjust failed.";
-    return status;
-  }
   int32_t index = 0;
+  auto status = RET_OK;
   for (auto &tensor : graph->allTensors) {
-    if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
+    if (!TensorNeedQuant(tensor)) {
       index++;
       continue;
     }
-    if (tensor->dataType != TypeId::kNumberTypeFloat32 && tensor->dataType != TypeId::kNumberTypeFloat &&
-        tensor->dataType != TypeId::kNumberTypeUInt8 && tensor->dataType != TypeId::kTypeUnknown) {
-      index++;
-      continue;
-    }
-    if (tensor->quantParams.size() != 1) {  // perchannel
+
+    if (tensor->quantParams.size() > 1) {  // perchannel
       status = ComputeQuantTensorPerChannel(tensor.get(), index, *graph);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "compute tensor to int8 prechannel failed.";
@@ -201,8 +178,8 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
     }
     // perlayer
     auto &quantParam = tensor->quantParams.front();
-    if (quantParam->dstDtype == TypeId::kNumberTypeUInt8 || quantParam->dstDtype == TypeId::kNumberTypeFloat32 ||
-        quantParam->dstDtype == TypeId::kNumberTypeFloat) {
+    if (quantParam->dstDtype == TypeId::kNumberTypeInt8 || quantParam->dstDtype == TypeId::kNumberTypeUInt8 ||
+        quantParam->dstDtype == TypeId::kNumberTypeFloat32 || quantParam->dstDtype == TypeId::kNumberTypeFloat) {
       status = ComputeDataToInt8(tensor, index);
     } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
       // quant bias data

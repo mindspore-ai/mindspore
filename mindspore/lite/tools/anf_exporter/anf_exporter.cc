@@ -38,6 +38,8 @@
 #include "ops/op_utils.h"
 #include "tools/common/graph_util.h"
 #include "src/ops/ops_utils.h"
+#include "tools/common/node_util.h"
+#include "tools/converter/converter_context.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -81,9 +83,9 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
 }
 }  // namespace
 
-int AnfExporter::SetQuantOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                          const std::shared_ptr<mindspore::Primitive> &primitive,
-                                          const std::unique_ptr<schema::CNodeT> &dst_node) {
+int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
+                                              const std::shared_ptr<mindspore::Primitive> &primitive,
+                                              const std::unique_ptr<schema::CNodeT> &dst_node) {
   auto first_output_index = dst_node->outputIndex[0];
   auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
   if (dst_node->quantType == schema::QuantType_PostTraining) {
@@ -116,81 +118,62 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   QuantParamsVector output_quant_params;
   dst_node->quantType = schema::QuantType_QUANT_NONE;
   auto quant_tensor_info_ptr = primitive->GetAttr("quant_params");
-  if (quant_tensor_info_ptr != nullptr) {
-    auto quant_param_holder = quant_tensor_info_ptr->cast<QuantParamHolderPtr>();
-    if (quant_param_holder == nullptr) {
-      MS_LOG(ERROR) << "quant param is invalid.";
-      return RET_ERROR;
-    }
-    input_quant_params = quant_param_holder->get_input_quant_params();
-    output_quant_params = quant_param_holder->get_output_quant_params();
-    dst_node->quantType = quant_param_holder->quant_type();
+  QuantParamHolderPtr quant_param_holder = nullptr;
+  if (quant_tensor_info_ptr == nullptr ||
+      (quant_param_holder = quant_tensor_info_ptr->cast<QuantParamHolderPtr>()) == nullptr) {
+    quant_param_holder = std::make_shared<QuantParamHolder>(dst_node->inputIndex.size(), dst_node->outputIndex.size());
   }
-  // add quant param
-  if (!input_quant_params.empty()) {
-    for (size_t i = 0; i < input_quant_params.size(); i++) {
-      if (i >= dst_node->inputIndex.size()) {
-        MS_LOG(INFO) << "node: " << dst_node->name << " input has " << input_quant_params.size()
-                     << " quant_params; but only " << dst_node->inputIndex.size() << " input";
-        break;
-      }
-      auto activate_index = dst_node->inputIndex[i];
-      auto tensor_input = meta_graph->allTensors[activate_index].get();
-      if (tensor_input->quantParams.empty()) {
-        for (auto input_quant_param : input_quant_params[i]) {
-          auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
-          MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
-                        << " zp: " << input_quant_param_ptr->zeroPoint;
-          input_quant_param_ptr->dstDtype = tensor_input->dataType;
-          tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
-        }
-      }
-      if (!tensor_input->quantParams.empty()) {
-        int bit_num = tensor_input->quantParams.at(0)->numBits;
-        if (bit_num != 8 && bit_num != 16) {
-          auto status = DoBitPack(bit_num, tensor_input);
-          if (status != RET_OK) {
-            MS_LOG(ERROR) << "do bit pack failed. " << status;
-            return RET_ERROR;
-          }
-        }
+
+  input_quant_params = quant_param_holder->get_input_quant_params();
+  output_quant_params = quant_param_holder->get_output_quant_params();
+  dst_node->quantType = quant_param_holder->quant_type();
+
+  // convert input quant param
+  for (size_t i = 0; i < dst_node->inputIndex.size(); i++) {
+    if (i >= input_quant_params.size()) {
+      MS_LOG(INFO) << "node: " << dst_node->name << " has " << dst_node->inputIndex.size() << ", but only has"
+                   << input_quant_params.size() << " quant params";
+      break;
+    }
+    auto activate_index = dst_node->inputIndex[i];
+    auto tensor_input = meta_graph->allTensors[activate_index].get();
+    if (tensor_input->quantParams.empty()) {
+      for (auto input_quant_param : input_quant_params[i]) {
+        auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
+        MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
+                      << " zp: " << input_quant_param_ptr->zeroPoint;
+        input_quant_param_ptr->dstDtype = tensor_input->dataType;
+        tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
       }
     }
-  } else {
-    MS_LOG(DEBUG) << "node: " << dst_node->name << " input quant params is empty";
-  }
-  // output
-  if (output_quant_params.empty()) {
-    if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
-      MS_LOG(DEBUG) << "node: " << dst_node->name << " output quant params is empty";
-    }
-  } else {
-    if (dst_node->outputIndex.size() != output_quant_params.size()) {
-      MS_LOG(INFO) << "node: " << dst_node->name << " output has " << output_quant_params.size()
-                   << " quant_params; but only " << dst_node->outputIndex.size() << " output";
-      return RET_ERROR;
-    }
-    int output_idx = 0;
-    for (const auto &output_quant_param : output_quant_params) {
-      auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[output_idx]].get();
-      output_idx++;
-      for (const auto &channel_quant_param : output_quant_param) {
-        if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
-          std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
-            std::make_unique<schema::QuantParamT>(channel_quant_param);
-          MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
-                        << " zp: " << output_quant_param_ptr->zeroPoint;
-          output_quant_param_ptr->dstDtype = output_tensor->dataType;
-          output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
+
+    if (!tensor_input->quantParams.empty()) {
+      int bit_num = tensor_input->quantParams.at(0)->numBits;
+      if (bit_num != 8 && bit_num != 16) {
+        auto status = DoBitPack(bit_num, tensor_input);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "do bit pack failed. " << status;
+          return RET_ERROR;
         }
       }
     }
   }
 
-  auto status = SetQuantOutputTensorType(meta_graph, primitive, dst_node);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "set quant output tensor data type failed.";
-    return RET_ERROR;
+  // output
+  int output_idx = 0;
+  for (const auto &output_quant_param : output_quant_params) {
+    auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[output_idx]].get();
+    output_idx++;
+    for (const auto &channel_quant_param : output_quant_param) {
+      if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_WeightQuant) {
+        std::unique_ptr<schema::QuantParamT> output_quant_param_ptr =
+          std::make_unique<schema::QuantParamT>(channel_quant_param);
+        MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
+                      << " zp: " << output_quant_param_ptr->zeroPoint;
+        output_quant_param_ptr->dstDtype = output_tensor->dataType;
+        output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
+      }
+    }
   }
   return RET_OK;
 }
@@ -224,6 +207,7 @@ int AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &m
         tensor->format = schema::Format_NHWC;
         if (!IsContain(subgraph->inputIndices, input)) {
           if (subgraph_index == kMainGraphIndex) {
+            TensorDataType::GetInstance()->UpdateGraphInputDType(meta_graphT->inputIndex.size(), tensor->dataType);
             meta_graphT->inputIndex.push_back(input);
           }
           subgraph->inputIndices.push_back(input);
@@ -262,6 +246,8 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgrap
   }
   for (unsigned int &i : return_node->inputIndex) {
     if (subgraph_index == kMainGraphIndex) {
+      auto &tensor = meta_graphT->allTensors.at(i);
+      TensorDataType::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
       meta_graphT->outputIndex.push_back(i);
     }
     meta_graphT->subGraph.at(subgraph_index)->outputIndices.push_back(i);
@@ -354,6 +340,13 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       break;
     }
+
+    auto status = SetPostTrainOutputTensorType(meta_graphT, prim, node);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "set quant output tensor data type failed.";
+      break;
+    }
+
     meta_graphT->nodes.push_back(std::move(node));
     meta_graphT->subGraph.at(subgraph_index)->nodeIndices.push_back(node_idx_++);
   }
@@ -615,7 +608,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       return;
     }
     auto elements = tuple->elements();
-    for (size_t i = 0; i < elements.size(); i++) {
+    for (size_t i = 0; i < lite::GetCNodeOutputsSize(cnode, train_flag_); i++) {
       auto msTensor = new (std::nothrow) schema::TensorT();
       if (msTensor == nullptr) {
         MS_LOG(ERROR) << "new msTensor failed";
@@ -627,8 +620,6 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         std::string name = cnode_name + "_o:" + std::to_string(i);
         node_id_map_[name] = meta_graphT->allTensors.size();
         meta_graphT->allTensors.emplace_back(msTensor);
-        if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))
-          break;
       } else {
         if (elements.size() == 1) {
           node_id_map_[cnode_name] = meta_graphT->allTensors.size();

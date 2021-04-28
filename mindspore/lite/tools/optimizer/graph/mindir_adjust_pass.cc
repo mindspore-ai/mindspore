@@ -21,20 +21,11 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-size_t GetCNodeOutputsSize(std::shared_ptr<AnfNode> anf_node) {
-  auto cnode = anf_node->cast<CNodePtr>();
-  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
-    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
-    return tuple->elements().size();
-  } else {
-    return 1;
-  }
-}
-
 int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   std::vector<schema::QuantParamT> quants;
@@ -112,27 +103,6 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
   return lite::RET_OK;
 }
 
-void CheckQuantParams(const PrimitivePtr &prim) {
-  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
-  auto input_quant_params = quant_param_holder->get_input_quant_params();
-  bool is_quant = false;
-  for (size_t i = 0; i < input_quant_params.size(); ++i) {
-    if (!input_quant_params.at(i).empty() && input_quant_params.at(i).at(0).inited) {
-      is_quant = true;
-      break;
-    }
-  }
-  auto output_quant_params = quant_param_holder->get_output_quant_params();
-  for (size_t i = 0; i < output_quant_params.size(); ++i) {
-    if (!output_quant_params.at(i).empty() && output_quant_params.at(i).at(0).inited) {
-      is_quant = true;
-    }
-  }
-  if (!is_quant) {
-    prim->EraseAttr("quant_params");
-  }
-}
-
 int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
   auto narrow_range = prim->GetAttr("narrow_range");
   bool narrow_range_param = false;
@@ -170,7 +140,6 @@ int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &i
     MS_LOG(ERROR) << "compute output quant param failed.";
     return status;
   }
-  CheckQuantParams(prim);
   return lite::RET_OK;
 }
 }  // namespace
@@ -236,7 +205,8 @@ int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
 
-  auto quant_param_holder = std::make_shared<lite::QuantParamHolder>(inputs.size(), GetCNodeOutputsSize(anf_node));
+  auto quant_param_holder =
+    std::make_shared<lite::QuantParamHolder>(inputs.size(), lite::GetCNodeOutputsSize(anf_node, train_flag_));
   primitive->AddAttr("quant_params", quant_param_holder);
 
   if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {

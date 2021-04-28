@@ -20,6 +20,7 @@
 #include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
+#include "tools/converter/quant_param_holder.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
 using mindspore::lite::converter::FmkType_MS;
@@ -92,6 +93,7 @@ lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const Fu
   }
   auto perm_node = BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_perm");
   auto prim = std::make_shared<ops::Transpose>();
+  prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>(1, 1));
   auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
   if (!weight_node->has_default()) {
     MS_LOG(DEBUG) << "Weight parameter should has default parameter.";
