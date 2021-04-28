@@ -36,11 +36,14 @@ InnerContext::InnerContext(const Context *context) {
 InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
   this->allocator = context->allocator;
   this->thread_num_ = context->thread_num_;
+  bool isUserSetNPU = context->device_list_.end() !=
+                      std::find_if(context->device_list_.begin(), context->device_list_.end(),
+                                   [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
   this->device_list_.clear();
   for (auto &device_ctx : context->device_list_) {
     // npu server would use one core so we don't bind core to avoid competition.
     // If user does not set npu device, we still bind core.
-    if (device_ctx.device_type_ == DT_CPU && IsUserSetNpu()) {
+    if (device_ctx.device_type_ == DT_CPU && isUserSetNPU) {
       auto cpu_ctx = device_ctx;
       cpu_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
       this->device_list_.push_back(cpu_ctx);
