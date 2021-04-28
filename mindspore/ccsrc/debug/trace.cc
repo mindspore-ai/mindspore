@@ -32,6 +32,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "utils/log_adapter.h"
 
@@ -155,9 +156,9 @@ std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
   return tagged_func_graphs;
 }
 
-void OutputAnalyzedGraphWithType() {
+void OutputAnalyzedGraphWithType(const string &file_path) {
   AnalyzedFuncGraphExporter exporter;
-  exporter.ExportFuncGraph("analyze_fail.dat", GetCNodeDebugStack());
+  exporter.ExportFuncGraph(file_path, GetCNodeDebugStack());
 }
 
 std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
@@ -494,8 +495,19 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     return;
   }
 
-  OutputAnalyzedGraphWithType();
-  oss << "\nThe function call stack (See file 'analyze_fail.dat' for details):\n";
+  string file_name = "analyze_fail.dat";
+  auto ms_om_path = common::GetEnv("MS_OM_PATH");
+  if (!ms_om_path.empty()) {
+    auto path = ms_om_path + "/" + "analyze_fail.dat";
+    auto realpath = Common::GetRealPath(path);
+    if (!realpath.has_value()) {
+      MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
+    }
+    file_name = realpath.value();
+  }
+
+  OutputAnalyzedGraphWithType(file_name);
+  oss << "\nThe function call stack (See file '" << file_name << "' for details):\n";
 
   int index = 0;
   std::string last_location_info = "";
