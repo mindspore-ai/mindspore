@@ -90,7 +90,7 @@ std::shared_ptr<domi::ModelBufferData> SubGraphNpuKernel::BuildIRModel() {
 
 int SubGraphNpuKernel::Run() {
   return reinterpret_cast<lite::NPUExecutor *>(this->executor_)
-    ->Run(in_tensors_, out_tensor_sorted_, out_nodes_, nodes_);
+    ->Run(in_tensors_, out_tensor_sorted_, in_nodes_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
