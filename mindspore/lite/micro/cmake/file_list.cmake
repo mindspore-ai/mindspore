@@ -99,6 +99,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/splice_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/exp_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/deconv2d_fp32_coder.cc
         #### nnacl int8 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/activation_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/add_int8_coder.cc
@@ -188,11 +189,13 @@ set(LITE_KERNEL_SRC
         ${NNACL_DIR}/fp32/winograd_utils.c
         ${NNACL_DIR}/fp32/pack_fp32.c
         ${NNACL_DIR}/fp32/arithmetic_fp32.c
+        ${NNACL_DIR}/fp32/deconv_fp32.c
+        ${NNACL_DIR}/fp32/matmul_fp32.c
+        ${NNACL_DIR}/fp32/common_func_fp32.c
         ${NNACL_DIR}/int8/quantize.c
         ${NNACL_DIR}/int8/pack_int8.c
         ${NNACL_DIR}/int8/matmul_int8.c
         ${NNACL_DIR}/int8/fixed_point.c
-        ${NNACL_DIR}/fp32/matmul_fp32.c
         ${NNACL_DIR}/int8/arithmetic_int8.c
         ${NNACL_DIR}/int8/add_int8.c
         ${NNACL_DIR}/int8/concat_int8.c
@@ -288,6 +291,8 @@ set(LITE_KERNEL_SRC
 if("${X86_64_SIMD}" STREQUAL "sse")
     set(SSE_SRC
             ${NNACL_DIR}/intrinsics/sse/MatMul_Sse.c
+            ${NNACL_DIR}/intrinsics/sse/PostFuncBiasReluC8.c
+            ${NNACL_DIR}/intrinsics/sse/PostFuncBiasReluC4.c
             )
     set_property(SOURCE ${SSE_SRC} PROPERTY LANGUAGE C)
 endif()
@@ -299,6 +304,8 @@ if("${X86_64_SIMD}" STREQUAL "avx")
     set(AVX_SRC
             ${NNACL_DIR}/intrinsics/avx/common_utils.c
             ${NNACL_DIR}/intrinsics/sse/MatMul_Sse.c
+            ${NNACL_DIR}/intrinsics/sse/PostFuncBiasReluC8.c
+            ${NNACL_DIR}/intrinsics/sse/PostFuncBiasReluC4.c
             ${NNACL_DIR}/assembly/avx/MatmulAvx.S
             )
     set_property(SOURCE ${AVX_SRC} PROPERTY LANGUAGE C)
