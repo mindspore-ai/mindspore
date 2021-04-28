@@ -42,6 +42,9 @@ void EltwiseFusionPass::MatchEltwise(const CNodePtr &cnode, const session::Kerne
     MS_EXCEPTION_IF_NULL(input_cnode);
     eltwise_input = input_cnode->input(1);
   }
+  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input)) {
+    (void)record.insert(eltwise_input);
+  }
   if (record.size() < MIN_ELTWISE_SIZE) {
     return;
   }

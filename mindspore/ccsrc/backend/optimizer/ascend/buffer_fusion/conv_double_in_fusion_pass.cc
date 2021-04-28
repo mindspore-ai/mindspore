@@ -66,7 +66,8 @@ void ConvDoubleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
+        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE &&
+        !AnfAlgo::CheckPrimitiveType(node, prim::kPrimReluV2)) {
       MatchConvDoubleInEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

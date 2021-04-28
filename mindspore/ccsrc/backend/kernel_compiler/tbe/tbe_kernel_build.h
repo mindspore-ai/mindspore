@@ -34,7 +34,7 @@ namespace kernel {
 // kernel operate type used for generate json
 
 class TbeKernelBuild {
-  enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2 };
+  enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 
  public:
   static bool GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
