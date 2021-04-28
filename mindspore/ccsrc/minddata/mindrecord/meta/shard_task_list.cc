@@ -94,7 +94,7 @@ int ShardTaskList::GetTaskSampleByID(size_t id) {
 
 int ShardTaskList::GetRandomTaskID() {
   std::mt19937 gen = mindspore::dataset::GetRandomDevice();
-  std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
+  std::uniform_int_distribution<> dis(0, sample_ids_.size() - 1);
   return dis(gen);
 }
 
