@@ -64,7 +64,7 @@ int ReduceCPUKernel::CallReduceUnit(int task_id) {
     }
     reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
              static_cast<float *>(dst_data_), task_id, context_->thread_num_);
-  } else if (data_type_ == KDataTypeBool) {
+  } else if (data_type_ == kDataTypeBool) {
     if (!bool_reducer_) {
       MS_LOG(ERROR) << "function bool_reducer_ is null.";
       return RET_NULL_PTR;
@@ -96,7 +96,7 @@ int ReduceCPUKernel::Run() {
   if (in_tensors().at(0)->data_type() == kNumberTypeFloat32) {
     data_type_ = kDataTypeFloat;
   } else if (in_tensors().at(0)->data_type() == kNumberTypeBool) {
-    data_type_ = KDataTypeBool;
+    data_type_ = kDataTypeBool;
   } else {
     data_type_ = kDataTypeInt;
   }
@@ -183,7 +183,7 @@ int ReduceCPUKernel::MallocTmpBuffer() {
     void *buffer = nullptr;
     if (data_type_ == kDataTypeFloat) {
       buffer = context_->allocator->Malloc(size * sizeof(float));
-    } else if (data_type_ == KDataTypeBool) {
+    } else if (data_type_ == kDataTypeBool) {
       buffer = context_->allocator->Malloc(size * sizeof(bool));
     } else {
       buffer = context_->allocator->Malloc(size * sizeof(int));

@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
+
 #include <vector>
 #include <memory>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/slice_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,41 +37,20 @@ class SliceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  template <typename T>
-  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
-                        const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
-                        int id) const;
-  void ExpandAllMemberDims();
-  bool CanCopyMemoryOnAxis(size_t dim) const;
-  int SignOfStride(size_t axis) const;
-  void CheckParam(const CNodePtr &kernel_node) const;
-  void TransArg();
-  void ClipBegin();
-  std::vector<int> begin_;
-  std::vector<int> end_;
-  std::vector<int> strides_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> input_element_num_;
-  std::vector<size_t> output_shape_;
-  std::vector<size_t> output_element_num_;
-  TypeId dtype_{kTypeUnknown};
+  void InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
+                      const std::vector<int64_t> &size);
+  void ParallelRun(void *input_addr, void *output_addr, int thread_num);
+
+  bool parallel_{true};
+  int data_size_{4};
+  SliceParameter slice_param_;
 };
 
-MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  SliceCPUKernel);
+MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SliceCPUKernel);
+MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SliceCPUKernel);
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   SliceCPUKernel);
-MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SliceCPUKernel);
-MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SliceCPUKernel);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  SliceCPUKernel);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  SliceCPUKernel);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  SliceCPUKernel);
-MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                   SliceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
