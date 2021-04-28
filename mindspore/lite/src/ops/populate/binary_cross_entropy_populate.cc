@@ -28,7 +28,12 @@ OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
   }
   memset(bce_param, 0, sizeof(BinaryCrossEntropyParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_BinaryCrossEntropy();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   bce_param->op_parameter_.type_ = primitive->value_type();
   bce_param->reduction = value->reduction();
   return reinterpret_cast<OpParameter *>(bce_param);

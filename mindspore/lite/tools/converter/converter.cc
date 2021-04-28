@@ -52,7 +52,7 @@ std::unique_ptr<Converter> Converter::CreateConverter(converter::FmkType fmk) {
   }
 }
 
-MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
+schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
   if (flag == nullptr) {
     MS_LOG(ERROR) << "Input flag is nullptr";
     return nullptr;
@@ -62,13 +62,13 @@ MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
   }
+
   // funcgraph compile
   graph = funcgraph_transform_->Transform(graph, flag.get());
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
     return nullptr;
   }
-  MS_LOG(INFO) << "Run anfTransform success";
 
   // protobuf -> flatbuf
   auto meta_graph = Export(graph, false, false, flag->trainModel);
@@ -76,7 +76,6 @@ MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
   }
-  MS_LOG(INFO) << "export success";
 
   // metagraph compile
   metagraph_transform_->SetGraphDef(meta_graph);

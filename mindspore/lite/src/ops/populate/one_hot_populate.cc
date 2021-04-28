@@ -19,9 +19,8 @@ using mindspore::schema::PrimitiveType_OneHot;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateOneHotParameter(const void *prim) {
-  OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
+  auto *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
   if (one_hot_param == nullptr) {
     MS_LOG(ERROR) << "malloc OneHotParameter failed.";
     return nullptr;
@@ -29,7 +28,12 @@ OpParameter *PopulateOneHotParameter(const void *prim) {
   memset(one_hot_param, 0, sizeof(OneHotParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_OneHot();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   one_hot_param->op_parameter_.type_ = primitive->value_type();
   one_hot_param->axis_ = value->axis();
   return reinterpret_cast<OpParameter *>(one_hot_param);

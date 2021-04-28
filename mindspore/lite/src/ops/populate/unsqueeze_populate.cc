@@ -21,16 +21,26 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateUnsqueezeParameter(const void *prim) {
-  UnSqueezeParameter *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
+  auto *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
   if (unsqueeze_param == nullptr) {
     MS_LOG(ERROR) << "malloc UnSqueezeParameter failed.";
     return nullptr;
   }
   memset(unsqueeze_param, 0, sizeof(UnSqueezeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   unsqueeze_param->op_parameter_.type_ = primitive->value_type();
   auto unsqueeze_prim = primitive->value_as_Unsqueeze();
-  auto flat_axis = std::vector<int>(unsqueeze_prim->axis()->begin(), unsqueeze_prim->axis()->end());
+  if (unsqueeze_prim == nullptr) {
+    MS_LOG(ERROR) << "unsqueeze_prim is nullptr";
+    return nullptr;
+  }
+  auto axis = unsqueeze_prim->axis();
+  if (axis == nullptr) {
+    MS_LOG(ERROR) << "axis is nullptr";
+    return nullptr;
+  }
+  auto flat_axis = std::vector<int>(axis->begin(), axis->end());
   unsqueeze_param->num_dim_ = flat_axis.size();
   int i = 0;
   for (auto iter = flat_axis.begin(); iter != flat_axis.end(); ++iter) {

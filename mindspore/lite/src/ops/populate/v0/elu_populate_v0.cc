@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateEluParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto elu_prim = primitive->value_as_Elu();
-  EluParameter *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
+  if (elu_prim == nullptr) {
+    MS_LOG(ERROR) << "elu_prim is nullptr";
+    return nullptr;
+  }
+  auto *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
   if (elu_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EluParameter failed.";
     return nullptr;

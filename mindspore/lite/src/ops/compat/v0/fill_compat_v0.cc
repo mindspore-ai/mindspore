@@ -31,7 +31,17 @@ int TransferFillToAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_ten
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto dims_attr = prim->value_as_Fill()->dims();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Fill();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto dims_attr = param->dims();
+  if (dims_attr == nullptr) {
+    MS_LOG(ERROR) << "dims_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> dims = std::vector<int>(dims_attr->begin(), dims_attr->end());
   auto dims_tensor = AttrToTensor(dims.data(), dims.size(), true, kNumberTypeInt32, tensor_bufs);
   if (dims_tensor == nullptr) {

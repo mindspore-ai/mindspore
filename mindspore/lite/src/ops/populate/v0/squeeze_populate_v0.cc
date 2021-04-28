@@ -23,18 +23,24 @@ namespace lite {
 namespace {
 OpParameter *PopulateSqueezeParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto squeeze_prim = primitive->value_as_Squeeze();
-  SqueezeParameter *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
+  if (squeeze_prim == nullptr) {
+    MS_LOG(ERROR) << "squeeze_prim is nullptr";
+    return nullptr;
+  }
+  auto *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
   if (squeeze_param == nullptr) {
     MS_LOG(ERROR) << "malloc SqueezeParameter failed.";
     return nullptr;
   }
   memset(squeeze_param, 0, sizeof(SqueezeParameter));
   squeeze_param->op_parameter_.type_ = schema::PrimitiveType_Squeeze;
-  if (squeeze_prim->axis() != nullptr) {
-    squeeze_param->axis_size_ = squeeze_prim->axis()->size();
+  auto axis = squeeze_prim->axis();
+  if (axis != nullptr) {
+    squeeze_param->axis_size_ = axis->size();
     for (size_t i = 0; i < squeeze_param->axis_size_; i++) {
-      squeeze_param->axis_[i] = *(squeeze_prim->axis()->begin() + i);
+      squeeze_param->axis_[i] = *(axis->begin() + i);
     }
   } else {
     squeeze_param->axis_size_ = 0;

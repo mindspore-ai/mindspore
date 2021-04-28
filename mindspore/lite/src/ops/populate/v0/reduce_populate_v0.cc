@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateReduceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto reduce_prim = primitive->value_as_Reduce();
-  ReduceParameter *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
+  if (reduce_prim == nullptr) {
+    MS_LOG(ERROR) << "reduce_prim is nullptr";
+    return nullptr;
+  }
+  auto *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
   if (reduce_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReduceParameter failed.";
     return nullptr;
@@ -36,6 +41,10 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   reduce_param->reduce_to_end_ = reduce_prim->reduceToEnd();
   reduce_param->coeff = reduce_prim->coeff();
   auto axisVector = reduce_prim->axes();
+  if (axisVector == nullptr) {
+    MS_LOG(ERROR) << "axisVector is nullptr";
+    return nullptr;
+  }
   if (axisVector->size() > MAX_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Reduce axes size " << axisVector->size() << " exceed limit " << MAX_SHAPE_SIZE;
     free(reduce_param);

@@ -27,7 +27,13 @@ int TransferGatherAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_ten
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto axis_attr = prim->value_as_Gather()->axis();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Gather();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto axis_attr = param->axis();
   auto axis_tensor = AttrToTensor(&axis_attr, 1, false, kNumberTypeInt32, tensor_bufs);
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "attr tensor is nullptr, transform is failed.";

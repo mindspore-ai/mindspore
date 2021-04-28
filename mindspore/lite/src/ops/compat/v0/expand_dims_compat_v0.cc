@@ -29,7 +29,13 @@ int TransferExpandDimsAttr(Model::Node *node, std::vector<schema::Tensor *> *dst
   MS_ASSERT(dst_tensors->size() == 0);
 
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  int32_t dim = prim->value_as_ExpandDims()->dim();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_ExpandDims();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  int32_t dim = param->dim();
   auto dim_tensor = AttrToTensor(&dim, 1, false, kNumberTypeInt32, tensor_bufs);
   if (dim_tensor == nullptr) {
     MS_LOG(ERROR) << "transfer expand dim tensor failed.";

@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateBiasAddGradParameter(const void *prim) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  auto *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
@@ -29,6 +29,7 @@ OpParameter *PopulateBiasAddGradParameter(const void *prim) {
   memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   arithmetic_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }

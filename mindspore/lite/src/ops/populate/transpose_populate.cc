@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateTransposeParameter(const void *prim) {
-  TransposeParameter *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   transpose_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(transpose_param);
 }

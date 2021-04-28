@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateSpaceToDepthParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto space_to_depth_prim = primitive->value_as_SpaceToDepth();
-  SpaceToDepthParameter *space_depth_param =
-    reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
+  if (space_to_depth_prim == nullptr) {
+    MS_LOG(ERROR) << "space_to_depth_prim is nullptr";
+    return nullptr;
+  }
+  auto *space_depth_param = reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
   if (space_depth_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
     return nullptr;

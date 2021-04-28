@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateEmbeddingLookupParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto embedding_lookup_prim = primitive->value_as_EmbeddingLookup();
-  EmbeddingLookupParameter *embedding_lookup_parameter =
+  if (embedding_lookup_prim == nullptr) {
+    MS_LOG(ERROR) << "embedding_lookup_prim is nullptr";
+    return nullptr;
+  }
+  auto *embedding_lookup_parameter =
     reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
   if (embedding_lookup_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EmbeddingLookupParameter failed.";

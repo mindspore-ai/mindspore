@@ -36,13 +36,14 @@ using mindspore::schema::PrimitiveType_SquaredDifference;
 namespace mindspore {
 namespace lite {
 ArithmeticParameter *PopulateArithmeticCommonPara(const void *prim) {
-  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  auto *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ArithmeticParameter));
-  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   param->op_parameter_.type_ = primitive->value_type();
   param->broadcasting_ = false;
   param->ndim_ = 0;

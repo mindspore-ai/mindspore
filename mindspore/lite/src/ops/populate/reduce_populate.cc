@@ -19,16 +19,20 @@
 using mindspore::schema::PrimitiveType_ReduceFusion;
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateReduceParameter(const void *prim) {
-  ReduceParameter *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
+  auto *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
   if (reduce_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReduceParameter failed.";
     return nullptr;
   }
   memset(reduce_param, 0, sizeof(ReduceParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ReduceFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   reduce_param->op_parameter_.type_ = primitive->value_type();
   reduce_param->keep_dims_ = value->keep_dims();
   reduce_param->reduce_to_end_ = value->reduce_to_end();

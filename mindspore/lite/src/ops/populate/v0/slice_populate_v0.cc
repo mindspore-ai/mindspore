@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateSliceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto slice_prim = primitive->value_as_Slice();
-  SliceParameter *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
+  if (slice_prim == nullptr) {
+    MS_LOG(ERROR) << "slice_prim is nullptr";
+    return nullptr;
+  }
+  auto *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
   if (slice_param == nullptr) {
     MS_LOG(ERROR) << "malloc SliceParameter failed.";
     return nullptr;
@@ -35,6 +40,10 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   auto param_begin = slice_prim->begin();
   auto param_size = slice_prim->size();
   auto param_axis = slice_prim->axes();
+  if (param_begin == nullptr || param_size == nullptr || param_axis == nullptr) {
+    MS_LOG(ERROR) << "nullptr";
+    return nullptr;
+  }
   if (param_begin->size() != param_size->size() || param_begin->size() != param_axis->size()) {
     free(slice_param);
     return nullptr;

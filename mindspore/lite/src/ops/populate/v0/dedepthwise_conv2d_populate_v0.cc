@@ -21,11 +21,15 @@
 namespace mindspore {
 namespace lite {
 namespace {
-
 OpParameter *PopulateDeconvDwParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto dedepthwise_conv2d_prim = primitive->value_as_DeDepthwiseConv2D();
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (dedepthwise_conv2d_prim == nullptr) {
+    MS_LOG(ERROR) << "dedepthwise_conv2d_prim is nullptr";
+    return nullptr;
+  }
+  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
@@ -34,12 +38,10 @@ OpParameter *PopulateDeconvDwParameter(const void *prim) {
   conv_param->op_parameter_.type_ = schema::PrimitiveType_Conv2dTransposeFusion;
 
   conv_param->group_ = dedepthwise_conv2d_prim->channelIn();
-
   conv_param->kernel_h_ = dedepthwise_conv2d_prim->kernelH();
   conv_param->kernel_w_ = dedepthwise_conv2d_prim->kernelW();
   conv_param->stride_h_ = dedepthwise_conv2d_prim->strideH();
   conv_param->stride_w_ = dedepthwise_conv2d_prim->strideW();
-
   conv_param->pad_u_ = dedepthwise_conv2d_prim->padUp();
   conv_param->pad_d_ = dedepthwise_conv2d_prim->padDown();
   conv_param->pad_l_ = dedepthwise_conv2d_prim->padLeft();

@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateExpParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto exp_prim = primitive->value_as_Exp();
-  ExpParameter *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
+  if (exp_prim == nullptr) {
+    MS_LOG(ERROR) << "exp_prim is nullptr";
+    return nullptr;
+  }
+  auto *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
   if (exp_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc ExpParameter failed.";
     return nullptr;

@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateCustomPredictParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto custom_predict_prim = primitive->value_as_CustomPredict();
-  PredictParameter *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
+  if (custom_predict_prim == nullptr) {
+    MS_LOG(ERROR) << "custom_predict_prim is nullptr";
+    return nullptr;
+  }
+  auto *param = reinterpret_cast<PredictParameter *>(malloc(sizeof(PredictParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc param failed.";
     return nullptr;

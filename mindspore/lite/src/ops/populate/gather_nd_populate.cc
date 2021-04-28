@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateGatherNdParameter(const void *prim) {
-  GatherNdParameter *gather_nd_param = reinterpret_cast<GatherNdParameter *>(malloc(sizeof(GatherNdParameter)));
+  auto *gather_nd_param = reinterpret_cast<GatherNdParameter *>(malloc(sizeof(GatherNdParameter)));
   if (gather_nd_param == nullptr) {
     MS_LOG(ERROR) << "malloc GatherNdParameter failed.";
     return nullptr;
   }
   memset(gather_nd_param, 0, sizeof(GatherNdParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   gather_nd_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(gather_nd_param);
 }

@@ -31,7 +31,17 @@ int TransferReshapeAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_te
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto dst_shape_attr = prim->value_as_Reshape()->shape();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Reshape();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto dst_shape_attr = param->shape();
+  if (dst_shape_attr == nullptr) {
+    MS_LOG(ERROR) << "dst_shape_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> dst_shape = std::vector<int>(dst_shape_attr->begin(), dst_shape_attr->end());
   auto dst_shape_tensor = AttrToTensor(dst_shape.data(), dst_shape.size(), true, kNumberTypeInt32, tensor_bufs);
   if (dst_shape_tensor == nullptr) {

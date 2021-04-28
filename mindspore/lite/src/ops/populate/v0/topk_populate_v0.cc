@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateTopKParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto topk_prim = primitive->value_as_TopK();
-  TopkParameter *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
+  if (topk_prim == nullptr) {
+    MS_LOG(ERROR) << "topk_prim is nullptr";
+    return nullptr;
+  }
+  auto *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
   if (topk_param == nullptr) {
     MS_LOG(ERROR) << "malloc TopkParameter failed.";
     return nullptr;

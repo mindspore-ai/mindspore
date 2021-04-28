@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateArgMinParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto argmin_prim = primitive->value_as_ArgMin();
-  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
+  if (argmin_prim == nullptr) {
+    MS_LOG(ERROR) << "argmin_prim is nullptr";
+    return nullptr;
+  }
+  auto *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
     return nullptr;

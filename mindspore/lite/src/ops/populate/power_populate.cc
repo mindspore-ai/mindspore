@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulatePowerParameter(const void *prim) {
-  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
+  auto *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
     MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
   memset(power_param, 0, sizeof(PowerParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   power_param->op_parameter_.type_ = primitive->value_type();
   auto power_prim = primitive->value_as_PowFusion();
+  if (power_prim == nullptr) {
+    MS_LOG(ERROR) << "power_prim is nullptr";
+    return nullptr;
+  }
   power_param->scale_ = power_prim->scale();
   power_param->shift_ = power_prim->shift();
   return reinterpret_cast<OpParameter *>(power_param);

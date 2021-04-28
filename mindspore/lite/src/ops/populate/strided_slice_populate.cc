@@ -19,8 +19,7 @@ using mindspore::schema::PrimitiveType_StridedSlice;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateStridedSliceParameter(const void *prim) {
-  StridedSliceParameter *strided_slice_param =
-    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
+  auto *strided_slice_param = reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
   if (strided_slice_param == nullptr) {
     MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
     return nullptr;
@@ -28,7 +27,12 @@ OpParameter *PopulateStridedSliceParameter(const void *prim) {
   memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_StridedSlice();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   strided_slice_param->op_parameter_.type_ = primitive->value_type();
 
   strided_slice_param->begins_mask_ = value->begin_mask();

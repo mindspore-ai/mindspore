@@ -18,16 +18,20 @@
 using mindspore::schema::PrimitiveType_MatMul;
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateMatMulParameter(const void *prim) {
-  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
   memset(matmul_param, 0, sizeof(MatMulParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_MatMul();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   matmul_param->op_parameter_.type_ = primitive->value_type();
   matmul_param->b_transpose_ = value->transpose_b();
   matmul_param->a_transpose_ = value->transpose_a();

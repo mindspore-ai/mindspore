@@ -27,10 +27,20 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   }
   memset(splice_parameter, 0, sizeof(SpliceParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto splice_primitive = primitive->value_as_Splice();
+  if (splice_primitive == nullptr) {
+    MS_LOG(ERROR) << "splice_primitive is nullptr";
+    return nullptr;
+  }
   splice_parameter->op_parameter_.type_ = primitive->value_type();
 
-  std::vector<int> primitive_context(splice_primitive->context()->begin(), splice_primitive->context()->end());
+  auto context = splice_primitive->context();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "context is nullptr";
+    return nullptr;
+  }
+  std::vector<int> primitive_context(context->begin(), context->end());
   splice_parameter->context_dim_ = static_cast<int>(primitive_context.size());
 
   // malloc && memset for context
@@ -48,8 +58,12 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
     src_to_dst_row_offset = std::max(src_to_dst_row_offset, std::abs(primitive_context.at(i)));
   }
 
-  std::vector<int> primitive_forward_indexes(splice_primitive->forward_indexes()->begin(),
-                                             splice_primitive->forward_indexes()->end());
+  auto forward_indexes = splice_primitive->forward_indexes();
+  if (forward_indexes == nullptr) {
+    MS_LOG(ERROR) << "forward_indexes is nullptr";
+    return nullptr;
+  }
+  std::vector<int> primitive_forward_indexes(forward_indexes->begin(), forward_indexes->end());
   splice_parameter->forward_indexes_dim_ = static_cast<int>(primitive_forward_indexes.size());
 
   // malloc && memset for forward_indexes

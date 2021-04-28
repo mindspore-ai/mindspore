@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto detection_post_process_prim = primitive->value_as_DetectionPostProcess();
-  DetectionPostProcessParameter *detection_post_process_parameter =
+  if (detection_post_process_prim == nullptr) {
+    MS_LOG(ERROR) << "detection_post_process_prim is nullptr";
+    return nullptr;
+  }
+  auto *detection_post_process_parameter =
     reinterpret_cast<DetectionPostProcessParameter *>(malloc(sizeof(DetectionPostProcessParameter)));
   if (detection_post_process_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EluParameter failed.";

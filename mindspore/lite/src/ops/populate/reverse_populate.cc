@@ -19,19 +19,27 @@ using mindspore::schema::PrimitiveType_ReverseV2;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateReverseParameter(const void *prim) {
-  ReverseParameter *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
+  auto *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
   if (reverse_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseParameter failed.";
     return nullptr;
   }
   memset(reverse_param, 0, sizeof(ReverseParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ReverseV2();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   reverse_param->op_parameter_.type_ = primitive->value_type();
 
   auto flatAxis = value->axis();
+  if (flatAxis == nullptr) {
+    MS_LOG(ERROR) << "flatAxis is nullptr";
+    return nullptr;
+  }
   reverse_param->num_axis_ = flatAxis->size();
   int i = 0;
   for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {

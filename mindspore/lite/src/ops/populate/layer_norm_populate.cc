@@ -27,8 +27,13 @@ OpParameter *PopulateLayerNormParameter(const void *prim) {
   }
   memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   layer_norm_parameter->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_LayerNormFusion();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   layer_norm_parameter->epsilon_ = param->epsilon();
   layer_norm_parameter->elementwise_affine_ = param->elementwise_affine();
   layer_norm_parameter->begin_norm_axis_ = static_cast<int>(param->begin_norm_axis());

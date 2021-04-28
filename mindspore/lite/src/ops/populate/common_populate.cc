@@ -28,6 +28,7 @@ OpParameter *PopulateCommonParameter(const void *prim) {
   }
   memset(common_parameter, 0, sizeof(OpParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   common_parameter->type_ = primitive->value_type();
   return common_parameter;
 }

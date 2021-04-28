@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateLstmParameter(const void *prim) {
-  LstmParameter *lstm_param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  auto *lstm_param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
   if (lstm_param == nullptr) {
     MS_LOG(ERROR) << "malloc LstmParameter failed.";
     return nullptr;
   }
   memset(lstm_param, 0, sizeof(LstmParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   lstm_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_LSTM();
   if (param == nullptr) {

@@ -28,6 +28,7 @@ OpParameter *PopulateSparseToDenseParameter(const void *prim) {
   }
   memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   sparse_to_dense_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
 }

@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateFusedBatchNormParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto fused_batchnorm_prim = primitive->value_as_FusedBatchNorm();
-  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
+  if (fused_batchnorm_prim == nullptr) {
+    MS_LOG(ERROR) << "fused_batchnorm_prim is nullptr";
+    return nullptr;
+  }
+  auto *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
   if (batch_norm_param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
     return nullptr;

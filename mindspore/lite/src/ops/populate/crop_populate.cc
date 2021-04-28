@@ -22,13 +22,22 @@ namespace lite {
 namespace {
 OpParameter *PopulateCropParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto crop_prim = primitive->value_as_Crop();
+  if (crop_prim == nullptr) {
+    MS_LOG(ERROR) << "crop_prim is nullptr";
+    return nullptr;
+  }
   auto param_offset = crop_prim->offsets();
+  if (param_offset == nullptr) {
+    MS_LOG(ERROR) << "param_offset is nullptr";
+    return nullptr;
+  }
   if (param_offset->size() > COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "crop_param offset size(" << param_offset->size() << ") should <= " << COMM_SHAPE_SIZE;
     return nullptr;
   }
-  CropParameter *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
+  auto *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
   if (crop_param == nullptr) {
     MS_LOG(ERROR) << "malloc CropParameter failed.";
     return nullptr;

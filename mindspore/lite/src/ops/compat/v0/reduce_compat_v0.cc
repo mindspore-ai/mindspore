@@ -31,7 +31,17 @@ int TransferReduceToAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_t
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto axes_attr = prim->value_as_Reduce()->axes();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Reduce();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto axes_attr = param->axes();
+  if (axes_attr == nullptr) {
+    MS_LOG(ERROR) << "axes_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> axes = std::vector<int>(axes_attr->begin(), axes_attr->end());
   auto axes_tensor = AttrToTensor(axes.data(), axes.size(), true, kNumberTypeInt32, tensor_bufs);
   if (axes_tensor == nullptr) {

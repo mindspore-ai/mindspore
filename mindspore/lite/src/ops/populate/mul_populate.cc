@@ -28,6 +28,7 @@ OpParameter *PopulateMulParameter(const void *prim) {
     return nullptr;
   }
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }

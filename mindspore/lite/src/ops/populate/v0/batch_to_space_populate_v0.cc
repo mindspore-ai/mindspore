@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto batch_to_space_prim = primitive->value_as_BatchToSpace();
-  BatchToSpaceParameter *batch_space_param =
-    reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
+  if (batch_to_space_prim == nullptr) {
+    MS_LOG(ERROR) << "batch_to_space_prim is nullptr";
+    return nullptr;
+  }
+  auto *batch_space_param = reinterpret_cast<BatchToSpaceParameter *>(malloc(sizeof(BatchToSpaceParameter)));
   if (batch_space_param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchToSpaceParameter failed.";
     return nullptr;
@@ -38,6 +42,10 @@ OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
   }
 
   auto block_shape = batch_to_space_prim->blockShape();
+  if (block_shape == nullptr) {
+    MS_LOG(ERROR) << "block_shape is nullptr";
+    return nullptr;
+  }
   if (block_shape->size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
     free(batch_space_param);
@@ -45,6 +53,10 @@ OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
   }
 
   auto crops = batch_to_space_prim->crops();
+  if (crops == nullptr) {
+    MS_LOG(ERROR) << "crops is nullptr";
+    return nullptr;
+  }
   if (crops->size() != COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space crops size should be " << COMM_SHAPE_SIZE;
     free(batch_space_param);

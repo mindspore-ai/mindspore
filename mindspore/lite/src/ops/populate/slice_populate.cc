@@ -19,19 +19,28 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateSliceParameter(const void *prim) {
-  SliceParameter *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
+  auto *slice_param = reinterpret_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
   if (slice_param == nullptr) {
     MS_LOG(ERROR) << "malloc SliceParameter failed.";
     return nullptr;
   }
   memset(slice_param, 0, sizeof(SliceParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_SliceFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   slice_param->op_parameter_.type_ = primitive->value_type();
-  for (size_t i = 0; i < value->axes()->size(); ++i) {
-    slice_param->axis_[i] = value->axes()->Get(i);
+  auto axes = value->axes();
+  if (axes == nullptr) {
+    MS_LOG(ERROR) << "axes is nullptr";
+    return nullptr;
+  }
+  for (size_t i = 0; i < axes->size(); ++i) {
+    slice_param->axis_[i] = axes->Get(i);
   }
   return reinterpret_cast<OpParameter *>(slice_param);
 }

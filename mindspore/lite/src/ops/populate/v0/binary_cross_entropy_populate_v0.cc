@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto binary_cross_entropy_prim = primitive->value_as_BinaryCrossEntropy();
-  BinaryCrossEntropyParameter *bce_param =
-    reinterpret_cast<BinaryCrossEntropyParameter *>(malloc(sizeof(BinaryCrossEntropyParameter)));
+  if (binary_cross_entropy_prim == nullptr) {
+    MS_LOG(ERROR) << "binary_cross_entropy_prim is nullptr";
+    return nullptr;
+  }
+  auto *bce_param = reinterpret_cast<BinaryCrossEntropyParameter *>(malloc(sizeof(BinaryCrossEntropyParameter)));
   if (bce_param == nullptr) {
     MS_LOG(ERROR) << "malloc BinaryCrossEntropy Parameter failed.";
     return nullptr;

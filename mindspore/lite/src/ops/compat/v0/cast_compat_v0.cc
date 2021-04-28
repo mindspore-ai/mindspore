@@ -26,7 +26,13 @@ int TransferCastAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tenso
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto dst_type_attr = prim->value_as_Cast()->dstT();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Cast();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto dst_type_attr = param->dstT();
   auto dst_type_tensor = AttrToTensor(&dst_type_attr, 1, false, kNumberTypeInt32, tensor_bufs);
   if (dst_type_tensor == nullptr) {
     MS_LOG(ERROR) << "attr tensor is nullptr, transform is failed.";

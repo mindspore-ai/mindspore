@@ -27,22 +27,41 @@ int TransferStridedSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *d
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
+  MS_ASSERT(prim != nullptr);
   int inputs_size = node->input_indices_.size();
+
+  auto param = prim->value_as_StridedSlice();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
   switch (inputs_size) {
     case 1: {
-      auto begins_attr = prim->value_as_StridedSlice()->begin();
+      auto begins_attr = param->begin();
+      if (begins_attr == nullptr) {
+        MS_LOG(ERROR) << "begins_attr is nullptr";
+        return RET_ERROR;
+      }
       std::vector<int> dst_begins = std::vector<int>(begins_attr->begin(), begins_attr->end());
       auto dst_begins_tensor = AttrToTensor(dst_begins.data(), dst_begins.size(), true, kNumberTypeInt32, tensor_bufs);
       dst_tensors->push_back(dst_begins_tensor);
     }
     case 2: {
-      auto ends_attr = prim->value_as_StridedSlice()->end();
+      auto ends_attr = param->end();
+      if (ends_attr == nullptr) {
+        MS_LOG(ERROR) << "ends_attr is nullptr";
+        return RET_ERROR;
+      }
       std::vector<int> dst_ends = std::vector<int>(ends_attr->begin(), ends_attr->end());
       auto dst_ends_tensor = AttrToTensor(dst_ends.data(), dst_ends.size(), true, kNumberTypeInt32, tensor_bufs);
       dst_tensors->push_back(dst_ends_tensor);
     }
     case 3: {
-      auto strides_attr = prim->value_as_StridedSlice()->stride();
+      auto strides_attr = param->stride();
+      if (strides_attr == nullptr) {
+        MS_LOG(ERROR) << "strides_attr is nullptr";
+        return RET_ERROR;
+      }
       std::vector<int> dst_strides = std::vector<int>(strides_attr->begin(), strides_attr->end());
       auto dst_strides_tensor =
         AttrToTensor(dst_strides.data(), dst_strides.size(), true, kNumberTypeInt32, tensor_bufs);

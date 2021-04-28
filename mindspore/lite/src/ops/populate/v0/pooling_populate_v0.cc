@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulatePoolingParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto pooling_prim = primitive->value_as_Pooling();
-
-  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  if (pooling_prim == nullptr) {
+    MS_LOG(ERROR) << "pooling_prim is nullptr";
+    return nullptr;
+  }
+  auto *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;

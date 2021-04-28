@@ -30,7 +30,17 @@ int TransferPadAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor
     return RET_OK;
   }
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto paddings_attr = prim->value_as_Pad()->paddings();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Pad();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto paddings_attr = param->paddings();
+  if (paddings_attr == nullptr) {
+    MS_LOG(ERROR) << "paddings_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> paddings = std::vector<int>(paddings_attr->begin(), paddings_attr->end());
   auto paddings_tensor = AttrToTensor(paddings.data(), paddings.size(), true, kNumberTypeInt32, tensor_bufs);
   if (paddings_tensor == nullptr) {

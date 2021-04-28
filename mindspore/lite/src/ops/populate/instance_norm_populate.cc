@@ -20,8 +20,7 @@ using mindspore::schema::PrimitiveType_InstanceNorm;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateInstanceNormParameter(const void *prim) {
-  InstanceNormParameter *instance_norm_param =
-    reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  auto *instance_norm_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
   if (instance_norm_param == nullptr) {
     MS_LOG(ERROR) << "malloc InstanceNormParameter failed.";
     return nullptr;
@@ -29,7 +28,12 @@ OpParameter *PopulateInstanceNormParameter(const void *prim) {
   memset(instance_norm_param, 0, sizeof(InstanceNormParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_InstanceNorm();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   instance_norm_param->op_parameter_.type_ = primitive->value_type();
   instance_norm_param->epsilon_ = value->epsilon();
   return reinterpret_cast<OpParameter *>(instance_norm_param);

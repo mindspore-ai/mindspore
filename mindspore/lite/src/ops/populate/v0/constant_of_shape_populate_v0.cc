@@ -22,10 +22,13 @@ namespace mindspore::lite {
 namespace {
 OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto constant_of_shape_prim = primitive->value_as_ConstantOfShape();
-
-  ConstantOfShapeParameter *param =
-    reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
+  if (constant_of_shape_prim == nullptr) {
+    MS_LOG(ERROR) << "constant_of_shape_prim is nullptr";
+    return nullptr;
+  }
+  auto *param = reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
     return nullptr;
@@ -37,12 +40,17 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   if (value->size() == 0 || value->size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
+    auto val = constant_of_shape_prim->value();
+    if (val == nullptr) {
+      MS_LOG(ERROR) << "val is nullptr";
+      return nullptr;
+    }
     switch (param->data_type_) {
       case kNumberTypeFloat32:
-        param->value_.f32_value_ = constant_of_shape_prim->value()->data()[0];
+        param->value_.f32_value_ = val->data()[0];
         break;
       case kNumberTypeInt32:
-        param->value_.int32_value_ = constant_of_shape_prim->value()->data()[0];
+        param->value_.int32_value_ = val->data()[0];
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";

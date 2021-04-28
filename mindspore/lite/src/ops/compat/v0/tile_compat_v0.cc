@@ -31,7 +31,17 @@ int TransferTileToAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_ten
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto multiples_attr = prim->value_as_Tile()->multiples();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Tile();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto multiples_attr = param->multiples();
+  if (multiples_attr == nullptr) {
+    MS_LOG(ERROR) << "multiples_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int> multiples = std::vector<int>(multiples_attr->begin(), multiples_attr->end());
   auto multiples_tensor = AttrToTensor(multiples.data(), multiples.size(), true, kNumberTypeInt32, tensor_bufs);
   if (multiples_tensor == nullptr) {

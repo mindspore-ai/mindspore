@@ -19,17 +19,20 @@ using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
-  QuantDTypeCastParameter *parameter =
-    reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
+  auto *parameter = reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
     return nullptr;
   }
   memset(parameter, 0, sizeof(QuantDTypeCastParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_QuantDTypeCast();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   parameter->op_parameter_.type_ = primitive->value_type();
   parameter->srcT = value->src_t();
   parameter->dstT = value->dst_t();

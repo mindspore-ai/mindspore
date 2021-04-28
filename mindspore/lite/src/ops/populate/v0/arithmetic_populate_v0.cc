@@ -23,13 +23,14 @@
 namespace mindspore {
 namespace lite {
 ArithmeticParameter *PopulateArithmeticV0CommonPara(const void *prim) {
+  auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ArithmeticParameter));
-  const auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   param->op_parameter_.type_ = primitive->value_type();
   param->broadcasting_ = false;
   param->ndim_ = 0;
@@ -38,7 +39,7 @@ ArithmeticParameter *PopulateArithmeticV0CommonPara(const void *prim) {
 }
 
 OpParameter *PopulateArithmeticV0(const void *primitive) {
-  ArithmeticParameter *param = PopulateArithmeticV0CommonPara(primitive);
+  auto *param = PopulateArithmeticV0CommonPara(primitive);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;

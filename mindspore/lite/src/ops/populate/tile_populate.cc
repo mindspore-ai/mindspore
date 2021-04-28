@@ -19,16 +19,20 @@ using mindspore::schema::PrimitiveType_TileFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateTileParameter(const void *prim) {
-  TileParameter *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
+  auto *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
   if (tile_param == nullptr) {
     MS_LOG(ERROR) << "malloc TileParameter failed.";
     return nullptr;
   }
   memset(tile_param, 0, sizeof(TileParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TileFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   tile_param->op_parameter_.type_ = primitive->value_type();
   auto dims = value->dims();
   if (dims != nullptr) {

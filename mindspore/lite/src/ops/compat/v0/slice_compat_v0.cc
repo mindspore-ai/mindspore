@@ -30,9 +30,19 @@ int TransferSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tens
   }
   MS_ASSERT(dst_tensors->size() == 0);
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
+  MS_ASSERT(prim != nullptr);
 
   /* transfer begin tensor */
-  auto begin_attr = prim->value_as_Slice()->begin();
+  auto param = prim->value_as_Slice();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto begin_attr = param->begin();
+  if (begin_attr == nullptr) {
+    MS_LOG(ERROR) << "begin_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int32_t> begin_shape = std::vector<int>(begin_attr->begin(), begin_attr->end());
   auto begin_tensor = AttrToTensor(begin_shape.data(), begin_shape.size(), true, kNumberTypeInt32, tensor_bufs);
   if (begin_tensor == nullptr) {
@@ -42,7 +52,11 @@ int TransferSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tens
   dst_tensors->push_back(begin_tensor);
 
   /* transfer size tensor */
-  auto size_attr = prim->value_as_Slice()->size();
+  auto size_attr = param->size();
+  if (size_attr == nullptr) {
+    MS_LOG(ERROR) << "size_attr is nullptr";
+    return RET_ERROR;
+  }
   std::vector<int32_t> size_shape = std::vector<int>(size_attr->begin(), size_attr->end());
   auto size_tensor = AttrToTensor(size_shape.data(), size_shape.size(), true, kNumberTypeInt32, tensor_bufs);
   if (size_tensor == nullptr) {

@@ -30,6 +30,10 @@ OpParameter *PopulateAddParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   param->op_parameter_.type_ = primitive->value_type();
   auto add_prim = primitive->value_as_AddFusion();
+  if (add_prim == nullptr) {
+    MS_LOG(ERROR) << "add_prim is nullptr";
+    return nullptr;
+  }
   param->activation_type_ = add_prim->activation_type();
   return reinterpret_cast<OpParameter *>(param);
 }

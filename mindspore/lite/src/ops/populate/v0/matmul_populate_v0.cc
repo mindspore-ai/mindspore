@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateMatMulParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto matmul_prim = primitive->value_as_MatMul();
-
-  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  if (matmul_prim == nullptr) {
+    MS_LOG(ERROR) << "matmul_prim is nullptr";
+    return nullptr;
+  }
+  auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;

@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateSoftmaxParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto softmax_prim = primitive->value_as_SoftMax();
-
-  SoftmaxParameter *softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
+  if (softmax_prim == nullptr) {
+    MS_LOG(ERROR) << "softmax_prim is nullptr";
+    return nullptr;
+  }
+  auto *softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
   if (softmax_param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxParameter failed.";
     return nullptr;

@@ -21,13 +21,14 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateWhereParameter(const void *prim) {
-  WhereParameter *where_parameter = reinterpret_cast<WhereParameter *>(malloc(sizeof(WhereParameter)));
+  auto *where_parameter = reinterpret_cast<WhereParameter *>(malloc(sizeof(WhereParameter)));
   if (where_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Where parameter failed.";
     return nullptr;
   }
   memset(where_parameter, 0, sizeof(OpParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   where_parameter->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(where_parameter);
 }

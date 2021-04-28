@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
-  DetectionPostProcessParameter *detection_post_process_parameter =
+  auto *detection_post_process_parameter =
     reinterpret_cast<DetectionPostProcessParameter *>(malloc(sizeof(DetectionPostProcessParameter)));
   if (detection_post_process_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EluParameter failed.";
@@ -29,12 +29,22 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   }
   memset(detection_post_process_parameter, 0, sizeof(DetectionPostProcessParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   detection_post_process_parameter->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_DetectionPostProcess();
-  detection_post_process_parameter->h_scale_ = *(param->scale()->begin());
-  detection_post_process_parameter->w_scale_ = *(param->scale()->begin() + 1);
-  detection_post_process_parameter->x_scale_ = *(param->scale()->begin() + 2);
-  detection_post_process_parameter->y_scale_ = *(param->scale()->begin() + 3);
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
+  auto scale = param->scale();
+  if (scale == nullptr) {
+    MS_LOG(ERROR) << "scale is nullptr";
+    return nullptr;
+  }
+  detection_post_process_parameter->h_scale_ = *(scale->begin());
+  detection_post_process_parameter->w_scale_ = *(scale->begin() + 1);
+  detection_post_process_parameter->x_scale_ = *(scale->begin() + 2);
+  detection_post_process_parameter->y_scale_ = *(scale->begin() + 3);
   detection_post_process_parameter->nms_iou_threshold_ = param->nms_iou_threshold();
   detection_post_process_parameter->nms_score_threshold_ = param->nms_score_threshold();
   detection_post_process_parameter->max_detections_ = param->max_detections();

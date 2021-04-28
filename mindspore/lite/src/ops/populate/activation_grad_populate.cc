@@ -20,8 +20,7 @@ using mindspore::schema::PrimitiveType_ActivationGrad;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateActivationGradParameter(const void *prim) {
-  ActivationGradParameter *act_param =
-    reinterpret_cast<ActivationGradParameter *>(malloc(sizeof(ActivationGradParameter)));
+  auto *act_param = reinterpret_cast<ActivationGradParameter *>(malloc(sizeof(ActivationGradParameter)));
   if (act_param == nullptr) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
@@ -29,7 +28,12 @@ OpParameter *PopulateActivationGradParameter(const void *prim) {
   memset(act_param, 0, sizeof(ActivationGradParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ActivationGrad();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   act_param->op_parameter.type_ = primitive->value_type();
   act_param->type_ = static_cast<int>(value->activation_type());
   act_param->alpha_ = value->alpha();

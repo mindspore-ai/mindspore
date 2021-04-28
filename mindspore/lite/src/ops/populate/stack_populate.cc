@@ -21,14 +21,19 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateStackParameter(const void *prim) {
-  StackParameter *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
+  auto *stack_param = reinterpret_cast<StackParameter *>(malloc(sizeof(StackParameter)));
   if (stack_param == nullptr) {
     MS_LOG(ERROR) << "malloc StackParameter failed.";
     return nullptr;
   }
   memset(stack_param, 0, sizeof(StackParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Stack();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   stack_param->op_parameter_.type_ = primitive->value_type();
   stack_param->axis_ = static_cast<int>(value->axis());
   return reinterpret_cast<OpParameter *>(stack_param);

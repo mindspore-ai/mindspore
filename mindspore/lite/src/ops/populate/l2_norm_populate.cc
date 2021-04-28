@@ -20,9 +20,8 @@ using mindspore::schema::PrimitiveType_L2NormalizeFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateL2NormParameter(const void *prim) {
-  L2NormParameter *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
+  auto *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
   if (l2_norm_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc L2NormParameter failed.";
     return nullptr;
@@ -30,10 +29,19 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
   memset(l2_norm_parameter, 0, sizeof(L2NormParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_L2NormalizeFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   l2_norm_parameter->op_parameter_.type_ = primitive->value_type();
 
   auto axis_vec = value->axis();
+  if (axis_vec == nullptr) {
+    MS_LOG(ERROR) << "axis_vec is nullptr";
+    return nullptr;
+  }
   l2_norm_parameter->axis_num_ = axis_vec->size();
 
   MS_ASSERT(axis_vec->size() < 8);

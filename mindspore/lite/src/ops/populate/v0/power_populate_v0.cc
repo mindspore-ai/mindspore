@@ -23,8 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulatePowerParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto power_prim = primitive->value_as_Power();
-  PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
+  if (power_prim == nullptr) {
+    MS_LOG(ERROR) << "power_prim is nullptr";
+    return nullptr;
+  }
+  auto *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
     MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;

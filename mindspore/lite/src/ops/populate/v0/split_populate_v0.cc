@@ -23,7 +23,12 @@ namespace lite {
 namespace {
 OpParameter *PopulateSplitParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto split_prim = primitive->value_as_Split();
+  if (split_prim == nullptr) {
+    MS_LOG(ERROR) << "split_prim is nullptr";
+    return nullptr;
+  }
   auto *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
   if (split_param == nullptr) {
     MS_LOG(ERROR) << "malloc SplitParameter failed.";
@@ -46,7 +51,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
   memset(split_sizes, 0, split_param->num_split_ * sizeof(int));
   split_param->split_sizes_ = split_sizes;
   auto split_sizes_vector_ = split_prim->sizeSplits();
-  if (split_sizes_vector_ != NULL) {
+  if (split_sizes_vector_ != nullptr) {
     int i = 0;
     for (auto iter = split_sizes_vector_->begin(); iter != split_sizes_vector_->end(); iter++) {
       split_param->split_sizes_[i++] = *iter;

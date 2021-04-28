@@ -28,7 +28,12 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
 
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_StridedSliceGrad();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   strided_slice_param->op_parameter_.type_ = primitive->value_type();
 
   strided_slice_param->begins_mask_ = value->begin_mask();

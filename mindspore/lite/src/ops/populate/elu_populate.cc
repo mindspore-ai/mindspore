@@ -21,15 +21,20 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateEluParameter(const void *prim) {
-  EluParameter *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
+  auto *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
   if (elu_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc EluParameter failed.";
     return nullptr;
   }
   memset(elu_parameter, 0, sizeof(EluParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   elu_parameter->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_Elu();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   elu_parameter->alpha_ = param->alpha();
   return reinterpret_cast<OpParameter *>(elu_parameter);
 }

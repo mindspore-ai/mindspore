@@ -23,9 +23,13 @@ namespace lite {
 namespace {
 OpParameter *PopulateBatchNormParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto batch_norm_prim = primitive->value_as_BatchNorm();
-
-  BatchNormParameter *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
+  if (batch_norm_prim == nullptr) {
+    MS_LOG(ERROR) << "batch_norm_prim is nullptr";
+    return nullptr;
+  }
+  auto *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
   if (batch_norm_param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
     return nullptr;

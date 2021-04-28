@@ -31,7 +31,13 @@ int TransferPowerToAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_te
   }
   dst_tensors->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
-  auto power_attr = prim->value_as_Power()->power();
+  MS_ASSERT(prim != nullptr);
+  auto param = prim->value_as_Power();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return RET_ERROR;
+  }
+  auto power_attr = param->power();
   auto power_tensor = AttrToTensor(&power_attr, 1, false, kNumberTypeFloat32, tensor_bufs);
   if (power_tensor == nullptr) {
     MS_LOG(ERROR) << "attr tensor is nullptr, transform is failed.";

@@ -23,20 +23,19 @@ namespace lite {
 namespace {
 OpParameter *PopulateOneHotParameter(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto one_hot_prim = primitive->value_as_OneHot();
-  OneHotParameter *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
+  if (one_hot_prim == nullptr) {
+    MS_LOG(ERROR) << "one_hot_prim is nullptr";
+    return nullptr;
+  }
+  auto *one_hot_param = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
   if (one_hot_param == nullptr) {
     MS_LOG(ERROR) << "malloc OneHotParameter failed.";
     return nullptr;
   }
   memset(one_hot_param, 0, sizeof(OneHotParameter));
   one_hot_param->op_parameter_.type_ = schema::PrimitiveType_OneHot;
-
-  if (one_hot_prim == nullptr) {
-    free(one_hot_param);
-    MS_LOG(ERROR) << "get OneHot param nullptr.";
-    return nullptr;
-  }
   one_hot_param->axis_ = one_hot_prim->axis();
   return reinterpret_cast<OpParameter *>(one_hot_param);
 }

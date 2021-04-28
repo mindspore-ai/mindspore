@@ -21,17 +21,26 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
-  SpaceToBatchParameter *space_batch_param =
-    reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
+  auto *space_batch_param = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
   }
   memset(space_batch_param, 0, sizeof(SpaceToBatchParameter));
-  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   space_batch_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_SpaceToBatch();
-  auto block_sizes = std::vector<int64_t>(param->block_size()->begin(), param->block_size()->end());
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
+  auto block_size = param->block_size();
+  if (block_size == nullptr) {
+    MS_LOG(ERROR) << "block_size is nullptr";
+    return nullptr;
+  }
+  auto block_sizes = std::vector<int64_t>(block_size->begin(), block_size->end());
   if (block_sizes.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of block_sizes.size() is too big";
     free(space_batch_param);
@@ -39,10 +48,20 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   }
   space_batch_param->m_ = block_sizes.size();
 
-  auto fb_paddings = param->paddings()->data();
+  auto param_paddings = param->paddings();
+  if (param_paddings == nullptr) {
+    MS_LOG(ERROR) << "param_paddings is nullptr";
+    return nullptr;
+  }
+  auto fb_paddings = param_paddings->data();
+  if (fb_paddings == nullptr) {
+    MS_LOG(ERROR) << "fb_paddings is nullptr";
+    return nullptr;
+  }
   if (fb_paddings->size() == 0 ||
-      static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
-        std::numeric_limits<size_t>::max() / sizeof(int64_t)) {
+      ((*(fb_paddings->begin())) != nullptr && (*(fb_paddings->begin()))->data() != nullptr &&
+       static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
+         std::numeric_limits<size_t>::max() / sizeof(int64_t))) {
     MS_LOG(ERROR) << "The value of paddings.size() is zero or too big";
     free(space_batch_param);
     return nullptr;
@@ -50,6 +69,10 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   std::vector<int64_t> paddings;
   for (auto iter = fb_paddings->begin(); iter != fb_paddings->end(); ++iter) {
     auto paddings_data = (*iter)->data();
+    if (paddings_data == nullptr) {
+      MS_LOG(ERROR) << "paddings_data is nullptr";
+      return nullptr;
+    }
     auto paddings_vec = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
     paddings.insert(paddings.end(), paddings_vec.begin(), paddings_vec.end());
   }

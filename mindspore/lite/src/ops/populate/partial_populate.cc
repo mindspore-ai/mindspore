@@ -24,14 +24,19 @@ typedef struct PartialParameter {
 } PartialParameter;
 
 OpParameter *PopulatePartialParameter(const void *prim) {
-  PartialParameter *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
+  auto *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
   if (partial_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc partial parameter failed.";
     return nullptr;
   }
   memset(partial_parameter, 0, sizeof(PartialParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PartialFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   partial_parameter->op_parameter_.type_ = primitive->value_type();
   partial_parameter->sub_graph_index_ = value->sub_graph_index();
 

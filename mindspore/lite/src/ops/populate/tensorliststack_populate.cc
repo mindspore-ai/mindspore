@@ -20,14 +20,19 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateTensorListStackParameter(const void *prim) {
-  TensorListParameter *stack_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
+  auto *stack_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
   if (stack_param == nullptr) {
     MS_LOG(ERROR) << "malloc TensorListParameter failed.";
     return nullptr;
   }
   memset(stack_param, 0, sizeof(TensorListParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TensorListStack();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
   stack_param->op_parameter_.type_ = primitive->value_type();
   stack_param->element_dtype_ = value->element_dtype();
   stack_param->num_element_ = value->num_elements();

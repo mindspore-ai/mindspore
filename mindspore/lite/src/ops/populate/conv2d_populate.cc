@@ -22,20 +22,33 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateConvParameter(const void *prim) {
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
   memset(conv_param, 0, sizeof(ConvParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   conv_param->op_parameter_.type_ = primitive->value_type();
   auto conv_primitive = primitive->value_as_Conv2DFusion();
-  conv_param->kernel_h_ = static_cast<int>(*(conv_primitive->kernel_size()->begin()));
-  conv_param->kernel_w_ = static_cast<int>(*(conv_primitive->kernel_size()->begin() + 1));
+  if (conv_primitive == nullptr) {
+    MS_LOG(ERROR) << "conv_primitive is nullptr";
+    return nullptr;
+  }
+  auto kernel_size = conv_primitive->kernel_size();
+  auto stride = conv_primitive->stride();
+  auto pad_list = conv_primitive->pad_list();
+  auto dilation = conv_primitive->dilation();
+  if (kernel_size == nullptr || stride == nullptr || dilation == nullptr) {
+    MS_LOG(ERROR) << "nullptr";
+    return nullptr;
+  }
+  conv_param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+  conv_param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
   conv_param->group_ = static_cast<int>(conv_primitive->group());
-  conv_param->stride_h_ = static_cast<int>(*(conv_primitive->stride()->begin()));
-  conv_param->stride_w_ = static_cast<int>(*(conv_primitive->stride()->begin() + 1));
+  conv_param->stride_h_ = static_cast<int>(*(stride->begin()));
+  conv_param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
   switch (conv_primitive->pad_mode()) {
     case schema::PadMode_SAME:
       conv_param->pad_mode_ = Pad_same;
@@ -46,19 +59,19 @@ OpParameter *PopulateConvParameter(const void *prim) {
     default:
       conv_param->pad_mode_ = Pad_pad;
   }
-  if (conv_primitive->pad_list() == nullptr || conv_primitive->pad_list()->size() < 4) {
+  if (pad_list == nullptr || pad_list->size() < 4) {
     conv_param->pad_u_ = 0;
     conv_param->pad_d_ = 0;
     conv_param->pad_l_ = 0;
     conv_param->pad_r_ = 0;
   } else {
-    conv_param->pad_u_ = static_cast<int>(*(conv_primitive->pad_list()->begin()));
-    conv_param->pad_d_ = static_cast<int>(*(conv_primitive->pad_list()->begin() + 1));
-    conv_param->pad_l_ = static_cast<int>(*(conv_primitive->pad_list()->begin() + 2));
-    conv_param->pad_r_ = static_cast<int>(*(conv_primitive->pad_list()->begin() + 3));
+    conv_param->pad_u_ = static_cast<int>(*(pad_list->begin()));
+    conv_param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
+    conv_param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
+    conv_param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
   }
-  conv_param->dilation_h_ = static_cast<int>(*(conv_primitive->dilation()->begin()));
-  conv_param->dilation_w_ = static_cast<int>(*(conv_primitive->dilation()->begin() + 1));
+  conv_param->dilation_h_ = static_cast<int>(*(dilation->begin()));
+  conv_param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
   conv_param->input_channel_ = static_cast<int>(conv_primitive->in_channel());
   conv_param->output_channel_ = static_cast<int>(conv_primitive->out_channel());
   auto act_type = conv_primitive->activation_type();

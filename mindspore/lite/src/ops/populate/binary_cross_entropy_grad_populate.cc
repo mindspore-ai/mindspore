@@ -21,7 +21,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateBinaryCrossEntropyGradParameter(const void *prim) {
-  BinaryCrossEntropyGradParameter *bce_param =
+  auto *bce_param =
     reinterpret_cast<BinaryCrossEntropyGradParameter *>(malloc(sizeof(BinaryCrossEntropyGradParameter)));
   if (bce_param == nullptr) {
     MS_LOG(ERROR) << "malloc BinaryCrossEntropyGrad Parameter failed.";
@@ -29,8 +29,13 @@ OpParameter *PopulateBinaryCrossEntropyGradParameter(const void *prim) {
   }
   memset(bce_param, 0, sizeof(BinaryCrossEntropyGradParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
   bce_param->op_parameter_.type_ = primitive->value_type();
   auto param = primitive->value_as_BinaryCrossEntropyGrad();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "param is nullptr";
+    return nullptr;
+  }
   bce_param->reduction = param->reduction();
   return reinterpret_cast<OpParameter *>(bce_param);
 }
