@@ -394,7 +394,7 @@ class Profiler:
         min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
         timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
                                         min_cycle_counter, source_path)
-        size_limit = 20 * 1024 * 1024  # 20MB
+        size_limit = 100 * 1024 * 1024  # 100MB
         timeline_analyser.write_timeline(size_limit)
         timeline_analyser.write_timeline_summary()
 

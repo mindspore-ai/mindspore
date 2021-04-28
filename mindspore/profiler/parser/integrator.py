@@ -499,6 +499,14 @@ class BaseTimelineGenerator:
     __col_names__ = ['op_name', 'stream_id', 'start_time', 'duration']
     _output_timeline_data_file_path = 'output_timeline_data_{}.txt'
     _timeline_meta = []
+    _format_meta_data_list = []
+    _thread_processed_list = []
+    _map_tid_name_to_int = {
+        "Steps": (-4, 100000),
+        "Scope Name": (-3, 100001),
+        "GpuOps": (-2, 100002),
+        "HostCpuOps": (-1, 100003)
+    }
     _timeline_summary = {
         'total_time': 0,
         'num_of_streams': 0,
@@ -507,6 +515,7 @@ class BaseTimelineGenerator:
         'max_scope_name_num': 0,
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
+    _max_scope_name_num = 0
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
@@ -539,6 +548,9 @@ class BaseTimelineGenerator:
                 json_file.write('[')
                 for index, item in enumerate(self._timeline_meta):
                     json.dump(item, json_file)
+                    if "scope_level" in item.keys():
+                        self._max_scope_name_num = max(
+                            self._max_scope_name_num, item["scope_level"] + 1)
                     file_size = os.path.getsize(display_file_path)
                     if file_size > size_limit:
                         break
@@ -572,10 +584,49 @@ class BaseTimelineGenerator:
     def _update_num_of_streams(timeline, stream_count_dict):
         """Update number of streams."""
         stream_id = timeline[1]
+        if stream_id in ["Steps", "Scope Name"]:
+            return
         if stream_id not in stream_count_dict.keys():
             stream_count_dict[stream_id] = 1
         else:
             stream_count_dict[stream_id] += 1
+
+    def _update_format_meta_data(self, timeline_dict):
+        """Update format meta data which control the display arrange and map the thread name."""
+        thread_name_meta_data = {
+            "name": "thread_name",
+            "pid": int(self._device_id),
+            "tid": 100000,
+            "ts": 0,
+            "ph": "M",
+            "cat": "__metadata",
+            "args": {
+                "name": "Steps"
+            }
+        }
+        tid_name = timeline_dict['tid']
+        sort_index = 0
+
+        if tid_name in self._map_tid_name_to_int.keys():
+            sort_index, tid = self._map_tid_name_to_int[tid_name]
+        elif tid_name.startswith("Stream"):
+            tid = int(tid_name.split("#")[-1])
+        else:
+            return
+
+        thread_name_meta_data["tid"] = tid
+        thread_name_meta_data["args"]["name"] = tid_name
+        thread_sort_meta_data = thread_name_meta_data.copy()
+        thread_sort_meta_data['name'] = "thread_sort_index"
+        thread_sort_meta_data["args"] = {"sort_index": sort_index}
+        timeline_dict["tid"] = tid
+
+        if tid_name in self._thread_processed_list:
+            return
+
+        self._thread_processed_list.append(tid_name)
+        self._format_meta_data_list.append(thread_name_meta_data)
+        self._format_meta_data_list.append(thread_sort_meta_data)
 
     def _get_max_scope_name_num(self, timeline_list):
         """Get the max number of scope level from all operator."""
@@ -593,7 +644,7 @@ class BaseTimelineGenerator:
         scope_name_start_duration_dict = {}
         scope_name_time_list = []
         op_full_name_idx, scope_name_idx, invalid_idx = 0, 0, -1
-        tid = "Name Scope"
+        tid = "Scope Name"
         for idx, time_item in enumerate(timeline_list):
             scope_name_list = time_item[op_full_name_idx].split('/')[:-1]
             # skip Default/InitDataSetQueue operator.
@@ -633,8 +684,9 @@ class BaseTimelineGenerator:
         # x[scope_name_idx] is a scope name like "0-Default".
         # if two element in scope_name_time_list have the same start time,
         # the previous element in list will displayed at the higher line in UI page.
-        scope_name_time_list.sort(key=lambda x: (float(x[self._start_time_idx]),
-                                                 x[scope_name_idx].split('-')[0]))
+        scope_name_time_list.sort(
+            key=lambda x: (float(x[self._start_time_idx]), int(x[scope_name_idx].split('-')[0]))
+        )
 
         return scope_name_time_list
 
@@ -673,21 +725,6 @@ class BaseTimelineGenerator:
 
         return step_time_list
 
-    def _adjust_timeline_arrange(self, timeline_list):
-        """Place the step time and scope name in the front of timeline list."""
-        first_step_time_idx = 0
-        first_scope_time_idx = 0
-        for idx, time_item in enumerate(timeline_list):
-            if time_item[self._tid_idx] == "Steps" and first_step_time_idx == 0:
-                first_step_time_idx = idx
-            if time_item[self._tid_idx] == "Name Scope" and first_step_time_idx == 0:
-                first_scope_time_idx = idx
-            if first_scope_time_idx and first_step_time_idx:
-                break
-        first_scope_time_item = timeline_list.pop(first_scope_time_idx)
-        timeline_list.insert(0, first_scope_time_item)
-        first_step_time_item = timeline_list.pop(first_step_time_idx)
-        timeline_list.insert(0, first_step_time_item)
 
 class GpuTimelineGenerator(BaseTimelineGenerator):
     """Generate gpu Timeline data from file."""
@@ -702,7 +739,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
         self._timeline_meta = []
-        self._max_scope_name_num = 0
 
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
@@ -730,10 +766,10 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         dur = op_meta.duration
         timeline_dict['dur'] = dur
         timeline_dict['pid'] = int(self._device_id)
-        if op_meta.stream_id == "Name Scope":
+        if op_meta.stream_id == "Scope Name":
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
-            timeline_dict['scope_level'] = op_meta.op_name.split('-')[0]
+            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
 
         if len(timeline) > 4:
             # len(timeline) > 4 refers to activity data, else op data.
@@ -743,11 +779,12 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 args_dict[self._activity_keys_list[ix]] = value
             timeline_dict['args'] = args_dict
             timeline_dict['tid'] = f"Stream #{timeline_dict['tid']}"
-        else:
+        elif op_meta.stream_id not in ["Scope Name", "Steps"]:
             # Update total time of operator execution.
             self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
 
+        self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
 
     def _load_timeline_data(self):
@@ -793,9 +830,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         activity_timeline_list = self._load_activity_data(activity_file_path, activity_args_file_path)
         timeline_list.extend(activity_timeline_list)
         timeline_list.sort(key=lambda x: float(x[2]))
-
-        # In order to show the steps at top of timeline, place the step time in front of the list.
-        self._adjust_timeline_arrange(timeline_list)
 
         return timeline_list
 
@@ -875,6 +909,10 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             if len(timeline) == 4:
                 self._update_num_of_streams(timeline, stream_count_dict)
 
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
         # Update timeline summary info
         self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
 
@@ -904,7 +942,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def __init__(self, profiling_dir, device_id):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
-        self._max_scope_name_num = 0
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
@@ -943,17 +980,20 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) * factor
         dur = op_meta.duration * factor
         timeline_dict['dur'] = dur
-        if op_meta.stream_id == "Name Scope":
+        if op_meta.stream_id == "Scope Name":
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
-            timeline_dict['scope_level'] = op_meta.op_name.split('-')[0]
+            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
 
         if op_meta.pid is None:
             timeline_dict['pid'] = int(self._device_id)
             # Update total time of operator execution.
-            self._timeline_summary['total_time'] += dur
+            if op_meta.stream_id not in ["Steps", "Scope Name"]:
+                self._timeline_summary['total_time'] += op_meta.duration
         else:  # AllReduce and AI CPU pid
             timeline_dict['pid'] = op_meta.pid
+
+        self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
 
     def init_timeline(self, all_reduce_info, framework_info, aicpu_info, min_cycle_counter, source_path):
@@ -1012,9 +1052,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             self._timeline_summary['num_of_ops'] += aicpu_info.get('num_of_ops', 0)
             self._timeline_summary['total_time'] += aicpu_info.get('total_time', 0)
 
-        # In order to show the steps at top of timeline, place the step time in the front of list.
-        self._adjust_timeline_arrange(timeline_list)
-
         # Init a dict for counting the num of streams.
         stream_count_dict = {}
         for timeline in timeline_list:
@@ -1023,6 +1060,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             if len(timeline) == 4:
                 self._update_num_of_streams(timeline, stream_count_dict)
 
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
         # Get framework metadata.
         framework_obj_list = framework_info.get('object')
         # The length of list is the number of operators.
