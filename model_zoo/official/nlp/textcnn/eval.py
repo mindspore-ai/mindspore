@@ -34,7 +34,7 @@ def eval_net():
     if config.dataset == 'MR':
         instance = MovieReview(root_dir=config.data_path, maxlen=config.word_len, split=0.9)
     elif config.dataset == 'SUBJ':
-        instance = Subjectivity(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+        instance = Subjectivity(root_dir=config.data_path, maxlen=config.word_len, split=0.9)
     elif config.dataset == 'SST2':
         instance = SST2(root_dir=config.data_path, maxlen=config.word_len, split=0.9)
     device_target = config.device_target
