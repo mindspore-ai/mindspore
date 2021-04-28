@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 namespace mindspore {
 namespace parallel {
@@ -26,6 +27,5 @@ std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device
   executors_[device_key] = executor;
   return executor;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

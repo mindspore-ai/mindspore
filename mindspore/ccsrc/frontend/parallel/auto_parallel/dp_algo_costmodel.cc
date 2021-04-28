@@ -132,18 +132,14 @@ Status GetStrategy(const CostGraphPtr &graph) {
 
 Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
   std::vector<EliminationPtr>::reverse_iterator rit;
-
+  const auto triangle_star_overwrite = CostModelContext::GetInstance()->triangle_star_strategy_overwrite();
   for (rit = eliminations.rbegin(); rit != eliminations.rend(); ++rit) {
     if ((*rit)->isa<OpElimination>()) {
       auto elimination = (*rit)->cast<OpEliminationPtr>();
       auto e = elimination->new_edge_;
       auto w = elimination->op_;
-      MS_EXCEPTION_IF_NULL(e);
-      MS_EXCEPTION_IF_NULL(w);
       auto left_edge = elimination->left_edge_;
       auto right_edge = elimination->right_edge_;
-      MS_EXCEPTION_IF_NULL(left_edge);
-      MS_EXCEPTION_IF_NULL(right_edge);
       auto decision = e->selected_cost()->decision_ptr_->cast<OpEliminationDecisionPtr>();
       w->SetSelectedStrategyAndCost(decision->op_strategy_, decision->middle_cost_);
       left_edge->set_selected_cost(decision->left_cost_);
@@ -201,12 +197,12 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       right_edge->set_selected_cost(decision->right_edge_cost_);
       // 'left_node' recovers the strategy.
       left_node->SetSelectedStrategyAndCost(decision->left_node_strategy_, decision->left_node_cost_);
-      if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
+      if (triangle_star_overwrite) {
         // 'right_node' recovers the strategy.
         MS_LOG(INFO) << "Overwrite the right-node: " << right_node->name() << " in recovering triangle elimination.";
         right_node->SetSelectedStrategyAndCost(decision->right_node_strategy_, decision->right_node_cost_);
       } else {
-        // In this case, 'right_node' is not overwriten strategy, and it checks strategy consistency.
+        // In this case, 'right_node' is not overwritten strategy, and it checks strategy consistency.
         right_node->CheckSelectedStrategy(decision->right_node_strategy_);
       }
       MS_LOG(INFO) << "Recover triangleElimination succeeded.";
@@ -215,7 +211,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       auto merged_node = elimination->eliminated_node_;
       auto succ_edges = elimination->succ_edges_;
       auto succ_nodes = elimination->succ_ops_;
-      // decision is hided in succ_nodes[0]
+      // decision is hidden in succ_nodes[0]
       auto decision = succ_nodes[0]->selected_cost()->decision_ptr_->cast<StarEliminationDecisionPtr>();
 
       merged_node->SetSelectedStrategyAndCost(decision->eliminated_op_strategy_, decision->eliminated_op_cost_);
@@ -228,7 +224,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       // Star is eliminated into 'succ_nodes[0]'
       succ_nodes[0]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[0], decision->succ_ops_cost_list_[0]);
       for (size_t k = 1; k < succ_nodes.size(); ++k) {
-        if (TRIANGLE_STAR_STRATEGY_OVERWRITE) {
+        if (triangle_star_overwrite) {
           // 'succ_nodes[k]' is overwritten strategy and cost.
           succ_nodes[k]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[k], decision->succ_ops_cost_list_[k]);
         } else {

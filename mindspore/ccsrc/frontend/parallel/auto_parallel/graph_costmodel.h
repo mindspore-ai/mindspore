@@ -34,32 +34,12 @@ class CostGraph;
 using CostGraphPtr = std::shared_ptr<CostGraph>;
 extern CostGraphPtr entire_costgraph;
 extern size_t TOTAL_OPS;
-extern double COST_MODEL_GAMMA;
-extern bool COST_MODEL_SIMPLIFY_CALCULATION;
-extern double DEVICE_MEMORY_CAPACITY;
-extern double COST_MODEL_COMMUNI_THRESHOLD;
-extern double COST_MODEL_COMMUNI_CONST;
-extern double COST_MODEL_COMMUNI_BIAS;
-extern bool TENSOR_SLICE_ALIGNMENT_ENABLE;
-extern size_t TENSOR_SLICE_ALIGNMENT_SIZE;
-extern bool FULLY_USE_DEVICES;
-extern bool ELEMENTWISE_OP_STRA_FOLLOW;
-extern bool MULTI_SUBGRAPHS;
-extern bool DP_ALGO_ENABLE_APPROX;
-extern double DP_ALGO_APPROX_EPSILON;
-extern int64_t RUN_PHASE;
-extern bool TRIANGLE_STAR_STRATEGY_OVERWRITE;
-extern bool DP_ALGO_SINGLE_LOOP;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have
   // output-input dependency relationship.
  public:
-  CostGraph() {
-    dev_memory_ = DEFAULT_DEVICE_MEMORY_CAPACITY;
-    costmodel_alpha_ = DEFAULT_COST_MODEL_ALPHA;
-    costmodel_beta_ = DEFAULT_COST_MODEL_BETA_ASCEND;
-  }
+  CostGraph() {}
   ~CostGraph() = default;
   void Init();
   void AddOperator(const OperatorInfoPtr &op) { ops_.push_back(op); }
@@ -79,8 +59,6 @@ class CostGraph {
   // An edge is uniquely identified by its name, and its output index and input index.
   bool IsEdgeInCostGraph(const std::string &, size_t, size_t);
 
-  void SetDeviceMemoryAndCostParameter();
-
   std::vector<std::shared_ptr<CostGraph>> ConstructConnectedComponents(std::vector<OperatorInfoPtr>);
   void DFS(const OperatorInfoPtr &current_op, std::map<OperatorInfoPtr, bool> *visited,
            const std::shared_ptr<CostGraph> &component);
@@ -91,10 +69,10 @@ class CostGraph {
   CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
   CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist, double memory);
   Status SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
+  Status SearchStrategyForTwoNodeFinalGraph(const std::vector<OperatorInfoPtr> &);
   std::vector<std::shared_ptr<Edge>> GetOriginalEdgeBetweenOperators(OperatorInfoPtr u_node, OperatorInfoPtr v_node) {
     return edges_[{u_node, v_node}];
   }
-  double GetDeviceMemory() const { return dev_memory_; }
 
   // Search the cost_list in the final graph, and determine the optimal one
   Status SearchStrategy();
@@ -194,7 +172,7 @@ class CostGraph {
   Status InitReshapeStrategy();
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string &) const;
-  // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
+  // When TmpIdentity is used by multiple operators, the corresponding parameter's memory cost should be calculated only
   // once (instead of multiple times), this method is used to correct this.
   Status CorrectOpsMemoryCost();
   // When APPROXIMATION is enabled in the DP algorithm, some edges may have no valid strategies.
@@ -224,9 +202,6 @@ class CostGraph {
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   std::map<std::string, std::string> tuple_getitem_list_;
-  double dev_memory_;
-  double costmodel_alpha_;
-  double costmodel_beta_;
   std::vector<OperatorInfoPtr> ops_;
   std::map<std::pair<OperatorInfoPtr, OperatorInfoPtr>, std::vector<EdgePtr>> edges_;
   std::vector<std::shared_ptr<CostGraph>> connected_compoents_;

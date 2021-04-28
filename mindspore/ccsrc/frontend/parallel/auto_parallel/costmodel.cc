@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace parallel {
 void Simplify(CostPtrList *clist_ptrs) {
-  if (RUN_PHASE == TRAINING_PHASE) {
+  const auto run_phase = CostModelContext::GetInstance()->run_phase();
+  if (run_phase == TRAINING_PHASE) {
     // training phase
     SimplifyForDecreasingCommunicationWithPartialPara(clist_ptrs);
   } else {
@@ -35,7 +36,8 @@ void SimplifyForDecreasingCommunicationForward(CostPtrList *clist_ptrs) {
   // Sort the cost_list with the computation_cost_ increasing, and communication_forward decreasing order. This method
   // excludes the cost with greater computation_cost_ and greater communication_forward.
   // E.g. clist_ptrs = {<100, 20>, <200, 10>, <300, 50>}. After this method, clist_ptrs = {<200, 10>, <100, 20>}
-  if (!COST_MODEL_SIMPLIFY_CALCULATION) {
+  const auto simplify_cal = CostModelContext::GetInstance()->costmodel_simplify_cal();
+  if (!simplify_cal) {
     return;
   }
   MS_EXCEPTION_IF_NULL(clist_ptrs);
@@ -57,7 +59,8 @@ void SimplifyForDecreasingCommunicationForward(CostPtrList *clist_ptrs) {
 void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist_ptrs) {
   // Sort the cost_list with the computation_cost_ increasing, and communication_with_partial_para_cost decreasing
   // order. This method excludes the cost with greater computation_cost_ and greater communication_without_para_cost.
-  if (!COST_MODEL_SIMPLIFY_CALCULATION) {
+  const auto simplify_cal = CostModelContext::GetInstance()->costmodel_simplify_cal();
+  if (!simplify_cal) {
     return;
   }
   MS_EXCEPTION_IF_NULL(clist_ptrs);
@@ -78,19 +81,23 @@ void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist_ptrs) 
 
 void RefineForPracticalCost(const CostPtr &origin_cost, bool is_redistribution) {
   MS_EXCEPTION_IF_NULL(origin_cost);
+  const auto comm_threshold = CostModelContext::GetInstance()->costmodel_communi_threshold();
+  const auto comm_const = CostModelContext::GetInstance()->costmodel_communi_const();
+  const auto comm_bias = CostModelContext::GetInstance()->costmodel_communi_bias();
+  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
   if (is_redistribution) {
     // Redistribution cost
     if ((origin_cost->communication_redis_forward_ > EPS) &&
-        (origin_cost->communication_redis_forward_ <= COST_MODEL_COMMUNI_THRESHOLD)) {
-      origin_cost->communication_redis_forward_ = COST_MODEL_COMMUNI_CONST;
-    } else if (origin_cost->communication_redis_forward_ > COST_MODEL_COMMUNI_THRESHOLD) {
-      origin_cost->communication_redis_forward_ += COST_MODEL_COMMUNI_BIAS;
+        (origin_cost->communication_redis_forward_ <= comm_threshold)) {
+      origin_cost->communication_redis_forward_ = comm_const;
+    } else if (origin_cost->communication_redis_forward_ > comm_threshold) {
+      origin_cost->communication_redis_forward_ += comm_bias;
     }
     if ((origin_cost->communication_redis_backward_ > EPS) &&
-        (origin_cost->communication_redis_backward_ <= COST_MODEL_COMMUNI_THRESHOLD)) {
-      origin_cost->communication_redis_backward_ = COST_MODEL_COMMUNI_CONST;
-    } else if (origin_cost->communication_redis_backward_ > COST_MODEL_COMMUNI_THRESHOLD) {
-      origin_cost->communication_redis_backward_ += COST_MODEL_COMMUNI_BIAS;
+        (origin_cost->communication_redis_backward_ <= comm_threshold)) {
+      origin_cost->communication_redis_backward_ = comm_const;
+    } else if (origin_cost->communication_redis_backward_ > comm_threshold) {
+      origin_cost->communication_redis_backward_ += comm_bias;
     }
     origin_cost->communication_cost_ =
       origin_cost->communication_redis_forward_ + origin_cost->communication_redis_backward_;
@@ -104,18 +111,17 @@ void RefineForPracticalCost(const CostPtr &origin_cost, bool is_redistribution) 
     }
     // forward cost
     if ((origin_cost->communication_without_parameter_ > EPS) &&
-        (origin_cost->communication_without_parameter_ <= COST_MODEL_COMMUNI_THRESHOLD)) {
-      origin_cost->communication_without_parameter_ = COST_MODEL_COMMUNI_CONST;
-    } else if (origin_cost->communication_without_parameter_ > COST_MODEL_COMMUNI_THRESHOLD) {
-      origin_cost->communication_without_parameter_ += COST_MODEL_COMMUNI_BIAS;
+        (origin_cost->communication_without_parameter_ <= comm_threshold)) {
+      origin_cost->communication_without_parameter_ = comm_const;
+    } else if (origin_cost->communication_without_parameter_ > comm_threshold) {
+      origin_cost->communication_without_parameter_ += comm_bias;
     }
     // total
     if (origin_cost->communication_cost_ > EPS) {
       origin_cost->communication_cost_ = origin_cost->communication_without_parameter_ + backward;
     }
     if (origin_cost->communication_with_partial_para_ > EPS) {
-      origin_cost->communication_with_partial_para_ =
-        origin_cost->communication_without_parameter_ + COST_MODEL_GAMMA * backward;
+      origin_cost->communication_with_partial_para_ = origin_cost->communication_without_parameter_ + gamma * backward;
     }
   }
 }

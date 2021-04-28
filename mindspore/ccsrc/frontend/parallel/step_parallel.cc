@@ -2010,7 +2010,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     // load strategy checkpoint
     // key of strategy map
     std::string strategy_key_name = "";
-    auto param_names = NodeParameterName(cnode);
+    auto param_names = NodeParameterName(cnode, -1, 0);
     if (!param_names.empty()) {
       strategy_key_name = prim->name() + "_" + param_names[0].first;
     }
@@ -2769,7 +2769,12 @@ bool IsCohesiveNode(const CNodePtr &cnode) {
          IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather);
 }
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index) {
+std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
+  if (curr_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(WARNING) << "When finding the parameters' name of a operator, exceeded the maximum depth: "
+                    << MAX_RECURSIVE_DEPTH;
+    return {};
+  }
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   std::vector<std::pair<std::string, int64_t>> param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
@@ -2786,7 +2791,7 @@ std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &n
         continue;
       }
       if (IsCohesiveNode(cnode) && cnode->inputs().size() >= 1) {
-        auto input_param_names = NodeParameterName(cnode, idx);
+        auto input_param_names = NodeParameterName(cnode, idx, 0);
         param_names.insert(param_names.end(), input_param_names.begin(), input_param_names.end());
       }
     }
@@ -2804,7 +2809,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
-    auto param_names = NodeParameterName(cnode);
+    auto param_names = NodeParameterName(cnode, -1, 0);
     if (param_names.empty()) {
       continue;
     }
