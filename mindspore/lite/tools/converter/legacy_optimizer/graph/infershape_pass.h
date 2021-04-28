@@ -32,9 +32,9 @@ namespace mindspore {
 namespace lite {
 
 struct InferTensor {
-  std::vector<uint32_t> in_nodes_; /* used current tensor as input */
-  std::vector<uint32_t> out_nodes_;
-  bool is_infer_;
+  std::vector<uint32_t> next_nodes_;
+  std::vector<uint32_t> prev_nodes_;
+  bool is_inferred_;
 };
 
 class InferShapePass : public GraphPass {
@@ -45,11 +45,10 @@ class InferShapePass : public GraphPass {
 
  private:
   void InitSearchTensor(MetaGraphT *graph);
-  void AddNextInferShapeNode(std::vector<uint32_t> output_tensor_node_indexes, size_t index);
-  void AddOutputNode(uint32_t infer_node_index);
+  void AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> next_nodes_indexes, size_t index);
+  void AddOutputNodes(MetaGraphT *graph, uint32_t infer_node_index);
 
   lite::converter::FmkType fmk_type_ = FmkType_TF;
-  MetaGraphT *graph_ = nullptr;
   std::vector<InferTensor> tensors_ = {};
   std::vector<uint32_t> infer_node_indexes_ = {};
   bool infer_interrupt_ = false;

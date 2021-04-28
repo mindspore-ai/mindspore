@@ -179,31 +179,35 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return kernel_creator != nullptr;
 }
 
-kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
-                                              const std::vector<Tensor *> &out_tensors, const InnerContext *ctx,
-                                              const kernel::KernelKey &key, OpParameter *parameter,
-                                              const void *primitive) {
+int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                              const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *parameter,
+                              kernel::LiteKernel **kernel, const void *primitive) {
   MS_ASSERT(ctx != nullptr);
+  MS_ASSERT(kernel != nullptr);
   if (key.vendor == kBuiltin) {
     auto creator = GetCreator(key);
     if (creator != nullptr) {
-      auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-      if (kernel != nullptr) {
-        kernel->set_desc(key);
-        return kernel;
+      *kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+      if (*kernel != nullptr) {
+        (*kernel)->set_desc(key);
+        return RET_OK;
       }
+      return RET_ERROR;
     }
   } else {
     auto creator = GetDelegateCreator(key);
-    if (creator == nullptr) {
-      return nullptr;
+    if (creator != nullptr) {
+      std::vector<tensor::MSTensor *> tensors_in;
+      Tensor2MSTensor(std::move(in_tensors), &tensors_in);
+      std::vector<tensor::MSTensor *> tensors_out;
+      Tensor2MSTensor(std::move(out_tensors), &tensors_out);
+      *kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
+      if (*kernel != nullptr) {
+        return RET_OK;
+      }
+      return RET_ERROR;
     }
-    std::vector<tensor::MSTensor *> tensors_in;
-    Tensor2MSTensor(std::move(in_tensors), &tensors_in);
-    std::vector<tensor::MSTensor *> tensors_out;
-    Tensor2MSTensor(std::move(out_tensors), &tensors_out);
-    return creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
   }
-  return nullptr;
+  return RET_NOT_SUPPORT;
 }
 }  // namespace mindspore::lite

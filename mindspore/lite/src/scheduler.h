@@ -60,12 +60,13 @@ class Scheduler {
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                         const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                         TypeId prefer_data_type = kTypeUnknown);
-  kernel::LiteKernel *FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type);
-  kernel::LiteKernel *FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *op_parameter, const kernel::KernelKey &desc);
-  kernel::LiteKernel *FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *op_parameter, const kernel::KernelKey &desc);
+  int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                    OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
+                    kernel::LiteKernel **kernel);
+  int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                    OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
+  int FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                    OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
   // schedule a partial node to a subgraph_kernel
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a node to a kernel

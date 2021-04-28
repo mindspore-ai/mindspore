@@ -151,6 +151,12 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
+    // set tensor list datatype
+    auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
+    if (src_tensor.data() != nullptr) {
+      auto tensor_data_type = TypeId(reinterpret_cast<const int *>(src_tensor.data()->data())[0]);
+      tensor_list->set_tensors_data_type(tensor_data_type);
+    }
   } else {
     dst_tensor = new (std::nothrow) Tensor(TypeId(src_tensor.dataType()), shape, src_tensor.format(), src_category);
   }
