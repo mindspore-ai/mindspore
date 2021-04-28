@@ -28,10 +28,10 @@
 #include "include/api/context.h"
 #include "include/api/types.h"
 #include "include/api/serialization.h"
-#include "minddata/dataset/include/dataset/vision_ascend.h"
-#include "minddata/dataset/include/dataset/execute.h"
-#include "minddata/dataset/include/dataset/transforms.h"
-#include "minddata/dataset/include/dataset/vision.h"
+#include "include/dataset/vision_ascend.h"
+#include "include/dataset/execute.h"
+#include "include/dataset/transforms.h"
+#include "include/dataset/vision.h"
 #include "inc/utils.h"
 
 using mindspore::dataset::vision::Decode;

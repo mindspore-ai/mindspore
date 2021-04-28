@@ -28,9 +28,8 @@
 #include "include/api/context.h"
 #include "include/api/serialization.h"
 #include "include/api/types.h"
-#include "include/minddata/dataset/include/dataset/vision.h"
-#include "include/minddata/dataset/include/dataset/execute.h"
-#include "minddata/dataset/include/dataset/vision.h"
+#include "include/dataset/vision.h"
+#include "include/dataset/execute.h"
 
 #include "inc/utils.h"
 
