@@ -57,20 +57,25 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
 
-  auto bias_size = UP_ROUND(output_channel, C4NUM) * sizeof(float16_t);
+  auto bias_size = UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);
   bias_data_ = malloc(bias_size);
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float16_t));
-  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
-      in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-    if (in_tensors_.at(2)->data_type() != kNumberTypeFloat16) {
+  memset(bias_data_, 0, UP_ROUND(output_channel, C8NUM) * sizeof(float16_t));
+  if (in_tensors_.size() == 3) {
+    if (in_tensors_.at(kBiasIndex)->data_type() != kNumberTypeFloat16) {
       MS_LOG(ERROR) << "DeConv fp16 only support fp16 weight";
       return RET_ERROR;
     }
-    memcpy(bias_data_, in_tensors_.at(2)->data_c(), bias_size);
+    if (in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+        in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
+      memcpy(bias_data_, in_tensors_.at(2)->data_c(), output_channel * sizeof(float16_t));
+    } else {
+      MS_LOG(ERROR) << "unsupported bias shape for deconv!";
+      return RET_ERROR;
+    }
   }
 
   size_t weight_pack_size = input_channel * kernel_w * kernel_h * UP_ROUND(output_channel, C8NUM) * sizeof(float16_t);

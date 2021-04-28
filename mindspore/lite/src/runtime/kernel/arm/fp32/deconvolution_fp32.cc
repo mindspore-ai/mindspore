@@ -56,15 +56,20 @@ int DeConvolutionCPUKernel::InitWeightBias() {
   auto kernel_h_ = weight_tensor->Height();
   auto kernel_w_ = weight_tensor->Width();
 
-  bias_data_ = malloc(UP_ROUND(output_channel, C4NUM) * sizeof(float));
+  bias_data_ = malloc(UP_ROUND(output_channel, C8NUM) * sizeof(float));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float));
-  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
-      in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
-    memcpy(bias_data_, in_tensors_.at(2)->MutableData(), output_channel * sizeof(float));
+  memset(bias_data_, 0, UP_ROUND(output_channel, C8NUM) * sizeof(float));
+  if (in_tensors_.size() == 3) {
+    if (in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+        in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
+      memcpy(bias_data_, in_tensors_.at(2)->MutableData(), output_channel * sizeof(float));
+    } else {
+      MS_LOG(ERROR) << "unsupported bias shape for deconv!";
+      return RET_ERROR;
+    }
   }
 
   size_t weight_pack_size = input_channel * kernel_w_ * kernel_h_ * UP_ROUND(output_channel, C8NUM) * sizeof(float);
