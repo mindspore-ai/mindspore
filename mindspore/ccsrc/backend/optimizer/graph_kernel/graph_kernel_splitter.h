@@ -25,7 +25,7 @@ class GraphKernelSplitter : public Pass {
  public:
   GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
   ~GraphKernelSplitter() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 using GraphKernelSplitterPtr = std::shared_ptr<GraphKernelSplitter>;
 }  // namespace opt

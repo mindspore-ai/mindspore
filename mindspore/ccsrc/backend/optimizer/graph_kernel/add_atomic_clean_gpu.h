@@ -31,7 +31,7 @@ class AtomicCleanInsertter : public Pass {
  public:
   explicit AtomicCleanInsertter(const std::string &name = "atomic_clean") : Pass(name) {}
   ~AtomicCleanInsertter() override = default;
-  virtual bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
   virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
