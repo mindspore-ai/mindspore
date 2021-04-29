@@ -41,12 +41,23 @@ bool CPUDeviceContext::Initialize() {
 }
 
 bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
-  address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(size);
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
+  if (!device_ptr) {
+    return false;
+  }
+  address->ptr_ = device_ptr;
+  address->size_ = size;
+  address->from_mem_pool_ = true;
   return true;
 }
 
 void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
-  static_cast<CPUMemoryManager *>(mem_manager_.get())->MemFree(address->ptr_);
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(address->ptr_);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->FreeMemFromMemPool(address->ptr_);
   address->ptr_ = nullptr;
 }
 
