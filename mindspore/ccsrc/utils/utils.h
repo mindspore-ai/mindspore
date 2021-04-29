@@ -119,6 +119,7 @@ constexpr auto kTransDataOpName = "TransData";
 constexpr auto kStackInitOpName = "StackInit";
 constexpr auto kStackPushOpName = "StackPush";
 constexpr auto kStackPopOpName = "StackPop";
+constexpr auto kStackOpName = "Stack";
 constexpr auto kStackDestroyOpName = "StackDestroy";
 constexpr auto kBNTrainingUpdateGradOpName = "BNTrainingUpdateGrad";
 constexpr auto kBNTrainingReduceGradOpName = "BNTrainingReduceGrad";
