@@ -101,7 +101,8 @@ int main(int argc, char **argv) {
     std::map<double, double> costTime_map;
     size_t size = all_files.size();
 
-    Execute transform(std::shared_ptr<DvppDecodeResizeJpeg>(new DvppDecodeResizeJpeg({576, 960})));
+    auto dvppDecodeResizeJpeg = DvppDecodeResizeJpeg({576, 960});
+    Execute transform(dvppDecodeResizeJpeg);
 
     for (size_t i = 0; i < size; ++i) {
         struct timeval start;
@@ -141,7 +142,7 @@ int main(int argc, char **argv) {
         infer_cnt++;
     }
 
-    average = average/infer_cnt;
+    average = average / infer_cnt;
     std::stringstream timeCost;
     timeCost << "NN inference cost average time: "<< average << " ms of infer_count " << infer_cnt << std::endl;
     std::cout << "NN inference cost average time: "<< average << "ms of infer_count " << infer_cnt << std::endl;

@@ -99,11 +99,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::shared_ptr<TensorTransform> decode(new Decode());
-    std::shared_ptr<TensorTransform> resize(new Resize({576, 960}));
-    std::shared_ptr<TensorTransform> normalize(new Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}));
-    std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
-    std::shared_ptr<TensorTransform> typeCast(new TypeCast(DataType::kNumberTypeFloat16));
+    auto decode = Decode();
+    auto resize = Resize({576, 960});
+    auto normalize = Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
+    auto hwc2chw = HWC2CHW();
+    auto typeCast = TypeCast(DataType::kNumberTypeFloat16);
 
     mindspore::dataset::Execute transformDecode(decode);
     mindspore::dataset::Execute transform({resize, normalize, hwc2chw});
