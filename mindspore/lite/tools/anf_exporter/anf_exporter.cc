@@ -21,9 +21,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
-#include <algorithm>
 #include "tools/converter/converter_flags.h"
-#include "tools/common/tensor_util.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
 #include "mindspore/core/ops/op_utils.h"
@@ -35,7 +33,6 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
-#include "ops/op_utils.h"
 #include "tools/common/graph_util.h"
 #include "src/ops/ops_utils.h"
 #include "tools/common/node_util.h"
@@ -286,7 +283,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
   auto cnodes = GetOrderedCNodes(func_graph);
   for (const auto &cnode : cnodes) {
     auto prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
-    schema::PrimitiveT *primT = nullptr;
+    std::unique_ptr<schema::PrimitiveT> primT;
     if (prim == nullptr) {
       auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
       if (fg != nullptr) {
@@ -344,7 +341,7 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       primT = GetPrimitiveT(cnode->input(0));
     }
     node->name = cnode->fullname_with_scope();
-    node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
+    node->primitive = std::move(primT);
     auto device_type_attr = cnode->GetAttr(mindspore::ops::kDeviceType);
     node->deviceType = (device_type_attr != nullptr) ? GetValue<int32_t>(device_type_attr) : -1;
     ret = SetOpInputNode(cnode, meta_graphT, node.get());

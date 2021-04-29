@@ -19,12 +19,13 @@
 
 #include <map>
 #include <string>
+#include <memory>
 #include "src/ops/ops_func_declare.h"
 
 #ifdef PRIMITIVE_WRITEABLE
 namespace mindspore {
 namespace lite {
-typedef schema::PrimitiveT *(*PrimitiveTCreator)(const AnfNodePtr &node);
+typedef std::unique_ptr<schema::PrimitiveT> (*PrimitiveTCreator)(const AnfNodePtr &node);
 
 class MSOpsRegistry {
  public:
@@ -32,8 +33,8 @@ class MSOpsRegistry {
     static MSOpsRegistry registry;
     return &registry;
   }
-  void InsertPrimitiveTMap(std::string name, PrimitiveTCreator creator) { primitive_creators[name] = creator; }
-  PrimitiveTCreator GetPrimitiveCreator(std::string name) {
+  void InsertPrimitiveTMap(const std::string &name, PrimitiveTCreator creator) { primitive_creators[name] = creator; }
+  PrimitiveTCreator GetPrimitiveCreator(const std::string &name) {
     if (primitive_creators.find(name) != primitive_creators.end()) {
       return primitive_creators[name];
     } else {
@@ -48,13 +49,13 @@ class MSOpsRegistry {
 
 class RegistryMSOps {
  public:
-  RegistryMSOps(std::string name, PrimitiveTCreator creator) {
+  RegistryMSOps(const std::string &name, PrimitiveTCreator creator) {
     MSOpsRegistry::GetInstance()->InsertPrimitiveTMap(name, creator);
   }
   ~RegistryMSOps() = default;
 };
 
-schema::PrimitiveT *GetPrimitiveT(const mindspore::AnfNodePtr &node);
+std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const mindspore::AnfNodePtr &node);
 }  // namespace lite
 }  // namespace mindspore
 #endif
