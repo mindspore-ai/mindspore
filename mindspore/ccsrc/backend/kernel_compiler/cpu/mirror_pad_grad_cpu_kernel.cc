@@ -146,19 +146,15 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
     paddings[i] = 0;  // init all to 0
   }
   extract_paddings_(paddings_arg, padd_dim, paddings);
-  // Create required anchor points for non-mirrored data inside new tensor
   int ap1_x = paddings[WIDTH + LEFT];
   int ap2_x = paddings[WIDTH + LEFT] + dx_width - 1;
   int ap1_y = paddings[HEIGHT + TOP];
   int ap2_y = paddings[HEIGHT + TOP] + dx_height - 1;
-
   for (size_t pos = 0; pos < size; ++pos) {
     int dx_block_num = (pos / dx_width) / dx_height;
     const int grad_x = (pos % dx_width) + paddings[WIDTH + LEFT];
     const int grad_y = ((pos / dx_width) % dx_height) + paddings[HEIGHT + TOP];
-    // copy position's own value into output
     dx[pos] = interim_dy[(dx_block_num * dy_height + grad_y) * dy_width + grad_x];
-
     int x_dist_1 = (ap1_x - grad_x - mode);
     int y_dist_1 = (ap1_y - grad_y - mode);
     int x_dist_2 = (ap2_x - grad_x + mode);
@@ -166,10 +162,8 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
     int axis_dist[] = {x_dist_1, x_dist_2, y_dist_1, y_dist_2};
     int anch_point[] = {ap1_x, ap2_x, ap1_y, ap2_y};
     bool x_axis_check[] = {true, true, false, false};  // true - update X , false - update Y
-
     int temp_x = 0;
     int temp_y = 0;
-    // mirroring in axis lines
     for (int x = 0; x < 4; x++) {
       if (axis_dist[x] != 0) {
         if (x_axis_check[x]) {
@@ -184,7 +178,6 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
         }
       }
     }
-    // mirroring at corners
     for (int x = 0; x < 2; x++) {
       for (int y = 2; y < 4; y++) {
         if ((axis_dist[x] != 0) && (axis_dist[y] != 0)) {
