@@ -119,7 +119,7 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
 run_standalone_train.sh
 ```
 
-按照以下训练步骤进行8卡训练：
+- 按照以下训练步骤进行8卡训练：
 
 1. 使用VOCaug数据集训练s16，微调ResNet-101预训练模型。脚本如下：
 
@@ -139,7 +139,7 @@ run_standalone_train.sh
     run_distribute_train_s8_r2.sh
     ```
 
-评估步骤如下：
+- 评估步骤如下：
 
 1. 使用voc val数据集评估s16。评估脚本如下：
 
@@ -163,6 +163,238 @@ run_standalone_train.sh
 
     ```bash
     run_eval_s8_multiscale_flip.sh
+    ```
+
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+1. 在 modelarts 使用VOCaug数据集训练s16，微调ResNet-101预训练模型。训练步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在 base_config.yaml 文件中设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/resnet101.ckpt"
+    #          在 base_config.yaml 文件中设置 "base_lr=0.08"
+    #          在 base_config.yaml 文件中设置 "is_distributed=True"
+    #          在 base_config.yaml 文件中设置 "save_steps=410"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "data_file=/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/resnet101.ckpt"
+    #          在网页上设置 "base_lr=0.08"
+    #          在网页上设置 "is_distributed=True"
+    #          在网页上设置 "save_steps=410"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "train.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+2. 使用VOCaug数据集训练s8，微调上一步的模型。训练步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s8'"
+    #          在 base_config.yaml 文件中设置 "train_epochs=800"
+    #          在 base_config.yaml 文件中设置 "batch_size=16"
+    #          在 base_config.yaml 文件中设置 "base_lr=0.02"
+    #          在 base_config.yaml 文件中设置 "loss_scale=2048"
+    #          在 base_config.yaml 文件中设置 "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在 base_config.yaml 文件中设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt"
+    #          在 base_config.yaml 文件中设置 "is_distributed=True"
+    #          在 base_config.yaml 文件中设置 "save_steps=820"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model='deeplab_v3_s8'"
+    #          在网页上设置 "train_epochs=800"
+    #          在网页上设置 "batch_size=16"
+    #          在网页上设置 "base_lr=0.02"
+    #          在网页上设置 "loss_scale=2048"
+    #          在网页上设置 "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt"
+    #          在网页上设置 "is_distributed=True"
+    #          在网页上设置 "save_steps=820"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "train.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+3. 使用VOCtrain数据集训练s8，微调上一步的模型。训练步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s8'"
+    #          在 base_config.yaml 文件中设置 "batch_size=16"
+    #          在 base_config.yaml 文件中设置 "base_lr=0.008"
+    #          在 base_config.yaml 文件中设置 "loss_scale=2048"
+    #          在 base_config.yaml 文件中设置 "data_file='/cache/data/vocaug/voctrain_mindrecord/voctrain_mindrecord00'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在 base_config.yaml 文件中设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-800_82.ckpt"
+    #          在 base_config.yaml 文件中设置 "is_distributed=True"
+    #          在 base_config.yaml 文件中设置 "save_steps=110"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model='deeplab_v3_s8'"
+    #          在网页上设置 "batch_size=16"
+    #          在网页上设置 "base_lr=0.008"
+    #          在网页上设置 "loss_scale=2048"
+    #          在网页上设置 "data_file='/cache/data/vocaug/voctrain_mindrecord/voctrain_mindrecord00'"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-800_82.ckpt"
+    #          在网页上设置 "is_distributed=True"
+    #          在网页上设置 "save_steps=110"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "train.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+- 在 ModelArts 进行验证 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+1. 使用voc val数据集评估s16。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s16'"
+    #          在 base_config.yaml 文件中设置 "batch_size=32"
+    #          在 base_config.yaml 文件中设置 "scales_type=0"
+    #          在 base_config.yaml 文件中设置 "freeze_bn=True"
+    #          在 base_config.yaml 文件中设置 "data_root='/cache/data/vocaug'"
+    #          在 base_config.yaml 文件中设置 "data_lst='/cache/data/vocaug/voc_val_lst.txt'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在 base_config.yaml 文件中设置 "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model=deeplab_v3_s16"
+    #          在网页上设置 "batch_size=32"
+    #          在网页上设置 "scales_type=0"
+    #          在网页上设置 "freeze_bn=True"
+    #          在网页上设置 "data_root=/cache/data/vocaug"
+    #          在网页上设置 "data_lst=/cache/data/vocaug/voc_val_lst.txt"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "eval.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+2. 使用voc val数据集评估s8。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s8'"
+    #          在 base_config.yaml 文件中设置 "batch_size=16"
+    #          在 base_config.yaml 文件中设置 "scales_type=0"
+    #          在 base_config.yaml 文件中设置 "freeze_bn=True"
+    #          在 base_config.yaml 文件中设置 "data_root='/cache/data/vocaug'"
+    #          在 base_config.yaml 文件中设置 "data_lst='/cache/data/vocaug/voc_val_lst.txt'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在 base_config.yaml 文件中设置 "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model=deeplab_v3_s8"
+    #          在网页上设置 "batch_size=16"
+    #          在网页上设置 "scales_type=0"
+    #          在网页上设置 "freeze_bn=True"
+    #          在网页上设置 "data_root=/cache/data/vocaug"
+    #          在网页上设置 "data_lst=/cache/data/vocaug/voc_val_lst.txt"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt"
+    #          在网页上设置 其他参数.
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "eval.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+3. 使用voc val数据集评估多尺度s8。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s8'"
+    #          在 base_config.yaml 文件中设置 "batch_size=16"
+    #          在 base_config.yaml 文件中设置 "scales_type=1"
+    #          在 base_config.yaml 文件中设置 "freeze_bn=True"
+    #          在 base_config.yaml 文件中设置 "data_root='/cache/data/vocaug'"
+    #          在 base_config.yaml 文件中设置 "data_lst='/cache/data/vocaug/voc_val_lst.txt'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在 base_config.yaml 文件中设置 "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model=deeplab_v3_s8"
+    #          在网页上设置 "batch_size=16"
+    #          在网页上设置 "scales_type=1"
+    #          在网页上设置 "freeze_bn=True"
+    #          在网页上设置 "data_root=/cache/data/vocaug"
+    #          在网页上设置 "data_lst=/cache/data/vocaug/voc_val_lst.txt"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "eval.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
+4. 使用voc val数据集评估多尺度和翻转s8。评估步骤如下：
+
+    ```python
+    # (1) 执行 a 或者 b.
+    #       a. 在 base_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 base_config.yaml 文件中设置 "model='deeplab_v3_s8'"
+    #          在 base_config.yaml 文件中设置 "batch_size=16"
+    #          在 base_config.yaml 文件中设置 "scales_type=1"
+    #          在 base_config.yaml 文件中设置 "freeze_bn=True"
+    #          在 base_config.yaml 文件中设置 "flip=True"
+    #          在 base_config.yaml 文件中设置 "data_root='/cache/data/vocaug'"
+    #          在 base_config.yaml 文件中设置 "data_lst='/cache/data/vocaug/voc_val_lst.txt'"
+    #          在 base_config.yaml 文件中设置 "checkpoint_url='/The path of checkpoint in S3/'"
+    #          在 base_config.yaml 文件中设置 "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'"
+    #          在 base_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "model=deeplab_v3_s8"
+    #          在网页上设置 "batch_size=16"
+    #          在网页上设置 "scales_type=1"
+    #          在网页上设置 "freeze_bn=True"
+    #          在网页上设置 "flip=True"
+    #          在网页上设置 "data_root=/cache/data/vocaug"
+    #          在网页上设置 "data_lst=/cache/data/vocaug/voc_val_lst.txt"
+    #          在网页上设置 "checkpoint_url=/The path of checkpoint in S3/"
+    #          在网页上设置 "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt"
+    #          在网页上设置 其他参数
+    # (2) 上传你的预训练模型到 S3 桶上
+    # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+    # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+    # (5) 在网页上设置启动文件为 "eval.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
     ```
 
 # 脚本说明

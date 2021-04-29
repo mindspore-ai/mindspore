@@ -14,24 +14,24 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=3
+export DEVICE_ID=0
 export SLOG_PRINT_TO_STDOUT=0
-train_code_path=/PATH/TO/MODEL_ZOO_CODE
-eval_path=/PATH/TO/EVAL
+EXECUTE_PATH=$(pwd)
+eval_path=${EXECUTE_PATH}/s16_eval
 
 if [ -d ${eval_path} ]; then
   rm -rf ${eval_path}
 fi
 mkdir -p ${eval_path}
 
-python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
-                    --data_lst=/PATH/TO/DATA_lst.txt  \
+python ${EXECUTE_PATH}/../eval.py --data_root=/PATH_TO_DATA/vocaug  \
+                    --data_lst=/PATH_TO_DATA/vocaug/voc_val_lst.txt  \
                     --batch_size=32  \
                     --crop_size=513  \
                     --ignore_label=255  \
                     --num_classes=21  \
                     --model=deeplab_v3_s16  \
-                    --scales=1.0  \
-                    --freeze_bn  \
+                    --scales_type=0  \
+                    --freeze_bn=True  \
                     --ckpt_path=/PATH/TO/PRETRAIN_MODEL >${eval_path}/eval_log 2>&1 &
 

@@ -104,7 +104,7 @@ For single device training, please config parameters, training script is:
 run_standalone_train.sh
 ```
 
-For 8 devices training, training steps are as follows:
+- For 8 devices training, training steps are as follows:
 
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is:
 
@@ -124,7 +124,7 @@ For 8 devices training, training steps are as follows:
     run_distribute_train_s8_r2.sh
     ```
 
-For evaluation, evaluating steps are as follows:
+- For evaluation, evaluating steps are as follows:
 
 1. Eval s16 with voc val dataset, eval script is:
 
@@ -148,6 +148,238 @@ For evaluation, evaluating steps are as follows:
 
     ```shell
     run_eval_s8_multiscale_flip.sh
+    ```
+
+- Train on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+1. Train s16 with vocaug dataset on modelarts, finetuning from resnet101 pretrained model, training steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'" on base_config.yaml file.
+    #          Set "checkpoint_url=/The path of checkpoint in S3/" on beta_config.yaml file.
+    #          Set "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/resnet101.ckpt" on base_config.yaml file.
+    #          Set "base_lr=0.08" on base_config.yaml file.
+    #          Set "is_distributed=True" on base_config.yaml file.
+    #          Set "save_steps=410" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_file=/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/resnet101.ckpt" on the website UI interface.
+    #          Add "base_lr=0.08" on the website UI interface.
+    #          Add "is_distributed=True" on the website UI interface.
+    #          Add "save_steps=410" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+2. Train s8 with vocaug dataset on modelarts, finetuning from model in previous step, training steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s8'" on base_config.yaml file.
+    #          Set "train_epochs=800" on base_config.yaml file.
+    #          Set "batch_size=16" on base_config.yaml file.
+    #          Set "base_lr=0.02" on base_config.yaml file.
+    #          Set "loss_scale=2048" on base_config.yaml file.
+    #          Set "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'" on base_config.yaml file.
+    #          Set "checkpoint_url=/The path of checkpoint in S3/" on beta_config.yaml file.
+    #          Set "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt" on base_config.yaml file.
+    #          Set "is_distributed=True" on base_config.yaml file.
+    #          Set "save_steps=820" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model='deeplab_v3_s8'" on the website UI interface.
+    #          Add "train_epochs=800" on the website UI interface.
+    #          Add "batch_size=16" on the website UI interface.
+    #          Add "base_lr=0.02" on the website UI interface.
+    #          Add "loss_scale=2048" on the website UI interface.
+    #          Add "data_file='/cache/data/vocaug/vocaug_mindrecord/vocaug_mindrecord0'" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt" on the website UI interface.
+    #          Add "is_distributed=True" on the website UI interface.
+    #          Add "save_steps=820" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+3. Train s8 with voctrain dataset on modelarts, finetuning from model in previous step, training steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s8'" on base_config.yaml file.
+    #          Set "batch_size=16" on base_config.yaml file.
+    #          Set "base_lr=0.008" on base_config.yaml file.
+    #          Set "loss_scale=2048" on base_config.yaml file.
+    #          Set "data_file='/cache/data/vocaug/voctrain_mindrecord/voctrain_mindrecord00'" on base_config.yaml file.
+    #          Set "checkpoint_url=/The path of checkpoint in S3/" on beta_config.yaml file.
+    #          Set "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-800_82.ckpt" on base_config.yaml file.
+    #          Set "is_distributed=True" on base_config.yaml file.
+    #          Set "save_steps=110" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model='deeplab_v3_s8'" on the website UI interface.
+    #          Add "batch_size=16" on the website UI interface.
+    #          Add "base_lr=0.008" on the website UI interface.
+    #          Add "loss_scale=2048" on the website UI interface.
+    #          Add "data_file='/cache/data/vocaug/voctrain_mindrecord/voctrain_mindrecord00'" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_pre_trained=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-800_82.ckpt" on the website UI interface.
+    #          Add "is_distributed=True" on the website UI interface.
+    #          Add "save_steps=110" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "train.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+- Eval on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start evaluating as follows)
+
+1. Eval s16 with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s16'" on base_config.yaml file.
+    #          Set "batch_size=32" on base_config.yaml file.
+    #          Set "scales_type=0" on base_config.yaml file.
+    #          Set "freeze_bn=True" on base_config.yaml file.
+    #          Set "data_root='/cache/data/vocaug'" on base_config.yaml file.
+    #          Set "data_lst='/cache/data/vocaug/voc_val_lst.txt'" on base_config.yaml file.
+    #          Set "checkpoint_url=/The path of checkpoint in S3/" on beta_config.yaml file.
+    #          Set "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model=deeplab_v3_s16" on the website UI interface.
+    #          Add "batch_size=32" on the website UI interface.
+    #          Add "scales_type=0" on the website UI interface.
+    #          Add "freeze_bn=True" on the website UI interface.
+    #          Add "data_root=/cache/data/vocaug" on the website UI interface.
+    #          Add "data_lst=/cache/data/vocaug/voc_val_lst.txt" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s16-300_41.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+2. Eval s8 with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s8'" on base_config.yaml file.
+    #          Set "batch_size=16" on base_config.yaml file.
+    #          Set "scales_type=0" on base_config.yaml file.
+    #          Set "freeze_bn=True" on base_config.yaml file.
+    #          Set "data_root='/cache/data/vocaug'" on base_config.yaml file.
+    #          Set "data_lst='/cache/data/vocaug/voc_val_lst.txt'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model=deeplab_v3_s8" on the website UI interface.
+    #          Add "batch_size=16" on the website UI interface.
+    #          Add "scales_type=0" on the website UI interface.
+    #          Add "freeze_bn=True" on the website UI interface.
+    #          Add "data_root=/cache/data/vocaug" on the website UI interface.
+    #          Add "data_lst=/cache/data/vocaug/voc_val_lst.txt" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+3. Eval s8 multiscale with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s8'" on base_config.yaml file.
+    #          Set "batch_size=16" on base_config.yaml file.
+    #          Set "scales_type=1" on base_config.yaml file.
+    #          Set "freeze_bn=True" on base_config.yaml file.
+    #          Set "data_root='/cache/data/vocaug'" on base_config.yaml file.
+    #          Set "data_lst='/cache/data/vocaug/voc_val_lst.txt'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model=deeplab_v3_s8" on the website UI interface.
+    #          Add "batch_size=16" on the website UI interface.
+    #          Add "scales_type=1" on the website UI interface.
+    #          Add "freeze_bn=True" on the website UI interface.
+    #          Add "data_root=/cache/data/vocaug" on the website UI interface.
+    #          Add "data_lst=/cache/data/vocaug/voc_val_lst.txt" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
+    ```
+
+4. Eval s8 multiscale and flip with voc val dataset on modelarts, evaluating steps are as follows:
+
+    ```python
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "model='deeplab_v3_s8'" on base_config.yaml file.
+    #          Set "batch_size=16" on base_config.yaml file.
+    #          Set "scales_type=1" on base_config.yaml file.
+    #          Set "freeze_bn=True" on base_config.yaml file.
+    #          Set "flip=True" on base_config.yaml file.
+    #          Set "data_root='/cache/data/vocaug'" on base_config.yaml file.
+    #          Set "data_lst='/cache/data/vocaug/voc_val_lst.txt'" on base_config.yaml file.
+    #          Set "checkpoint_url='/The path of checkpoint in S3/'" on beta_config.yaml file.
+    #          Set "ckpt_path='/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt'" on base_config.yaml file.
+    #          Set other parameters on base_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "model=deeplab_v3_s8" on the website UI interface.
+    #          Add "batch_size=16" on the website UI interface.
+    #          Add "scales_type=1" on the website UI interface.
+    #          Add "freeze_bn=True" on the website UI interface.
+    #          Add "flip=True" on the website UI interface.
+    #          Add "data_root=/cache/data/vocaug" on the website UI interface.
+    #          Add "data_lst=/cache/data/vocaug/voc_val_lst.txt" on the website UI interface.
+    #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+    #          Add "ckpt_path=/cache/checkpoint_path/path_to_pretrain/deeplab_v3_s8-300_11.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Upload or copy your pretrained model to S3 bucket.
+    # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (4) Set the code directory to "/path/deeplabv3" on the website UI interface.
+    # (5) Set the startup file to "eval.py" on the website UI interface.
+    # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (7) Create your job.
     ```
 
 # [Script Description](#contents)

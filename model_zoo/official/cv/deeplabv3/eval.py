@@ -15,7 +15,7 @@
 """eval deeplabv3."""
 
 import os
-import argparse
+import time
 import numpy as np
 import cv2
 from mindspore import Tensor
@@ -25,34 +25,18 @@ import mindspore.ops as ops
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.nets import net_factory
+
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+from utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
-                    device_id=int(os.getenv('DEVICE_ID')))
+                    device_id=get_device_id())
 
 
-def parse_args():
-    parser = argparse.ArgumentParser('mindspore deeplabv3 eval')
+#     parser.add_argument('--scales', type=float, action='append', help='scales of evaluation')
+#     parser.add_argument('--flip', action='store_true', help='perform left-right flip')
 
-    # val data
-    parser.add_argument('--data_root', type=str, default='', help='root path of val data')
-    parser.add_argument('--data_lst', type=str, default='', help='list of val data')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size')
-    parser.add_argument('--crop_size', type=int, default=513, help='crop size')
-    parser.add_argument('--image_mean', type=list, default=[103.53, 116.28, 123.675], help='image mean')
-    parser.add_argument('--image_std', type=list, default=[57.375, 57.120, 58.395], help='image std')
-    parser.add_argument('--scales', type=float, action='append', help='scales of evaluation')
-    parser.add_argument('--flip', action='store_true', help='perform left-right flip')
-    parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
-    parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
-
-    # model
-    parser.add_argument('--model', type=str, default='deeplab_v3_s16', help='select model')
-    parser.add_argument('--freeze_bn', action='store_true', default=False, help='freeze bn')
-    parser.add_argument('--ckpt_path', type=str, default='', help='model to evaluate')
-    parser.add_argument("--input_format", type=str, choices=["NCHW", "NHWC"], default="NCHW",
-                        help="NCHW or NHWC")
-
-    args, _ = parser.parse_known_args()
-    return args
 
 
 def cal_hist(a, b, n):
@@ -153,8 +137,63 @@ def eval_batch_scales(args, eval_net, img_lst, scales,
     return result_msk
 
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, "vocaug")):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                i = 0
+                for file in fz.namelist():
+                    if i % int(data_num / 100) == 0:
+                        print("unzip percent: {}%".format(i / int(data_num / 100)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, "vocaug.zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.train_dir = os.path.join(config.output_path, str(get_rank_id()), config.train_dir)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def net_eval():
-    args = parse_args()
+    config.scales = config.scales_list[config.scales_type]
+    args = config
 
     # data list
     with open(args.data_lst) as f:

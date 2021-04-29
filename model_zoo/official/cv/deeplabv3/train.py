@@ -15,8 +15,7 @@
 """train deeplabv3."""
 
 import os
-import argparse
-import ast
+import time
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -31,6 +30,9 @@ from src.data import dataset as data_generator
 from src.loss import loss
 from src.nets import net_factory
 from src.utils import learning_rates
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+from utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 set_seed(1)
 
@@ -47,57 +49,68 @@ class BuildTrainNetwork(nn.Cell):
         return net_loss
 
 
-def parse_args():
-    parser = argparse.ArgumentParser('mindspore deeplabv3 training')
-    parser.add_argument('--train_dir', type=str, default='', help='where training log and ckpts saved')
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, "vocaug")):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                i = 0
+                for file in fz.namelist():
+                    if i % int(data_num / 100) == 0:
+                        print("unzip percent: {}%".format(i / int(data_num / 100)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-    # dataset
-    parser.add_argument('--data_file', type=str, default='', help='path and name of one mindrecord file')
-    parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-    parser.add_argument('--crop_size', type=int, default=513, help='crop size')
-    parser.add_argument('--image_mean', type=list, default=[103.53, 116.28, 123.675], help='image mean')
-    parser.add_argument('--image_std', type=list, default=[57.375, 57.120, 58.395], help='image std')
-    parser.add_argument('--min_scale', type=float, default=0.5, help='minimum scale of data argumentation')
-    parser.add_argument('--max_scale', type=float, default=2.0, help='maximum scale of data argumentation')
-    parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
-    parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, "vocaug.zip")
+        save_dir_1 = os.path.join(config.data_path)
 
-    # optimizer
-    parser.add_argument('--train_epochs', type=int, default=300, help='epoch')
-    parser.add_argument('--lr_type', type=str, default='cos', help='type of learning rate')
-    parser.add_argument('--base_lr', type=float, default=0.015, help='base learning rate')
-    parser.add_argument('--lr_decay_step', type=int, default=40000, help='learning rate decay step')
-    parser.add_argument('--lr_decay_rate', type=float, default=0.1, help='learning rate decay rate')
-    parser.add_argument('--loss_scale', type=float, default=3072.0, help='loss scale')
+        sync_lock = "/tmp/unzip_sync.lock"
 
-    # model
-    parser.add_argument('--model', type=str, default='deeplab_v3_s16', help='select model')
-    parser.add_argument('--freeze_bn', action='store_true', help='freeze bn')
-    parser.add_argument('--ckpt_pre_trained', type=str, default='', help='pretrained model')
-    parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
-                        help="Filter the last weight parameters, default is False.")
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
 
-    # train
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
-                        help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument('--is_distributed', action='store_true', help='distributed training')
-    parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-    parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-    parser.add_argument('--save_steps', type=int, default=3000, help='steps interval for saving')
-    parser.add_argument('--keep_checkpoint_max', type=int, default=int, help='max checkpoint for saving')
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
 
-    args, _ = parser.parse_known_args()
-    return args
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.train_dir = os.path.join(config.output_path, str(get_rank_id()), config.train_dir)
 
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
-    args = parse_args()
+    args = config
 
     if args.device_target == "CPU":
         context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="CPU")
     else:
         context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
-                            device_target="Ascend", device_id=int(os.getenv('DEVICE_ID')))
+                            device_target="Ascend", device_id=get_device_id())
 
     # init multicards training
     if args.is_distributed:

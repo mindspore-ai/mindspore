@@ -14,11 +14,34 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 1 ]
+then
+    echo "Usage: sh run_distribute_train_base.sh [RANK_TABLE_FILE]"
+exit 1
+fi
+
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+PATH1=$(get_real_path $1)
+echo $PATH1
+
+if [ ! -f $PATH1 ]
+then
+    echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
+exit 1
+fi
+
 ulimit -c unlimited
-train_path=/PATH/TO/EXPERIMENTS_DIR
+EXECUTE_PATH=$(pwd)
+train_path=${EXECUTE_PATH}/s8_aug_train
 export SLOG_PRINT_TO_STDOUT=0
-train_code_path=/PATH/TO/MODEL_ZOO_CODE
-export RANK_TABLE_FILE=${train_code_path}/src/tools/rank_table_8p.json
+export RANK_TABLE_FILE=$PATH1
 export RANK_SIZE=8
 export RANK_START_ID=0
 
@@ -35,8 +58,8 @@ do
     echo 'start rank='${i}', device id='${DEVICE_ID}'...'
     mkdir ${train_path}/device${DEVICE_ID}
     cd ${train_path}/device${DEVICE_ID} || exit
-    python ${train_code_path}/train.py --train_dir=${train_path}/ckpt  \
-                                               --data_file=/PATH/TO/MINDRECORD_NAME  \
+    python ${EXECUTE_PATH}/../train.py --train_dir=${train_path}/ckpt  \
+                                               --data_file=/PATH_TO_DATA/vocaug/vocaug_mindrecord/vocaug_mindrecord0  \
                                                --train_epochs=800  \
                                                --batch_size=16  \
                                                --crop_size=513  \
@@ -49,7 +72,7 @@ do
                                                --model=deeplab_v3_s8  \
                                                --loss_scale=2048  \
                                                --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
-                                               --is_distributed  \
+                                               --is_distributed=True  \
                                                --save_steps=820  \
-                                               --keep_checkpoint_max=200 >log 2>&1 &
+                                               --keep_checkpoint_max=1 >log 2>&1 &
 done
