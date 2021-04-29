@@ -2368,21 +2368,27 @@ function Run_x86_codegen() {
           continue
         fi
         echo ${model_name} >> "${run_x86_codegen_log_file}"
-        ${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms >> ${run_x86_codegen_log_file}
+        local PARALLEL=$1
+        ${CODEGEN_PATH}/codegen --codePath=${build_path} --modelPath=${ms_models_path}/${model_name}.ms --supportParallel=${PARALLEL} >> ${run_x86_codegen_log_file}
         # 1. build benchmark
         mkdir -p ${build_path}/${model_name}/build && cd ${build_path}/${model_name}/build || exit 1
         cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-inference-linux-x64 ${build_path}/${model_name} >> ${run_x86_codegen_log_file}
         make >> ${run_x86_codegen_log_file}
         # 2. run benchmark
         echo "net file: ${build_path}/${model_name}/src/net.bin" >> ${run_x86_codegen_log_file}
-        echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out" >> ${run_x86_codegen_log_file}
-        ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out >> ${run_x86_codegen_log_file}
+        if [[ "${PARALLEL}" == "false" ]]; then
+          echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out" >> ${run_x86_codegen_log_file}
+          ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out >> ${run_x86_codegen_log_file}
+        else
+          echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out 4 0" >> ${run_x86_codegen_log_file}
+          ./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${build_path}/${model_name}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out 4 0 >> ${run_x86_codegen_log_file}
+        fi
         if [ $? = 0 ]; then
             run_result='x86_codegen: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86_codegen: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${codegen_models_tflite_config}
+    done < ${models_codegen_config}
 
     rm -rf ${build_path}
 }
@@ -2482,7 +2488,7 @@ models_compatibility_config=${basepath}/models_compatibility.cfg
 models_with_multiple_inputs_config=${basepath}/models_with_multiple_inputs.cfg
 models_for_process_only_config=${basepath}/models_for_process_only.cfg
 models_tf_weightquant_config=${basepath}/models_tf_weightquant.cfg
-codegen_models_tflite_config=${basepath}/codegen/models_tflite.cfg
+models_codegen_config=${basepath}/codegen/models_codegen.cfg
 
 ms_models_path=${basepath}/ms_models
 build_path=${basepath}/codegen_build
@@ -2597,7 +2603,7 @@ fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-codegen" ]]; then
     # Run on x86-java
     echo "start Run x86 codegen ..."
-    Run_x86_codegen`` &
+    Run_x86_codegen "false" &
     Run_x86_codegen_PID=$!
     sleep 1
 fi
