@@ -49,7 +49,7 @@ bool RemoveRedundantDepend(const AnfNodePtr &node, const FuncGraphManagerPtr &mn
     return false;
   }
 
-  std::vector<AnfNodePtr>::iterator delete_begin = latter_to_delete.begin();
+  auto delete_begin = latter_to_delete.begin();
   if (latter_to_delete.size() == sons.size()) {
     // Left one Depend node relation and delete others!
     ++delete_begin;
@@ -64,7 +64,7 @@ bool RemoveRedundantDepend(const AnfNodePtr &node, const FuncGraphManagerPtr &mn
   return true;
 }
 
-AnfNodePtr FindPatronNode(const FuncGraphPtr &main_graph, const FuncGraphManagerPtr &mng) {
+AnfNodePtr FindPatronNode(const FuncGraphPtr &main_graph) {
   AnfNodePtr patron_node;
 
   auto return_cnode = main_graph->get_return()->cast<CNodePtr>();
@@ -158,7 +158,7 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
   }
 
   // Add new depend node in tail.
-  AnfNodePtr patron_node = FindPatronNode(func_graph, mng);
+  AnfNodePtr patron_node = FindPatronNode(func_graph);
   AddDepends(patron_node, free_nodes, func_graph, mng);
   return true;
 }
