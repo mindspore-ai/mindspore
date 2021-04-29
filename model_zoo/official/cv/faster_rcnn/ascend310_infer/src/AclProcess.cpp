@@ -142,8 +142,7 @@ int AclProcess::WriteResult(const std::string& imageFile) {
     void *resHostBuf = nullptr;
     for (size_t i = 0; i < outputBuffers_.size(); ++i) {
         size_t output_size;
-        void *netOutput;
-        netOutput = outputBuffers_[i];
+        void *netOutput = outputBuffers_[i];
         output_size =  outputSizes_[i];
         int ret = aclrtMallocHost(&resHostBuf, output_size);
         if (ret != OK) {

@@ -69,7 +69,6 @@ int main(int argc, char **argv) {
   mindspore::Graph graph;
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
 
-
   if (!FLAGS_precision_mode.empty()) {
     ascend310->SetPrecisionMode(FLAGS_precision_mode);
   }

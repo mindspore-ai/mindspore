@@ -88,8 +88,7 @@ int main(int argc, char* argv[]) {
         }
     } else if (is_dir(FLAGS_data_path)) {
         struct dirent *filename;
-        DIR *dir;
-        dir = opendir(FLAGS_data_path.c_str());
+        DIR *dir = opendir(FLAGS_data_path.c_str());
         if (dir == nullptr) {
             aclProcess.Release();
             return ERROR;
@@ -104,9 +103,11 @@ int main(int argc, char* argv[]) {
             if (ret != OK) {
                 std::cout << "model process failed, errno = " << ret << std::endl;
                 aclProcess.Release();
+                closedir(dir);
                 return ret;
             }
         }
+        closedir(dir);
     } else {
         std::cout << " input image path error" << std::endl;
     }

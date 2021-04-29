@@ -157,8 +157,7 @@ DIR *Utils::OpenDir(std::string dir_name) {
         return nullptr;
     }
 
-    DIR *dir;
-    dir = opendir(real_path.c_str());
+    DIR *dir = opendir(real_path.c_str());
     if (dir == nullptr) {
         std::cout << "Can not open dir " << dir_name << std::endl;
         return nullptr;
