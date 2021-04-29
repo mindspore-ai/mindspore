@@ -2464,7 +2464,7 @@ def pad(arr, pad_width, mode="constant", stat_length=None, constant_values=0,
         end_values (Union[tuple, list, int], optional): Used in 'linear_ramp'.  The values
             used for the ending value of the linear_ramp and that will form the edge of
             the padded `arr`. :class:`((before_1, after_1), ... (before_N, after_N))`
-            unique end values for each axis. :class`((before, after),)` yields same before
+            unique end values for each axis. :class:`((before, after),)` yields same before
             and after end values for each axis. :class:`(constant,)` or :class:`constant`
             is a shortcut for :class:`before = after = constant` for all axes. Default is 0.
         reflect_type(string, optional) can choose between \'even\' and \'odd\'. Used in

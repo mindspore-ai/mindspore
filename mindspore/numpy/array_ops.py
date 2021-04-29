@@ -1445,16 +1445,22 @@ def _split(x, indices_or_sections, opname, axis=0):
             should be integer, tuple(int) or list(int), but got", indices_or_sections)
     return res
 
+@constexpr
+def convert_neg_indices(indices, ndim):
+    """converts negative values in tuple/list indices"""
+    def canonicalizer(ax):
+        return ax + ndim if ax < 0 else ax
+    indices = tuple([canonicalizer(axis) for axis in indices])
+    return indices
 
 def _split_sub_tensors(x, indices, axis):
     """
     Splits the input tensor `x` into multiple sub-tensors
     along the axis according to the given indices.
     """
-    if isinstance(indices, list):
-        indices.append(x.shape[axis])
-    elif isinstance(indices, tuple):
-        indices += (x.shape[axis],)
+    length_along_dim = x.shape[axis]
+    indices = convert_neg_indices(indices, length_along_dim)
+    indices += (length_along_dim,)
 
     sub_tensors = []
     strides = _list_comprehensions(x.ndim, 1, True)
@@ -2202,17 +2208,6 @@ def choose(a, choices, mode='clip'):
         [[ 10 -10  10]
         [-10  10 -10]
         [ 10 -10  10]]
-        >>> a = np.array([0, 1]).reshape((2,1,1))
-        >>> c1 = np.array([1, 2, 3]).reshape((1,3,1))
-        >>> c2 = np.array([-1, -2, -3, -4, -5]).reshape((1,1,5))
-        >>> print(np.choose(a, (c1, c2)))
-        [[[ 1  1  1  1  1]
-        [ 2  2  2  2  2]
-        [ 3  3  3  3  3]]
-
-        [[-1 -2 -3 -4 -5]
-        [-1 -2 -3 -4 -5]
-        [-1 -2 -3 -4 -5]]]
     """
     a = _to_tensor(a)
     if isinstance(choices, (tuple, list)):
@@ -2346,11 +2341,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         [[[1 0 0]
         [0 2 0]
         [0 0 3]]
-
         [[4 0 0]
         [0 5 0]
         [0 0 6]]
-
         [[7 0 0]
         [0 8 0]
         [0 0 9]]]

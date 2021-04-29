@@ -215,10 +215,9 @@ def tensor_index_by_slice(data, slice_index):
 
 def tensor_index_by_number(data, number_index):
     """Tensor getitem by a Number which may be integer/float/bool value"""
-    number_type = const_utils.check_number_index_type(number_index)
-    if number_type == const_utils.BOOL_:
+    if isinstance(number_index, bool):
         return _tensor_index_by_bool(data, number_index)
-    if number_type == const_utils.INT_:
+    if isinstance(number_index, int):
         return _tensor_index_by_integer(data, number_index)
     return const_utils.raise_index_error("Only support integers, slices(`:`), ellipsis(`...`), None and bool.")
 
@@ -234,9 +233,8 @@ def _tensor_index_by_bool(data, bool_value):
 
 def _tensor_index_by_integer(data, int_index):
     """Tensor getitem by a single integer number"""
-    if const_utils.judge_index_type(F.typeof(data), mstype.tensor_type):
-        min_data_dim, max_data_dim = 1, 8
-        const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+    if data.ndim < 1 or data.ndim > 8:
+        const_utils.raise_value_error("Expect Tensor to have dimension between 1 and 8.")
 
     data_shape = F.shape(data)
     transformed_number = const_utils.check_range(int_index, data_shape[0])
