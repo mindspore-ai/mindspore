@@ -1,0 +1,33 @@
+-----------------------------------------------------------
+watchpoint_hit for test_1 attributes:
+name = Default/network-WithLossCell/_backbone-AlexNet/conv3-Conv2d/Conv2D-op168
+slot = 0
+condition = 6
+watchpoint_id = 1
+parameter 0 name = param
+parameter 0 disabled = False
+parameter 0 value = 0.0
+parameter 0 hit = True
+parameter 0 actual_value = -0.08050537109375
+error code = 0
+device_id = 0
+root_graph_id = 0
+-----------------------------------------------------------
+watchpoint_hit for test_4 attributes:
+name = Default/network-WithLossCell/_backbone-AlexNet/fc3-Dense/Parameter[6]_11/fc3.bias
+slot = 0
+condition = 18
+watchpoint_id = 3
+parameter 0 name = abs_mean_update_ratio_gt
+parameter 0 disabled = False
+parameter 0 value = 0.0
+parameter 0 hit = True
+parameter 0 actual_value = 0.5243796973599475
+parameter 1 name = epsilon
+parameter 1 disabled = True
+parameter 1 value = 0.0
+parameter 1 hit = False
+parameter 1 actual_value = 0.0
+error code = 0
+device_id = 0
+root_graph_id = 0

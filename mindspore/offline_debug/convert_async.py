@@ -63,41 +63,41 @@ def handle_multi_process(convert_obj, files):
     # pylint: enable=W0212
     return return_code
 
+if __name__ == "__main__":
+    convert_parser = argparse.ArgumentParser()
+    convert_parser.add_argument(
+        '-d', '--dump_file', dest='dump_path', default='', required=True)
+    convert_parser.add_argument(
+        '-l', '--file_list', nargs="*", dest='file_list', default='')
+    convert_parser.add_argument('-f', '--format', dest='format', default=None)
+    convert_parser.add_argument(
+        '-v', '--version', dest='dump_version', choices=[1, 2], type=int, default=2)
+    convert_parser.add_argument('-s', '--shape', dest='shape', default=None)
+    convert_parser.add_argument('-o', '--output_tensor',
+                                dest='output', default=None)
+    convert_parser.add_argument('-i', '--input_tensor', dest='input', default=None)
+    convert_parser.add_argument(
+        '-c', '--custom_script_path', dest='custom_script_path', default=None)
+    convert_parser.add_argument('-out', '--output', dest='output_path', default='')
+    convert_parser.add_argument(
+        '-t', '--type', dest='output_file_type', choices=['npy', 'bin'], default='npy')
 
-convert_parser = argparse.ArgumentParser()
-convert_parser.add_argument(
-    '-d', '--dump_file', dest='dump_path', default='', required=True)
-convert_parser.add_argument(
-    '-l', '--file_list', nargs="*", dest='file_list', default='')
-convert_parser.add_argument('-f', '--format', dest='format', default=None)
-convert_parser.add_argument(
-    '-v', '--version', dest='dump_version', choices=[1, 2], type=int, default=2)
-convert_parser.add_argument('-s', '--shape', dest='shape', default=None)
-convert_parser.add_argument('-o', '--output_tensor',
-                            dest='output', default=None)
-convert_parser.add_argument('-i', '--input_tensor', dest='input', default=None)
-convert_parser.add_argument(
-    '-c', '--custom_script_path', dest='custom_script_path', default=None)
-convert_parser.add_argument('-out', '--output', dest='output_path', default='')
-convert_parser.add_argument(
-    '-t', '--type', dest='output_file_type', choices=['npy', 'bin'], default='npy')
-
-args = convert_parser.parse_args()
-dump_failed = os.path.abspath(args.dump_path) + "/convert_failed_file_list.txt"
-if os.path.exists(dump_failed):
-    os.remove(dump_failed)
-file_list = args.file_list
-if args.format is not None:
-    convert = FormatConversionMain(args)
-else:
-    convert = DumpDataParser(args)
-if args.file_list == "":
-    file_list = os.listdir(args.dump_path)
-handle_multi_process(convert, file_list)
-if os.path.exists(dump_failed):
-    with open(dump_failed, newline='') as failed_ops:
-        file_reader = csv.reader(failed_ops, delimiter=',')
-        file_list = [os.path.abspath(row[0]) for row in file_reader]
-    args.format = None
-    convert = DumpDataParser(args)
+    args = convert_parser.parse_args()
+    dump_failed = os.path.abspath(args.dump_path) + "/convert_failed_file_list.txt"
+    if os.path.exists(dump_failed):
+        os.remove(dump_failed)
+    file_list = args.file_list
+    if args.format is not None:
+        convert = FormatConversionMain(args)
+    else:
+        convert = DumpDataParser(args)
+    if args.file_list == "":
+        file_list = os.listdir(args.dump_path)
     handle_multi_process(convert, file_list)
+    if os.path.exists(dump_failed):
+        with open(dump_failed, newline='') as failed_ops:
+            file_reader = csv.reader(failed_ops, delimiter=',')
+            file_list = [os.path.abspath(row[0]) for row in file_reader]
+        args.format = None
+        convert = DumpDataParser(args)
+        handle_multi_process(convert, file_list)
