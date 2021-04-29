@@ -63,10 +63,13 @@ using mindspore::StatusCode;
     }                                          \
   } while (false)
 
-// Macro to compare 2 MSTensors; compare shape-size and data
+// Macro to compare 2 MSTensors; compare shape-size, shape and data
 #define EXPECT_MSTENSOR_EQ(_mstensor1, _mstensor2)                                                            \
 do {                                                                                                          \
     EXPECT_EQ(_mstensor1.Shape().size(), _mstensor2.Shape().size());                                          \
+    for (int i = 0; i < _mstensor1.Shape().size(); i++) {                                                     \
+      EXPECT_EQ(_mstensor1.Shape()[i], _mstensor2.Shape()[i]);                                                \
+    }                                                                                                         \
     EXPECT_EQ(_mstensor1.DataSize(), _mstensor2.DataSize());                                                  \
     EXPECT_EQ(std::memcmp((const void *)_mstensor1.Data().get(), (const void *)_mstensor2.Data().get(),       \
                           _mstensor2.DataSize()), 0);                                                         \

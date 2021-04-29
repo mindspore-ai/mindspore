@@ -2238,15 +2238,20 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess5) {
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(246);
   std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {2, 2}));
+  // Generate a ds of 4 tensors, each tensor has 3 rows and 2 columns
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {3, 2}));
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
   ds = ds->SetNumWorkers(2);
   EXPECT_NE(ds, nullptr);
 
-  // Apply Slice op on ds, get the first and third elements in each row.
+  // Apply two SliceOptions on ds which includes 4 tensors with shape 3*2
+  // The first SliceOption is to slice the first and the second row of each tensor
+  // The shape of result tensor changes to 2*2
   std::vector<dsize_t> indices1 = {0, 1};
   SliceOption slice_option1 = SliceOption(indices1);
+  // The second SliceOption is to slice the last column of each tensor
+  // The shape of result tensor changes to 2*1
   std::vector<dsize_t> indices2 = {-1};
   SliceOption slice_option2 = SliceOption(indices2);
 
@@ -2270,7 +2275,7 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess5) {
   while (row.size() != 0) {
     auto ind = row["col1"];
     std::shared_ptr<Tensor> de_expected_tensor;
-    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({1, 2}), &de_expected_tensor));
+    ASSERT_OK(Tensor::CreateFromVector(expected[i], TensorShape({2, 1}), &de_expected_tensor));
     mindspore::MSTensor expected_tensor =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
     EXPECT_MSTENSOR_EQ(ind, expected_tensor);
