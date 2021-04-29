@@ -38,6 +38,28 @@ namespace lite {
 static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
+static const std::unordered_map<TypeId, std::string> TYPE_ID_MAP{
+  {kNumberTypeFloat16, "Float16"}, {kNumberTypeFloat, "Float32"},    {kNumberTypeFloat32, "Float32"},
+  {kNumberTypeInt8, "Int8"},       {kNumberTypeInt16, "Int16"},      {kNumberTypeInt, "Int32"},
+  {kNumberTypeInt32, "Int32"},     {kNumberTypeUInt8, "UInt8"},      {kNumberTypeUInt16, "UInt16"},
+  {kNumberTypeUInt, "UInt32"},     {kNumberTypeUInt32, "UInt32"},    {kObjectTypeString, "String"},
+  {kNumberTypeBool, "Bool"},       {kObjectTypeTensorType, "Tensor"}};
+static const std::unordered_map<schema::Format, std::string> TENSOR_FORMAT_MAP{
+  {schema::Format_NCHW, "NCHW"}, {schema::Format_NHWC, "NHWC"},     {schema::Format_NHWC4, "NHWC4"},
+  {schema::Format_HWKC, "HWKC"}, {schema::Format_HWCK, "HWCK"},     {schema::Format_KCHW, "KCHW"},
+  {schema::Format_CKHW, "CKHW"}, {schema::Format_KHWC, "KHWC"},     {schema::Format_CHWK, "CHWK"},
+  {schema::Format_HW, "HW"},     {schema::Format_HW4, "HW4"},       {schema::Format_NC, "NC"},
+  {schema::Format_NC4, "NC4"},   {schema::Format_NC4HW4, "NC4HW4"}, {schema::Format_NCDHW, "NCDHW"}};
+
+namespace dump {
+constexpr auto kConfigPath = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kSettings = "common_dump_settings";
+constexpr auto kMode = "dump_mode";
+constexpr auto kPath = "path";
+constexpr auto kNetName = "net_name";
+constexpr auto kInputOutput = "input_output";
+constexpr auto kKernels = "kernels";
+}  // namespace dump
 
 int Benchmark::GenerateRandomData(size_t size, void *data, TypeId data_type) {
   MS_ASSERT(data != nullptr);
@@ -243,6 +265,30 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
   }
   this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
   return RET_OK;
+}
+
+void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
+  auto &cpu_device_ctx = context->device_list_[0];
+  if (flags_->cpu_bind_mode_ == MID_CPU || flags_->cpu_bind_mode_ == HIGHER_CPU) {
+    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = CpuBindMode(flags_->cpu_bind_mode_);
+  } else {
+    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+  }
+  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
+
+  if (flags_->device_ == "GPU") {
+    DeviceContext gpu_device_ctx{DT_GPU, {false}};
+    gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = flags_->enable_fp16_;
+    context->device_list_.push_back(gpu_device_ctx);
+  }
+
+  if (flags_->device_ == "NPU") {
+    DeviceContext npu_device_ctx{DT_NPU};
+    npu_device_ctx.device_info_.npu_device_info_.frequency_ = 3;
+    context->device_list_.push_back(npu_device_ctx);
+  }
+
+  context->thread_num_ = flags_->num_threads_;
 }
 
 int Benchmark::CompareOutput() {
@@ -575,27 +621,7 @@ int Benchmark::RunBenchmark() {
     return RET_ERROR;
   }
 
-  auto &cpu_device_ctx = context->device_list_[0];
-  if (flags_->cpu_bind_mode_ == MID_CPU || flags_->cpu_bind_mode_ == HIGHER_CPU) {
-    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = CpuBindMode(flags_->cpu_bind_mode_);
-  } else {
-    cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
-  }
-  cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = flags_->enable_fp16_;
-
-  if (flags_->device_ == "GPU") {
-    DeviceContext gpu_device_ctx{DT_GPU, {false}};
-    gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = flags_->enable_fp16_;
-    context->device_list_.push_back(gpu_device_ctx);
-  }
-
-  if (flags_->device_ == "NPU") {
-    DeviceContext npu_device_ctx{DT_NPU};
-    npu_device_ctx.device_info_.npu_device_info_.frequency_ = 3;
-    context->device_list_.push_back(npu_device_ctx);
-  }
-
-  context->thread_num_ = flags_->num_threads_;
+  (void)InitContext(context);
 
   session_ = session::LiteSession::CreateSession(context.get());
   if (session_ == nullptr) {
@@ -617,7 +643,7 @@ int Benchmark::RunBenchmark() {
       return ret;
     }
   }
-  if (model != nullptr) {
+  if (model != nullptr && !flags_->dump_tensor_data_) {
     model->Free();
   }
 
@@ -654,6 +680,9 @@ int Benchmark::RunBenchmark() {
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;
     }
+  }
+  if (flags_->dump_tensor_data_) {
+    std::cout << "Dumped file is saved to : " + dump_file_output_dir_ << std::endl;
   }
   return RET_OK;
 }
@@ -860,7 +889,7 @@ std::string DumpMSTensor(tensor::MSTensor *tensor) {
   for (auto &dim : tensor->shape()) {
     oss << " " << dim;
   }
-  oss << std::endl << "Data:";
+  oss << std::endl << " Data:";
   switch (tensor->data_type()) {
     case kNumberTypeFloat32: {
       oss << DataToString<float>(tensor->data(), tensor->ElementsNum());
@@ -883,9 +912,31 @@ std::string DumpMSTensor(tensor::MSTensor *tensor) {
   }
   return oss.str();
 }
+
+std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &op_name, const std::string &file_type,
+                                   const size_t &idx) {
+  std::string file_name = op_name;
+  auto pos = file_name.find_first_of('/');
+  while (pos != std::string::npos) {
+    file_name.replace(pos, 1, ".");
+    pos = file_name.find_first_of('/');
+  }
+  file_name += "_" + file_type + "_" + std::to_string(idx) + "_shape_";
+  for (const auto &dim : tensor->shape()) {
+    file_name += std::to_string(dim) + "_";
+  }
+  if (TYPE_ID_MAP.find(tensor->data_type()) != TYPE_ID_MAP.end()) {
+    file_name += TYPE_ID_MAP.at(tensor->data_type());
+  }
+  auto tensor_format = static_cast<lite::Tensor *>(tensor)->format();
+  if (TENSOR_FORMAT_MAP.find(tensor_format) != TENSOR_FORMAT_MAP.end()) {
+    file_name += "_" + TENSOR_FORMAT_MAP.at(tensor_format) + ".bin";
+  }
+  return file_name;
+}
 }  // namespace
 
-int Benchmark::InitDumpProfilingCallbackParameter() {
+int Benchmark::InitPrintTensorDataCallbackParameter() {
   // before callback
   before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
@@ -910,6 +961,105 @@ int Benchmark::InitDumpProfilingCallbackParameter() {
   };
   return RET_OK;
 }
+int Benchmark::InitDumpTensorDataCallbackParameter() {
+  // before callback
+  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                          const CallBackParam &call_param) { return true; };
+
+  // after callback
+  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                         const CallBackParam &call_param) {
+    auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
+    auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
+    auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
+
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+      if (input_output_mode == 0 || input_output_mode == 1) {
+        for (size_t i = 0; i < after_inputs.size(); i++) {
+          auto ms_tensor = after_inputs.at(i);
+          auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "input", i);
+          auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
+          if (WriteToBin(abs_file_path, ms_tensor->data(), ms_tensor->Size()) != RET_OK) {  // save to file
+            MS_LOG(ERROR) << "write tensor data to file failed.";
+            return false;
+          }
+        }
+      }
+    }
+    if (dump_mode == 0 || std::find(kernels.begin(), kernels.end(), call_param.node_name) != kernels.end()) {
+      if (input_output_mode == 0 || input_output_mode == 2) {
+        for (size_t i = 0; i < after_outputs.size(); i++) {
+          auto ms_tensor = after_outputs.at(i);
+          auto file_name = GenerateOutputFileName(ms_tensor, call_param.node_name, "output", i);
+          auto abs_file_path = dump_file_output_dir_ + "/" + file_name;
+          if (WriteToBin(abs_file_path, ms_tensor->data(), ms_tensor->Size()) != RET_OK) {  // save to file
+            MS_LOG(ERROR) << "write tensor data to file failed.";
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+  return RET_OK;
+}
+
+int Benchmark::InitDumpConfigFromJson(char *path) {
+  auto real_path = RealPath(path);
+  std::ifstream ifs(real_path);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
+    return RET_ERROR;
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << real_path << " open failed";
+    return RET_ERROR;
+  }
+
+  try {
+    dump_cfg_json_ = nlohmann::json::parse(ifs);
+  } catch (const nlohmann::json::parse_error &error) {
+    MS_LOG(ERROR) << "parse json file failed, please check your file.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings] == nullptr) {
+    MS_LOG(ERROR) << "\"common_dump_settings\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kMode] == nullptr) {
+    MS_LOG(ERROR) << "\"dump_mode\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kPath] == nullptr) {
+    MS_LOG(ERROR) << "\"path\" is required.";
+    return RET_ERROR;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kNetName] == nullptr) {
+    dump_cfg_json_[dump::kSettings][dump::kNetName] = "Default";
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kInputOutput] == nullptr) {
+    dump_cfg_json_[dump::kSettings][dump::kInputOutput] = 0;
+  }
+  if (dump_cfg_json_[dump::kSettings][dump::kKernels] != nullptr &&
+      !dump_cfg_json_[dump::kSettings][dump::kKernels].empty()) {
+    if (dump_cfg_json_[dump::kSettings][dump::kMode] == 0) {
+      MS_LOG(ERROR) << R"("dump_mode" should be 1 when "kernels" isn't empty.)";
+      return RET_ERROR;
+    }
+  }
+
+  dump_file_output_dir_ = dump_cfg_json_[dump::kSettings][dump::kPath].get<std::string>() + "/" +
+                          dump_cfg_json_[dump::kSettings][dump::kNetName].get<std::string>();
+  auto status = CreateOutputDir(&dump_file_output_dir_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "create data output directory failed.";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
 
 int Benchmark::InitCallbackParameter() {
   int ret = RET_OK;
@@ -917,8 +1067,10 @@ int Benchmark::InitCallbackParameter() {
     ret = InitTimeProfilingCallbackParameter();
   } else if (flags_->perf_profiling_) {
     ret = InitPerfProfilingCallbackParameter();
-  } else if (flags_->dump_profiling_) {
-    ret = InitDumpProfilingCallbackParameter();
+  } else if (flags_->print_tensor_data_) {
+    ret = InitPrintTensorDataCallbackParameter();
+  } else if (flags_->dump_tensor_data_) {
+    ret = InitDumpTensorDataCallbackParameter();
   }
   return ret;
 }
@@ -1002,6 +1154,19 @@ int Benchmark::Init() {
   if (flags_->time_profiling_ && flags_->perf_profiling_) {
     MS_LOG(INFO) << "time_profiling is enabled, will not run perf_profiling.";
   }
+
+  // get dump data output path
+  auto dump_cfg_path = std::getenv(dump::kConfigPath);
+  if (dump_cfg_path != nullptr) {
+    flags_->dump_tensor_data_ = true;
+    if (InitDumpConfigFromJson(dump_cfg_path) != RET_OK) {
+      MS_LOG(ERROR) << "parse dump config file failed.";
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(INFO) << "No MINDSPORE_DUMP_CONFIG in env, don't need to dump data";
+  }
+
   auto status = InitCallbackParameter();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Init callback Parameter failed.";

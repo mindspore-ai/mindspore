@@ -15,13 +15,33 @@
  */
 
 #include "src/common/file_utils.h"
+#ifdef _WIN32
+#include <direct.h>
+#include <io.h>
+#else
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#endif
+
 #include <cstdlib>
 #include <climits>
 #include "securec/include/securec.h"
 
+#ifdef _WIN32
+#define ACCESS(file_path, access_mode) _access(file_path, access_mode)
+#define MKDIR(file_path) _mkdir(file_path)
+#else
+#define ACCESS(file_path, accessMode) access(file_path, accessMode)
+#define MKDIR(file_path) mkdir(file_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
+#endif
+
 namespace mindspore {
 namespace lite {
+namespace {
+const int MAXIMUM_NUMBERS_OF_FOLDER = 1000;
+}
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";
@@ -81,6 +101,55 @@ std::string RealPath(const char *path) {
   }
   std::string res = resolved_path.get();
   return res;
+}
+
+int CreateOutputDir(std::string *file_path) {
+  if (file_path->empty()) {
+    MS_LOG(ERROR) << "input file path is empty.";
+    return RET_ERROR;
+  } else if (file_path->size() > PATH_MAX) {
+    MS_LOG(ERROR) << "input file path is too long";
+    return RET_ERROR;
+  }
+
+  for (size_t i = 0; i < file_path->size(); i++) {
+    if ((*file_path).at(i) == '\\' || (*file_path).at(i) == '/') {
+      if (ACCESS(file_path->substr(0, i + 1).c_str(), F_OK) != 0) {
+        int ret = MKDIR(file_path->substr(0, i + 1).c_str());
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "mkdir failed. " << file_path->substr(0, i + 1);
+          return RET_ERROR;
+        }
+      }
+    }
+  }
+
+  if (file_path->back() != '\\' && file_path->back() != '/') {
+    if (ACCESS(file_path->c_str(), F_OK) != 0) {
+      int ret = MKDIR(file_path->c_str());
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "mkdir failed. " << file_path;
+        return RET_ERROR;
+      }
+    }
+  }
+
+  int count = 1;
+  while (ACCESS((*file_path + "/" + std::to_string(count)).c_str(), F_OK) == 0) {
+    MS_LOG(DEBUG) << "current file_path has existed, file_path cnt plus 1.";  // such as: /xxx/1 ==> /xxx/2
+    count++;
+    if (count > MAXIMUM_NUMBERS_OF_FOLDER) {
+      MS_LOG(ERROR) << "the number of file folders exceeds the upper limit.";
+      return RET_ERROR;
+    }
+  }
+  *file_path += "/" + std::to_string(count);
+  int ret = MKDIR(file_path->c_str());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "mkdir failed. " << file_path->c_str();
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore
