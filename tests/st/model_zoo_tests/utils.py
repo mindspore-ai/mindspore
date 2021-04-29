@@ -14,7 +14,7 @@ from mindspore import log as logger
 
 rank_table_path = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 data_root = "/home/workspace/mindspore_dataset/"
-ckpt_root = "/home/workspace/mindspore_ckpt/"
+ckpt_root = "/home/workspace/mindspore_dataset/checkpoint"
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 geir_root = os.path.join(cur_path, "mindspore_geir")
 arm_main_path = os.path.join(cur_path, "mindir_310infer_exe")
