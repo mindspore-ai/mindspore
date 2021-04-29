@@ -110,7 +110,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   size_t dtype_size = is_fp16 ? sizeof(int16_t) : sizeof(float);
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // weight: o, h, w, i; o == group, i == 1
-  void *origin_weight = in_tensors_.at(kWeightIndex)->data_c();
+  void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
   int CO4 = UP_DIV(out_info.C, C4NUM * block_size_.C);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
@@ -162,6 +162,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   if (packed_weight_ == nullptr) {
     return RET_ERROR;
   }
+  FreeStoredData(stored_weight_);
   return mindspore::lite::RET_OK;
 }
 
@@ -196,12 +197,14 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     src_type = in_tensors_.at(kBiasIndex)->data_type();
     dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
-    ConvertBias(in_tensors_.at(kBiasIndex)->data_c(), temp_bias.data(), element_size, dtype_size, src_type, dst_type);
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    ConvertBias(src_data, temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
   bias_data_ = allocator->Malloc(bias_size, temp_bias.data());
   if (bias_data_ == nullptr) {
     return RET_ERROR;
   }
+  FreeStoredData(stored_bias_);
   return mindspore::lite::RET_OK;
 }
 
@@ -248,6 +251,24 @@ void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   local_size_ = std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
 
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+}
+
+int DepthwiseConv2dOpenCLKernel::StoreConstData() {
+  if (!op_parameter_->infer_flag_) {
+    stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
+    if (stored_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Store weight failed.";
+      return RET_ERROR;
+    }
+    if (in_tensors_.size() > kBiasIndex) {
+      stored_bias_ = StoreTensorData(in_tensors_.at(kBiasIndex));
+      if (stored_bias_ == nullptr) {
+        MS_LOG(ERROR) << "Store bias failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::Run() {

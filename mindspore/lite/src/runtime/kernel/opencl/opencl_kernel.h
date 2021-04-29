@@ -195,6 +195,7 @@ class OpenCLKernel : public LiteKernel {
   virtual std::vector<BaseTuningParameter> GenerateTuningParam();
   virtual int AssignTuningParam(const BaseTuningParameter &param);
   virtual int Tune();
+  virtual int StoreConstData() { return RET_OK; }
 
   int GetImageSize(size_t idx, lite::opencl::ImageSize *img_size);
   void PrintOutput(int print_num = 10, const std::string &out_file = "");
@@ -256,6 +257,12 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
   ret = kernel->OpenCLKernel::CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
+    delete kernel;
+    return nullptr;
+  }
+  ret = reinterpret_cast<OpenCLKernel *>(kernel)->StoreConstData();
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
     delete kernel;
     return nullptr;
   }

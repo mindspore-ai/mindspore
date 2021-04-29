@@ -108,12 +108,13 @@ void WinogradOpenCLKernel::InitFilter() {
 
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
+  void *src_filter_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
 #ifndef ENABLE_ARM64
-  auto winograd_filter = GenerateWinogradFilter(filter_tensor->data_c(), filter_tensor->data_type(), CO_, CI_);
+  auto winograd_filter = GenerateWinogradFilter(src_filter_data, filter_tensor->data_type(), CO_, CI_);
   void *src_data = winograd_filter.data();
 #else
   std::unique_ptr<float[]> winograd_filter(new float[CO_ * 6 * 6 * CI_]);
-  WinogradWeightTransform(reinterpret_cast<const float *>(filter_tensor->data_c()),
+  WinogradWeightTransform(reinterpret_cast<const float *>(src_filter_data),
                           reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
 
   void *src_data = winograd_filter.get();
@@ -136,6 +137,7 @@ void WinogradOpenCLKernel::InitFilter() {
     memcpy(packed_filter_, tmp.data(), size);
     allocator->UnmapBuffer(packed_filter_);
   }
+  FreeStoredData(stored_filter_);
 }
 
 void WinogradOpenCLKernel::AllocateMemory() {

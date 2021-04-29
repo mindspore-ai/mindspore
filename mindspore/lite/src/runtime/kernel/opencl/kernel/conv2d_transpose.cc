@@ -148,7 +148,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
   padWeight_ = allocator->Malloc(div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size, lite::opencl::MemType::BUF);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
-  auto origin_weight = in_tensors_.at(kWeightIndex)->data_c();
+  auto origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
@@ -188,6 +188,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 
@@ -209,20 +210,22 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == 3) {
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(src_data)[i];
       }
     } else if (bias_dtype == kNumberTypeFloat16 && !enable_fp16_) {
       for (int i = 0; i < co; i++) {
-        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(src_data)[i];
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->data_c(), co * data_size);
+      memcpy(bias_, src_data, co * data_size);
     }
   }
   allocator->UnmapBuffer(bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 
@@ -239,6 +242,24 @@ int Conv2dTransposeOpenCLKernel::InferShape() {
   auto ret = OpenCLKernel::InferShape();
   if (ret != RET_OK) {
     return ret;
+  }
+  return RET_OK;
+}
+
+int Conv2dTransposeOpenCLKernel::StoreConstData() {
+  if (!op_parameter_->infer_flag_) {
+    stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
+    if (stored_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Store weight failed.";
+      return RET_ERROR;
+    }
+    if (in_tensors_.size() > kBiasIndex) {
+      stored_bias_ = StoreTensorData(in_tensors_.at(kBiasIndex));
+      if (stored_bias_ == nullptr) {
+        MS_LOG(ERROR) << "Store bias failed.";
+        return RET_ERROR;
+      }
+    }
   }
   return RET_OK;
 }
