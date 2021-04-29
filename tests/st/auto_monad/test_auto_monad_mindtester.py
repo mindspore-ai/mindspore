@@ -550,9 +550,12 @@ def test_side_effect_grad_two_addn_switch():
     inputs = Tensor([9.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
     net = SideEffectTwoAddnSwitchNet()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    out2 = net.grad_mindspore_impl(inputs, grad_ys)
-    allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+    try:
+        context.set_context(mode=context.PYNATIVE_MODE)
+        out2 = net.grad_mindspore_impl(inputs, grad_ys)
+        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+    finally:
+        context.set_context(mode=context.GRAPH_MODE)
 
 
 class SideEffectGradIfNet(Cell):
@@ -590,9 +593,12 @@ def test_side_effect_grad_if():
     inputs = Tensor([9.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs, grad_ys)
     net = SideEffectGradIfNet()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    out2 = net.grad_mindspore_impl(inputs, grad_ys)
-    allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
+    try:
+        context.set_context(mode=context.PYNATIVE_MODE)
+        out2 = net.grad_mindspore_impl(inputs, grad_ys)
+        allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
+    finally:
+        context.set_context(mode=context.GRAPH_MODE)
 
 
 class OneInputBprop(Cell):
@@ -683,8 +689,11 @@ def test_side_effect_grad_control_flow_assign_depend_while_net():
     inputs2 = Tensor([6.0], ms.float32)
     inputs3 = Tensor([3.0], ms.float32)
     out1 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = SideEffectControlFlowAssignDependWhileNet()
-    out2 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
-    allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
-    allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
+    try:
+        context.set_context(mode=context.PYNATIVE_MODE)
+        net = SideEffectControlFlowAssignDependWhileNet()
+        out2 = net.grad_mindspore_impl(inputs1, inputs2, inputs3, grad_ys)
+        allclose_nparray(out1[0][0].asnumpy(), out2[0][0].asnumpy(), 0.001, 0.001)
+        allclose_nparray(out1[1][0].asnumpy(), out2[1][0].asnumpy(), 0.001, 0.001)
+    finally:
+        context.set_context(mode=context.GRAPH_MODE)
