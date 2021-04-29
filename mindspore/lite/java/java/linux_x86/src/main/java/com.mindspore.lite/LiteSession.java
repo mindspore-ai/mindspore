@@ -16,6 +16,7 @@
 
 package com.mindspore.lite;
 
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,15 +30,37 @@ public class LiteSession {
         System.loadLibrary("mindspore-lite-jni");
     }
 
-    private long sessionPtr;
+    private long sessionPtr = 0;
 
+    // Deprecated, please use "public static LiteSession createSession(final MSConfig config)" instead.
     public LiteSession() {
         this.sessionPtr = 0;
     }
 
+    // Deprecated, please use "public static LiteSession createSession(final MSConfig config)" instead.
     public boolean init(MSConfig config) {
         this.sessionPtr = createSession(config.getMSConfigPtr());
         return this.sessionPtr != 0;
+    }
+
+    public static LiteSession createSession(final MSConfig config) {
+        LiteSession liteSession = new LiteSession();
+        liteSession.sessionPtr = liteSession.createSession(config.getMSConfigPtr());
+        if (liteSession.sessionPtr == 0) {
+            return null;
+        } else {
+            return liteSession;
+        }
+    }
+
+    public static LiteSession createSession(final MappedByteBuffer buffer, final MSConfig config) {
+        LiteSession liteSession = new LiteSession();
+        liteSession.sessionPtr = liteSession.createSessionWithModel(buffer, config.getMSConfigPtr());
+        if (liteSession.sessionPtr == 0) {
+            return null;
+        } else {
+            return liteSession;
+        }
     }
 
     public long getSessionPtr() {
@@ -123,6 +146,8 @@ public class LiteSession {
     }
 
     private native long createSession(long msConfigPtr);
+
+    private native long createSessionWithModel(MappedByteBuffer buffer, long msConfigPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
 

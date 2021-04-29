@@ -15,9 +15,35 @@
  */
 
 #include <jni.h>
+#include <fstream>
 #include "common/ms_log.h"
 #include "include/lite_session.h"
 #include "include/errorcode.h"
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createSessionWithModel(JNIEnv *env, jobject thiz,
+                                                                                              jobject model_buffer,
+                                                                                              jlong ms_config_ptr) {
+  // decode model buffer and buffer size
+  if (model_buffer == nullptr) {
+    MS_LOGE("Buffer from java is nullptr");
+    return reinterpret_cast<jlong>(nullptr);
+  }
+  jlong buffer_len = env->GetDirectBufferCapacity(model_buffer);
+  auto *model_buf = static_cast<char *>(env->GetDirectBufferAddress(model_buffer));
+  // decode ms context
+  auto *pointer = reinterpret_cast<void *>(ms_config_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Context pointer from java is nullptr");
+    return jlong(nullptr);
+  }
+  auto *lite_context_ptr = static_cast<mindspore::lite::Context *>(pointer);
+  // create session
+  auto session = mindspore::session::LiteSession::CreateSession(model_buf, buffer_len, lite_context_ptr);
+  if (session == nullptr) {
+    MS_LOGE("CreateSession failed");
+    return jlong(nullptr);
+  }
+  return jlong(session);
+}
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_LiteSession_createSession(JNIEnv *env, jobject thiz,
                                                                                      jlong ms_config_ptr) {
