@@ -29,6 +29,7 @@
 #include "ps/core/communicator/task_executor.h"
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/tcp_msg_handler.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {

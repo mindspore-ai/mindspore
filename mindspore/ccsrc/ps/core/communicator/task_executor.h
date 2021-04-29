@@ -41,7 +41,8 @@ namespace core {
  */
 class TaskExecutor {
  public:
-  explicit TaskExecutor(size_t thread_num, size_t max_task_num = kMaxTaskNum, size_t submit_timeout = kSubmitTimeOut);
+  explicit TaskExecutor(size_t thread_num, size_t max_task_num = kMaxTaskNum,
+                        size_t submit_timeout = kSubmitTimeOutInMs);
   ~TaskExecutor();
 
   // If the number of submitted tasks is greater than the size of the queue, it will block the submission of subsequent
@@ -55,7 +56,7 @@ class TaskExecutor {
       std::unique_lock<std::mutex> lock(mtx_);
       if (task_num_ >= max_task_num_) {
         lock.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(kSubmitTaskInterval));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kSubmitTaskIntervalInMs));
         index++;
       } else {
         break;

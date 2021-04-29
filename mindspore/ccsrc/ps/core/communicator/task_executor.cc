@@ -67,7 +67,7 @@ TaskExecutor::TaskExecutor(size_t thread_num, size_t max_task_num, size_t submit
           cv_.notify_one();
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(kSubmitTaskInterval));
+      std::this_thread::sleep_for(std::chrono::milliseconds(kSubmitTaskIntervalInMs));
     }
   });
   notify_thread_.detach();
