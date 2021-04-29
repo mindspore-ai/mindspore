@@ -93,6 +93,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pooling_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/power_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/reduce_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/resize_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/scale_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/softmax_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/tile_fp32_coder.cc
@@ -150,6 +151,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
         ${LITE_DIR}/src/ops/populate/detection_post_process_populate.cc
         ${LITE_DIR}/src/ops/populate/depthwise_conv2d_populate.cc
+        ${LITE_DIR}/src/ops/populate/deconv2d_populate.cc
         ${LITE_DIR}/src/ops/populate/full_connection_populate.cc
         ${LITE_DIR}/src/ops/populate/pooling_populate.cc
         ${LITE_DIR}/src/ops/populate/quant_dtype_cast_populate.cc
@@ -173,6 +175,7 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/populate/erf_populate.cc
         ${LITE_DIR}/src/ops/populate/exp_populate.cc
         ${LITE_DIR}/src/ops/populate/strided_slice_populate.cc
+        ${LITE_DIR}/src/ops/populate/scale_populate.cc
         ${LITE_DIR}/src/ops/populate/lstm_populate.cc
         ${LITE_DIR}/src/ops/populate/squeeze_populate.cc
         ${LITE_DIR}/src/ops/populate/transpose_populate.cc
@@ -192,6 +195,7 @@ set(LITE_KERNEL_SRC
         ${NNACL_DIR}/fp32/deconv_fp32.c
         ${NNACL_DIR}/fp32/matmul_fp32.c
         ${NNACL_DIR}/fp32/common_func_fp32.c
+        ${NNACL_DIR}/fp32/resize_fp32.c
         ${NNACL_DIR}/int8/quantize.c
         ${NNACL_DIR}/int8/pack_int8.c
         ${NNACL_DIR}/int8/matmul_int8.c

@@ -133,7 +133,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
             "matmul_fp32.c",
             "pack_fp32.c",
             "deconv_fp32.c",
-            "minimal_filter_generator.c",
+            "minimal_filtering_generator.c",
           });
   if (target_ == kARM32A) {
     Collect(context, {}, {},
@@ -172,8 +172,8 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
   std::string src_out_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
-    input_ptr_ = src_in_ptr_str + std::to_string(batch_index * input_plane_ * conv_param_->input_channel_);
-    output_ptr_ = src_out_ptr_str + std::to_string(batch_index * output_plane_ * conv_param_->output_channel_);
+    input_ptr_ = src_in_ptr_str + "+" + std::to_string(batch_index * input_plane_ * conv_param_->input_channel_);
+    output_ptr_ = src_out_ptr_str + "+" + std::to_string(batch_index * output_plane_ * conv_param_->output_channel_);
 
     if (target_ == kARM32A) {
       code.CodeFunction("RowMajor2Col4Major", input_ptr_, packed_input_, matmul_param_.row_, matmul_param_.deep_);
