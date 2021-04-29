@@ -319,6 +319,9 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
 
   int in_shape[MAX_SHAPE_SIZE];
   size_t in_shape_size = 0;
+  if (input->shape_size_ > MAX_SHAPE_SIZE) {
+    return NNACL_ERR;
+  }
   ShapeSet(in_shape, &in_shape_size, input->shape_, input->shape_size_);
 
   StridedSliceTransferBuffer transfer_buffer;

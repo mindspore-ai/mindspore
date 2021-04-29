@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,12 @@ void StridedSliceCPUKernel::InitFastRunParam() {
 }
 
 int StridedSliceCPUKernel::ReSize() {
+  auto input_tensor = in_tensors_.at(0);
+  auto begin_tensor = in_tensors_.at(1);
+  if (input_tensor->shape().size() > DIMENSION_8D || begin_tensor->shape().size() > DIMENSION_8D) {
+    MS_LOG(ERROR) << "StridedSlice not support input rank or begin num exceeds " << DIMENSION_8D;
+    return RET_ERROR;
+  }
   fast_run_ = MatchFastPattern();
   if (fast_run_) {
     InitFastRunParam();

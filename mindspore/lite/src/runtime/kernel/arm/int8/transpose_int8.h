@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ class TransposeInt8CPUKernel : public LiteKernel {
   int thread_h_stride_ = 0;
   int thread_h_num_ = 0;
   int num_unit_ = 0;
-  int in_shape_[8] = {0};
-  int out_shape_[8] = {0};
+  int in_shape_[20] = {0};
+  int out_shape_[20] = {0};
   int nhnc_param_[3] = {0};
 };
 }  // namespace mindspore::kernel

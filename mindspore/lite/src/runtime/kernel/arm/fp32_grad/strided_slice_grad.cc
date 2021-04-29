@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,10 @@ int StridedSliceGradCPUKernel::Init() {
 }
 
 void StridedSliceGradCPUKernel::FillEmptyDims() {
-  int32_t begins[DIMENSION_7D];
-  int32_t ends[DIMENSION_7D];
-  int32_t strides[DIMENSION_7D];
-  int32_t input_shape[DIMENSION_7D];
+  int32_t begins[DIMENSION_8D];
+  int32_t ends[DIMENSION_8D];
+  int32_t strides[DIMENSION_8D];
+  int32_t input_shape[DIMENSION_8D];
   int32_t i;
   for (i = 0; i < param_->num_axes_; ++i) {
     begins[i] = param_->begins_[i];
@@ -72,7 +72,7 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
   }
 
   int32_t real_index = param_->in_shape_length_ - 1;
-  for (i = DIMENSION_7D - 1; i >= 0; --i) {
+  for (i = DIMENSION_8D - 1; i >= 0; --i) {
     if (real_index >= 0) {
       param_->begins_[i] = begins[real_index];
       param_->ends_[i] = ends[real_index];
@@ -85,10 +85,10 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
       param_->in_shape_[i] = 1;
     }
   }
-  param_->num_axes_ = DIMENSION_7D;
-  param_->in_shape_length_ = DIMENSION_7D;
+  param_->num_axes_ = DIMENSION_8D;
+  param_->in_shape_length_ = DIMENSION_8D;
 
-  for (i = 0; i < DIMENSION_7D; ++i) {
+  for (i = 0; i < DIMENSION_8D; ++i) {
     if (param_->begins_[i] < 0) {
       param_->begins_[i] += param_->in_shape_[i];
     }
@@ -101,7 +101,7 @@ void StridedSliceGradCPUKernel::FillEmptyDims() {
 void StridedSliceGradCPUKernel::FillOutputDim() {
   auto output = out_tensors_.at(0);
   size_t out_size = output->shape().size();
-  for (size_t i = 0; i < DIMENSION_7D; i++) {
+  for (size_t i = 0; i < DIMENSION_8D; i++) {
     if (i < out_size) {
       output_shape_.push_back(output->shape()[i]);
     } else {

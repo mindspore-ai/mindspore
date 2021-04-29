@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ int TransposeInt8CPUKernel::ReSize() {
     transpose_param_->out_strides_[i] = out_shape.at(i + 1) * transpose_param_->out_strides_[i + 1];
   }
 
-  extra_dims_ = out_shape.size() > MAX_SHAPE_SIZE;
+  extra_dims_ = out_shape.size() > DIMENSION_5D;
 
   num_unit_ = static_cast<int>(in_shape.at(transpose_param_->perm_[kNHWC_H]));
   thread_h_num_ = MSMIN(thread_num_, num_unit_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ int TransposeCPUKernel::Run() {
     for (int i = 0; i < input_perm->ElementsNum(); ++i) {
       param_->perm_[i] = perm_data[i];
     }
-    for (int i = input_perm->ElementsNum(); i < MAX_SHAPE_SIZE; ++i) {
+    for (int i = input_perm->ElementsNum(); i < MAX_TRANSPOSE_DIM_SIZE; ++i) {
       param_->perm_[i] = 0;
     }
   }
@@ -169,7 +169,7 @@ int TransposeCPUKernel::Run() {
 
   MS_ASSERT(out_shape_);
   dims_ = out_tensor->shape().size();
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
+  if (dims_ > DIMENSION_6D) {
     dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims_ * sizeof(int)));
     if (dim_size_ == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
@@ -187,13 +187,13 @@ int TransposeCPUKernel::Run() {
     }
   }
   int ret;
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
+  if (dims_ > DIMENSION_6D) {
     ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, TransposeImpl, this,
                          thread_count_);
   } else {
     ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
   }
-  if (dims_ > MAX_TRANSPOSE_DIM_SIZE) {
+  if (dims_ > DIMENSION_6D) {
     context_->allocator->Free(dim_size_);
     context_->allocator->Free(position_);
     dim_size_ = nullptr;

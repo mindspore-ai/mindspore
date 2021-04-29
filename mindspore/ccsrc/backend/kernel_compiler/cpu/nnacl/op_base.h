@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@
 #define MAX_SHAPE_SIZE 8
 
 #define DIMENSION_4D 4
+#define DIMENSION_5D 5
 #define DIMENSION_6D 6
 #define DIMENSION_7D 7
 #define DIMENSION_8D 8
