@@ -48,21 +48,22 @@ class EnvConfigParser {
   std::string config_file_{""};
   bool already_parsed_{false};
 
+  // rdr
   bool rdr_enabled_{false};
   bool has_rdr_setting_{false};
   std::string rdr_path_{"./rdr/"};
 
+  // memreuse
   bool sys_memreuse_{true};
+
   void ParseFromFile();
   void ParseFromEnv();
-  std::string GetIfstreamString(const std::ifstream &ifstream);
-  void ParseRdrSetting(const nlohmann::json &content);
-
-  bool CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key, const std::string &key);
+  std::string GetIfstreamString(const std::ifstream &ifstream) const;
+  bool CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key, const std::string &key) const;
   std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> CheckJsonKeyExist(const nlohmann::json &content,
                                                                                      const std::string &setting_key,
-                                                                                     const std::string &key);
-
+                                                                                     const std::string &key) const;
+  void ParseRdrSetting(const nlohmann::json &content);
   void ParseRdrPath(const nlohmann::json &content);
   void ParseRdrEnable(const nlohmann::json &content);
   void ParseMemReuseSetting(const nlohmann::json &content);

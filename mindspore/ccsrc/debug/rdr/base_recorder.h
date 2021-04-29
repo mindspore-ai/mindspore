@@ -54,12 +54,12 @@ class BaseRecorder {
       timestamp_ = ss.str();
     }
   }
-  virtual ~BaseRecorder() {}
+  ~BaseRecorder() {}
 
   std::string GetModule() const { return module_; }
   std::string GetName() const { return name_; }
   std::string GetTimeStamp() const { return timestamp_; }
-  std::optional<std::string> GetFileRealPath(const std::string &suffix = "");
+  std::optional<std::string> GetFileRealPath(const std::string &suffix = "") const;
 
   void SetDirectory(const std::string &directory);
   void SetFilename(const std::string &filename);
