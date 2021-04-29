@@ -29,8 +29,7 @@ void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
     LaunchKernel<float>(inputs, outputs);
@@ -43,7 +42,8 @@ bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                    const std::vector<AddressPtr> &outputs) const {
   T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
