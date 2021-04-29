@@ -166,7 +166,7 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
 int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
   int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
   if (attr_val <= 0) {
-    MS_LOG(EXCEPTION) << "Invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
+    MS_LOG(EXCEPTION) << op << " invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
   }
   return attr_val;
 }
@@ -182,7 +182,7 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
     int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
-    result.insert(result.begin(), num_element, attr_val);
+    (void)result.insert(result.begin(), num_element, attr_val);
   }
   return result;
 }
