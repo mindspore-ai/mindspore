@@ -24,7 +24,9 @@
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
-#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
 
 namespace mindspore {
 namespace dataset {

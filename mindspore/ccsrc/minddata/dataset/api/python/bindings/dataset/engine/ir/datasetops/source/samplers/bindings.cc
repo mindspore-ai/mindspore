@@ -21,7 +21,15 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/distributed_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/pk_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/prebuilt_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/random_sampler_ir.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/sequential_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/subset_random_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/subset_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/weighted_random_sampler_ir.h"
 
 namespace mindspore {
 namespace dataset {

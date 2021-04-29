@@ -28,7 +28,9 @@
 #include "minddata/dataset/include/dataset/vision.h"
 #include "minddata/dataset/include/dataset/vision_lite.h"
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
-#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
