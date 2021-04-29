@@ -236,6 +236,7 @@
 #include "ops/splice.h"
 #include "ops/log_softmax.h"
 #include "ops/call.h"
+#include "ops/cumsum.h"
 
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP)                                        \
   namespace mindspore::lite::ops {                                            \
@@ -446,5 +447,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(ResizeGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(Splice);
 FUNC_MSOP2SCHEMAOP_DECLARE(LogSoftmax);
 FUNC_MSOP2SCHEMAOP_DECLARE(Call);
+FUNC_MSOP2SCHEMAOP_DECLARE(CumSum);
 #endif
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_

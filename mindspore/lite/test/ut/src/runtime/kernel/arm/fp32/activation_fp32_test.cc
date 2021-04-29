@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,6 +221,50 @@ TEST_F(TestActivationFp32, HardTanh2) {
 
   std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
+
+  input0_tensor.set_data(nullptr);
+  output0_tensor.set_data(nullptr);
+}
+
+TEST_F(TestActivationFp32, Softplus) {
+  std::vector<lite::Tensor *> inputs_tensor;
+  std::vector<lite::Tensor *> outputs_tensor;
+
+  ActivationParameter op_param;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_Activation;
+  op_param.type_ = schema::ActivationType_SOFTPLUS;
+
+  std::vector<float> input = {1, 2, 3, 4, 5, -1, 6, 7, -10, -20, 20, 30, 14, 0};
+  std::vector<int> in_shape = {14};
+
+  lite::Tensor input0_tensor;
+  inputs_tensor.push_back(&input0_tensor);
+  input0_tensor.set_data(input.data());
+  input0_tensor.set_shape(in_shape);
+
+  std::vector<float> output(14);
+  std::vector<int> output_shape = {14};
+
+  lite::Tensor output0_tensor;
+  outputs_tensor.push_back(&output0_tensor);
+  output0_tensor.set_data(output.data());
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
+  lite::InnerContext ctx;
+  ctx.thread_num_ = 2;
+  ASSERT_EQ(lite::RET_OK, ctx.Init());
+  kernel::LiteKernel *kernel =
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+  auto output_tensor_shape = output0_tensor.shape();
+  auto ret = kernel->Run();
+  ASSERT_EQ(0, ret);
+  std::vector<float> expect_output = {1.3132616,   2.1269281,   3.0485871,  4.0181499,    5.0067153,
+                                      0.31326169,  6.0024757,   7.0009117,  0.0000453989, 0.0000000002,
+                                      20.00000000, 30.00000000, 14.0000000, 0.69314718};
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 14, 0.00001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);

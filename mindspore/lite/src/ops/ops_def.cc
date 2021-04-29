@@ -208,6 +208,7 @@ OP_TYPE(Splice)
 OP_TYPE(LogSoftmax)
 OP_TYPE(Call)
 OP_TYPE(Custom)
+OP_TYPE(CumSum)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1103,6 +1104,11 @@ OP_SCHEMA_DEF_END(LogSoftmax)
 
 OP_SCHEMA_DEF(Call)
 OP_SCHEMA_DEF_END(Call)
+
+OP_SCHEMA_DEF(CumSum)
+OP_ATTR(exclusive, bool)
+OP_ATTR(reverse, bool)
+OP_SCHEMA_DEF_END(CumSum)
 
 OP_SCHEMA_DEF_ONLY(Custom)
 OP_ATTR_ONLY(type, string)

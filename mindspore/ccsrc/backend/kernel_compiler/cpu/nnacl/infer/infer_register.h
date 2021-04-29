@@ -216,8 +216,9 @@ enum PrimType {
   PrimType_LogSoftmax = 189,
   PrimType_Call = 190,
   PrimType_Custom = 191,
+  PrimType_CumSum = 192,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_Custom + 1
+  PrimType_MAX = PrimType_CumSum + 1
 };
 
 void RegInfer(int prim_type, InferShape func);
