@@ -57,8 +57,7 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                          const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                           const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
