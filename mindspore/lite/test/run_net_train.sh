@@ -89,13 +89,15 @@ function Run_x86() {
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
         fi
-        
+        if [[ "${save_lite}" == "1" ]]; then
+          inference_file="${ms_models_path}/${model_name}_infer"
+        fi
         echo ${model_name} >> "${run_x86_log_file}"
         ${run_valgrind}./tools/benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}.ms \
         --inDataFile=${train_io_path}/${model_prefix}_input1.bin,${train_io_path}/${model_prefix}_input2.bin \
         --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
-        --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
@@ -138,8 +140,8 @@ function Run_arm() {
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_train_test_path} || exit 1
     if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libjpeg.so* ${benchmark_train_test_path}/ || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_train_test_path}/ || exit 1
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
     if [ "$1" == arm64 ]; then
@@ -178,8 +180,9 @@ function Run_arm() {
             run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
             continue
         fi
-  
-
+        if [[ "${save_lite}" == "1" ]]; then
+          inference_file="${ms_models_path}/${model_name}_infer"
+        fi
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
         adb -s ${device_id} push ${train_io_path}/${model_prefix}_input*.bin ${train_io_path}/${model_prefix}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
@@ -198,7 +201,7 @@ function Run_arm() {
         --modelFile=${model_name}.ms \
         --inDataFile=${tmp_dir}/${model_prefix}_input1.bin,${tmp_dir}/${model_prefix}_input2.bin \
         --expectedDataFile=${tmp_dir}/${model_prefix}_output \
-        --numThreads=${threads} --accuracyThreshold=${accuracy_limit}
+        --numThreads=${threads} --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -249,7 +252,7 @@ models_mindspore_train_config=${basepath}/models_ms_train.cfg
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
+while getopts "r:M:c:m:d:i:e:vt:q:DF" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -291,6 +294,8 @@ while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
         t)
             epoch_num=${OPTARG}
             echo "train epoch num is ${epoch_num}"
+            ;;
+        F)  save_lite=1
             ;;                          
         ?)
             echo "unknown para"
@@ -342,7 +347,7 @@ if [[ $enable_export == 1 ]]; then
     Run_Export
     Print_Result ${export_result_file}
 
-fi    
+fi 
 
 # Write converter result to temp file
 run_converter_log_file=${logs_path}/run_converter_log.txt

@@ -16,10 +16,20 @@
 #ifndef MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_
 #define MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_
 
+#include <vector>
+#include <string>
 #include "include/ms_tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
+namespace kernel {
+class LiteKernel;
+}
+
 namespace lite {
+
+kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter);
+size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter);
 
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output);
 float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output);

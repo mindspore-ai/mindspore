@@ -37,25 +37,12 @@
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
 #include "src/common/tensor_util.h"
+#include "src/train/train_utils.h"
+#include "src/train/train_export.h"
 
 namespace mindspore {
 namespace lite {
 
-static size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter) {
-  for (size_t i = 0; i < where.size(); i++) {
-    if (where[i] == searchParameter) {
-      return i;
-    }
-  }
-  return where.size();
-}
-
-static kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where,
-                                        const std::string &searchParameter) {
-  auto it = std::find_if(where.begin(), where.end(),
-                         [&searchParameter](const kernel::LiteKernel *k) { return (k->name() == searchParameter); });
-  return *it;
-}
 TrainSession::TrainSession() {
   is_train_session_ = true;
 #ifdef ENABLE_V0
@@ -476,6 +463,16 @@ int TrainSession::SetLossName(std::string loss_name) {
   }
   return RET_OK;
 }
+
+int TrainSession::ExportInference(std::string file_name) {
+  bool orig_train_state = IsTrain();
+  Eval();
+  TrainExport texport(file_name, model_);
+  int status = texport.Export(inference_kernels_, tensors_, GetOutputTensorNames());
+  if (orig_train_state) Train();
+  return status;
+}
+
 }  // namespace lite
 
 session::TrainSession *session::TrainSession::CreateSession(mindspore::lite::Model *model, lite::Context *context,

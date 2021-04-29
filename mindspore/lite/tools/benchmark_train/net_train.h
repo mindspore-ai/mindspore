@@ -30,6 +30,7 @@
 #include <cfloat>
 #include <utility>
 #include <algorithm>
+
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -51,14 +52,15 @@ struct MS_API CheckTensor {
 };
 
 template <typename T>
-T TensorSum(void *data, int size) {
+float TensorSum(void *data, int size) {
   T *typed_data = reinterpret_cast<T *>(data);
-  T sum = static_cast<T>(0);
+  float sum = 0.f;
   for (int i = 0; i < size; i++) {
-    sum += typed_data[i];
+    sum += static_cast<float>(typed_data[i]);
   }
   return sum;
 }
+
 class MS_API NetTrainFlags : public virtual FlagParser {
  public:
   NetTrainFlags() {
@@ -77,6 +79,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::layer_checksum_, "layerCheckSum", "layer output checksum print (debug)", false);
     AddFlag(&NetTrainFlags::enable_fp16_, "enableFp16", "Enable float16", false);
     AddFlag(&NetTrainFlags::loss_name_, "lossName", "loss layer name", "");
+    AddFlag(&NetTrainFlags::inference_file_, "inferenceFile", "MS file to export inference model", "");
   }
 
   ~NetTrainFlags() override = default;
@@ -109,6 +112,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   bool layer_checksum_ = false;
   std::vector<std::vector<int64_t>> resize_dims_;
   std::string loss_name_ = "";
+  std::string inference_file_ = "";
 };
 
 class MS_API NetTrain {
@@ -166,6 +170,7 @@ class MS_API NetTrain {
     for (int j = 0; j < std::min(50, size); j++) {
       std::cout << refOutput[j] << " ";
     }
+    std::cout << std::endl;
     for (int j = 0; j < size; j++) {
       if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
         std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
@@ -174,7 +179,7 @@ class MS_API NetTrain {
       }
 
       auto tolerance = absoluteTolerance + relativeTolerance * fabs(refOutput[j]);
-      auto absoluteError = std::fabs(msTensorData[j] - refOutput[j]);
+      auto absoluteError = std::fabs(static_cast<float>(msTensorData[j]) - refOutput[j]);
       if (absoluteError > tolerance) {
         if (fabs(refOutput[j]) == 0) {
           if (absoluteError > 1e-5) {
@@ -208,6 +213,10 @@ class MS_API NetTrain {
   int MarkAccuracy();
 
  private:
+  int RunExportedNetLite(std::string file_name);
+  int MarkAccuracyLite(const std::unique_ptr<session::LiteSession> &lite_session);
+  int CompareOutputLite(const std::unique_ptr<session::LiteSession> &lite_session);
+  int CheckExecute(mindspore::lite::Model *model);
   NetTrainFlags *flags_;
   session::TrainSession *session_ = nullptr;
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
