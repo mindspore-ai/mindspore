@@ -58,6 +58,7 @@ class DefaultAllocator : public Allocator {
  private:
   void Lock();
   void UnLock();
+  bool ReuseMemory(size_t free_size, size_t size);
   struct MemBuf {
     size_t size;
     void *buf;

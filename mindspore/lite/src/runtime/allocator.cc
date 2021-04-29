@@ -44,6 +44,11 @@ void DefaultAllocator::UnLock() {
   }
 }
 
+bool DefaultAllocator::ReuseMemory(size_t free_size, size_t size) {
+  return free_size >= size &&
+         (free_size <= (size >= UINT32_MAX / (1ul << shiftFactor_) ? UINT32_MAX : size << shiftFactor_));
+}
+
 void *DefaultAllocator::Malloc(size_t size) {
   if (size > MAX_MALLOC_SIZE) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
@@ -55,7 +60,7 @@ void *DefaultAllocator::Malloc(size_t size) {
   }
   Lock();
   auto iter = freeList_.lower_bound(size);
-  if (iter != freeList_.end() && (iter->second->size >= size) && (iter->second->size <= (size << shiftFactor_))) {
+  if (iter != freeList_.end() && ReuseMemory(iter->second->size, size)) {
     auto membuf = iter->second;
     freeList_.erase(iter);
     allocatedList_[membuf->buf] = membuf;
