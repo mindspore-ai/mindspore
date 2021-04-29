@@ -25,7 +25,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "ir/anf.h"
 #include "backend/kernel_compiler/ascend_kernel_mod.h"
-#include "framework/ge_runtime/task_info.h"
+#include "runtime/device/ascend/ge_runtime/task_info.h"
 
 namespace mindspore {
 namespace device {

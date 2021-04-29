@@ -20,7 +20,7 @@
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-using ge::model_runner::StreamActiveTaskInfo;
+using mindspore::ge::model_runner::StreamActiveTaskInfo;
 using StreamActiveTaskInfoPtr = std::shared_ptr<StreamActiveTaskInfo>;
 
 namespace mindspore {

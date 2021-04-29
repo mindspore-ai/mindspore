@@ -252,7 +252,6 @@ if(NOT ENABLE_GE)
                 FILES
                     ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
                     ${CMAKE_BINARY_DIR}/graphengine/ge/common/libge_common.so
-                    ${CMAKE_BINARY_DIR}/graphengine/ge/ge_runtime/libge_runtime.so
                 DESTINATION ${INSTALL_LIB_DIR}
                 COMPONENT mindspore
             )

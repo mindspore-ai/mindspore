@@ -25,15 +25,15 @@
 #include <unordered_set>
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/context.h"
-#include "framework/ge_runtime/davinci_model.h"
+#include "runtime/device/ascend/ge_runtime/davinci_model.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/session/session_basic.h"
 #include "runtime/device/ascend/dump/data_dumper.h"
 
-using ge::model_runner::TaskInfo;
 using std::unordered_map;
 using std::vector;
 namespace mindspore::device::ascend {
+using ge::model_runner::TaskInfo;
 class AscendKernelRuntime : public KernelRuntime {
  public:
   AscendKernelRuntime() = default;

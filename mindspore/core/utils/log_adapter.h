@@ -134,6 +134,7 @@ enum SubModuleId : int {
   SM_HCCL_ADPT,          // Hccl Adapter
   SM_MINDQUANTUM,        // MindQuantum
   SM_RUNTIME_FRAMEWORK,  // Runtime framework
+  SM_GE,                 // GraphEngine
   NUM_SUBMODUES          // number of submodules
 };
 
@@ -142,34 +143,35 @@ enum SubModuleId : int {
 #endif
 
 static const char *SUB_MODULE_NAMES[NUM_SUBMODUES] = {
-  "UNKNOWN",           // SM_UNKNOWN
-  "CORE",              // SM_CORE
-  "ANALYZER",          // SM_ANALYZER
-  "COMMON",            // SM_COMMON
-  "DEBUG",             // SM_DEBUG
-  "OFFLINE_DEBUG",     // SM_OFFLINE_DEBUG
-  "DEVICE",            // SM_DEVICE
-  "GE_ADPT",           // SM_GE_ADPT
-  "IR",                // SM_IR
-  "KERNEL",            // SM_KERNEL
-  "MD",                // SM_MD
-  "ME",                // SM_ME
-  "EXPRESS",           // SM_EXPRESS
-  "OPTIMIZER",         // SM_OPTIMIZER
-  "PARALLEL",          // SM_PARALLEL
-  "PARSER",            // SM_PARSER
-  "PIPELINE",          // SM_PIPELINE
-  "PRE_ACT",           // SM_PRE_ACT
-  "PYNATIVE",          // SM_PYNATIVE
-  "SESSION",           // SM_SESSION
-  "UTILS",             // SM_UTILS
-  "VM",                // SM_VM
-  "PROFILER",          // SM_PROFILER
-  "PS",                // SM_PS
-  "LITE",              // SM_LITE
-  "HCCL_ADPT",         // SM_HCCL_ADPT
-  "MINDQUANTUM",       // SM_MINDQUANTUM
-  "RUNTIME_FRAMEWORK"  // SM_RUNTIME_FRAMEWORK
+  "UNKNOWN",            // SM_UNKNOWN
+  "CORE",               // SM_CORE
+  "ANALYZER",           // SM_ANALYZER
+  "COMMON",             // SM_COMMON
+  "DEBUG",              // SM_DEBUG
+  "OFFLINE_DEBUG",      // SM_OFFLINE_DEBUG
+  "DEVICE",             // SM_DEVICE
+  "GE_ADPT",            // SM_GE_ADPT
+  "IR",                 // SM_IR
+  "KERNEL",             // SM_KERNEL
+  "MD",                 // SM_MD
+  "ME",                 // SM_ME
+  "EXPRESS",            // SM_EXPRESS
+  "OPTIMIZER",          // SM_OPTIMIZER
+  "PARALLEL",           // SM_PARALLEL
+  "PARSER",             // SM_PARSER
+  "PIPELINE",           // SM_PIPELINE
+  "PRE_ACT",            // SM_PRE_ACT
+  "PYNATIVE",           // SM_PYNATIVE
+  "SESSION",            // SM_SESSION
+  "UTILS",              // SM_UTILS
+  "VM",                 // SM_VM
+  "PROFILER",           // SM_PROFILER
+  "PS",                 // SM_PS
+  "LITE",               // SM_LITE
+  "HCCL_ADPT",          // SM_HCCL_ADPT
+  "MINDQUANTUM",        // SM_MINDQUANTUM
+  "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
+  "GE",                 // SM_GE
 };
 
 #if defined(_WIN32) || defined(_WIN64)

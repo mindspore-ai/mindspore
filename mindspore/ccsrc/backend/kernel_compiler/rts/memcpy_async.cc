@@ -25,7 +25,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"
 
-using ge::model_runner::MemcpyAsyncTaskInfo;
+using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 using mindspore::device::ascend::MemcpyRtsDynamicKernel;

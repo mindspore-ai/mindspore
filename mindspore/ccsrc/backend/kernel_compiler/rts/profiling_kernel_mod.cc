@@ -23,7 +23,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
 
-using ProfilerTraceTaskInfo = ge::model_runner::ProfilerTraceTaskInfo;
+using ProfilerTraceTaskInfo = mindspore::ge::model_runner::ProfilerTraceTaskInfo;
 using mindspore::device::ascend::ProfilingRtsDynamicKernel;
 using mindspore::device::ascend::ProfilingUtils;
 

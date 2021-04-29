@@ -20,7 +20,7 @@
 #include "framework/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-using ge::model_runner::EventRecordTaskInfo;
+using mindspore::ge::model_runner::EventRecordTaskInfo;
 using EventRecordTaskInfoPtr = std::shared_ptr<EventRecordTaskInfo>;
 
 namespace mindspore {

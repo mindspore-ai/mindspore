@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-using ge::model_runner::EventWaitTaskInfo;
+using mindspore::ge::model_runner::EventWaitTaskInfo;
 using EventWaitTaskInfoPtr = std::shared_ptr<EventWaitTaskInfo>;
 
 RecvKernel::RecvKernel() { event_id_ = 0; }
