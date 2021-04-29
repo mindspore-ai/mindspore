@@ -90,11 +90,13 @@ Status Edge::InitEdgeCost() {
     }
   }
   if (!has_available_cost) {
-    if (FULLY_USE_DEVICES) {
+    const auto fully_use = CostModelContext::GetInstance()->fully_use_device();
+    const auto stra_follow = CostModelContext::GetInstance()->elementwise_stra_follow();
+    if (fully_use) {
       MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
                         << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
                            "'fully_use_devices' false.";
-    } else if (ELEMENTWISE_OP_STRA_FOLLOW) {
+    } else if (stra_follow) {
       MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
                         << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "
                            "Try to set 'elementwise_op_strategy_follow' false.";
@@ -130,6 +132,7 @@ Status Edge::GetRedistributionCost(const TensorLayout &prev_op_output_layout, co
   double backward_comm_cost = tensor_redistribution.backward_comm_cost();
   double computation_cost = tensor_redistribution.computation_cost();
   double mem_cost = tensor_redistribution.memory_cost();
+  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
 
   // Now AllGather, ReduceScatter, AlltoAll don't support bool type
   MS_EXCEPTION_IF_NULL(type);
@@ -142,7 +145,7 @@ Status Edge::GetRedistributionCost(const TensorLayout &prev_op_output_layout, co
   (*cost)->communication_without_parameter_ = type_length * comm_cost;
   (*cost)->communication_with_partial_para_ =
     (*cost)->communication_without_parameter_ +
-    COST_MODEL_GAMMA * ((*cost)->communication_cost_ - (*cost)->communication_without_parameter_);
+    gamma * ((*cost)->communication_cost_ - (*cost)->communication_without_parameter_);
   (*cost)->communication_redis_forward_ = type_length * forward_comm_cost;
   (*cost)->communication_redis_backward_ = type_length * backward_comm_cost;
   (*cost)->memory_with_reuse_ = mem_cost;
@@ -173,13 +176,14 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr
   std::function<void(size_t, double, double, double, double, double)> recursive =
     [&](size_t k, double computation, double memory, double communication, double communication_without_para,
         double communication_forward) {
+      const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
       if (k == edges.size()) {
         auto decision = std::make_shared<EdgeEliminationDecision>(selected_cost_list);
         CostPtr new_cost = std::make_shared<Cost>(computation, communication);
         MS_EXCEPTION_IF_NULL(new_cost);
         new_cost->communication_without_parameter_ = communication_without_para;
         new_cost->communication_with_partial_para_ =
-          communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+          communication_without_para + gamma * (communication - communication_without_para);
         new_cost->memory_with_reuse_ = memory;
         new_cost->communication_forward_ = communication_forward;
         new_cost->decision_ptr_ = decision;
@@ -242,10 +246,11 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
 
         auto decision = std::make_shared<OpEliminationDecision>(op_strategy, left_cost, middle_cost, right_cost);
         auto cost = std::make_shared<Cost>(computation, communication, decision);
+        const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
         MS_EXCEPTION_IF_NULL(cost);
         cost->communication_without_parameter_ = communication_without_para;
         cost->communication_with_partial_para_ =
-          communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+          communication_without_para + gamma * (communication - communication_without_para);
         cost->memory_with_reuse_ = memory_cost;
         cost->communication_forward_ = communication_forward;
         ret_cost_list->emplace_back(std::move(cost));

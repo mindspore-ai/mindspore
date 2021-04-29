@@ -153,7 +153,6 @@ class TestDPAlgo : public UT::Common {
 
 void TestDPAlgo::SetUp() {
   cost_graph = std::make_shared<CostGraph>();
-  cost_graph->SetDeviceMemoryAndCostParameter();
   RankList dev_list;
 
   for (int32_t i = 0; i < 10; i++) {

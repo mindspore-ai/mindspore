@@ -396,12 +396,12 @@ void ReshapeInfo::SetCostForReshape(const mindspore::parallel::StrategyPtr &stra
   double computation_cost =
     operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   double communication_cost = operator_cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
     operator_cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
-    result->communication_without_parameter_ +
-    COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
+    result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
   BreakingTiesForPerferringDataParallel(strategy, result);

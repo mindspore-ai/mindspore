@@ -230,7 +230,8 @@ void InitCostGraph() {
   if (entire_costgraph == nullptr) {
     entire_costgraph = std::make_shared<CostGraph>();
   }
-  entire_costgraph->SetDeviceMemoryAndCostParameter();
+  MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
+  CostModelContext::GetInstance()->PrintCostModel();
   entire_costgraph->Init();
 }
 
@@ -251,13 +252,14 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
     strategyPtr = (*stra_map)[strategy_key_name];
   }
   if (strategyPtr != nullptr) {
+    const auto fully_use_devices = CostModelContext::GetInstance()->fully_use_device();
     if (prim->name() == RESHAPE) {
       MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
     }
     // Set cost for this configured strategy
     if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
-    } else if (FULLY_USE_DEVICES) {
+    } else if (fully_use_devices) {
       // If configured to fully use devices, then checking for the user-specified strategy
       int64_t used_devices = operator_info->used_devices();
       MS_EXCEPTION_IF_NULL(g_device_manager);
@@ -325,7 +327,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_cnode(cnode);
   // key of strategy map
   std::string strategy_key_name = "";
-  auto param_names = NodeParameterName(cnode);
+  auto param_names = NodeParameterName(cnode, -1, 0);
   if (!param_names.empty()) {
     strategy_key_name = prim->name() + "_" + param_names[0].first;
   }
@@ -402,7 +404,8 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     if (search_cnode == from_cnode_to_info.end()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
-      if (DP_ALGO_SINGLE_LOOP && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size())) {
+      const auto single_loop = CostModelContext::GetInstance()->dp_algo_single_loop();
+      if (single_loop && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size())) {
         const auto &current_op_ptr = operators_in_forloop[loop_to_ops[loop_index]];
         bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
                              (current_op_ptr->name().find(BATCH_PARALLEL) == std::string::npos) &&
@@ -439,7 +442,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
       (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), operator_info));
-      if (DP_ALGO_SINGLE_LOOP && is_in_loop) {
+      if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         ops_in_a_loop_.insert(operator_info->name());
         loop_to_ops[loop_index]++;
@@ -527,7 +530,8 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     if (search_cnode == from_cnode_to_info.end()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
-      bool is_op_created = DP_ALGO_SINGLE_LOOP && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size());
+      const auto single_loop = CostModelContext::GetInstance()->dp_algo_single_loop();
+      bool is_op_created = single_loop && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size());
       if (is_op_created) {
         const auto &current_op_ptr = operators_in_forloop[loop_to_ops[loop_index]];
         bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
@@ -566,7 +570,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
       (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
-      if (DP_ALGO_SINGLE_LOOP && is_in_loop) {
+      if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         ops_in_a_loop_.insert(operator_info->name());
         loop_to_ops[loop_index]++;
@@ -599,8 +603,9 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
     MS_LOG(INFO) << "The two operators in two separate for-loops, thus skip the edge.";
     return;
   }
+  const auto stra_follow = CostModelContext::GetInstance()->elementwise_stra_follow();
   bool follow_strategy = (prim->name() == RESHAPE) || (prev_prim->name() == RESHAPE) ||
-                         (ELEMENTWISE_OP_STRA_FOLLOW && IsElementWiseOperator(prev_prim->name()));
+                         (stra_follow && IsElementWiseOperator(prev_prim->name()));
   if (follow_strategy) {
     // Redistribution in not allowed on the edge.
     // Elementwise operators have the same strategy as their previous operators.
@@ -1051,7 +1056,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   graph = EliminateGraph(graph, eli_list, index_list);
 
   size_t num_device = g_device_manager->DeviceNum();
-  double device_memory = entire_costgraph->GetDeviceMemory();
+  const auto device_memory = CostModelContext::GetInstance()->device_memory_capacity();
   if (PartitionForAllDevices(num_device, device_memory, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {

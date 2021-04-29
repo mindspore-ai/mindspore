@@ -469,7 +469,8 @@ Status MatMulBase::PrepareStrategy(int64_t stage_id, size_t dev_num,
                                    size_t input1_shape_size, mindspore::parallel::StrategyPtr *const sp) {
   int64_t product =
     std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int64_t>());
-  if (!FULLY_USE_DEVICES) {
+  const auto fully_use_device = CostModelContext::GetInstance()->fully_use_device();
+  if (!fully_use_device) {
     if (LongToSize(product) > dev_num) {
       return FAILED;
     }
@@ -558,7 +559,9 @@ void MatMulBase::InitTensorInfoForCost(std::vector<TensorInfo> *relica_inputs_te
 }
 
 Status MatMulBase::CheckForTensorSliceValid() const {
-  if (!TENSOR_SLICE_ALIGNMENT_ENABLE) {
+  const auto align_enable = CostModelContext::GetInstance()->tensor_slice_alignment_enable();
+  const auto align_size = CostModelContext::GetInstance()->tensor_slice_alignment_size();
+  if (!align_enable) {
     return SUCCESS;
   }
   if (inputs_tensor_info_.empty()) {
@@ -566,8 +569,8 @@ Status MatMulBase::CheckForTensorSliceValid() const {
   }
   for (auto &one_input_tensor : inputs_tensor_info_) {
     auto slice_shape = one_input_tensor.slice_shape();
-    if ((LongToSize(slice_shape[LAST_INDEX(slice_shape.size())]) % TENSOR_SLICE_ALIGNMENT_SIZE != 0) ||
-        (LongToSize(slice_shape[SECOND_FROM_END(slice_shape.size())]) % TENSOR_SLICE_ALIGNMENT_SIZE != 0)) {
+    if ((LongToSize(slice_shape[LAST_INDEX(slice_shape.size())]) % align_size != 0) ||
+        (LongToSize(slice_shape[SECOND_FROM_END(slice_shape.size())]) % align_size != 0)) {
       return FAILED;
     }
   }
@@ -602,12 +605,12 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &
   double computation_cost =
     operator_cost()->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   double communication_cost = operator_cost()->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
     operator_cost()->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
-    result->communication_without_parameter_ +
-    COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
+    result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
   BreakingTiesForPerferringDataParallel(strategy, result);

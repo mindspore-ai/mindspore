@@ -41,7 +41,6 @@ namespace parallel {
 #define DEFAULT_FULLY_USE_DEVICES true
 #define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
 #define DEFAULT_IS_MULTI_SUBGRAPHS false
-#define DEFAULT_RUN_PHASE 0
 #define TRAINING_PHASE 0
 #define INFERENCE_PHASE 1
 #define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
@@ -58,6 +57,7 @@ class CostModelContext {
   void ResetAlgoParameters();
 
   static std::shared_ptr<CostModelContext> GetInstance();
+  void PrintCostModel();
 
   void set_costmodel_context_for_device(const std::string &);
   // DEVICE_MEMORY_CAPACITY

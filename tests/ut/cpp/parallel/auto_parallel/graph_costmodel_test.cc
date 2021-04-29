@@ -52,7 +52,6 @@ class TestCostGraph : public UT::Common {
 };
 
 void TestCostGraph::SetUp() {
-  cost_graph.SetDeviceMemoryAndCostParameter();
   RankList dev_list;
 
   for (int32_t i = 0; i < 10; i++) {
@@ -305,7 +304,6 @@ TEST_F(TestCostGraph, test_ConstructConnectedComponents) {
 
 TEST_F(TestCostGraph, test_SelectCostListWithMinTrainingTimeMultiple) {
   CostGraph entire_cost_graph;
-  entire_cost_graph.SetDeviceMemoryAndCostParameter();
   double memory = 1024.0;
   CostPtrList clist_1, clist_2;
   std::vector<CostPtrList> all_list;
@@ -371,7 +369,8 @@ TEST_F(TestCostGraph, test_CreateFinalCostList_AND_Select) {
   ASSERT_EQ(edge_m1_m2->InitEdgeCost(), SUCCESS);
   cost_graph.AddEdge(matmul1, matmul2, edge_m1_m2);
   auto cost_list = cost_graph.CreateFinalCostList(matmul1, edge_m1_m2, matmul2);
-  cost_graph.SelectCostWithMinInferenceTime(cost_list, cost_graph.GetDeviceMemory());
+  const auto device_mem_capacity = CostModelContext::GetInstance()->device_memory_capacity();
+  cost_graph.SelectCostWithMinInferenceTime(cost_list, device_mem_capacity);
 }
 
 TEST_F(TestCostGraph, test_EliminationOp) {
