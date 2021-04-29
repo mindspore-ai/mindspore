@@ -312,6 +312,11 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 def test_resnet_and_resnet_thor_imagenet_4p():
+    # reset context
+    context.set_context(save_graphs=False, enable_graph_kernel=False, enable_sparse=False)
+    context.reset_auto_parallel_context()
+    context.reset_ps_context()
+
     q = Queue()
     q2 = Queue()
 

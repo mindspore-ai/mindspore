@@ -29,6 +29,7 @@ class Sampling(nn.Cell):
     """
     Test class: sample of Normal distribution.
     """
+
     def __init__(self, shape, seed=0):
         super(Sampling, self).__init__()
         self.n1 = msd.Normal(0, 1, seed=seed, dtype=dtype.float32)
@@ -400,6 +401,8 @@ class RandomChoiceWithMaskNet(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_random_choice_with_mask():
+    mode = context.get_context('mode')
+    assert (mode == context.GRAPH_MODE), 'GRAPH_MODE required but got ' + str(mode)
     net = RandomChoiceWithMaskNet()
     x = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]).astype(np.bool))
     index1, index2, index3 = net(x)
