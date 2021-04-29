@@ -27,7 +27,7 @@ class StringRecorder : public BaseRecorder {
   StringRecorder(const std::string &module, const std::string &name, const std::string &data)
       : BaseRecorder(module, name), data_(data) {}
   ~StringRecorder() {}
-  virtual void Export();
+  void Export() override;
 
  private:
   std::string data_;

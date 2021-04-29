@@ -37,7 +37,7 @@ void BaseRecorder::SetFilename(const std::string &filename) {
   }
 }
 
-std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) {
+std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) const {
   std::string filename;
   if (filename_.empty()) {
     filename = module_ + delimiter_ + name_;

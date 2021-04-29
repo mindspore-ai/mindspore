@@ -36,7 +36,7 @@ class ExecNode {
   void SetEventId(const uint32_t &event_id) { event_id_ = event_id; }
   void SetLabelId(const uint32_t &label_id) { label_ids_.push_back(label_id); }
   void SetActiveStreamId(const uint32_t &active_stream_id) { active_stream_ids_.push_back(active_stream_id); }
-  json ExecNode2Json();
+  json ExecNode2Json() const;
 
  private:
   size_t index_;
@@ -93,7 +93,7 @@ class StreamExecOrderRecorder : public BaseRecorder {
     }
   }
   ~StreamExecOrderRecorder() {}
-  virtual void Export();
+  void Export() override;
 
  private:
   std::vector<ExecNodePtr> exec_order_;
