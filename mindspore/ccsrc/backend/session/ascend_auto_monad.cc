@@ -1031,7 +1031,13 @@ class AscendAutoMonadConverter {
       }
       tuple_inputs.emplace_back(AssignAll(target, value, true, keep, false));
     }
-    return kernel_graph_->NewCNode(tuple_inputs);
+    auto new_tuple = kernel_graph_->NewCNode(tuple_inputs);
+    // Set abstract for the MakeTuple node.
+    abstract::AbstractBasePtrList element_abstracts;
+    (void)std::transform(tuple_inputs.begin() + 1, tuple_inputs.end(), std::back_inserter(element_abstracts),
+                         [](const AnfNodePtr &input) { return input->abstract(); });
+    new_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(element_abstracts));
+    return new_tuple;
   }
 
   // Return true if the graph is involved with recursive calls.
@@ -1087,7 +1093,13 @@ class AscendAutoMonadConverter {
     for (size_t i = 0; i < targets.size(); ++i) {
       tuple_inputs.emplace_back(Assign(targets[i], sources[i], link, keep, output));
     }
-    return kernel_graph_->NewCNode(tuple_inputs);
+    auto new_tuple = kernel_graph_->NewCNode(tuple_inputs);
+    // Set abstract for the MakeTuple node.
+    abstract::AbstractBasePtrList element_abstracts;
+    (void)std::transform(tuple_inputs.begin() + 1, tuple_inputs.end(), std::back_inserter(element_abstracts),
+                         [](const AnfNodePtr &input) { return input->abstract(); });
+    new_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(element_abstracts));
+    return new_tuple;
   }
 
   // Insert UpdateState after input node.
