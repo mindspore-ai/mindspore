@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/tensorlist_reserve_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensorlist_parameter.h"
 
 int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
@@ -26,6 +27,7 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   }
 #endif
 
+  TensorListParameter *reserve_param = (TensorListParameter *)parameter;
   const TensorC *input0 = inputs[0];
   int ele_shape_type = input0->data_type_;
   if (ele_shape_type != kNumberTypeInt && ele_shape_type != kNumberTypeInt32) {
@@ -35,6 +37,7 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   TensorListC *output = (TensorListC *)(outputs[0]);
   output->data_type_ = kObjectTypeTensorType;
   output->format_ = Format_NHWC;
+  output->tensors_data_type_ = reserve_param->element_dtype_;
 
   if (input0->data_ == NULL) {
     return NNACL_INFER_INVALID;

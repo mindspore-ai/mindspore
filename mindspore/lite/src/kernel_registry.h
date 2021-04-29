@@ -48,9 +48,9 @@ class KernelRegistry {
                 kernel::CreateKernel creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
   bool SupportKernel(const kernel::KernelKey &key);
-  kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter,
-                                const void *primitive = nullptr);
+  int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter,
+                kernel::LiteKernel **kernel, const void *primitive = nullptr);
 
  protected:
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};

@@ -63,7 +63,7 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
   if (!tensorT->data.empty()) {
     int *data = reinterpret_cast<int *>(tensorT->data.data());
     type = TypeId(data[0]);
-    if (tensorT->data.size() < 8 || (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size())) {
+    if (tensorT->data.size() < 8 || (data[1] != 0 && (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size()))) {
       MS_LOG(ERROR) << "tensorlist data length illegal";
       *convert_succ = false;
       return;
@@ -229,29 +229,36 @@ void SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors,
   output_tensor->dataType = output_tensors[i]->data_type();
   if (output_tensors[i]->data_type() == kObjectTypeTensorType) {
     auto tensor_list = reinterpret_cast<TensorList *>(output_tensors[i]);
-    if (tensor_list->tensors_data_type() == kTypeUnknown) {
-      tensors_->at(node->outputIndex[i]).is_infer_ = false;
+    if (output_tensor->data.empty()) {
+      output_tensor->data.resize(8, 0);
     }
+    if (tensor_list->tensors_data_type() == kTypeUnknown) {
+      tensors_->at(node->outputIndex[i]).is_inferred_ = false;
+      return;
+    }
+    output_tensor->data.at(0) = tensor_list->tensors_data_type();
+  } else if (output_tensors[i]->data_type() == kTypeUnknown) {
+    tensors_->at(node->outputIndex[i]).is_inferred_ = false;
+    return;
   }
+  tensors_->at(node->outputIndex[i]).is_inferred_ = true;
+  return;
 }
 }  // namespace
 
 STATUS InferShapePass::Run(MetaGraphT *graph) {
-  graph_ = graph;
-  InitSearchTensor(graph);
   MS_ASSERT(graph != nullptr);
-  for (auto idx : graph->inputIndex) {
-    auto input_tensor = graph->allTensors[idx].get();
+  InitSearchTensor(graph);
+  for (auto input_idx : graph->inputIndex) {
+    auto input_tensor = graph->allTensors[input_idx].get();
     for (auto &dim : input_tensor->dims) {
       if (dim == 0) {
         MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to -1 as a default value.";
         dim = DEFAULT_DIM_VALUE;
       }
     }
-  }
-  for (auto g_input_idx : graph->inputIndex) {
-    auto g_input_shape = graph->allTensors.at(g_input_idx)->dims;
-    if (std::find(g_input_shape.begin(), g_input_shape.end(), -1) != g_input_shape.end() || fmk_type_ == FmkType_TF) {
+    auto input_shape = graph->allTensors.at(input_idx)->dims;
+    if (std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end() || fmk_type_ == FmkType_TF) {
       infer_interrupt_ = true;
     }
   }
@@ -286,11 +293,11 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
         auto output_dims = output_tensors[i]->shape();
         auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
         output_tensor->dims.swap(output_dims);
-        SetDataType(graph_, output_tensors, &tensors_, i, infer_node_index);
+        SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
       }
     } else if (status == RET_INFER_INVALID) {
       for (size_t i = 0; i < output_tensors.size(); i++) {
-        SetDataType(graph_, output_tensors, &tensors_, i, infer_node_index);
+        SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
       }
       infer_interrupt_ = true;
     } else {
@@ -300,7 +307,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       return RET_INFER_ERR;
     }
     FreeTensors(&input_tensors, &output_tensors);
-    AddOutputNode(infer_node_index);
+    AddOutputNodes(graph, infer_node_index);
   }
   return RET_OK;
 }
@@ -313,82 +320,60 @@ void InferShapePass::InitSearchTensor(MetaGraphT *graph) {
     auto node_input_indexes = node->inputIndex;
     //  init in_nodes index
     for (size_t j = 0; j < node_input_indexes.size(); j++) {
-      tensors_[node_input_indexes[j]].in_nodes_.push_back(i);
+      tensors_[node_input_indexes[j]].next_nodes_.push_back(i);
     }
     auto node_output_indexes = node->outputIndex;
     for (size_t j = 0; j < node_output_indexes.size(); j++) {
-      tensors_[node_output_indexes[j]].out_nodes_.push_back(i);
-      all_node_output_tensor_indexes.insert(all_node_output_tensor_indexes.end(), node_output_indexes.begin(),
-                                            node_output_indexes.end());
+      tensors_[node_output_indexes[j]].prev_nodes_.push_back(i);
+    }
+    all_node_output_tensor_indexes.insert(all_node_output_tensor_indexes.end(), node_output_indexes.begin(),
+                                          node_output_indexes.end());
+  }
+  for (uint32_t i = 0; i < tensors_.size(); i++) {
+    if (tensors_[i].prev_nodes_.empty() || IsContain(graph->inputIndex, i) || !graph->allTensors.at(i)->data.empty()) {
+      tensors_[i].is_inferred_ = true;
     }
   }
   for (size_t i = 0; i < graph->nodes.size(); i++) {
-    auto &node = graph->nodes[i];
+    auto &node = graph->nodes.at(i);
     if (std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
-                    [&](uint32_t index) { return !IsContain(all_node_output_tensor_indexes, index); })) {
+                    [&](uint32_t idx) { return tensors_[idx].is_inferred_; })) {
       infer_node_indexes_.push_back(i);
     }
   }
-  for (size_t i = 0; i < tensors_.size(); i++) {
-    if (tensors_[i].out_nodes_.empty()) {
-      tensors_[i].is_infer_ = true;
-    }
-  }
 }
 
-void InferShapePass::AddOutputNode(uint32_t infer_node_index) {
-  auto &node = graph_->nodes[infer_node_index];
+void InferShapePass::AddOutputNodes(MetaGraphT *graph, uint32_t infer_node_index) {
+  auto &node = graph->nodes.at(infer_node_index);
   for (size_t i = 0; i < node->outputIndex.size(); i++) {
-    auto output_tensor_node_indexes = tensors_[node->outputIndex[i]].in_nodes_;
-    tensors_[node->outputIndex[i]].is_infer_ = true;
-    for (size_t j = 0; j < output_tensor_node_indexes.size(); j++) {
-      bool flag = false;
-      auto &output_tensor_node = graph_->nodes[output_tensor_node_indexes[j]];
-      for (size_t k = 0; k < output_tensor_node->outputIndex.size(); k++) {
-        if (graph_->allTensors.at(output_tensor_node->outputIndex[k])->dataType != kObjectTypeTensorType) {
-          if (graph_->allTensors.at(output_tensor_node->outputIndex[k])->dataType == kTypeUnknown ||
-              tensors_[output_tensor_node->outputIndex[k]].is_infer_ == false) {
-            flag = true;
-            break;
-          }
-        } else {
-          if (tensors_[output_tensor_node->outputIndex[k]].is_infer_ == false) {
-            flag = true;
-            break;
-          }
-        }
-      }
-      if (flag) {
-        AddNextInferShapeNode(output_tensor_node_indexes, j);
+    auto next_nodes_indexes = tensors_[node->outputIndex[i]].next_nodes_;
+    for (size_t j = 0; j < next_nodes_indexes.size(); j++) {
+      auto &next_node = graph->nodes.at(next_nodes_indexes[j]);
+      if (std::any_of(next_node->outputIndex.begin(), next_node->outputIndex.end(),
+                      [&](uint32_t idx) { return !tensors_[idx].is_inferred_; })) {
+        AddNextInferShapeNode(graph, next_nodes_indexes, j);
       }
     }
   }
 }
 
-void InferShapePass::AddNextInferShapeNode(std::vector<uint32_t> output_tensor_node_indexes, size_t index) {
-  auto &output_tensor_node = graph_->nodes.at(output_tensor_node_indexes[index]);
-  if (find(infer_node_indexes_.begin(), infer_node_indexes_.end(), output_tensor_node_indexes[index]) ==
+void InferShapePass::AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32_t> next_nodes_indexes, size_t index) {
+  auto &next_node = graph->nodes.at(next_nodes_indexes[index]);
+  if (find(infer_node_indexes_.begin(), infer_node_indexes_.end(), next_nodes_indexes[index]) ==
       infer_node_indexes_.end()) {
-    auto output_tensor_node_type = output_tensor_node->primitive->value.type;
-    if (output_tensor_node_type == schema::PrimitiveType_Merge) {
-      if (std::all_of(output_tensor_node->inputIndex.begin(),
-                      output_tensor_node->inputIndex.begin() + output_tensor_node->inputIndex.size() / 2,
-                      [&](uint32_t k) { return tensors_[k].is_infer_; }) ||
-          std::all_of(output_tensor_node->inputIndex.begin() + output_tensor_node->inputIndex.size() / 2,
-                      output_tensor_node->inputIndex.end(), [&](uint32_t k) { return tensors_[k].is_infer_; })) {
-        infer_node_indexes_.push_back(output_tensor_node_indexes[index]);
+    auto next_node_type = next_node->primitive->value.type;
+    if (next_node_type == schema::PrimitiveType_Merge) {
+      if (std::all_of(next_node->inputIndex.begin(), next_node->inputIndex.begin() + next_node->inputIndex.size() / 2,
+                      [&](uint32_t i) { return tensors_[i].is_inferred_; }) ||
+          std::all_of(next_node->inputIndex.begin() + next_node->inputIndex.size() / 2, next_node->inputIndex.end(),
+                      [&](uint32_t i) { return tensors_[i].is_inferred_; })) {
+        infer_node_indexes_.push_back(next_nodes_indexes[index]);
       }
-    } else {
-      bool flag = true;
-      for (size_t i = 0; i < output_tensor_node->inputIndex.size(); i++) {
-        if (!(tensors_[output_tensor_node->inputIndex[i]].is_infer_)) {
-          flag = false;
-          break;
-        }
-      }
-      if (flag) {
-        infer_node_indexes_.push_back(output_tensor_node_indexes[index]);
-      }
+    } else if (std::all_of(next_node->inputIndex.begin(), next_node->inputIndex.end(),
+                           [&](uint32_t i) { return tensors_[i].is_inferred_; }) ||
+               std::any_of(next_node->inputIndex.begin(), next_node->inputIndex.end(),
+                           [&](uint32_t i) { return graph->allTensors.at(i)->dataType == kObjectTypeTensorType; })) {
+      infer_node_indexes_.push_back(next_nodes_indexes[index]);
     }
   }
 }

@@ -39,6 +39,9 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   TensorC *output = outputs[0];
 
   SetDataTypeFormat(output, input);
+  if (parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
+    output->data_type_ = kNumberTypeFloat32;
+  }
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
