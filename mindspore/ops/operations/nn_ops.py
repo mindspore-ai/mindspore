@@ -18,9 +18,9 @@
 import math
 import operator
 from functools import reduce, partial
+import numpy as np
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
-import numpy as np
 from ... import context
 from .. import signature as sig
 from ..._checkparam import Validator as validator
