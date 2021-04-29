@@ -40,9 +40,9 @@ class CommunicatorBase {
   using MessageCallback = std::function<void(std::shared_ptr<MessageHandler>)>;
   using HttpMsgCallback = std::function<void(std::shared_ptr<HttpMessageHandler>)>;
   using OnNodeEventCallback = std::function<void(const NodeEvent &)>;
-  using TcpMsgCallBack = std::function<void(std::shared_ptr<core::TcpConnection> conn,
+  using TcpMsgCallback = std::function<void(std::shared_ptr<core::TcpConnection> conn,
                                             std::shared_ptr<core::MessageMeta> meta, DataPtr data, size_t size)>;
-  using CertainEventCallBack = std::function<void(void)>;
+  using CertainEventCallback = std::function<void(void)>;
 
   CommunicatorBase() = default;
 

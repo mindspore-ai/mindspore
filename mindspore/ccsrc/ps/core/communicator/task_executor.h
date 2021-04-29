@@ -50,7 +50,7 @@ class TaskExecutor {
   bool Submit(Fun &&function, Args &&... args) {
     auto callee = std::bind(function, args...);
     std::function<void()> task = [callee]() -> void { callee(); };
-    auto index = 0;
+    size_t index = 0;
     for (size_t i = 0; i < submit_timeout_; i++) {
       std::unique_lock<std::mutex> lock(mtx_);
       if (task_num_ >= max_task_num_) {

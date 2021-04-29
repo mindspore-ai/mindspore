@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "ps/core/server_node.h"
+#include "ps/core/communicator/tcp_communicator.h"
+#include "ps/core/communicator/http_communicator.h"
 
 namespace mindspore {
 namespace ps {
@@ -122,6 +124,36 @@ void ServerNode::ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, 
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
+}
+
+std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateHttpComm(const std::string &ip, std::int16_t port,
+                                                                  const std::shared_ptr<TaskExecutor> &task_executor) {
+  std::lock_guard<std::mutex> lock(communicator_mutex_);
+  if (!communicators_.count(kHttpCommunicator)) {
+    MS_LOG(INFO) << "Create Http communicator.";
+    auto http_comm = std::make_shared<HttpCommunicator>(ip, port, task_executor);
+    MS_EXCEPTION_IF_NULL(http_comm);
+    communicators_[kHttpCommunicator] = http_comm;
+  }
+  return communicators_[kHttpCommunicator];
+}
+
+std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateTcpComm(const std::string &scheduler_ip,
+                                                                 std::int16_t scheduler_port, uint32_t worker_num,
+                                                                 uint32_t server_num,
+                                                                 const std::shared_ptr<TaskExecutor> &task_executor) {
+  std::lock_guard<std::mutex> lock(communicator_mutex_);
+  if (!communicators_.count(kTcpCommunicator)) {
+    MS_LOG(INFO) << "Create Tcp communicator.";
+    auto tcp_comm = std::make_shared<TcpCommunicator>(task_executor, this);
+    MS_EXCEPTION_IF_NULL(tcp_comm);
+    ClusterMetadata::instance()->Init(worker_num, server_num, scheduler_ip, scheduler_port);
+    MS_LOG(INFO) << "Initialize cluster metadata for server. Worker number:" << worker_num
+                 << ", Server number:" << server_num << ", Scheduler ip:" << scheduler_ip
+                 << ", Scheduler port:" << scheduler_port;
+    communicators_[kTcpCommunicator] = tcp_comm;
+  }
+  return communicators_[kTcpCommunicator];
 }
 
 bool ServerNode::Stop() {
