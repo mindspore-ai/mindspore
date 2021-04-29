@@ -77,6 +77,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int quantWeightSize;
   std::string bitNumIn;
   int bitNum;
+  int parallelMode;
   std::string configFile;
   std::string quantWeightChannelStr;
   int quantWeightChannel;
