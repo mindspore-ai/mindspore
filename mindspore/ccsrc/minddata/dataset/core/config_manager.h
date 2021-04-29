@@ -122,7 +122,8 @@ class ConfigManager {
 
   // setter function
   // @param num_parallel_workers - The setting to apply to the config
-  void set_num_parallel_workers(int32_t num_parallel_workers);
+  // @return Status error code
+  Status set_num_parallel_workers(int32_t num_parallel_workers);
 
   // setter function
   // @param connector_size - The setting to apply to the config
@@ -258,7 +259,7 @@ class ConfigManager {
   bool numa_enable_;
   int32_t prefetch_size_;
   bool auto_num_workers_;
-  const int32_t num_cpu_threads_;
+  int32_t num_cpu_threads_;
   int32_t auto_num_workers_num_shards_;
   uint8_t auto_worker_config_;
   // Private helper function that takes a nlohmann json format and populates the settings
