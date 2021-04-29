@@ -5,7 +5,7 @@ if(ENABLE_GITEE)
     __download_pkg_with_git(Vulkan-Headers ${REQ_URL} ${PKG_GIT_TAG} ${MD5})
 else()
     set(REQ_URL "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.2.144.zip")
-    set(MD5 "91eae880a0ad9ad77c89d79b95b7399a")
+    set(MD5 "c6e4a281e0b7be3fe2a433c73a9b778b")
     __download_pkg(Vulkan-Headers ${REQ_URL} ${MD5})
 endif()
 
