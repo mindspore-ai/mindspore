@@ -19,6 +19,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore import context
+from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="Ascend")
 
@@ -29,18 +30,22 @@ class ForwardNet(nn.Cell):
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.int32)
         self.i = Tensor(np.array(0), mstype.int32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
 
     def construct(self, x, y):
         out = self.zero
         i = self.i
         while x < y:
+            self.weight = x
             while i < self.max_cycles:
                 out = x * y + out
                 i = i + 1
+                self.weight = i
             x = x + 1
-        if out > 20:
+        if out < 20:
+            self.weight = out
             out = out - 20
-        return out
+        return out, self.weight
 
 
 class BackwardNet(nn.Cell):
@@ -57,25 +62,77 @@ class BackwardNet(nn.Cell):
 def test_forward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
-    forward_net = ForwardNet(max_cycles=3)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
-    graph_mode_out = forward_net(x, y)
+    graph_forward_net = ForwardNet(max_cycles=3)
+    graph_mode_out = graph_forward_net(x, y)
     # Pynative Mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_mode_out = forward_net(x, y)
+    pynative_forward_net = ForwardNet(max_cycles=3)
+    pynative_mode_out = pynative_forward_net(x, y)
     assert graph_mode_out == pynative_mode_out
 
 
 def test_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
-    forward_net = ForwardNet(max_cycles=3)
-    backward_net = BackwardNet(forward_net)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
-    graph_mode_grads = backward_net(x, y)
+    graph_forward_net = ForwardNet(max_cycles=3)
+    graph_backward_net = BackwardNet(graph_forward_net)
+    graph_mode_grads = graph_backward_net(x, y)
     # Pynative Mode
     context.set_context(mode=context.PYNATIVE_MODE)
-    pynative_mode_grads = backward_net(x, y)
+    pynative_forward_net = ForwardNet(max_cycles=3)
+    pynative_backward_net = BackwardNet(pynative_forward_net)
+    pynative_mode_grads = pynative_backward_net(x, y)
+    assert graph_mode_grads == pynative_mode_grads
+
+
+class ForwardNetNoAssign(nn.Cell):
+    def __init__(self, max_cycles=10):
+        super(ForwardNetNoAssign, self).__init__()
+        self.max_cycles = max_cycles
+        self.zero = Tensor(np.array(0), mstype.int32)
+        self.i = Tensor(np.array(0), mstype.int32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+
+    def construct(self, x, y):
+        out = self.zero
+        i = self.i
+        while x < y:
+            while i < self.max_cycles:
+                out = x * y + out
+                i = i + 1
+            x = x + 1
+        if out < 20:
+            out = out - 20
+        return out
+
+
+class BackwardNetNoAssign(nn.Cell):
+    def __init__(self, net):
+        super(BackwardNetNoAssign, self).__init__(auto_prefix=False)
+        self.forward_net = net
+        self.grad = C.GradOperation(get_all=True)
+
+    def construct(self, *inputs):
+        grads = self.grad(self.forward_net)(*inputs)
+        return grads
+
+
+# This test case has a problem of evaluator endless loop.
+def test_backward_no_assign():
+    x = Tensor(np.array(1), mstype.int32)
+    y = Tensor(np.array(3), mstype.int32)
+    # Graph Mode
+    context.set_context(mode=context.GRAPH_MODE)
+    graph_forward_net = ForwardNetNoAssign(max_cycles=3)
+    graph_backward_net = BackwardNetNoAssign(graph_forward_net)
+    graph_mode_grads = graph_backward_net(x, y)
+    # Pynative Mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    pynative_forward_net = ForwardNetNoAssign(max_cycles=3)
+    pynative_backward_net = BackwardNetNoAssign(pynative_forward_net)
+    pynative_mode_grads = pynative_backward_net(x, y)
     assert graph_mode_grads == pynative_mode_grads

@@ -23,6 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
+
 def test_if_after_for():
     class IfAfterForNet(nn.Cell):
         def __init__(self):
