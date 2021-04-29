@@ -37,7 +37,7 @@ namespace opt {
 class DimInfo {
  public:
   DimInfo() = default;
-  ~DimInfo() {}
+  virtual ~DimInfo() {}
   virtual std::string ToString() = 0;
 };
 
@@ -60,7 +60,7 @@ class FusionInfo {
  public:
   FusionInfo() = default;
   explicit FusionInfo(const std::string &type) : fusion_type_(type) {}
-  ~FusionInfo() = default;
+  virtual ~FusionInfo() = default;
   std::string FusionType() { return fusion_type_; }
   virtual bool ExistTypeInfo() { return false; }
 
@@ -72,7 +72,7 @@ class BlockFusionInfo : public FusionInfo {
  public:
   BlockFusionInfo() : FusionInfo("block_fusion") {}
   ~BlockFusionInfo() = default;
-  bool ExistTypeInfo() { return false; }
+  bool ExistTypeInfo() override { return false; }
 };
 
 class BlockPipelineFusionInfo : public FusionInfo {
@@ -80,7 +80,7 @@ class BlockPipelineFusionInfo : public FusionInfo {
   explicit BlockPipelineFusionInfo(const std::vector<std::vector<int>> &ids)
       : FusionInfo("block_pipeline_fusion"), pipeline_ids_(ids) {}
   ~BlockPipelineFusionInfo() = default;
-  bool ExistTypeInfo() { return true; }
+  bool ExistTypeInfo() override { return true; }
   std::vector<std::vector<int>> PipelineIds() { return pipeline_ids_; }
 
  private:
@@ -95,11 +95,11 @@ class ParallelCostModel {
  public:
   ParallelCostModel() {}
   ~ParallelCostModel() {}
-  int GetNodeCalAmount(const AnfNodePtr &node);
-  std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> CalFuseInfo(const AnfNodePtrList &nodes);
+  int GetNodeCalAmount(const AnfNodePtr &node) const;
+  std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> CalFuseInfo(const AnfNodePtrList &nodes) const;
 
  private:
-  FusionInfoPtr ProcessFusionInfo(py::object fusion_type, py::object type_info);
+  FusionInfoPtr ProcessFusionInfo(const py::object &fusion_type, const py::object &type_info) const;
 };
 
 using ParallelCostModelPtr = std::shared_ptr<ParallelCostModel>;
