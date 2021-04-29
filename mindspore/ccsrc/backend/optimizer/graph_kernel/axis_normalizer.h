@@ -29,9 +29,9 @@ class AxisNormalizer : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const FuncGraphPtr &func_graph);
-  int64_t NormAxis(int64_t x, size_t rank);
-  bool IsReduce(const AnfNodePtr &node);
+  bool Process(const FuncGraphPtr &func_graph) const;
+  int64_t NormAxis(int64_t x, size_t rank) const;
+  bool IsReduce(const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

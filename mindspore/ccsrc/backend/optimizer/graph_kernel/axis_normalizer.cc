@@ -23,15 +23,15 @@
 
 namespace mindspore {
 namespace opt {
-int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) { return x >= 0 ? x : x + static_cast<int64_t>(rank); }
+int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) const { return x >= 0 ? x : x + static_cast<int64_t>(rank); }
 
-bool AxisNormalizer::IsReduce(const AnfNodePtr &node) {
+bool AxisNormalizer::IsReduce(const AnfNodePtr &node) const {
   std::vector<PrimitivePtr> node_with_axis = {prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin};
   return std::any_of(node_with_axis.begin(), node_with_axis.end(),
                      [&node](PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }
 
-bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) {
+bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) const {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (auto node : todos) {
@@ -48,8 +48,8 @@ bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) {
       bool diff = false;
       ShapeVector axis_vec;
       if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
-        int64_t v1 = GetValue<int64_t>(axis);
-        int64_t v2 = NormAxis(v1, rank);
+        auto v1 = GetValue<int64_t>(axis);
+        auto v2 = NormAxis(v1, rank);
         axis_vec.push_back(v2);
         diff = diff || (v1 != v2);
       } else if (axis->isa<ValueList>() || axis->isa<ValueTuple>()) {
@@ -61,8 +61,8 @@ bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) {
           }
         } else if (vec[0]->isa<Int32Imm>() || vec[0]->isa<Int64Imm>()) {
           for (auto v : vec) {
-            int64_t v1 = GetValue<int64_t>(v);
-            int64_t v2 = NormAxis(v1, rank);
+            auto v1 = GetValue<int64_t>(v);
+            auto v2 = NormAxis(v1, rank);
             axis_vec.push_back(v2);
             diff = diff || (v1 != v2);
           }

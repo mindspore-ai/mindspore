@@ -80,7 +80,7 @@ class AbstractShapeCreator {
     return {device_shape[0], device_shape[3], device_shape[1], device_shape[2]};
   }
   static ShapeVector FractalNzAbstractShape(const ShapeVector &device_shape) {
-    if (device_shape.size() == 1 && (device_shape[0] == 1 || device_shape[0] % kCubeSize == 0)) {
+    if (device_shape.size() == 1 && (device_shape[0] == 1 || static_cast<size_t>(device_shape[0]) % kCubeSize == 0)) {
       return device_shape;
     }
     if (device_shape.size() < 4) {
@@ -126,7 +126,7 @@ class CNodeDecoder {
   }
 
  private:
-  ValuePtr ParseValue(const nlohmann::json &attr_json, const std::string &type) {
+  ValuePtr ParseValue(const nlohmann::json &attr_json, const std::string &type) const {
     if (type == "str") {
       std::string value = attr_json[kJsonKeyValue];
       return MakeValue(value);
@@ -204,7 +204,6 @@ class CNodeDecoder {
 
   bool DecodeOutputDesc(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph) {
     std::vector<nlohmann::json> output_descs = cnode_json[kJsonKeyOutputDesc];
-    AbstractBasePtr abstract(nullptr);
     if (output_descs.empty()) {
       MS_LOG(ERROR) << "No outputs found.";
       return false;
@@ -288,7 +287,7 @@ class CNodeDecoder {
     return primitive;
   }
 
-  tensor::TensorPtr DecodeScalar(const nlohmann::json &scalar_json) {
+  tensor::TensorPtr DecodeScalar(const nlohmann::json &scalar_json) const {
     auto type_id = DtypeToTypeId(scalar_json[kJsonKeyDataType]);
     switch (type_id) {
       case kNumberTypeFloat16:
@@ -435,7 +434,7 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const std::string &kernel_js
   return DecodeFusedNodes(kernel_json);
 }
 
-StitchInfo AkgKernelJsonDecoder::GetStitchInfo(const nlohmann::json &kernel_json) {
+StitchInfo AkgKernelJsonDecoder::GetStitchInfo(const nlohmann::json &kernel_json) const {
   StitchInfo info;
   if (kernel_json.find(kJsonKeyBufferStitch) != kernel_json.end()) {
     nlohmann::json buffer_stitch = kernel_json[kJsonKeyBufferStitch];
@@ -451,7 +450,8 @@ StitchInfo AkgKernelJsonDecoder::GetStitchInfo(const nlohmann::json &kernel_json
   return info;
 }
 
-void AkgKernelJsonDecoder::SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info, const CNodePtr &node) {
+void AkgKernelJsonDecoder::SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info,
+                                         const CNodePtr &node) const {
   std::vector<nlohmann::json> output_descs = op_desc[kJsonKeyOutputDesc];
   if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) return;
   std::string tensor_name = output_descs[0][kJsonKeyTensorName];
