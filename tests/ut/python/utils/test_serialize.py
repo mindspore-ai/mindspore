@@ -236,7 +236,7 @@ def test_load_param_into_net_param_type_and_shape_error():
     assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
-    one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7))), name="conv1.weight")
+    one_param = Parameter(Tensor(np.ones(shape=(64, 3, 7, 7)), dtype=mstype.int32), name="conv1.weight")
     parameter_dict["conv1.weight"] = one_param
     with pytest.raises(RuntimeError):
         load_param_into_net(net, parameter_dict)
