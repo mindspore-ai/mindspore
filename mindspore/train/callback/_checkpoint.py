@@ -82,6 +82,10 @@ class CheckpointConfig:
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
+        enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
+                                      is not required. Default: None.
+        enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
+                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -126,7 +130,9 @@ class CheckpointConfig:
                  keep_checkpoint_per_n_minutes=0,
                  integrated_save=True,
                  async_save=False,
-                 saved_network=None):
+                 saved_network=None,
+                 enc_key=None,
+                 enc_mode='AES-GCM'):
 
         if save_checkpoint_steps is not None:
             save_checkpoint_steps = Validator.check_non_negative_int(save_checkpoint_steps)
@@ -160,6 +166,8 @@ class CheckpointConfig:
         self._integrated_save = Validator.check_bool(integrated_save)
         self._async_save = Validator.check_bool(async_save)
         self._saved_network = saved_network
+        self._enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
+        self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
 
     @property
     def save_checkpoint_steps(self):
@@ -195,6 +203,16 @@ class CheckpointConfig:
     def saved_network(self):
         """Get the value of _saved_network"""
         return self._saved_network
+
+    @property
+    def enc_key(self):
+        """Get the value of _enc_key"""
+        return self._enc_key
+
+    @property
+    def enc_mode(self):
+        """Get the value of _enc_mode"""
+        return self._enc_mode
 
     def get_checkpoint_policy(self):
         """Get the policy of checkpoint."""
@@ -355,7 +373,7 @@ class ModelCheckpoint(Callback):
 
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
             save_checkpoint(network, cur_file, self._config.integrated_save,
-                            self._config.async_save)
+                            self._config.async_save, self._config.enc_key, self._config.enc_mode)
 
             self._latest_ckpt_file_name = cur_file
 

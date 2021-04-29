@@ -14,6 +14,7 @@
 # ============================================================================
 """ut for model serialize(save/load)"""
 import os
+import platform
 import stat
 import time
 
@@ -297,6 +298,30 @@ def test_load_checkpoint_empty_file():
     os.mknod("empty.ckpt")
     with pytest.raises(ValueError):
         load_checkpoint("empty.ckpt")
+
+
+def test_save_and_load_checkpoint_for_network_with_encryption():
+    """ test save and checkpoint for network with encryption"""
+    net = Net()
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
+    opt = Momentum(net.trainable_params(), 0.0, 0.9, 0.0001, 1024)
+
+    loss_net = WithLossCell(net, loss)
+    train_network = TrainOneStepCell(loss_net, opt)
+    key = os.urandom(16)
+    mode = "AES-GCM"
+    ckpt_path = "./encrypt_ckpt.ckpt"
+    if platform.system().lower() == "windows":
+        with pytest.raises(NotImplementedError):
+            save_checkpoint(train_network, ckpt_file_name=ckpt_path, enc_key=key, enc_mode=mode)
+            param_dict = load_checkpoint(ckpt_path, dec_key=key, dec_mode="AES-GCM")
+            load_param_into_net(net, param_dict)
+    else:
+        save_checkpoint(train_network, ckpt_file_name=ckpt_path, enc_key=key, enc_mode=mode)
+        param_dict = load_checkpoint(ckpt_path, dec_key=key, dec_mode="AES-GCM")
+        load_param_into_net(net, param_dict)
+    if os.path.exists(ckpt_path):
+        os.remove(ckpt_path)
 
 
 class MYNET(nn.Cell):

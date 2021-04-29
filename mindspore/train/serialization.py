@@ -14,6 +14,7 @@
 # ============================================================================
 """Model and parameters serialization."""
 import os
+
 import sys
 import stat
 import math
@@ -40,7 +41,7 @@ from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export
 from mindspore.parallel._tensor import _load_tensor
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
-from .._c_expression import load_mindir
+from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
 
 
 tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
@@ -120,14 +121,19 @@ def _update_param(param, new_param):
         param.set_data(type(param.data)(new_param.data))
 
 
-def _exec_save(ckpt_file_name, data_list):
+def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
     """Execute the process of saving checkpoint into file."""
 
     try:
+        MAX_BLOCK_SIZE = 1024*1024*512
         with _ckpt_mutex:
             if os.path.exists(ckpt_file_name):
                 os.remove(ckpt_file_name)
             with open(ckpt_file_name, "ab") as f:
+                if enc_key is not None:
+                    plain_data = bytes(0)
+                    cipher_data = bytes(0)
+
                 for name, value in data_list.items():
                     data_size = value[2].nbytes / 1024
                     if data_size > SLICE_SIZE:
@@ -145,7 +151,19 @@ def _exec_save(ckpt_file_name, data_list):
                         param_tensor.tensor_type = value[1]
                         param_tensor.tensor_content = param_slice.tobytes()
 
-                        f.write(checkpoint_list.SerializeToString())
+                        if enc_key is None:
+                            f.write(checkpoint_list.SerializeToString())
+                        else:
+                            plain_data += checkpoint_list.SerializeToString()
+                            while len(plain_data) >= MAX_BLOCK_SIZE:
+                                cipher_data += _encrypt(plain_data[0: MAX_BLOCK_SIZE], MAX_BLOCK_SIZE, enc_key,
+                                                        len(enc_key), enc_mode)
+                                plain_data = plain_data[MAX_BLOCK_SIZE:]
+
+                if enc_key is not None:
+                    if plain_data:
+                        cipher_data += _encrypt(plain_data, len(plain_data), enc_key, len(enc_key), enc_mode)
+                    f.write(cipher_data)
 
         os.chmod(ckpt_file_name, stat.S_IRUSR)
 
@@ -154,7 +172,7 @@ def _exec_save(ckpt_file_name, data_list):
         raise e
 
 
-def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False):
+def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, enc_key=None, enc_mode="AES-GCM"):
     """
     Saves checkpoint info to a specified file.
 
@@ -166,6 +184,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
+        enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
+                                      is not required. Default: None.
+        enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
+                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Raises:
         TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter
@@ -176,6 +198,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
         raise TypeError("The parameter save_obj should be nn.Cell or list, but got {}".format(type(save_obj)))
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
+    enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
+    enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
 
     logger.info("Execute the process of saving checkpoint files.")
 
@@ -218,10 +242,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
             data_list[key].append(data)
 
     if async_save:
-        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list), name="asyn_save_ckpt")
+        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_list, enc_key, enc_mode), name="asyn_save_ckpt")
         thr.start()
     else:
-        _exec_save(ckpt_file_name, data_list)
+        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode)
 
     logger.info("Saving checkpoint process is finished.")
 
@@ -278,7 +302,7 @@ def load(file_name):
     return graph
 
 
-def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None):
+def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM"):
     """
     Loads checkpoint info from a specified file.
 
@@ -289,6 +313,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                            in the param_dict into net with the same suffix. Default: False
         filter_prefix (Union[str, list[str], tuple[str]]): Parameters starting with the filter_prefix
             will not be loaded. Default: None.
+        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
+                                      is not required. Default: None.
+        dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
+                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Returns:
         Dict, key is parameter name, value is a Parameter.
@@ -303,15 +331,25 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
     """
     ckpt_file_name, filter_prefix = _check_checkpoint_param(ckpt_file_name, filter_prefix)
+    dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
+    dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
     logger.info("Execute the process of loading checkpoint files.")
     checkpoint_list = Checkpoint()
 
     try:
-        with open(ckpt_file_name, "rb") as f:
-            pb_content = f.read()
+        if dec_key is None:
+            with open(ckpt_file_name, "rb") as f:
+                pb_content = f.read()
+        else:
+            pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
-        logger.error("Failed to read the checkpoint file `%s`, please check the correct of the file.", ckpt_file_name)
+        if _is_cipher_file(ckpt_file_name):
+            logger.error("Failed to read the checkpoint file `%s`. The file may be encrypted, please pass in the "
+                         "dec_key.", ckpt_file_name)
+        else:
+            logger.error("Failed to read the checkpoint file `%s`, please check the correct of the file.", \
+                         ckpt_file_name)
         raise ValueError(e.__str__())
 
     parameter_dict = {}
@@ -1082,7 +1120,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     return merged_parameter
 
 
-def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=None):
+def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=None, dec_key=None, dec_mode='AES-GCM'):
     """
     Load checkpoint into net for distributed predication.
 
@@ -1095,6 +1133,10 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
             elements are [dev_matrix, tensor_map, param_split_shape, field]. If None,
             it means that the predication process just uses single device.
             Default: None.
+        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is None, the decryption
+                                      is not required. Default: None.
+        dec_mode (str): This parameter is valid only when dec_key is not set to None. Specifies the decryption
+                        mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Raises:
         TypeError: The type of inputs do not match the requirements.
@@ -1112,6 +1154,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                          f"and the value is a list or a tuple that the first four elements are "
                          f"dev_matrix (list[int]), tensor_map (list[int]), "
                          f"param_split_shape (list[int]) and field_size (zero).")
+
+    dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
+    dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
 
     train_strategy_filename = context.get_auto_parallel_context("strategy_ckpt_load_file")
     _train_strategy = build_searched_strategy(train_strategy_filename)
@@ -1135,7 +1180,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         param_rank = rank_list[param.name][0]
         skip_merge_split = rank_list[param.name][1]
         for rank in param_rank:
-            sliced_param = load_checkpoint(checkpoint_filenames[rank])[param.name]
+            sliced_param = load_checkpoint(checkpoint_filenames[rank], dec_key=dec_key, dec_mode=dec_mode)[param.name]
             sliced_params.append(sliced_param)
         if skip_merge_split:
             split_param = sliced_params[0]
