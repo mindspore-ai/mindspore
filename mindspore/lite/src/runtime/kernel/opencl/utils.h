@@ -64,8 +64,9 @@ void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
 int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
                          TypeId expect_data_type, const std::vector<int> &expect_shape);
 
-void StoreTmpWeight(lite::Tensor *tensor);
-void FreeTmpWeight(lite::Tensor *tensor);
+void *StoreTensorData(lite::Tensor *tensor);
+
+void FreeStoredData(void *data);
 
 std::vector<std::string> CreateBuildOptionsExtByDType(TypeId type_id);
 

@@ -260,7 +260,7 @@ void Conv2DOpenCLKernel::InitFilter() {
 
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
-  void *src_data = filter_tensor->data_c();
+  void *src_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
   auto src_dtype = filter_tensor->data_type();
   auto dst_dtype = use_fp16_ ? kNumberTypeFloat16 : kNumberTypeFloat32;
   std::vector<char> tmp(size, 0);
@@ -279,7 +279,7 @@ void Conv2DOpenCLKernel::InitFilter() {
     allocator->UnmapBuffer(packed_filter_);
   }
 
-  FreeTmpWeight(in_tensors_.at(kWeightIndex));
+  FreeStoredData(stored_filter_);
 }
 
 void Conv2DOpenCLKernel::InitBias() {
@@ -287,6 +287,7 @@ void Conv2DOpenCLKernel::InitBias() {
 
   // align bias from C to C4
   auto bias_tensor = in_tensors_.at(2);
+  void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
   packed_bias_ = allocator->Malloc(packed_bias_size, lite::opencl::MemType::BUF);
 
@@ -294,10 +295,10 @@ void Conv2DOpenCLKernel::InitBias() {
   memset(packed_bias_, 0x00, packed_bias_size);
   if (bias_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_) {
-      memcpy(packed_bias_, bias_tensor->data_c(), CO_ * sizeof_FLT_);
+      memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
     } else {
       auto packed_bias_fp32 = reinterpret_cast<float *>(packed_bias_);
-      auto origin_bias_fp16 = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+      auto origin_bias_fp16 = reinterpret_cast<float16_t *>(src_data);
       MS_ASSERT(origin_bias_fp16);
       for (int i = 0; i < CO_; ++i) {
         packed_bias_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
@@ -306,17 +307,17 @@ void Conv2DOpenCLKernel::InitBias() {
   } else {
     if (use_fp16_) {
       auto packed_bias_fp16 = reinterpret_cast<float16_t *>(packed_bias_);
-      auto origin_bias_fp32 = reinterpret_cast<float *>(bias_tensor->data_c());
+      auto origin_bias_fp32 = reinterpret_cast<float *>(src_data);
       MS_ASSERT(origin_bias_fp32);
       for (int i = 0; i < CO_; ++i) {
         packed_bias_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
       }
     } else {
-      memcpy(packed_bias_, bias_tensor->data_c(), CO_ * sizeof_FLT_);
+      memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
     }
   }
   allocator->UnmapBuffer(packed_bias_);
-  FreeTmpWeight(in_tensors_.at(kBiasIndex));
+  FreeStoredData(stored_bias_);
 }
 
 void Conv2DOpenCLKernel::SetConstArgs() {
@@ -401,6 +402,24 @@ std::vector<BaseTuningParameter> Conv2DOpenCLKernel::GenerateTuningParam() {
     }
   }
   return tuning_params;
+}
+
+int Conv2DOpenCLKernel::StoreConstData() {
+  if (!op_parameter_->infer_flag_) {
+    stored_filter_ = StoreTensorData(in_tensors_.at(kWeightIndex));
+    if (stored_filter_ == nullptr) {
+      MS_LOG(ERROR) << "Store weight failed.";
+      return RET_ERROR;
+    }
+    if (in_tensors_.size() > kBiasIndex) {
+      stored_bias_ = StoreTensorData(in_tensors_.at(kBiasIndex));
+      if (stored_bias_ == nullptr) {
+        MS_LOG(ERROR) << "Store bias failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
 }
 
 bool UseFcReplaceConv(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -528,11 +547,12 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
     }
   }
   if (!infer_shape_done) {
-    StoreTmpWeight(inputs.at(kWeightIndex));
-    if (inputs.size() > kBiasIndex) {
-      StoreTmpWeight(inputs.at(kBiasIndex));
+    auto ret = reinterpret_cast<Conv2DOpenCLKernel *>(kernel)->StoreConstData();
+    if (ret != mindspore::lite::RET_OK) {
+      MS_LOG(ERROR) << "Store " << opParameter->name_ << " const data failed!";
+      delete kernel;
+      return nullptr;
     }
-    MS_LOG(WARNING) << "kernel don't infer shape yet!";
     return kernel;
   }
   if (kernel->CheckSpecs() != RET_OK || kernel->OpenCLKernel::CheckSpecs() != RET_OK) {

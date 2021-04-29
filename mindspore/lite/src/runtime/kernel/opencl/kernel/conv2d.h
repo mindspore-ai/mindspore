@@ -58,6 +58,8 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
   int Run() override;
 
+  int StoreConstData() override;
+
   std::string Key() override {
     auto key = OpenCLKernel::Key();
     key += "_" + std::to_string(KH_) + "_" + std::to_string(KW_) + "_" + std::to_string(param_->stride_h_) + "_" +
@@ -94,7 +96,9 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   int KH_{};
   int KW_{};
   void *packed_filter_{nullptr};
+  void *stored_filter_{nullptr};
   void *packed_bias_{nullptr};
+  void *stored_bias_{nullptr};
   MemType filter_type_{MemType::BUF};
   bool has_bias_{false};
   int TILE_HW_{};

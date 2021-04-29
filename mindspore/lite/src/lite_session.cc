@@ -347,11 +347,16 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   }
 }
 
-void LiteSession::FreePackOpWeight() {
-  for (auto *kernel : kernels_) {
+void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
+  for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
-    if (!IsPackedOp(kernel->Type())) {
-      continue;
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (!IsPackedOp(kernel->Type())) {
+        continue;
+      }
+    } else {
+      auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      FreePackOpWeight(subgraph->nodes());
     }
     auto inputs = kernel->in_tensors();
     for (auto *tensor : inputs) {
@@ -444,8 +449,10 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+#ifndef SUPPORT_TRAIN
   // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
-  FreePackOpWeight();
+  FreePackOpWeight(kernels_);
+#endif
   is_running_.store(false);
   return RET_OK;
 }  // namespace lite

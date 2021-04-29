@@ -271,13 +271,13 @@ int CastConstTensorsData(const std::vector<Tensor *> &tensors, std::map<Tensor *
     if (tensor->data_type() == kNumberTypeFloat32 && dst_data_type == kNumberTypeFloat16) {
       auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat16);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Cast const tensor from fp32 to fp16 failed, tensor name : " << tensor->tensor_name();
+        MS_LOG(DEBUG) << "Cast const tensor from fp32 to fp16 failed, tensor name : " << tensor->tensor_name();
         return ret;
       }
     } else if (tensor->data_type() == kNumberTypeFloat16 && dst_data_type == kNumberTypeFloat32) {
       auto ret = CastConstTensorData(tensor, restored_origin_tensors, kNumberTypeFloat32);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Cast const tensor from fp16 to fp32 failed, tensor name : " << tensor->tensor_name();
+        MS_LOG(DEBUG) << "Cast const tensor from fp16 to fp32 failed, tensor name : " << tensor->tensor_name();
         return ret;
       }
     } else {

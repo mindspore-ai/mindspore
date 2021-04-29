@@ -140,8 +140,9 @@ int FullConnectionOpenCLKernel::InitFilter() {
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
-  auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
-  auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c());
+  void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
+  auto originWeightFp32 = reinterpret_cast<float *>(src_data);
+  auto originWeightFp16 = reinterpret_cast<float16_t *>(src_data);
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
 
   // pad weight
@@ -182,6 +183,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 
@@ -202,19 +204,21 @@ int FullConnectionOpenCLKernel::InitBias() {
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() == 3) {
-    if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < CO_; i++) {
-        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
+        reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(src_data)[i];
       }
-    } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
+    } else if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
       for (int i = 0; i < CO_; i++) {
-        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
+        reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(src_data)[i];
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->data_c(), CO_ * dtype_size);
+      memcpy(bias_, src_data, CO_ * dtype_size);
     }
   }
   allocator->UnmapBuffer(bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 
@@ -242,6 +246,24 @@ void FullConnectionOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_img_shape);
   auto *param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count, static_cast<cl_int>(param->act_type_));
+}
+
+int FullConnectionOpenCLKernel::StoreConstData() {
+  if (!op_parameter_->infer_flag_) {
+    stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
+    if (stored_weight_ == nullptr) {
+      MS_LOG(ERROR) << "Store weight failed.";
+      return RET_ERROR;
+    }
+    if (in_tensors_.size() > kBiasIndex) {
+      stored_bias_ = StoreTensorData(in_tensors_.at(kBiasIndex));
+      if (stored_bias_ == nullptr) {
+        MS_LOG(ERROR) << "Store bias failed.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
 }
 
 int FullConnectionOpenCLKernel::Run() {

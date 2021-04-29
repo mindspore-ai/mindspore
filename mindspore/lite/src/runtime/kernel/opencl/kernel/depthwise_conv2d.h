@@ -44,10 +44,13 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
   int InitBias();
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int StoreConstData() override;
 
  private:
   void *packed_weight_{nullptr};
+  void *stored_weight_{nullptr};
   void *bias_data_{nullptr};
+  void *stored_bias_{nullptr};
   struct {
     int H{2};
     int W{2};

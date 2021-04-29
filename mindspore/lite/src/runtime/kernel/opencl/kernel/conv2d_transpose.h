@@ -39,10 +39,13 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int InferShape() override;
+  int StoreConstData() override;
 
  private:
   void *padWeight_{nullptr};
   void *bias_{nullptr};
+  void *stored_weight_{nullptr};
+  void *stored_bias_{nullptr};
   bool enable_fp16_{false};
 };
 }  // namespace mindspore::kernel

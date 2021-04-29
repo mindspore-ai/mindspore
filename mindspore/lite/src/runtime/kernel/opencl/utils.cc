@@ -301,29 +301,22 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
   return RET_OK;
 }
 
-static std::set<void *> tmp_weights;
-
-void StoreTmpWeight(lite::Tensor *tensor) {
-  MS_LOG(WARNING) << "store weight when kernel don't infer shape!";
+void *StoreTensorData(lite::Tensor *tensor) {
   if ((tensor != nullptr) && (tensor->data_c() != nullptr) && (tensor->Size() > 0)) {
-    void *new_data = malloc(tensor->Size());
-    MS_ASSERT(new_data);
-    if (new_data == nullptr) {
-      return;
+    void *stored_data = malloc(tensor->Size());
+    if (stored_data == nullptr) {
+      MS_LOG(ERROR) << "StoreTensorData Malloc Failed.";
+      return nullptr;
     }
-    memcpy(new_data, tensor->data_c(), tensor->Size());
-    tensor->set_data(new_data);
-    tmp_weights.insert(new_data);
+    memcpy(stored_data, tensor->data_c(), tensor->Size());
+    return stored_data;
   }
+  return nullptr;
 }
 
-void FreeTmpWeight(lite::Tensor *tensor) {
-  MS_ASSERT(tensor != nullptr);
-  auto data = tensor->data_c();
-  if (tmp_weights.count(data)) {
-    tmp_weights.erase(data);
+void FreeStoredData(void *data) {
+  if (data != nullptr) {
     free(data);
-    tensor->set_data(nullptr);
   }
 }
 

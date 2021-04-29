@@ -36,12 +36,15 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
+  int StoreConstData() override;
 
  private:
   int InitFilter();
   int InitBias();
   void *padWeight_{nullptr};
   void *bias_{nullptr};
+  void *stored_weight_{nullptr};
+  void *stored_bias_{nullptr};
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
