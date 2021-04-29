@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -131,3 +131,41 @@ class StackedRNNForGPU(nn.Cell):
             res += (self.expand_dims(self.fc(output[i]), 0),)
         res = self.concat(res)
         return res
+
+class StackedRNNForCPU(nn.Cell):
+    """
+     Define a stacked RNN network which contains two LSTM layers and one full-connect layer on CPU.
+
+     Args:
+        input_size(int): Size of time sequence. Usually, the input_size is equal to three times of image height for
+        captcha images.
+        batch_size(int): batch size of input data, default is 64
+        hidden_size(int): the hidden size in LSTM layers, default is 512
+        num_classes(int): the number of classes.
+     """
+
+    def __init__(self, input_size, batch_size=64, hidden_size=512, num_classes=11):
+        super(StackedRNNForCPU, self).__init__()
+        self.batch_size = batch_size
+        self.input_size = input_size
+        k = (1 / hidden_size) ** 0.5
+        self.w1 = Parameter(
+            np.random.uniform(-k, k, (4 * hidden_size * (input_size + hidden_size + 1), 1, 1)).astype(np.float32))
+        self.w2 = Parameter(
+            np.random.uniform(-k, k, (4 * hidden_size * (2 * hidden_size + 1), 1, 1)).astype(np.float32))
+        self.h = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float32))
+        self.c = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float32))
+
+        self.lstm_1 = nn.LSTMCell(input_size=input_size, hidden_size=hidden_size)
+        self.lstm_2 = nn.LSTMCell(input_size=hidden_size, hidden_size=hidden_size)
+
+        self.fc = nn.Dense(in_channels=hidden_size, out_channels=num_classes)
+        self.transpose = P.Transpose()
+
+    def construct(self, x):
+        x = self.transpose(x, (3, 0, 2, 1))
+        x = F.reshape(x, (-1, self.batch_size, self.input_size))
+        y1, _, _, _, _ = self.lstm_1(x, self.h, self.c, self.w1)
+        y2, _, _, _, _ = self.lstm_2(y1, self.h, self.c, self.w2)
+        output = self.fc(y2) # y2 shape: [time_step, bs, hidden_size] output shape: [time_step, bs, num_classes].
+        return output

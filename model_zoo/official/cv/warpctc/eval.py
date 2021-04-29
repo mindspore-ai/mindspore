@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.loss import CTCLoss
 from src.config import config as cf
 from src.dataset import create_dataset
-from src.warpctc import StackedRNN, StackedRNNForGPU
+from src.warpctc import StackedRNN, StackedRNNForGPU, StackedRNNForCPU
 from src.metric import WarpCTCAccuracy
 
 set_seed(1)
@@ -32,8 +32,8 @@ set_seed(1)
 parser = argparse.ArgumentParser(description="Warpctc training")
 parser.add_argument("--dataset_path", type=str, default=None, help="Dataset, default is None.")
 parser.add_argument("--checkpoint_path", type=str, default=None, help="checkpoint file path, default is None")
-parser.add_argument('--platform', type=str, default='Ascend', choices=['Ascend', 'GPU'],
-                    help='Running platform, choose from Ascend, GPU, and default is Ascend.')
+parser.add_argument('--platform', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'],
+                    help='Running platform, choose from Ascend, GPU or CPU, and default is Ascend.')
 args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
@@ -54,8 +54,10 @@ if __name__ == '__main__':
                    batch_size=cf.batch_size)
     if args_opt.platform == 'Ascend':
         net = StackedRNN(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
-    else:
+    elif args_opt.platform == 'GPU':
         net = StackedRNNForGPU(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
+    else:
+        net = StackedRNNForCPU(input_size=input_size, batch_size=cf.batch_size, hidden_size=cf.hidden_size)
 
     # load checkpoint
     param_dict = load_checkpoint(args_opt.checkpoint_path)

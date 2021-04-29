@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ run_ascend() {
   cd ..
 }
 
-run_gpu() {
+run_gpu_cpu() {
   if [ -d "eval" ]; then
     rm -rf ./eval
   fi
@@ -70,15 +70,13 @@ run_gpu() {
   cp -r ../src ./eval
   cd ./eval || exit
   env >env.log
-  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=GPU  > log.txt 2>&1 &
+  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=$3  > log.txt 2>&1 &
   cd ..
 }
 
 if [ "Ascend" == $PLATFORM ]; then
   run_ascend $PATH1 $PATH2
-elif [ "GPU" == $PLATFORM ]; then
-  run_gpu $PATH1 $PATH2
 else
-  echo "error: PLATFORM=$PLATFORM is not support, only support Ascend and GPU."
+  run_gpu_cpu $PATH1 $PATH2 $PLATFORM
 fi
 
