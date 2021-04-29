@@ -5,11 +5,14 @@ MINDSPORE_HOME="${CURRENT_PATH}/../../../.."
 echo "MINDSPORE_HOME path is ${MINDSPORE_HOME}"
 CROPPER_OUTPUT_DIR=${MINDSPORE_HOME}/mindspore/lite/build/tools/cropper
 mkdir -p ${CROPPER_OUTPUT_DIR}
-MAPPING_OUTPUT_FILE_NAME_TMP=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_tmp.cfg
-MAPPING_OUTPUT_FILE_NAME=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu.cfg
-echo "MAPPING_OUTPUT_FILE_NAME is ${MAPPING_OUTPUT_FILE_NAME}"
+MAPPING_OUTPUT_FILE_NAME_TMP=${CROPPER_OUTPUT_DIR}/cropper_mapping_tmp.cfg
+CPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu.cfg
+GPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_gpu.cfg
+NPU_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_npu.cfg
 [ -n "${MAPPING_OUTPUT_FILE_NAME_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TMP}
-[ -n "${MAPPING_OUTPUT_FILE_NAME}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME}
+[ -n "${CPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_MAPPING_OUTPUT_FILE}
+[ -n "${GPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${GPU_MAPPING_OUTPUT_FILE}
+[ -n "${NPU_MAPPING_OUTPUT_FILE}" ] && rm -f ${NPU_MAPPING_OUTPUT_FILE}
 ops_list=()
 DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID"
 # get the flatbuffers path
@@ -60,6 +63,7 @@ getDeep() {
     fi
   done
 }
+
 getOpsFile() {
   echo "start get operator mapping file $3"
   # shellcheck disable=SC2068
@@ -76,17 +80,19 @@ getOpsFile() {
       map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
       # first is *.o second is *.cc
       array_file=()
-      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR})
+      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build' | egrep -v ${REMOVE_LISTS_STR})
       # shellcheck disable=SC2068
       for array_file in ${array_file[@]}; do
         # only add existing files
         if [[ -e ${array_file%h*}cc ]]; then
           getDeep ${type} ${array_file%h*}cc ${3} &
+          getDeep ${type} ${array_file} ${3} &
           array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
           echo "${type},${3},${array_file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
         fi
         if [[ -e ${array_file%h*}c ]]; then
           getDeep ${type} ${array_file%h*}c ${3} &
+          getDeep ${type} ${array_file} ${3} &
           array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
           echo "${type},${3},${array_file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
         fi
@@ -94,6 +100,7 @@ getOpsFile() {
     done
   done
 }
+
 getCommonFile() {
   echo "start get common files"
   include_h=()
@@ -111,6 +118,17 @@ getCommonFile() {
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/pack.h
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/populate_register.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h
+    "${MINDSPORE_HOME}"/mindspore/core/ir/dtype/type_id.h
+    "${MINDSPORE_HOME}"/mindspore/core/utils/overload.h
+    "${MINDSPORE_HOME}"/mindspore/lite/tools/common/option.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions_fp16.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.h
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
   )
   all_files_h=("${include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
 
@@ -147,6 +165,7 @@ getCommonFile() {
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.cc
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
     "${MINDSPORE_HOME}"/mindspore/core/utils/status.cc
+    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.c
   )
   all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
@@ -171,9 +190,42 @@ getCommonFile() {
   # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')
-    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP} &
+    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
   done
-  wait
+}
+
+# The x86 platform cannot search based on header files, so manually search for the first layer.
+# opencl & ddk
+getOpsFileWithNoDeepSearch() {
+  echo "start get gpu/npu operator mapping file $3"
+  # shellcheck disable=SC2068
+  for type in ${ops_list[@]}; do
+    # get mapping
+    ret=$(egrep -r -l "$1${type}," $2)
+    array=("${ret}")
+    # shellcheck disable=SC2068
+    for file in ${array[@]}; do
+      # delete \n
+      out_file=$(echo ${file} | awk -F '/' '{print $NF}')
+      # concat schemaType + fileType + fileName append to files
+      echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+
+      local ret=$(egrep -r *.h\" ${file} | awk -F '\"' '{print $2}')
+      local ret_h=$(egrep -r *.h\" ${file%cc*}h | awk -F '\"' '{print $2}')
+      local depend_file=("${ret}" "${ret_h}")
+      for array_file in ${depend_file[@]}; do
+        # only add existing files
+        if [[ -e ${MINDSPORE_HOME}/mindspore/lite/${array_file%h*}cc ]]; then
+          array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
+          echo "${type},${3},${array_file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+        fi
+        if [[ -e ${MINDSPORE_HOME}/mindspore/lite/${array_file%h*}c ]]; then
+          array_file_split=$(echo ${array_file} | awk -F '/' '{print $NF}')
+          echo "${type},${3},${array_file_split%h*}c.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+        fi
+      done
+    done
+  done
 }
 
 # automatically generate operator list
@@ -188,18 +240,74 @@ echo "Start getting all file associations."
 generateOpsList
 getCommonFile
 # get src/ops
-getOpsFile "Registry\(schema::PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
-getOpsFile "REG_POPULATE\(PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops" "prototype" &
+getOpsFile "REG_POPULATE\(PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/ops/populate" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer" "prototype" &
+# support for cpu
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt8" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt32" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt32" &
 wait
-echo "remove duplicate files"
+sleep 1
 # remove duplicate files
-sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${MAPPING_OUTPUT_FILE_NAME}
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${CPU_MAPPING_OUTPUT_FILE}
+chmod 444 ${CPU_MAPPING_OUTPUT_FILE}
+
+# support for gpu
+opencl_files=()
+while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/*.cc)
+while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/gpu/*.cc)
+while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/gpu/opencl/*.cc)
+opencl_others_files=(
+  "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel/fusion_eltwise.cc"
+  "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.cc"
+)
+opencl_files=("${opencl_files[@]}" "${opencl_others_files[@]}")
+# shellcheck disable=SC2068
+for file in ${opencl_files[@]}; do
+  file=$(echo ${file} | awk -F '/' '{print $NF}')
+  echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+done
+
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeFloat32" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeFloat16" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt8" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt32" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt32" &
+sleep 1
+wait
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${GPU_MAPPING_OUTPUT_FILE}
+chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
+
+# support for npu
+npu_files=()
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/agent/npu/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/agent/npu/optimizer/*.cc)
+npu_other_files=(
+  "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm/fp32/transpose_fp32.cc"
+)
+# shellcheck disable=SC2068
+for file in ${npu_other_files[@]}; do
+  getDeep CommonFile ${file} common
+done
+opencl_files=("${opencl_files[@]}" "${npu_other_files[@]}")
+# shellcheck disable=SC2068
+for file in ${npu_files[@]}; do
+  file=$(echo ${file} | awk -F '/' '{print $NF}')
+  echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+done
+
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeFloat32" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeFloat16" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt8" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt32" &
+getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/npu" "kNumberTypeInt32" &
+wait
+sleep 1
+sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | egrep -v "*.h.o" | uniq >${NPU_MAPPING_OUTPUT_FILE}
+chmod 444 ${NPU_MAPPING_OUTPUT_FILE}
+
 # modify file permissions to read-only
 [ -n "${MAPPING_OUTPUT_FILE_NAME_TMP}" ] && rm -f ${MAPPING_OUTPUT_FILE_NAME_TMP}
-chmod 444 ${MAPPING_OUTPUT_FILE_NAME}
 echo "Complete all tasks."
