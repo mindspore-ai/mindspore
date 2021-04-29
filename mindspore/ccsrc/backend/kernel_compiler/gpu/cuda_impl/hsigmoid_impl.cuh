@@ -24,6 +24,6 @@ template <typename T>
 void CalHSigmoid(const size_t &size, const T *input, T *output, cudaStream_t cuda_stream);
 
 template <typename T>
-void CalHSigmoidGrad(const size_t &size, const T *dout, T *output, cudaStream_t cuda_stream);
+void CalHSigmoidGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_HSIGMOID_IMPL_CUH_

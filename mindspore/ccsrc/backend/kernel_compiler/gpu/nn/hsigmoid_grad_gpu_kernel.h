@@ -38,8 +38,9 @@ class HSigmoidGradKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
     T *input = GetDeviceAddress<T>(inputs, 0);
+    T *x = GetDeviceAddress<T>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    CalHSigmoidGrad(input_size_, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalHSigmoidGrad(input_size_, input, x, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -74,7 +75,6 @@ class HSigmoidGradKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
-    // though we are not using this mem, we still need to allocate
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
   }

@@ -420,6 +420,9 @@ AbstractBasePtr InferImplHSigmoid(const AnalysisEnginePtr &, const PrimitivePtr 
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
   CheckArgsSize(primitive->name(), args_spec_list, 1);
+  // add check, types other than half and float are from cpu
+  auto tensor = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 0);
+  (void)CheckTensorDType(tensor, {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32}, "Input of HSigmoid should be %s");
   return args_spec_list[0]->Broaden();
 }
 
@@ -427,6 +430,12 @@ AbstractBasePtr InferImplHSigmoidGrad(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
   CheckArgsSize(primitive->name(), args_spec_list, 2);
+  // add check, types other than half and float are from cpu
+  auto dout = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 0);
+  auto x = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 1);
+  (void)CheckTensorDType(dout, {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32},
+                         "Dout of HSigmoidGrad should be %s");
+  (void)CheckTensorDType(x, {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32}, "X of HSigmoidGrad should be %s");
   return args_spec_list[1]->Broaden();
 }
 
