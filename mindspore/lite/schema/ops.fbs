@@ -443,11 +443,6 @@ table Crop {
     offsets: [long];
 }
 
-table CumSum {
-    exclusive: bool = false;
-    reverse: bool = false;
-}
-
 table CustomExtractFeatures {
 }
 
@@ -1109,6 +1104,11 @@ table LogSoftmax {
 }
 
 table Call {
+}
+
+table CumSum {
+    exclusive: bool;
+    reverse: bool;
 }
 
 table Custom {

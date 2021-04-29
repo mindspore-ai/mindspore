@@ -20,6 +20,9 @@
 #undef __STDC_FORMAT_MACROS
 #include <algorithm>
 #include <utility>
+#ifdef ENABLE_NEON
+#include <arm_neon.h>
+#endif
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
@@ -178,6 +181,88 @@ int NetTrain::CompareOutput() {
       MS_LOG(ERROR) << "ReadFile return nullptr";
       return RET_ERROR;
     }
+
+    if (flags_->enable_fp16_ && tensor->data_type() == kNumberTypeFloat16) {
+      if (static_cast<int>(size / sizeof(float)) != tensor->ElementsNum()) {
+        MS_LOG(ERROR) << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
+                      << ", read size: " << size / sizeof(float);
+        return RET_ERROR;
+      }
+    } else {
+      if (size != tensor->Size()) {
+        MS_LOG(ERROR) << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
+                      << ", read size: " << size;
+        return RET_ERROR;
+      }
+    }
+    float bias = 0.f;
+    if (flags_->enable_fp16_ && tensor->data_type() == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+      bias = CompareData<float16_t>(bin_buf, tensor->ElementsNum(), reinterpret_cast<float16_t *>(outputs));
+#endif
+    } else {
+      bias = CompareData<float>(bin_buf, tensor->ElementsNum(), reinterpret_cast<float *>(outputs));
+    }
+    if (bias >= 0) {
+      total_bias += bias;
+      total_size++;
+    } else {
+      has_error = true;
+      break;
+    }
+    i++;
+    delete[] bin_buf;
+  }
+
+  if (!has_error) {
+    float mean_bias;
+    if (total_size != 0) {
+      mean_bias = total_bias / total_size * 100;
+    } else {
+      mean_bias = 0;
+    }
+
+    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%"
+              << " threshold is:" << this->flags_->accuracy_threshold_ << std::endl;
+    std::cout << "=======================================================" << std::endl << std::endl;
+
+    if (mean_bias > this->flags_->accuracy_threshold_) {
+      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
+      std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
+      return RET_ERROR;
+    } else {
+      return RET_OK;
+    }
+  } else {
+    MS_LOG(ERROR) << "Error in CompareData";
+    std::cerr << "Error in CompareData" << std::endl;
+    std::cout << "=======================================================" << std::endl << std::endl;
+    return RET_ERROR;
+  }
+}
+int NetTrain::CompareOutputLite(const std::unique_ptr<session::LiteSession> &lite_session) {
+  std::cout << "================ Comparing Forward Output data ================" << std::endl;
+  float total_bias = 0;
+  int total_size = 0;
+  bool has_error = false;
+  auto tensors_list = lite_session->GetOutputs();
+  if (tensors_list.empty()) {
+    MS_LOG(ERROR) << "Cannot find output tensors, get model output failed";
+    return RET_ERROR;
+  }
+  mindspore::tensor::MSTensor *tensor = nullptr;
+  int i = 1;
+  for (auto it = tensors_list.begin(); it != tensors_list.end(); ++it) {
+    tensor = lite_session->GetOutputByTensorName(it->first);
+    std::cout << "output is tensor " << it->first << "\n";
+    auto outputs = tensor->MutableData();
+    size_t size;
+    std::string output_file = flags_->data_file_ + std::to_string(i) + ".bin";
+    auto *bin_buf = ReadFileBuf(output_file.c_str(), &size);
+    if (bin_buf == nullptr) {
+      MS_LOG(ERROR) << "ReadFile return nullptr";
+      return RET_ERROR;
+    }
     if (size != tensor->Size()) {
       MS_LOG(ERROR) << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
                     << ", read size: " << size;
@@ -288,7 +373,7 @@ int NetTrain::MarkAccuracy() {
   }
   session_->Eval();
 
-  auto status = session_->RunGraph();
+  auto status = session_->RunGraph(before_call_back_, after_call_back_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
@@ -296,6 +381,40 @@ int NetTrain::MarkAccuracy() {
   }
 
   status = CompareOutput();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Compare output error " << status;
+    std::cerr << "Compare output error " << status << std::endl;
+    return status;
+  }
+  return RET_OK;
+}
+int NetTrain::MarkAccuracyLite(const std::unique_ptr<session::LiteSession> &lite_session) {
+  MS_LOG(INFO) << "MarkAccuracy";
+  std::cout << "MarkAccuracy" << std::endl;
+  for (auto &msInput : ms_inputs_) {
+    switch (msInput->data_type()) {
+      case TypeId::kNumberTypeFloat:
+        PrintInputData<float>(msInput);
+        break;
+      case TypeId::kNumberTypeFloat32:
+        PrintInputData<float>(msInput);
+        break;
+      case TypeId::kNumberTypeInt32:
+        PrintInputData<int>(msInput);
+        break;
+      default:
+        MS_LOG(ERROR) << "Datatype " << msInput->data_type() << " is not supported.";
+        return RET_ERROR;
+    }
+  }
+  auto status = lite_session->RunGraph();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Inference error " << status;
+    std::cerr << "Inference error " << status << std::endl;
+    return status;
+  }
+
+  status = CompareOutputLite(lite_session);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compare output error " << status;
     std::cerr << "Compare output error " << status << std::endl;
@@ -375,6 +494,80 @@ int NetTrain::RunExportedNet() {
   return RET_OK;
 }
 
+int NetTrain::RunExportedNetLite(std::string file_name) {
+  auto start_prepare_time = GetTimeUs();
+  // Load graph
+  std::string model_name = file_name.substr(file_name.find_last_of(DELIM_SLASH) + 1);
+
+  MS_LOG(INFO) << "start reading exported model file";
+  std::cout << "reading " << file_name << std::endl;
+  auto context = std::make_shared<Context>();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "New context failed while running " << model_name.c_str();
+    std::cerr << "New context failed while running " << model_name.c_str() << std::endl;
+    return RET_ERROR;
+  }
+
+  if (flags_->cpu_bind_mode_ == 2) {
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = MID_CPU;
+  } else if (flags_->cpu_bind_mode_ == 1) {
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
+  } else {
+    context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
+  }
+
+  context->thread_num_ = flags_->num_threads_;
+
+  auto *model = mindspore::lite::Model::Import(file_name.c_str());
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "create model for lite session failed";
+    return RET_ERROR;
+  }
+  auto lite_session = std::unique_ptr<session::LiteSession>(session::LiteSession::CreateSession(context.get()));
+  if (lite_session == nullptr) {
+    MS_LOG(ERROR) << "ExportedFile CreateSession failed while running " << model_name.c_str();
+    std::cout << "CreateSession failed while running " << model_name.c_str() << std::endl;
+    return RET_ERROR;
+  }
+  if (lite_session->CompileGraph(model) != RET_OK) {
+    MS_LOG(ERROR) << "Cannot compile model";
+    delete model;
+    return RET_ERROR;
+  }
+  ms_inputs_ = lite_session->GetInputs();
+  auto end_prepare_time = GetTimeUs();
+  MS_LOG(INFO) << "Exported model PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
+  std::cout << "Exported model PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms" << std::endl;
+
+  // Load input
+  MS_LOG(INFO) << "start generate input data";
+  auto status = LoadInput();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Generate input data error";
+    delete model;
+    return status;
+  }
+  if (!flags_->data_file_.empty()) {
+    MS_LOG(INFO) << "Check accuracy for exported model";
+    std::cout << "Check accuracy for exported model " << std::endl;
+    status = MarkAccuracyLite(lite_session);
+    for (auto &data : data_) {
+      data.second->shape.clear();
+      data.second->data.clear();
+      delete data.second;
+    }
+    data_.clear();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run MarkAccuracy on exported model error: " << status;
+      std::cout << "Run MarkAccuracy on exported model error: " << status << std::endl;
+      delete model;
+      return status;
+    }
+  }
+  delete model;
+  return RET_OK;
+}
+
 int NetTrain::RunNetTrain() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
@@ -451,6 +644,17 @@ int NetTrain::RunNetTrain() {
       return status;
     }
   }
+  status = CheckExecute(model);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run CheckExecute error: " << status;
+    std::cout << "Run CheckExecute error: " << status << std::endl;
+    return status;
+  }
+  return RET_OK;
+}
+
+int NetTrain::CheckExecute(mindspore::lite::Model *model) {
+  int status;
   if (!flags_->export_file_.empty()) {
     auto ret = Model::Export(model, flags_->export_file_.c_str());
     if (ret != RET_OK) {
@@ -459,11 +663,32 @@ int NetTrain::RunNetTrain() {
       return RET_ERROR;
     }
     delete session_;
+    session_ = nullptr;
     status = RunExportedNet();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run Exported model error: " << status;
       std::cout << "Run Exported model error: " << status << std::endl;
       return status;
+    }
+  } else {
+    if (!flags_->inference_file_.empty()) {
+      auto tick = GetTimeUs();
+      status = session_->ExportInference(flags_->inference_file_);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Save model error: " << status;
+        std::cout << "Save model error: " << status << std::endl;
+        return status;
+      }
+      std::cout << "ExportInference() execution time is " << GetTimeUs() - tick << "us\n";
+      delete session_;
+      session_ = nullptr;
+
+      status = RunExportedNetLite(flags_->inference_file_ + ".ms");
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Running saved model error: " << status;
+        std::cout << "Running saved model error: " << status << std::endl;
+        return status;
+      }
     }
   }
   return RET_OK;
@@ -554,6 +779,11 @@ int NetTrain::InitCallbackParameter() {
         case kNumberTypeInt32:
           std::cout << TensorSum<int>(output, tensor_size);
           break;
+#ifdef ENABLE_FP16
+        case kNumberTypeFloat16:
+          std::cout << TensorSum<float16_t>(output, tensor_size);
+          break;
+#endif
         default:
           std::cout << "unsupported type:" << type;
           break;

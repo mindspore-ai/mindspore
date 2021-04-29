@@ -87,6 +87,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     }
     return outputs;
   }
+  int ExportInference(std::string file_name) override;
 
  protected:
   void AllocWorkSpace();

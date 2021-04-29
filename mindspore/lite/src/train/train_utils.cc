@@ -19,9 +19,25 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/common/utils.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore {
 namespace lite {
+
+size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter) {
+  for (size_t i = 0; i < where.size(); i++) {
+    if (where[i] == searchParameter) {
+      return i;
+    }
+  }
+  return where.size();
+}
+
+kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter) {
+  auto it = std::find_if(where.begin(), where.end(),
+                         [&searchParameter](const kernel::LiteKernel *k) { return (k->name() == searchParameter); });
+  return *it;
+}
 
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
   if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {

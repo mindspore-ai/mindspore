@@ -123,6 +123,7 @@ if(SUPPORT_TRAIN)
             ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_metrics.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
             )
     if(ENABLE_V0)
       set(LITE_SRC

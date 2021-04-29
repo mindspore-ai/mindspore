@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INCLUDE_TRAIN_SESSION_H_
-#define MINDSPORE_LITE_INCLUDE_TRAIN_SESSION_H_
+#ifndef MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_SESSION_H_
+#define MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_SESSION_H_
 #include <vector>
 #include <string>
 #include <tuple>
@@ -115,6 +115,10 @@ class TrainSession : public session::LiteSession {
     loss_name_ = loss_name;
     return mindspore::lite::RET_OK;
   }
+  /// \brief Save model for inference (LiteSession)
+  /// \param[in] fb_name pretrained model file name prefix. '.ms' is added as extension.
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int ExportInference(std::string fb_name) { return mindspore::lite::RET_ERROR; }
 
  protected:
   bool train_mode_ = false;
@@ -125,4 +129,4 @@ class TrainSession : public session::LiteSession {
 };
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_INCLUDE_TRAIN_SESSION_H_
+#endif  // MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_SESSION_H_
