@@ -234,6 +234,13 @@ constexpr auto kSideEffectIO = "side_effect_io";
 constexpr auto kDeviceType = "device_type";
 constexpr auto kExclusive = "exclusive";
 constexpr auto kReverse = "reverse";
+constexpr auto kSplitStride = "split_stride";
+constexpr auto kExtendTop = "extend_top";
+constexpr auto kExtendBottom = "extend_bottom";
+constexpr auto kNumberSplit = "number_split";
+constexpr auto kSplitDim = "split_dim";
+constexpr auto kPadTop = "pad_top";
+constexpr auto kTransFormat = "trans_format";
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 

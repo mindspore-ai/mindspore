@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 #define SPLIT_STRIDES_SIZE 32
+#define SPLIT_MAX_SLICE_NUM 10
 
 typedef struct SplitQuantArg {
   QuantArg in_args_;
@@ -43,5 +44,16 @@ typedef struct SplitParameter {
   int n_dims_;
   int split_count_;
 } SplitParameter;
+
+typedef struct SplitWithOverlapParameter {
+  OpParameter op_parameter_;
+  int num_split_;
+  int split_dim_;
+  int stride_;
+  int pad_top_;
+  int ratio_[SPLIT_MAX_SLICE_NUM];
+  int extend_top_[SPLIT_MAX_SLICE_NUM];
+  int extend_bottom_[SPLIT_MAX_SLICE_NUM];
+} SplitWithOverlapParameter;
 
 #endif  // MINDSPORE_NNACL_SPLIT_PARAMETER_H_
