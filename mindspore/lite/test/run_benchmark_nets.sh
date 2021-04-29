@@ -182,6 +182,23 @@ function Run_Converter() {
         fi
     done < ${models_tflite_weightquant_config}
 
+    # Convert caffe weightquant models:
+    while read line; do
+        weight_quant_line_info=${line}
+        if [[ ${weight_quant_line_info} == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=CAFFE --modelFile='${models_path}'/'${model_name}'.prototxt --weightFile='${models_path}'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name}_weightquant'  --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=CAFFE --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}_weightquant  --quantType=WeightQuant --bitNum=8 --quantWeightChannel=0
+        if [ $? = 0 ]; then
+            converter_result='converter caffe_weight_quant '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter caffe_weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_caffe_weightquant_config}
+
     # Convert mindir weightquant models:
     while read line; do
         weight_quant_line_info=${line}
@@ -594,6 +611,24 @@ function Run_x86() {
             run_result='x86: '${model_name}_weightquant' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Run caffe weightquant converted models:
+    while read line; do
+        weight_quant_line_info=${line}
+        if [[ ${weight_quant_line_info} == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
+        ./benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=${models_path}/input_output/input/${model_name}.ms.bin --benchmarkDataFile=${models_path}/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit}>> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}_weightquant' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}_weightquant' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_caffe_weightquant_config}
 
     # Run tf weightquant converted models:
     while read line; do
@@ -2423,6 +2458,7 @@ version=${file_name_array[2]}
 models_tflite_config=${basepath}/models_tflite.cfg
 models_tf_config=${basepath}/models_tf.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
+models_caffe_weightquant_config=${basepath}/models_caffe_weightquant.cfg
 models_tflite_awaretraining_config=${basepath}/models_tflite_awaretraining.cfg
 models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 models_caffe_posttraining_config=${basepath}/models_caffe_posttraining.cfg
