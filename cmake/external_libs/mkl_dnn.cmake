@@ -21,7 +21,8 @@ else()
         LIBS dnnl mkldnn
         URL ${REQ_URL}
         MD5 ${MD5}
-        CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF)
+        CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF
+            -DDNNL_ENABLE_CONCURRENT_EXEC=ON)
 endif()
 
 include_directories(${onednn_INC})
