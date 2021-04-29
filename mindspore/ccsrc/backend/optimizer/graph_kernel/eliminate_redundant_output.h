@@ -41,7 +41,7 @@ class EliminateHangingOutput : public Pass {
 
  private:
   // update the GetItem(node, i) to GetItem(node, i - offset)
-  void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset);
+  void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) const;
   AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
 };
 

@@ -25,7 +25,7 @@ class BindValueToGraph : public Pass {
  public:
   BindValueToGraph() : Pass("bind_value_to_graph") {}
   ~BindValueToGraph() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 using BindValueToGraphPtr = std::shared_ptr<BindValueToGraph>;
 }  // namespace opt
