@@ -142,7 +142,15 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/ir/datasetops/shuffle_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/album_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/mnist_node.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/distributed_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/pk_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/prebuilt_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/random_sampler_ir.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/samplers_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/sequential_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/subset_random_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/subset_sampler_ir.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/weighted_random_sampler_ir.cc
         ${MINDDATA_DIR}/engine/datasetops/dataset_op.cc
         ${MINDDATA_DIR}/engine/datasetops/repeat_op.cc
         ${MINDDATA_DIR}/engine/datasetops/epoch_ctrl_op.cc
@@ -216,7 +224,52 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/image/exif_utils.cc
         ${MINDDATA_DIR}/kernels/ir/validators.cc
         ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/affine_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/auto_contrast_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/bounding_box_augment_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/center_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/cutmix_batch_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/cutout_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/decode_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/equalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/hwc_to_chw_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/invert_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/mixup_batch_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/normalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/normalize_pad_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/pad_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_affine_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_color_adjust_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_color_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_decode_resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_posterize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resize_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_rotation_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_select_subpolicy_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_sharpness_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_solarize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_preserve_ar_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_bgr_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
         ${MINDDATA_DIR}/callback/callback_manager.cc
         ${MINDDATA_DIR}/util/task_manager.cc
         ${MINDDATA_DIR}/util/services.cc
@@ -301,7 +354,52 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/image/exif_utils.cc
             ${MINDDATA_DIR}/kernels/ir/validators.cc
             ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
-            ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/affine_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/auto_contrast_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/bounding_box_augment_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/center_crop_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/crop_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/cutmix_batch_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/cutout_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/decode_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/equalize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/hwc_to_chw_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/invert_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/mixup_batch_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/normalize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/normalize_pad_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/pad_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_affine_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_color_adjust_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_color_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_crop_decode_resize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_crop_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_crop_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_posterize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_resize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_resize_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_rotation_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_select_subpolicy_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_sharpness_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_solarize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/resize_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/resize_preserve_ar_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/resize_with_bbox_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_bgr_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
+            ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/MDToDApi.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/album_op_android.cc
             )
@@ -416,7 +514,52 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         ${CORE_DIR}/utils/ms_utils.cc
         ${MINDDATA_DIR}/kernels/ir/validators.cc
         ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/affine_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/auto_contrast_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/bounding_box_augment_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/center_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/cutmix_batch_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/cutout_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/decode_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/equalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/hwc_to_chw_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/invert_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/mixup_batch_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/normalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/normalize_pad_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/pad_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_affine_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_color_adjust_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_color_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_decode_resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_crop_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_posterize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resized_crop_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_resize_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_rotation_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_select_subpolicy_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_sharpness_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_solarize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/random_vertical_flip_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rescale_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_preserve_ar_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/resize_with_bbox_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_bgr_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
         )
 
     target_link_libraries(minddata-lite

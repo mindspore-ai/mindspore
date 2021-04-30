@@ -16,7 +16,25 @@
 
 #include <memory>
 #include "common/common.h"
-#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_color_adjust_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_color_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_crop_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_posterize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_rotation_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_select_subpolicy_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_sharpness_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_solarize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_vertical_flip_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_vertical_flip_with_bbox_ir.h"
 
 using namespace mindspore::dataset;
 
