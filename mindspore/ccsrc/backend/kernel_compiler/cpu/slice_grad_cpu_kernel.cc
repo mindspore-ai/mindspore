@@ -95,7 +95,7 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 template <typename T>
 bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+                                      const std::vector<kernel::AddressPtr> &outputs) const {
   T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 

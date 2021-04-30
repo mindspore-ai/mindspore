@@ -34,7 +34,8 @@ class SliceGradCPUKernel : public CPUKernel {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                    const std::vector<kernel::AddressPtr> &outputs) const;
   template <typename T>
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
