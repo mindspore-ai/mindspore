@@ -455,16 +455,16 @@ OP_ATTR(weight_threshold, float)
 OP_SCHEMA_DEF_END(CustomPredict)
 
 OP_SCHEMA_DEF(DeConv2DGradFilter)
-OP_ATTR(in_channel, long);
-OP_ATTR(out_channel, long);
-OP_ATTR(kernel_size, [long]);
-OP_ATTR_ENUM(pad_mode, PadMode);
-OP_ATTR(pad_list, [long]);
-OP_ATTR(stride, [long]);
-OP_ATTR(dilation, [long]);
-OP_ATTR(group, long);
-OP_ATTR_ENUM(format, Format);
-OP_ATTR_ENUM(activation_type, ActivationType);
+OP_ATTR(in_channel, long)
+OP_ATTR(out_channel, long)
+OP_ATTR(kernel_size, [long])
+OP_ATTR_ENUM(pad_mode, PadMode)
+OP_ATTR(pad_list, [long])
+OP_ATTR(stride, [long])
+OP_ATTR(dilation, [long])
+OP_ATTR(group, long)
+OP_ATTR_ENUM(format, Format)
+OP_ATTR_ENUM(activation_type, ActivationType)
 OP_SCHEMA_DEF_END(DeConv2DGradFilter)
 
 OP_SCHEMA_DEF(Depend)

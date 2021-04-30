@@ -117,7 +117,7 @@ bool NodeInferShape::JudgeOpSupportInfer(const CNodePtr &cnode) {
   }
   auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim_t->value.type, lite::SCHEMA_CUR);
   if (parameter_gen == nullptr) {
-    delete prim_t;
+    prim_t.reset();
     return false;
   }
   return true;
@@ -153,8 +153,8 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-  auto prim = lite::ConvertToPrimitive(prim_t, &fbb);
-  delete prim_t;
+  auto prim = lite::ConvertToPrimitive(prim_t.release(), &fbb);
+  prim_t.reset();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "get primitive failed.";
     FreeTensors(&inputs);

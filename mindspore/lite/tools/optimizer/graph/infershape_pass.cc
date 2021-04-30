@@ -400,8 +400,8 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     }
 
     flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-    auto prim = lite::ConvertToPrimitive(prim_t, &fbb);
-    delete prim_t;
+    auto prim = lite::ConvertToPrimitive(prim_t.release(), &fbb);
+    prim_t.reset();
     if (prim == nullptr) {
       MS_LOG(ERROR) << "get primitive failed.";
       FreeTensors(&input_tensors);

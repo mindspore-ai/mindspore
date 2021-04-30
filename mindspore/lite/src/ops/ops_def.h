@@ -58,10 +58,13 @@
     op_def.append(" {\n");
 
 #elif PRIMITIVE_WRITEABLE
-#define OP_SCHEMA_DEF(OP)                                                      \
-  namespace mindspore::lite::ops {                                             \
-  mindspore::schema::PrimitiveT *MSOp2SchemaOp(const mindspore::ops::OP *op) { \
-    mindspore::schema::OP##T *schema_op = new (std::nothrow) mindspore::schema::OP##T();
+#define OP_SCHEMA_DEF(OP)                                                           \
+  namespace mindspore::lite::ops {                                                  \
+  std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op) { \
+    auto schema_op = std::make_unique<schema::OP##T>();                             \
+    if (schema_op == nullptr) {                                                     \
+      return nullptr;                                                               \
+    }
 #else
 #define OP_SCHEMA_DEF(OP)
 #endif
@@ -71,34 +74,32 @@
 #define OP_ATTR_ENUM(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
 #define OP_ATTR_VEC2D(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
 #elif PRIMITIVE_WRITEABLE
-#define OP_ATTR(key, type)              \
-  if (schema_op != nullptr) {           \
-    if (op->GetAttr(#key) != nullptr) { \
-      schema_op->key = op->get_##key(); \
-    }                                   \
-  } else {                              \
-    return nullptr;                     \
+#define OP_ATTR(key, type)            \
+  if (op->GetAttr(#key) != nullptr) { \
+    schema_op->key = op->get_##key(); \
   }
 
-#define OP_ATTR_ENUM(key, type)                                    \
-  if (schema_op != nullptr) {                                      \
-    if (op->GetAttr(#key) != nullptr) {                            \
-      schema_op->key = static_cast<schema::type>(op->get_##key()); \
-    }                                                              \
+#define OP_ATTR_ENUM(key, type)                                  \
+  if (op->GetAttr(#key) != nullptr) {                            \
+    schema_op->key = static_cast<schema::type>(op->get_##key()); \
   }
 
-#define OP_ATTR_VEC2D(key, type)                                \
-  if (schema_op != nullptr) {                                   \
-    auto vec2d = std::make_unique<schema::Vec2DT>();            \
-    if (op->GetAttr(#key) != nullptr) {                         \
-      auto data = op->get_##key();                              \
-      for (size_t i = 0; i < data.size(); ++i) {                \
-        auto vec = std::make_unique<schema::VecT>();            \
-        vec->data.assign(data.at(i).begin(), data.at(i).end()); \
-        vec2d->data.push_back(std::move(vec));                  \
-      }                                                         \
-      schema_op->key = std::move(vec2d);                        \
-    }                                                           \
+#define OP_ATTR_VEC2D(key, type)                              \
+  if (op->GetAttr(#key) != nullptr) {                         \
+    auto vec2d = std::make_unique<schema::Vec2DT>();          \
+    if (vec2d == nullptr) {                                   \
+      return nullptr;                                         \
+    }                                                         \
+    auto data = op->get_##key();                              \
+    for (size_t i = 0; i < data.size(); ++i) {                \
+      auto vec = std::make_unique<schema::VecT>();            \
+      if (vec == nullptr) {                                   \
+        return nullptr;                                       \
+      }                                                       \
+      vec->data.assign(data.at(i).begin(), data.at(i).end()); \
+      vec2d->data.push_back(std::move(vec));                  \
+    }                                                         \
+    schema_op->key = std::move(vec2d);                        \
   }
 
 #else
@@ -114,19 +115,13 @@
   op_def.append("    ").append(#key).append(": ").append(#type).append(" = ").append(#value).append(";\n");
 #elif PRIMITIVE_WRITEABLE
 #define OP_ATTR_WITH_VALUE(key, type, value) \
-  if (schema_op != nullptr) {                \
-    if (op->GetAttr(#key) != nullptr) {      \
-      schema_op->key = op->get_##key();      \
-    }                                        \
-  } else {                                   \
-    return nullptr;                          \
+  if (op->GetAttr(#key) != nullptr) {        \
+    schema_op->key = op->get_##key();        \
   }
 
-#define OP_ATTR_ENUM_WITH_VALUE(key, type, value)                  \
-  if (schema_op != nullptr) {                                      \
-    if (op->GetAttr(#key) != nullptr) {                            \
-      schema_op->key = static_cast<schema::type>(op->get_##key()); \
-    }                                                              \
+#define OP_ATTR_ENUM_WITH_VALUE(key, type, value)                \
+  if (op->GetAttr(#key) != nullptr) {                            \
+    schema_op->key = static_cast<schema::type>(op->get_##key()); \
   }
 #else
 #define OP_ATTR_WITH_VALUE(key, type, value)
@@ -141,15 +136,15 @@
   SchemaOpRegister g_schema_op_##OP(Gen##OP##Def); \
   }  // namespace mindspore::lite::ops
 #elif PRIMITIVE_WRITEABLE
-#define OP_SCHEMA_DEF_END(OP)                                         \
-  schema::PrimitiveT *prim = new (std::nothrow) schema::PrimitiveT(); \
-  if (prim == nullptr) {                                              \
-    return nullptr;                                                   \
-  }                                                                   \
-  prim->value.value = schema_op;                                      \
-  prim->value.type = schema::PrimitiveType_##OP;                      \
-  return prim;                                                        \
-  }                                                                   \
+#define OP_SCHEMA_DEF_END(OP)                         \
+  auto prim = std::make_unique<schema::PrimitiveT>(); \
+  if (prim == nullptr) {                              \
+    return nullptr;                                   \
+  }                                                   \
+  prim->value.value = schema_op.release();            \
+  prim->value.type = schema::PrimitiveType_##OP;      \
+  return prim;                                        \
+  }                                                   \
   }  // namespace mindspore::lite::ops
 #else
 #define OP_SCHEMA_DEF_END(OP)
