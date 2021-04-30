@@ -43,8 +43,8 @@ int ConvolutionCPUKernel::InitWeightBias() {
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-  int oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
-  int pack_weight_size = oc_block_num * in_channel * kernel_plane;
+  size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
+  size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
@@ -163,11 +163,11 @@ int ConvolutionCPUKernel::Run() {
 
 void ConvolutionCPUKernel::PackWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  int in_channel = filter_tensor->Channel();
-  int out_channel = filter_tensor->Batch();
-  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-  int oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
-  int pack_weight_size = oc_block_num * in_channel * kernel_plane;
+  size_t in_channel = filter_tensor->Channel();
+  size_t out_channel = filter_tensor->Batch();
+  size_t kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  size_t oc_block_num = UP_ROUND(out_channel, OC_BLOCK);
+  size_t pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->data_c());
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));

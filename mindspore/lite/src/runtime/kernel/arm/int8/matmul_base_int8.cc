@@ -64,34 +64,33 @@ MatmulBaseInt8CPUKernel::~MatmulBaseInt8CPUKernel() {
     free(bias_ptr_);
     bias_ptr_ = nullptr;
   }
-  if (quant_param_ != nullptr) {
-    free(quant_param_);
-    quant_param_ = nullptr;
-  }
 }
 
 void MatmulBaseInt8CPUKernel::FreeQuantParam() {
-  if (quant_param_->filter_scale_ != nullptr) {
-    free(quant_param_->filter_scale_);
-    quant_param_->filter_scale_ = nullptr;
+  if (quant_param_ != nullptr) {
+    if (quant_param_->filter_scale_ != nullptr) {
+      free(quant_param_->filter_scale_);
+      quant_param_->filter_scale_ = nullptr;
+    }
+    if (quant_param_->filter_zp_ != nullptr) {
+      free(quant_param_->filter_zp_);
+      quant_param_->filter_zp_ = nullptr;
+    }
+    if (quant_param_->left_shift_ != nullptr) {
+      free(quant_param_->left_shift_);
+      quant_param_->left_shift_ = nullptr;
+    }
+    if (quant_param_->right_shift_ != nullptr) {
+      free(quant_param_->right_shift_);
+      quant_param_->right_shift_ = nullptr;
+    }
+    if (quant_param_->quant_multiplier_ != nullptr) {
+      free(quant_param_->quant_multiplier_);
+      quant_param_->quant_multiplier_ = nullptr;
+    }
+    free(quant_param_);
+    quant_param_ = nullptr;
   }
-  if (quant_param_->filter_zp_ != nullptr) {
-    free(quant_param_->filter_zp_);
-    quant_param_->filter_zp_ = nullptr;
-  }
-  if (quant_param_->left_shift_ != nullptr) {
-    free(quant_param_->left_shift_);
-    quant_param_->left_shift_ = nullptr;
-  }
-  if (quant_param_->right_shift_ != nullptr) {
-    free(quant_param_->right_shift_);
-    quant_param_->right_shift_ = nullptr;
-  }
-  if (quant_param_->quant_multiplier_ != nullptr) {
-    free(quant_param_->quant_multiplier_);
-    quant_param_->quant_multiplier_ = nullptr;
-  }
-  return;
 }
 
 int MatmulBaseInt8CPUKernel::MallocQuantParam() {

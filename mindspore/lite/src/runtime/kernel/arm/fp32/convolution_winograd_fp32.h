@@ -81,7 +81,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *gemm_out_ = nullptr;
   float *col_buffer_ = nullptr;
   float *trans_weight_ = nullptr;
-  TmpBufferAddress tmp_buffer_address_list_[4];
+  TmpBufferAddress tmp_buffer_address_list_[4] = {nullptr};
   InputTransFunc in_func_ = nullptr;
   OutputTransFunc out_func_ = nullptr;
 };

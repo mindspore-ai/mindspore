@@ -88,7 +88,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 
   int rank = (int)(input->shape_size_);
-  int actual_axes[MAX_SHAPE_SIZE];
+  int actual_axes[MAX_SHAPE_SIZE] = {0};
   size_t actual_axes_size = 0;
   ShapeSet(actual_axes, &actual_axes_size, axes, num_axes);
 

@@ -244,7 +244,7 @@ int TransIndexToPositive(StridedSliceTransferBuffer *transfer_buffer, const int 
 }
 
 void ApplyShrinkMask(StridedSliceTransferBuffer *transfer_buffer, int *output_shape, size_t *output_shape_size) {
-  int old_out_shape[MAX_SHAPE_SIZE];
+  int old_out_shape[MAX_SHAPE_SIZE] = {0};
   size_t old_out_shape_size = 0;
   ShapeSet(old_out_shape, &old_out_shape_size, output_shape, *output_shape_size);
   *output_shape_size = 0;
@@ -317,7 +317,7 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
     return NNACL_INFER_INVALID;
   }
 
-  int in_shape[MAX_SHAPE_SIZE];
+  int in_shape[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;
   if (input->shape_size_ > MAX_SHAPE_SIZE) {
     return NNACL_ERR;
