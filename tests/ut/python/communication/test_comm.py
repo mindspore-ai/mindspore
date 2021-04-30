@@ -30,13 +30,16 @@ from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
 from mindspore.ops.operations.array_ops import Gather
 import mindspore
 
+
 # pylint: disable=W0212
 # W0212: protected-access
 
 tag = 0
 
 context.set_context(device_target="Ascend")
+GlobalComm.CHECK_ENVS = False
 init("hccl")
+GlobalComm.CHECK_ENVS = True
 
 
 class AllReduceNet(nn.Cell):

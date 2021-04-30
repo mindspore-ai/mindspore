@@ -24,7 +24,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
 from mindspore.context import ParallelMode
-
+from mindspore.communication._comm_helper import GlobalComm
 
 class Net(nn.Cell):
     def __init__(self, input_channel, out_channel):
@@ -47,7 +47,9 @@ def test_dense_gen_graph():
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.HYBRID_PARALLEL, gradients_mean=True, device_num=8)
+    GlobalComm.CHECK_ENVS = False
     init()
+    GlobalComm.CHECK_ENVS = True
     network = Net(512, 128)
 
     loss_fn = nn.SoftmaxCrossEntropyWithLogits()

@@ -84,6 +84,7 @@ class GlobalComm:
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     INITED = False
+    CHECK_ENVS = True
 
 def is_hccl_available():
     """

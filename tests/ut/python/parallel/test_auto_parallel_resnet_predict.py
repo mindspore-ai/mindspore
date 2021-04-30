@@ -18,11 +18,15 @@ from mindspore.communication.management import init
 from mindspore.parallel import set_algo_parameters
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
+from mindspore.communication._comm_helper import GlobalComm
 from .test_auto_parallel_resnet import resnet50
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=0)
+GlobalComm.CHECK_ENVS = False
 init()
+GlobalComm.CHECK_ENVS = True
 
 def test_train_32k_8p(batch_size=32, num_classes=32768):
     dev_num = 8

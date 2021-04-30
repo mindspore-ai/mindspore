@@ -29,6 +29,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
+from mindspore.communication._comm_helper import GlobalComm
 
 context.set_context(mode=context.GRAPH_MODE)
 device_number = 32
@@ -124,7 +125,9 @@ class TrainOneStepCell(Cell):
 
 
 def net_trains(criterion, rank):
+    GlobalComm.CHECK_ENVS = False
     init()
+    GlobalComm.CHECK_ENVS = True
     lr = 0.1
     momentum = 0.9
     max_epoch = 20

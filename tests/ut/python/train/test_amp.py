@@ -21,6 +21,7 @@ from mindspore import Tensor
 from mindspore import amp
 from mindspore import nn
 from mindspore.communication.management import init
+from mindspore.communication._comm_helper import GlobalComm
 from mindspore.context import ParallelMode
 from mindspore.train import Model
 from ....dataset_mock import MindData
@@ -156,8 +157,8 @@ def test_compile_model_train_O2_parallel():
     net = NetNoLoss(16, 16)
     loss = nn.MSELoss()
     optimizer = nn.Momentum(net.trainable_params(), 0.1, 0.9, 0.00004, 1024.0)
-
+    GlobalComm.CHECK_ENVS = False
     init()
-
+    GlobalComm.CHECK_ENVS = True
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O2")
     model.train(2, dataset, dataset_sink_mode=False)
