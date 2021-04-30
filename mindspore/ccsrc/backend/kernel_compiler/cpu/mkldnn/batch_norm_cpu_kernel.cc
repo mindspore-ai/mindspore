@@ -35,7 +35,9 @@ void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
   momentum = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (x_shape.size() != 4) {
+  if (x_shape.size() == 2) {
+    x_shape.insert(x_shape.end(), 2, 1);
+  } else if (x_shape.size() != 4) {
     MS_LOG(EXCEPTION) << "Batchnorm only support nchw input!";
   }
   batch_size = x_shape[0];
