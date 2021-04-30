@@ -43,9 +43,12 @@ bool SelectCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std
   auto input_x = reinterpret_cast<T *>(inputs[1]->addr);
   auto input_y = reinterpret_cast<T *>(inputs[2]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
-  for (size_t pos = 0; pos < element_num_; pos++) {
-    output[pos] = input_cond[pos] ? input_x[pos] : input_y[pos];
-  }
+  auto task = [=](const size_t start, const size_t end) {
+    for (size_t pos = start; pos < end; pos++) {
+      output[pos] = input_cond[pos] ? input_x[pos] : input_y[pos];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, element_num_);
   return true;
 }
 }  // namespace kernel
