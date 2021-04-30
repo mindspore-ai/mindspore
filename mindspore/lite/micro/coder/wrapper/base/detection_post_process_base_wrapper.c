@@ -33,7 +33,7 @@ static inline bool compare(int i, int j, const float *scores) {
 static void heapify(const float *scores, int *indexes, int n, int i) {
   while (i < n) {
     int cur = i;
-    int l = 2 * i + 1;
+    const int l = 2 * i + 1;
     const int r = 2 * i + 2;
     if (r < n && compare(indexes[cur], indexes[r], scores)) {
       cur = r;
