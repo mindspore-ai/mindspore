@@ -85,6 +85,11 @@ std::vector<std::vector<size_t>> SplitGroup(const std::vector<AnfNodePtr> &topos
         if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
           return false;
         }
+        // if Call/Switch/SwitchLayer, do not replace load.
+        if (IsPrimitiveCNode(node, prim::kPrimCall) || IsPrimitiveCNode(node, prim::kPrimSwitch) ||
+            IsPrimitiveCNode(node, prim::kPrimSwitchLayer)) {
+          return true;
+        }
         auto cnode = node->cast<CNodePtr>();
         auto &inputs = cnode->inputs();
         return std::any_of(inputs.begin(), inputs.end(),

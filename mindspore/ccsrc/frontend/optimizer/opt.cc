@@ -246,7 +246,7 @@ void SubstitutionList::DisplayStatusOfSubstitution(const std::unordered_map<std:
      << std::endl;
   for (size_t i = 0; i < list_.size(); i++) {
     auto name = list_[i]->name_;
-    ss << std::left << std::setw(space + 4) << name << "\t";
+    ss << std::left << std::setw(SizeToInt(space) + 4) << name << "\t";
     for (auto change : status.at(name + std::to_string(i))) {
       ss << change << " ";
     }

@@ -28,6 +28,7 @@ namespace {
 // data = Load(input, attach)
 // data = Depend(input, attach)
 // monad = UpdateState(input, attach)
+constexpr size_t kFirstInputIndex = 0;
 constexpr size_t kInputIndex = 1;
 constexpr size_t kAttachIndex = 2;
 constexpr size_t kMakeTupleSize = 3;
@@ -120,6 +121,13 @@ AnfNodePtr EliminateUpdateStateForPureNode(const CNodePtr &update_state, const A
       return nullptr;
     }
   }
+  // Skip Call/Switch/SwitchLayer.
+  auto first_input_node = cnode->input(kFirstInputIndex);
+  if (IsPrimitiveCNode(first_input_node, prim::kPrimCall) || IsPrimitiveCNode(first_input_node, prim::kPrimSwitch) ||
+      IsPrimitiveCNode(first_input_node, prim::kPrimSwitchLayer)) {
+    return nullptr;
+  }
+
   // Remove UpdateState by replace it with its input monad.
   return update_state->input(kInputIndex);
 }
