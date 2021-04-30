@@ -25,14 +25,14 @@ class RaiseReductionPrecision : public Pass {
  public:
   RaiseReductionPrecision() : Pass("raise_reduction_precision") {}
   ~RaiseReductionPrecision() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool IsFp16ReduceSum(const AnfNodePtr &node);
+  bool IsFp16ReduceSum(const AnfNodePtr &node) const;
   bool Process(const FuncGraphPtr &func_graph);
-  AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, std::string format);
-  AnfNodePtr CreateReduceSum(const AnfNodePtr &node, const AnfNodePtr &input);
-  void ReplaceNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node);
+  AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, const std::string &format) const;
+  AnfNodePtr CreateReduceSum(const AnfNodePtr &node, const AnfNodePtr &input) const;
+  void ReplaceNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

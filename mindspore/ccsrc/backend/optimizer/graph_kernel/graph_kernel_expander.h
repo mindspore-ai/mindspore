@@ -44,7 +44,7 @@ class GraphKernelExpander : public Pass {
  public:
   GraphKernelExpander() : Pass("graph_kernel_expander") {}
   ~GraphKernelExpander() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   ExpanderPtr GetExpander(const AnfNodePtr &node);

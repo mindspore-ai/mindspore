@@ -30,19 +30,19 @@ class GraphKernelOptimizer {
 
  private:
   // Pre-process
-  PassManagerPtr PreProcess();
+  PassManagerPtr PreProcess() const;
   // Cluster kernels
-  PassManagerPtr Cluster();
+  PassManagerPtr Cluster() const;
   // High level optimize 1
-  PassManagerPtr HighLevelOpt1();
+  PassManagerPtr HighLevelOpt1() const;
   // Split kernels
-  PassManagerPtr Split();
+  PassManagerPtr Split() const;
   // High level optimize 2
-  PassManagerPtr HighLevelOpt2();
+  PassManagerPtr HighLevelOpt2() const;
   // Combine kernels
-  PassManagerPtr Combine();
+  PassManagerPtr Combine() const;
   // Post-process
-  PassManagerPtr PostProcess();
+  PassManagerPtr PostProcess() const;
 
   bool is_gpu{false};
   bool is_ascend{false};
