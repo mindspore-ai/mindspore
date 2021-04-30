@@ -82,7 +82,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
 
-  bool ReadNodeDataRequired(const CNodePtr &kernel);
+  bool ReadNodeDataRequired(const CNodePtr &kernel) const;
 
   void PostExecuteNode(const CNodePtr &kernel, bool last_kernel);
 
@@ -107,9 +107,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool debugger_enabled() const;
 
-  bool partial_memory();
+  bool partial_memory() const;
 
-  void SetCurNode(std::string cur_name);
+  void SetCurNode(const std::string &cur_name);
 
   std::string run_level() const;
 
@@ -120,7 +120,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping);
 
   // check if any feature that uses the debugger backend is enabled
-  bool DebuggerBackendEnabled();
+  bool DebuggerBackendEnabled() const;
 
   void SetTrainingDone(bool training_done);
 
@@ -140,13 +140,13 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadGraphs(const KernelGraphPtr &graph_ptr);
 
-  uint32_t GetFirstRunGraphId();
+  uint32_t GetFirstRunGraphId() const;
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
   std::list<KernelGraphPtr> GetGraphPtrList() { return graph_ptr_list_; }
 
-  bool TensorExistsInCurrent(std::string tensor_name);
+  bool TensorExistsInCurrent(const std::string &tensor_name);
 
  private:
   // private constructor for singleton
@@ -160,14 +160,14 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void SetOpOverflowBinPath(uint32_t graph_id);
 
   // check if dump using debugger backend is enabled
-  bool CheckDebuggerDumpEnabled();
+  bool CheckDebuggerDumpEnabled() const;
 
   // check if debugger enabled
-  bool CheckDebuggerEnabled();
+  bool CheckDebuggerEnabled() const;
 
   void CheckDebuggerEnabledParam();
 
-  bool CheckDebuggerPartialMemoryEnabled();
+  bool CheckDebuggerPartialMemoryEnabled() const;
 
   // check and save graph pointer
   void CheckGraphPtr(const KernelGraphPtr &graph_ptr);
@@ -181,7 +181,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // send graph and enter command wait loop
   void SendGraphAndSuspend(const GraphProto &graph_proto);
 
-  void SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list, uint32_t graph_sum);
+  void SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list);
 
   // wait for command and process command
   // send command request and process reply in a loop
@@ -223,7 +223,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool CheckPort(const char *port);
 
   // Check if the IP is valid
-  bool CheckIp(const char *host);
+  bool CheckIp(const char *host) const;
 
   void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
 

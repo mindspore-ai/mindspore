@@ -52,7 +52,7 @@ class DebugServices {
 
   DebugServices &operator=(const DebugServices &other);
 
-  ~DebugServices();
+  ~DebugServices() = default;
 
   enum CONDITION_TYPE {
     HAS_NAN,
@@ -121,7 +121,7 @@ class DebugServices {
     std::vector<parameter_t> parameter_list;
     size_t location = 0;
 
-    std::string FindQualifiedTensorName(const std::string &tensor_name) {
+    std::string FindQualifiedTensorName(const std::string &tensor_name) const {
       std::string node_name = tensor_name.substr(0, tensor_name.find_first_of(':'));
       for (auto check_node : check_node_list) {
         std::string w_name = std::get<0>(check_node);
@@ -135,17 +135,17 @@ class DebugServices {
       return {};
     }
 
-    bool is_gt_wp() {
+    bool is_gt_wp() const {
       return condition.type == MAX_GT || condition.type == MIN_GT || condition.type == MEAN_GT ||
              condition.type == SD_GT || condition.type == MAX_MIN_GT;
     }
 
-    bool is_lt_wp() {
+    bool is_lt_wp() const {
       return condition.type == MAX_LT || condition.type == MIN_LT || condition.type == MEAN_LT ||
              condition.type == SD_LT || condition.type == MAX_MIN_LT;
     }
 
-    bool min_max_enabled() {
+    bool min_max_enabled() const {
       return condition.type == MAX_LT || condition.type == MAX_GT || condition.type == MIN_LT ||
              condition.type == MIN_GT || condition.type == MAX_MIN_LT || condition.type == MAX_MIN_GT ||
              (condition.type == INIT && (!parameter_list[1].disabled || !parameter_list[2].disabled)) ||
@@ -153,7 +153,7 @@ class DebugServices {
              (condition.type == TOO_SMALL && (!parameter_list[1].disabled || !parameter_list[2].disabled));
     }
     // inf or nan related condition set
-    bool inf_nan_enabled() {
+    bool inf_nan_enabled() const {
       return condition.type == HAS_INF || condition.type == HAS_NAN || condition.type == GENERAL_OVERFLOW;
     }
     // mean or sd related condition set
@@ -166,7 +166,7 @@ class DebugServices {
       return (condition.type == TOO_LARGE && !parameter_list[0].disabled) ||
              (condition.type == TOO_SMALL && !parameter_list[0].disabled);
     }
-    bool zero_percentage_enabled() { return condition.type == ALL_ZERO || condition.type == INIT; }
+    bool zero_percentage_enabled() const { return condition.type == ALL_ZERO || condition.type == INIT; }
 
     bool tensor_update_ratio_mean_enabled() const {
       return condition.type == CHANGE_TOO_LARGE || condition.type == CHANGE_TOO_SMALL;
@@ -191,9 +191,9 @@ class DebugServices {
   void RemoveWatchpoint(unsigned int id);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
-                        std::vector<unsigned int> *watchpoint_id, std::vector<std::vector<parameter_t>> *parameters,
-                        std::vector<int32_t> *error_code, const std::vector<std::string> &op_overflows,
-                        const std::vector<std::string> &async_file_pool,
+                        std::vector<unsigned int> *const watchpoint_id,
+                        std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_code,
+                        const std::vector<std::string> &op_overflows, const std::vector<std::string> &async_file_pool,
                         std::vector<std::shared_ptr<TensorData>> *tensor_list, bool init_dbg_suspend,
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr);
@@ -243,9 +243,9 @@ class DebugServices {
                               const std::vector<std::string> &async_file_pool,
                               std::vector<std::shared_ptr<TensorData>> *tensor_list);
 #endif
-  void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
+  void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
-                        std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *shape);
+                        std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *const shape);
 #ifdef ONLINE_DBG_MODE
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
@@ -282,9 +282,9 @@ class DebugServices {
   std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
 #endif
 
-  bool TensorExistsInCurrent(std::string tensor_name);
+  bool TensorExistsInCurrent(const std::string &tensor_name);
 
-  void MoveTensorCurrentToPrev(std::string tensor_name);
+  void MoveTensorCurrentToPrev(const std::string &tensor_name);
 
   void SetNetName(std::string net_name);
 
@@ -308,7 +308,7 @@ class DebugServices {
   std::string dump_dir;
   bool is_sync_mode;
 
-  TensorLoader *tensor_loader_;
+  std::shared_ptr<TensorLoader> tensor_loader_;
 };
 #ifdef ONLINE_DBG_MODE
 }  // namespace mindspore

@@ -47,12 +47,12 @@ class TensorLoader {
 
   void SwapCurrentPrev() { tensor_list_map.swap(prev_tensor_list_map); }
 
-  bool TensorExistsInCurrent(std::string tensor_name) {
+  bool TensorExistsInCurrent(std::string tensor_name) const {
     return tensor_list_map.find(tensor_name) != tensor_list_map.end();
   }
 
   // only parameters will return true
-  bool PrevTensorExistsInCurrent(std::string tensor_name) { return TensorExistsInCurrent(tensor_name + ":prev"); }
+  bool PrevTensorExistsInCurrent(std::string tensor_name) const { return TensorExistsInCurrent(tensor_name + ":prev"); }
 
   void MoveParametersCurrentToPrev() {
     MS_LOG(INFO) << "Moving parameters from current map to previous map";
@@ -69,7 +69,7 @@ class TensorLoader {
     }
   }
 
-  bool IsPrevTensor(std::string tensor_name) {
+  bool IsPrevTensor(std::string tensor_name) const {
     const std::string suffix = ":prev";
     if (tensor_name.length() <= suffix.length()) return false;
     return std::equal(suffix.rbegin(), suffix.rend(), tensor_name.rbegin());
@@ -100,13 +100,13 @@ class TensorLoader {
     return tensor_list;
   }
 
-  std::shared_ptr<TensorData> GetTensor(const std::string &tensor_name) {
+  std::shared_ptr<TensorData> GetTensor(const std::string &tensor_name) const {
     auto iter = tensor_list_map.find(tensor_name);
     if (iter != tensor_list_map.end()) return iter->second;
     return nullptr;
   }
 
-  uint32_t GetIterNum() { return iter_num; }
+  uint32_t GetIterNum() const { return iter_num; }
 
   std::map<std::string, std::shared_ptr<TensorData>> GetTensorMap() { return tensor_list_map; }
 

@@ -29,11 +29,7 @@
 #ifdef ONLINE_DBG_MODE
 namespace mindspore {
 #endif
-DebugServices::DebugServices() {
-  tensor_loader_ = new TensorLoader();
-  uint32_t iter_num = -1;
-  tensor_loader_->set_iter_num(iter_num);
-}
+DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
 
 DebugServices::DebugServices(const DebugServices &other) {
   tensor_loader_ = other.tensor_loader_;
@@ -47,8 +43,6 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
   }
   return *this;
 }
-
-DebugServices::~DebugServices() { delete tensor_loader_; }
 
 void DebugServices::AddWatchpoint(
   unsigned int id, unsigned int watch_condition, float parameter,
@@ -77,8 +71,9 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
   watchpoint_table.erase(id);
 }
 
-std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor, void *previous_tensor_ptr,
-                                              uint32_t num_elements, int tensor_dtype) {
+std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
+                                              void *const previous_tensor_ptr, uint32_t num_elements,
+                                              int tensor_dtype) {
   switch (tensor_dtype) {
     case DbgDataType::DT_UINT8: {
       return std::make_unique<TensorSummary<uint8_t>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements);
@@ -156,8 +151,8 @@ void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bo
 
 void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
                                           const std::string &tensor_name, const std::string &tensor_name_no_slot,
-                                          bool *previous_iter_tensor_needed, std::string *qualified_tensor_name,
-                                          std::vector<watchpoint_t> *watchpoints_to_check) {
+                                          bool *previous_iter_tensor_needed, std::string *const qualified_tensor_name,
+                                          std::vector<watchpoint_t> *const watchpoints_to_check) {
   for (auto w_table_item : watchpoint_table) {
     auto wp = std::get<1>(w_table_item);
     // check ONLY init conditions on initial suspended state.
@@ -191,10 +186,11 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
   }
 }
 
-void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot,
-                                     std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
-                                     std::vector<std::vector<parameter_t>> *parameters,
-                                     std::vector<int32_t> *error_codes, const std::vector<std::string> &op_overflows,
+void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::vector<std::string> *const slot,
+                                     std::vector<int> *const condition, std::vector<unsigned int> *const watchpoint_id,
+                                     std::vector<std::vector<parameter_t>> *const parameters,
+                                     std::vector<int32_t> *const error_codes,
+                                     const std::vector<std::string> &op_overflows,
                                      const std::vector<std::string> &async_file_pool,
                                      std::vector<std::shared_ptr<TensorData>> *tensor_list, const bool init_dbg_suspend,
                                      const bool step_end, const bool recheck, std::vector<unsigned int> *device_id,
@@ -818,9 +814,10 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
 }
 #endif
 
-void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
-                                     std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
-                                     std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *shape) {
+void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *const ret_name,
+                                     std::vector<char *> *const data_ptr, std::vector<ssize_t> *const data_size,
+                                     std::vector<unsigned int> *const dtype,
+                                     std::vector<std::vector<int64_t>> *const shape) {
   std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
   tensor_loader_->SearchTensors(name, &result_list);
 
@@ -929,10 +926,10 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNod
 }
 #endif
 
-bool DebugServices::TensorExistsInCurrent(std::string tensor_name) {
+bool DebugServices::TensorExistsInCurrent(const std::string &tensor_name) {
   return tensor_loader_->TensorExistsInCurrent(tensor_name);
 }
-void DebugServices::MoveTensorCurrentToPrev(std::string tensor_name) {
+void DebugServices::MoveTensorCurrentToPrev(const std::string &tensor_name) {
   tensor_loader_->MoveTensorCurrentToPrev(tensor_name);
 }
 
