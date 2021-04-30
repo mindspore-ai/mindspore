@@ -93,7 +93,11 @@ int ArithmeticFP32Coder::ReSize(CoderContext *const context) {
   CalcMultiplesAndStrides(arithmetic_parameter_);
   if (arithmetic_parameter_->broadcasting_) {
     outside_ = 1;
-    for (auto i = arithmetic_parameter_->ndim_ - 1; i >= 0; --i) {
+    int resize_n_index = static_cast<int>(arithmetic_parameter_->ndim_) - 1;
+    if (resize_n_index < 0) {
+      return RET_ERROR;
+    }
+    for (auto i = resize_n_index; i >= 0; --i) {
       if (arithmetic_parameter_->in_shape0_[i] != arithmetic_parameter_->in_shape1_[i]) {
         break_pos_ = i;
         break;

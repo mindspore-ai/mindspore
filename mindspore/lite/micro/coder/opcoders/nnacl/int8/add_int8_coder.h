@@ -38,7 +38,7 @@ class AddInt8Coder final : public OperatorCoder {
   int Init();
   int ReSize();
 
-  AddQuantParameter para_;
+  AddQuantParameter para_{};
   ArithmeticParameter *arith_para_{nullptr};
   Tensor *input0{nullptr};
   Tensor *input1{nullptr};

@@ -15,7 +15,6 @@
  */
 
 #include "wrapper/int8/conv1x1_init_int8_wrapper.h"
-#include <memory.h>
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/errorcode.h"
 

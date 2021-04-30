@@ -39,10 +39,10 @@ class ReluxInt8Coder : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  protected:
-  ReluXQuantArg quant_arg_;
+  ReluXQuantArg quant_arg_{};
 
  private:
-  int type_;
+  int type_{0};
 };
 
 class ReluInt8Coder final : public ReluxInt8Coder {
