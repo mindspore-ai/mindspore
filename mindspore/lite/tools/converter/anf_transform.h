@@ -61,6 +61,8 @@ class AnfTransform {
 
   static int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
+  static int RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
   int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   void GetAllFuncGraph(const FuncGraphPtr &func_graph);

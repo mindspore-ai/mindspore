@@ -279,6 +279,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
+            ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
             ${LITE_DIR}/tools/common/graph_util.cc
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc

@@ -17,6 +17,7 @@
 #include "tools/converter/anf_transform.h"
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "src/common/log_adapter.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ir/primitive.h"
@@ -65,6 +66,7 @@
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/optimizer/parallel/split_strategy.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -117,6 +119,31 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     MS_LOG(ERROR) << "run op fusion failed.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  MS_LOG(DEBUG) << "Run ParallelPass start";
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  if (config->trainModel || !config->parallelMode) {
+    return RET_OK;
+  }
+  // 1. deal with split strategy
+  std::unordered_map<std::string, opt::SplitStrategy> split_strategys =
+    ParserSplitStrategy(static_cast<opt::SplitMode>(config->parallelMode));
+  if (split_strategys.empty()) {
+    MS_LOG(ERROR) << "parse split_strategy error.";
+    return RET_OK;
+  }
+  auto parallel_pm = std::make_shared<opt::PassManager>("anf parallel pass manager", false);
+  // 2. preceding parallel pass
+  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  // 3. multi_conv parallel pass
+  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  // 4. single conv parallel pass
+  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  optimizer->AddPassManager(parallel_pm);
+  MS_LOG(DEBUG) << "Run ParallelPass end";
   return RET_OK;
 }
 
@@ -371,6 +398,12 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 
   for (auto &fg : func_graphs_) {
     status = RunGraphPass(fg, config);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run convert pass failed.";
+      return nullptr;
+    }
+
+    status = RunParallelPass(fg, config);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run convert pass failed.";
       return nullptr;
