@@ -39,11 +39,7 @@ class ParallelInfo {
   ParallelInfo() = default;
   ParallelInfo(const AnfNodePtrList &nodes, const std::vector<DimInfoPtr> &dims, const FusionInfoPtr &fusion_info)
       : nodes_(nodes), dims_(dims), fusion_info_(fusion_info) {}
-  ParallelInfo(const ParallelInfo &obj) {
-    nodes_ = obj.nodes_;
-    dims_ = obj.dims_;
-    fusion_info_ = obj.fusion_info_;
-  }
+  ParallelInfo(const ParallelInfo &obj) : nodes_(obj.nodes_), dims_(obj.dims_), fusion_info_(obj.fusion_info_) {}
   ~ParallelInfo() = default;
 
   size_t GetSize() const {
@@ -66,7 +62,7 @@ class ParallelConfig {
  public:
   ParallelConfig() = default;
   explicit ParallelConfig(size_t max_n) : max_num_for_fuse_(max_n) {}
-  explicit ParallelConfig(const ParallelConfig &obj) { max_num_for_fuse_ = obj.max_num_for_fuse_; }
+  ParallelConfig(const ParallelConfig &obj) { max_num_for_fuse_ = obj.max_num_for_fuse_; }
   ~ParallelConfig() = default;
   size_t max_num_for_fuse() { return max_num_for_fuse_; }
 
