@@ -67,8 +67,8 @@ __global__ void PadGeneral(const size_t size, const T *input, const int num, con
                            const int pad_left, const T pad_value, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     int block_num = (pos / padded_width) / padded_height;       // total blocks = (batch * channels)
-    const int padded_w = pos % padded_width;                  // x coordinate refered to by cur 'pos'
-    const int padded_h = (pos / padded_width) % padded_height;  // y coordinate refered to by cur 'pos'
+    const int padded_w = pos % padded_width;                  // x coordinate referred to by cur 'pos'
+    const int padded_h = (pos / padded_width) % padded_height;  // y coordinate referred to by cur 'pos'
 
     int channels_new = channels_orig + pad_channel_after + pad_channel_before;  // new number of channels from padding
     int channel_num = block_num % channels_new;                                 // current channel
@@ -80,7 +80,7 @@ __global__ void PadGeneral(const size_t size, const T *input, const int num, con
         channel_num > channels_orig + pad_channel_before - 1) {
       output[pos] = pad_value;
     } else {
-      // on a block/x,y positon that isn't padding, copy data from the correct block/x,y pos the input
+      // on a block/x,y position that isn't padding, copy data from the correct block/x,y pos the input
       // calculate from number of blocks of padding (due to channel padding) inserted prior
       equiv_block_num = block_num - (batch_item * (pad_channel_before + pad_channel_after)) - pad_channel_before;
       output[pos] = input[(equiv_block_num * old_height + padded_h - pad_top) * old_width + padded_w - pad_left];
@@ -111,6 +111,31 @@ __global__ void PadGrad(const size_t size, const T* dy, const int num, const int
     const int padded_w = pos % old_width + pad_left;
     const int padded_h = pos / old_width % old_height + pad_top;
     dx[pos] = dy[(block_num * padded_height + padded_h) * padded_width + padded_w];
+  }
+  return;
+}
+
+// For internal OP use, not user facing
+template <typename T>
+__global__ void Pad3d(const size_t size, const T* input, const int num, const int channels, const int old_depth,
+                      const int old_height, const int old_width, const int old_dhw, const int old_hw,
+                      const int padded_depth, const int padded_height, const int padded_width, const int padded_dhw,
+                      const int padded_hw, const int pad_head, const int pad_top, const int pad_left,
+                      const float pad_value, T* output) {
+  T pad_value_ = static_cast<T>(pad_value);
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    const int pos_d = pos / padded_hw % padded_depth;
+    const int pos_h = pos / padded_width % padded_height;
+    const int pos_w = pos % padded_width;
+    const int block_num = pos / padded_dhw;
+
+    if (pos_d - pad_head < 0 || pos_h - pad_top < 0 || pos_w - pad_left < 0 || pos_h - pad_head >= old_depth ||
+        pos_h - pad_top >= old_height || pos_w - pad_left >= old_width) {
+      output[pos] = pad_value_;
+    } else {
+      int index = block_num * old_dhw + old_hw * (pos_d - pad_head) + old_width * (pos_h - pad_top) + pos_w - pad_left;
+      output[pos] = input[index];
+    }
   }
   return;
 }
@@ -163,6 +188,22 @@ void CalPadGrad(const size_t size, const T* dy, const int num, const int channel
   return;
 }
 
+template <typename T>
+void CalPad3d(const size_t size, const T* input, const int num, const int channels, const int old_depth,
+              const int old_height, const int old_width, const int padded_depth, const int padded_height,
+              const int padded_width, const int pad_head, const int pad_top, const int pad_left, const float pad_value,
+              T* output, cudaStream_t cuda_stream) {
+  const int old_hw = old_height * old_width;
+  const int old_dhw = old_depth * old_hw;
+  const int padded_hw = padded_height * padded_width;
+  const int padded_dhw = padded_depth * padded_hw;
+  Pad3d<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, num, channels, old_depth, old_height,
+                                                           old_width, old_dhw, old_hw, padded_depth, padded_height,
+                                                           padded_width, padded_dhw, padded_hw, pad_head, pad_top,
+                                                           pad_left, pad_value, output);
+  return;
+}
+
 template void CalPad<float>(const size_t size, const float* input, const int num, const int channels,
                             const int old_height, const int old_width, const int padded_height, const int padded_width,
                             const int pad_top, const int pad_left, float pad_value, float* output,
@@ -210,3 +251,11 @@ template void CalPadGeneral<int>(const size_t size, const int *input, const int 
                                   const int old_width, const int padded_height, const int padded_width,
                                   const int pad_top, const int pad_left, const int pad_value, int *output,
                                   cudaStream_t cuda_stream);
+template void CalPad3d<float>(const size_t size, const float* input, const int num, const int channels,
+                              const int old_depth, const int old_height, const int old_width, const int padded_depth,
+                              const int padded_height, const int padded_width, const int pad_head, const int pad_top,
+                              const int pad_left, const float pad_value, float* output, cudaStream_t cuda_stream);
+template void CalPad3d<half>(const size_t size, const half* input, const int num, const int channels,
+                             const int old_depth, const int old_height, const int old_width, const int padded_depth,
+                             const int padded_height, const int padded_width, const int pad_head, const int pad_top,
+                             const int pad_left, const float pad_value, half* output, cudaStream_t cuda_stream);
