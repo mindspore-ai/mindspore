@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-ulimit -u unlimited
+"""Device adapter for ModelArts"""
 
-BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-export DEVICE_ID=0
+from .config import config
 
-dataset_type='cifar10'
-if [ $# == 1 ]
-then
-    if [ $1 != "cifar10" ] && [ $1 != "imagenet" ]
-    then
-        echo "error: the selected dataset is neither cifar10 nor imagenet"
-    exit 1
-    fi
-    dataset_type=$1
-fi
-config_path="./${dataset_type}_config.yaml"
-echo "config path is : ${config_path}"
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
-python ${BASEPATH}/../eval.py --config_path=$config_path --dataset_name=$dataset_type > ./eval.log 2>&1 &
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

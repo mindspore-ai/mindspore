@@ -53,12 +53,14 @@ then
     fi
     dataset_type=$3
 fi
+config_path="./${dataset_type}_config.yaml"
+echo "config path is : ${config_path}"
 
 
 if [ $1 -gt 1 ]
 then
     mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
-    python3 ${BASEPATH}/../train.py --dataset_name=$dataset_type > train.log 2>&1 &
+    python3 ${BASEPATH}/../train.py --config_path=$config_path --dataset_name=$dataset_type > train.log 2>&1 &
 else
-    python3 ${BASEPATH}/../train.py --dataset_name=$dataset_type > train.log 2>&1 &
+    python3 ${BASEPATH}/../train.py --config_path=$config_path --dataset_name=$dataset_type > train.log 2>&1 &
 fi
