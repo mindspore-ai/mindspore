@@ -38,8 +38,7 @@ class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
   CNodePtr CreateInplaceAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
   std::vector<std::pair<AnfNodePtr, int>> FindInnerCNodeUsers(const AnfNodePtr &inner_node,
                                                               const CNodePtr &target) const;
-  void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
-                          const FuncGraphManagerPtr &mng);
+  void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
   bool IsStitchWithAtomic(const AnfNodePtr &anf_node);
 
   AnfNodePtr stitch_node_{nullptr};
