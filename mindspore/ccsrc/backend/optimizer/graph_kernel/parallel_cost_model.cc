@@ -30,7 +30,7 @@ std::string CommonDimInfo::ToString() {
   return buffer.str();
 }
 
-int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) {
+int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
   nlohmann::json json_desc;
   AnfNodePtrList nodes = {node};
   DumpOption dump_option;
@@ -47,7 +47,8 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) {
   return py::cast<int>(ret);
 }
 
-std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFuseInfo(const AnfNodePtrList &nodes) {
+std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFuseInfo(
+  const AnfNodePtrList &nodes) const {
   nlohmann::json json_desc;
   std::vector<AnfNodePtrList> graphs;
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(graphs),
@@ -80,7 +81,7 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
   return std::make_tuple(dim_infos, benefit, fusion_info);
 }
 
-FusionInfoPtr ParallelCostModel::ProcessFusionInfo(py::object fusion_type, py::object type_info) {
+FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type, const py::object &type_info) const {
   if (!py::isinstance<py::str>(fusion_type)) {
     MS_LOG(EXCEPTION) << "Fusion type for parallel is invalid!";
   }

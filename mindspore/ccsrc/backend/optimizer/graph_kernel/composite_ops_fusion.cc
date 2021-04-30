@@ -60,7 +60,7 @@ bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &che
   }
   circle_nodes->clear();
 
-  auto InputEdges = [&depend_prior](CNodePtr cnode) {
+  auto InputEdges = [&depend_prior](const CNodePtr &cnode) {
     std::set<AnfNodePtr> edges;
     auto range = depend_prior.equal_range(cnode);
     for (auto iter = range.first; iter != range.second; ++iter) {
