@@ -111,7 +111,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 template <typename T>
 bool SliceCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+                                  const std::vector<kernel::AddressPtr> &outputs) const {
   T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
