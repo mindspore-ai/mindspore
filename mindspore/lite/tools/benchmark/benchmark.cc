@@ -1050,8 +1050,18 @@ int Benchmark::InitDumpConfigFromJson(char *path) {
     }
   }
 
-  dump_file_output_dir_ = dump_cfg_json_[dump::kSettings][dump::kPath].get<std::string>() + "/" +
-                          dump_cfg_json_[dump::kSettings][dump::kNetName].get<std::string>();
+  auto abs_path = dump_cfg_json_[dump::kSettings][dump::kPath].get<std::string>();
+  auto net_name = dump_cfg_json_[dump::kSettings][dump::kNetName].get<std::string>();
+  if (abs_path.back() == '\\' || abs_path.back() == '/') {
+    dump_file_output_dir_ = abs_path + net_name;
+  } else {
+#ifdef _WIN32
+    dump_file_output_dir_ = abs_path + "\\" + net_name;
+#else
+    dump_file_output_dir_ = abs_path + "/" + net_name;
+#endif
+  }
+
   auto status = CreateOutputDir(&dump_file_output_dir_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "create data output directory failed.";
