@@ -55,29 +55,29 @@ class DynamicNet(nn.Cell):
 
 def generate_testcases(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.array([-1, -2, 0, 2, 1]).astype(nptype)
+    x = np.array([-1, -2, 0, 4, 5]).astype(nptype)
     net = Net()
     output = net(Tensor(x))
-    expect = np.array([0.33333334, 0.16666667, 0.5, 0.8333333, 0.6666667]).astype(nptype)
+    expect = np.array([0.33333334, 0.16666667, 0.5, 1, 1]).astype(nptype)
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
-    sens = np.array([-1.45, -2.63, 0.34, 6.43, 34.6]).astype(nptype)
+    sens = np.array([-1.45, 0.63, 0.34, 6.43, 34.6]).astype(nptype)
     backward_net = Grad(Net())
     output = backward_net(Tensor(x), Tensor(sens))
-    expect = np.array([0, 0, 5.66666685e-02, 0, 0]).astype(nptype)
+    expect = np.array([-0.2416667, 0.1049999, 5.66666685e-02, 0, 0]).astype(nptype)
     np.testing.assert_almost_equal(output[0].asnumpy(), expect)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x = np.array([-1, -2, 0, 2, 1]).astype(nptype)
+    x = np.array([-1, -2, 0, 4, 5]).astype(nptype)
     net = Net()
     output = net(Tensor(x))
-    expect = np.array([0.33333334, 0.16666667, 0.5, 0.8333333, 0.6666667]).astype(nptype)
+    expect = np.array([0.33333334, 0.16666667, 0.5, 1, 1]).astype(nptype)
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
-    sens = np.array([-1.45, -2.63, 0.34, 6.43, 34.6]).astype(nptype)
+    sens = np.array([-1.45, 0.63, 0.34, 6.43, 34.6]).astype(nptype)
     backward_net = Grad(Net())
     output = backward_net(Tensor(x), Tensor(sens))
-    expect = np.array([0, 0, 5.66666685e-02, 0, 0]).astype(nptype)
+    expect = np.array([-0.2416667, 0.1049999, 5.66666685e-02, 0, 0]).astype(nptype)
     np.testing.assert_almost_equal(output[0].asnumpy(), expect)
 
 

@@ -26,11 +26,10 @@ __global__ void HsigmoidKernel(size_t size, const T *input, T *output) {
 }
 
 template <typename T>
-__global__ void HsigmoidGradKernel(size_t size, const T *dout, T *output) {
+__global__ void HsigmoidGradKernel(size_t size, const T *dout, const T *x, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     T value = dout[pos] / static_cast<T>(6);
-    value = value > static_cast<T>(1) ? static_cast<T>(0) : value;
-    output[pos] = value > static_cast<T>(0) ? value : static_cast<T>(0);
+    output[pos] = (x[pos] > static_cast<T>(-3) && x[pos] < static_cast<T>(3)) ? value : static_cast<T>(0);
   }
 }
 
@@ -40,12 +39,14 @@ void CalHSigmoid(const size_t &size, const T *input, T *output, cudaStream_t cud
 }
 
 template <typename T>
-void CalHSigmoidGrad(const size_t &size, const T *dout, T *output, cudaStream_t cuda_stream) {
-  HsigmoidGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dout, output);
+void CalHSigmoidGrad(const size_t &size, const T *dout, const T *x, T *output, cudaStream_t cuda_stream) {
+  HsigmoidGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dout, x, output);
 }
 
 template void CalHSigmoid<half>(const size_t &size, const half *input, half *output, cudaStream_t cuda_stream);
 template void CalHSigmoid<float>(const size_t &size, const float *input, float *output, cudaStream_t cuda_stream);
 
-template void CalHSigmoidGrad<half>(const size_t &size, const half *dout, half *output, cudaStream_t cuda_stream);
-template void CalHSigmoidGrad<float>(const size_t &size, const float *dout, float *output, cudaStream_t cuda_stream);
+template void CalHSigmoidGrad<half>(const size_t &size, const half *dout, const half *x, half *output,
+                                    cudaStream_t cuda_stream);
+template void CalHSigmoidGrad<float>(const size_t &size, const float *dout, const float *x, float *output,
+                                     cudaStream_t cuda_stream);
