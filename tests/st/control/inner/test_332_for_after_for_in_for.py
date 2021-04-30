@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_for_after_for_in_for():
+def test_for_after_for_in_for_01():
     class ForAfterForInForNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -45,13 +45,69 @@ def test_for_after_for_in_for():
             for _ in range(0, 4):
                 self.param_b = self.add(self.param_c, self.param_b)
                 for _ in range(0, 8):
-                    self.param_b = self.param_a + j
+                    self.param_b = self.param_a + x
                 self.param_c = self.param_a * self.param_b
 
             for _ in range(0, 3):
                 y = y + self.param_b
                 x = self.relu(self.param_c * 3)
                 self.param_a = x - y
+            z = y + self.param_b
+            return z
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([11], mstype.int32)
+    y = Tensor([7], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    for_after_for_in_for_net = ForAfterForInForNet()
+    net = GradNet(for_after_for_in_for_net)
+    graph_forward_res = for_after_for_in_for_net(x, y)
+    graph_backward_res = net(x, y)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    for_after_for_in_for_net = ForAfterForInForNet()
+    net = GradNet(for_after_for_in_for_net)
+    pynative_forward_res = for_after_for_in_for_net(x, y)
+    pynative_backward_res = net(x, y)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_for_after_for_in_for_02():
+    class ForAfterForInForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.div = P.Div()
+            self.assign = P.Assign()
+            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
+            self.param_c = Parameter(Tensor(20, mstype.int32), name='c')
+
+        def construct(self, x, y):
+            for _ in range(0, 6):
+                self.param_b = self.add(self.param_c, self.param_b)
+                for _ in range(0, 2):
+                    self.assign(self.param_b, self.param_a + x)
+                self.assign(self.param_c, self.param_a * self.param_b)
+
+            for _ in range(0, 3):
+                y = y + self.param_b
+                x = self.relu(self.param_c * 3)
+                self.assign(self.param_b, x - y)
             z = y + self.param_b
             return z
 
