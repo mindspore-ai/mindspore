@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
-#define MINDQUANTUM_ENGINE_PARAMETER_GATE_H_
-#include <string>
-#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/gates/basic_gates.h"
-#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/projector.h"
 
 namespace mindspore {
 namespace mindquantum {
-class ParameterGate : public BasicGate {
- public:
-  ParameterGate();
-  ParameterGate(const std::string &, const Indexes &, const Indexes &, const ParameterResolver &);
-  virtual ~ParameterGate() {}
-};
+Projector::Projector() {}
+Projector::Projector(const NameType &proj_str) : proj_str_(proj_str), n_qubits_(proj_str.length()) {}
+void Projector::HandleMask() {
+  mask1_ = 0;
+  mask2_ = 0;
+  for (auto i : proj_str_) {
+    if (i == '1') {
+      mask1_ = mask1_ * 2 + 1;
+    } else {
+      mask1_ = mask1_ * 2;
+    }
+    if (i == '0') {
+      mask2_ = mask2_ * 2;
+    } else {
+      mask2_ = mask2_ * 2 + 1;
+    }
+  }
+}
+Indexes Projector::GetMasks() { return {mask1_, mask2_}; }
 }  // namespace mindquantum
 }  // namespace mindspore
-#endif  // MINDQUANTUM_ENGINE_PARAMETER_GATE_H_

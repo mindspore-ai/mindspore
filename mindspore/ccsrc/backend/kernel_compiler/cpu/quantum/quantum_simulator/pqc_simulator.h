@@ -28,6 +28,7 @@
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/hamiltonian.h"
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/transformer.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/projector.h"
 
 namespace mindspore {
 namespace mindquantum {
@@ -35,10 +36,12 @@ struct CalcGradientParam {
   BasicCircuit *circuit_cp;
   BasicCircuit *circuit_hermitian_cp;
   transformer::Hamiltonians *hamiltonians_cp;
+  transformer::Projectors *projectors_cp;
   ParameterResolver *paras_cp;
   transformer::NamesType *encoder_params_names_cp;
   transformer::NamesType *ansatz_params_names_cp;
   bool dummy_circuit_cp{false};
+  bool is_projector_cp{false};
 };
 class PQCSimulator : public Simulator {
  private:
@@ -53,13 +56,11 @@ class PQCSimulator : public Simulator {
   void ApplyBlock(const GateBlock &, const ParameterResolver &);
   void ApplyBlocks(const GateBlocks &, const ParameterResolver &);
   void Evolution(const BasicCircuit &, const ParameterResolver &);
-  CalcType Measure(Index, Index, bool);
+  CalcType Measure(const Indexes &, bool);
   void ApplyHamiltonian(const Hamiltonian &);
   CalcType GetExpectationValue(const Hamiltonian &);
   std::vector<std::vector<float>> CalcGradient(const std::shared_ptr<CalcGradientParam> &, PQCSimulator &,
                                                PQCSimulator &, PQCSimulator &);
-  void AllocateAll();
-  void DeallocateAll();
   void SetState(const StateVector &);
   std::size_t GetControlMask(Indexes const &);
   void SetZeroState();

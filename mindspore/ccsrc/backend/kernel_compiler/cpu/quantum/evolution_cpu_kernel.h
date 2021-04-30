@@ -41,7 +41,6 @@ class EvolutionCPUKernel : public CPUKernel {
  private:
   int64_t n_qubits_;
   size_t state_len_;
-  mindquantum::PQCSimulator sim_;
   mindquantum::BasicCircuit circ_;
   mindquantum::transformer::Hamiltonians hams_;
   mindquantum::transformer::NamesType param_names_;
