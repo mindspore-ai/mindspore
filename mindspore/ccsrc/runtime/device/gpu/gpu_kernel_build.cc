@@ -68,20 +68,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
     }
   }
 
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
-
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
-  bool akg_ret = akg_gpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
-  if (!akg_ret) {
-    MS_LOG(ERROR) << "Akg-Kernel Parallel Building in GPU fail.";
-  }
-
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Akg GPU KernelBuild run in  " << PRIu64 << " us " << cost;
+  (void)akg_gpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
 }
 }  // namespace gpu
 }  // namespace device
