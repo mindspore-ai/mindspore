@@ -152,6 +152,14 @@ void GraphKernelFlags::Refresh() {
   for (auto &item : flag_map) {
     MS_LOG(WARNING) << "Unknown GraphKernel flag: " << item.first;
   }
+  if (opt_level > 0) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
+      MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE";
+      opt_level = 0;
+    }
+  }
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
