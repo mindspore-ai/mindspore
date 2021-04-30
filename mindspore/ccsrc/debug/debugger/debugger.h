@@ -80,7 +80,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
-  void PostExecute();
+  void PostExecute(const KernelGraphPtr &graph_ptr = nullptr);
 
   bool ReadNodeDataRequired(const CNodePtr &kernel);
 

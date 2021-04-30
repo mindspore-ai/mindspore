@@ -328,9 +328,6 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
           graph_ptr_ = dbg_graph_ptr;
           SendMultiGraphsAndSuspend(graph_proto_list_, graph_sum);
           graph_proto_list_.clear();
-        } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
-          // stop only when receive the first sub run graph for each step
-          CommandLoop();
         }
       }
     }
@@ -343,7 +340,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
   }
 }
 
-void Debugger::PostExecute() {
+void Debugger::PostExecute(const KernelGraphPtr &graph_ptr) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   if (pipeline::ExecutorPy::GetDebugTerminate()) {
@@ -355,9 +352,15 @@ void Debugger::PostExecute() {
       if (device_target_ != kGPUDevice) {
         num_step_++;
       }
-
       SendWatchpoints(CheckWatchpoints());
-      CommandLoop();
+      if (graph_ptr != nullptr && device_target_ == kGPUDevice) {
+        auto graph_id = graph_ptr->graph_id();
+        if (graph_id == rungraph_id_list_.front()) {
+          CommandLoop();
+        }
+      } else {
+        CommandLoop();
+      }
     }
     // Only keep parameters in the current map
     debug_services_->ResetLoadedTensors();

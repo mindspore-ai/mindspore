@@ -443,7 +443,7 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
     DumpJsonParser::GetInstance().UpdateDumpIter();
   }
   if (debugger_) {
-    debugger_->PostExecute();
+    debugger_->PostExecute(kernel_graph);
   }
 }
 
