@@ -210,6 +210,7 @@ union PrimitiveType {
     Call,
     Custom,
     CumSum,
+    SplitWithOverlap,
 }
 
 table Abs {
@@ -1114,4 +1115,15 @@ table CumSum {
 table Custom {
     type: string;
     attr: [Attribute];
+}
+
+table SplitWithOverlap {
+    number_split: long;
+    ratio: [long];
+    extend_top: [long];
+    extend_bottom: [long];
+    split_dim: long;
+    stride: long;
+    pad_top: long;
+    trans_format: bool = false;
 }
