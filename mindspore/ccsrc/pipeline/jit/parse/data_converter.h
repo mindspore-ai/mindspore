@@ -44,7 +44,7 @@ ResolveTypeDef GetObjType(const py::object &obj);
 ClassInstanceTypeDef GetClassInstanceType(const py::object &obj);
 
 bool IsCellInstance(const py::object &obj);
-py::object CreatePythonObject(const py::object &type, const py::tuple &params);
+py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwargs);
 void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name);
 ValuePtr PyDataToValue(const py::object &obj);
 void ClearObjectCache();

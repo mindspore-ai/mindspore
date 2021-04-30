@@ -1107,7 +1107,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       MS_LOG(EXCEPTION) << "'args_spec_list' should not be empty";
     }
 
-    // get the type parameter
+    // Get the type parameter.
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     TypePtr type = args_spec_list[0]->GetTypeTrack();
     if (type->type_id() != kMetaTypeTypeType) {
@@ -1131,17 +1131,17 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     auto class_type = type_obj->obj();
     MS_LOG(DEBUG) << "Get class type is " << type_obj->ToString() << ".";
 
-    // get the create instance obj's parameters
-    pybind11::tuple params = GetParameters(args_spec_list);
+    // Get the create instance obj's parameters, `params` may contain tuple(args, kwargs).
+    py::tuple params = GetParameters(args_spec_list);
 
-    // create class instance
+    // Create class instance.
     auto obj = parse::data_converter::CreatePythonObject(class_type, params);
     if (py::isinstance<py::none>(obj)) {
       MS_LOG(EXCEPTION) << "Create python object" << py::str(class_type)
                         << " failed, only support create Cell or Primitive object.";
     }
 
-    // process the object
+    // Process the object.
     ValuePtr converted_ret = nullptr;
     bool converted = parse::ConvertData(obj, &converted_ret, true);
     if (!converted) {
