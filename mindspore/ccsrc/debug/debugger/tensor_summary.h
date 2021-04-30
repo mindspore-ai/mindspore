@@ -46,7 +46,7 @@ class AllCloseCalculator {
   AllCloseCalculator();
   ~AllCloseCalculator() = default;
   void ProcessElement(double current, double previous);
-  bool IsAllClose();
+  bool IsAllClose() const;
   void set_atol(double value) { atol = value; }
   void set_rtol(double value) { rtol = value; }
 
@@ -61,7 +61,7 @@ class MeanCalculator {
   MeanCalculator();
   ~MeanCalculator() = default;
   void ProcessElement(double value);
-  double GetMean();
+  double GetMean() const;
 
  protected:
   double mean;
@@ -74,8 +74,8 @@ class VarianceAndMeanCalculator {
   ~VarianceAndMeanCalculator() = default;
   void ProcessElement(double value);
   double GetStandardDeviation();
-  double GetVariance();
-  double GetMean();
+  double GetVariance() const;
+  double GetMean() const;
 
  private:
   double mean;

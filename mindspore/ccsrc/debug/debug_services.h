@@ -39,7 +39,7 @@ class DebugServices {
 
   DebugServices &operator=(const DebugServices &other);
 
-  ~DebugServices();
+  ~DebugServices() = default;
 
   enum CONDITION_TYPE {
     HAS_NAN,
@@ -106,7 +106,7 @@ class DebugServices {
     std::vector<parameter_t> parameter_list;
     size_t location = 0;
 
-    std::string FindQualifiedTensorName(const std::string &tensor_name) {
+    std::string FindQualifiedTensorName(const std::string &tensor_name) const {
       std::string node_name = tensor_name.substr(0, tensor_name.find_first_of(':'));
       for (auto check_node : check_node_list) {
         std::string w_name = std::get<0>(check_node);
@@ -120,17 +120,17 @@ class DebugServices {
       return {};
     }
 
-    bool is_gt_wp() {
+    bool is_gt_wp() const {
       return condition.type == MAX_GT || condition.type == MIN_GT || condition.type == MEAN_GT ||
              condition.type == SD_GT || condition.type == MAX_MIN_GT;
     }
 
-    bool is_lt_wp() {
+    bool is_lt_wp() const {
       return condition.type == MAX_LT || condition.type == MIN_LT || condition.type == MEAN_LT ||
              condition.type == SD_LT || condition.type == MAX_MIN_LT;
     }
 
-    bool min_max_enabled() {
+    bool min_max_enabled() const {
       return condition.type == MAX_LT || condition.type == MAX_GT || condition.type == MIN_LT ||
              condition.type == MIN_GT || condition.type == MAX_MIN_LT || condition.type == MAX_MIN_GT ||
              (condition.type == INIT && (!parameter_list[1].disabled || !parameter_list[2].disabled)) ||
@@ -138,7 +138,7 @@ class DebugServices {
              (condition.type == TOO_SMALL && (!parameter_list[1].disabled || !parameter_list[2].disabled));
     }
     // inf or nan related condition set
-    bool inf_nan_enabled() {
+    bool inf_nan_enabled() const {
       return condition.type == HAS_INF || condition.type == HAS_NAN || condition.type == GENERAL_OVERFLOW;
     }
     // mean or sd related condition set
@@ -151,7 +151,7 @@ class DebugServices {
       return (condition.type == TOO_LARGE && !parameter_list[0].disabled) ||
              (condition.type == TOO_SMALL && !parameter_list[0].disabled);
     }
-    bool zero_percentage_enabled() { return condition.type == ALL_ZERO || condition.type == INIT; }
+    bool zero_percentage_enabled() const { return condition.type == ALL_ZERO || condition.type == INIT; }
 
     bool tensor_update_ratio_mean_enabled() const {
       return condition.type == CHANGE_TOO_LARGE || condition.type == CHANGE_TOO_SMALL;
@@ -184,7 +184,7 @@ class DebugServices {
                              const std::string &tensor_name_no_slot, std::string *qualified_tensor_name,
                              std::vector<watchpoint_t> *watchpoints_to_check);
 
-  void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
+  void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size, std::vector<TypePtr> *dtype,
                         std::vector<std::vector<int64_t>> *const shape);
 
@@ -218,9 +218,9 @@ class DebugServices {
 
   std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
 
-  bool TensorExistsInCurrent(std::string tensor_name);
+  bool TensorExistsInCurrent(const std::string &tensor_name);
 
-  void MoveTensorCurrentToPrev(std::string tensor_name);
+  void MoveTensorCurrentToPrev(const std::string &tensor_name);
 
  private:
   std::mutex lock_;
@@ -229,7 +229,7 @@ class DebugServices {
   std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
 
-  TensorLoader *tensor_loader_;
+  std::shared_ptr<TensorLoader> tensor_loader_;
 };
 }  // namespace mindspore
 
