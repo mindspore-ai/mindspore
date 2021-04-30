@@ -23,7 +23,7 @@ unsigned Log2Ceil(unsigned length) {
   }
   int floor = 0;
   for (int i = 4; i >= 0; --i) {
-    const unsigned shift = (1 << i);
+    const unsigned shift = (1 << (unsigned)i);
     unsigned tmp = length >> shift;
     if (tmp != 0) {
       length = tmp;

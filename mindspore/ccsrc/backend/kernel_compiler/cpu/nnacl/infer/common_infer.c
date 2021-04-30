@@ -415,9 +415,12 @@ int VectorCPush(VectorC *vc, int value) {
   return NNACL_OK;
 }
 
-void VectorCInsert(VectorC *vc, int index, int value) {
+int VectorCInsert(VectorC *vc, int index, int value) {
   if (vc->size_ + 1 > vc->max_size_) {
     int *tmp = (int *)malloc(vc->per_malloc_size_ * sizeof(int) + vc->max_size_ * sizeof(int));
+    if (tmp == NULL) {
+      return NNACL_ERR;
+    }
     memcpy(tmp, vc->data_, vc->size_ * sizeof(int));
     free(vc->data_);
     vc->data_ = tmp;
@@ -426,6 +429,7 @@ void VectorCInsert(VectorC *vc, int index, int value) {
   memmove(vc->data_ + index + 1, vc->data_ + index, (vc->size_ - index) * sizeof(int));
   vc->data_[index] = value;
   vc->size_++;
+  return NNACL_OK;
 }
 
 void VectorCErase(VectorC *vc, int index) {

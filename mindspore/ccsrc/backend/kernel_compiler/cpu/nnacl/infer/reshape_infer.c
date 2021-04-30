@@ -81,59 +81,52 @@ int CalShapeByType(const TensorC *const *inputs, size_t shape_size, int *out_sha
   if (shape_size == 0) {
     return NNACL_ERR;
   }
+  int *data_int = (int *)malloc(sizeof(int) * shape_size);
+  if (data_int == NULL) {
+    return NNACL_ERR;
+  }
   switch (shape_tensor->data_type_) {
     case kNumberTypeInt8: {
       int8_t *data = (int8_t *)(shape_tensor->data_);
-      int *data_int = (int *)malloc(sizeof(int) * shape_size);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
       CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
-      free(data_int);
     } break;
     case kNumberTypeInt32: {
       int32_t *data = (int32_t *)(shape_tensor->data_);
-      int *data_int = (int *)malloc(sizeof(int) * shape_size);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
       CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
-      free(data_int);
     } break;
     case kNumberTypeInt64: {
       int64_t *data = (int64_t *)(shape_tensor->data_);
-      int *data_int = (int *)malloc(sizeof(int) * shape_size);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
       CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
-      free(data_int);
     } break;
     case kNumberTypeFloat: {
       float *data = (float *)(shape_tensor->data_);
-      int *data_int = (int *)malloc(sizeof(int) * shape_size);
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
       CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
-      free(data_int);
     } break;
     case kNumberTypeUInt32: {
       uint32_t *data = (uint32_t *)(shape_tensor->data_);
-      int *data_int = (int *)malloc(sizeof(int) * shape_size);
-      if (data_int == NULL) {
-        return NNACL_ERR;
-      }
       for (size_t i = 0; i < shape_size; i++) {
         data_int[i] = data[i];
       }
       CalShape(data_int, inputs, out_shape, out_shape_size, shape_size);
-      free(data_int);
     } break;
     default: {
+      free(data_int);
       return NNACL_ERR;
     }
   }
+  free(data_int);
   return NNACL_OK;
 }
 

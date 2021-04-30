@@ -200,7 +200,7 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 int VectorCInit(VectorC *vc, size_t per_malloc_size);
 int VectorCSet(VectorC *vc, const int *src_shape, size_t src_shape_size);
 int VectorCPush(VectorC *vc, int value);
-void VectorCInsert(VectorC *vc, int index, int value);
+int VectorCInsert(VectorC *vc, int index, int value);
 void VectorCErase(VectorC *vc, int index);
 bool VectorCEqual(VectorC *vc1, VectorC *vc2);
 void VectorCFree(VectorC *vc);

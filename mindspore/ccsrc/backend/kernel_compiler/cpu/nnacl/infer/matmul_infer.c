@@ -81,6 +81,9 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int c_shape[MAX_SHAPE_SIZE];
   size_t c_shape_size = 0;
   ShapeSet(c_shape, &c_shape_size, a_shape, a_shape_size);
+  if (c_shape_size < 1 || b_shape_size < 1) {
+    return NNACL_ERR;
+  }
   c_shape[c_shape_size - 1] = b_shape[b_shape_size - 1];
   if (del_start) {
     ShapeErase(c_shape, &c_shape_size, 0);

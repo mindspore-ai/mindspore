@@ -62,7 +62,7 @@ void SearchSubGraph::ConvertSubGraphToModel() {
     Model::Node *new_partial_node = new (std::nothrow) Model::Node();
     if (new_partial_node == nullptr) {
       MS_LOG(ERROR) << "New partial node failed!";
-      free(new_sub_graph);
+      delete new_sub_graph;
       return;
     }
     new_partial_node->name_ = "Partial-subgraph-split-" + std::to_string(new_sub_index);
