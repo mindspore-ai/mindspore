@@ -327,6 +327,11 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
                       << " prim bprop function to J expanded func graph. NodeInfo: "
                       << trace::GetDebugInfo(bprop_fg->debug_info());
   }
+  if (lift_fv_before_grad && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
+    // Inline fprop_switch before renormalize;
+    expanded_fg->set_flag(FUNC_GRAPH_FLAG_FORCE_INLINE, true);
+    MS_LOG(DEBUG) << "set force_inline for fg: " << expanded_fg->ToString();
+  }
 
   return expanded_fg;
 }

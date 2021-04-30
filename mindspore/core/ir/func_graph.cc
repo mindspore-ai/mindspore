@@ -98,6 +98,21 @@ void FuncGraph::add_parameter(const ParameterPtr &p) {
   }
 }
 
+ParameterPtr FuncGraph::InsertFrontParameter() {
+  FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
+  ParameterPtr p = std::make_shared<Parameter>(this_func_graph);
+  InsertFrontParameter(p);
+  return p;
+}
+
+void FuncGraph::InsertFrontParameter(const ParameterPtr &p) {
+  if (manager_.lock()) {
+    manager_.lock()->InsertFrontParameter(shared_from_base<FuncGraph>(), p);
+  } else {
+    PrependParameter(p);
+  }
+}
+
 ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
   ParameterPtr p = std::make_shared<Parameter>(this_graph);

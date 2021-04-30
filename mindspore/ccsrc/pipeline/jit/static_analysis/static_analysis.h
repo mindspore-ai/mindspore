@@ -248,6 +248,10 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
+  FuncGraphPtr root_func_graph() const { return root_func_graph_; }
+  AnalysisContextPtr root_context() const { return root_context_; }
+  void set_root_context(const AnalysisContextPtr &context) { root_context_ = context; }
+
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
   void ResetFunctionCallDepth() {
@@ -292,7 +296,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
  private:
-  bool SetUndeterminedFlag(const EvaluatorPtr &evaluator);
+  bool SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
                                      bool *continue_flag);
@@ -308,6 +312,9 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::list<EvaluatorArgs> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
   std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
+  // root or top func_graph for static analysis;
+  FuncGraphPtr root_func_graph_{nullptr};
+  AnalysisContextPtr root_context_{nullptr};
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);

@@ -210,8 +210,6 @@ class BaseFuncGraphEvaluator : public Evaluator {
 
   AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list);
 
-  AnalysisContextPtr context() const { return context_; }
-  void set_context(const AnalysisContextPtr &context) { context_ = context; }
   AnalysisContextPtr parent_context() const { return parent_context_; }
   void set_parent_context(const AnalysisContextPtr &parent_context) { parent_context_ = parent_context; }
 
@@ -219,14 +217,14 @@ class BaseFuncGraphEvaluator : public Evaluator {
   AnalysisContextPtr parent_context_;
 
  private:
-  AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
+  AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                      const AnalysisContextPtr &context);
   // Add functions for stack frame routine.
-  AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
+  AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                   const AnalysisContextPtr &context);
   static void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                               const StackFramePtr &new_stack_frame);
   static void LeaveStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame);
-
-  AnalysisContextPtr context_;
 };
 
 class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
@@ -353,6 +351,8 @@ class JEvaluator : public Evaluator {
   EvaluatorPtr evaluator_;
   AbstractFunctionPtr orig_func_;
 };
+
+void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_

@@ -83,6 +83,7 @@ const char FUNC_GRAPH_FLAG_CORE[] = "core";
 const char FUNC_GRAPH_ATTR_GRAPH_KERNEL[] = "graph_kernel";
 const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 const char FUNC_GRAPH_OUTPUT_NO_RECOMPUTE[] = "output_no_recompute";
+const char FUNC_GRAPH_FLAG_FORCE_INLINE[] = "force_inline";
 
 const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
@@ -169,9 +170,14 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);
 
   const std::vector<AnfNodePtr> &parameters() const { return parameters_; }
+  // Append
   virtual ParameterPtr add_parameter();
   void add_parameter(const ParameterPtr &p);
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
+  // Prepend
+  virtual ParameterPtr InsertFrontParameter();
+  void InsertFrontParameter(const ParameterPtr &p);
+  void PrependParameter(const ParameterPtr &p) { parameters_.insert(parameters_.begin(), p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
   // Add a weight parameter with specific name.
   ParameterPtr AddWeightParameter(const std::string &name);
@@ -354,7 +360,6 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
 
   std::unordered_map<std::string, ValuePtr> attrs_;
-  std::vector<BaseShapePtr> joined_shapes_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
   // Parameter default value.
   std::map<std::string, AnfNodePtr> parameter_default_value_;

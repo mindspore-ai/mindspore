@@ -101,12 +101,15 @@ void DumpInferStack(std::ostringstream &oss) {
       infer_vec.clear();
       break;
     }
-    auto graph_context = graph_infer->context();
+    auto graph_context = graph_infer->parent_context();
     if (graph_context == nullptr) {
       MS_LOG(INFO) << "Null context continue";
       continue;
     }
     auto graph = graph_context->func_graph();
+    if (graph == nullptr) {
+      continue;
+    }
     auto args_spec_list = graph_context->args_spec_list();
     oss << "    #" << index++ << " " << GetGraphParamString(graph, args_spec_list);
   }
@@ -264,7 +267,7 @@ std::vector<AnalysisContextPtr> AnalyzedFuncGraphExporter::ProcessFuncGraphCall(
     }
 
     auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
-    auto ctx = base_fg_evaluator->context();
+    auto ctx = base_fg_evaluator->parent_context();
     if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
       MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
       context_vec_.push_back(ctx);
@@ -506,7 +509,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     return;
   }
   static int fileNumber = 0;
-  string file_name = "analyze_fail" + std::to_string(fileNumber++) + ".dat";
+  string file_name = "analyze_fail_" + std::to_string(fileNumber++) + ".dat";
   auto ms_om_path = common::GetEnv("MS_OM_PATH");
   if (!ms_om_path.empty()) {
     auto path = ms_om_path + "/" + file_name;

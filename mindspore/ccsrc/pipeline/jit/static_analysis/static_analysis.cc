@@ -80,6 +80,8 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   MS_EXCEPTION_IF_NULL(func_graph_manager_);
   func_graph_manager_->AddFuncGraph(func_graph);
 
+  root_func_graph_ = func_graph;
+
   AnalysisContextPtr empty_context = AnalysisContext::DummyContext();
 
   // Running the analyzer.
@@ -105,7 +107,7 @@ AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Ana
                                        const ConfigPtrList &args_conf_list) {
   std::shared_ptr<FuncGraphEvaluator> eval = std::make_shared<FuncGraphEvaluator>(func_graph, context);
   (void)eval->Run(shared_from_this(), args_conf_list, nullptr);
-  return eval->context();
+  return root_context_;
 }
 
 void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) {
@@ -213,11 +215,12 @@ void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
     return;
   }
   auto top_evaluator = infer_stack.top().first;
-  if (!top_evaluator->isa<BaseFuncGraphEvaluator>()) {
+  // Top or root func_graph must be FuncGraph other than MetaFuncGraph;
+  if (!top_evaluator->isa<FuncGraphEvaluator>()) {
     MS_LOG(EXCEPTION) << "Top evaluator is " << top_evaluator->ToString();
   }
-  auto top_fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(top_evaluator);
-  auto top_context_fg = top_fg_evaluator->context()->func_graph();
+  auto top_fg_evaluator = dyn_cast<FuncGraphEvaluator>(top_evaluator);
+  auto top_context_fg = top_fg_evaluator->func_graph();
   if (current_cnode_fg != top_context_fg) {  // Ignore FV call.
     return;
   }
@@ -339,6 +342,8 @@ void AnalysisEngine::Clear() {
   evaluators_.clear();
   constructors_app_.clear();
   continued_evals_.clear();
+  root_func_graph_ = nullptr;
+  root_context_ = nullptr;
 }
 
 namespace {
@@ -578,7 +583,7 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
 #endif
 }
 
-bool AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
+bool AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
@@ -591,10 +596,17 @@ bool AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator) {
   auto undetermined_fgs = fg->recursive();
   if (undetermined_fgs) {
     auto fg_parent = fg->parent();
-    MS_EXCEPTION_IF_NULL(fg_parent);
-    fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
-    MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString();
-    return true;
+    if (fg_parent != nullptr) {
+      fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
+      MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString() << " for fg: " << fg->ToString();
+      return true;
+    } else if (possible_parent_fg != nullptr) {
+      possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
+      MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString() << " for fg: " << fg->ToString();
+      return true;
+    } else {
+      MS_LOG(EXCEPTION) << "cannot find parent for fg: " << fg->ToString();
+    }
   }
   return false;
 }
@@ -810,8 +822,11 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   AsyncAbstractResultPtr asyncResult1 = std::make_shared<AsyncAbstractResult>();
   AsyncAbstractResultPtr asyncFirstRunResult = std::make_shared<AsyncAbstractResult>();
 
-  bool firstRun = !SetUndeterminedFlag(evaluators[0]);
-  (void)SetUndeterminedFlag(evaluators[1]);
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  auto possible_parent_fg = out_conf->node()->func_graph();
+  bool firstRun = !SetUndeterminedFlag(evaluators[0], possible_parent_fg);
+  (void)SetUndeterminedFlag(evaluators[1], possible_parent_fg);
   std::string threadId = AnalysisResultCacheMgr::GetThreadid();
 
   MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluators[0]->ToString();
@@ -891,8 +906,12 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
-  for (const auto &eval : evaluators) {
-    (void)SetUndeterminedFlag(eval);
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  auto possible_parent_fg = out_conf->node()->func_graph();
+  for (auto eval : evaluators) {
+    (void)SetUndeterminedFlag(eval, possible_parent_fg);
+
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.

@@ -109,11 +109,12 @@ void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
 }
 
 // Start running stack frames in a Evaluator.
-AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg) {
+AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                                         const AnalysisContextPtr &context) {
   EvalResultPtr eval_result = nullptr;
   AbstractBasePtr res_base = nullptr;
   std::stack<StackFramePtr> stack_frames;
-  auto current_stack_frame = std::make_shared<StackFrame>(shared_from_base<Evaluator>(), fg, context_, parent_context_);
+  auto current_stack_frame = std::make_shared<StackFrame>(shared_from_base<Evaluator>(), fg, context, parent_context_);
   MS_LOG(DEBUG) << "[" << this << "/StackFrame] Start at func graph, " << current_stack_frame;
   stack_frames.push(current_stack_frame);
   while (true) {
@@ -155,7 +156,8 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
   return res_base;
 }
 
-AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg) {
+AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
+                                                            const AnalysisContextPtr &context) {
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
     if (node->isa<ValueNode>() || node->isa<Parameter>()) {
@@ -165,7 +167,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   });
   AbstractBasePtr res_base = nullptr;
   for (const auto &node : all_nodes) {
-    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context_);
+    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
     auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
@@ -214,24 +216,30 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                   << parent_context_->func_graph()->ToString() << "()->" << AnalysisResultCacheMgr::GetThreadid() << ":"
                   << fg->ToString() << "();";
   }
-  context_ = parent_context_->NewFuncGraphContext(fg, args_abs_list);
+  auto context = parent_context_->NewFuncGraphContext(fg, args_abs_list);
+  auto func_graph_evaluator = dyn_cast<FuncGraphEvaluator>(shared_from_base<BaseFuncGraphEvaluator>());
+  if (func_graph_evaluator != nullptr) {
+    if (engine->root_func_graph() == func_graph_evaluator->func_graph()) {
+      engine->set_root_context(context);
+    }
+  }
   const auto &parameters = fg->parameters();
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg = args_abs_list[i];
     const auto &node = parameters[i];
-    AnfNodeConfigPtr conf = engine->MakeConfig(node, context_);
+    AnfNodeConfigPtr conf = engine->MakeConfig(node, context);
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
     MS_LOG(DEBUG) << GetInferThread() << "Set Param: " << conf->ToString() << "   =   " << arg->ToString();
   }
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
-                << ", context: " << context_->ToString() << ", return node: " << fg->get_return()->DebugString()
+                << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
                 << ", current function call depth: " << engine->function_call_depth();
   AbstractBasePtr res_base = nullptr;
   if (engine->enable_recursive_eval()) {
-    res_base = LaunchRecursiveEval(engine, fg);
+    res_base = LaunchRecursiveEval(engine, fg, context);
   } else {
-    res_base = LaunchStackFrame(engine, fg);
+    res_base = LaunchStackFrame(engine, fg, context);
   }
 
   MS_EXCEPTION_IF_NULL(res_base);
@@ -250,28 +258,27 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   return res;
 }
 
+void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args) {
+  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(*broaded_args),
+                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         // Only broaden scalar that data type is number, such as float16,int32 and so on.
+                         auto type = arg->BuildType()->type_id();
+                         if (arg->isa<AbstractScalar>() && type > kNumberTypeBegin && type < kNumberTypeEnd) {
+                           auto config = abstract::AbstractBase::kBroadenScalarParameterOnly;
+                           return arg->Broaden(config);
+                         } else if (arg->GetValueTrack() != kAnyValue) {
+                           return arg->Broaden();
+                         }
+                         return arg;
+                       });
+}
+
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
     AbstractBasePtrList broaded_list;
-    (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_list),
-                         [](const AbstractBasePtr &arg) -> AbstractBasePtr {
-                           MS_EXCEPTION_IF_NULL(arg);
-                           // Only broaden scalar that data type is number, such as float16,int32 and so on.
-                           auto type = arg->BuildType()->type_id();
-                           if (arg->isa<AbstractScalar>() && type > kNumberTypeBegin && type < kNumberTypeEnd) {
-                             auto config = abstract::AbstractBase::kBroadenScalarParameterOnly;
-                             return arg->Broaden(config);
-                           } else if (arg->GetValueTrack() != kAnyValue) {
-                             return arg->Broaden();
-                           }
-                           return arg;
-                         });
-    if (func_graph_->joined_shapes_.size() == broaded_list.size()) {
-      for (size_t i = 0; i < broaded_list.size(); ++i) {
-        broaded_list[i]->set_shape(func_graph_->joined_shapes_[i]);
-      }
-    }
+    BroadenArgs(args_spec_list, &broaded_list);
 
     MS_LOG(DEBUG) << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
                   << ", broaded: " << mindspore::ToString(broaded_list);
@@ -287,55 +294,11 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
   }
 
   if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
-    if (parent_context_) {
-      MS_LOG(DEBUG) << "Undeterminate FuncGraphEvaluator " << ToString()
-                    << ", context: " << parent_context_->ToString();
-      auto last_context = parent_context_->FindParentContext(func_graph_);
-      if (last_context && last_context->func_graph() == func_graph_) {
-        MS_LOG(DEBUG) << "Find last eval context: " << last_context->ToString();
-        MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);
-        MS_LOG(DEBUG) << "Last eval args: " << ::mindspore::ToString(last_context->args_spec_list());
-        // Join the last eval arguments and current arguments to check if there are loop variant.
-        auto joined_args_spec_list_1 = AbstractJoin(args_spec_list, last_context->args_spec_list());
-        MS_LOG(DEBUG) << "Joined args: " << ::mindspore::ToString(joined_args_spec_list_1);
-        // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
-        if (!(joined_args_spec_list_1 == args_spec_list)) {
-          func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
-          func_graph_->joined_shapes_.clear();
-          std::transform(joined_args_spec_list_1.begin(), joined_args_spec_list_1.end(),
-                         std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
-                           MS_EXCEPTION_IF_NULL(arg_spec);
-                           return arg_spec->GetShapeTrack();
-                         });
-          joined_args_spec_list_1 = NormalizeArgs(joined_args_spec_list_1);
-          MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
-        }
-        return joined_args_spec_list_1;
-      }
-    }
-    if (!trace_.empty()) {
-      MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);
-      MS_LOG(DEBUG) << "Last eval args: " << ::mindspore::ToString(trace_.back());
-      // Join the last eval arguments and current arguments to check if there are loop variant.
-      auto joined_args_spec_list_2 = AbstractJoin(args_spec_list, trace_.back());
-      // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
-      if (!(joined_args_spec_list_2 == args_spec_list)) {
-        trace_.push_back(joined_args_spec_list_2);
-        func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
-        func_graph_->joined_shapes_.clear();
-        std::transform(joined_args_spec_list_2.begin(), joined_args_spec_list_2.end(),
-                       std::back_inserter(func_graph_->joined_shapes_), [](const AbstractBasePtr &arg_spec) {
-                         MS_EXCEPTION_IF_NULL(arg_spec);
-                         return arg_spec->GetShapeTrack();
-                       });
-        joined_args_spec_list_2 = NormalizeArgs(joined_args_spec_list_2);
-        MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
-      }
-      MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list_2);
-      return joined_args_spec_list_2;
-    } else {
-      trace_.push_back(args_spec_list);
-    }
+    func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+    auto normalized_args_spec_list = NormalizeArgs(args_spec_list);
+    MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
+    MS_LOG(DEBUG) << "Normalized args " << mindspore::ToString(normalized_args_spec_list);
+    return normalized_args_spec_list;
   }
   return args_spec_list;
 }
@@ -388,16 +351,6 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
 
 EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                              const AnfNodeConfigPtr &out_conf) {
-  // The evaluator can't reenter at sametime.
-  std::unique_lock<std::recursive_timed_mutex> eval_lock(eval_lock_, std::try_to_lock);
-  if (!eval_lock.owns_lock()) {
-    // Release GIL
-    pybind11::gil_scoped_release infer_gil_release;
-    // Check if enter endless loop
-    HealthPointScopedDrop health_point_check;
-    eval_lock.lock();
-  }
-
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {

@@ -445,6 +445,12 @@ void FuncGraphManager::AddParameter(const FuncGraphPtr &fg, const AnfNodePtr &pa
   tr.Commit();
 }
 
+void FuncGraphManager::InsertFrontParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter) {
+  auto tr = Transact();
+  tr.InsertFrontParameter(fg, parameter);
+  tr.Commit();
+}
+
 bool FuncGraphManager::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
   auto func_graph = old_node->func_graph();
   auto tr = Transact();
@@ -599,6 +605,13 @@ void FuncGraphManager::ParseChanges(const std::vector<Change> &changes, EdgeTupl
         auto param_node = param.param->cast<ParameterPtr>();
         param.func_graph->append_parameter(param_node);
       } break;
+      case Change::kTxInsertFrontParam: {
+        auto param = args.cast<ArgsOfInsertFrontParam>();
+        MS_EXCEPTION_IF_NULL(param.func_graph);
+        (*adds)[param.param] += 1;
+        auto param_node = param.param->cast<ParameterPtr>();
+        param.func_graph->PrependParameter(param_node);
+      } break;
       default:
         break;
     }
@@ -663,6 +676,10 @@ void FuncGraphTransaction::SetParameters(FuncGraphPtr fg, const std::vector<AnfN
 
 void FuncGraphTransaction::AddParameter(FuncGraphPtr fg, const AnfNodePtr &param) {
   changes_.emplace_back(Change::kTxAddParam, ArgsOfAddParam{fg, param});
+}
+
+void FuncGraphTransaction::InsertFrontParameter(FuncGraphPtr fg, const AnfNodePtr &param) {
+  changes_.emplace_back(Change::kTxInsertFrontParam, ArgsOfInsertFrontParam{fg, param});
 }
 
 bool FuncGraphTransaction::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {

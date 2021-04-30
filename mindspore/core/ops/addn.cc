@@ -40,6 +40,16 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape = elements[i]->BuildShape();
+    if (shape->isa<abstract::Shape>() && shape_0->isa<abstract::Shape>()) {
+      const auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
+      const auto &shape_0_vec = shape_0->cast<abstract::ShapePtr>()->shape();
+      if ((shape_vec == ShapeVector({1}) && shape_0_vec == ShapeVector()) ||
+          (shape_vec == ShapeVector() && shape_0_vec == ShapeVector({1}))) {
+        MS_LOG(DEBUG) << primitive->name() << "Shape of input[" << i << "]: " << shape->ToString()
+                      << " are consistent with the shape of input[0]" << shape_0->ToString();
+        continue;
+      }
+    }
     if (*shape != *shape_0) {
       MS_EXCEPTION(ValueError) << primitive->name() << "Shape of input[" << i << "]: " << shape->ToString()
                                << " are not consistent with the shape of input[0]" << shape_0->ToString();

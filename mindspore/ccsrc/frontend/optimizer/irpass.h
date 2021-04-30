@@ -86,6 +86,9 @@ class OptimizeIRPassLib {
   SubstitutionPtr convert_switch_replacement_;
   SubstitutionPtr exchange_switch_depend_value_;
 
+  SubstitutionPtr switch_partial_eliminater_;
+  SubstitutionPtr switch_layer_partial_eliminater_;
+
   // AddN
   SubstitutionPtr merge_addn_;
   SubstitutionPtr addn_zero_filter_;

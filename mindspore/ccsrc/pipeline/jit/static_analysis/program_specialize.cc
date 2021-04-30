@@ -23,6 +23,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"
+#include "abstract/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "debug/trace.h"
@@ -545,32 +546,37 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   std::unordered_set<AbstractBasePtrList, AbstractBasePtrListHasher, AbstractBasePtrListEqual> choices;
   EvalResultPtr ret = nullptr;
   AbstractBasePtrList broaded_argvals;
-  EvalResultCache &cache = evalcaches_[eval]->GetCache();
-  for (auto &argvals_map : cache) {
+  std::vector<AbstractBasePtrList> args_vector;
+  auto &origin_eval_cache = evalcaches_[eval]->GetCache();
+  for (auto &argvals_map : origin_eval_cache) {
     auto argvals = argvals_map.first;
+    args_vector.push_back(argvals);
     broaded_argvals.clear();
-
-    (void)std::transform(argvals.begin(), argvals.end(), std::back_inserter(broaded_argvals),
-                         [](const AbstractBasePtr &arg) -> AbstractBasePtr { return arg->Broaden(); });
+    BroadenArgs(argvals, &broaded_argvals);
     (void)choices.insert(broaded_argvals);
     MS_LOG(DEBUG) << "Broaded_argvals: " << broaded_argvals.size() << ", " << ::mindspore::ToString(broaded_argvals);
   }
-
   if (choices.size() == 1) {
-    ConfigPtrList args_conf_list;
-    (void)std::transform(broaded_argvals.begin(), broaded_argvals.end(), std::back_inserter(args_conf_list),
-                         [](AbstractBasePtr v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
-
-    // If broaden return null
-    ret = eval->SingleRun(engine_, args_conf_list, nullptr);
+    if (args_vector.size() < 2) {
+      MS_LOG(EXCEPTION) << "Should have 2 more choices, but: " << args_vector.size();
+    }
+    AbstractBasePtrList joined_argvals = args_vector[0];
+    for (size_t i = 1; i < args_vector.size(); ++i) {
+      joined_argvals = abstract::AbstractJoin(joined_argvals, args_vector[i]);
+    }
+    MS_LOG(DEBUG) << "Joined argvals: " << joined_argvals.size() << ", " << ::mindspore::ToString(joined_argvals);
     EvaluatorCacheMgrPtr real = std::make_shared<EvaluatorCacheMgr>();
-    real->SetValue(broaded_argvals, ret);
-    evalcaches_[eval] = real;
-    return std::make_pair(broaded_argvals, ret->abstract());
-  } else {
-    MS_LOG(DEBUG) << "Choices.size: " << choices.size();
-    return std::make_pair(AbstractBasePtrList(), nullptr);
+    auto joined_eval_result = origin_eval_cache.get(joined_argvals);
+    if (joined_eval_result != nullptr) {
+      MS_LOG(DEBUG) << "Find unique Choices in original eval cache, so use it: " << joined_eval_result->ToString();
+
+      real->SetValue(joined_argvals, joined_eval_result);
+      evalcaches_[eval] = real;
+      return std::make_pair(joined_argvals, joined_eval_result->abstract());
+    }
   }
+  MS_LOG(DEBUG) << "Choices.size: " << choices.size();
+  return std::make_pair(AbstractBasePtrList(), nullptr);
 }
 
 void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {

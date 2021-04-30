@@ -224,7 +224,6 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   TraceGuard trace_guard(func_graph->debug_info(), target_relation_);
   *target_func_graph = std::make_shared<FuncGraph>();
   (*target_func_graph)->set_attrs(func_graph->attrs());
-  (*target_func_graph)->joined_shapes_ = func_graph->joined_shapes_;
   (*target_func_graph)->set_transforms(func_graph->transforms());
   (*target_func_graph)->set_has_vararg(func_graph->has_vararg());
   (*target_func_graph)->set_has_kwarg(func_graph->has_kwarg());
@@ -254,9 +253,24 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     return;
   }
 
+  CloneInfo item = todo_.back();
+  auto lift_top_func_graph = item.origin;
   for (auto &fv_map : iter->second) {
     auto &free_var = fv_map.first;
     if (utils::isa<AnfNodePtr>(free_var)) {
+      auto free_var_node = utils::cast<AnfNodePtr>(free_var);
+      // Don't lift weight parameter to top func_graph.
+      if (func_graph == lift_top_func_graph) {
+        if (free_var_node->isa<Parameter>()) {
+          auto free_var_param = free_var_node->cast<ParameterPtr>();
+          if (free_var_param->has_default()) {
+            MS_LOG(DEBUG) << "Bypass weight param: " << free_var_param->ToString()
+                          << " for top_func_graph: " << lift_top_func_graph->ToString();
+            continue;
+          }
+        }
+      }
+      MS_LOG(DEBUG) << "Gen param: " << free_var_node->ToString() << " for func_graph: " << func_graph->ToString();
       repl_func_graph_params_[func_graph].push_back(AddParameter(func_graph, utils::cast<AnfNodePtr>(free_var)));
     }
   }
@@ -301,6 +315,8 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     }
   }
   AnfNodePtr new_param = nullptr;
+  CloneInfo item = todo_.back();
+  auto lift_top_func_graph = item.origin;
   for (auto &param : params) {
     auto old_param = repl_node_[param];
     if (old_param->isa<CNode>() && old_param->func_graph() == func_graph) {
@@ -312,6 +328,14 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     if (old_params.find(old_param) != old_params.end()) {
       new_param = repl_map_node_[func_graph][old_param];
       input_params->push_back(new_param);
+      continue;
+    }
+    if (lift_top_func_graph == func_graph) {
+      // Don't lift parameter from used_graphs to my parameter if I am the top;
+      repl_node_[old_param] = old_param;
+      input_params->push_back(old_param);
+      MS_LOG(DEBUG) << "Bypass param: " << old_param->ToString()
+                    << " for top_func_graph: " << lift_top_func_graph->ToString();
       continue;
     }
     new_param = AddParameter(func_graph, old_param, false);
