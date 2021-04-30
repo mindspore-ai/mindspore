@@ -80,6 +80,8 @@ bool IsParamOrValueNodeWithData(const BaseRef &n);
 
 bool IsConvNode(const BaseRef &n);
 
+bool IsDwConvNode(const BaseRef &n);
+
 bool IsPoolingNode(const BaseRef &n);
 
 bool IsQuantNode(const BaseRef &n);

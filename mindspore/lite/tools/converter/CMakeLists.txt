@@ -63,6 +63,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fisson/fisson_util.cc
         ../optimizer/fisson/iter_node_outputs.cc
         ../optimizer/fisson/node_out_shapes.cc
+        ../optimizer/parallel/conv2d_info.cc
         ../optimizer/parallel/dynamic_creator.cc
         ../optimizer/parallel/operator_info.cc
         ../optimizer/parallel/parallel_pass.cc

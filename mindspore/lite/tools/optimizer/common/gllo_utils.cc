@@ -592,7 +592,7 @@ bool IsConvNode(const BaseRef &n) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
     PrimitivePtr prim;
     if (utils::isa<CNodePtr>(anf_node)) {
-      prim = GetValueNode<PrimitivePtr>(anf_node->cast<CNodePtr>()->input(0));
+      prim = GetValueNode<PrimitivePtr>(anf_node->cast<CNodePtr>()->input(kAnfPrimitiveIndex));
     }
     if (utils::isa<ValueNodePtr>(anf_node)) {
       prim = GetValueNode<PrimitivePtr>(anf_node);
@@ -610,6 +610,29 @@ bool IsConvNode(const BaseRef &n) {
       prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
     return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion) ||
            (CheckPrimitiveType(anf_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise);
+  }
+  return false;
+}
+
+bool IsDwConvNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    PrimitivePtr prim;
+    if (utils::isa<CNodePtr>(anf_node)) {
+      prim = GetValueNode<PrimitivePtr>(anf_node->cast<CNodePtr>()->input(kAnfPrimitiveIndex));
+    }
+    if (utils::isa<ValueNodePtr>(anf_node)) {
+      prim = GetValueNode<PrimitivePtr>(anf_node);
+    }
+
+    if (prim == nullptr) {
+      return false;
+    }
+
+    bool is_depth_wise =
+      prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+
+    return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion) && is_depth_wise;
   }
   return false;
 }
