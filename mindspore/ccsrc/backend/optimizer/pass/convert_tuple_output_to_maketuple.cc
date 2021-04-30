@@ -34,6 +34,11 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
     return tuple_anf;
   }
   auto kernel_graph = graph->cast<KernelGraphPtr>();
+  FuncGraphPtr anf_graph = tuple_anf->func_graph();
+  if (anf_graph != nullptr) {
+    kernel_graph = anf_graph->cast<KernelGraphPtr>();
+  }
+
   if (kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf)) {
     return kernel_graph->FindTupleParameterToMakeTupleMap(tuple_anf);
   }
@@ -77,7 +82,8 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
       cnode_input_changed = true;
     }
   }
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  FuncGraphPtr graph = node->func_graph();
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
   if (kernel_graph == nullptr || !cnode_input_changed) {
     return nullptr;
   }
