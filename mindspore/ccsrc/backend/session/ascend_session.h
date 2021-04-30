@@ -30,7 +30,6 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/session_factory.h"
-#include "backend/session/ascend_control_parser.h"
 
 namespace mindspore {
 namespace session {
@@ -95,11 +94,6 @@ class AscendSession : public SessionBasic {
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
 
   static void BackendOptimization(const std::vector<KernelGraphPtr> &all_graphs);
-  static void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
-  // replace labelgoto with labelswitch in subgraph called multiple times
-  void MultiCallGraphOptimize(NotNull<KernelGraphPtr> root_graph);
-  bool IsMultiCallGraph(NotNull<KernelGraphPtr> graph, std::vector<GraphId> parent_graphs);
-  void SyncDataToExtraParams(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   // merge execution order list of child graphs
   void MergeGraphExecOrder();

@@ -1448,12 +1448,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
         (void)ConstructKernelGraph(child_graph, all_out_graph);
       }
       (void)CreateValueNodeKernelGraph(node, graph.get());
-      auto &parent_graph = parent_graphs_[front_backend_graph_map_[child_graph.get()]->graph_id()];
-      auto parent_graph_it =
-        std::find(parent_graph.begin(), parent_graph.end(), front_backend_graph_map_[func_graph.get()]->graph_id());
-      if (parent_graph_it == parent_graph.end()) {
-        parent_graph.push_back(front_backend_graph_map_[func_graph.get()]->graph_id());
-      }
       continue;
     }
     // Create cnode
