@@ -82,6 +82,7 @@ OpParameter *PopulateBCEParameter(const void *prim) {
   }
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_BinaryCrossEntropy();
+  MS_ASSERT(value != nullptr);
   *reduction = value->reduction();
   return reinterpret_cast<OpParameter *>(reduction);
 }
