@@ -181,7 +181,11 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
 
   RETURN_IF_NOT_OK(clue_op->Init());
 
-  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
+  // If a global shuffle is used for Clue, it will inject a shuffle op over the Clue.
+  // But, if there is a cache in the tree, we do not need the global shuffle and the shuffle op should not be built.
+  // This is achieved in the cache transform pass where we call MakeSimpleProducer to reset Clue's shuffle
+  // option to false.
+  if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;

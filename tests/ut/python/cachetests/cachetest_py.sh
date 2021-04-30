@@ -121,6 +121,9 @@ HandleRcExit $? 0 0
 PytestCmd "test_cache_map.py" "test_cache_map_voc" 1
 HandleRcExit $? 0 0
 
+PytestCmd "test_cache_map.py" "test_cache_map_mindrecord" 1
+HandleRcExit $? 0 0
+
 PytestCmd "test_cache_map.py" "test_cache_map_python_sampler" 1
 HandleRcExit $? 0 0
 

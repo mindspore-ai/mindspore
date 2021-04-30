@@ -63,10 +63,12 @@ void ShardTaskList::TaskListSwap(ShardTaskList &orig_tasks, ShardTaskList &new_t
   // When swapping, if the orig_tasks contains fields that need to be preserved after the swap, then swapping with a
   // new_tasks that does not have those fields will result in clobbering/losing the data after the swap.
   // The task_list_ should not be lost/clobbered.
-  new_tasks.task_list_ = std::move(orig_tasks.task_list_);
+  // This function can be called in the middle of mindrecord's epoch, when orig_tasks.task_list_ is still being
+  // used by mindrecord op's worker threads. So don't touch its task_list_ since this field should be preserved anyways.
 
-  // Now, it's safe to drive the swap.
-  std::swap(orig_tasks, new_tasks);
+  std::swap(orig_tasks.categories, new_tasks.categories);
+  std::swap(orig_tasks.permutation_, new_tasks.permutation_);
+  std::swap(orig_tasks.sample_ids_, new_tasks.sample_ids_);
 }
 
 void ShardTaskList::PopBack() { task_list_.pop_back(); }

@@ -32,11 +32,13 @@ class MindDataNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
-               const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded);
+               const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
+               std::shared_ptr<DatasetCache> cache);
 
   /// \brief Constructor
   MindDataNode(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-               const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded);
+               const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
+               std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
   ~MindDataNode() = default;
@@ -109,7 +111,9 @@ class MindDataNode : public MappableSourceNode {
   std::vector<std::string> dataset_files_;  // search_for_pattern_ will be false in this mode
   bool search_for_pattern_;
   std::vector<std::string> columns_list_;
-  std::shared_ptr<SamplerObj> sampler_;
+  std::shared_ptr<SamplerObj> input_sampler_;  // The sampler from users input, will be used to create a set of shard
+                                               // operators.
+  std::shared_ptr<SamplerObj> sampler_;        // An auto-created sampler, IR of runtime MindRecordSamplerRT sampler
   nlohmann::json padded_sample_;
   std::map<std::string, std::string> sample_bytes_;  // enable in python
   int64_t num_padded_;

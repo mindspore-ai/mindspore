@@ -121,7 +121,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<MapNode> node, bool *const mod
     // to TensorOp, we need to check the randomness in MapNode::Build().
     // By setting this MapNode is under a cache, we will check the randomness of its tensor operations without the need
     // to walk the IR tree again.
-    node->Cached();
+    node->HasCacheAbove();
 
     auto tfuncs = node->TensorOperations();
     for (size_t i = 0; i < tfuncs.size(); i++) {

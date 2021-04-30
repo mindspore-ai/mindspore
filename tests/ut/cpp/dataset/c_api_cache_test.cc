@@ -32,7 +32,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiSamplerNull) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true, "127.0.0.1", 50053, 1, 1);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false, "127.0.0.1", 50053, 1, 1);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
@@ -52,7 +52,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
@@ -80,7 +80,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheImageFolderCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
@@ -121,7 +121,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCocoCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a Coco Dataset, this folder_path has 6 images in it
@@ -164,7 +164,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMnistCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a Mnist Dataset
@@ -205,7 +205,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCelebaCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a CelebA Dataset, this folder_path has 4 records in it
@@ -247,7 +247,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheManifestCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a Manifest Dataset, this file_path has 2 records in it
@@ -288,7 +288,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar10CApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a Cifar10 Dataset
@@ -329,7 +329,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar100CApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a Cifar100 Dataset
@@ -370,7 +370,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a VOC Dataset, this folder_path has 9 records in it
@@ -412,7 +412,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
@@ -449,12 +449,50 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMindRecordCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a MindData Dataset
+  // Pass one mindrecord shard file to parse dataset info, and search for other mindrecord files with same dataset info,
+  // thus all records in imagenet.mindrecord0 ~ imagenet.mindrecord3 will be read
+  std::string file_path = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
+
+  // Create a MindRecord Dataset, 20 records in it
+  std::shared_ptr<Dataset> ds = MindData(file_path, {}, std::make_shared<RandomSampler>(), nullptr, 0, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a RandomDataset
@@ -496,7 +534,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a TFRecord Dataset, this file_path has 3 records in it
@@ -539,7 +577,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a TFRecord Dataset, this file_path has 3 records in it
@@ -590,7 +628,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a TFRecord Dataset, this file_path has 3 records in it
@@ -637,7 +675,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTextfileCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a TextFile Dataset, this file_path has 3 records in it
@@ -680,7 +718,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a CSV Dataset, this file_path has 3 records in it
@@ -724,7 +762,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create a CLUE Dataset, this file_path has 3 records in it
@@ -769,7 +807,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
@@ -821,7 +859,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
@@ -874,7 +912,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShareFailure1) {
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
 
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
   EXPECT_NE(some_cache, nullptr);
 
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it

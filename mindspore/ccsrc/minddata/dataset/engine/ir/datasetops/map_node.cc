@@ -38,8 +38,7 @@ MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr
       output_columns_(output_columns),
       project_columns_(project_columns),
       DatasetNode(std::move(cache)),
-      callbacks_(callbacks),
-      under_a_cache_(false) {
+      callbacks_(callbacks) {
   this->AddChild(child);
 }
 
@@ -68,9 +67,9 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // This is temporary code.
   // Because the randomness of its tensor operations is not known in TensorOperation form until we convert them
   // to TensorOp, we need to check the randomness here.
-  // When TensorOperation captures the randomness behaviour, remove this code and the member "under_a_cache_"
+  // When TensorOperation captures the randomness behaviour, remove this code
   // and the temporary code in CacheValidation pre pass in IR optimizer.
-  if (under_a_cache_) {
+  if (IsDescendantOfCache()) {
     auto itr = std::find_if(tensor_ops.begin(), tensor_ops.end(), [](const auto &it) { return !it->Deterministic(); });
     if (itr != tensor_ops.end()) {
       RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");

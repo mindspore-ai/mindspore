@@ -11,6 +11,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SRC_FILES
         subset_random_sampler_ir.cc
         subset_sampler_ir.cc
         weighted_random_sampler_ir.cc
+        mindrecord_sampler_ir.cc
         )
 
 add_library(engine-ir-datasetops-source-samplers OBJECT ${DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SRC_FILES})

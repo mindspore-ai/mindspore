@@ -20,10 +20,13 @@
 #include <memory>
 #include <stack>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
+#include "minddata/dataset/engine/ir/datasetops/cache_lookup_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/mindrecord_sampler_ir.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
@@ -31,36 +34,40 @@ namespace mindspore {
 namespace dataset {
 
 MindDataNode::MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
-                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
-    : MappableSourceNode(),
+                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
+                           std::shared_ptr<DatasetCache> cache = nullptr)
+    : MappableSourceNode(std::move(cache)),
       dataset_file_(std::string()),
       dataset_files_(dataset_files),
       search_for_pattern_(false),
       columns_list_(columns_list),
-      sampler_(sampler),
+      input_sampler_(sampler),
+      sampler_(std::make_shared<MindRecordSamplerObj>()),
       padded_sample_(padded_sample),
       sample_bytes_({}),
       num_padded_(num_padded) {}
 
 MindDataNode::MindDataNode(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
-    : MappableSourceNode(),
+                           const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
+                           std::shared_ptr<DatasetCache> cache = nullptr)
+    : MappableSourceNode(std::move(cache)),
       dataset_file_(dataset_file),
       dataset_files_({}),
       search_for_pattern_(true),
       columns_list_(columns_list),
-      sampler_(sampler),
+      input_sampler_(sampler),
+      sampler_(std::make_shared<MindRecordSamplerObj>()),
       padded_sample_(padded_sample),
       sample_bytes_({}),
       num_padded_(num_padded) {}
 
 std::shared_ptr<DatasetNode> MindDataNode::Copy() {
   std::shared_ptr<MindDataNode> node;
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
+  std::shared_ptr<SamplerObj> sampler = (input_sampler_ == nullptr) ? nullptr : input_sampler_->SamplerCopy();
   if (dataset_files_.empty()) {
-    node = std::make_shared<MindDataNode>(dataset_file_, columns_list_, sampler, padded_sample_, num_padded_);
+    node = std::make_shared<MindDataNode>(dataset_file_, columns_list_, sampler, padded_sample_, num_padded_, cache_);
   } else {
-    node = std::make_shared<MindDataNode>(dataset_files_, columns_list_, sampler, padded_sample_, num_padded_);
+    node = std::make_shared<MindDataNode>(dataset_files_, columns_list_, sampler, padded_sample_, num_padded_, cache_);
   }
   node->SetSampleBytes(&sample_bytes_);
   return node;
@@ -82,7 +89,7 @@ Status MindDataNode::ValidateParams() {
     search_for_pattern_ ? std::vector<std::string>{dataset_file_} : dataset_files_;
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("MindDataNode", dataset_file_vec));
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("MindDataNode", sampler_));
+  RETURN_IF_NOT_OK(ValidateDatasetSampler("MindDataNode", input_sampler_));
 
   if (!columns_list_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MindDataNode", "columns_list", columns_list_));
@@ -153,22 +160,46 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
 void MindDataNode::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) { sample_bytes_ = *sample_bytes; }
 
 Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
+  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(input_sampler_, &operators_, num_padded_));
+
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  // Build the sampler IR into a runtime sampler.
+  // This will also create a shard reader object, saved in this node's sampler_.
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+
+  // Now we need to acquire the newly created shard reader from this node's sampler_.
+  // There are two cases:
+  // 1. If this node is cached, now after cache transform pass, its sampler_ has already been replaced by cache lookup
+  // node, and we should find the shard reader from cache lookup node's sampler_.
+  // 2. If this node is not cached, just acquire the shard reader from this node's sampler_.
+  std::unique_ptr<ShardReader> shard_reader;
+  if (IsDescendantOfCache()) {
+    auto cache_lookup_sampler = std::dynamic_pointer_cast<CacheLookupNode>(sampler_);
+    CHECK_FAIL_RETURN_UNEXPECTED(cache_lookup_sampler != nullptr,
+                                 "Internal error. MindDataNode is cached, its sampler should be cache lookup node");
+    auto mr_sampler = std::dynamic_pointer_cast<MindRecordSamplerObj>(cache_lookup_sampler->Sampler());
+    CHECK_FAIL_RETURN_UNEXPECTED(mr_sampler != nullptr,
+                                 "Internal error. CacheLookupNode's sampler should be a MindRecordSamplerObj object");
+    RETURN_IF_NOT_OK(mr_sampler->GetShardReader(&shard_reader));
+  } else {
+    auto mr_sampler = std::dynamic_pointer_cast<MindRecordSamplerObj>(sampler_);
+    CHECK_FAIL_RETURN_UNEXPECTED(mr_sampler != nullptr,
+                                 "Internal error. MindDataNode's sampler should be a MindRecordSamplerObj object");
+    RETURN_IF_NOT_OK(mr_sampler->GetShardReader(&shard_reader));
+  }
 
   std::shared_ptr<MindRecordOp> mindrecord_op;
-  std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
-
   // If pass a string to MindData(), it will be treated as a pattern to search for matched files,
   // else if pass a vector to MindData(), it will be treated as specified files to be read
   if (search_for_pattern_) {
     std::vector<std::string> dataset_file_vec_ = {dataset_file_};
-    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, dataset_file_vec_, search_for_pattern_,
-                                                   connector_que_size_, columns_list_, operators_, num_padded_,
-                                                   padded_sample_, sample_bytes_, std::move(shard_reader));
+    mindrecord_op = std::make_shared<MindRecordOp>(
+      num_workers_, dataset_file_vec_, search_for_pattern_, connector_que_size_, columns_list_, operators_, num_padded_,
+      padded_sample_, sample_bytes_, std::move(shard_reader), std::move(sampler_rt));
   } else {
-    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, dataset_files_, search_for_pattern_,
-                                                   connector_que_size_, columns_list_, operators_, num_padded_,
-                                                   padded_sample_, sample_bytes_, std::move(shard_reader));
+    mindrecord_op = std::make_shared<MindRecordOp>(
+      num_workers_, dataset_files_, search_for_pattern_, connector_que_size_, columns_list_, operators_, num_padded_,
+      padded_sample_, sample_bytes_, std::move(shard_reader), std::move(sampler_rt));
   }
 
   RETURN_IF_NOT_OK(mindrecord_op->Init());
@@ -181,7 +212,7 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
 // Get the shard id of node
 Status MindDataNode::GetShardId(int32_t *shard_id) {
-  *shard_id = sampler_->ShardId();
+  *shard_id = input_sampler_->ShardId();
 
   return Status::OK();
 }
@@ -195,7 +226,7 @@ Status MindDataNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   }
   int64_t num_rows = -1;
   std::vector<std::shared_ptr<ShardOperator>> operators;
-  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators, num_padded_));
+  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(input_sampler_, &operators, num_padded_));
 
   if (search_for_pattern_) {
     dataset_files_ = {dataset_file_};
