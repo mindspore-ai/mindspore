@@ -14,3 +14,9 @@
 # ============================================================================
 
 """custom ops"""
+from .fake_learned_scale_quant_perlayer import _fake_learned_scale_quant_perlayer_tbe
+from .fake_learned_scale_quant_perlayer_grad import _fake_learned_scale_quant_perlayer_grad_d_tbe
+from .fake_learned_scale_quant_perlayer_grad_reduce import _fake_learned_scale_quant_perlayer_grad_d_reduce_tbe
+from .fake_learned_scale_quant_perchannel import _fake_learned_scale_quant_perchannel_tbe
+from .fake_learned_scale_quant_perchannel_grad import _fake_learned_scale_quant_perchannel_grad_d_tbe
+from .fake_learned_scale_quant_perchannel_grad_reduce import _fake_learned_scale_quant_perchannel_grad_d_reduce_tbe

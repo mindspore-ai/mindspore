@@ -55,6 +55,45 @@ config_gpu_quant = ed({
     "save_checkpoint_path": "./checkpoint",
 })
 
+config_lsq_gpu_quant = ed({
+    "num_classes": 1000,
+    "image_height": 224,
+    "image_width": 224,
+    "batch_size": 128,
+    "epoch_size": 60,
+    "start_epoch": 200,
+    "warmup_epochs": 0,
+    "lr": 0.05,
+    "momentum": 0.9,
+    "weight_decay": 4e-5,
+    "label_smooth": 0.1,
+    "loss_scale": 1024,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 1,
+    "keep_checkpoint_max": 300,
+    "save_checkpoint_path": "./checkpoint",
+})
+
+config_lsq_ascend_quant = ed({
+    "num_classes": 1000,
+    "image_height": 224,
+    "image_width": 224,
+    "batch_size": 192,
+    "data_load_mode": "mindata",
+    "epoch_size": 40,
+    "start_epoch": 200,
+    "warmup_epochs": 0,
+    "lr": 0.05,
+    "momentum": 0.9,
+    "weight_decay": 4e-5,
+    "label_smooth": 0.1,
+    "loss_scale": 1024,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 1,
+    "keep_checkpoint_max": 300,
+    "save_checkpoint_path": "./checkpoint",
+})
+
 def config_quant(device_target):
     if device_target not in ["Ascend", "GPU"]:
         raise ValueError("Unsupported device target: {}.".format(device_target))

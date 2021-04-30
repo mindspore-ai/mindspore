@@ -295,6 +295,10 @@ inline const PrimitivePtr kPrimOnesLike = std::make_shared<Primitive>("OnesLike"
 inline const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 inline const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 inline const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");
+inline const PrimitivePtr kPrimFakeLearnedScaleQuantPerLayer =
+  std::make_shared<Primitive>("FakeLearnedScaleQuantPerLayer");
+inline const PrimitivePtr kPrimFakeLearnedScaleQuantPerChannel =
+  std::make_shared<Primitive>("FakeLearnedScaleQuantPerChannel");
 inline const PrimitivePtr kPrimFakeQuantWithMinMaxVars = std::make_shared<Primitive>("FakeQuantWithMinMaxVars");
 inline const PrimitivePtr kPrimApplyRMSProp = std::make_shared<Primitive>("ApplyRMSProp");
 inline const PrimitivePtr kPrimSparseApplyFtrl = std::make_shared<Primitive>("SparseApplyFtrl");

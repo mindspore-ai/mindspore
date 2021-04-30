@@ -26,15 +26,18 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint
 from mindspore.communication.management import init, get_group_size, get_rank
+from mindspore.compression.common import QuantDtype
 from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.quant.quantizer import OptimizeOption
 from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from mindspore.common import set_seed
 
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.utils import Monitor, CrossEntropyWithLabelSmooth
-from src.config import config_ascend_quant, config_gpu_quant
+from src.config import config_ascend_quant, config_gpu_quant, config_lsq_ascend_quant, config_lsq_gpu_quant
 from src.mobilenetV2 import mobilenetV2
+from src.mobilenetv2_mix_quant import mobilenetv2_mix_quant
 
 set_seed(1)
 
@@ -42,6 +45,8 @@ parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pertained checkpoint path')
 parser.add_argument('--device_target', type=str, default=None, help='Run device target')
+parser.add_argument('--optim_option', type=str, default="QAT", help='If OptimizeOption is set to LEARNED_SCALE,'
+                                                                    'the learned scale quant process is executed.')
 args_opt = parser.parse_args()
 
 if args_opt.device_target == "Ascend":
@@ -66,7 +71,11 @@ else:
 
 
 def train_on_ascend():
-    config = config_ascend_quant
+    if args_opt.optim_option == "LEARNED_SCALE":
+        config = config_lsq_ascend_quant
+    else:
+        config = config_ascend_quant
+
     print("training args: {}".format(args_opt))
     print("training configure: {}".format(config))
     print("parallel args: rank_id {}, device_id {}, rank_size {}".format(rank_id, device_id, rank_size))
@@ -80,7 +89,10 @@ def train_on_ascend():
         init()
 
     # define network
-    network = mobilenetV2(num_classes=config.num_classes)
+    if args_opt.optim_option == "LEARNED_SCALE":
+        network = mobilenetv2_mix_quant(num_classes=config.num_classes)
+    else:
+        network = mobilenetV2(num_classes=config.num_classes)
     # define loss
     if config.label_smooth > 0:
         loss = CrossEntropyWithLabelSmooth(smooth_factor=config.label_smooth, num_classes=config.num_classes)
@@ -99,10 +111,22 @@ def train_on_ascend():
         param_dict = load_checkpoint(args_opt.pre_trained)
         load_nonquant_param_into_quant_net(network, param_dict)
     # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False],
-                                          one_conv_fold=True)
+    if args_opt.optim_option == "LEARNED_SCALE":
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              quant_dtype=(QuantDtype.INT4, QuantDtype.INT8),
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[True, False],
+                                              one_conv_fold=True)
     network = quantizer.quantize(network)
 
     # get learning rate
@@ -136,12 +160,19 @@ def train_on_ascend():
 
 
 def train_on_gpu():
-    config = config_gpu_quant
+    if args_opt.optim_option == "LEARNED_SCALE":
+        config = config_lsq_gpu_quant
+    else:
+        config = config_gpu_quant
+
     print("training args: {}".format(args_opt))
     print("training configure: {}".format(config))
 
     # define network
-    network = mobilenetV2(num_classes=config.num_classes)
+    if args_opt.optim_option == "LEARNED_SCALE":
+        network = mobilenetv2_mix_quant(num_classes=config.num_classes)
+    else:
+        network = mobilenetV2(num_classes=config.num_classes)
     # define loss
     if config.label_smooth > 0:
         loss = CrossEntropyWithLabelSmooth(smooth_factor=config.label_smooth,
@@ -163,11 +194,23 @@ def train_on_gpu():
         load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(bn_fold=True,
-                                          per_channel=[True, False],
-                                          symmetric=[False, False],
-                                          freeze_bn=1000000,
-                                          quant_delay=step_size * 2)
+    if args_opt.optim_option == "LEARNED_SCALE":
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              quant_dtype=(QuantDtype.INT4, QuantDtype.INT8),
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        quantizer = QuantizationAwareTraining(bn_fold=True,
+                                              per_channel=[True, False],
+                                              symmetric=[False, False],
+                                              freeze_bn=1000000,
+                                              quant_delay=step_size * 2)
     network = quantizer.quantize(network)
 
     # get learning rate

@@ -397,7 +397,9 @@ void ExecutorPy::GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weig
   CNodePtr cnode = nullptr;
   auto is_quant_cnode = [](const AnfNodePtr &node) {
     return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
-           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel);
+           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerLayer) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerChannel);
   };
   while (!is_quant_cnode(x)) {
     if (count >= max_depth) {
@@ -452,7 +454,9 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy:
   std::vector<AnfNodePtr> nodes = DeepScopedGraphSearchWithFilter(func_graph->get_return(), AlwaysInclude, filter);
   auto is_quant_cnode = [](const AnfNodePtr &node) {
     return IsPrimitiveCNode(node, prim::kPrimFakeQuantPerLayer) ||
-           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel);
+           IsPrimitiveCNode(node, prim::kPrimFakeQuantPerChannel) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerLayer) ||
+           IsPrimitiveCNode(node, prim::kPrimFakeLearnedScaleQuantPerChannel);
   };
   for (const auto &node : nodes) {
     auto root_node = node->cast<CNodePtr>();
@@ -461,7 +465,15 @@ std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> ExecutorPy:
     }
     auto weight = root_node->input(2);
     if (!is_quant_cnode(weight)) {
-      continue;
+      auto tuple_node = weight->cast<CNodePtr>();
+      if (tuple_node != nullptr) {
+        auto fake_node = tuple_node->input(1);
+        if (!is_quant_cnode(fake_node)) {
+          continue;
+        } else {
+          weight = fake_node;
+        }
+      }
     }
     // get parameter weight's name
     auto cnode = weight->cast<CNodePtr>();

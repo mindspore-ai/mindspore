@@ -27,6 +27,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore import load_checkpoint, load_param_into_net, export
 from mindspore.train import Model
 from mindspore.compression.quant import QuantizationAwareTraining
+from mindspore.compression.quant.quantizer import OptimizeOption
 from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from dataset import create_dataset
 from config import nonquant_cfg, quant_cfg
@@ -58,7 +59,30 @@ def train_lenet():
                 dataset_sink_mode=True)
 
 
-def train_lenet_quant():
+def eval_lenet():
+    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+    cfg = nonquant_cfg
+    ds_eval = create_dataset(os.path.join(data_path, "test"), cfg.batch_size, 1)
+    ckpt_path = './ckpt_lenet_noquant-10_1875.ckpt'
+    # define fusion network
+    network = LeNet5(cfg.num_classes)
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+    # call back and monitor
+    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+    # load quantization aware network checkpoint
+    param_dict = load_checkpoint(ckpt_path)
+    not_load_param = load_param_into_net(network, param_dict)
+    if not_load_param:
+        raise ValueError("Load param into net fail!")
+
+    print("============== Starting Testing ==============")
+    acc = model.eval(ds_eval, dataset_sink_mode=True)
+    print("============== {} ==============".format(acc))
+    assert acc['Accuracy'] > 0.98
+
+
+def train_lenet_quant(optim_option="QAT"):
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     cfg = quant_cfg
     ckpt_path = './ckpt_lenet_noquant-10_1875.ckpt'
@@ -73,10 +97,21 @@ def train_lenet_quant():
     load_nonquant_param_into_quant_net(network, param_dict)
 
     # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(quant_delay=900,
-                                          bn_fold=False,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
+    if optim_option == "LEARNED_SCALE":
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=False,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        quantizer = QuantizationAwareTraining(quant_delay=900,
+                                              bn_fold=False,
+                                              per_channel=[True, False],
+                                              symmetric=[True, False])
     network = quantizer.quantize(network)
 
     # define network loss
@@ -87,7 +122,7 @@ def train_lenet_quant():
     # call back and monitor
     config_ckpt = CheckpointConfig(save_checkpoint_steps=cfg.epoch_size * step_size,
                                    keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpt_callback = ModelCheckpoint(prefix="ckpt_lenet_quant", config=config_ckpt)
+    ckpt_callback = ModelCheckpoint(prefix="ckpt_lenet_quant"+optim_option, config=config_ckpt)
 
     # define model
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
@@ -98,19 +133,30 @@ def train_lenet_quant():
     print("============== End Training ==============")
 
 
-def eval_quant():
+def eval_quant(optim_option="QAT"):
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     cfg = quant_cfg
     ds_eval = create_dataset(os.path.join(data_path, "test"), cfg.batch_size, 1)
-    ckpt_path = './ckpt_lenet_quant-10_937.ckpt'
+    ckpt_path = './ckpt_lenet_quant'+optim_option+'-10_937.ckpt'
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(quant_delay=0,
-                                          bn_fold=False,
-                                          freeze_bn=10000,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
+    if optim_option == "LEARNED_SCALE":
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=False,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        quantizer = QuantizationAwareTraining(quant_delay=0,
+                                              bn_fold=False,
+                                              freeze_bn=10000,
+                                              per_channel=[True, False],
+                                              symmetric=[True, False])
     network = quantizer.quantize(network)
 
     # define loss
@@ -132,17 +178,29 @@ def eval_quant():
     print("============== {} ==============".format(acc))
     assert acc['Accuracy'] > 0.98
 
-def export_lenet():
+
+def export_lenet(optim_option="QAT"):
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     cfg = quant_cfg
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
     # convert fusion network to quantization aware network
-    quantizer = QuantizationAwareTraining(quant_delay=0,
-                                          bn_fold=False,
-                                          freeze_bn=10000,
-                                          per_channel=[True, False],
-                                          symmetric=[True, False])
+    if optim_option == "LEARNED_SCALE":
+        quant_optim_otions = OptimizeOption.LEARNED_SCALE
+        quantizer = QuantizationAwareTraining(bn_fold=False,
+                                              per_channel=[True, False],
+                                              symmetric=[True, True],
+                                              narrow_range=[True, True],
+                                              freeze_bn=0,
+                                              quant_delay=0,
+                                              one_conv_fold=True,
+                                              optimize_option=quant_optim_otions)
+    else:
+        quantizer = QuantizationAwareTraining(quant_delay=0,
+                                              bn_fold=False,
+                                              freeze_bn=10000,
+                                              per_channel=[True, False],
+                                              symmetric=[True, False])
     network = quantizer.quantize(network)
 
     # export network
@@ -155,9 +213,13 @@ def export_lenet():
 @pytest.mark.env_onecard
 def test_lenet_quant():
     train_lenet()
+    eval_lenet()
     train_lenet_quant()
     eval_quant()
     export_lenet()
+    train_lenet_quant(optim_option="LEARNED_SCALE")
+    eval_quant(optim_option="LEARNED_SCALE")
+    export_lenet(optim_option="LEARNED_SCALE")
 
 
 if __name__ == "__main__":

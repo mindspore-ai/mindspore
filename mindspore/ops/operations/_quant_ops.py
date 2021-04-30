@@ -24,6 +24,14 @@ from ...common import dtype as mstype
 
 __all__ = ["MinMaxUpdatePerLayer",
            "MinMaxUpdatePerChannel",
+           "FakeLearnedScaleQuantPerLayer",
+           "FakeLearnedScaleQuantPerLayerGrad",
+           "FakeLearnedScaleQuantPerLayerGradD",
+           "FakeLearnedScaleQuantPerLayerGradDReduce",
+           "FakeLearnedScaleQuantPerChannel",
+           "FakeLearnedScaleQuantPerChannelGrad",
+           "FakeLearnedScaleQuantPerChannelGradD",
+           "FakeLearnedScaleQuantPerChannelGradDReduce",
            "FakeQuantWithMinMaxVars",
            "FakeQuantWithMinMaxVarsGradient",
            "FakeQuantWithMinMaxVarsPerChannel",
@@ -167,6 +175,321 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
                   ("x", "min", "max"),
                   (x_type, min_type, max_type)))
         return min_type, max_type
+
+
+class FakeLearnedScaleQuantPerLayer(PrimitiveWithInfer):
+    r"""
+    Simulates the quantize and dequantize operations of the fake learned scale quant per-layer case in training time.
+
+    Args:
+        quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
+            simulate quantization aware function. After delay step in training time begin simulate the aware
+            quantize function. Default: 0.
+        neg_trunc (bool): Whether the quantization algorithm uses nagetive truncation or not. Default: False.
+        training (bool): Training the network or not. Default: True.
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor that needs to be quantified.
+        - **alpha** (Tensor) : Value of the max clipping range of the input data `input_x`.
+        - **quant_max** (Tensor) : Value of the quantization range.
+
+    Outputs:
+        - Tensor: Simulates quantize tensor of `input_x`，with the same type and shape as the `input_x`.
+
+    Examples:
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> alpha_tensor = Tensor(np.array([6]), mstype.float32)
+        >>> quant_max_tensor = Tensor(np.array([127]), mstype.float32)
+        >>> output_tensor = FakeLearnedScaleQuantPerLayer()(input_tensor, alpha_tensor, quant_max_tensor)
+    """
+    @prim_attr_register
+    def __init__(self,
+                 quant_delay=0,
+                 neg_trunc=False,
+                 training=True):
+        """init FakeLearnedScaleQuantPerLayer OP"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perlayer
+
+        self.quant_delay = validator.check_non_negative_int(
+            quant_delay, 'quant_delay', self.name)
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        self.init_prim_io_names(inputs=['input_x', 'alpha', 'quant_max'],
+                                outputs=['out'])
+
+    def infer_shape(self, input_x_shape, alpha_shape, quant_max_shape):
+        validator.check_int(len(input_x_shape), 1, Rel.GE, "input_x rank", self.name)
+        validator.check_int(len(alpha_shape), 1, Rel.GE, "alpha rank", self.name)
+        validator.check_int(len(quant_max_shape), 1, Rel.GE, "quant max rank", self.name)
+        return input_x_shape
+
+    def infer_dtype(self, input_x_type, alpha_type, quant_max_type):
+        if context.get_context('device_target') == "GPU":
+            valid_dtypes = (mstype.float32,)
+        else:
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("input_x", "alpha", "quant_max"),
+                  (input_x_type, alpha_type, quant_max_type)))
+        return input_x_type
+
+
+class FakeLearnedScaleQuantPerLayerGrad(PrimitiveWithInfer):
+    r"""
+    Performs grad of FakeLearnedScaleQuantPerLayer operation.
+
+    Examples:
+        >>> fake_learned_scale_grad = FakeLearnedScaleQuantPerLayerGrad()
+        >>> dout = Tensor(np.array([[-2.3, 1.2], [5.7, 0.2]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[18, -23], [0.2, 6]]), mindspore.float32)
+        >>> _alpha = Tensor(np.array([6]), mindspore.float32)
+        >>> _quant_max = Tensor(np.array([127]), mindspore.float32)
+        >>> result = fake_learned_scale_grad(dout, input_x, _min, _max)
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 quant_delay=0,
+                 neg_trunc=False):
+        self.quant_delay = validator.check_non_negative_int(
+            quant_delay, 'quant_delay', self.name)
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'alpha', 'quant_max'], outputs=['dx', 'dalpha'])
+
+    def infer_shape(self, dout_shape, x_shape, alpha_shape, quant_max_shape):
+        validator.check("dout shape", dout_shape, "x_shape", x_shape, Rel.EQ, self.name)
+        validator.check_int(len(alpha_shape), 1, Rel.GE, "alpha rank", self.name)
+        validator.check_int(len(quant_max_shape), 1, Rel.GE, "quant max rank", self.name)
+        return dout_shape, alpha_shape
+
+    def infer_dtype(self, dout_type, x_type, alpha_type, quant_max_type):
+        if context.get_context('device_target') == "GPU":
+            valid_dtypes = (mstype.float32,)
+        else:
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "alpha", "quant_max"),
+                  (dout_type, x_type, alpha_type, quant_max_type)))
+        return dout_type, alpha_type
+
+
+class FakeLearnedScaleQuantPerLayerGradD(PrimitiveWithInfer):
+    r"""
+    Performs input grad of FakeLearnedScaleQuantPerLayer operation.
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 neg_trunc=False):
+        from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perlayer_grad
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'alpha', 'quant_max'], outputs=['dx', 'dalpha'])
+
+    def infer_shape(self, dout_shape, x_shape, alpha_shape, quant_max_shape):
+        validator.check("dout shape", dout_shape, "x_shape", x_shape, Rel.EQ, self.name)
+        validator.check_int(len(alpha_shape), 1, Rel.GE, "alpha rank", self.name)
+        validator.check_int(len(quant_max_shape), 1, Rel.GE, "quant max rank", self.name)
+        return dout_shape, dout_shape
+
+    def infer_dtype(self, dout_type, x_type, alpha_type, quant_max_type):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "alpha", "quant_max"),
+                  (dout_type, x_type, alpha_type, quant_max_type)))
+        return dout_type, dout_type
+
+
+class FakeLearnedScaleQuantPerLayerGradDReduce(PrimitiveWithInfer):
+    r"""
+    Performs alpha grad reduce of FakeLearnedScaleQuantPerLayer operation.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perlayer_grad_reduce
+        self.init_prim_io_names(
+            inputs=['dout_alpha'], outputs=['dalpha'])
+
+    def infer_shape(self, dout_alpha_shape):
+        return (1,)
+
+    def infer_dtype(self, dout_alpha_type):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("dout_alpha", dout_alpha_type, valid_dtypes, self.name)
+        return dout_alpha_type
+
+
+class FakeLearnedScaleQuantPerChannel(PrimitiveWithInfer):
+    r"""
+    Simulates the quantize and dequantize operations of the fake learned scale quant per-chnnel case in training time.
+
+    Args:
+        quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
+            simulate quantization aware function. After delay step in training time begin simulate the aware
+            quantize function. Default: 0.
+        neg_trunc (bool): Whether the quantization algorithm uses nagetive truncation or not. Default: False.
+        training (bool): Training the network or not. Default: True.
+        channel_axis (int): Quantization by channel axis. Ascend backend only supports 0 or 1. Default: 1.
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor that needs to be quantified.
+        - **alpha** (Tensor) : Value of the max clipping range of the input data `input_x`.
+        - **quant_max** (Tensor) : Value of the quantization range.
+
+    Outputs:
+        - Tensor: Simulates quantize tensor of `input_x`，with the same type and shape as the `input_x`.
+
+    Examples:
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> alpha_tensor = Tensor(np.array([6]*3), mstype.float32)
+        >>> quant_max_tensor = Tensor(np.array([127]), mstype.float32)
+        >>> output_tensor = FakeLearnedScaleQuantPerChannel()(input_tensor, alpha_tensor, quant_max_tensor)
+    """
+    ascend_support_x_rank = [2, 4]
+
+    @prim_attr_register
+    def __init__(self,
+                 quant_delay=0,
+                 neg_trunc=False,
+                 training=True,
+                 channel_axis=1):
+        """init FakeLearnedScaleQuantPerChannel OP"""
+        if context.get_context('device_target') == "Ascend":
+            from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perchannel
+        self.is_ascend = context.get_context('device_target') == "Ascend"
+        self.quant_delay = validator.check_non_negative_int(
+            quant_delay, 'quant_delay', self.name)
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.training = validator.check_value_type(
+            'training', training, (bool,), self.name)
+        if self.is_ascend:
+            self.channel_axis = validator.check_int_range(channel_axis, 0, 1, Rel.INC_BOTH, 'channel_axis', self.name)
+        else:
+            self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel_axis', self.name)
+        self.init_prim_io_names(inputs=['input_x', 'alpha', 'quant_max'],
+                                outputs=['out'])
+
+    def infer_shape(self, input_x_shape, alpha_shape, quant_max_shape):
+        if self.is_ascend and len(input_x_shape) not in self.ascend_support_x_rank:
+            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+        if not self.is_ascend:
+            validator.check_int(len(input_x_shape), 1, Rel.GE, "input_x rank", self.name)
+        if len(input_x_shape) == 1:
+            self.channel_axis = 0
+
+        validator.check_equal_int(alpha_shape[0], input_x_shape[self.channel_axis], "alpha rank", self.name)
+        validator.check_int(len(quant_max_shape), 1, Rel.GE, "quant max rank", self.name)
+        return input_x_shape
+
+    def infer_dtype(self, input_x_type, alpha_type, quant_max_type):
+        if context.get_context('device_target') == "GPU":
+            valid_dtypes = (mstype.float32,)
+        else:
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("input_x", "alpha", "quant_max"),
+                  (input_x_type, alpha_type, quant_max_type)))
+        return input_x_type
+
+
+class FakeLearnedScaleQuantPerChannelGrad(PrimitiveWithInfer):
+    r"""
+    Performs grad of FakeLearnedScaleQuantPerChannel operation.
+
+    Examples:
+        >>> fake_learned_scale_grad = FakeLearnedScaleQuantPerChannelGrad()
+        >>> dout = Tensor(np.array([[-2.3, 1.2], [5.7, 0.2]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[18, -23], [0.2, 6]]), mindspore.float32)
+        >>> _alpha = Tensor(np.array([6]*2), mindspore.float32)
+        >>> _quant_max = Tensor(np.array([127]), mindspore.float32)
+        >>> result = fake_learned_scale_grad(dout, input_x, _min, _max)
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 quant_delay=0,
+                 neg_trunc=False,
+                 channel_axis=1):
+        self.quant_delay = validator.check_non_negative_int(
+            quant_delay, 'quant_delay', self.name)
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel axis', self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'alpha', 'quant_max'], outputs=['dx', 'dalpha'])
+
+    def infer_shape(self, dout_shape, x_shape, alpha_shape, quant_max_shape):
+        validator.check("dout shape", dout_shape, "x_shape", x_shape, Rel.EQ, self.name)
+        return dout_shape, alpha_shape
+
+    def infer_dtype(self, dout_type, x_type, alpha_type, quant_max_type):
+        if context.get_context('device_target') == "GPU":
+            valid_dtypes = (mstype.float32,)
+        else:
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "alpha", "quant_max"),
+                  (dout_type, x_type, alpha_type, quant_max_type)))
+        return dout_type, alpha_type
+
+
+class FakeLearnedScaleQuantPerChannelGradD(PrimitiveWithInfer):
+    r"""
+    Performs input grad of FakeLearnedScaleQuantPerChannel operation.
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 neg_trunc=False,
+                 channel_axis=1):
+        from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perchannel_grad
+        self.neg_trunc = validator.check_value_type(
+            'neg_trunc', neg_trunc, (bool,), self.name)
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel axis', self.name)
+        self.init_prim_io_names(
+            inputs=['dout', 'x', 'alpha', 'quant_max'], outputs=['dx', 'dalpha'])
+
+    def infer_shape(self, dout_shape, x_shape, alpha_shape, quant_max_shape):
+        validator.check("dout shape", dout_shape, "x_shape", x_shape, Rel.EQ, self.name)
+        validator.check_int(len(alpha_shape), 1, Rel.GE, "alpha rank", self.name)
+        validator.check_int(len(quant_max_shape), 1, Rel.GE, "quant max rank", self.name)
+        return dout_shape, dout_shape
+
+    def infer_dtype(self, dout_type, x_type, alpha_type, quant_max_type):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "alpha", "quant_max"),
+                  (dout_type, x_type, alpha_type, quant_max_type)))
+        return dout_type, dout_type
+
+
+class FakeLearnedScaleQuantPerChannelGradDReduce(PrimitiveWithInfer):
+    r"""
+    Performs alpha grad reduce of FakeLearnedScaleQuantPerChannel operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, channel_axis=1):
+        from mindspore.ops._op_impl._custom_op import fake_learned_scale_quant_perchannel_grad_reduce
+        self.channel_axis = validator.check_non_negative_int(channel_axis, 'channel axis', self.name)
+        self.init_prim_io_names(
+            inputs=['dout_alpha'], outputs=['dalpha'])
+
+    def infer_shape(self, dout_alpha_shape):
+        return (dout_alpha_shape[self.channel_axis],)
+
+    def infer_dtype(self, dout_alpha_type):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("dout_alpha", dout_alpha_type, valid_dtypes, self.name)
+        return dout_alpha_type
 
 
 class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
