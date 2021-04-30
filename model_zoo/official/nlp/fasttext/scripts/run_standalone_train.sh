@@ -51,6 +51,5 @@ cp -r ../scripts/*.sh ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-#python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
-python train.py  --data_path $DATASET --data_name $DATANAME
+python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
 cd ..
