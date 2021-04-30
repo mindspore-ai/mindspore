@@ -122,7 +122,7 @@ bool IsSideEffectNode(const AnfNodePtr &node) {
  */
 class UnifyRepeatedOutput : public Pass {
  public:
-  bool Run(const FuncGraphPtr &func_graph) {
+  bool Run(const FuncGraphPtr &func_graph) override {
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
     auto todos = FindGraphKernelsWithMultiOutput(func_graph);
@@ -155,7 +155,8 @@ class UnifyRepeatedOutput : public Pass {
     index_map_.resize(outputs.size());
     bool found = false;
     for (size_t i = 0; i < outputs.size(); ++i) {
-      index_map_[i] = std::find(outputs.begin(), outputs.begin() + i, outputs[i]) - outputs.begin();
+      index_map_[i] =
+        static_cast<size_t>(std::find(outputs.begin(), outputs.begin() + i, outputs[i]) - outputs.begin());
       if (index_map_[i] != i) {
         found = true;
       }
@@ -183,7 +184,7 @@ class UnifyRepeatedOutput : public Pass {
  */
 class UnifyRepeatedGetitem : public Pass {
  public:
-  bool Run(const FuncGraphPtr &func_graph) {
+  bool Run(const FuncGraphPtr &func_graph) override {
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
     auto todos = FindGraphKernelsWithMultiOutput(func_graph);
@@ -210,7 +211,7 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
-void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) {
+void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) const {
   if (offset == 0) return;
   MS_EXCEPTION_IF_NULL(getitem);
   auto index = GetIndex(getitem);
