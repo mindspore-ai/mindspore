@@ -46,6 +46,7 @@ cd ${EXECUTE_PATH}/data_standalone_log_$USE_DEVICE_ID || exit
 echo "start training for rank $RANK_ID, device $USE_DEVICE_ID"
 env > ${EXECUTE_PATH}/log_standalone_graph/face_recognition_$USE_DEVICE_ID.log
 python ${EXECUTE_PATH}/../train.py \
+    --config_path=${EXECUTE_PATH}/../base_config.yaml \
     --train_stage=base \
     --is_distributed=0 &> ${EXECUTE_PATH}/log_standalone_graph/face_recognition_$USE_DEVICE_ID.log &
 
