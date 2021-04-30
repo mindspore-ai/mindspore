@@ -132,7 +132,7 @@ if(SUPPORT_GPU STREQUAL vulkan)
     include(${TOP_DIR}/cmake/external_libs/vulkan.cmake)
 endif()
 
-if(ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper" OR PLATFORM_ARM)
+if(ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper" OR ENABLE_TOOLS)
     include(${TOP_DIR}/cmake/external_libs/json.cmake)
 endif()
 
