@@ -38,12 +38,6 @@ const std::vector<std::string> kSplitDevTypes = {"CPU", "GPU"};
 
 using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
 
-enum Status {
-  SUCCESS = 0,
-  FAILED,
-  INVALID_ARGUMENT,
-};
-
 enum SplitMode {
   SplitN = 0,
   SplitH = 1,

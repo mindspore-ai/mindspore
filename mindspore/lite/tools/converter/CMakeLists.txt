@@ -59,9 +59,13 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/tf_gelu_fusion.cc
         ../optimizer/fusion/onnx_gelu_fusion.cc
         ../optimizer/fusion/squeeze_fusion.cc
+        ../optimizer/fisson/eliminate_concat_split.cc
         ../optimizer/fisson/fisson_util.cc
         ../optimizer/fisson/iter_node_outputs.cc
         ../optimizer/fisson/node_out_shapes.cc
+        ../optimizer/parallel/dynamic_creator.cc
+        ../optimizer/parallel/operator_info.cc
+        ../optimizer/parallel/parallel_pass.cc
         ../optimizer/graph/conv1d_inout_adjust_pass.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
