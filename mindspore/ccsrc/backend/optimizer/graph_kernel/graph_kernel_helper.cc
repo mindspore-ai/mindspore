@@ -593,77 +593,6 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
   return name.str();
 }
 
-std::vector<PrimitivePtr> GetFusibleOpList() {
-#if ENABLE_D
-  std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,      prim::kPrimRound,      prim::kPrimNeg,     prim::kPrimExp,       prim::kPrimAdd,
-    prim::kPrimCast,     prim::kPrimMul,        prim::kPrimMinimum, prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,      prim::kPrimSub,        prim::kPrimRsqrt,   prim::kPrimSqrt,      prim::kPrimAddN,
-    prim::kPrimEqual,    prim::kPrimReciprocal, prim::kPrimTanh,    prim::kPrimReshape,   prim::kPrimTranspose,
-    prim::kPrimRealDiv,  prim::kPrimMatMul,     prim::kPrimAssign,  prim::kPrimReduceSum, prim::kPrimInplaceAssign,
-    prim::KPrimTransData};
-#elif ENABLE_GPU
-  std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound,        prim::kPrimNeg,          prim::kPrimExp,       prim::kPrimAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,          prim::kPrimMinimum,      prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,          prim::kPrimRsqrt,        prim::kPrimSqrt,      prim::kPrimAddN,
-    prim::kPrimEqual,   prim::kPrimReciprocal,   prim::KPrimTransData,    prim::kPrimSelect,    prim::kPrimGreater,
-    prim::kPrimCast,    prim::kPrimReduceSum,    prim::kPrimTanh,         prim::kPrimReshape,   prim::kPrimTranspose,
-    prim::kPrimAssign,  prim::kPrimLessEqual,    prim::kPrimGreaterEqual, prim::kPrimReduceMax, prim::kPrimReduceMin,
-    prim::kPrimLess,    prim::kPrimInplaceAssign};
-#else
-  std::vector<PrimitivePtr> fusible_basic_ops;
-#endif
-  const auto &flags = context::GraphKernelFlags::GetInstance();
-  OpListFilter(&fusible_basic_ops, flags.enable_cluster_ops_only, flags.enable_cluster_ops, flags.disable_cluster_ops);
-  return fusible_basic_ops;
-}
-
-bool CheckProcessor(const AnfNodePtr &node, kernel::Processor processor = kernel::Processor::AICORE) {
-  MS_EXCEPTION_IF_NULL(node);
-
-  auto node_kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
-  if (node_kernel_info == nullptr) {
-    return false;
-  }
-
-  auto node_build_info = node_kernel_info->GetMutableSelectKernelBuildInfo();
-  if (node_build_info == nullptr) {
-    return false;
-  }
-
-  return node_build_info->processor() == processor;
-}
-
-bool IsBasicFuseOp(const AnfNodePtr &node) {
-  std::vector<PrimitivePtr> basic_ops = GetFusibleOpList();
-#if ENABLE_D
-  if (!CheckProcessor(node)) {
-    std::vector<PrimitivePtr> fused_aicpu_op = {prim::kPrimExpandDims, prim::kPrimReshape};
-    if (!std::any_of(fused_aicpu_op.begin(), fused_aicpu_op.end(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
-      return false;
-    }
-  }
-#endif
-  return std::any_of(basic_ops.begin(), basic_ops.end(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-}
-
-bool IsFusibleOp(const AnfNodePtr &node) {
-#if ENABLE_D
-  const std::set<std::string> graph_kernel_black_list = {"BNTrainingUpdateSum", "ApplyMomentum", "LayerNormForward",
-                                                         "LambNextMV", "LambUpdateWithLR"};
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto fg_attr = AnfAlgo::GetCNodeFuncGraphPtr(node)->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-    if (fg_attr != nullptr) {
-      return graph_kernel_black_list.count(GetValue<std::string>(fg_attr)) == 0;
-    }
-  }
-#endif
-  return IsBasicFuseOp(node) || AnfAlgo::IsGraphKernel(node);
-}
-
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -672,37 +601,6 @@ void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
 #elif ENABLE_GPU
   device::gpu::SetKernelInfo(cnode, kernel_type);
 #endif
-}
-
-void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
-                                       const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs) {
-  std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> new_fuse_cnode_dep_pri;
-
-  for (size_t out_idx = 0; out_idx < outputs.size(); ++out_idx) {
-    if (IsPrimitiveCNode(outputs[out_idx], prim::kPrimMakeTuple)) {
-      MS_LOG(ERROR) << "Need real outputs of makeTuple";
-    }
-    if (IsPrimitiveCNode(outputs[out_idx], prim::kPrimTupleGetItem)) {
-      continue;
-    }
-    for (auto iter = (*depend_prior).begin(); iter != (*depend_prior).end();) {
-      if (iter->first == outputs[out_idx]) {
-        new_fuse_cnode_dep_pri.insert({new_fuse_cnode, iter->second});
-        iter = depend_prior->erase(iter);
-        continue;
-      }
-      if (iter->second.first == outputs[out_idx]) {
-        new_fuse_cnode_dep_pri.insert({iter->first, std::make_pair(new_fuse_cnode, iter->second.second)});
-        iter = depend_prior->erase(iter);
-        continue;
-      }
-      ++iter;
-    }
-  }
-
-  for (auto item : new_fuse_cnode_dep_pri) {
-    depend_prior->insert(item);
-  }
 }
 
 std::string GetFormat(const AnfNodePtr &node) {

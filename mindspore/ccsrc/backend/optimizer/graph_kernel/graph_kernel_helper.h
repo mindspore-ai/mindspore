@@ -47,6 +47,8 @@ constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
 
+constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
+
 struct DataInfo {
   std::string format{kOpFormat_DEFAULT};
   ShapeVector shape{1};
@@ -75,12 +77,7 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
 bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &dump_option, nlohmann::json *op_desc);
 FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNodePtr> &inputs);
 std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix = "", const string &postfix = "");
-std::vector<PrimitivePtr> GetFusibleOpList();
-bool IsBasicFuseOp(const AnfNodePtr &node);
-bool IsFusibleOp(const AnfNodePtr &node);
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
-void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
-                                       const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs);
 
 std::string GetFormat(const AnfNodePtr &node);
 TypePtr GetType(const AnfNodePtr &node);
