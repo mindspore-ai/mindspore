@@ -88,7 +88,7 @@ class OpInfoExtractor {
     }
   }
 
-  bool ExcludeAttr(const std::string &name) {
+  bool ExcludeAttr(const std::string &name) const {
     const std::set<std::string> black_list = {"IsFeatureMapInputList", "IsFeatureMapOutput", kAttrOutputNames,
                                               kAttrInputNames};
     return black_list.count(name) != 0;

@@ -118,12 +118,12 @@ class AkgKernelJsonGenerator {
                      nlohmann::json *node_json);
   std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
                             const std::pair<size_t, size_t> &position);
-  TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index);
-  std::vector<size_t> GetInputShape(const AnfNodePtr &anf_node, size_t real_index);
-  std::string GetInputFormat(const AnfNodePtr &anf_node, size_t real_index);
-  TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index);
-  std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index);
-  std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
+  inline TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index);
+  inline std::vector<size_t> GetInputShape(const AnfNodePtr &anf_node, size_t real_index);
+  inline std::string GetInputFormat(const AnfNodePtr &anf_node, size_t real_index);
+  inline TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index);
+  inline std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index);
+  inline std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node);
   void CollectParallelDimInfo(const AnfNodePtr &anf_node);
