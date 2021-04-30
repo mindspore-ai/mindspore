@@ -90,7 +90,7 @@ bool PackCpuFwdKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 template <typename T>
-bool PackCpuFwdKernel<T>::CheckParam(const std::vector<AddressPtr> &outputs) {
+bool PackCpuFwdKernel<T>::CheckParam(const std::vector<AddressPtr> &outputs) const {
   if (outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but PackGpuFwdKernel needs 1 output.";
     return false;
