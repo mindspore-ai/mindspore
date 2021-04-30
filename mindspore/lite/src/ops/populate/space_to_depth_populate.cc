@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_SpaceToDepth;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSpaceToDepthParameter(const void *prim) {
-  auto *space_depth_param = reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
-  if (space_depth_param == nullptr) {
-    MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
-    return nullptr;
-  }
-  memset(space_depth_param, 0, sizeof(SpaceToDepthParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_SpaceToDepth();
@@ -33,15 +27,24 @@ OpParameter *PopulateSpaceToDepthParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  space_depth_param->op_parameter_.type_ = primitive->value_type();
-  space_depth_param->block_size_ = value->block_size();
-  if (value->format() != schema::Format::Format_NHWC) {
-    MS_LOG(ERROR) << "Currently only NHWC format is supported.";
-    free(space_depth_param);
+
+  auto *param = reinterpret_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc SpaceToDepthParameter failed.";
     return nullptr;
   }
-  return reinterpret_cast<OpParameter *>(space_depth_param);
+  memset(param, 0, sizeof(SpaceToDepthParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->block_size_ = value->block_size();
+  if (value->format() != schema::Format::Format_NHWC) {
+    MS_LOG(ERROR) << "Currently only NHWC format is supported.";
+    free(param);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_SpaceToDepth, PopulateSpaceToDepthParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

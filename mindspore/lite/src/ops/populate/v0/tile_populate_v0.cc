@@ -45,10 +45,14 @@ OpParameter *PopulateTileParameter(const void *prim) {
 #else
   if (tile_prim->dims() != nullptr) {
     auto dims = tile_prim->dims();
-    if (dims != nullptr) {
-      for (size_t i = 0; i < dims->size(); i++) {
-        tile_param->dims_[i] = static_cast<int>(dims->Get(i));
-      }
+    if (dims == nullptr) {
+      MS_LOG(ERROR) << "dims is nullptr";
+      free(tile_param);
+      return nullptr;
+    }
+
+    for (size_t i = 0; i < dims->size(); i++) {
+      tile_param->dims_[i] = static_cast<int>(dims->Get(i));
     }
     tile_param->dims_size_ = dims->size();
   }

@@ -19,14 +19,7 @@ using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateScaleParameter(const void *prim) {
-  auto *scale_param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
-  if (scale_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ScaleParameter failed.";
-    return nullptr;
-  }
-  memset(scale_param, 0, sizeof(ScaleParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ScaleFusion();
@@ -34,12 +27,19 @@ OpParameter *PopulateScaleParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  scale_param->op_parameter_.type_ = primitive->value_type();
-  scale_param->axis_ = value->axis();
-  scale_param->activation_type_ = value->activation_type();
-  return reinterpret_cast<OpParameter *>(scale_param);
+
+  auto *param = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ScaleParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ScaleParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->axis_ = value->axis();
+  param->activation_type_ = value->activation_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ScaleFusion, PopulateScaleParameter, SCHEMA_CUR)
 }  // namespace lite

@@ -20,13 +20,6 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateExpParameter(const void *prim) {
-  auto *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
-  if (exp_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc ExpParameter failed.";
-    return nullptr;
-  }
-  memset(exp_parameter, 0, sizeof(ExpParameter));
-
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ExpFusion();
@@ -34,16 +27,24 @@ OpParameter *PopulateExpParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  exp_parameter->op_parameter_.type_ = primitive->value_type();
-  exp_parameter->base_ = value->base();
-  exp_parameter->scale_ = value->scale();
-  exp_parameter->shift_ = value->shift();
-  if (exp_parameter->base_ != -1 && exp_parameter->base_ <= 0) {
-    MS_LOG(ERROR) << "Exp base must be strictly positive, got " << exp_parameter->base_;
-    free(exp_parameter);
+
+  auto *param = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ExpParameter failed.";
     return nullptr;
   }
-  return reinterpret_cast<OpParameter *>(exp_parameter);
+  memset(param, 0, sizeof(ExpParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->base_ = value->base();
+  param->scale_ = value->scale();
+  param->shift_ = value->shift();
+  if (param->base_ != -1 && param->base_ <= 0) {
+    MS_LOG(ERROR) << "Exp base must be strictly positive, got " << param->base_;
+    free(param);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_ExpFusion, PopulateExpParameter, SCHEMA_CUR)

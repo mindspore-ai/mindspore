@@ -20,74 +20,76 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateConvParameter(const void *prim) {
-  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
-  if (conv_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Conv2DFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
-  memset(conv_param, 0, sizeof(ConvParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  conv_param->op_parameter_.type_ = primitive->value_type();
-  auto conv_primitive = primitive->value_as_Conv2DFusion();
-  if (conv_primitive == nullptr) {
-    MS_LOG(ERROR) << "conv_primitive is nullptr";
-    return nullptr;
-  }
-  auto kernel_size = conv_primitive->kernel_size();
-  auto stride = conv_primitive->stride();
-  auto pad_list = conv_primitive->pad_list();
-  auto dilation = conv_primitive->dilation();
+  memset(param, 0, sizeof(ConvParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  auto kernel_size = value->kernel_size();
+  auto stride = value->stride();
+  auto pad_list = value->pad_list();
+  auto dilation = value->dilation();
   if (kernel_size == nullptr || stride == nullptr || dilation == nullptr) {
     MS_LOG(ERROR) << "nullptr";
+    free(param);
     return nullptr;
   }
-  conv_param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
-  conv_param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
-  conv_param->group_ = static_cast<int>(conv_primitive->group());
-  conv_param->stride_h_ = static_cast<int>(*(stride->begin()));
-  conv_param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
-  switch (conv_primitive->pad_mode()) {
+  param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+  param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+  param->group_ = static_cast<int>(value->group());
+  param->stride_h_ = static_cast<int>(*(stride->begin()));
+  param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
+  switch (value->pad_mode()) {
     case schema::PadMode_SAME:
-      conv_param->pad_mode_ = Pad_same;
+      param->pad_mode_ = Pad_same;
       break;
     case schema::PadMode_VALID:
-      conv_param->pad_mode_ = Pad_valid;
+      param->pad_mode_ = Pad_valid;
       break;
     default:
-      conv_param->pad_mode_ = Pad_pad;
+      param->pad_mode_ = Pad_pad;
   }
   if (pad_list == nullptr || pad_list->size() < 4) {
-    conv_param->pad_u_ = 0;
-    conv_param->pad_d_ = 0;
-    conv_param->pad_l_ = 0;
-    conv_param->pad_r_ = 0;
+    param->pad_u_ = 0;
+    param->pad_d_ = 0;
+    param->pad_l_ = 0;
+    param->pad_r_ = 0;
   } else {
-    conv_param->pad_u_ = static_cast<int>(*(pad_list->begin()));
-    conv_param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
-    conv_param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
-    conv_param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
+    param->pad_u_ = static_cast<int>(*(pad_list->begin()));
+    param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
+    param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
+    param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
   }
-  conv_param->dilation_h_ = static_cast<int>(*(dilation->begin()));
-  conv_param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
-  conv_param->input_channel_ = static_cast<int>(conv_primitive->in_channel());
-  conv_param->output_channel_ = static_cast<int>(conv_primitive->out_channel());
-  auto act_type = conv_primitive->activation_type();
+  param->dilation_h_ = static_cast<int>(*(dilation->begin()));
+  param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
+  param->input_channel_ = static_cast<int>(value->in_channel());
+  param->output_channel_ = static_cast<int>(value->out_channel());
+  auto act_type = value->activation_type();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->act_type_ = ActType_Relu;
+      param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->act_type_ = ActType_Relu6;
+      param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->act_type_ = ActType_No;
+      param->act_type_ = ActType_No;
   }
-  return reinterpret_cast<OpParameter *>(conv_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_Conv2DFusion, PopulateConvParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

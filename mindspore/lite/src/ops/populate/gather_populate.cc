@@ -19,21 +19,20 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateGatherParameter(const void *prim) {
-  auto *gather_param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
-  if (gather_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<GatherParameter *>(malloc(sizeof(GatherParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc GatherParameter failed.";
     return nullptr;
   }
-  memset(gather_param, 0, sizeof(GatherParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  gather_param->op_parameter_.type_ = primitive->value_type();
+  memset(param, 0, sizeof(GatherParameter));
 
-  return reinterpret_cast<OpParameter *>(gather_param);
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Gather, PopulateGatherParameter, SCHEMA_CUR)
 }  // namespace lite

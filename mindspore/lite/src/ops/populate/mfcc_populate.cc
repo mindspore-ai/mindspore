@@ -19,26 +19,26 @@ using mindspore::schema::PrimitiveType_Mfcc;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateMfccParameter(const void *prim) {
-  auto *arg_param = reinterpret_cast<MfccParameter *>(malloc(sizeof(MfccParameter)));
-  if (arg_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Mfcc();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<MfccParameter *>(malloc(sizeof(MfccParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc MfccParameter failed.";
     return nullptr;
   }
-  memset(arg_param, 0, sizeof(MfccParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  arg_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_Mfcc();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  arg_param->dct_coeff_num_ = param->dct_coeff_num();
-  return reinterpret_cast<OpParameter *>(arg_param);
+  memset(param, 0, sizeof(MfccParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->dct_coeff_num_ = value->dct_coeff_num();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Mfcc, PopulateMfccParameter, SCHEMA_CUR)
 }  // namespace lite

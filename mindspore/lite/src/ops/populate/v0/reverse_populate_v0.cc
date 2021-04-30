@@ -39,12 +39,13 @@ OpParameter *PopulateReverseParameter(const void *prim) {
   auto flatAxis = reverse_prim->axis();
   if (flatAxis == nullptr) {
     MS_LOG(ERROR) << "flatAxis is nullptr";
+    free(reverse_param);
     return nullptr;
   }
   reverse_param->num_axis_ = flatAxis->size();
   int i = 0;
-  for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {
-    reverse_param->axis_[i++] = *iter;
+  for (int flatAxi : *flatAxis) {
+    reverse_param->axis_[i++] = flatAxi;
   }
   return reinterpret_cast<OpParameter *>(reverse_param);
 }

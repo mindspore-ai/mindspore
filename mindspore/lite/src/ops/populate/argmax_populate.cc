@@ -19,7 +19,6 @@ using mindspore::schema::PrimitiveType_ArgMaxFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateArgMaxParameter(const void *prim) {
   auto *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
@@ -32,6 +31,7 @@ OpParameter *PopulateArgMaxParameter(const void *prim) {
   auto param = primitive->value_as_ArgMaxFusion();
   if (param == nullptr) {
     MS_LOG(ERROR) << "param is nullptr";
+    free(arg_param);
     return nullptr;
   }
   arg_param->axis_ = param->axis();
@@ -41,7 +41,6 @@ OpParameter *PopulateArgMaxParameter(const void *prim) {
   arg_param->get_max_ = true;
   return reinterpret_cast<OpParameter *>(arg_param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ArgMaxFusion, PopulateArgMaxParameter, SCHEMA_CUR)
 }  // namespace lite

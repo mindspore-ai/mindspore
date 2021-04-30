@@ -18,20 +18,21 @@ using mindspore::schema::PrimitiveType_ScatterNd;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateScatterNDParameter(const void *prim) {
-  auto *scatter_nd_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (scatter_nd_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
     return nullptr;
   }
-  memset(scatter_nd_param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  scatter_nd_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(scatter_nd_param);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_ScatterNd, PopulateScatterNDParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

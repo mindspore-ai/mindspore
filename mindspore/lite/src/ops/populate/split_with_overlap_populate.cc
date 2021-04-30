@@ -20,48 +20,57 @@ using mindspore::schema::PrimitiveType_SplitWithOverlap;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSplitWithOverlapParameter(const void *prim) {
-  auto *split_with_over_lap_param =
-    reinterpret_cast<SplitWithOverlapParameter *>(malloc(sizeof(SplitWithOverlapParameter)));
-  if (split_with_over_lap_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_SplitWithOverlap();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<SplitWithOverlapParameter *>(malloc(sizeof(SplitWithOverlapParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc PopulateSplitWithOverlapParameter failed.";
     return nullptr;
   }
-  memset(split_with_over_lap_param, 0, sizeof(SplitWithOverlapParameter));
+  memset(param, 0, sizeof(SplitWithOverlapParameter));
 
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_SplitWithOverlap();
-  split_with_over_lap_param->op_parameter_.type_ = primitive->value_type();
-
+  param->op_parameter_.type_ = primitive->value_type();
   auto ratio = value->ratio();
+  if (ratio == nullptr) {
+    MS_LOG(ERROR) << "ratio is nullptr";
+    free(param);
+    return nullptr;
+  }
   if (ratio->size() > SPLIT_MAX_SLICE_NUM) {
     MS_LOG(ERROR) << "SplitWithOverlap do not support splitting tensor into more than " << SPLIT_MAX_SLICE_NUM
                   << " slices";
-    delete split_with_over_lap_param;
+    free(param);
     return nullptr;
   }
-
-  split_with_over_lap_param->num_split_ = static_cast<int>(ratio->size());
-  split_with_over_lap_param->split_dim_ = value->split_dim();
+  param->num_split_ = static_cast<int>(ratio->size());
+  param->split_dim_ = value->split_dim();
 
   auto extend_top = value->extend_top();
   auto extend_bottom = value->extend_bottom();
-  if (extend_top->size() != ratio->size() || extend_bottom->size() != ratio->size()) {
+  if (extend_top->size() != ratio->size() || (extend_bottom != nullptr && extend_bottom->size() != ratio->size())) {
     MS_LOG(ERROR) << "The sizes of ratio, extend_top and extend_bottom are not identical";
-    delete split_with_over_lap_param;
+    free(param);
     return nullptr;
   }
 
   for (size_t i = 0; i < ratio->size(); ++i) {
-    split_with_over_lap_param->ratio_[i] = (*ratio)[i];
-    split_with_over_lap_param->extend_top_[i] = (*extend_top)[i];
-    split_with_over_lap_param->extend_bottom_[i] = (*extend_bottom)[i];
+    param->ratio_[i] = (*ratio)[i];
+    param->extend_top_[i] = (*extend_top)[i];
+    param->extend_bottom_[i] = (*extend_bottom)[i];
   }
 
-  split_with_over_lap_param->stride_ = value->stride();
-  split_with_over_lap_param->pad_top_ = value->pad_top();
+  param->stride_ = value->stride();
+  param->pad_top_ = value->pad_top();
 
-  return reinterpret_cast<OpParameter *>(split_with_over_lap_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_SplitWithOverlap, PopulateSplitWithOverlapParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -17,28 +17,31 @@
 #include <cstdint>
 #include "src/ops/populate/populate_register.h"
 using mindspore::schema::PrimitiveType_LayerNormFusion;
+
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateLayerNormParameter(const void *prim) {
-  auto layer_norm_parameter = reinterpret_cast<LayerNormParameter *>(malloc(sizeof(LayerNormParameter)));
-  if (layer_norm_parameter == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_LayerNormFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto param = reinterpret_cast<LayerNormParameter *>(malloc(sizeof(LayerNormParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc LayerNormParameter failed.";
     return nullptr;
   }
-  memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  layer_norm_parameter->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_LayerNormFusion();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  layer_norm_parameter->epsilon_ = param->epsilon();
-  layer_norm_parameter->elementwise_affine_ = param->elementwise_affine();
-  layer_norm_parameter->begin_norm_axis_ = static_cast<int>(param->begin_norm_axis());
-  layer_norm_parameter->begin_params_axis_ = static_cast<int>(param->begin_params_axis());
-  return reinterpret_cast<OpParameter *>(layer_norm_parameter);
+  memset(param, 0, sizeof(LayerNormParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->epsilon_ = value->epsilon();
+  param->elementwise_affine_ = value->elementwise_affine();
+  param->begin_norm_axis_ = static_cast<int>(value->begin_norm_axis());
+  param->begin_params_axis_ = static_cast<int>(value->begin_params_axis());
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_LayerNormFusion, PopulateLayerNormParameter, SCHEMA_CUR)

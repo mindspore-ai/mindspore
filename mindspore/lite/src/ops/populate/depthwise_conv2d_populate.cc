@@ -19,13 +19,14 @@
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateConvDwParameter(const void *primitive) {
-  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
-  if (conv_param == nullptr) {
+  auto *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
-  memset(conv_param, 0, sizeof(ConvParameter));
-  return reinterpret_cast<OpParameter *>(conv_param);
+  memset(param, 0, sizeof(ConvParameter));
+
+  return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace lite
 }  // namespace mindspore

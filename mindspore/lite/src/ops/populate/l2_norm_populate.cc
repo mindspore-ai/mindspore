@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cstdint>
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/l2_norm_parameter.h"
 using mindspore::schema::PrimitiveType_L2NormalizeFusion;
@@ -21,13 +20,6 @@ using mindspore::schema::PrimitiveType_L2NormalizeFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateL2NormParameter(const void *prim) {
-  auto *l2_norm_parameter = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
-  if (l2_norm_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc L2NormParameter failed.";
-    return nullptr;
-  }
-  memset(l2_norm_parameter, 0, sizeof(L2NormParameter));
-
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_L2NormalizeFusion();
@@ -35,32 +27,40 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  l2_norm_parameter->op_parameter_.type_ = primitive->value_type();
 
+  auto *param = reinterpret_cast<L2NormParameter *>(malloc(sizeof(L2NormParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc L2NormParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(L2NormParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
   auto axis_vec = value->axis();
   if (axis_vec == nullptr) {
     MS_LOG(ERROR) << "axis_vec is nullptr";
+    free(param);
     return nullptr;
   }
-  l2_norm_parameter->axis_num_ = axis_vec->size();
+  param->axis_num_ = axis_vec->size();
 
   MS_ASSERT(axis_vec->size() < 8);
   for (size_t i = 0; i < axis_vec->size(); i++) {
-    l2_norm_parameter->axis_[i] = static_cast<int>(axis_vec->Get(i));
+    param->axis_[i] = static_cast<int>(axis_vec->Get(i));
   }
   if (value->epsilon() < 1e-6) {
-    l2_norm_parameter->epsilon_ = 1e-6;
+    param->epsilon_ = 1e-6;
   } else {
-    l2_norm_parameter->epsilon_ = value->epsilon();
+    param->epsilon_ = value->epsilon();
   }
   if (value->activation_type() == static_cast<int>(schema::ActivationType_RELU)) {
-    l2_norm_parameter->act_type_ = ActType_Relu;
+    param->act_type_ = ActType_Relu;
   } else if (value->activation_type() == static_cast<int>(schema::ActivationType_RELU6)) {
-    l2_norm_parameter->act_type_ = ActType_Relu6;
+    param->act_type_ = ActType_Relu6;
   } else {
-    l2_norm_parameter->act_type_ = ActType_No;
+    param->act_type_ = ActType_No;
   }
-  return reinterpret_cast<OpParameter *>(l2_norm_parameter);
+  return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_L2NormalizeFusion, PopulateL2NormParameter, SCHEMA_CUR)
 }  // namespace lite

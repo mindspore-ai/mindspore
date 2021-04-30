@@ -19,26 +19,26 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateConcatParameter(const void *prim) {
-  auto *concat_param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
-  if (concat_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ConcatParameter failed.";
-    return nullptr;
-  }
-  memset(concat_param, 0, sizeof(ConcatParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  concat_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_Concat();
-  if (param == nullptr) {
+  auto value = primitive->value_as_Concat();
+  if (value == nullptr) {
     MS_LOG(ERROR) << "param is nullptr";
     return nullptr;
   }
-  concat_param->axis_ = static_cast<int>(param->axis());
-  return reinterpret_cast<OpParameter *>(concat_param);
+
+  auto *param = reinterpret_cast<ConcatParameter *>(malloc(sizeof(ConcatParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ConcatParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ConcatParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->axis_ = static_cast<int>(value->axis());
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Concat, PopulateConcatParameter, SCHEMA_CUR)
 }  // namespace lite

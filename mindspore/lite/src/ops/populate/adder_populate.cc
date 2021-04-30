@@ -21,56 +21,59 @@ using mindspore::schema::PrimitiveType_AdderFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateAdderParameter(const void *prim) {
-  ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
-  if (conv_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_AdderFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConvParameter failed.";
     return nullptr;
   }
-  memset(conv_param, 0, sizeof(ConvParameter));
+  memset(param, 0, sizeof(ConvParameter));
 
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  conv_param->op_parameter_.type_ = primitive->value_type();
-  auto conv_primitive = primitive->value_as_AdderFusion();
-  if (conv_primitive == nullptr) {
-    MS_LOG(ERROR) << "conv_primitive is nullptr";
-    return nullptr;
-  }
-  auto kernel_size = conv_primitive->kernel_size();
-  auto stride = conv_primitive->stride();
-  auto pad_list = conv_primitive->pad_list();
-  auto dilation = conv_primitive->dilation();
+  param->op_parameter_.type_ = primitive->value_type();
+  auto kernel_size = value->kernel_size();
+  auto stride = value->stride();
+  auto pad_list = value->pad_list();
+  auto dilation = value->dilation();
   if (kernel_size == nullptr || stride == nullptr || pad_list == nullptr || dilation == nullptr) {
     MS_LOG(ERROR) << "nullptr";
+    free(param);
     return nullptr;
   }
-  conv_param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
-  conv_param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
-  conv_param->group_ = static_cast<int>(conv_primitive->group());
-  conv_param->stride_h_ = static_cast<int>(*(stride->begin()));
-  conv_param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
-  conv_param->pad_u_ = static_cast<int>(*(pad_list->begin()));
-  conv_param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
-  conv_param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
-  conv_param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
-  conv_param->dilation_h_ = static_cast<int>(*(dilation->begin()));
-  conv_param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
-  conv_param->input_channel_ = static_cast<int>(conv_primitive->in_channel());
-  conv_param->output_channel_ = static_cast<int>(conv_primitive->out_channel());
-  auto act_type = conv_primitive->activation_type();
+  param->kernel_h_ = static_cast<int>(*(kernel_size->begin()));
+  param->kernel_w_ = static_cast<int>(*(kernel_size->begin() + 1));
+  param->group_ = static_cast<int>(value->group());
+  param->stride_h_ = static_cast<int>(*(stride->begin()));
+  param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
+  param->pad_u_ = static_cast<int>(*(pad_list->begin()));
+  param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
+  param->pad_l_ = static_cast<int>(*(pad_list->begin() + 2));
+  param->pad_r_ = static_cast<int>(*(pad_list->begin() + 3));
+  param->dilation_h_ = static_cast<int>(*(dilation->begin()));
+  param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
+  param->input_channel_ = static_cast<int>(value->in_channel());
+  param->output_channel_ = static_cast<int>(value->out_channel());
+  auto act_type = value->activation_type();
   switch (act_type) {
     case schema::ActivationType_RELU:
-      conv_param->act_type_ = ActType_Relu;
+      param->act_type_ = ActType_Relu;
       break;
     case schema::ActivationType_RELU6:
-      conv_param->act_type_ = ActType_Relu6;
+      param->act_type_ = ActType_Relu6;
       break;
     default:
-      conv_param->act_type_ = ActType_No;
+      param->act_type_ = ActType_No;
       break;
   }
-  return reinterpret_cast<OpParameter *>(conv_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_AdderFusion, PopulateAdderParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

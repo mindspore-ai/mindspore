@@ -18,20 +18,20 @@ using mindspore::schema::PrimitiveType_Rank;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateRankParameter(const void *prim) {
-  auto *rank_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (rank_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc RankParameter failed.";
     return nullptr;
   }
-  memset(rank_param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  rank_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(rank_param);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Rank, PopulateRankParameter, SCHEMA_CUR)
 }  // namespace lite

@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_BroadcastTo;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateBroadcastToParameter(const void *prim) {
-  auto *broadcast_param = reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
-  if (broadcast_param == nullptr) {
-    MS_LOG(ERROR) << "malloc BroadcastToParameter failed.";
-    return nullptr;
-  }
-  memset(broadcast_param, 0, sizeof(BroadcastToParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_BroadcastTo();
@@ -33,17 +27,26 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  broadcast_param->op_parameter_.type_ = primitive->value_type();
+
+  auto *param = reinterpret_cast<BroadcastToParameter *>(malloc(sizeof(BroadcastToParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc BroadcastToParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(BroadcastToParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
   auto dst_shape = value->shape();
   if (dst_shape == nullptr) {
     MS_LOG(ERROR) << "dst_shape is nullptr";
+    free(param);
     return nullptr;
   }
-  broadcast_param->shape_size_ = dst_shape->size();
-  for (size_t i = 0; i < broadcast_param->shape_size_; ++i) {
-    broadcast_param->shape_[i] = dst_shape->Get(i);
+  param->shape_size_ = dst_shape->size();
+  for (size_t i = 0; i < param->shape_size_; ++i) {
+    param->shape_[i] = dst_shape->Get(i);
   }
-  return reinterpret_cast<OpParameter *>(broadcast_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_BroadcastTo, PopulateBroadcastToParameter, SCHEMA_CUR)

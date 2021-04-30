@@ -39,6 +39,7 @@ OpParameter *PopulateBroadcastToParameter(const void *prim) {
   broadcast_param->op_parameter_.type_ = schema::PrimitiveType_BroadcastTo;
   auto dst_shape = broadcast_to_prim->dst_shape();
   if (dst_shape == nullptr) {
+    free(broadcast_param);
     MS_LOG(ERROR) << "dst_shape is nullptr";
     return nullptr;
   }

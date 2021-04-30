@@ -19,27 +19,26 @@ using mindspore::schema::PrimitiveType_GRU;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateGruParameter(const void *prim) {
-  auto *gru_param = reinterpret_cast<GruParameter *>(malloc(sizeof(GruParameter)));
-  if (gru_param == nullptr) {
-    MS_LOG(ERROR) << "malloc GruParameter failed.";
-    return nullptr;
-  }
-  memset(gru_param, 0, sizeof(GruParameter));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  gru_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_GRU();
-  if (param == nullptr) {
-    free(gru_param);
+  auto value = primitive->value_as_GRU();
+  if (value == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";
     return nullptr;
   }
-  gru_param->bidirectional_ = param->bidirectional();
-  return reinterpret_cast<OpParameter *>(gru_param);
+
+  auto *param = reinterpret_cast<GruParameter *>(malloc(sizeof(GruParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc GruParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(GruParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->bidirectional_ = value->bidirectional();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_GRU, PopulateGruParameter, SCHEMA_CUR)
 }  // namespace lite

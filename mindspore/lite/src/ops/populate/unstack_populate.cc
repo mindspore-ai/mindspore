@@ -19,14 +19,7 @@ using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateUnstackParameter(const void *prim) {
-  auto *unstack_param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
-  if (unstack_param == nullptr) {
-    MS_LOG(ERROR) << "malloc UnstackParameter failed.";
-    return nullptr;
-  }
-  memset(unstack_param, 0, sizeof(UnstackParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Unstack();
@@ -34,10 +27,19 @@ OpParameter *PopulateUnstackParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  unstack_param->op_parameter_.type_ = primitive->value_type();
-  unstack_param->axis_ = value->axis();
-  return reinterpret_cast<OpParameter *>(unstack_param);
+
+  auto *param = reinterpret_cast<UnstackParameter *>(malloc(sizeof(UnstackParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc UnstackParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(UnstackParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->axis_ = value->axis();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_Unstack, PopulateUnstackParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

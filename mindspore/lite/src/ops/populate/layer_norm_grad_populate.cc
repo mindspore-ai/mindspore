@@ -21,23 +21,25 @@ using mindspore::schema::PrimitiveType_LayerNormGrad;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateLayerNormGradParameter(const void *prim) {
-  auto layer_norm_grad_parameter = reinterpret_cast<LayerNormGradParameter *>(malloc(sizeof(LayerNormGradParameter)));
-  if (layer_norm_grad_parameter == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_LayerNormGrad();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto param = reinterpret_cast<LayerNormGradParameter *>(malloc(sizeof(LayerNormGradParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc LayerNormParameter failed.";
     return nullptr;
   }
-  memset(layer_norm_grad_parameter, 0, sizeof(LayerNormGradParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  layer_norm_grad_parameter->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_LayerNormGrad();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  layer_norm_grad_parameter->begin_norm_axis_ = param->begin_norm_axis();
-  layer_norm_grad_parameter->begin_params_axis_ = param->begin_params_axis();
-  return reinterpret_cast<OpParameter *>(layer_norm_grad_parameter);
+  memset(param, 0, sizeof(LayerNormGradParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->begin_norm_axis_ = value->begin_norm_axis();
+  param->begin_params_axis_ = value->begin_params_axis();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_LayerNormGrad, PopulateLayerNormGradParameter, SCHEMA_CUR);

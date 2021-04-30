@@ -18,7 +18,6 @@ using mindspore::schema::PrimitiveType_While;
 
 namespace mindspore {
 namespace lite {
-
 typedef struct WhileParemeter {
   OpParameter op_parameter_;
   int body_subgraph_index;
@@ -26,12 +25,6 @@ typedef struct WhileParemeter {
 } WhileParemeter;
 
 OpParameter *PopulateWhileParemeter(const void *prim) {
-  auto *while_paremeter = reinterpret_cast<WhileParemeter *>(malloc(sizeof(WhileParemeter)));
-  if (while_paremeter == nullptr) {
-    MS_LOG(ERROR) << "malloc WhileParemeter failed.";
-    return nullptr;
-  }
-  memset(while_paremeter, 0, sizeof(WhileParemeter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_While();
@@ -39,11 +32,20 @@ OpParameter *PopulateWhileParemeter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  while_paremeter->op_parameter_.type_ = primitive->value_type();
-  while_paremeter->body_subgraph_index = value->body_subgraph_index();
-  while_paremeter->cond_subgraph_index = value->cond_subgraph_index();
-  return reinterpret_cast<OpParameter *>(while_paremeter);
+
+  auto *param = reinterpret_cast<WhileParemeter *>(malloc(sizeof(WhileParemeter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc WhileParemeter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(WhileParemeter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->body_subgraph_index = value->body_subgraph_index();
+  param->cond_subgraph_index = value->cond_subgraph_index();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_While, PopulateWhileParemeter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

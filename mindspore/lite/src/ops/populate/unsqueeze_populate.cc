@@ -19,36 +19,37 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateUnsqueezeParameter(const void *prim) {
-  auto *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
-  if (unsqueeze_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Unsqueeze();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc UnSqueezeParameter failed.";
     return nullptr;
   }
-  memset(unsqueeze_param, 0, sizeof(UnSqueezeParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  unsqueeze_param->op_parameter_.type_ = primitive->value_type();
-  auto unsqueeze_prim = primitive->value_as_Unsqueeze();
-  if (unsqueeze_prim == nullptr) {
-    MS_LOG(ERROR) << "unsqueeze_prim is nullptr";
-    return nullptr;
-  }
-  auto axis = unsqueeze_prim->axis();
+  memset(param, 0, sizeof(UnSqueezeParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  auto axis = value->axis();
   if (axis == nullptr) {
     MS_LOG(ERROR) << "axis is nullptr";
+    free(param);
     return nullptr;
   }
   auto flat_axis = std::vector<int>(axis->begin(), axis->end());
-  unsqueeze_param->num_dim_ = flat_axis.size();
+  param->num_dim_ = flat_axis.size();
   int i = 0;
-  for (auto iter = flat_axis.begin(); iter != flat_axis.end(); ++iter) {
-    unsqueeze_param->dims_[i++] = *iter;
+  for (int &flat_axi : flat_axis) {
+    param->dims_[i++] = flat_axi;
   }
-  return reinterpret_cast<OpParameter *>(unsqueeze_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Unsqueeze, PopulateUnsqueezeParameter, SCHEMA_CUR)
 }  // namespace lite

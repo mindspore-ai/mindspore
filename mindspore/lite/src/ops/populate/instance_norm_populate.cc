@@ -20,13 +20,6 @@ using mindspore::schema::PrimitiveType_InstanceNorm;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateInstanceNormParameter(const void *prim) {
-  auto *instance_norm_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
-  if (instance_norm_param == nullptr) {
-    MS_LOG(ERROR) << "malloc InstanceNormParameter failed.";
-    return nullptr;
-  }
-  memset(instance_norm_param, 0, sizeof(InstanceNormParameter));
-
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_InstanceNorm();
@@ -34,9 +27,17 @@ OpParameter *PopulateInstanceNormParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  instance_norm_param->op_parameter_.type_ = primitive->value_type();
-  instance_norm_param->epsilon_ = value->epsilon();
-  return reinterpret_cast<OpParameter *>(instance_norm_param);
+
+  auto *param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc InstanceNormParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(InstanceNormParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->epsilon_ = value->epsilon();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_InstanceNorm, PopulateInstanceNormParameter, SCHEMA_CUR)

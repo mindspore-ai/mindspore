@@ -18,20 +18,20 @@ using mindspore::schema::PrimitiveType_Clip;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateClipParameter(const void *prim) {
-  auto *act_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (act_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ClipParameter failed.";
     return nullptr;
   }
-  memset(act_param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  act_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(act_param);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR)
 }  // namespace lite

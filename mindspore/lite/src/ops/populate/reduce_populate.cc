@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/reduce_parameter.h"
 using mindspore::schema::PrimitiveType_ReduceFusion;
+
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateReduceParameter(const void *prim) {
-  auto *reduce_param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
-  if (reduce_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
-    return nullptr;
-  }
-  memset(reduce_param, 0, sizeof(ReduceParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ReduceFusion();
@@ -33,15 +27,22 @@ OpParameter *PopulateReduceParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  reduce_param->op_parameter_.type_ = primitive->value_type();
-  reduce_param->keep_dims_ = value->keep_dims();
-  reduce_param->reduce_to_end_ = value->reduce_to_end();
-  reduce_param->coeff = value->coeff();
-  reduce_param->mode_ = static_cast<int>(value->mode());
-  return reinterpret_cast<OpParameter *>(reduce_param);
+
+  auto *param = reinterpret_cast<ReduceParameter *>(malloc(sizeof(ReduceParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ReduceParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ReduceParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->keep_dims_ = value->keep_dims();
+  param->reduce_to_end_ = value->reduce_to_end();
+  param->coeff = value->coeff();
+  param->mode_ = static_cast<int>(value->mode());
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_ReduceFusion, PopulateReduceParameter, SCHEMA_CUR)
-
 }  // namespace lite
 }  // namespace mindspore

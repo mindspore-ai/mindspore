@@ -19,29 +19,28 @@ using mindspore::schema::PrimitiveType_ROIPooling;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateROIPoolingParameter(const void *prim) {
-  auto *roi_param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
-  if (roi_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ROIPoolingParameter failed.";
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_ROIPooling();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
 
-  memset(roi_param, 0, sizeof(ROIPoolingParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  roi_param->op_parameter_.type_ = primitive->value_type();
-  auto roi_prim = primitive->value_as_ROIPooling();
-  if (roi_prim == nullptr) {
-    MS_LOG(ERROR) << "roi_prim is nullptr";
+  auto *param = reinterpret_cast<ROIPoolingParameter *>(malloc(sizeof(ROIPoolingParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ROIPoolingParameter failed.";
     return nullptr;
   }
-  roi_param->pooledH_ = roi_prim->pooled_h();
-  roi_param->pooledW_ = roi_prim->pooled_w();
-  roi_param->scale_ = roi_prim->scale();
-  return reinterpret_cast<OpParameter *>(roi_param);
+  memset(param, 0, sizeof(ROIPoolingParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->pooledH_ = value->pooled_h();
+  param->pooledW_ = value->pooled_w();
+  param->scale_ = value->scale();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ROIPooling, PopulateROIPoolingParameter, SCHEMA_CUR)
 }  // namespace lite

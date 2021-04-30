@@ -20,13 +20,6 @@ using mindspore::schema::PrimitiveType_BinaryCrossEntropy;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
-  BinaryCrossEntropyParameter *bce_param =
-    reinterpret_cast<BinaryCrossEntropyParameter *>(malloc(sizeof(BinaryCrossEntropyParameter)));
-  if (bce_param == nullptr) {
-    MS_LOG(ERROR) << "malloc BinaryCrossEntropy Parameter failed.";
-    return nullptr;
-  }
-  memset(bce_param, 0, sizeof(BinaryCrossEntropyParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_BinaryCrossEntropy();
@@ -34,9 +27,17 @@ OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  bce_param->op_parameter_.type_ = primitive->value_type();
-  bce_param->reduction = value->reduction();
-  return reinterpret_cast<OpParameter *>(bce_param);
+
+  auto *param = reinterpret_cast<BinaryCrossEntropyParameter *>(malloc(sizeof(BinaryCrossEntropyParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc BinaryCrossEntropy Parameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(BinaryCrossEntropyParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->reduction = value->reduction();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_BinaryCrossEntropy, PopulateBinaryCrossEntropyParameter, SCHEMA_CUR);

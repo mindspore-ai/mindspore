@@ -18,20 +18,20 @@ using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateFillParameter(const void *prim) {
-  auto *fill_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (fill_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc FillParameter failed.";
     return nullptr;
   }
-  memset(fill_param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  fill_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(fill_param);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Fill, PopulateFillParameter, SCHEMA_CUR)
 }  // namespace lite

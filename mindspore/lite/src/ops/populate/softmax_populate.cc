@@ -19,36 +19,37 @@ using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateSoftmaxParameter(const void *prim) {
-  auto *softmax_param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
-  if (softmax_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Softmax();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<SoftmaxParameter *>(malloc(sizeof(SoftmaxParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxParameter failed.";
     return nullptr;
   }
-  memset(softmax_param, 0, sizeof(SoftmaxParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  softmax_param->op_parameter_.type_ = primitive->value_type();
-  auto prim_softmax = primitive->value_as_Softmax();
-  if (prim_softmax == nullptr) {
-    MS_LOG(ERROR) << "prim_softmax is nullptr";
-    return nullptr;
-  }
-  auto axis = prim_softmax->axis();
+  memset(param, 0, sizeof(SoftmaxParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  auto axis = value->axis();
   if (axis == nullptr) {
     MS_LOG(ERROR) << "axis is nullptr";
+    free(param);
     return nullptr;
   }
   if (axis->size() != 1) {
     MS_LOG(ERROR) << "axis number invalid!number: " << axis->size();
-    free(softmax_param);
+    free(param);
     return nullptr;
   }
-  softmax_param->axis_ = axis->data()[0];
-  return reinterpret_cast<OpParameter *>(softmax_param);
+  param->axis_ = axis->data()[0];
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Softmax, PopulateSoftmaxParameter, SCHEMA_CUR)
 }  // namespace lite

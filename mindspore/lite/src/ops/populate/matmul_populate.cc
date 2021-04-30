@@ -16,15 +16,10 @@
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
 using mindspore::schema::PrimitiveType_MatMul;
+
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateMatMulParameter(const void *prim) {
-  auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
-  if (matmul_param == nullptr) {
-    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
-    return nullptr;
-  }
-  memset(matmul_param, 0, sizeof(MatMulParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_MatMul();
@@ -32,13 +27,22 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  matmul_param->op_parameter_.type_ = primitive->value_type();
-  matmul_param->b_transpose_ = value->transpose_b();
-  matmul_param->a_transpose_ = value->transpose_a();
-  matmul_param->has_bias_ = false;
-  matmul_param->act_type_ = ActType_No;
-  return reinterpret_cast<OpParameter *>(matmul_param);
+
+  auto *param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc MatMulParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(MatMulParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->b_transpose_ = value->transpose_b();
+  param->a_transpose_ = value->transpose_a();
+  param->has_bias_ = false;
+  param->act_type_ = ActType_No;
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

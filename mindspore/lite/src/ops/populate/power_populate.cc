@@ -19,27 +19,27 @@ using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulatePowerParameter(const void *prim) {
-  auto *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
-  if (power_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_PowFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
-  memset(power_param, 0, sizeof(PowerParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  power_param->op_parameter_.type_ = primitive->value_type();
-  auto power_prim = primitive->value_as_PowFusion();
-  if (power_prim == nullptr) {
-    MS_LOG(ERROR) << "power_prim is nullptr";
-    return nullptr;
-  }
-  power_param->scale_ = power_prim->scale();
-  power_param->shift_ = power_prim->shift();
-  return reinterpret_cast<OpParameter *>(power_param);
+  memset(param, 0, sizeof(PowerParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->scale_ = value->scale();
+  param->shift_ = value->shift();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_PowFusion, PopulatePowerParameter, SCHEMA_CUR)
 }  // namespace lite

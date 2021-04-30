@@ -19,22 +19,27 @@ using mindspore::schema::PrimitiveType_CumSum;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateCumSumParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto cumsum_prim = primitive->value_as_CumSum();
-  CumSumParameter *cumsum_param = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
-  if (cumsum_param == nullptr) {
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_CumSum();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc CumsumParameter failed.";
     return nullptr;
   }
-  memset(cumsum_param, 0, sizeof(CumSumParameter));
-  cumsum_param->op_parameter_.type_ = primitive->value_type();
-  cumsum_param->exclusive_ = cumsum_prim->exclusive();
-  cumsum_param->reverse_ = cumsum_prim->reverse();
-  return reinterpret_cast<OpParameter *>(cumsum_param);
+  memset(param, 0, sizeof(CumSumParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->exclusive_ = value->exclusive();
+  param->reverse_ = value->reverse();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_CumSum, PopulateCumSumParameter, SCHEMA_CUR)
 }  // namespace lite

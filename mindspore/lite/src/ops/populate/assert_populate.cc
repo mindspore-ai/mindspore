@@ -18,20 +18,21 @@ using mindspore::schema::PrimitiveType_Assert;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateAssertParameter(const void *prim) {
-  auto *assert_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (assert_parameter == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc AssertParameter failed.";
     return nullptr;
   }
-  memset(assert_parameter, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  assert_parameter->type_ = primitive->value_type();
+  memset(param, 0, sizeof(OpParameter));
 
-  return reinterpret_cast<OpParameter *>(assert_parameter);
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -19,14 +19,16 @@ using mindspore::schema::PrimitiveType_Adam;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateAdamParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Adam Parameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+
   param->type_ = primitive->value_type();
   return param;
 }

@@ -43,6 +43,7 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   auto axisVector = reduce_prim->axes();
   if (axisVector == nullptr) {
     MS_LOG(ERROR) << "axisVector is nullptr";
+    free(reduce_param);
     return nullptr;
   }
   if (axisVector->size() > MAX_SHAPE_SIZE) {
@@ -52,8 +53,8 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   }
   reduce_param->num_axes_ = static_cast<int>(axisVector->size());
   int i = 0;
-  for (auto iter = axisVector->begin(); iter != axisVector->end(); iter++) {
-    reduce_param->axes_[i++] = *iter;
+  for (int iter : *axisVector) {
+    reduce_param->axes_[i++] = iter;
   }
   reduce_param->mode_ = static_cast<int>(reduce_prim->mode());
   return reinterpret_cast<OpParameter *>(reduce_param);

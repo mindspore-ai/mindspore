@@ -19,29 +19,28 @@ using mindspore::schema::PrimitiveType_ReverseSequence;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateReverseSequenceParameter(const void *prim) {
-  auto *reverse_sequence_param = reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
-  if (reverse_sequence_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_ReverseSequence();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ReverseSequenceParameter failed.";
     return nullptr;
   }
-  memset(reverse_sequence_param, 0, sizeof(ReverseSequenceParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto param = primitive->value_as_ReverseSequence();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  reverse_sequence_param->op_parameter_.type_ = primitive->value_type();
-  reverse_sequence_param->seq_axis_ = static_cast<int>(param->seq_dim());
-  reverse_sequence_param->batch_axis_ = static_cast<int>(param->batch_dim());
-  return reinterpret_cast<OpParameter *>(reverse_sequence_param);
+  memset(param, 0, sizeof(ReverseSequenceParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->seq_axis_ = static_cast<int>(value->seq_dim());
+  param->batch_axis_ = static_cast<int>(value->batch_dim());
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

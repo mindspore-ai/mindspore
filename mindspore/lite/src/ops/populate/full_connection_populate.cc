@@ -19,37 +19,37 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateFullconnectionParameter(const void *prim) {
-  auto *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
-  if (matmul_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_FullConnection();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
-  memset(matmul_param, 0, sizeof(MatMulParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  matmul_param->op_parameter_.type_ = primitive->value_type();
-  auto full_conn_prim = primitive->value_as_FullConnection();
-  if (full_conn_prim == nullptr) {
-    MS_LOG(ERROR) << "full_conn_prim is nullptr";
-    return nullptr;
-  }
-  matmul_param->b_transpose_ = true;
-  matmul_param->a_transpose_ = false;
-  matmul_param->has_bias_ = full_conn_prim->has_bias();
-  if (full_conn_prim->activation_type() == schema::ActivationType_RELU) {
-    matmul_param->act_type_ = ActType_Relu;
-  } else if (full_conn_prim->activation_type() == schema::ActivationType_RELU6) {
-    matmul_param->act_type_ = ActType_Relu6;
+  memset(param, 0, sizeof(MatMulParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->b_transpose_ = true;
+  param->a_transpose_ = false;
+  param->has_bias_ = value->has_bias();
+  if (value->activation_type() == schema::ActivationType_RELU) {
+    param->act_type_ = ActType_Relu;
+  } else if (value->activation_type() == schema::ActivationType_RELU6) {
+    param->act_type_ = ActType_Relu6;
   } else {
-    matmul_param->act_type_ = ActType_No;
+    param->act_type_ = ActType_No;
   }
-  matmul_param->axis_ = full_conn_prim->axis();
-  matmul_param->use_axis_ = full_conn_prim->use_axis();
-  return reinterpret_cast<OpParameter *>(matmul_param);
+  param->axis_ = value->axis();
+  param->use_axis_ = value->use_axis();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_FullConnection, PopulateFullconnectionParameter, SCHEMA_CUR)
 }  // namespace lite

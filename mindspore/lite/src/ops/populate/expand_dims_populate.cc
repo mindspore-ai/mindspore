@@ -18,20 +18,20 @@ using mindspore::schema::PrimitiveType_ExpandDims;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateExpandDimsParameter(const void *prim) {
-  auto *expand_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (expand_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
     return nullptr;
   }
-  memset(expand_param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  expand_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(expand_param);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ExpandDims, PopulateExpandDimsParameter, SCHEMA_CUR)
 }  // namespace lite

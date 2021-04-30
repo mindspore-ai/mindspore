@@ -19,26 +19,27 @@ using mindspore::schema::PrimitiveType_Elu;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateEluParameter(const void *prim) {
-  auto *elu_parameter = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
-  if (elu_parameter == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Elu();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<EluParameter *>(malloc(sizeof(EluParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc EluParameter failed.";
     return nullptr;
   }
-  memset(elu_parameter, 0, sizeof(EluParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  elu_parameter->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_Elu();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  elu_parameter->alpha_ = param->alpha();
-  return reinterpret_cast<OpParameter *>(elu_parameter);
+  memset(param, 0, sizeof(EluParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->alpha_ = value->alpha();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_Elu, PopulateEluParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

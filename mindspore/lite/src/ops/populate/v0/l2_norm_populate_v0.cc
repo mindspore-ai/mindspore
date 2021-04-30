@@ -40,6 +40,7 @@ OpParameter *PopulateL2NormParameter(const void *prim) {
   auto axis_vec = l2_norm_prim->axis();
   if (axis_vec == nullptr) {
     MS_LOG(ERROR) << "axis_vec is nullptr";
+    free(l2_norm_parameter);
     return nullptr;
   }
   l2_norm_parameter->axis_num_ = axis_vec->size();

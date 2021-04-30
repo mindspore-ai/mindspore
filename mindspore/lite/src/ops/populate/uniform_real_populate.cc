@@ -21,23 +21,25 @@ using mindspore::schema::PrimitiveType_UniformReal;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
-  auto *random_parameter = reinterpret_cast<RandomParam *>(malloc(sizeof(RandomParam)));
-  if (random_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc Random parameter failed.";
-    return nullptr;
-  }
-  memset(random_parameter, 0, sizeof(RandomParam));
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  random_parameter->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_RandomStandardNormal();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
+  auto value = primitive->value_as_RandomStandardNormal();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  random_parameter->seed_ = param->seed();
-  random_parameter->seed2_ = param->seed2();
-  return reinterpret_cast<OpParameter *>(random_parameter);
+
+  auto *param = reinterpret_cast<RandomParam *>(malloc(sizeof(RandomParam)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc RandomParam failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(RandomParam));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->seed_ = value->seed();
+  param->seed2_ = value->seed2();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_UniformReal, DefaultPopulateParameter, SCHEMA_CUR)
