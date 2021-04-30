@@ -41,9 +41,10 @@ ScaleFP32Coder::~ScaleFP32Coder() {
 int ScaleFP32Coder::InitScaleOffset() {
   Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(scale_tensor);
-  if (reinterpret_cast<float *>(scale_tensor->data_c())) {
+  if (scale_tensor->data_c() != nullptr) {
     scale_param_->const_scale_ = true;
-    scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
+    scale_ =
+      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(scale_);
     MS_CHECK_TRUE(scale_tensor->Size() > 0, "invalid scale tensor size");
     MS_CHECK_RET_CODE(memcpy_s(scale_, scale_tensor->Size(), scale_tensor->data_c(), scale_tensor->Size()),
@@ -55,13 +56,16 @@ int ScaleFP32Coder::InitScaleOffset() {
 
   if (input_tensors_.size() == 2) {
     scale_param_->const_offset_ = true;
-    offset_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
+    offset_ =
+      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(offset_);
     MS_CHECK_RET_CODE(memset_s(offset_, scale_tensor->Size(), 0, scale_tensor->Size()), "memset_s failed!");
-  } else if (input_tensors_.size() == 3 && reinterpret_cast<float *>(input_tensors_.at(2)->data_c())) {
+  } else if (input_tensors_.size() == 3 && input_tensors_.at(2)->data_c() != nullptr) {
     scale_param_->const_offset_ = true;
     Tensor *offset_tensor = input_tensors_.at(2);
-    offset_ = reinterpret_cast<float *>(malloc(offset_tensor->ElementsNum() * sizeof(float)));
+    MS_CHECK_PTR(offset_tensor);
+    offset_ =
+      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, offset_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(offset_);
     MS_CHECK_TRUE(offset_tensor->Size() > 0, "invalid offset tensor size");
     MS_CHECK_RET_CODE(memcpy_s(offset_, offset_tensor->Size(), offset_tensor->data_c(), offset_tensor->Size()),
@@ -123,10 +127,6 @@ int ScaleFP32Coder::ReSize() {
 
 int ScaleFP32Coder::DoCode(CoderContext *const context) {
   // init struct ScaleParameters
-  Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
-  Tensor *offset_tensor = input_tensors_.at(kBiasIndex);
-  MS_CHECK_PTR(scale_tensor);
-  MS_CHECK_PTR(offset_tensor);
   Collect(context,
           {
             "nnacl/scale.h",
@@ -141,16 +141,15 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
 
   switch (scale_param_->activation_type_) {
     case schema::ActivationType_RELU6:
-      code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
+      code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
                         "&scale_parameter");
       break;
     case schema::ActivationType_RELU:
-      code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
+      code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
                         "&scale_parameter");
       break;
     case schema::ActivationType_NO_ACTIVATION:
-      code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
-                        "&scale_parameter");
+      code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId, "&scale_parameter");
       break;
     default:
       MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
