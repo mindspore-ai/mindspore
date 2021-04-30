@@ -28,7 +28,6 @@
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/session_factory.h"
-#include "backend/session/ascend_control_parser.h"
 
 namespace mindspore {
 namespace session {
