@@ -39,6 +39,8 @@ class TfliteLogicalNotParser : public TfliteNodeParser {
  public:
   TfliteLogicalNotParser() : TfliteNodeParser("LogicalNot") {}
 
+  ~TfliteLogicalNotParser() override = default;
+
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
@@ -46,6 +48,8 @@ class TfliteLogicalNotParser : public TfliteNodeParser {
 class TfliteLogicalOrParser : public TfliteNodeParser {
  public:
   TfliteLogicalOrParser() : TfliteNodeParser("LogicalOr") {}
+
+  ~TfliteLogicalOrParser() override = default;
 
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::ModelT> &tflite_model) override;
