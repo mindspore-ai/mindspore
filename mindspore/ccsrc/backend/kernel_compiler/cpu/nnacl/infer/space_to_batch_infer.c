@@ -32,7 +32,7 @@ int SpaceToBatchInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   }
   SetDataTypeFormat(outputs[0], input);
   SpaceToBatchParameter *param = (SpaceToBatchParameter *)parameter;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (input->shape_size_ != 4) {

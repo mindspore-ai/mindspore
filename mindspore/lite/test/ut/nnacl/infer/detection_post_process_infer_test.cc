@@ -44,7 +44,6 @@ TEST_F(DetectionPostProcessInferTest, DetectionPostProcessInferTest0) {
   outputs[2] = new TensorC;
   outputs[3] = new TensorC;
   DetectionPostProcessParameter *parameter = new DetectionPostProcessParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->max_detections_ = 20;
   parameter->max_classes_per_detection_ = 3;
   parameter->num_classes_ = 10;

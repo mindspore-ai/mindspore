@@ -29,7 +29,7 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   const TensorC *input0 = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input0);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

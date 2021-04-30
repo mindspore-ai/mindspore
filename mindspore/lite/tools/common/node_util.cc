@@ -375,7 +375,6 @@ STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &i
     MS_LOG(ERROR) << "parameter is nullptr.";
     return RET_ERROR;
   }
-  parameter->infer_flag_ = true;
   auto ret = KernelInferShape(inputs, outputs, parameter);
   fbb.Clear();
   free(parameter);

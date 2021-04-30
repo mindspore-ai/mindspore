@@ -50,11 +50,11 @@ class Scheduler {
   void FindNodeInoutTensors(const lite::Model::Node &node, std::vector<Tensor *> *inputs,
                             std::vector<Tensor *> *outputs);
   // infer shape for a partial node
-  int InferPartialShape(const lite::Model::Node *node, bool *infer_shape_interrupt);
+  int InferPartialShape(const lite::Model::Node *node);
   // infer shape for a node
-  int InferNodeShape(const lite::Model::Node *node, bool *infer_shape_interrupt);
+  int InferNodeShape(const lite::Model::Node *node);
   // infer shape for a subgraph
-  int InferSubGraphShape(size_t subgraph_index, bool *infer_shape_interrupt);
+  int InferSubGraphShape(size_t subgraph_index);
 
   // schedule a node to kernel according to context and kernels registered
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,

@@ -37,7 +37,6 @@ TEST_F(SpaceToBatchNdInferTest, SpaceToBatchNdInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SpaceToBatchParameter *parameter = new SpaceToBatchParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->m_ = 2;
   parameter->block_sizes_[0] = 2;
   parameter->block_sizes_[1] = 2;
@@ -75,7 +74,6 @@ TEST_F(SpaceToBatchNdInferTest, SpaceToBatchNdInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SpaceToBatchParameter *parameter = new SpaceToBatchParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->m_ = 2;
   parameter->block_sizes_[0] = 2;
   parameter->block_sizes_[1] = 2;
@@ -113,7 +111,6 @@ TEST_F(SpaceToBatchNdInferTest, SpaceToBatchNdInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SpaceToBatchParameter *parameter = new SpaceToBatchParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->m_ = 2;
   parameter->block_sizes_[0] = 2;
   parameter->block_sizes_[1] = 2;
@@ -151,7 +148,6 @@ TEST_F(SpaceToBatchNdInferTest, SpaceToBatchNdInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SpaceToBatchParameter *parameter = new SpaceToBatchParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->m_ = 2;
   parameter->block_sizes_[0] = 2;
   parameter->block_sizes_[1] = 2;

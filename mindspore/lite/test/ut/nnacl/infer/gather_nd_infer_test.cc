@@ -38,7 +38,6 @@ TEST_F(GatherNdInferTest, GatherNdInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherNdParameter *parameter = new GatherNdParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = GatherNdInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -70,7 +69,6 @@ TEST_F(GatherNdInferTest, GatherNdInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherNdParameter *parameter = new GatherNdParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = GatherNdInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -102,7 +100,6 @@ TEST_F(GatherNdInferTest, GatherNdInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherNdParameter *parameter = new GatherNdParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = GatherNdInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -133,7 +130,6 @@ TEST_F(GatherNdInferTest, GatherNdInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherNdParameter *parameter = new GatherNdParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = GatherNdInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -167,7 +163,6 @@ TEST_F(GatherNdInferTest, GatherNdInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherNdParameter *parameter = new GatherNdParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = GatherNdInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

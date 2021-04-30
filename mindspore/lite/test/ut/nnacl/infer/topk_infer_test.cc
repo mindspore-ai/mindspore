@@ -36,7 +36,6 @@ TEST_F(TopKInferTest, TopKInferTest0) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   TopkParameter *parameter = new TopkParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->k_ = 6;
   int ret = TopKInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));
@@ -74,7 +73,6 @@ TEST_F(TopKInferTest, TopKInferInputsSize2) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   TopkParameter *parameter = new TopkParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->k_ = 6;
   int ret = TopKInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));

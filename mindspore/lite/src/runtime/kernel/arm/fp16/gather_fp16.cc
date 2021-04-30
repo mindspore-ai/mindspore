@@ -56,10 +56,8 @@ int GatherFp16CPUKernel::ReSize() { return RET_OK; }
 
 int GatherFp16CPUKernel::PreProcess() {
   if (!InferShapeDone()) {
-    op_parameter_->infer_flag_ = true;
     auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
     if (ret != 0) {
-      op_parameter_->infer_flag_ = false;
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }

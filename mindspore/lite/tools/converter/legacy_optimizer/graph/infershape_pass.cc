@@ -168,7 +168,7 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
 }
 
 STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
-                      std::vector<Tensor *> *outputs, bool infer_interrupt) {
+                      std::vector<Tensor *> *outputs) {
   flatbuffers::FlatBufferBuilder fbb(kInitialSize);
   auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
   if (prim == nullptr) {
@@ -189,11 +189,6 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quantType;
-  if (infer_interrupt) {
-    parameter->infer_flag_ = false;
-  } else {
-    parameter->infer_flag_ = true;
-  }
   auto ret = KernelInferShape(inputs, outputs, parameter);
   fbb.Clear();
   free(parameter);
@@ -257,10 +252,6 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
         dim = DEFAULT_DIM_VALUE;
       }
     }
-    auto input_shape = graph->allTensors.at(input_idx)->dims;
-    if (std::find(input_shape.begin(), input_shape.end(), -1) != input_shape.end() || fmk_type_ == FmkType_TF) {
-      infer_interrupt_ = true;
-    }
   }
   while (!infer_node_indexes_.empty()) {
     auto infer_node_index = infer_node_indexes_.front();
@@ -282,9 +273,9 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       FreeTensors(&input_tensors, &output_tensors);
       return RET_INFER_ERR;
     }
-    auto status = NodeInferShape(node, input_tensors, &output_tensors, infer_interrupt_);
+    auto status = NodeInferShape(node, input_tensors, &output_tensors);
     MS_LOG(DEBUG) << "cur node:" << node->name;
-    if (status == RET_OK) {
+    if (status == RET_OK || status == RET_INFER_INVALID) {
 #ifdef Debug
       PrintTensorShape(input_tensors, output_tensors);
 #endif
@@ -295,11 +286,6 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
         output_tensor->dims.swap(output_dims);
         SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
       }
-    } else if (status == RET_INFER_INVALID) {
-      for (size_t i = 0; i < output_tensors.size(); i++) {
-        SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
-      }
-      infer_interrupt_ = true;
     } else {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
                       << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);
@@ -309,6 +295,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
     FreeTensors(&input_tensors, &output_tensors);
     AddOutputNodes(graph, infer_node_index);
   }
+  ResetIncorrectTensorShape(graph);
   return RET_OK;
 }
 
@@ -378,5 +365,17 @@ void InferShapePass::AddNextInferShapeNode(MetaGraphT *graph, std::vector<uint32
   }
 }
 
+void InferShapePass::ResetIncorrectTensorShape(MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
+  for (auto &node : graph->nodes) {
+    auto out_tensors_index = node->outputIndex;
+    for (auto index : out_tensors_index) {
+      auto shape = graph->allTensors.at(index)->dims;
+      if (shape == std::vector{-1}) {
+        graph->allTensors.at(index)->dims = {};
+      }
+    }
+  }
+}
 }  // namespace lite
 }  // namespace mindspore

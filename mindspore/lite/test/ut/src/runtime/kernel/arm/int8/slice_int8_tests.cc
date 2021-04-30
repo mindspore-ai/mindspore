@@ -52,7 +52,6 @@ TEST_F(TestSliceInt8, SliceInt8) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -103,7 +102,6 @@ TEST_F(TestSliceInt8, Slice5D) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -154,7 +152,6 @@ TEST_F(TestSliceInt8, Slice6D) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -205,7 +202,6 @@ TEST_F(TestSliceInt8, Slice7D) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -257,7 +253,6 @@ TEST_F(TestSliceInt8, Slice8D) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -309,7 +304,6 @@ TEST_F(TestSliceInt8, SliceDiffQuantArgs) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -361,7 +355,6 @@ TEST_F(TestSliceInt8, SliceSingleThread) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 
@@ -415,7 +408,6 @@ TEST_F(TestSliceInt8, Slice4Thread) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
 
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
 

@@ -34,7 +34,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_[0] = 1;
   parameter->begins_[1] = 0;
   parameter->begins_[2] = 0;
@@ -77,7 +76,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_[0] = 1;
   parameter->begins_[1] = 0;
   parameter->begins_[2] = 0;
@@ -120,7 +118,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_[0] = 1;
   parameter->begins_[1] = -1;
   parameter->begins_[2] = 0;
@@ -161,7 +158,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_[0] = 0;
   parameter->ends_[0] = 3;
   parameter->strides_[0] = 1;
@@ -194,7 +190,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_[0] = 1;
   parameter->ends_[0] = -2;
   parameter->strides_[0] = 1;
@@ -251,7 +246,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest5) {
   outputs.push_back(NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_mask_ = 0;
   parameter->ends_mask_ = 0;
   parameter->ellipsisMask_ = 0;
@@ -299,7 +293,6 @@ TEST_F(StridedSliceInferTest, StridedSliceInferTest6) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   StridedSliceParameter *parameter = new StridedSliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->begins_mask_ = 0;
   parameter->ends_mask_ = 0;
   parameter->ellipsisMask_ = 0;

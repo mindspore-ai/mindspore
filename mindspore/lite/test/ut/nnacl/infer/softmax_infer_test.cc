@@ -35,7 +35,6 @@ TEST_F(SoftmaxInferTest, SoftmaxInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SoftmaxParameter *parameter = new SoftmaxParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SoftMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

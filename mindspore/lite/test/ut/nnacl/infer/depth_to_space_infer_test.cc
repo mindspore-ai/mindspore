@@ -37,7 +37,6 @@ TEST_F(DepthToSpaceInferTest, DepthToSpaceInferTest0) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   DepthToSpaceParameter *param = new DepthToSpaceParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->block_size_ = 2;
   int ret = DepthToSpaceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(param));
@@ -69,7 +68,6 @@ TEST_F(DepthToSpaceInferTest, DepthToSpaceInferTest1) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   DepthToSpaceParameter *param = new DepthToSpaceParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->block_size_ = 2;
   int ret = DepthToSpaceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(param));
@@ -101,7 +99,6 @@ TEST_F(DepthToSpaceInferTest, DepthToSpaceInferTest2) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   DepthToSpaceParameter *param = new DepthToSpaceParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->block_size_ = 2;
   int ret = DepthToSpaceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(param));
@@ -133,7 +130,6 @@ TEST_F(DepthToSpaceInferTest, DepthToSpaceInferTest3) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   DepthToSpaceParameter *param = new DepthToSpaceParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->block_size_ = 4;
   int ret = DepthToSpaceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(param));
@@ -164,7 +160,6 @@ TEST_F(DepthToSpaceInferTest, DepthToSpaceInferTest4) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   DepthToSpaceParameter *param = new DepthToSpaceParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->block_size_ = 4;
   int ret = DepthToSpaceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(param));

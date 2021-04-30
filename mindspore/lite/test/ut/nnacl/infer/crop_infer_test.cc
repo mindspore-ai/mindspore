@@ -40,7 +40,6 @@ TEST_F(CropInferTest, CropInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   CropParameter *parameter = new CropParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = CropInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

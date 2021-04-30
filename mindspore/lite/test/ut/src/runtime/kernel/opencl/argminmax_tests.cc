@@ -31,7 +31,6 @@ OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, boo
   param->axis_type_ = axis_type;
   param->out_value_ = out_value;
   param->keep_dims_ = keep_dims;
-  reinterpret_cast<OpParameter *>(param)->infer_flag_ = true;
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace

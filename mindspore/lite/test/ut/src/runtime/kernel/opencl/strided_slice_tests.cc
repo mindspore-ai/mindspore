@@ -406,7 +406,6 @@ TEST_F(TestOpenCL_StridedSlice, test0) {
 
     for (auto fp16_enable : {false, true}) {
       auto *param = CreateParameter(begin, end, stride);
-      param->infer_flag_ = true;
       TestMain({{input_shape, input_data, VAR, kNumberTypeFloat32},
                 {{static_cast<int>(begin.size())}, begin.data(), CONST_TENSOR, kNumberTypeInt32},
                 {{static_cast<int>(end.size())}, end.data(), CONST_TENSOR, kNumberTypeInt32},

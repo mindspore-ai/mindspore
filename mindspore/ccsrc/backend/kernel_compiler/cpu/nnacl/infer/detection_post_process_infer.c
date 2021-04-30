@@ -57,7 +57,7 @@ int DetectionPostProcessInferShape(const TensorC *const *inputs, size_t inputs_s
   detected_scores->data_type_ = kNumberTypeFloat32;
   num_det->format_ = boxes->format_;
   num_det->data_type_ = kNumberTypeFloat32;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   const int max_detections = param->max_detections_;

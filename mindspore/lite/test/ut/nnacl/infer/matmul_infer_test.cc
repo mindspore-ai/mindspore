@@ -37,7 +37,6 @@ TEST_F(MatmulInferTest, MatmulInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *parameter = new MatMulParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->a_transpose_ = false;
   parameter->b_transpose_ = true;
   int ret = MatmulInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -71,7 +70,6 @@ TEST_F(MatmulInferTest, MatmulInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *parameter = new MatMulParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->a_transpose_ = false;
   parameter->b_transpose_ = false;
   int ret = MatmulInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -106,7 +104,6 @@ TEST_F(MatmulInferTest, MatmulInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *parameter = new MatMulParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->a_transpose_ = false;
   parameter->b_transpose_ = true;
   int ret = MatmulInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -141,7 +138,6 @@ TEST_F(MatmulInferTest, MatmulInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *parameter = new MatMulParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->a_transpose_ = false;
   parameter->b_transpose_ = true;
   int ret = MatmulInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

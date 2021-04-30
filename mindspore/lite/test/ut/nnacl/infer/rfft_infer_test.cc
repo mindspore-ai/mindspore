@@ -33,7 +33,6 @@ TEST_F(RfftInferTest, RfftInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RfftParameter *parameter = new RfftParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->fft_length_ = 4;
   int ret = RfftInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));

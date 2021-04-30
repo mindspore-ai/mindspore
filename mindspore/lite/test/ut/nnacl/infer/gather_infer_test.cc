@@ -38,7 +38,6 @@ TEST_F(GatherInferTest, GatherInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherParameter *param = new GatherParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->axis_ = 0;
   int ret = GatherInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(param));
@@ -71,7 +70,6 @@ TEST_F(GatherInferTest, GatherInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherParameter *param = new GatherParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->axis_ = 0;
   int ret = GatherInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(param));
@@ -104,7 +102,6 @@ TEST_F(GatherInferTest, GatherInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherParameter *param = new GatherParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->axis_ = 0;
   int ret = GatherInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(param));
@@ -136,7 +133,6 @@ TEST_F(GatherInferTest, GatherInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherParameter *param = new GatherParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->axis_ = 0;
   int ret = GatherInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(param));
@@ -170,7 +166,6 @@ TEST_F(GatherInferTest, GatherInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   GatherParameter *param = new GatherParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->axis_ = 0;
   int ret = GatherInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(param));

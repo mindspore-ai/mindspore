@@ -39,7 +39,6 @@ TEST_F(UnsortedSegmentSumInferTest, UnsortedSegmentSumInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   UnsortedSegmentSumParameter *parameter = new UnsortedSegmentSumParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->segments_num_ = 10;
   int ret = UnsortedSegmentSumInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                          reinterpret_cast<OpParameter *>(parameter));

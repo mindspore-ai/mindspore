@@ -37,7 +37,6 @@ TEST_F(PoolingGradInferTest, PoolingGradInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 3;
   parameter->window_h_ = 3;
   parameter->stride_w_ = 1;

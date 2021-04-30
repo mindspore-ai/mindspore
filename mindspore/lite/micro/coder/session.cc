@@ -209,12 +209,10 @@ OpParameter *CoderSession::GenParameterAndInfer(const Model::Node *node, const s
   MS_CHECK_PTR_RET_NULL(parame_gen);
   auto parameter = parame_gen(primitive);
   MS_CHECK_PTR_RET_NULL(parameter);
-  parameter->infer_flag_ = true;
   auto ret = KernelInferShape(inputs, outputs, parameter);
   if (ret == RET_INFER_INVALID) {
     MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
                  << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive)) << "flag set to false.";
-    parameter->infer_flag_ = false;
   } else if (ret != RET_OK) {
     MS_LOG(ERROR) << "InferShape failed, name: " << node->name_
                   << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive));

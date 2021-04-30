@@ -29,7 +29,7 @@ int DropoutInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   const TensorC *input = inputs[0];
   TensorC *output0 = outputs[0];
   SetDataTypeFormat(output0, input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   SetShapeTensor(output0, input);

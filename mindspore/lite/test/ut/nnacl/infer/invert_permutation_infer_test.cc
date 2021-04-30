@@ -34,7 +34,6 @@ TEST_F(InvertPermutationInferTest, InvertPermutationInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = InvertPermutationInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

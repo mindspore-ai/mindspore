@@ -28,7 +28,7 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
 
   const TensorC *input = inputs[0];
   SetDataTypeFormat(outputs[0], input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   BroadcastToParameter *param = (BroadcastToParameter *)parameter;

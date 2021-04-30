@@ -41,7 +41,6 @@ TEST_F(TestCumsum, TestThread1) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -95,7 +94,6 @@ TEST_F(TestCumsum, TestExclusive) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = true;
   parameter->reverse_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -148,7 +146,6 @@ TEST_F(TestCumsum, TestReverse) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = 1;
   parameter->exclusive_ = false;
   parameter->reverse_ = true;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -201,7 +198,6 @@ TEST_F(TestCumsum, TestReverseExclusive) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = true;
   parameter->reverse_ = true;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -254,7 +250,6 @@ TEST_F(TestCumsum, TestIntRank2) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -302,7 +297,6 @@ TEST_F(TestCumsum, TestIntRank2Thread2) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
@@ -349,7 +343,6 @@ TEST_F(TestCumsum, TestIntRank2Thread4) {
 
   CumSumParameter *parameter = reinterpret_cast<CumSumParameter *>(malloc(sizeof(CumSumParameter)));
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};

@@ -70,7 +70,6 @@ TEST_F(TestStridedSlice, StridedSlice) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -113,7 +112,6 @@ TEST_F(TestStridedSlice, 7d) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -156,7 +154,6 @@ TEST_F(TestStridedSlice, 8d) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_StridedSlice};
@@ -201,7 +198,6 @@ TEST_F(TestStridedSlice, FastRun7d) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -246,7 +242,6 @@ TEST_F(TestStridedSlice, FastRun7dSingleThread) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
@@ -291,7 +286,6 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  parameter->op_parameter_.infer_flag_ = true;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_StridedSlice};

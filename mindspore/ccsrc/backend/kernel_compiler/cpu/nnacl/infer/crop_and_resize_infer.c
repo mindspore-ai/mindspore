@@ -27,16 +27,14 @@ int CropAndResizeInferShape(const TensorC *const *inputs, size_t inputs_size, Te
 #endif
 
   const TensorC *input = inputs[0];
+  TensorC *output = outputs[0];
+  SetDataTypeFormat(output, input);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
   if (input->shape_size_ != 0 && input->shape_size_ != 4) {
     return NNACL_ERR;
   }
-
-  TensorC *output = outputs[0];
-  SetDataTypeFormat(output, input);
-  if (!parameter->infer_flag_) {
-    return NNACL_INFER_INVALID;
-  }
-
   int output_shape[MAX_SHAPE_SIZE] = {0};
   size_t output_shape_size = 0;
   if (inputs[1]->data_ != NULL) {

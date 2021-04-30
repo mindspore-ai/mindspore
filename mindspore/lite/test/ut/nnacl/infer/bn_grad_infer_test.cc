@@ -50,7 +50,6 @@ TEST_F(BnGradInferTest, BnGradInferTest0) {
   outputs[1] = new TensorC;
   outputs[2] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = BnGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

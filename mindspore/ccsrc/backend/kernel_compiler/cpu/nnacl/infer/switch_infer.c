@@ -57,9 +57,12 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       memcpy(mirror_tensor, inputs[i + 1], sizeof(TensorC));
       outputs[i + outputs_size / 2] = mirror_tensor;
     }
+  }
+  bool infer_flag = InferFlag(inputs, inputs_size);
+  for (size_t i = 0; i < outputs_size / 2; i++) {
     *((const TensorC **)inputs + i + 1) = NULL;
   }
-  if (!parameter->infer_flag_) {
+  if (!infer_flag) {
     return NNACL_INFER_INVALID;
   }
   return NNACL_OK;

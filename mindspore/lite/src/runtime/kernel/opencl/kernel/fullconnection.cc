@@ -249,7 +249,7 @@ void FullConnectionOpenCLKernel::SetConstArgs() {
 }
 
 int FullConnectionOpenCLKernel::StoreConstData() {
-  if (!op_parameter_->infer_flag_) {
+  if (!InferShapeDone()) {
     stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
     if (stored_weight_ == nullptr) {
       MS_LOG(ERROR) << "Store weight failed.";

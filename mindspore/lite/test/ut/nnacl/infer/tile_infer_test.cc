@@ -34,7 +34,6 @@ TEST_F(TileInferTest, TileInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   TileParameter *parameter = new TileParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->multiples_size_ = 2;
   parameter->multiples_[0] = 4;
   parameter->multiples_[1] = 5;
@@ -68,7 +67,6 @@ TEST_F(TileInferTest, TileInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   TileParameter *parameter = new TileParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->multiples_size_ = 2;
   parameter->multiples_[0] = 4;
   parameter->multiples_[1] = 5;

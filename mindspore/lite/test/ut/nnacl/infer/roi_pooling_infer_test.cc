@@ -39,7 +39,6 @@ TEST_F(ROIPoolingInferTest, ROIPoolingInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ROIPoolingParameter *parameter = new ROIPoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->pooledW_ = 3;
   parameter->pooledH_ = 4;
   int ret = ROIPoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

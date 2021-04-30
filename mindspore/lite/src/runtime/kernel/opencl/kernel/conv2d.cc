@@ -405,7 +405,7 @@ std::vector<BaseTuningParameter> Conv2DOpenCLKernel::GenerateTuningParam() {
 }
 
 int Conv2DOpenCLKernel::StoreConstData() {
-  if (!op_parameter_->infer_flag_) {
+  if (!InferShapeDone()) {
     stored_filter_ = StoreTensorData(in_tensors_.at(kWeightIndex));
     if (stored_filter_ == nullptr) {
       MS_LOG(ERROR) << "Store weight failed.";
@@ -445,7 +445,6 @@ OpParameter *CreateFcParam(const ConvParameter *conv_param, const std::vector<li
     return nullptr;
   }
   fc_param->op_parameter_.type_ = PrimitiveType_FullConnection;
-  fc_param->op_parameter_.infer_flag_ = true;
   fc_param->a_transpose_ = false;
   fc_param->b_transpose_ = true;
   fc_param->act_type_ = conv_param->act_type_;
@@ -517,7 +516,8 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
 
   // case 3: common conv2d
   kernel::OpenCLKernel *kernel = nullptr;
-  bool infer_shape_done = opParameter->infer_flag_;
+  auto shape = outputs.front()->shape();
+  bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param, inputs);
     kernel = new (std::nothrow)

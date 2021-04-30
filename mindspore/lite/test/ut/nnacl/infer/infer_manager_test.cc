@@ -41,7 +41,6 @@ TEST_F(InferManagerTest, InferManagerTest0) {
   inputs.push_back(tensor1);
 
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   parameter->type_ = mindspore::schema::PrimitiveType_TensorListFromTensor;
 
   std::vector<lite::Tensor *> outputs;
@@ -118,7 +117,6 @@ TEST_F(InferManagerTest, InferManagerTest1) {
   inputs.push_back(tensor2);
 
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   parameter->type_ = mindspore::schema::PrimitiveType_TensorListGetItem;
 
   std::vector<lite::Tensor *> outputs;
@@ -162,7 +160,6 @@ TEST_F(InferManagerTest, InferManagerTest2) {
   inputs.push_back(tensor1);
 
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   parameter->type_ = mindspore::schema::PrimitiveType_TensorListReserve;
 
   std::vector<lite::Tensor *> outputs;

@@ -50,7 +50,6 @@ TEST_F(LstmInferTest, LstmInferTest0) {
   outputs[2] = new TensorC;
   LstmParameter *parameter = new LstmParameter;
   parameter->bidirectional_ = false;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = LstmInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -102,8 +102,6 @@ class SubGraphKernel : public LiteKernel {
 
   int ReSize() override;
 
-  int ReSize(bool is_interrupt);
-
   void InitOutTensorInitRefCount() override;
 
   int Init() override { return mindspore::lite::RET_OK; }

@@ -33,7 +33,6 @@ TEST_F(CustomPredictInferTest, CustomPredictInferTest0) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   CustomPredictParameter *parameter = new CustomPredictParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->output_num = 5;
   int ret = CustomPredictInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                     reinterpret_cast<OpParameter *>(parameter));

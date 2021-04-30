@@ -34,7 +34,7 @@ int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   for (int i = 0; i < 2; i++) {
     SetDataTypeFormat(outputs[i], input);
   }
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

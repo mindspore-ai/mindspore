@@ -37,9 +37,10 @@ class GroupConvCreator {
                    const lite::InnerContext *ctx, bool is_quant, TypeId data_type)
       : origin_inputs_(std::move(inputs)),
         origin_outputs_(std::move(outputs)),
-        infered_(op_parameter->infer_flag_),
         is_quant_(is_quant),
         data_type_(data_type) {
+    auto shape = origin_outputs_.front()->shape();
+    infered_ = std::find(shape.begin(), shape.end(), -1) == shape.end();
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter);
   }
 

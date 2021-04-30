@@ -121,7 +121,7 @@ int ResizeOpenCLKernel::Run() {
 }
 
 int ResizeOpenCLKernel::PreProcess() {
-  if (Type() == PrimitiveType_Resize && !op_parameter_->infer_flag_ && in_tensors_.size() == 2) {
+  if (Type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == 2) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();

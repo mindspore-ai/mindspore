@@ -46,7 +46,6 @@ TEST_F(MaxMinGradInferTest, MaxMinGradInferTest0) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   ArithmeticParameter *parameter = new ArithmeticParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = MaxMinGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                  reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -139,7 +139,7 @@ typedef struct TensorListC {
   bool is_ready_;
   int data_type_;
   int format_;
-
+  int shape_value_;
   int tensors_data_type_;  // element_data_type_, keep same as c++
   int max_elements_num_;
   int element_shape_[8];
@@ -204,6 +204,7 @@ int VectorCInsert(VectorC *vc, int index, int value);
 void VectorCErase(VectorC *vc, int index);
 bool VectorCEqual(VectorC *vc1, VectorC *vc2);
 void VectorCFree(VectorC *vc);
+bool InferFlag(const TensorC *const *inputs, size_t inputs_size);
 
 #ifdef __cplusplus
 }

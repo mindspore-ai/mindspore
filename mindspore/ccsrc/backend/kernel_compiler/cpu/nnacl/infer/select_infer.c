@@ -28,7 +28,7 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
 #endif
 
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   for (size_t i = 0; i < outputs_size; i++) {

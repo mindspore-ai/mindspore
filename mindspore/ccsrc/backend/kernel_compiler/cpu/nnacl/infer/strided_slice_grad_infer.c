@@ -37,7 +37,7 @@ int StridedSliceGradInferShape(const TensorC *const *inputs, size_t inputs_size,
 
   const TensorC *input = inputs[0];
   SetDataTypeFormat(outputs[0], input);
-  bool inferflag = parameter->infer_flag_;
+  bool inferflag = InferFlag(inputs, inputs_size);
 
   int in_shape_[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;

@@ -29,7 +29,7 @@ int SqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   const TensorC *input = inputs[0];
   SqueezeParameter *param = (SqueezeParameter *)parameter;
   SetDataTypeFormat(outputs[0], input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int out_shape[MAX_SHAPE_SIZE] = {0};

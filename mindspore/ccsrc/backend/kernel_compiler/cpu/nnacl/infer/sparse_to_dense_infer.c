@@ -30,7 +30,7 @@ int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   const TensorC *input1 = inputs[1];
   const TensorC *input2 = inputs[2];
   SetDataTypeFormat(output, input2);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int *input1_data = (int *)(input1->data_);

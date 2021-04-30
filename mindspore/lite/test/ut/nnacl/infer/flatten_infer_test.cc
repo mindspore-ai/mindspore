@@ -35,7 +35,6 @@ TEST_F(FlattenInferTest, FlattenInferTest0) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   OpParameter *param = new OpParameter;
-  param->infer_flag_ = true;
   int ret = FlattenInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), param);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
@@ -61,7 +60,6 @@ TEST_F(FlattenInferTest, FlattenInferTest1) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   OpParameter *param = new OpParameter;
-  param->infer_flag_ = true;
   int ret = FlattenInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), param);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
@@ -86,7 +84,6 @@ TEST_F(FlattenInferTest, FlattenInferTest2) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   OpParameter *param = new OpParameter;
-  param->infer_flag_ = true;
   int ret = FlattenInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), param);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
@@ -110,7 +107,6 @@ TEST_F(FlattenInferTest, FlattenInferTest3) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   OpParameter *param = new OpParameter;
-  param->infer_flag_ = true;
   int ret = FlattenInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), param);
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);

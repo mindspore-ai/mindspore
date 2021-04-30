@@ -36,7 +36,6 @@ TEST_F(FillInferTest, FillInferTest0) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   FillParameter *parameter = new FillParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->num_dims_ = 4;
   parameter->dims_[0] = 1;
   parameter->dims_[1] = 2;
@@ -66,7 +65,6 @@ TEST_F(FillInferTest, FillInferTest1) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   FillParameter *parameter = new FillParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->num_dims_ = 3;
   parameter->dims_[0] = 4;
   parameter->dims_[1] = 2;
@@ -94,7 +92,6 @@ TEST_F(FillInferTest, FillInferTest2) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   FillParameter *parameter = new FillParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->num_dims_ = 2;
   parameter->dims_[0] = 4;
   parameter->dims_[1] = 2;
@@ -120,7 +117,6 @@ TEST_F(FillInferTest, FillInferTest3) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   FillParameter *parameter = new FillParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->num_dims_ = 1;
   parameter->dims_[0] = 4;
   int ret = FillInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

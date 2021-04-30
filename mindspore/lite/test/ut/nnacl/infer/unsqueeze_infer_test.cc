@@ -35,7 +35,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest0) {
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 1;
   parameter->dims_[0] = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -62,7 +61,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest1) {
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 1;
   parameter->dims_[0] = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -88,7 +86,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest2) {
   outputs[0] = new TensorC;
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -117,7 +114,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest3) {
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 1;
   parameter->dims_[0] = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -150,7 +146,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest4) {
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 1;
   parameter->dims_[0] = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -183,7 +178,6 @@ TEST_F(UnsqueezeInferTest, UnsqueezeInferTest5) {
   UnSqueezeParameter *parameter = new UnSqueezeParameter;
   parameter->num_dim_ = 1;
   parameter->dims_[0] = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = UnsqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

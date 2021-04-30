@@ -247,7 +247,7 @@ int Conv2dTransposeOpenCLKernel::InferShape() {
 }
 
 int Conv2dTransposeOpenCLKernel::StoreConstData() {
-  if (!op_parameter_->infer_flag_) {
+  if (!InferShapeDone()) {
     stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
     if (stored_weight_ == nullptr) {
       MS_LOG(ERROR) << "Store weight failed.";

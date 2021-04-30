@@ -40,7 +40,6 @@ TEST_F(StackInferTest, StackInferTest0) {
   outputs[0] = new TensorC;
   StackParameter *parameter = new StackParameter;
   parameter->axis_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = StackInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -74,7 +73,6 @@ TEST_F(StackInferTest, StackInferTest1) {
   outputs[0] = new TensorC;
   StackParameter *parameter = new StackParameter;
   parameter->axis_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = StackInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

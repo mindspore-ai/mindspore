@@ -33,7 +33,6 @@ TEST_F(LayerNormInferTest, LayerNormInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LayerNormParameter *parameter = new LayerNormParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->normalized_dims_ = 1;
   parameter->elementwise_affine_ = false;
   parameter->normalized_shape_[0] = 3;
@@ -62,7 +61,6 @@ TEST_F(LayerNormInferTest, LayerNormInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LayerNormParameter *parameter = new LayerNormParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->normalized_dims_ = 3;
   parameter->elementwise_affine_ = false;
   parameter->normalized_shape_[0] = 3;
@@ -88,7 +86,6 @@ TEST_F(LayerNormInferTest, LayerNormInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LayerNormParameter *parameter = new LayerNormParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->normalized_dims_ = 2;
   parameter->elementwise_affine_ = false;
   parameter->normalized_shape_[0] = 3;

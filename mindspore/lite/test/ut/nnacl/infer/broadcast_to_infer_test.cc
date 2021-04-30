@@ -33,7 +33,6 @@ TEST_F(BroadcastToInferTest, BroadcastToInferTest0) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   BroadcastToParameter *param = new BroadcastToParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->shape_size_ = 2;
   param->shape_[0] = 5;
   param->shape_[1] = 4;
@@ -63,7 +62,6 @@ TEST_F(BroadcastToInferTest, BroadcastToInferTest1) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   BroadcastToParameter *param = new BroadcastToParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->shape_size_ = 3;
   param->shape_[0] = 3;
   param->shape_[1] = 3;
@@ -96,7 +94,6 @@ TEST_F(BroadcastToInferTest, BroadcastToInferTest2) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   BroadcastToParameter *param = new BroadcastToParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->shape_size_ = 4;
   param->shape_[0] = 4;
   param->shape_[1] = 5;
@@ -131,7 +128,6 @@ TEST_F(BroadcastToInferTest, BroadcastToInferTest3) {
   std::vector<TensorC *> outputs(inputs_size, NULL);
   outputs[0] = new TensorC;
   BroadcastToParameter *param = new BroadcastToParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->shape_size_ = 4;
   param->shape_[0] = 4;
   param->shape_[1] = 5;

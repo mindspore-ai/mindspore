@@ -71,11 +71,6 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   }
 #endif
 
-  if (!parameter->infer_flag_) {
-    MergeDataTypeInfer((struct TensorC **)inputs, inputs_size, outputs, outputs_size);
-    return NNACL_INFER_INVALID;
-  }
-
   const TensorC *const *left_part_inputs = inputs;
   size_t left_part_inputs_size = inputs_size / 2;
 
@@ -90,6 +85,7 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return MergeInfer((TensorC **)right_part_inputs, right_part_inputs_size, outputs, outputs_size);
   }
 
+  MergeDataTypeInfer((struct TensorC **)inputs, inputs_size, outputs, outputs_size);
   return NNACL_INFER_INVALID;
 }
 

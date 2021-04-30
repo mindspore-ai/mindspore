@@ -174,7 +174,8 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   }
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
-  if (opParameter->infer_flag_) {
+  auto shape = outputs.front()->shape();
+  if (std::find(shape.begin(), shape.end(), -1) == shape.end()) {
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
     if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
