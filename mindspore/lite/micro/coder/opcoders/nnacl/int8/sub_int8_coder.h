@@ -37,7 +37,7 @@ class SubInt8Coder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  SubQuantArg param_;
+  SubQuantArg param_{};
   Tensor *input0{nullptr};
   Tensor *input1{nullptr};
   int8_t *tile0_data_{nullptr};

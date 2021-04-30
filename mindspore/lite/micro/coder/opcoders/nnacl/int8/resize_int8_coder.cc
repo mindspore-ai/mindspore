@@ -40,8 +40,16 @@ int ResizeInt8Coder::Prepare(CoderContext *const context) {
   quant_out_ = new (std::nothrow)::QuantArg;
   multiplier_ = new (std::nothrow) QuantMulArg;
   MS_CHECK_PTR(quant_in_);
-  MS_CHECK_PTR(quant_out_);
-  MS_CHECK_PTR(multiplier_);
+  if (quant_out_ == nullptr) {
+    delete quant_in_;
+    quant_in_ = nullptr;
+  }
+  if (multiplier_ == nullptr) {
+    delete quant_in_;
+    quant_in_ = nullptr;
+    delete quant_out_;
+    quant_out_ = nullptr;
+  }
   quant_in_->zp_ = input_tensor_->quant_params().at(0).zeroPoint;
   quant_in_->scale_ = input_tensor_->quant_params().at(0).scale;
   quant_out_->zp_ = output_tensor_->quant_params().at(0).zeroPoint;

@@ -29,7 +29,7 @@ class ResizeInt8Coder final : public ResizeBaseCoder {
                   const Model::Node *node, size_t node_index, Target target)
       : ResizeBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
-  ~ResizeInt8Coder();
+  ~ResizeInt8Coder() override;
 
   int Prepare(CoderContext *const context) override;
 
@@ -37,23 +37,10 @@ class ResizeInt8Coder final : public ResizeBaseCoder {
 
  private:
   int ReSize();
-  int InitResizeBiLinear();
-  int InitFloatResizeBiLinear();
-  int InitResizeQuantArg();
-  int CalRatio();
-  int CalInterpolationRange();
-  void FreeResizeBiLinear();
-  int InitResizeFloatQuantArg();
-  int CalFloatRatio();
-  int CalFloatInterpolationRange();
-  void FreeFloatResizeBiLinear();
-
   ResizeParameter *param_{nullptr};
   ::QuantArg *quant_in_{nullptr};
   ::QuantArg *quant_out_{nullptr};
   QuantMulArg *multiplier_{nullptr};
-  ResizeQuantArg resize_quant_arg_;
-  ResizeFloatScaleQuantArg resize_float_quant_arg_;
 };
 
 }  // namespace mindspore::lite::micro::nnacl

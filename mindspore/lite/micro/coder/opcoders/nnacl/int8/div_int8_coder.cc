@@ -54,7 +54,7 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
   int element_num = output_tensor_->ElementsNum();
   code.CodeStruct("param", param_);
   if (broadcast_) {
-    ArithmeticParameter tile_para;
+    ArithmeticParameter tile_para = {0};
     tile_para.ndim_ = output_tensor_->shape().size();
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = input0->DimensionSize(i);
