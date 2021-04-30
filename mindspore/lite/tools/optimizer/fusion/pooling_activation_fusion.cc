@@ -63,7 +63,6 @@ const AnfNodePtr PoolingActivationFusion::Process(const FuncGraphPtr &func_graph
     }
     auto pooling_node = pre_node->cast<CNodePtr>();
     auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(pooling_node->input(0));
-    MS_ASSERT(primitive_c);
 
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Pooling>>(primitive_c));
     auto primc = utils::cast<std::shared_ptr<mindspore::lite::Pooling>>(primitive_c);

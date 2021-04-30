@@ -94,6 +94,8 @@ size_t GetOutputTensorNum(const AnfNodePtr &node);
 
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
+bool IsConcatNode(const BaseRef &n);
+
 size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
 tensor::TensorPtr GetTensorInfo(const AnfNodePtr &node);

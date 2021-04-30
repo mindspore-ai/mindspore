@@ -645,6 +645,13 @@ bool IsSqueezeNode(const BaseRef &n) {
   return false;
 }
 
+bool IsConcatNode(const BaseRef &n) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimConcat);
+  }
+  return false;
+}
+
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

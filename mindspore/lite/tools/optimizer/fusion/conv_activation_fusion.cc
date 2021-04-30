@@ -62,7 +62,6 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
       return nullptr;
     }
     auto conv_node = pre_node->cast<CNodePtr>();
-    MS_ASSERT(primitive_c);
     if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion) ||
         CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
       auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
