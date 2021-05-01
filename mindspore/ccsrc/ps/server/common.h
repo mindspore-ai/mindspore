@@ -1,0 +1,189 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
+#define MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
+
+#include <map>
+#include <string>
+#include <numeric>
+#include <climits>
+#include <memory>
+#include <functional>
+#include "proto/ps.pb.h"
+#include "ir/anf.h"
+#include "utils/utils.h"
+#include "ir/dtype/type_id.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "ps/ps_context.h"
+#include "ps/core/communicator/http_message_handler.h"
+#include "ps/core/communicator/tcp_server.h"
+
+namespace mindspore {
+namespace ps {
+namespace server {
+// Definitions for the server framework.
+enum ServerMode { PARAMETER_SERVER = 0, FL_SERVER };
+enum CommType { HTTP = 0, TCP };
+enum AggregationType { FedAvg = 0, FedAdam, FedAdagarg, FedMeta, qffl, DenseGradAccum, SparseGradAccum };
+
+using kernel::Address;
+using kernel::AddressPtr;
+using kernel::CPUKernel;
+using TimeOutCb = std::function<void(void)>;
+using StopTimerCb = std::function<void(void)>;
+using FinishIterCb = std::function<void(void)>;
+using FinalizeCb = std::function<void(void)>;
+
+// Information about whether server kernel will reuse kernel node memory from the front end.
+// Key refers to the server kernel's parameter name, like "weights", "grad", "learning_rate".
+// Value refers to the kernel node's parameter index.
+using ReuseKernelNodeInfo = std::map<std::string, size_t>;
+
+// UploadData refers to the data which is uploaded by workers.
+// Key refers to the data name. For example: "weights", "grad", "learning_rate", etc. This will be set by the worker.
+// Value refers to the data of the key.
+
+// We use Address instead of AddressPtr because:
+// 1. Address doesn't need to call make_shared<T> so it has better performance.
+// 2. The data uploaded by worker is normally parsed from FlatterBuffers or ProtoBuffer. For example: learning rate, new
+// weights, etc. Address is enough to store these data.
+
+// Pay attention that Address only stores the void* pointer of the data, so the data must not be released before the
+// related logic is done.
+using UploadData = std::map<std::string, Address>;
+
+constexpr auto kWeight = "weight";
+constexpr auto kAccumulation = "accum";
+constexpr auto kLearningRate = "lr";
+constexpr auto kGradient = "grad";
+constexpr auto kNewGradient = "new_grad";
+constexpr auto kMomentum = "momentum";
+constexpr auto kIndices = "indices";
+constexpr auto kAdamM = "m";
+constexpr auto kAdamV = "v";
+constexpr auto kAdamBeta1Power = "beta1_power";
+constexpr auto kAdamBeta2Power = "beta2_power";
+constexpr auto kAdamBeta1 = "beta1";
+constexpr auto kAdamBeta2 = "beta2";
+constexpr auto kAdamEps = "eps";
+constexpr auto kFtrlLinear = "linear";
+
+// OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
+// launched.
+using OptimParamNameToIndex = std::map<std::string, std::map<std::string, size_t>>;
+const OptimParamNameToIndex kMomentumNameToIdx = {
+  {"inputs", {{kWeight, 0}, {kAccumulation, 1}, {kLearningRate, 2}, {kGradient, 3}, {kMomentum, 4}}}, {"outputs", {}}};
+const OptimParamNameToIndex kAdamNameToIdx = {{"inputs",
+                                               {{kWeight, 0},
+                                                {kAdamM, 1},
+                                                {kAdamV, 2},
+                                                {kAdamBeta1Power, 3},
+                                                {kAdamBeta2Power, 4},
+                                                {kLearningRate, 5},
+                                                {kAdamBeta1, 6},
+                                                {kAdamBeta2, 7},
+                                                {kAdamEps, 8},
+                                                {kGradient, 9}}},
+                                              {"outputs", {}}};
+const OptimParamNameToIndex kSparseAdamNameToIdx = {{"inputs",
+                                                     {{kWeight, 0},
+                                                      {kAdamM, 1},
+                                                      {kAdamV, 2},
+                                                      {kAdamBeta1Power, 3},
+                                                      {kAdamBeta2Power, 4},
+                                                      {kLearningRate, 5},
+                                                      {kAdamBeta1, 6},
+                                                      {kAdamBeta1, 7},
+                                                      {kAdamEps, 8},
+                                                      {kGradient, 9},
+                                                      {kIndices, 10}}},
+                                                    {"outputs", {}}};
+const OptimParamNameToIndex kSparseFtrlNameToIdx = {
+  {"inputs", {{kWeight, 0}, {kAccumulation, 1}, {kFtrlLinear, 2}, {kGradient, 3}, {kIndices, 4}}}, {"outputs", {}}};
+const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {
+  {kApplyMomentumOpName, kMomentumNameToIdx},
+  {kFusedSparseAdamName, kSparseAdamNameToIdx},
+  {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
+  {kApplyAdamOpName, kAdamNameToIdx},
+};
+
+constexpr uint32_t kLeaderServerRank = 0;
+constexpr size_t kWorkerMgrThreadPoolSize = 32;
+constexpr size_t kWorkerMgrMaxTaskNum = 64;
+constexpr size_t kCipherMgrThreadPoolSize = 32;
+constexpr size_t kCipherMgrMaxTaskNum = 64;
+constexpr size_t kExecutorThreadPoolSize = 32;
+constexpr size_t kExecutorMaxTaskNum = 32;
+constexpr int kHttpSuccess = 200;
+constexpr auto kPBProtocol = "PB";
+constexpr auto kFBSProtocol = "FBS";
+constexpr auto kAggregationKernelType = "Aggregation";
+constexpr auto kOptimizerKernelType = "Optimizer";
+constexpr auto kCtxFuncGraph = "FuncGraph";
+constexpr auto kCtxIterNum = "iteration";
+constexpr auto kCtxDeviceMetas = "device_metas";
+constexpr auto kCtxTotalTimeoutDuration = "total_timeout_duration";
+constexpr auto kCtxUpdateModelClientList = "update_model_client_list";
+constexpr auto kCtxUpdateModelClientNum = "update_model_client_num";
+
+// This macro the current timestamp in milliseconds.
+#define CURRENT_TIME_MILLI \
+  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+
+#define RETURN_IF_NULL(expr, ret)             \
+  if (expr == nullptr) {                      \
+    MS_LOG(ERROR) << #expr << " is nullptr."; \
+    return ret;                               \
+  }
+
+// This method returns the size in bytes of the given TypeId.
+inline size_t GetTypeIdByte(const TypeId &type) {
+  switch (type) {
+    case kNumberTypeFloat16:
+      return 2;
+    case kNumberTypeUInt32:
+    case kNumberTypeFloat32:
+      return 4;
+    case kNumberTypeUInt64:
+      return 8;
+    default:
+      MS_LOG(EXCEPTION) << "TypeId " << type << " not supported.";
+      return 0;
+  }
+}
+
+inline AddressPtr GenerateParameterNodeAddrPtr(const CNodePtr &kernel_node, size_t param_idx) {
+  RETURN_IF_NULL(kernel_node, nullptr);
+  auto param_node =
+    AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, param_idx), 0).first->cast<ParameterPtr>();
+  RETURN_IF_NULL(param_node, nullptr);
+  auto param_tensor = param_node->default_param()->cast<tensor::TensorPtr>();
+  RETURN_IF_NULL(param_tensor, nullptr);
+  AddressPtr addr = std::make_shared<kernel::Address>();
+  addr->addr = param_tensor->data_c();
+  addr->size = param_tensor->data().nbytes();
+  return addr;
+}
+
+// Definitions for Federated Learning.
+
+// Definitions for Parameter Server.
+
+}  // namespace server
+}  // namespace ps
+}  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_PS_SERVER_COMMON_H_
