@@ -42,15 +42,6 @@ enum MS_API DataType { kImage = 0, kBinary = 1 };
 constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 
-struct MS_API CheckTensor {
-  CheckTensor(const std::vector<size_t> &shape, const std::vector<float> &data) {
-    this->shape = shape;
-    this->data = data;
-  }
-  std::vector<size_t> shape;
-  std::vector<float> data;
-};
-
 template <typename T>
 float TensorSum(void *data, int size) {
   T *typed_data = reinterpret_cast<T *>(data);
@@ -84,10 +75,6 @@ class MS_API NetTrainFlags : public virtual FlagParser {
 
   ~NetTrainFlags() override = default;
 
-  void InitInputDataList();
-
-  void InitResizeDimsList();
-
  public:
   // common
   std::string model_file_;
@@ -118,25 +105,22 @@ class MS_API NetTrainFlags : public virtual FlagParser {
 class MS_API NetTrain {
  public:
   explicit NetTrain(NetTrainFlags *flags) : flags_(flags) {}
-
-  virtual ~NetTrain();
+  virtual ~NetTrain() = default;
 
   int Init();
   int RunNetTrain();
-  int RunExportedNet();
 
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
-  int LoadInput();
+  int LoadInput(Vector<tensor::MSTensor *> *ms_inputs);
 
   // call GenerateRandomData to fill inputTensors
-  int GenerateInputData();
+  int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
 
   int GenerateRandomData(size_t size, void *data);
 
-  int ReadInputFile();
-
-  int CompareOutput();
+  int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
+  int CreateAndRunNetwork(const std::string &filename, int train_session, int epochs);
 
   int InitCallbackParameter();
 
@@ -208,22 +192,13 @@ class MS_API NetTrain {
     return meanError;
   }
 
-  int MarkPerformance();
+  int MarkPerformance(session::TrainSession *session);
 
-  int MarkAccuracy();
-
- private:
-  int RunExportedNetLite(std::string file_name);
-  int MarkAccuracyLite(const std::unique_ptr<session::LiteSession> &lite_session);
-  int CompareOutputLite(const std::unique_ptr<session::LiteSession> &lite_session);
-  int CheckExecute(mindspore::lite::Model *model);
+  int MarkAccuracy(session::LiteSession *lite_session);
+  int CompareOutput(const session::LiteSession &lite_session);
+  int SaveModels(session::TrainSession *session, mindspore::lite::Model *model);
+  int CheckExecutionOfSavedModels();
   NetTrainFlags *flags_;
-  session::TrainSession *session_ = nullptr;
-  std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
-  std::unordered_map<std::string, CheckTensor *> data_;
-  std::unordered_map<std::string, TypeId> data_type_map_{{"FLOAT", TypeId::kNumberTypeFloat},
-                                                         {"INT32", TypeId::kNumberTypeInt32}};
 
   // callback parameters
   uint64_t op_begin_ = 0;
@@ -234,7 +209,6 @@ class MS_API NetTrain {
 
   mindspore::KernelCallBack before_call_back_;
   mindspore::KernelCallBack after_call_back_;
-  bool layer_checksum_ = false;
 };
 
 int MS_API RunNetTrain(int argc, const char **argv);

@@ -43,6 +43,7 @@
 #include "src/lite_session.h"
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
+#include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {
 static constexpr size_t UINT8_QUANTIZATION = 8;
@@ -82,7 +83,7 @@ class QuantStrategy {
 
   bool CanConvOpQuantized(const CNodePtr &node) const;
   bool CanMulOpQuantized(const CNodePtr &node) const;
-  bool CanOpPostQuantized(AnfNodePtr &node) const;
+  bool CanOpPostQuantized(const AnfNodePtr &node) const;
   bool CanTensorQuantized(const AnfNodePtr &inputNode) const;
 
   size_t m_weight_size_;
@@ -100,9 +101,6 @@ constexpr int quant_param_size = 32 * 8;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
-                             int quant_min, int num_bits);
-
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange = false,
                              int numBits = UINT8_QUANTIZATION);
 
@@ -112,9 +110,6 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
 
 STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_datas, int new_size, TypeId new_data_type);
 
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
-                         bool channel_at_first, float *desired_max, float *desired_min);
-
 int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first);
 
 void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes, int index, bool *channel_at_first,
@@ -123,193 +118,10 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
 void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<int> &shapes, int index,
                        bool *channel_at_first, int *channel_cnt);
 
-template <typename T>
-T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
-  MS_ASSERT(quantParam != nullptr);
-  MS_ASSERT(quantParam->inited);
-  const auto scale = quantParam->scale;
-  const auto zeroPoint = quantParam->zeroPoint;
-  const auto numBit = quantParam->numBits;
-  const auto narrowRange = quantParam->narrowRange;
-  double maxLimitTemp = static_cast<float>((1 << (unsigned int)numBit) - 1);
-  const double maxLimit = static_cast<float>(maxLimitTemp - zeroPoint + std::numeric_limits<T>::min()) * scale;
-  double minLimit;
-  if (narrowRange) {
-    minLimit = static_cast<float>(std::numeric_limits<T>::min() + 1 - zeroPoint) * scale;
-  } else {
-    minLimit = static_cast<float>(std::numeric_limits<T>::min() - zeroPoint) * scale;
-  }
-
-  return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    double tmp;
-    if (originData > maxLimit) {
-      tmp = maxLimit;
-    } else if (originData < minLimit) {
-      tmp = minLimit;
-    } else {
-      tmp = originData;
-    }
-    auto quantData = static_cast<T>(std::round(zeroPoint + tmp / scale));
-    return quantData;
-  }();
-}
-
-template <typename T>
-T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quant_max, int quant_min) {
-  MS_ASSERT(quantParam != nullptr);
-  MS_ASSERT(quantParam->inited);
-  const auto scale = quantParam.scale;
-  const int zeroPoint = quantParam.zeroPoint;
-  const auto narrowRange = quantParam.narrowRange;
-  const int maxLimit = quant_max;
-  const int minLimit = quant_min;
-  if (scale <= SCALE_THREASHOLD) {
-    return 0;
-  }
-  return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    auto quant_data = std::round(originData / scale + zeroPoint);
-    if (quant_data > maxLimit) {
-      quant_data = maxLimit;
-    } else if (quant_data < minLimit) {
-      quant_data = minLimit;
-    }
-    return static_cast<T>(quant_data);
-  }();
-}
-
 bool QuantParamEqual(const schema::QuantParamT &quant_param1, const schema::QuantParamT &quant_param2);
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
-template <typename T>
-STATUS DoPerChannelQuant(const tensor::TensorPtr &weight, const QuantType &quant_type,
-                         std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                         const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                         std::vector<float> *dequant_datas, TypeId quant_data_type, bool channel_at_first = true,
-                         int channel_cnt = -1) {
-  auto dims = weight->shape();
-  size_t elem_count = weight->DataSize();
-  auto *raw_datas = static_cast<float *>(weight->data_c());
-  auto channels = CalChannels(dims, channel_cnt, &channel_at_first);
-  if (channels == 0) {
-    MS_LOG(ERROR) << "channels is zero";
-    return RET_ERROR;
-  }
-  size_t one_filter_size = elem_count / channels;
-  bool do_quant = quant_param_size / (sizeof(float) * 8 - bit_num) < one_filter_size;
-  if (!do_quant && quant_type == QuantType_WeightQuant) {
-    MS_LOG(INFO) << "too few elements in a filter, no need to quantize. " << one_filter_size;
-    return RET_CONTINUE;
-  }
-  for (int i = 0; i < channels; i++) {
-    float min = FLT_MAX;
-    float max = -FLT_MAX;
-    GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
-    schema::QuantParamT quant_param;
-    STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-      return status;
-    }
-    // do quantization
-    double average_dequant = 0;
-    double average_raw = 0;
-    for (uint32_t j = 0; j < one_filter_size; j++) {
-      auto index = j + i * one_filter_size;
-      if (!channel_at_first) {
-        index = j * channels + i;
-      }
-      MS_ASSERT(index < elem_count);
-      float raw_data = raw_datas[index];
-      auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
-      (*quant_datas)[index] = quant_data;
-
-      if (quant_type == QuantType_WeightQuant) {
-        float dequant_data = quant_param.scale * (quant_data - quant_param.zeroPoint);
-        (*dequant_datas)[index] = dequant_data;
-        average_dequant += dequant_data;
-        average_raw += raw_data;
-      }
-    }
-    if (quant_type == QuantType_WeightQuant && !k_means) {
-      // mean
-      average_dequant = average_dequant / one_filter_size;
-      average_raw = average_raw / one_filter_size;
-      // std
-      double variance_dequant = 0;
-      double variance_raw = 0;
-      for (uint32_t j = 0; j < one_filter_size; j++) {
-        auto index = j + i * one_filter_size;
-        if (!channel_at_first) {
-          index = j * channels + i;
-        }
-        MS_ASSERT(index < elem_count);
-        variance_dequant += std::pow((*dequant_datas)[index] - average_dequant, 2);
-        variance_raw += std::pow(raw_datas[index] - average_raw, 2);
-      }
-      variance_dequant = std::sqrt(variance_dequant / one_filter_size);
-      variance_raw = std::sqrt(variance_raw / one_filter_size);
-      quant_param.varCorr = 1;
-      if (variance_raw != 0 && variance_dequant != 0) {
-        auto temp_var_corr = variance_raw / variance_dequant;
-        if (temp_var_corr > 0 && temp_var_corr < 10) {
-          quant_param.varCorr = temp_var_corr;
-        } else {
-          MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
-        }
-      }
-      quant_param.meanCorr = average_raw - average_dequant * quant_param.varCorr;
-    }
-    quant_params->emplace_back(quant_param);
-  }
-  auto status = UpdateTensorDataAndSize(weight, quant_datas->data(), quant_datas->size() * sizeof(T), quant_data_type);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-template <typename T>
-STATUS DoPerLayerQuant(const tensor::TensorPtr &weight, const QuantType &quant_type,
-                       std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                       const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                       TypeId quant_data_type) {
-  auto dims = weight->shape();
-  size_t elem_count = weight->DataSize();
-  auto *raw_datas = static_cast<float *>(weight->data_c());
-  float min = FLT_MAX;
-  float max = -FLT_MIN;
-  for (uint32_t i = 0; i < elem_count; i++) {
-    // find max min
-    min = std::min(min, raw_datas[i]);
-    max = std::max(max, raw_datas[i]);
-  }
-
-  schema::QuantParamT quant_param;
-  if (!k_means) {
-    STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-      return status;
-    }
-  }
-  quant_params->emplace_back(quant_param);
-  // update data and datatype
-  for (uint32_t i = 0; i < elem_count; i++) {
-    float raw_data = raw_datas[i];
-    if (!k_means) {
-      auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
-      (*quant_datas)[i] = quant_data;
-    }
-  }
-  auto status = UpdateTensorDataAndSize(weight, quant_datas->data(), quant_datas->size() * sizeof(T), quant_data_type);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
 template <typename T>
 STATUS DoBitPack(const tensor::TensorPtr &weight, const size_t &bit_num, const std::vector<T> &quant_datas) {
   if (bit_num != 8 && bit_num != 16) {
@@ -363,15 +175,19 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
   }
 
   std::vector<T> quant_data(elem_count);
-  std::vector<float> dequant_datas(elem_count);
   int ret = RET_OK;
   if (per_channel) {
     bool channel_at_first = true;
     int channel_cnt = -1;
     CalQuantAssitInfo(primitive, dims, index, &channel_at_first, &channel_cnt);
-    // channel at first
-    ret = DoPerChannelQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data,
-                               &dequant_datas, quant_data_type, channel_at_first, channel_cnt);
+    auto channels = CalChannels(dims, channel_cnt, &channel_at_first);
+    if (channels == 0) {
+      MS_LOG(ERROR) << "channels is zero";
+      return RET_ERROR;
+    }
+    ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
+                               static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
+                               quant_min, bit_num, k_means, &quant_data, channels, channel_at_first);
     if (ret == RET_CONTINUE) {
       return ret;
     } else if (ret != RET_OK) {
@@ -379,12 +195,17 @@ STATUS QuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &primitiv
       return ret;
     }
   } else {
-    ret = DoPerLayerQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data,
-                             quant_data_type);
+    ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
+                             quant_min, bit_num, k_means, &quant_data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;
     }
+  }
+  auto status = UpdateTensorDataAndSize(weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
+    return RET_ERROR;
   }
 
 #ifdef HUFFMAN_ENCODE

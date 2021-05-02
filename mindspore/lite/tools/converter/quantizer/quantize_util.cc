@@ -100,12 +100,12 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
-bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
+bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) const {
   MS_ASSERT(node != nullptr);
   if (!node->isa<mindspore::CNode>()) {
     return false;
   }
-  auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
+  const auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   auto type = NodePrimitiveType(cnode);
   static const std::vector<std::string> int8OpList = {
     ops::kNameAddFusion,     ops::kNameActivation,      ops::kNameAvgPoolFusion,
@@ -266,67 +266,6 @@ bool TensorQuantParamsInited(const schema::TensorT &tensor) {
     }
   }
   return true;
-}
-
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
-                             int quant_min, int num_bits) {
-  MS_ASSERT(quantParam != nullptr);
-  if (mMin > 0.0f) {
-    MS_LOG(DEBUG) << "min " << mMin << " is bigger then 0, set to 0, this may course low precision";
-    mMin = 0.0f;
-  }
-  if (mMax < 0.0f) {
-    MS_LOG(DEBUG) << "mMax " << mMax << " is smaller than 0, set to 0, this may course low precision";
-    mMax = 0.0f;
-  }
-  if (mMin > mMax) {
-    MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
-    return RET_PARAM_INVALID;
-  }
-  if (mMin == mMax) {
-    if (mMin != 0.0f) {
-      MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
-      return RET_ERROR;
-    }
-    quantParam->inited = true;
-    quantParam->min = mMin;
-    quantParam->max = mMax;
-    quantParam->scale = 0.0f;
-    quantParam->zeroPoint = 0;
-    quantParam->narrowRange = narrowRange;
-    quantParam->numBits = num_bits;
-    return RET_OK;
-  }
-
-  auto quantMinFloat = static_cast<double>(quant_min);
-  auto quantMaxFloat = static_cast<double>(quant_max);
-  if (fabs(quantMaxFloat - quantMinFloat) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
-    return RET_ERROR;
-  }
-  double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
-  if (fabs(scale) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
-    return RET_ERROR;
-  }
-  const double zeroPointFromMin = quantMinFloat - mMin / scale;
-  int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
-  if (scale < SCALE_THREASHOLD) {
-    zeroPoint = 0;
-  }
-  // The zero point should always be in the range of quantized value,
-  // [qmin, qmax].
-  MS_ASSERT(zeroPoint >= quantMin);
-  MS_ASSERT(zeroPoint <= quantMax);
-  quantParam->inited = true;
-  quantParam->min = mMin;
-  quantParam->max = mMax;
-  quantParam->scale = scale;
-  quantParam->zeroPoint = zeroPoint;
-  quantParam->narrowRange = narrowRange;
-  quantParam->numBits = num_bits;
-
-  return RET_OK;
 }
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int numBits) {
@@ -997,26 +936,6 @@ STATUS UpdateTensorDataAndSize(const tensor::TensorPtr &weight, void *quant_data
   }
   memcpy(weight->data_c(), quant_datas, new_size);
   return RET_OK;
-}
-
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
-                         bool channel_at_first, float *desired_max, float *desired_min) {
-  float min = FLT_MAX;
-  float max = -FLT_MAX;
-  // find min and max
-  for (int j = 0; j < one_filter_size; j++) {
-    auto index = j + i * one_filter_size;
-    if (!channel_at_first) {
-      index = j * channels + i;
-    }
-    if (index >= elem_count) {
-      MS_LOG(ERROR) << "over flow!";
-    }
-    min = std::min(min, raw_datas[index]);
-    max = std::max(max, raw_datas[index]);
-  }
-  *desired_max = max;
-  *desired_min = min;
 }
 
 int CalChannels(const ShapeVector &dims, int channel_cnt, bool *channel_at_first) {

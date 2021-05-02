@@ -23,46 +23,93 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 #include "src/train/train_utils.h"
+#include "src/common/quant_utils.h"
+#include "tools/common/storage.h"
 
 namespace mindspore {
 namespace lite {
 
-std::vector<uint8_t> TrainExport::CreateData(const mindspore::lite::Tensor *tensor) {
+std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   uint8_t *tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c());
   auto size = tensor->Size();
   std::vector<uint8_t> data(tensor_data, tensor_data + size);
   return data;
 }
 
+bool TrainExport::NeedQuantization(const lite::Tensor *tensor) {
+  return (tensor->quant_params().size() > 0 && tensor->quant_params().at(0).inited);
+}
+
+schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel) {
+  if (std::any_of(kernel->in_tensors().cbegin(), kernel->in_tensors().cend(), [](const lite::Tensor *t) {
+        return (t->IsConst() && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited));
+      })) {
+    return schema::QuantType_QUANT_WEIGHT;
+  }
+  return schema::QuantType_QUANT_NONE;
+}
+
+int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tensor *src_tensor) {
+  int channels = src_tensor->quant_params().size();
+  if (channels < 1) {
+    MS_LOG(ERROR) << "Quant Params is empty";
+    return RET_ERROR;
+  }
+  int bit_num = src_tensor->quant_params().at(0).bitNum;
+  int quant_max = QuantMax(bit_num, kNumberTypeInt8);
+  int quant_min = QuantMin(bit_num, kNumberTypeInt8);
+  std::vector<int8_t> data(src_tensor->ElementsNum());
+  std::vector<schema::QuantParamT> quant_params;
+
+  STATUS ret = RET_OK;
+  if (channels == kPerTensor) {
+    ret = DoPerLayerQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data_c()), src_tensor->ElementsNum(),
+                                  &(quant_params), quant_max, quant_min, bit_num, false, &data);
+  } else {
+    bool channel_at_first = (src_tensor->shape().at(0) == channels);
+    ret = DoPerChannelQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data_c()), src_tensor->ElementsNum(),
+                                    schema::QuantType_WeightQuant, &(quant_params), quant_max, quant_min, bit_num,
+                                    false, &data, channels, channel_at_first);
+  }
+  if (ret == RET_QUANT_CONTINUE) {
+    MS_LOG(DEBUG) << "No Need to quant per channel";
+    return RET_OK;
+  }
+  if (ret == RET_ERROR) {
+    MS_LOG(ERROR) << "QuantTensorData error,  channels = " << channels;
+    return ret;
+  }
+  if (quant_params.empty()) {
+    MS_LOG(ERROR) << "quant_params empty";
+    return RET_ERROR;
+  }
+  dest_tensor->data = std::vector<uint8_t>(data.data(), data.data() + data.size());
+  dest_tensor->dataType = kNumberTypeInt8;
+  dest_tensor->quantParams.clear();
+  for (auto quant_param : quant_params) {
+    dest_tensor->quantParams.emplace_back(std::make_unique<schema::QuantParamT>(quant_param));
+  }
+
+  return RET_OK;
+}
+
 std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite::Tensor *tensor,
                                                            schema::Tensor *scTensor) {
   auto tensorT = std::make_unique<schema::TensorT>();
   tensorT->nodeType = scTensor->nodeType();
-  tensorT->dataType = tensor->data_type();
   tensorT->dims = tensor->shape();
   tensorT->format = tensor->format();
   tensorT->name = tensor->tensor_name();
   tensorT->refCount = 0;
   tensorT->offset = 0;
+  tensorT->dataType = tensor->data_type();
   tensorT->enableHuffmanCode = false;
   if ((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) {
-    tensorT->data = CreateData(tensor);
-  }
-  for (auto quant_param : tensor->quant_params()) {
-    auto quantParamT = std::make_unique<schema::QuantParamT>();
-    quantParamT->scale = quant_param.scale;
-    quantParamT->zeroPoint = quant_param.zeroPoint;
-    quantParamT->min = 0;
-    quantParamT->max = 0;
-    quantParamT->narrowRange = true;
-    quantParamT->numBits = quant_param.bitNum;
-    quantParamT->inited = quant_param.inited;
-    quantParamT->varCorr = quant_param.var_corr;
-    quantParamT->meanCorr = quant_param.mean_corr;
-    quantParamT->dstDtype = quant_param.dstDtype;
-    quantParamT->roundType = quant_param.roundType;
-    quantParamT->multiplier = quant_param.multiplier;
-    tensorT->quantParams.emplace_back(std::move(quantParamT));
+    if (NeedQuantization(tensor)) {
+      QuantTensorData(tensorT.get(), tensor);
+    } else {
+      tensorT->data = CreateData(tensor);
+    }
   }
   tensorT->quantClusters = tensor->quant_clusters();
   return tensorT;
@@ -85,7 +132,7 @@ std::unique_ptr<schema::CNodeT> TrainExport::CreateCNode(const mindspore::kernel
   cnodeT->inputIndex = inputIndex;
   cnodeT->outputIndex = outputIndex;
   cnodeT->name = kernel->name();
-  cnodeT->quantType = schema::QuantType_QUANT_NONE;
+  cnodeT->quantType = GetNodeQuantType(kernel);
   // find kernel in model
   auto *node = FindNode(kernel);
   if (node == nullptr) {
@@ -132,7 +179,6 @@ int TrainExport::Export(const std::vector<mindspore::kernel::LiteKernel *> &kern
         MS_LOG(ERROR) << "cannot find tensor " + tensor->ToString() + " in model";
         return RET_ERROR;
       }
-      out_set.insert(id);
       auto it = remap.find(id);
       if (it == remap.end()) {
         remap[id] = tensor_idx;
@@ -153,7 +199,7 @@ int TrainExport::Export(const std::vector<mindspore::kernel::LiteKernel *> &kern
     schema::Tensor *scTensor = model_->all_tensors_.at(id);
     auto tensorT = CreateTensor(tensor, scTensor);
     // find a tensor which is not an output
-    if (out_set.find(id) == out_set.end()) {
+    if (out_set.find(remap[id]) == out_set.end()) {
       if ((tensorT->nodeType == NodeType_ValueNode) && (tensorT->data.size() == 0)) {
         meta_graph->inputIndex.push_back(remap[id]);
       }
@@ -165,37 +211,12 @@ int TrainExport::Export(const std::vector<mindspore::kernel::LiteKernel *> &kern
     meta_graph->allTensors.emplace_back(std::move(tensorT));
   }
   auto graph = meta_graph.release();
-  int err = SaveToFile(graph, file_name_);
+  int err = Storage::Save(*graph, file_name_);
   if (err != RET_OK) {
     MS_LOG(ERROR) << "failed to save flatbuffer file " << file_name_;
   }
   delete graph;
   return err;
-}
-
-int TrainExport::SaveToFile(const schema::MetaGraphT *graph, const std::string &outputPath) {
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = schema::MetaGraph::Pack(builder, graph);
-  builder.Finish(offset);
-  schema::FinishMetaGraphBuffer(builder, offset);
-  int size = builder.GetSize();
-  auto content = builder.GetBufferPointer();
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return RET_ERROR;
-  }
-  if (access((outputPath + ".ms").c_str(), F_OK) == 0) {
-    chmod((outputPath + ".ms").c_str(), S_IWUSR);
-  }
-  std::ofstream output(outputPath + ".ms", std::ofstream::binary);
-  if (!output.is_open()) {
-    MS_LOG(ERROR) << "Can not open output file: " << outputPath << ".ms";
-    return RET_ERROR;
-  }
-  output.write((const char *)content, size);
-  output.close();
-  chmod((outputPath + ".ms").c_str(), S_IRUSR);
-  return RET_OK;
 }
 
 }  // namespace lite
