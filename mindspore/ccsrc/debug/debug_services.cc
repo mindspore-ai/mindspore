@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
                                      std::vector<unsigned int> *root_graph_id) {
   std::lock_guard<std::mutex> lg(lock_);
   if (watchpoint_table.empty()) return;
-
+  // vector to store execution order of tensors hit
+  std::vector<int> exec_order;
   for (auto &tensor : *tensor_list) {
 #ifdef OFFLINE_DBG_MODE
     // read data in offline mode
@@ -212,7 +213,6 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
       continue;
     }
 #endif
-
     const auto tensor_name = tensor->GetName();
     const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
     const auto tensor_slot = std::to_string(tensor->GetSlot());
@@ -228,7 +228,6 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
                           &previous_iter_tensor_needed, &qualified_tensor_name, &watchpoints_to_check);
     // no wp set on current tensor
     if (watchpoints_to_check.empty()) continue;
-
     uint32_t num_elements = tensor->GetNumElements();
 
 #ifdef OFFLINE_DBG_MODE
@@ -237,7 +236,6 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
     void *previous_tensor_ptr =
       tensor_loader_->GetPrevTensor(tensor_name) ? tensor_loader_->GetPrevTensor(tensor_name)->GetDataPtr() : nullptr;
 #endif
-
     std::unique_ptr<ITensorSummary> base_summary_ptr;
     if (!(watchpoints_to_check.size() == 1 && watchpoints_to_check[0].condition.type == IS_OVERFLOW)) {
       base_summary_ptr = GetSummaryPtr(tensor, previous_tensor_ptr, num_elements, tensor_dtype);
@@ -258,23 +256,26 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
         parameter_list = std::get<2>(item);
       }
       AddAnalyzedTensorToCache(recheck, wp.id, tensor_name);
-
       if (is_hit || error_code) {
-        name->push_back(qualified_tensor_name);
-        slot->push_back(tensor_slot);
-        condition->push_back(wp.condition.type);
-        watchpoint_id->push_back(wp.id);
+        std::vector<int>::iterator iter;
+        // if the execution order is repeated,inserts the new one before the others with same execution order.
+        iter = std::lower_bound(exec_order.begin(), exec_order.end(), tensor->GetExecutionOrder());
+        int position = iter - exec_order.begin();
+        exec_order.insert(iter, tensor->GetExecutionOrder());
+        name->insert(name->begin() + position, qualified_tensor_name);
+        slot->insert(slot->begin() + position, tensor_slot);
+        condition->insert(condition->begin() + position, wp.condition.type);
+        watchpoint_id->insert(watchpoint_id->begin() + position, wp.id);
         if (device_id != nullptr) {
-          device_id->push_back(tensor->GetDeviceId());
+          device_id->insert(device_id->begin() + position, tensor->GetDeviceId());
         }
         if (root_graph_id != nullptr) {
-          root_graph_id->push_back(tensor->GetRootGraphId());
+          root_graph_id->insert(root_graph_id->begin() + position, tensor->GetRootGraphId());
         }
-        parameters->push_back(parameter_list);
-        error_codes->push_back(error_code);
+        parameters->insert(parameters->begin() + position, parameter_list);
+        error_codes->insert(error_codes->begin() + position, error_code);
       }
     }
-
 #ifdef OFFLINE_DBG_MODE
     // in offline mode remove the need for the data
     tensor.reset();
