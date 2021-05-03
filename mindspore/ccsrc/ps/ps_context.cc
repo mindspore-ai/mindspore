@@ -61,7 +61,12 @@ void PSContext::SetPSEnable(bool enabled) {
   }
 }
 
-bool PSContext::is_ps_mode() const { return ps_enabled_; }
+bool PSContext::is_ps_mode() const {
+  if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
+    return true;
+  }
+  return ps_enabled_;
+}
 
 void PSContext::Reset() {
   ps_enabled_ = false;
@@ -77,6 +82,9 @@ void PSContext::Reset() {
 }
 
 std::string PSContext::ms_role() const {
+  if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
+    return role_;
+  }
   if (is_worker_) {
     return kEnvRoleOfWorker;
   } else if (is_pserver_) {
@@ -88,11 +96,26 @@ std::string PSContext::ms_role() const {
   }
 }
 
-bool PSContext::is_worker() const { return is_worker_; }
+bool PSContext::is_worker() const {
+  if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
+    return role_ == kRoleOfWorker;
+  }
+  return is_worker_;
+}
 
-bool PSContext::is_server() const { return is_pserver_; }
+bool PSContext::is_server() const {
+  if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
+    return role_ == kEnvRoleOfServer;
+  }
+  return is_pserver_;
+}
 
-bool PSContext::is_scheduler() const { return is_sched_; }
+bool PSContext::is_scheduler() const {
+  if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
+    return role_ == kEnvRoleOfScheduler;
+  }
+  return is_sched_;
+}
 
 uint32_t PSContext::initial_worker_num() { return worker_num_; }
 
@@ -150,6 +173,94 @@ void PSContext::set_rank_id(int rank_id) const {
 #endif
 }
 
+void PSContext::set_server_mode(const std::string &server_mode) {
+  if (server_mode != kServerModePS && server_mode != kServerModeFL && server_mode != kServerModeHybrid) {
+    MS_LOG(EXCEPTION) << server_mode << " is invalid. Server mode must be " << kServerModePS << " or " << kServerModeFL
+                      << " or " << kServerModeHybrid;
+    return;
+  }
+  server_mode_ = server_mode;
+}
+
+const std::string &PSContext::server_mode() const { return server_mode_; }
+
+void PSContext::set_ms_role(const std::string &role) {
+  if (server_mode_ != kServerModeFL && server_mode_ != kServerModeHybrid) {
+    MS_LOG(EXCEPTION) << "Only federated learning supports to set role by ps context.";
+    return;
+  }
+  if (role != kEnvRoleOfWorker && role != kEnvRoleOfServer && role != kEnvRoleOfScheduler) {
+    MS_LOG(EXCEPTION) << "ms_role " << role << " is invalid.";
+    return;
+  }
+  role_ = role;
+}
+
+void PSContext::set_worker_num(uint32_t worker_num) { worker_num_ = worker_num; }
+uint32_t PSContext::worker_num() const { return worker_num_; }
+
+void PSContext::set_server_num(uint32_t server_num) {
+  if (server_num == 0) {
+    MS_LOG(EXCEPTION) << "Server number must be greater than 0.";
+    return;
+  }
+  server_num_ = server_num;
+}
+uint32_t PSContext::server_num() const { return server_num_; }
+
+void PSContext::set_scheduler_ip(const std::string &sched_ip) { scheduler_host_ = sched_ip; }
+
+std::string PSContext::scheduler_ip() const { return scheduler_host_; }
+
+void PSContext::set_scheduler_port(uint16_t sched_port) { scheduler_port_ = sched_port; }
+
+uint16_t PSContext::scheduler_port() const { return scheduler_port_; }
+
+void PSContext::GenerateResetterRound() {
+  uint32_t binary_server_context = 0;
+  bool is_parameter_server_mode = false;
+  bool is_federated_learning_mode = false;
+  bool is_mixed_training_mode = false;
+
+  if (server_mode_ == kServerModePS) {
+    is_parameter_server_mode = true;
+  } else if (server_mode_ == kServerModeFL) {
+    is_federated_learning_mode = true;
+  } else if (server_mode_ == kServerModeHybrid) {
+    is_mixed_training_mode = true;
+  } else {
+    MS_LOG(EXCEPTION) << server_mode_ << " is invalid. Server mode must be " << kServerModePS << " or " << kServerModeFL
+                      << " or " << kServerModeHybrid;
+    return;
+  }
+
+  binary_server_context = (is_parameter_server_mode << 0) | (is_federated_learning_mode << 1) |
+                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3) | (worker_overwrite_weights_ << 4);
+  if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
+    resetter_round_ = ResetterRound::kNoNeedToReset;
+  } else {
+    resetter_round_ = kServerContextToResetRoundMap.at(binary_server_context);
+  }
+  MS_LOG(INFO) << "Server context is " << binary_server_context << ". Resetter round is " << resetter_round_;
+  return;
+}
+
+ResetterRound PSContext::resetter_round() const { return resetter_round_; }
+
+void PSContext::set_fl_server_port(uint16_t fl_server_port) { fl_server_port_ = fl_server_port; }
+
+uint16_t PSContext::fl_server_port() const { return fl_server_port_; }
+
+void PSContext::set_fl_client_enable(bool enabled) { fl_client_enable_ = enabled; }
+
+bool PSContext::fl_client_enable() { return fl_client_enable_; }
+
+void PSContext::set_start_fl_job_threshold(size_t start_fl_job_threshold) {
+  start_fl_job_threshold_ = start_fl_job_threshold;
+}
+
+size_t PSContext::start_fl_job_threshold() const { return start_fl_job_threshold_; }
+
 void PSContext::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
 
 const std::string &PSContext::fl_name() const { return fl_name_; }
@@ -165,5 +276,15 @@ uint64_t PSContext::client_epoch_num() const { return client_epoch_num_; }
 void PSContext::set_client_batch_size(uint64_t client_batch_size) { client_batch_size_ = client_batch_size; }
 
 uint64_t PSContext::client_batch_size() const { return client_batch_size_; }
+
+void PSContext::set_worker_overwrite_weights(uint64_t worker_overwrite_weights) {
+  worker_overwrite_weights_ = worker_overwrite_weights;
+}
+
+uint64_t PSContext::worker_overwrite_weights() const { return worker_overwrite_weights_; }
+
+void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
+
+bool PSContext::secure_aggregation() const { return secure_aggregation_; }
 }  // namespace ps
 }  // namespace mindspore

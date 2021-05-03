@@ -49,7 +49,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
   void *req_data = inputs[0]->addr;
-  const std::shared_ptr<FBBuilder> &fbb = std::make_shared<FBBuilder>();
+  std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
     return false;

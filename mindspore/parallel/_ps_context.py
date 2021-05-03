@@ -33,7 +33,21 @@ def ps_context():
     return _ps_context
 
 _set_ps_context_func_map = {
-    "enable_ps": ps_context().set_ps_enable
+    "server_mode": ps_context().set_server_mode,
+    "ms_role": ps_context().set_ms_role,
+    "enable_ps": ps_context().set_ps_enable,
+    "worker_num": ps_context().set_worker_num,
+    "server_num": ps_context().set_server_num,
+    "scheduler_ip": ps_context().set_scheduler_ip,
+    "scheduler_port": ps_context().set_scheduler_port,
+    "fl_server_port": ps_context().set_fl_server_port,
+    "enable_fl_client": ps_context().set_fl_client_enable,
+    "start_fl_job_threshold": ps_context().set_start_fl_job_threshold,
+    "fl_name": ps_context().set_fl_name,
+    "fl_iteration_num": ps_context().set_fl_iteration_num,
+    "client_epoch_num": ps_context().set_client_epoch_num,
+    "client_batch_size": ps_context().set_client_batch_size,
+    "secure_aggregation": ps_context().set_secure_aggregation
 }
 
 _get_ps_context_func_map = {

@@ -302,7 +302,7 @@ bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<ke
 }
 
 std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &cnode) {
-  std::vector<std::string> aggregation_algorithm = {};
+  std::vector<std::string> aggregation_algorithm = {kFedAvg};
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
   return aggregation_algorithm;
 }

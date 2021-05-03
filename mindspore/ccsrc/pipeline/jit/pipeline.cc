@@ -55,6 +55,7 @@
 #include "ps/worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/server/server.h"
 #endif
 
 #if (ENABLE_GE || ENABLE_D)
@@ -529,6 +530,11 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   std::string backend = MsContext::GetInstance()->backend_policy();
 
 #if (ENABLE_CPU && !_WIN32)
+  const std::string &server_mode = ps::PSContext::instance()->server_mode();
+  if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
+      ps::PSContext::instance()->is_server()) {
+    return ServerPipeline();
+  }
   if (ps::PSContext::instance()->is_server()) {
     resource->results()[kBackend] = compile::CreateBackend();
     return PServerPipeline();

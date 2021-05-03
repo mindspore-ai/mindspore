@@ -47,6 +47,7 @@
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
+#include "ps/server/server.h"
 #endif
 
 namespace mindspore {
@@ -619,6 +620,47 @@ bool StartPSServerAction(const ResourcePtr &res) {
   return true;
 }
 
+bool StartServerAction(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
+  size_t worker_num = ps::PSContext::instance()->initial_worker_num();
+  size_t server_num = ps::PSContext::instance()->initial_server_num();
+  uint64_t fl_server_port = ps::PSContext::instance()->fl_server_port();
+
+  // Update model threshold is a certain ratio of start_fl_job threshold.
+  // update_model_threshold_ = start_fl_job_threshold_ * percent_for_update_model_.
+  size_t start_fl_job_threshold = ps::PSContext::instance()->start_fl_job_threshold();
+  float percent_for_update_model = 1;
+  size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * percent_for_update_model));
+
+  std::vector<ps::server::RoundConfig> rounds_config = {
+    {"startFLJob", false, 3000, false, start_fl_job_threshold},
+    {"updateModel", false, 3000, false, update_model_threshold},
+    {"getModel", false, 3000},
+    {"asyncUpdateModel"},
+    {"asyncGetModel"},
+    {"push", false, 3000, true, worker_num},
+    {"pull", false, 3000, true, worker_num},
+    {"getWeightsByKey", false, 3000, true, 1},
+    {"overwriteWeightsByKey", false, 3000, true, server_num},
+  };
+
+  size_t executor_threshold = 0;
+  if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {
+    executor_threshold = update_model_threshold;
+    ps::server::Server::GetInstance().Initialize(true, true, fl_server_port, rounds_config, func_graph,
+                                                 executor_threshold);
+  } else if (server_mode_ == ps::kServerModePS) {
+    executor_threshold = worker_num;
+    ps::server::Server::GetInstance().Initialize(true, false, 0, rounds_config, func_graph, executor_threshold);
+  } else {
+    MS_LOG(EXCEPTION) << "Server mode " << server_mode_ << " is not supported.";
+    return false;
+  }
+  ps::server::Server::GetInstance().Run();
+  return true;
+}
+
 bool StartPSSchedulerAction(const ResourcePtr &res) {
   ps::Scheduler::GetInstance().Run();
   return true;
@@ -797,6 +839,14 @@ std::vector<ActionItem> VmPipeline() {
 }
 
 #if (ENABLE_CPU && !_WIN32)
+std::vector<ActionItem> ServerPipeline() {
+  auto actions = CommonPipeline();
+  actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+  actions.emplace_back(std::make_pair("validate", ValidateAction));
+  actions.emplace_back(std::make_pair("server", StartServerAction));
+  return actions;
+}
+
 std::vector<ActionItem> PServerPipeline() {
   auto actions = CommonPipeline();
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));

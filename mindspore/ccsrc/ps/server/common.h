@@ -44,6 +44,14 @@ enum ServerMode { PARAMETER_SERVER = 0, FL_SERVER };
 enum CommType { HTTP = 0, TCP };
 enum AggregationType { FedAvg = 0, FedAdam, FedAdagarg, FedMeta, qffl, DenseGradAccum, SparseGradAccum };
 
+struct RoundConfig {
+  std::string name;
+  bool check_timeout = false;
+  size_t time_window = 3000;
+  bool check_count = false;
+  size_t threshold_count = 0;
+};
+
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::kernel::CPUKernel;
@@ -73,6 +81,7 @@ using ReuseKernelNodeInfo = std::map<std::string, size_t>;
 using UploadData = std::map<std::string, Address>;
 
 constexpr auto kWeight = "weight";
+constexpr auto kNewWeight = "new_weight";
 constexpr auto kAccumulation = "accum";
 constexpr auto kLearningRate = "lr";
 constexpr auto kGradient = "grad";
@@ -87,6 +96,8 @@ constexpr auto kAdamBeta1 = "beta1";
 constexpr auto kAdamBeta2 = "beta2";
 constexpr auto kAdamEps = "eps";
 constexpr auto kFtrlLinear = "linear";
+constexpr auto kDataSize = "data_size";
+constexpr auto kNewDataSize = "new_data_size";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.
@@ -137,6 +148,7 @@ constexpr size_t kExecutorMaxTaskNum = 32;
 constexpr int kHttpSuccess = 200;
 constexpr auto kPBProtocol = "PB";
 constexpr auto kFBSProtocol = "FBS";
+constexpr auto kFedAvg = "FedAvg";
 constexpr auto kAggregationKernelType = "Aggregation";
 constexpr auto kOptimizerKernelType = "Optimizer";
 constexpr auto kCtxFuncGraph = "FuncGraph";
@@ -145,6 +157,8 @@ constexpr auto kCtxDeviceMetas = "device_metas";
 constexpr auto kCtxTotalTimeoutDuration = "total_timeout_duration";
 constexpr auto kCtxUpdateModelClientList = "update_model_client_list";
 constexpr auto kCtxUpdateModelClientNum = "update_model_client_num";
+constexpr auto kCtxUpdateModelThld = "update_model_threshold";
+constexpr auto kCtxFedAvgTotalDataSize = "fed_avg_total_data_size";
 
 // This macro the current timestamp in milliseconds.
 #define CURRENT_TIME_MILLI \

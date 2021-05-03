@@ -193,7 +193,29 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<co
 
 bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const PBMetadata &meta) {
   std::unique_lock<std::mutex> lock(mutex_[name]);
-  metadata_[name] = meta;
+  if (meta.has_device_meta()) {
+    auto &fl_id_to_meta_map = *metadata_[name].mutable_device_metas()->mutable_fl_id_to_meta();
+    auto &fl_id = meta.device_meta().fl_id();
+    auto &device_meta = meta.device_meta();
+    fl_id_to_meta_map[fl_id] = device_meta;
+  } else if (meta.has_fl_id()) {
+    auto client_list = metadata_[name].mutable_client_list();
+    auto &fl_id = meta.fl_id().fl_id();
+    // Check whether the new item already exists.
+    bool add_flag = true;
+    for (int i = 0; i < client_list->fl_id_size(); i++) {
+      if (fl_id == client_list->fl_id(i)) {
+        add_flag = false;
+        break;
+      }
+    }
+    if (add_flag) {
+      client_list->add_fl_id(fl_id);
+    }
+  } else if (meta.has_update_model_threshold()) {
+    auto update_model_threshold = metadata_[name].mutable_update_model_threshold();
+    *update_model_threshold = meta.update_model_threshold();
+  }
   return true;
 }
 }  // namespace server

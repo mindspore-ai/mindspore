@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PS_CONTEXT_H_
 #define MINDSPORE_CCSRC_PS_CONTEXT_H_
 
+#include <map>
 #include <string>
 #include <memory>
 #include "ps/constants.h"
@@ -24,11 +25,31 @@
 
 namespace mindspore {
 namespace ps {
+constexpr char kServerModePS[] = "PARAMETER_SERVER";
+constexpr char kServerModeFL[] = "FEDERATED_LEARNING";
+constexpr char kServerModeHybrid[] = "HYBRID_TRAINING";
 constexpr char kEnvRole[] = "MS_ROLE";
 constexpr char kEnvRoleOfPServer[] = "MS_PSERVER";
+constexpr char kEnvRoleOfServer[] = "MS_SERVER";
 constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
+
+// Use binary data to represent federated learning server's context so that we can judge which round resets the
+// iteration. From right to left, each bit stands for:
+// 0: Server is in parameter server mode.
+// 1: Server is in federated learning mode.
+// 2: Server is in mixed training mode.
+// 3: Server enables sucure aggregation.
+// 4: Server needs worker to overwrite weights.
+// For example: 01010 stands for that the server is in federated learning mode and sucure aggregation  is enabled.
+enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kWorkerOverwriteWeights };
+const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {
+  {0b00010, ResetterRound::kUpdateModel},
+  {0b01010, ResetterRound::kReconstructSeccrets},
+  {0b11100, ResetterRound::kWorkerOverwriteWeights},
+  {0b10100, ResetterRound::kWorkerOverwriteWeights},
+  {0b00100, ResetterRound::kUpdateModel}};
 
 class PSContext {
  public:
@@ -60,18 +81,63 @@ class PSContext {
   void set_cache_enable(bool cache_enable) const;
   void set_rank_id(int rank_id) const;
 
-  // Setter and getter for federated learning.
+  // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set
+  // by ps_context.
+  void set_server_mode(const std::string &server_mode);
+  const std::string &server_mode() const;
+
+  void set_ms_role(const std::string &role);
+
+  void set_worker_num(uint32_t worker_num);
+  uint32_t worker_num() const;
+
+  void set_server_num(uint32_t server_num);
+  uint32_t server_num() const;
+
+  void set_scheduler_ip(const std::string &sched_ip);
+  std::string scheduler_ip() const;
+
+  void set_scheduler_port(uint16_t sched_port);
+  uint16_t scheduler_port() const;
+
+  // Methods federated learning.
+
+  // Generate which round should reset the iteration.
+  void GenerateResetterRound();
+  ResetterRound resetter_round() const;
+
+  void set_fl_server_port(uint16_t fl_server_port);
+  uint16_t fl_server_port() const;
+
+  // Set true if this process is a federated learning worker in cross-silo scenario.
+  void set_fl_client_enable(bool enabled);
+  bool fl_client_enable();
+
+  void set_start_fl_job_threshold(size_t start_fl_job_threshold);
+  size_t start_fl_job_threshold() const;
+
   void set_fl_name(const std::string &fl_name);
   const std::string &fl_name() const;
 
+  // Set the iteration number of the federated learning.
   void set_fl_iteration_num(uint64_t fl_iteration_num);
   uint64_t fl_iteration_num() const;
 
+  // Set the training epoch number of the client.
   void set_client_epoch_num(uint64_t client_epoch_num);
   uint64_t client_epoch_num() const;
 
+  // Set the data batch size of the client.
   void set_client_batch_size(uint64_t client_batch_size);
   uint64_t client_batch_size() const;
+
+  // Set true if worker will overwrite weights on server. Used in hybrid training.
+  void set_worker_overwrite_weights(uint64_t worker_overwrite_weights);
+  uint64_t worker_overwrite_weights() const;
+
+  // Set true if using secure aggregation for federated learning.
+  void set_secure_aggregation(bool secure_aggregation);
+  bool secure_aggregation() const;
 
  private:
   PSContext()
@@ -94,11 +160,22 @@ class PSContext {
   std::string scheduler_host_;
   uint16_t scheduler_port_;
 
+  std::string role_;
+
   // Members for federated learning.
+  std::string server_mode_;
+  ResetterRound resetter_round_;
+  uint16_t fl_server_port_;
+  bool fl_client_enable_;
   std::string fl_name_;
+  size_t start_fl_job_threshold_;
   uint64_t fl_iteration_num_;
   uint64_t client_epoch_num_;
   uint64_t client_batch_size_;
+  bool worker_overwrite_weights_;
+
+  // Federated learning security.
+  bool secure_aggregation_;
 };
 }  // namespace ps
 }  // namespace mindspore
