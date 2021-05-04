@@ -58,7 +58,7 @@ void AllCloseCalculator::ProcessElement(double current, double previous) {
   result = result && (std::abs(current - previous) <= (atol + rtol * std::abs(previous)));
 }
 
-bool AllCloseCalculator::IsAllClose() { return result; }
+bool AllCloseCalculator::IsAllClose() const { return result; }
 
 MeanCalculator::MeanCalculator() : mean(0.0), count(0) {}
 
@@ -68,7 +68,7 @@ void MeanCalculator::ProcessElement(double value) {
   mean += delta / count;
 }
 
-double MeanCalculator::GetMean() { return mean; }
+double MeanCalculator::GetMean() const { return mean; }
 
 VarianceAndMeanCalculator::VarianceAndMeanCalculator() : mean(0.0), count(0), m2(0.0) {}
 
@@ -79,9 +79,9 @@ void VarianceAndMeanCalculator::ProcessElement(double value) {
   m2 += delta * (value - mean);
 }
 
-double VarianceAndMeanCalculator::GetMean() { return mean; }
+double VarianceAndMeanCalculator::GetMean() const { return mean; }
 
-double VarianceAndMeanCalculator::GetVariance() {
+double VarianceAndMeanCalculator::GetVariance() const {
   if (count > 1) {
     return m2 / (count - 1);
   } else {
@@ -92,7 +92,7 @@ double VarianceAndMeanCalculator::GetVariance() {
 double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
 
 template <typename T>
-TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *previous_tensor_ptr, uint32_t num_elements)
+TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements)
     : current_tensor_ptr(reinterpret_cast<T *>(current_tensor_ptr)),
       prev_tensor_ptr(reinterpret_cast<T *>(previous_tensor_ptr)),
       num_elements(num_elements),

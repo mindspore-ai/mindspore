@@ -178,11 +178,11 @@ class TensorData {
 
   ~TensorData() {}
 
-  std::string GetName() { return this->name; }
+  std::string GetName() const { return this->name; }
 
-  size_t GetSlot() { return this->slot; }
+  size_t GetSlot() const { return this->slot; }
 
-  int GetExecutionOrder() { return this->execution_order; }
+  int GetExecutionOrder() const { return this->execution_order; }
 
   void SetExecutionOrder(int execution_order) { this->execution_order = execution_order; }
 
