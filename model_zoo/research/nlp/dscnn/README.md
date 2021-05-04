@@ -94,6 +94,20 @@ First set the config for data, train, eval in src/config.py
   python eval.py --model_dir your_models_folder_path
   ```
 
+- running on GPU
+
+  ```python
+  # run training example
+  python train.py --amp_level 'O3' --device_target='GPU'
+
+  # run evaluation example
+  # if you want to eval a specific model, you should specify model_dir to the ckpt path:
+  python eval.py --device_id 0 --model_dir your_ckpt_path --device_target 'GPU'
+
+  # if you want to eval all the model you saved, you should specify model_dir to the folder where the models are saved.
+  python eval.py --device_id 0 --model_dir your_models_folder_path --device_target 'GPU'
+  ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -105,6 +119,8 @@ First set the config for data, train, eval in src/config.py
     │   ├──run_download_process_data.sh   // shell script for download dataset and prepare feature and label
     │   ├──run_train_ascend.sh            // shell script for train on ascend
     │   ├──run_eval_ascend.sh             // shell script for evaluation on ascend
+    │   ├──run_train_gpu.sh               // shell script for train on gpu
+    │   ├──run_eval_gpu.sh                // shell script for evaluation on gpu
     ├── src
     │   ├──callback.py                    // callbacks
     │   ├──config.py                      // parameter configuration of data, train and eval
@@ -173,6 +189,8 @@ Parameters for both training and evaluation can be set in config.py.
   'log_interval': 100           # logging interval
   'ckpt_path': 'train_outputs'  # the location where checkpoint and log will be saved
   'ckpt_interval': 100          # save ckpt_interval  
+  'device_target': 'Ascend'    # device target used to train or evaluate the dataset.
+  'amp_level': 'O3'             # amp level for the mix precision training
   ```
 
 - config for DS-CNN and evaluation parameters of Speech commands dataset version 1
@@ -184,6 +202,7 @@ Parameters for both training and evaluation can be set in config.py.
                                 # Words to use (others will be added to an unknown label)
   'sample_rate': 16000          # Expected sample rate of the wavs
   'device_id': 1000             # device ID used to train or evaluate the dataset.
+  'device_target': 'Ascend'    # device target used to train or evaluate the dataset.
   'clip_duration_ms': 10        # Expected duration in milliseconds of the wavs
   'window_size_ms': 40.0        # How long each spectrogram timeslice is
   'window_stride_ms': 20.0      # How long each spectrogram timeslice is
@@ -227,6 +246,15 @@ Parameters for both training and evaluation can be set in config.py.
   Best epoch:41 acc:93.73%
   ```
 
+- running on GPU
+
+  for shell script:
+
+  ```python
+  # sh scripts/run_train_gpu.sh [device_num] [device_id] [amp_level]
+  sh scripts/run_train_gpu.sh 1 0 'O3'
+  ```
+
   The checkpoints and log will be saved in the train_outputs.
 
 ## [Evaluation Process](#contents)
@@ -255,6 +283,17 @@ Parameters for both training and evaluation can be set in config.py.
   python eval.py --device_id 0 --model_dir train_outputs/*
   ```
 
+- evaluation on Speech commands dataset version 1 when running on GPU
+
+  for shell scripts:
+
+  ```bash
+  # sh scripts/run_eval_gpu.sh device_id model_dir
+  sh scripts/run_eval_gpu.sh 0 train_outputs/*/*.ckpt
+  or
+  sh scripts/run_eval_gpu.sh 0 train_outputs/*/
+  ```
+
   You can view the results on the screen or from logs in eval_outputs folder. The accuracy of the test dataset will be as follows:
 
   ```python
@@ -268,39 +307,39 @@ Parameters for both training and evaluation can be set in config.py.
 
 ### Train Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | ------------------------------------------------------------ |
-| Model Version              | DS-CNN                                                       |
-| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8               |
-| uploaded Date              | 27/09/2020 (month/day/year)                                  |
-| MindSpore Version          | 1.0.0                                                        |  
-| Dataset                    | Speech commands dataset version 1                            |
-| Training Parameters        | epoch=80, batch_size = 100, lr=0.1                           |
-| Optimizer                  | Momentum                                                     |
-| Loss Function              | Softmax Cross Entropy                                        |
-| outputs                    | probability                                                  |
-| Loss                       | 0.0019                                                       |
-| Speed                      | 2s/epoch                                                     |
-| Total time                 | 4 mins                                                       |
-| Parameters (K)             |  500K                                                        |
-| Checkpoint for Fine tuning |  3.3M (.ckpt file)                                           |
+| Parameters                 | Ascend                                                       | GPU                                              |
+| -------------------------- | ------------------------------------------------------------ | -------------------------------------------------|
+| Model Version              | DS-CNN                                                       | DS-CNN                                           |
+| Resource                   | Ascend 910; CPU 2.60GHz, 56cores; Memory 314G; OS Euler2.8   | NV SMX2 V100-32G                                 |
+| uploaded Date              | 27/09/2020 (month/day/year)                                  | 05/05/2021 (month/day/year)                      |
+| MindSpore Version          | 1.0.0                                                        | 1.2.0                                            |
+| Dataset                    | Speech commands dataset version 1                            | Speech commands dataset version 1                |
+| Training Parameters        | epoch=80, batch_size = 100, lr=0.1                           | epoch=80, batch_size = 100, lr=0.1               |
+| Optimizer                  | Momentum                                                     | Momentum                                         |
+| Loss Function              | Softmax Cross Entropy                                        | Softmax Cross Entropy                            |
+| outputs                    | probability                                                  | probability                                      |
+| Loss                       | 0.0019                                                       | 0.003304138                                               |
+| Speed                      | 2s/epoch                                                     | 3s/epoch                                         |
+| Total time                 | 4 mins                                                       | 6 mins                                                 |
+| Parameters (K)             |  500K                                                        | 500K                                             |
+| Checkpoint for Fine tuning |  3.3M (.ckpt file)                                           | 3.3M (.ckpt file)                                |
 | Script                     | [Link]() | [Link]() |
 
 ### Inference Performance
 
-| Parameters          | Ascend                      |
-| ------------------- | --------------------------- |
-| Model Version       | DS-CNN                      |
-| Resource            | Ascend 910; OS Euler2.8                  |
-| Uploaded Date       | 09/27/2020  |
-| MindSpore Version   | 1.0.0                         |
-| Dataset             |Speech commands dataset version 1     |
-| Training Parameters          | src/config.py                        |
-| outputs             | probability                 |
-| Accuracy            | 93.96%                 |
-| Total time            | 3min                 |
-| Params (K)            |       500K           |
-|Checkpoint for Fine tuning (M)            |      3.3M            |
+| Parameters          | Ascend                      | GPU                      |
+| ------------------- | --------------------------- | -------------------------|
+| Model Version       | DS-CNN                      | DS-CNN                   |
+| Resource            | Ascend 910; OS Euler2.8     | NV SMX2 V100-32G         |
+| Uploaded Date       | 09/27/2020                  | 05/05/2021               |
+| MindSpore Version   | 1.0.0                       | 1.2.0                    |
+| Dataset             |Speech commands dataset version 1     | Speech commands dataset version 1     |
+| Training Parameters          | src/config.py                        | src/config.py                        |
+| outputs             | probability                 |  probability                 |
+| Accuracy            | 93.96%                 | 93.97%                       |
+| Total time            | 3min                 | 2min20s
+| Params (K)            |       500K           |       500K           |
+|Checkpoint for Fine tuning (M)            |      3.3M            |      3.3M            |
 
 # [Description of Random Situation](#contents)
 

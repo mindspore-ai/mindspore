@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,8 +74,9 @@ def val(args, model, test_de):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device_id', type=int, default=1, help='which device the model will be trained on')
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'])
     args, model_settings = eval_config(parser)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Davinci", device_id=args.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
     # Logger
     args.outputs_dir = os.path.join(args.log_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))

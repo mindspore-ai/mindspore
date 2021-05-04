@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import soundfile as sf
 from python_speech_features import mfcc
 from tqdm import tqdm
 
-from src.config import train_config, prepare_model_settings
-from src.utils import prepare_words_list
+from config import train_config, prepare_model_settings
+from utils import prepare_words_list
 
 FLAGS = None
 MAX_NUM_WAVS_PER_CLASS = 2 ** 27 - 1  # ~134M
