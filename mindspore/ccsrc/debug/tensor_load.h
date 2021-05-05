@@ -175,7 +175,7 @@ class TensorLoader {
     std::string file_extension = ".bin";
     std::string path = "";
     if (trans_flag) {
-      path = filepath + '_' + shape + '_' + TypeIdLabel(host_type) + '_' + host_fmt + file_extension;
+      path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt + file_extension;
     } else {
       path = filepath + '_' + shape + '_' + TypeIdToType(addr_type_id)->ToString() + '_' + addr_format + file_extension;
     }
