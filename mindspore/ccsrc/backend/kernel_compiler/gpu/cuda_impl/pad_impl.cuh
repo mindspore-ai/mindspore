@@ -40,4 +40,9 @@ void CalPadGeneral(const size_t size, const T *input, const int num, const int c
                    const int pad_channel_before, const int pad_channel_after, const int old_height, const int old_width,
                    const int padded_height, const int padded_width, const int pad_top, const int pad_left,
                    const T pad_value, T *output, cudaStream_t cuda_stream);
+template <typename T>
+void CalPad3d(const size_t size, const T* input, const int num, const int channels, const int old_depth,
+              const int old_height, const int old_width, const int padded_depth, const int padded_height,
+              const int padded_width, const int pad_head, const int pad_top, const int pad_left, const float pad_value,
+              T* output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_

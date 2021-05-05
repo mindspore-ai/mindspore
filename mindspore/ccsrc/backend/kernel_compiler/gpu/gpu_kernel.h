@@ -150,6 +150,12 @@ class GpuKernel : public KernelMod {
       dimA[1] = SizeToInt(shape[3]);
       dimA[2] = SizeToInt(shape[1]);
       dimA[3] = SizeToInt(shape[2]);
+    } else if (format == "NCDHW") {
+      dimA[0] = SizeToInt(shape[0]);
+      dimA[1] = SizeToInt(shape[1]);
+      dimA[2] = SizeToInt(shape[2]);
+      dimA[3] = SizeToInt(shape[3]);
+      dimA[4] = SizeToInt(shape[4]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -168,6 +174,12 @@ class GpuKernel : public KernelMod {
       strideA[1] = 1;
       strideA[2] = SizeToInt(shape[2] * shape[3]);
       strideA[3] = SizeToInt(shape[3]);
+    } else if (format == "NCDHW") {
+      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3] * shape[4]);
+      strideA[1] = SizeToInt(shape[2] * shape[3] * shape[4]);
+      strideA[2] = SizeToInt(shape[3] * shape[4]);
+      strideA[3] = SizeToInt(shape[4]);
+      strideA[4] = 1;
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
