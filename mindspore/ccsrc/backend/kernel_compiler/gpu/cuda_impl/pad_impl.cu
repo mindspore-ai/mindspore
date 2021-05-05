@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,13 +129,30 @@ __global__ void Pad3d(const size_t size, const T* input, const int num, const in
     const int pos_w = pos % padded_width;
     const int block_num = pos / padded_dhw;
 
-    if (pos_d - pad_head < 0 || pos_h - pad_top < 0 || pos_w - pad_left < 0 || pos_h - pad_head >= old_depth ||
+    if (pos_d - pad_head < 0 || pos_h - pad_top < 0 || pos_w - pad_left < 0 || pos_d - pad_head >= old_depth ||
         pos_h - pad_top >= old_height || pos_w - pad_left >= old_width) {
       output[pos] = pad_value_;
     } else {
       int index = block_num * old_dhw + old_hw * (pos_d - pad_head) + old_width * (pos_h - pad_top) + pos_w - pad_left;
       output[pos] = input[index];
     }
+  }
+  return;
+}
+
+template <typename T>
+__global__ void PadGrad3d(const size_t size, const T* dy, const int num, const int channels, const int old_depth,
+                          const int old_height, const int old_width, const int old_dhw, const int old_hw,
+                          const int padded_depth, const int padded_height, const int padded_width,
+                          const int padded_dhw, const int padded_hw, const int pad_head, const int pad_top,
+                          const int pad_left, T* dx) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+    const int block_num = pos / old_dhw;
+    const int pos_d = pos / old_hw % old_depth + pad_head;
+    const int pos_h = pos / old_width % old_height + pad_top;
+    const int pos_w = pos % old_width + pad_left;
+    const int index = block_num * padded_dhw + pos_d * padded_hw + pos_h * padded_width + pos_w;
+    dx[pos] = dy[index];
   }
   return;
 }
@@ -204,6 +221,22 @@ void CalPad3d(const size_t size, const T* input, const int num, const int channe
   return;
 }
 
+template <typename T>
+void CalPadGrad3d(const size_t size, const T* dy, const int num, const int channels, const int old_depth,
+                  const int old_height, const int old_width, const int padded_depth, const int padded_height,
+                  const int padded_width, const int pad_head, const int pad_top, const int pad_left, T* dx,
+                  cudaStream_t cuda_stream) {
+  const int old_hw = old_height * old_width;
+  const int old_dhw = old_depth * old_hw;
+  const int padded_hw = padded_height * padded_width;
+  const int padded_dhw = padded_depth * padded_hw;
+  PadGrad3d<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy, num, channels, old_depth, old_height,
+                                                               old_width, old_dhw, old_hw, padded_depth, padded_height,
+                                                               padded_width, padded_dhw, padded_hw, pad_head, pad_top,
+                                                               pad_left, dx);
+  return;
+}
+
 template void CalPad<float>(const size_t size, const float* input, const int num, const int channels,
                             const int old_height, const int old_width, const int padded_height, const int padded_width,
                             const int pad_top, const int pad_left, float pad_value, float* output,
@@ -259,3 +292,13 @@ template void CalPad3d<half>(const size_t size, const half* input, const int num
                              const int old_depth, const int old_height, const int old_width, const int padded_depth,
                              const int padded_height, const int padded_width, const int pad_head, const int pad_top,
                              const int pad_left, const float pad_value, half* output, cudaStream_t cuda_stream);
+template void CalPadGrad3d<float>(const size_t size, const float* dy, const int num, const int channels,
+                                  const int old_depth, const int old_height, const int old_width,
+                                  const int padded_depth, const int padded_height, const int padded_width,
+                                  const int pad_head, const int pad_top, const int pad_left, float* dx,
+                                  cudaStream_t cuda_stream);
+template void CalPadGrad3d<half>(const size_t size, const half* dy, const int num, const int channels,
+                                 const int old_depth, const int old_height, const int old_width,
+                                 const int padded_depth, const int padded_height, const int padded_width,
+                                 const int pad_head, const int pad_top, const int pad_left, half* dx,
+                                 cudaStream_t cuda_stream);

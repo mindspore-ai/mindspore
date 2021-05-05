@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,4 +45,9 @@ void CalPad3d(const size_t size, const T* input, const int num, const int channe
               const int old_height, const int old_width, const int padded_depth, const int padded_height,
               const int padded_width, const int pad_head, const int pad_top, const int pad_left, const float pad_value,
               T* output, cudaStream_t cuda_stream);
+template <typename T>
+void CalPadGrad3d(const size_t size, const T* dy, const int num, const int channels, const int old_depth,
+                  const int old_height, const int old_width, const int padded_depth, const int padded_height,
+                  const int padded_width, const int pad_head, const int pad_top, const int pad_left, T* dx,
+                  cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_PADIMPL_H_
