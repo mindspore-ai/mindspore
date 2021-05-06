@@ -70,7 +70,6 @@ int main(int argc, char **argv) {
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
-
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
@@ -90,14 +89,13 @@ int main(int argc, char **argv) {
   std::vector<float> mean = {0.485 * 255, 0.456 * 255, 0.406 * 255};
   std::vector<float> std = {0.229 * 255, 0.224 * 255, 0.225 * 255};
 
-  std::shared_ptr<TensorTransform> decode(new Decode());
-  std::shared_ptr<TensorTransform> resize(new Resize(resize_paras));
-  std::shared_ptr<TensorTransform> centercrop(new CenterCrop(crop_paras));
-  std::shared_ptr<TensorTransform> normalize(new Normalize(mean, std));
-  std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
+  auto decode = Decode();
+  auto resize = Resize(resize_paras);
+  auto centercrop = CenterCrop(crop_paras);
+  auto normalize = Normalize(mean, std);
+  auto hwc2chw = HWC2CHW();
 
-  std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop, normalize, hwc2chw};
-  mindspore::dataset::Execute SingleOp(trans_list);
+  mindspore::dataset::Execute SingleOp({decode, resize, centercrop, normalize, hwc2chw});
 
   for (size_t i = 0; i < size; ++i) {
     for (size_t j = 0; j < all_files[i].size(); ++j) {

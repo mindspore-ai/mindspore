@@ -350,8 +350,7 @@ std::vector<std::string> SampleProcess::GetModelExecCostTimeInfo() {
         " ms of infer_count " << infer_cnt << std::endl;
     result.emplace_back(timeCost.str());
 
-    double totalCostTime;
-    totalCostTime = totalCostTime_map_.begin()->second - totalCostTime_map_.begin()->first;
+    double totalCostTime = totalCostTime_map_.begin()->second - totalCostTime_map_.begin()->first;
     std::stringstream totalTimeCost;
     totalTimeCost << "total inference cost time: "<< totalCostTime << " ms; count " << infer_cnt << std::endl;
     result.emplace_back(totalTimeCost.str());

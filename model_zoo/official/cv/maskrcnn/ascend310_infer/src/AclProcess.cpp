@@ -298,12 +298,14 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMalloc failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
+        free(im_info);
         return ret;
     }
     ret = aclrtMemcpy(reinterpret_cast<uint8_t *>(imInfo_dst), 8, im_info, 8, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
         std::cout << "aclrtMemcpy failed, ret = " << ret << std::endl;
         aclrtFree(imInfo_dst);
+        free(im_info);
         return ret;
     }
 
@@ -327,6 +329,7 @@ int AclProcess::ModelInfer(std::map<double, double> *costTime_map) {
         return ret;
     }
     RELEASE_DVPP_DATA(resizeOutData->data);
+    free(im_info);
     return OK;
 }
 

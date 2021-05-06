@@ -1,12 +1,12 @@
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,14 +48,13 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
     std::string homePath = "./result_Files";
     for (size_t i = 0; i < outputs.size(); ++i) {
         size_t outputSize;
-        std::shared_ptr<const void> netOutput;
-        netOutput = outputs[i].Data();
+        std::shared_ptr<const void> netOutput = outputs[i].Data();
         outputSize = outputs[i].DataSize();
         int pos = imageFile.rfind('/');
         std::string fileName(imageFile, pos + 1);
         fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
         std::string outFileName = homePath + "/" + fileName;
-        FILE * outputFile = fopen(outFileName.c_str(), "wb");
+        FILE *outputFile = fopen(outFileName.c_str(), "wb");
         fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
         fclose(outputFile);
         outputFile = nullptr;
@@ -104,8 +103,7 @@ DIR *OpenDir(std::string_view dirName) {
         std::cout << "dirName is not a valid directory !" << std::endl;
         return nullptr;
     }
-    DIR *dir;
-    dir = opendir(realPath.c_str());
+    DIR *dir = opendir(realPath.c_str());
     if (dir == nullptr) {
         std::cout << "Can not open dir " << dirName << std::endl;
         return nullptr;
@@ -118,7 +116,6 @@ std::string RealPath(std::string_view path) {
     char realPathMem[PATH_MAX] = {0};
     char *realPathRet = nullptr;
     realPathRet = realpath(path.data(), realPathMem);
-
     if (realPathRet == nullptr) {
         std::cout << "File: " << path << " is not exist.";
         return "";
