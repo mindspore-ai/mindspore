@@ -5150,7 +5150,7 @@ class Identity(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)

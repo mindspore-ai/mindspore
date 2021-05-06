@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "identity_impl.cuh"
+#include "eye_impl.cuh"
 #include <iostream>
 template <typename T>
-__global__ void IdentityKernel(const size_t size, const size_t dim, T *output_addr) {
+__global__ void EyeKernel(const size_t size, const size_t dim, T *output_addr) {
   for (size_t pointIdx = blockIdx.x * blockDim.x + threadIdx.x; pointIdx < (size); pointIdx += blockDim.x * gridDim.x) {
     size_t batchIdx = pointIdx / (dim * dim);
     size_t dst_x = (pointIdx - batchIdx * dim * dim) / dim;
@@ -31,10 +31,9 @@ __global__ void IdentityKernel(const size_t size, const size_t dim, T *output_ad
 }
 
 template <typename T>
-void Identity(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream) {
-  IdentityKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dim, output_addr);
+void Eye(const size_t size, const size_t dim, T *output_addr, cudaStream_t cuda_stream) {
+  EyeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dim, output_addr);
   return;
 }
 
-template void Identity<float>(const size_t size, const size_t dim, float *output_addr, cudaStream_t cuda_stream);
-
+template void Eye<float>(const size_t size, const size_t dim, float *output_addr, cudaStream_t cuda_stream);

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <thread>
@@ -251,6 +252,11 @@ void Atanh(const T *in, T *out, size_t size) {
   };
   CPUKernelUtils::ParallelFor(task, size);
 }
+
+template <typename T>
+void Identity(const T *in, T *out, size_t size) {
+  std::copy(in, in + size, out);
+}
 }  // namespace
 
 static const std::map<std::string, OperateType> kArithmeticOpTypeMap = {{prim::kPrimNeg->name(), NEG},
@@ -274,7 +280,8 @@ static const std::map<std::string, OperateType> kArithmeticOpTypeMap = {{prim::k
                                                                         {prim::kPrimCosh->name(), COSH},
                                                                         {prim::kPrimAsinh->name(), ASINH},
                                                                         {prim::kPrimAcosh->name(), ACOSH},
-                                                                        {prim::kPrimAtanh->name(), ATANH}};
+                                                                        {prim::kPrimAtanh->name(), ATANH},
+                                                                        {prim::kPrimIdentityMath->name(), IDENTITY}};
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -334,6 +341,17 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   } else {
     MS_LOG(EXCEPTION) << "Not support " << operate_type_;
   }
+}
+
+template <typename T>
+bool IdentityCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+  Identity<T>(input, output, lens);
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

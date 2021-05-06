@@ -118,6 +118,7 @@ enum OperateType {
   ATAN2,
   RINT,
   ROUND,
+  IDENTITY,
 };
 
 class CPUKernel : public kernel::KernelMod {

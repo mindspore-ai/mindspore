@@ -433,6 +433,7 @@ inline const PrimitivePtr kPrimACosGrad = std::make_shared<Primitive>("ACosGrad"
 inline const PrimitivePtr kPrimAtanGrad = std::make_shared<Primitive>("AtanGrad");
 inline const PrimitivePtr kPrimFloorMod = std::make_shared<Primitive>("FloorMod");
 inline const PrimitivePtr kPrimWhere = std::make_shared<Primitive>("Where");
+inline const PrimitivePtr kPrimIdentityMath = std::make_shared<Primitive>("Identity", kSideEffectPropagate);
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
