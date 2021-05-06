@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-#include "ps/server/local_meta_storage.h"
-#include <string>
+#include "ps/server/local_meta_store.h"
 
 namespace mindspore {
 namespace ps {
 namespace server {
-void LocalMetaStorage::remove_value(const std::string &name) {
+void LocalMetaStore::remove_value(const std::string &name) {
   std::unique_lock<std::mutex> lock(mtx_);
   if (key_to_meta_.count(name) != 0) {
     key_to_meta_.erase(key_to_meta_.find(name));
   }
 }
 
-bool LocalMetaStorage::has_value(const std::string &name) {
+bool LocalMetaStore::has_value(const std::string &name) {
   std::unique_lock<std::mutex> lock(mtx_);
   return key_to_meta_.count(name) != 0;
 }
 
-void LocalMetaStorage::set_curr_iter_num(size_t num) {
+void LocalMetaStore::set_curr_iter_num(size_t num) {
   std::unique_lock<std::mutex> lock(mtx_);
   curr_iter_num_ = num;
 }
 
-const size_t LocalMetaStorage::curr_iter_num() {
+const size_t LocalMetaStore::curr_iter_num() {
   std::unique_lock<std::mutex> lock(mtx_);
   return curr_iter_num_;
 }

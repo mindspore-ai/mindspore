@@ -63,10 +63,6 @@ class Executor {
   // asynchronously.
   bool HandleModelUpdateAsync(const std::map<std::string, UploadData> &feature_map);
 
-  // Called in asynchronous federated learning training mode. Returns whole model in key-value where key refers to the
-  // parameter name.
-  std::map<std::string, AddressPtr> HandleAsyncGetModel();
-
   // Forcibly overwrite specific weights in overwriteWeights message.
   bool HandleOverwriteWeightsByKey(const std::map<std::string, Address> &feature_map);
 

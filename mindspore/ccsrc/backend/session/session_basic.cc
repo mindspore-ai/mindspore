@@ -43,7 +43,7 @@
 #include "debug/common.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/context.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -2357,7 +2357,7 @@ void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
 #endif
 }
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
   if (!ps::PSContext::instance()->is_worker()) {
     return;

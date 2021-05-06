@@ -43,7 +43,7 @@
 #include "vm/transform.h"
 #include "parse/python_adapter.h"
 #include "frontend/optimizer/py_pass_manager.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
@@ -606,7 +606,7 @@ bool ExecuteAction(const ResourcePtr &res) {
   return true;
 }
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 bool StartPSWorkerAction(const ResourcePtr &res) {
   ps::Worker::GetInstance().Run();
   return true;
@@ -782,7 +782,7 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_worker()) {
     actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
   }
@@ -796,7 +796,7 @@ std::vector<ActionItem> VmPipeline() {
   return actions;
 }
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 std::vector<ActionItem> PServerPipeline() {
   auto actions = CommonPipeline();
   actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));

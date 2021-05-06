@@ -28,7 +28,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
@@ -192,7 +192,7 @@ Status UniqueInfo::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph();
   if (gen_g.Init(cnode) != SUCCESS) {
@@ -230,7 +230,7 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 #endif
 
 ReplaceGraphPtr UniqueInfo::replace_graph(const CNodePtr &cnode) {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     auto inputs = cnode->inputs();
     if (inputs.empty()) {

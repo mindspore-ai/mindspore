@@ -51,7 +51,7 @@ class UniqueInfo : public OperatorInfo {
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferAsLossDivisor() override { return SUCCESS; }
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 #endif
 

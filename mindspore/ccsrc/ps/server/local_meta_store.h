@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORAGE_H_
-#define MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORAGE_H_
+#ifndef MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_
+#define MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_
 
 #include <any>
 #include <mutex>
@@ -26,13 +26,13 @@
 namespace mindspore {
 namespace ps {
 namespace server {
-// LocalMetaStorage class is used for metadata storage of this server process.
+// LocalMetaStore class is used for metadata storage of this server process.
 // For example, the current iteration number, time windows for round kernels, etc.
-// LocalMetaStorage is threadsafe.
-class LocalMetaStorage {
+// LocalMetaStore is threadsafe.
+class LocalMetaStore {
  public:
-  static LocalMetaStorage &GetInstance() {
-    static LocalMetaStorage instance;
+  static LocalMetaStore &GetInstance() {
+    static LocalMetaStore instance;
     return instance;
   }
 
@@ -43,7 +43,7 @@ class LocalMetaStorage {
   }
 
   template <typename T>
-  const T &value(const std::string &name) {
+  T value(const std::string &name) {
     std::unique_lock<std::mutex> lock(mtx_);
     try {
       T value = std::any_cast<T>(key_to_meta_[name]);
@@ -71,10 +71,10 @@ class LocalMetaStorage {
   const size_t curr_iter_num();
 
  private:
-  LocalMetaStorage() = default;
-  ~LocalMetaStorage() = default;
-  LocalMetaStorage(const LocalMetaStorage &) = delete;
-  LocalMetaStorage &operator=(const LocalMetaStorage &) = delete;
+  LocalMetaStore() = default;
+  ~LocalMetaStore() = default;
+  LocalMetaStore(const LocalMetaStore &) = delete;
+  LocalMetaStore &operator=(const LocalMetaStore &) = delete;
 
   // key_to_meta_ stores metadata with key-value format.
   std::unordered_map<std::string, std::any> key_to_meta_;
@@ -85,4 +85,4 @@ class LocalMetaStorage {
 }  // namespace server
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORAGE_H_
+#endif  // MINDSPORE_CCSRC_PS_SERVER_LOCAL_META_STORE_H_

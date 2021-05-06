@@ -60,6 +60,19 @@ class PSContext {
   void set_cache_enable(bool cache_enable) const;
   void set_rank_id(int rank_id) const;
 
+  // Setter and getter for federated learning.
+  void set_fl_name(const std::string &fl_name);
+  const std::string &fl_name() const;
+
+  void set_fl_iteration_num(uint64_t fl_iteration_num);
+  uint64_t fl_iteration_num() const;
+
+  void set_client_epoch_num(uint64_t client_epoch_num);
+  uint64_t client_epoch_num() const;
+
+  void set_client_batch_size(uint64_t client_batch_size);
+  uint64_t client_batch_size() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -80,6 +93,12 @@ class PSContext {
   uint32_t server_num_;
   std::string scheduler_host_;
   uint16_t scheduler_port_;
+
+  // Members for federated learning.
+  std::string fl_name_;
+  uint64_t fl_iteration_num_;
+  uint64_t client_epoch_num_;
+  uint64_t client_batch_size_;
 };
 }  // namespace ps
 }  // namespace mindspore

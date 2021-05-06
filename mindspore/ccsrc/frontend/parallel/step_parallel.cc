@@ -46,7 +46,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -3553,7 +3553,7 @@ static void HandleFullySplitParameters(const FuncGraphPtr &root) {
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }

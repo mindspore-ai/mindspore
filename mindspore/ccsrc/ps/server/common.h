@@ -24,13 +24,17 @@
 #include <memory>
 #include <functional>
 #include "proto/ps.pb.h"
+#include "proto/fl.pb.h"
 #include "ir/anf.h"
 #include "utils/utils.h"
 #include "ir/dtype/type_id.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "schema/fl_job_generated.h"
+#include "schema/cipher_generated.h"
 #include "ps/ps_context.h"
 #include "ps/core/communicator/http_message_handler.h"
 #include "ps/core/communicator/tcp_server.h"
+#include "ps/core/communicator/message_handler.h"
 
 namespace mindspore {
 namespace ps {
@@ -40,13 +44,15 @@ enum ServerMode { PARAMETER_SERVER = 0, FL_SERVER };
 enum CommType { HTTP = 0, TCP };
 enum AggregationType { FedAvg = 0, FedAdam, FedAdagarg, FedMeta, qffl, DenseGradAccum, SparseGradAccum };
 
-using kernel::Address;
-using kernel::AddressPtr;
-using kernel::CPUKernel;
+using mindspore::kernel::Address;
+using mindspore::kernel::AddressPtr;
+using mindspore::kernel::CPUKernel;
+using FBBuilder = flatbuffers::FlatBufferBuilder;
 using TimeOutCb = std::function<void(void)>;
 using StopTimerCb = std::function<void(void)>;
 using FinishIterCb = std::function<void(void)>;
 using FinalizeCb = std::function<void(void)>;
+using MessageCallback = std::function<void(const std::shared_ptr<core::MessageHandler> &)>;
 
 // Information about whether server kernel will reuse kernel node memory from the front end.
 // Key refers to the server kernel's parameter name, like "weights", "grad", "learning_rate".

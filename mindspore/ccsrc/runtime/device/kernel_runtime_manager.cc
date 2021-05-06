@@ -16,14 +16,14 @@
 
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
 namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
   }
@@ -125,7 +125,7 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
   if (runtime == nullptr) {
     return;
   }
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
   }

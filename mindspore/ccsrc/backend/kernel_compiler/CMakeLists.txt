@@ -75,7 +75,7 @@ if(ENABLE_CPU)
     endif()
 endif()
 
-if(NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
+if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/apply_momentum_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_proxy_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/embedding_look_up_ps_kernel.cc")
