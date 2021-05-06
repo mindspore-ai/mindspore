@@ -4084,7 +4084,7 @@ class Atan2(_MathBinaryOp):
         TypeError: If `input_x` or `input_y` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1]), mindspore.float32)
