@@ -1853,7 +1853,7 @@ def take(a, indices, axis=None, mode='clip'):
         mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how out-of-bounds
             indices will behave.
 
-            ‘raise’ – raise an error (default);
+            ‘raise’ – raise an error;
 
             ‘wrap’ – wrap around;
 
@@ -2175,7 +2175,7 @@ def choose(a, choices, mode='clip'):
         mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
             ``[0, n-1]`` will be treated:
 
-            ‘raise’ – raise an error (default);
+            ‘raise’ – raise an error;
 
             ‘wrap’ – wrap around;
 
@@ -2420,7 +2420,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         >>> import mindspore.numpy as np
         >>> x = np.linspace(-2.5, 2.5, 6)
         >>> print(np.piecewise(x, [x < 0, x >= 0], [-1, 1]))
-        [2.5 1.5 0.5 0.5 1.5 2.5]
+        [-1 -1 -1  1  1  1]
     """
     x = _to_tensor(x)
     choicelist = funclist

@@ -2176,15 +2176,15 @@ def test_histogram():
     for bins in [(1, 2, 3), [2], 1, 5, 10]:
         # pylint: disable=redefined-builtin
         for range in [None, (3, 3), (2, 20)]:
-            match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, error=3)
-            match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, density=True, error=3)
+            match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, error=1)
+            match_res(mnp.histogram, onp.histogram, x, bins=bins, range=range, density=True, error=1)
             mnp_res = mnp.histogram(to_tensor(x), bins=bins, range=range, weights=to_tensor(weights))
             onp_res = onp.histogram(x, bins=bins, range=range, weights=weights)
-            match_all_arrays(mnp_res, onp_res, error=3)
+            match_all_arrays(mnp_res, onp_res, error=1)
             mnp_res = mnp.histogram(to_tensor(x), bins=bins, range=range,
                                     weights=to_tensor(weights), density=True)
             onp_res = onp.histogram(x, bins=bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res, onp_res, error=3)
+            match_all_arrays(mnp_res, onp_res, error=1)
 
 
 @pytest.mark.level1
