@@ -2595,7 +2595,7 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; t
     # Run on x86-java
     echo "start Run x86 java ..."
     x86_java_path=${release_path}/aar/avx
-    Run_x86_java`` &
+    Run_x86_java &
     Run_x86_java_PID=$!
     sleep 1
 fi
@@ -2665,7 +2665,7 @@ fi
 
 if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
     cd ${basepath} || exit 1
-    bash ${basepath}/run_cropper.sh -r ${release_path} -d ${device_id} -m ${models_path}
+    bash ${basepath}/run_cropper.sh -r ${release_path} -d ${device_id}
     Run_cropper_status=$?
     if [[ ${Run_cropper_status} != 0 ]];then
         echo "Run cropper failed"
