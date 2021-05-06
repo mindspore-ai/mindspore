@@ -33,9 +33,7 @@ __kernel void FullConnection(__read_only image2d_t input, __write_only image2d_t
     } else if (act_type == ActivationType_RELU6) {
       result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
     } else if (act_type == ActivationType_TANH) {
-      FLT4 exp0 = exp(result);
-      FLT4 exp1 = exp(-result);
-      result = (exp0 - exp1) / (exp0 + exp1);
+      result = tanh(result);
     }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
@@ -75,9 +73,7 @@ __kernel void FullConnectionWeightVar(__read_only image2d_t input, __write_only 
     } else if (act_type == ActivationType_RELU6) {
       result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
     } else if (act_type == ActivationType_TANH) {
-      FLT4 exp0 = exp(result);
-      FLT4 exp1 = exp(-result);
-      result = (exp0 - exp1) / (exp0 + exp1);
+      result = tanh(result);
     }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
