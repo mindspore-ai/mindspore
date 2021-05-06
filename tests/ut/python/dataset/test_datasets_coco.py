@@ -234,7 +234,7 @@ def test_coco_case_exception():
             pass
         assert False
     except ValueError as e:
-        assert "does not exist or permission denied" in str(e)
+        assert "does not exist or is not a directory or permission denied" in str(e)
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file="./file_not_exist", task="Detection")
