@@ -168,10 +168,12 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                             f.write(checkpoint_list.SerializeToString())
                         else:
                             plain_data += checkpoint_list.SerializeToString()
-                            while len(plain_data) >= SLICE_SIZE * 1024:
-                                cipher_data += _encrypt(plain_data[0: SLICE_SIZE*1024], SLICE_SIZE*1024, enc_key,
+
+                            max_block_size = SLICE_SIZE*1024
+                            while len(plain_data) >= max_block_size:
+                                cipher_data += _encrypt(plain_data[0: max_block_size], max_block_size, enc_key,
                                                         len(enc_key), enc_mode)
-                                plain_data = plain_data[SLICE_SIZE*1024:]
+                                plain_data = plain_data[max_block_size:]
 
                 if enc_key is not None:
                     if plain_data:
