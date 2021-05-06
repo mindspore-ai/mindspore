@@ -14,12 +14,6 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
-then 
-    echo "Usage: sh run_process_data.sh [SRC_PATH] [DATASET_NAME]"
-exit 1
-fi
-
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"
@@ -27,29 +21,33 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-SRC_PATH=$(get_real_path $1)
-echo $SRC_PATH
 
-DATASET_NAME=$2
+DATASET_NAME=$1
 echo $DATASET_NAME
+MODEL_CKPT=$(get_real_path $2)
+echo $MODEL_CKPT
 
-if [ ! -d data_mr ]; then
-  mkdir data_mr
-else
-  echo data_mr exist
+
+if [ -d "eval" ];
+then
+    rm -rf ./eval
 fi
-MINDRECORD_PATH=`pwd`/data_mr
+mkdir ./eval
+cp ../*.py ./eval
+cp ../*.yaml ./eval
+cp *.sh ./eval
+cp -r ../src ./eval
+cp -r ../model_utils ./eval
+cd ./eval || exit
+echo "start eval on standalone GPU"
 
-rm -f $MINDRECORD_PATH/$DATASET_NAME
-rm -f $MINDRECORD_PATH/$DATASET_NAME.db
+if [ $DATASET_NAME == cora ]
+then
+    python eval.py --data_dir=../data_mr/$DATASET_NAME --device_target="GPU"  --model_ckpt $MODEL_CKPT &> log &
+fi
 
-cd ../../../../utils/graph_to_mindrecord || exit
-
-python writer.py --mindrecord_script $DATASET_NAME \
---mindrecord_file "$MINDRECORD_PATH/$DATASET_NAME" \
---mindrecord_partitions 1 \
---mindrecord_header_size_by_bit 18 \
---mindrecord_page_size_by_bit 20 \
---graph_api_args "$SRC_PATH"
-
-cd - || exit
+if [ $DATASET_NAME == citeseer ]
+then
+    python eval.py --data_dir=../data_mr/$DATASET_NAME --device_target="GPU"  --model_ckpt $MODEL_CKPT &> log &
+fi
+cd ..
