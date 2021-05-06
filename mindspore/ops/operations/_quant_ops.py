@@ -22,6 +22,9 @@ from ..._checkparam import Rel
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 from ...common import dtype as mstype
 
+if context.get_context('device_target') == "Ascend":
+    import mindspore.ops._op_impl._custom_op
+
 __all__ = ["MinMaxUpdatePerLayer",
            "MinMaxUpdatePerChannel",
            "FakeLearnedScaleQuantPerLayer",
