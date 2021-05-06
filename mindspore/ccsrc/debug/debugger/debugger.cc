@@ -182,7 +182,7 @@ void Debugger::SetOpOverflowBinPath(uint32_t graph_id) {
   d = opendir(overflow_bin_path.c_str());
   if (d != nullptr) {
     struct dirent *dir;
-    while ((dir = readdir(d)) != NULL) {
+    while ((dir = readdir(d)) != nullptr) {
       if (dir->d_type == DT_REG) {
         std::string file_path = overflow_bin_path;
         file_path.append(dir->d_name);
@@ -216,7 +216,7 @@ void Debugger::CheckDatasetSinkMode() {
   }
 }
 
-bool Debugger::CheckDebuggerDumpEnabled() {
+bool Debugger::CheckDebuggerDumpEnabled() const {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
     return device::KernelRuntime::DumpDataEnabled();
@@ -224,7 +224,7 @@ bool Debugger::CheckDebuggerDumpEnabled() {
   return false;
 }
 
-bool Debugger::CheckDebuggerEnabled() {
+bool Debugger::CheckDebuggerEnabled() const {
   // get env variables to configure debugger
   const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
   if (env_enable_char != nullptr) {
@@ -250,7 +250,7 @@ void Debugger::CheckDebuggerEnabledParam() {
   }
 }
 
-bool Debugger::CheckDebuggerPartialMemoryEnabled() {
+bool Debugger::CheckDebuggerPartialMemoryEnabled() const {
   const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
   if (env_partial_mem_str != nullptr) {
     MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
@@ -261,7 +261,7 @@ bool Debugger::CheckDebuggerPartialMemoryEnabled() {
   return false;
 }
 
-bool Debugger::DebuggerBackendEnabled() { return CheckDebuggerDumpEnabled() || CheckDebuggerEnabled(); }
+bool Debugger::DebuggerBackendEnabled() const { return CheckDebuggerDumpEnabled() || CheckDebuggerEnabled(); }
 
 void Debugger::Reset() {
   // access lock for public method
@@ -315,7 +315,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
           LoadParametersAndConst();
           // revert graph ptr to original value
           graph_ptr_ = dbg_graph_ptr;
-          SendMultiGraphsAndSuspend(graph_proto_list_, graph_sum);
+          SendMultiGraphsAndSuspend(graph_proto_list_);
           graph_proto_list_.clear();
         } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
           // stop only when receive the first sub run graph for each step
@@ -353,7 +353,7 @@ void Debugger::PostExecute() {
   }
 }
 
-bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) {
+bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
   if (debugger_enabled_ && !is_dataset_graph_) {
     auto is_watchpoint = debug_services_->IsWatchPoint(cur_name_, kernel);
     // if node has a watchpoint on it, is next_to node, or continue_to node then read the kernel tensor data
@@ -470,7 +470,7 @@ void Debugger::CheckDatasetGraph() {
 
 GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   // convert kernel graph to debugger modelproto
-  ModelProto model = GetDebuggerFuncGraphProto(graph_ptr_);
+  ModelProto model = GetDebuggerFuncGraphProto(graph_ptr);
   return model.graph();
 }
 
@@ -528,7 +528,7 @@ bool Debugger::SendMetadata(bool version_check) {
   return ret;
 }
 
-void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list, uint32_t graph_sum) {
+void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list) {
   if (!SendMetadata(true)) {
     return;
   }
@@ -719,7 +719,7 @@ void Debugger::ProcessKViewCMD(const EventReply &reply) {
   }
 }
 
-void AddTensorProtoInfo(TensorProto *tensor_item, TensorProto tensor) {
+void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
   tensor_item->set_node_name(tensor.node_name());
   tensor_item->set_slot(tensor.slot());
   tensor_item->set_iter(tensor.iter());
@@ -993,9 +993,9 @@ std::string GetTensorFullName(const TensorProto &tensor) {
 
 bool GetMiVersionMatched(const EventReply &reply) { return reply.version_matched(); }
 
-bool Debugger::partial_memory() { return partial_memory_; }
+bool Debugger::partial_memory() const { return partial_memory_; }
 
-void Debugger::SetCurNode(std::string cur_name) {
+void Debugger::SetCurNode(const std::string &cur_name) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   cur_name_ = cur_name;
@@ -1031,7 +1031,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
     MS_LOG(INFO) << "processing bin file path " << overflow_bin_path << ", graph id " << graph_id;
     if (d != nullptr) {
       struct dirent *dir = nullptr;
-      while ((dir = readdir(d)) != NULL) {
+      while ((dir = readdir(d)) != nullptr) {
         if (dir->d_type == DT_REG) {
           std::string file_path = overflow_bin_path;
           file_path.append(dir->d_name);
@@ -1111,7 +1111,7 @@ bool Debugger::CheckPort(const char *port) {
   return true;
 }
 
-bool Debugger::CheckIp(const char *host) {
+bool Debugger::CheckIp(const char *host) const {
   std::regex reg_ip(
     "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
     "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
@@ -1122,7 +1122,7 @@ bool Debugger::CheckIp(const char *host) {
   return std::regex_match(host_str, smat, reg_ip);
 }
 
-uint32_t Debugger::GetFirstRunGraphId() { return rungraph_id_list_.front(); }
+uint32_t Debugger::GetFirstRunGraphId() const { return rungraph_id_list_.front(); }
 
 void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -1189,7 +1189,6 @@ void Debugger::LoadGraphOutputs() {
   int exec_order = 1;
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
-    auto node_name = AnfAlgo::GetCNodeName(node);
     std::string kernel_name = node->fullname_with_scope();
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     if (partial_memory_) {
@@ -1238,7 +1237,7 @@ void Debugger::ClearCurrentData() {
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
     debug_services_->EmptyCurrentTensor();
 }
-bool Debugger::TensorExistsInCurrent(std::string tensor_name) {
+bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   return debug_services_->TensorExistsInCurrent(tensor_name);
 }
 
