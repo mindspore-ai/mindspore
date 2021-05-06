@@ -14,10 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=5
+export DEVICE_ID=0
 export SLOG_PRINT_TO_STDOUT=0
-train_path=/PATH/TO/EXPERIMENTS_DIR
-train_code_path=/PATH/TO/MODEL_ZOO_CODE
+EXECUTE_PATH=$(pwd)
+train_path=${EXECUTE_PATH}/s16_aug_train_1p
 
 if [ -d ${train_path} ]; then
   rm -rf ${train_path}
@@ -27,7 +27,7 @@ mkdir ${train_path}/device${DEVICE_ID}
 mkdir ${train_path}/ckpt
 cd ${train_path}/device${DEVICE_ID} || exit
 
-python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
+python ${EXECUTE_PATH}/../train.py --data_file=/PATH_TO_DATA/vocaug/vocaug_mindrecord/vocaug_mindrecord0  \
                     --train_dir=${train_path}/ckpt  \
                     --train_epochs=200  \
                     --batch_size=32  \

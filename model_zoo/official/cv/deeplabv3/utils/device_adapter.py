@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-export DEVICE_ID=7
-EXECUTE_PATH=$(pwd)
+"""Device adapter for ModelArts"""
 
-python ${EXECUTE_PATH}/../src/data/build_seg_data.py  --data_root=/PATH/TO/DATA_ROOT  \
-                    --data_lst=/PATH/TO/DATA_lst.txt  \
-                    --dst_path=/PATH/TO/MINDRECORED_NAME.mindrecord  \
-                    --num_shards=8  \
-                    --shuffle=True
+from .config import config
+
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]
