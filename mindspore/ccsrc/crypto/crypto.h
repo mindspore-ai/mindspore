@@ -33,7 +33,7 @@ typedef unsigned char Byte;
 
 namespace mindspore {
 namespace crypto {
-const int MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment 512MB
+const int MAX_BLOCK_SIZE = 512 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
 const unsigned int MAGIC_NUM = 0x7F3A5ED8;     // Magic number
 
 Byte *Encrypt(int64_t *encrypt_len, Byte *plain_data, const int64_t plain_len, Byte *key, const int32_t key_len,
