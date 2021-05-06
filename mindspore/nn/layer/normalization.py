@@ -381,13 +381,15 @@ class BatchNorm2d(_BatchNorm):
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         use_batch_statistics (bool):
-            If true, use the mean value and variance value of current batch data and track running mean
-                and running varance.
-            If false, use the mean value and variance value of specified value, and not track statistical value.
-            If None, The use_batch_statistics is automatically assigned process according to the training and eval mode.
-                During training, batchnorm2d process will be same with use_batch_statistics=True.
-                Contrarily, in eval, batchnorm2d process will be same with use_batch_statistics=False.
-            Default: None.
+
+            - If true, use the mean value and variance value of current batch data and track running mean
+              and running varance.
+            - If false, use the mean value and variance value of specified value, and not track statistical value.
+            - If None, The use_batch_statistics is automatically assigned process according to
+              the training and eval mode. During training, batchnorm2d process will be the same
+              with use_batch_statistics=True. Contrarily, in eval, batchnorm2d process will be the same
+              with use_batch_statistics=False.
+
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
