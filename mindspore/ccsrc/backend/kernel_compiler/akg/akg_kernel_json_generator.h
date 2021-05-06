@@ -102,7 +102,8 @@ class AkgKernelJsonGenerator {
   bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
   void GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map,
                      nlohmann::json *kernel_json);
-  bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size, std::vector<size_t> *output_size);
+  bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
+                 std::vector<size_t> *output_size) const;
   bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   nlohmann::json CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -115,17 +116,17 @@ class AkgKernelJsonGenerator {
   size_t GetInputTensorIdxInc(const AnfNodePtr &anf_node, size_t input_idx);
   size_t GetOutputTensorIdxInc();
   void SetTensorName(const std::string &tag, const std::string &new_name, const std::pair<size_t, size_t> &position,
-                     nlohmann::json *node_json);
+                     nlohmann::json *node_json) const;
   std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
-                            const std::pair<size_t, size_t> &position);
-  inline TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index);
-  inline std::vector<size_t> GetInputShape(const AnfNodePtr &anf_node, size_t real_index);
-  inline std::string GetInputFormat(const AnfNodePtr &anf_node, size_t real_index);
-  inline TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index);
-  inline std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index);
-  inline std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
+                            const std::pair<size_t, size_t> &position) const;
+  inline TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index) const;
+  inline std::vector<size_t> GetInputShape(const AnfNodePtr &anf_node, size_t real_index) const;
+  inline std::string GetInputFormat(const AnfNodePtr &anf_node, size_t real_index) const;
+  inline TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index) const;
+  inline std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index) const;
+  inline std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index) const;
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
-  OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node);
+  OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node) const;
   void CollectParallelDimInfo(const AnfNodePtr &anf_node);
   void GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                        const std::vector<AnfNodePtr> &output_list,

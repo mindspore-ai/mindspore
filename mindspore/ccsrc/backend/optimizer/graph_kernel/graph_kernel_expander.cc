@@ -102,8 +102,7 @@ FuncGraphPtr GraphKernelExpander::CreateExpandFuncGraph(const CNodePtr &node) {
     return nullptr;
   }
   // decode json to func_graph.
-  std::vector<AnfNodePtr> ori_inputs(node->inputs().begin() + 1, node->inputs().end());
-  return JsonDescToAnf(kernel_desc_str, ori_inputs);
+  return JsonDescToAnf(kernel_desc_str);
 }
 
 void GraphKernelExpander::EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {

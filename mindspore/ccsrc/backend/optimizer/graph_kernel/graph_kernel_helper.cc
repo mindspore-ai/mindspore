@@ -134,7 +134,7 @@ bool TensorElementAllTheSame(const tensor::TensorPtr &tensor) {
 
   auto data = static_cast<char *>(tensor->data_c());
   auto itemsize = static_cast<size_t>(tensor->data().itemsize());
-  auto total_cnt = static_cast<size_t>(tensor->DataSize());
+  auto total_cnt = IntToSize(tensor->DataSize());
   for (size_t i = 1; i < total_cnt; ++i) {
     for (size_t ei = 0; ei < itemsize; ++ei) {
       if (data[ei] != data[i * itemsize + ei]) {
@@ -150,7 +150,7 @@ AnfNodePtr ConvertToScalarTensor(const AnfNodePtr &value_node) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto type_id = tensor->data_type();
   ShapeVector new_shape;
-  auto origin_ndim = static_cast<size_t>(tensor->DataDim());
+  auto origin_ndim = IntToSize(tensor->DataDim());
   for (size_t i = 0; i < origin_ndim; ++i) {
     new_shape.push_back(1);
   }
@@ -407,7 +407,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       auto value_node = value_input->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       auto item_idx = GetValue<int64_t>(value_node->value());
-      int64_t new_item_idx = SizeToLong(out_idx) + offset + item_idx;
+      int64_t new_item_idx = SizeToLong(out_idx + offset) + item_idx;
       fn_inputs.clear();
       fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
       fn_inputs.push_back(new_fuse_cnode);
@@ -545,7 +545,7 @@ bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &
   return true;
 }
 
-FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNodePtr> &inputs) {
+FuncGraphPtr JsonDescToAnf(const std::string &json_desc) {
   kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
   auto fg = akg_kernel_json_decoder.DecodeFusedNodes(json_desc);
   if (fg == nullptr) {
@@ -648,7 +648,7 @@ void InitDependPrior(const std::vector<AnfNodePtr> &todos,
     std::vector<AnfNodePtr> prior_nodes = {prior_node};
     std::vector<AnfNodePtr> depend_nodes = {depend_node};
 
-    int depend_mode = 0;
+    int64_t depend_mode = 0;
     if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
       depend_mode = AnfAlgo::GetNodeAttr<int64_t>(cnode, kControlDependMode);
     }
@@ -692,7 +692,7 @@ void InitDependPrior(const std::vector<AnfNodePtr> &todos,
         if (AnfAlgo::CheckPrimitiveType(depend, prim::kPrimControlDepend)) {
           continue;
         }
-        depend_prior->insert({depend, std::make_pair(prior, cnode)});
+        depend_prior->emplace(depend, std::make_pair(prior, cnode));
       }
     }
     real_prior_nodes.clear();
@@ -713,12 +713,12 @@ void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNo
     }
     for (auto iter = (*depend_prior).begin(); iter != (*depend_prior).end();) {
       if (iter->first == outputs[out_idx]) {
-        new_fuse_cnode_dep_pri.insert({new_fuse_cnode, iter->second});
+        new_fuse_cnode_dep_pri.emplace(new_fuse_cnode, iter->second);
         iter = depend_prior->erase(iter);
         continue;
       }
       if (iter->second.first == outputs[out_idx]) {
-        new_fuse_cnode_dep_pri.insert({iter->first, std::make_pair(new_fuse_cnode, iter->second.second)});
+        new_fuse_cnode_dep_pri.emplace(iter->first, std::make_pair(new_fuse_cnode, iter->second.second));
         iter = depend_prior->erase(iter);
         continue;
       }
@@ -903,19 +903,16 @@ bool IsKeepBasicNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  static std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
-                                                      "aggregate", "aggregate_input_indexx"};
-  static std::vector<std::function<bool(const AnfNodePtr &node)>> attrs_with_value = {
-    [](const AnfNodePtr &n) -> bool { return AnfAlgo::GetBooleanAttr(n, "skip"); }};
+  static const std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
+                                                            "aggregate", "aggregate_input_indexx"};
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
-  // If node contain attribute in attrs_with_value, it only have to keep basic when the check result is true.
   if (std::any_of(contagious_attrs.cbegin(), contagious_attrs.cend(),
-                  [&cnode](const std::string &attr_name) -> bool { return AnfAlgo::HasNodeAttr(attr_name, cnode); }) ||
-      std::any_of(attrs_with_value.cbegin(), attrs_with_value.cend(),
-                  [&cnode](std::function<bool(const AnfNodePtr &node)> func) -> bool { return func(cnode); })) {
+                  [&cnode](const std::string &attr_name) -> bool { return AnfAlgo::HasNodeAttr(attr_name, cnode); })) {
     return true;
   }
-
+  if (AnfAlgo::GetBooleanAttr(cnode, "skip")) {
+    return true;
+  }
   return false;
 }
 }  // namespace opt
