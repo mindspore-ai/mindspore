@@ -29,18 +29,21 @@ namespace mindspore::lite {
 class MindrtExecutor : public Executor {
  public:
   MindrtExecutor() = default;
-  virtual ~MindrtExecutor() { MindrtTerminate(opActors_); }
+  virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+                      const std::vector<Tensor *> &outputs);
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:
-  std::vector<std::shared_ptr<LiteOpActor>> opActors_;
-  std::vector<OpDataPtr<Tensor>> inputData_;
-  std::vector<OpDataPtr<Tensor>> outputData_;
+  void PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
+  void PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
+  std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
+  std::vector<OpDataPtr<Tensor>> input_data_;
+  std::vector<OpDataPtr<Tensor>> output_data_;
 };
 
 }  // namespace mindspore::lite

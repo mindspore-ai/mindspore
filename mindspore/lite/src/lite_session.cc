@@ -357,6 +357,9 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   for (auto *tensor : this->inputs_) {
     tensor->set_category(Tensor::Category::GRAPH_INPUT);
   }
+  for (auto *tensor : this->outputs_) {
+    tensor->set_category(Tensor::Category::GRAPH_OUTPUT);
+  }
 }
 
 void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
@@ -373,7 +376,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     auto inputs = kernel->in_tensors();
     for (auto *tensor : inputs) {
       MS_ASSERT(tensor != nullptr);
-      if (!tensor->IsConst()) {
+      if (!tensor->IsConst() || tensor->init_ref_count() != 1) {
         continue;
       }
       tensor->FreeData();
@@ -455,7 +458,7 @@ int LiteSession::CompileGraph(Model *model) {
     return RET_ERROR;
   }
 
-  ret = executor_->Prepare(this->kernels_);
+  ret = executor_->Prepare(this->kernels_, this->inputs_, this->outputs_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
     is_running_.store(false);

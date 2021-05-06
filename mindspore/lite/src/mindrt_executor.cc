@@ -22,40 +22,62 @@
 
 namespace mindspore::lite {
 
-int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
+void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
+                                      const std::vector<Tensor *> &inputs) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    for (size_t j = 0; j < kernels.size(); ++j) {
+      if (!kernels[j]->in_kernels().empty()) {
+        continue;
+      }
+      auto in_tensor_size = kernels[j]->in_tensors().size();
+      for (size_t k = 0; k < in_tensor_size; ++k) {
+        if (inputs[i] != kernels[j]->in_tensors()[k]) {
+          continue;
+        }
+        auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), inputs[i], static_cast<int>(k));
+        input_data_.emplace_back(data);
+      }
+    }
+  }
+}
+
+void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels,
+                                       const std::vector<Tensor *> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    for (size_t j = 0; j < kernels.size(); ++j) {
+      if (!kernels[i]->out_kernels().empty()) {
+        continue;
+      }
+      auto out_tensor_size = kernels[j]->out_tensors().size();
+      for (size_t k = 0; k < out_tensor_size; ++k) {
+        if (outputs[i] != kernels[j]->out_tensors()[k]) {
+          continue;
+        }
+        auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), outputs[i], static_cast<int>(k));
+        op_actors_[j]->AddResultIndex(output_data_.size());
+        output_data_.emplace_back(data);
+      }
+    }
+  }
+}
+
+int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+                            const std::vector<Tensor *> &outputs) {
   auto ret = MindrtInit();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtInit failed";
     return ret;
   }
-  auto kernelSize = kernels.size();
-  opActors_ = CreateOpActor(kernels);
-  if (opActors_.size() != kernelSize) {
+  op_actors_ = CreateOpActor(kernels);
+  if (op_actors_.size() != kernels.size()) {
     MS_LOG(ERROR) << "CreateOpActor failed";
     return RET_ERROR;
   }
-  for (size_t i = 0; i < kernelSize; i++) {
-    if (kernels[i]->in_kernels().size() == 0) {
-      auto inTensorSize = kernels[i]->in_tensors().size();
 
-      for (size_t j = 0; j < inTensorSize; j++) {
-        auto data =
-          std::make_shared<OpData<Tensor>>(opActors_[i]->GetAID(), kernels[i]->in_tensors()[j], static_cast<int>(j));
-        inputData_.emplace_back(data);
-      }
-    }
+  PrepareInputData(kernels, inputs);
 
-    if (kernels[i]->out_kernels().size() == 0) {
-      auto outTensorSize = kernels[i]->out_tensors().size();
+  PrepareOutputData(kernels, outputs);
 
-      for (size_t j = 0; j < outTensorSize; j++) {
-        auto data =
-          std::make_shared<OpData<Tensor>>(opActors_[i]->GetAID(), kernels[i]->out_tensors()[j], static_cast<int>(j));
-        opActors_[i]->AddResultIndex(outputData_.size());
-        outputData_.emplace_back(data);
-      }
-    }
-  }
   return RET_OK;
 }
 
@@ -71,13 +93,11 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
     }
   }
   // clear ref_count
-  for (auto *kernel : kernels) {
-    for (auto *tensor : kernel->in_tensors()) {
-      tensor->set_ref_count(0);
-    }
+  for (auto *tensor : kernels.front()->in_tensors()) {
+    tensor->set_ref_count(0);
   }
 
-  return MindrtRun<Tensor>(inputData_, &outputData_, &before, &after);
+  return MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
 }
 
 }  // namespace mindspore::lite

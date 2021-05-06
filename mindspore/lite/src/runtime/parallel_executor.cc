@@ -21,7 +21,8 @@
 
 namespace mindspore::lite {
 ParallelExecutor::~ParallelExecutor() { DestroyThreadPool(thread_pool_); }
-int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *> &kernels) {
+int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
+                              const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
   thread_pool_ = CreateLiteThreadPool(max_thread_num_, NO_BIND);
   if (thread_pool_ == nullptr) {
     MS_LOG(ERROR) << "Memory error: fail to new ThreadPool";

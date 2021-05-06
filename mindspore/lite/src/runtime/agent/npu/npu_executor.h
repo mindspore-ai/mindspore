@@ -33,7 +33,8 @@ class NPUExecutor : public Executor {
   explicit NPUExecutor(const std::string &model_name, NPUManager *npu_manager = nullptr)
       : model_name_(model_name), npu_manager_(npu_manager) {}
   ~NPUExecutor() override;
-  int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
+  int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+              const std::vector<Tensor *> &outputs) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
           const std::vector<kernel::LiteKernel *> &in_kernels, const std::vector<kernel::LiteKernel *> &kernels,
