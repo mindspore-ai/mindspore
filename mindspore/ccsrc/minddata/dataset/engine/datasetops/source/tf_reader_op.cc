@@ -39,6 +39,7 @@
 
 namespace mindspore {
 namespace dataset {
+const int64_t kTFRecordFileLimit = 0x140000000;
 TFReaderOp::Builder::Builder()
     : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_equal_rows_per_shard_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
@@ -55,6 +56,14 @@ bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
   if (!reader) {
     return false;
   }
+  int64_t file_len = reader.seekg(0, std::ios::end).tellg();
+  if (file_len > kTFRecordFileLimit) {
+    MS_LOG(WARNING) << "The file size of " << filename
+                    << " is larger than 5G, there may be performance problems in "
+                       "distributed scenarios, and it can be split into sub-files "
+                       "smaller than 5G to get better performance.";
+  }
+  (void)reader.seekg(0, std::ios::beg);
 
   // read data
   int64_t record_length = 0;
