@@ -28,9 +28,6 @@ ALL_TENSOR = 0
 NO_TENSOR = 1
 CONTAIN_TENSOR = 2
 ALL_SCALAR = 3
-ALL_INT = 4
-NO_INT = 5
-CONTAIN_INT = 6
 ALL_BASIC = 7
 MIXED = 8
 
@@ -75,12 +72,12 @@ def make_empty_slice():
 
 
 @constexpr
-def _deep_list(array_like, ndim=-1):
+def _deep_list(array_like, dim_size=-1):
     """convert nested tuple/list mixtures to pure nested list"""
-    if ndim != -1:
-        array_like = check_range(array_like, ndim)
+    if dim_size != -1:
+        array_like = check_range(array_like, dim_size)
     if isinstance(array_like, (list, tuple)):
-        return list(map(lambda x: _deep_list(x, ndim), array_like))
+        return list(map(lambda x: _deep_list(x, dim_size), array_like))
     return array_like
 
 
@@ -117,16 +114,16 @@ def _deep_tensor_to_nparray(array_like):
 
 
 @constexpr
-def check_range(x, ndim):
+def check_range(x, dim_size):
     if isinstance(x, int) and not isinstance(x, bool):
-        if x >= ndim or x < -ndim:
-            raise IndexError(f'index {x} if out of bounds for dimension with size {ndim}')
-        x = x%ndim
+        if x >= dim_size or x < -dim_size:
+            raise IndexError(f'index {x} is out of bounds for dimension with size {dim_size}')
+        x = x%dim_size
     return x
 
 
 @constexpr
-def make_tensor(a, dtype=mstype.int64, data_shape=None, ndim=-1):
+def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=-1):
     """
     Converts the input to tensor.
 
@@ -150,12 +147,12 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, ndim=-1):
     if not isinstance(a, (list, tuple, int, float, bool)):
         raise TypeError("input data must be `int`, `float`, `bool`, `list` or `tuple`")
 
-    if ndim != -1:
-        a = check_range(a, ndim)
+    if dim_size != -1:
+        a = check_range(a, dim_size)
 
     if isinstance(a, (list, tuple)):
         # Convert all tuple/nested tuples to lists
-        a = _deep_list(a, ndim)
+        a = _deep_list(a, dim_size)
         # Convert all tensor sub-elements to numpy arrays
         a = _deep_tensor_to_nparray(a)
         a = np.asarray(a)
@@ -369,13 +366,6 @@ def check_indices_value_size(indices_size, value_size):
 
 
 @constexpr
-def tuple_index_int_cnt(types, op_name):
-    """count the int type of types which contains the tuple elements' type."""
-    int_cnt = sum(isinstance(ele, mstype.Int) for ele in types)
-    return ALL_INT if int_cnt == len(types) else NO_INT if int_cnt == 0 else CONTAIN_INT
-
-
-@constexpr
 def tuple_index_type_cnt(types, op_name):
     """count the tensor type of types which contains the tuple elements' type."""
     if all(isinstance(ele, mstype.tensor_type) for ele in types):
@@ -451,12 +441,6 @@ def compute_multiples(origin_shape, broadcast_shape):
 
 
 @constexpr
-def convert_int_to_slice(tuple_index):
-    tuple_index_new = tuple(slice(i, i+1, 1) for i in tuple_index)
-    return tuple_index_new
-
-
-@constexpr
 def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slice_shapes, fancy_position):
     """Convert a slice to a tensor."""
 
@@ -502,25 +486,21 @@ def transform_slice_to_ele_list(slice_index, dim_len):
 
 @constexpr
 def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_indexes_shapes,
-                                                    slice_shapes, op_name):
+                                                    slice_shapes, op_name, fancy_position=None):
     """
     Generate index info which contain broadcast shape, final shape,
     indexes shapes info, ellipsis size from a tuple of mixed tensors.
     """
     tensor_positions = tuple(sorted(tensor_positions))
-    tensor_index_continue_tag = _judge_order_continuous(tensor_positions)
-    fancy_position = tensor_positions[0] if tensor_index_continue_tag else 0
+    if fancy_position is None:
+        tensor_index_continue_tag = _judge_order_continuous(tensor_positions)
+        fancy_position = tensor_positions[0] if tensor_index_continue_tag else 0
     broadcast_shape = generate_broadcast_shape(tensor_indexes_shapes, op_name)
     index_tensor_new_shape, final_shape = [], []
 
-    if tensor_index_continue_tag:
-        final_shape = slice_shapes[:fancy_position] + broadcast_shape + slice_shapes[fancy_position:]
-        index_tensor_new_shape = (1,) * len(slice_shapes[:fancy_position]) + \
-            broadcast_shape + (1,) * len(slice_shapes[fancy_position:])
-
-    else:
-        final_shape = broadcast_shape + slice_shapes
-        index_tensor_new_shape = broadcast_shape + (1,) * len(slice_shapes)
+    final_shape = slice_shapes[:fancy_position] + broadcast_shape + slice_shapes[fancy_position:]
+    index_tensor_new_shape = (1,) * len(slice_shapes[:fancy_position]) + \
+        broadcast_shape + (1,) * len(slice_shapes[fancy_position:])
 
     return broadcast_shape, index_tensor_new_shape, final_shape, fancy_position
 
@@ -743,7 +723,7 @@ def is_slice(x):
 def filter_expanded_dims(shape, not_expanded_dim):
     diff = len(not_expanded_dim) - len(shape)
     if diff < 0:
-        raise ValueError('unable to broadcast {shape}')
+        raise ValueError(f'unable to broadcast {shape}')
     return tuple(compress(shape, not_expanded_dim[diff:]))
 
 
@@ -755,7 +735,7 @@ def sequence_to_index(sequence, dim_size):
     if all(isinstance(i, bool) for i in sequence):
         seq_size = len(sequence)
         if seq_size != dim_size:
-            raise IndexError('dimension is {dim_size} but corresponding boolean dimension is {seq_size}')
+            raise IndexError(f'dimension is {dim_size} but corresponding boolean dimension is {seq_size}')
         sequence = tuple(compress(range(dim_size), sequence))
         if not sequence:
             return False

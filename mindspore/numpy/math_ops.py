@@ -4335,7 +4335,7 @@ def searchsorted(a, v, side='left', sorter=None):
         [0 5 1 2]
     """
     if side not in ('left', 'right'):
-        _raise_value_error(f'{side} is an invalid value for keyword "side"')
+        _raise_value_error('invalid value for keyword "side"')
     a = _to_tensor(a).astype(mstype.float32)
     v = _to_tensor(v)
     shape = F.shape(v)
