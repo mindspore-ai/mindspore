@@ -49,7 +49,7 @@ getDeep() {
   map_files=$(gcc -MM ${2} ${DEFINE_STR} ${HEADER_LOCATION})
   # first is *.o second is *.cc
   array_deep=()
-  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR})
+  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build' | egrep -v ${REMOVE_LISTS_STR})
   # shellcheck disable=SC2068
   for array_deep_file in ${array_deep[@]}; do
     # only add existing files
@@ -103,32 +103,33 @@ getOpsFile() {
 
 getCommonFile() {
   echo "start get common files"
+  cd "${MINDSPORE_HOME}" || exit 1
   include_h=()
-  while IFS='' read -r line; do include_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/include/*.h)
+  while IFS='' read -r line; do include_h+=("$line"); done < <(ls mindspore/lite/include/*.h)
   src_files_h=()
-  while IFS='' read -r line; do src_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.h)
+  while IFS='' read -r line; do src_files_h+=("$line"); done < <(ls mindspore/lite/src/*.h)
   common_files_h=()
-  while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.h)
+  while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls mindspore/lite/src/common/*.h)
   runtime_files_h=()
-  while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.h)
+  while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
   others_files_h=(
-    "${MINDSPORE_HOME}"/mindspore/lite/src/populate/populate_register.h
-    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/infer_manager.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/pack.h
-    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
-    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/populate_register.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h
-    "${MINDSPORE_HOME}"/mindspore/core/ir/dtype/type_id.h
-    "${MINDSPORE_HOME}"/mindspore/core/utils/overload.h
-    "${MINDSPORE_HOME}"/mindspore/lite/tools/common/option.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions_fp16.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.h
-    "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
+    mindspore/lite/src/populate/populate_register.h
+    mindspore/lite/src/runtime/infer_manager.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/pack.h
+    mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
+    mindspore/lite/src/ops/populate/populate_register.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h
+    mindspore/core/ir/dtype/type_id.h
+    mindspore/core/utils/overload.h
+    mindspore/lite/tools/common/option.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions_fp16.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.h
+    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
   )
   all_files_h=("${include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
 
