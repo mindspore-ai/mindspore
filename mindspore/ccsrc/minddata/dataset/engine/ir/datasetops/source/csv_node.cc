@@ -119,7 +119,11 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 
   RETURN_IF_NOT_OK(csv_op->Init());
 
-  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
+  // If a global shuffle is used for CSV, it will inject a shuffle op over the CSV.
+  // But, if there is a cache in the tree, we do not need the global shuffle and the shuffle op should not be built.
+  // This is achieved in the cache transform pass where we call MakeSimpleProducer to reset CSV's shuffle
+  // option to false.
+  if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;

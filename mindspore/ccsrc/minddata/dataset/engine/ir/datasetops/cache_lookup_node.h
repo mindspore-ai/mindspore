@@ -76,6 +76,10 @@ class CacheLookupNode : public DatasetNode, public SamplerObj {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() { return sampler_; }
+
  private:
   std::shared_ptr<SamplerObj> sampler_;
   std::shared_ptr<DatasetOp> lookup_op_;

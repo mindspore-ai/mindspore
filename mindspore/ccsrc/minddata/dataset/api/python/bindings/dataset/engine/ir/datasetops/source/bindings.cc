@@ -177,9 +177,9 @@ PYBIND_REGISTER(MindDataNode, 2, ([](const py::module *m) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
-                      auto minddata =
-                        std::make_shared<MindDataNode>(dataset_file, toStringVector(columns_list),
-                                                       toSamplerObj(sampler, true), padded_sample_json, num_padded);
+                      auto minddata = std::make_shared<MindDataNode>(dataset_file, toStringVector(columns_list),
+                                                                     toSamplerObj(sampler, true), padded_sample_json,
+                                                                     num_padded, nullptr);
                       minddata->SetSampleBytes(&sample_bytes);
                       THROW_IF_ERROR(minddata->ValidateParams());
                       return minddata;
@@ -189,9 +189,9 @@ PYBIND_REGISTER(MindDataNode, 2, ([](const py::module *m) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
-                      auto minddata =
-                        std::make_shared<MindDataNode>(toStringVector(dataset_file), toStringVector(columns_list),
-                                                       toSamplerObj(sampler, true), padded_sample_json, num_padded);
+                      auto minddata = std::make_shared<MindDataNode>(
+                        toStringVector(dataset_file), toStringVector(columns_list), toSamplerObj(sampler, true),
+                        padded_sample_json, num_padded, nullptr);
                       minddata->SetSampleBytes(&sample_bytes);
                       THROW_IF_ERROR(minddata->ValidateParams());
                       return minddata;

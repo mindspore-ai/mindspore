@@ -29,6 +29,11 @@ UT_TEST_DIR="${BUILD_PATH}/mindspore/tests/ut/cpp"
 DateStamp=$(date +%Y%m%d_%H%M%S);
 CPP_TEST_LOG_OUTPUT="/tmp/ut_tests_cache_${DateStamp}.log"
 
+## prepare data for dataset & mindrecord
+cp -fr ${PROJECT_PATH}/tests/ut/data ${UT_TEST_DIR}
+## prepare album dataset, uses absolute path so has to be generated
+python ${UT_TEST_DIR}/data/dataset/testAlbum/gen_json.py
+
 # start cache server with a spilling path to be used for all tests
 cmd="${CACHE_ADMIN} --start -s /tmp"
 CacheAdminCmd "${cmd}" 0

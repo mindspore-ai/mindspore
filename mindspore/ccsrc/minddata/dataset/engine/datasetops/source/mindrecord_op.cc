@@ -40,7 +40,7 @@ using mindrecord::ShardOperator;
 using mindrecord::ShardReader;
 
 // Builder constructor.  Creates the builder object.
-MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
+MindRecordOp::Builder::Builder() : build_dataset_file_({}), builder_sampler_(nullptr) {
   // Some arguments to the MindRecordOp constructor have a default argument that is taken
   // from the client config.
   // The user may choose to change these values for the construction of the MindRecordOp by
@@ -69,11 +69,14 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
   }
 
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
+  if (builder_sampler_ == nullptr) {
+    builder_sampler_ = std::make_shared<MindRecordSamplerRT>(shard_reader.get());
+  }
 
-  new_mind_record_op =
-    std::make_shared<MindRecordOp>(build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_,
-                                   build_op_connector_queue_size_, build_columns_to_load_, build_operators_,
-                                   build_num_padded_, sample_json, build_sample_bytes_, std::move(shard_reader));
+  new_mind_record_op = std::make_shared<MindRecordOp>(
+    build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_, build_op_connector_queue_size_,
+    build_columns_to_load_, build_operators_, build_num_padded_, sample_json, build_sample_bytes_,
+    std::move(shard_reader), builder_sampler_);
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
   *ptr = std::move(new_mind_record_op);
@@ -115,9 +118,8 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
                            int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
                            const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes,
-                           std::unique_ptr<ShardReader> shard_reader)
-    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size,
-                     std::make_shared<MindRecordSamplerRT>(shard_reader.get())),
+                           std::unique_ptr<ShardReader> shard_reader, std::shared_ptr<SamplerRT> sampler)
+    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::move(sampler)),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
@@ -275,6 +277,7 @@ Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, int64_t row_id, in
     RETURN_IF_NOT_OK(LoadTensorRow(fetched_row, {}, mindrecord::json(), task_type));
     std::vector<std::string> file_path(fetched_row->size(), dataset_file_[0]);
     fetched_row->setPath(file_path);
+    fetched_row->setId(row_id);
   }
   if (tupled_buffer.empty()) return Status::OK();
   if (task_type == mindrecord::TaskType::kCommonTask) {
@@ -284,6 +287,7 @@ Status MindRecordOp::GetRowFromReader(TensorRow *fetched_row, int64_t row_id, in
       RETURN_IF_NOT_OK(LoadTensorRow(fetched_row, columns_blob, columns_json, task_type));
       std::vector<std::string> file_path(fetched_row->size(), dataset_file_[0]);
       fetched_row->setPath(file_path);
+      fetched_row->setId(row_id);
     }
   }
 

@@ -25,6 +25,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/data_schema.h"
@@ -107,6 +108,14 @@ class MindRecordOp : public MappableLeafOp {
       return *this;
     }
 
+    // Setter method
+    // @param std::shared_ptr<Sampler> sampler
+    // @return Builder setter method returns reference to the builder.
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
+      builder_sampler_ = std::move(sampler);
+      return *this;
+    }
+
     Status SanityCheck() const;
 
     static int32_t num_mind_record_workers() { return kDefaultMindRecordWorkers; }
@@ -128,6 +137,7 @@ class MindRecordOp : public MappableLeafOp {
     int64_t build_num_padded_;
     py::handle build_sample_;
     std::map<std::string, std::string> build_sample_bytes_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
   };
 
   // Constructor of the MindRecordOp.
@@ -137,11 +147,12 @@ class MindRecordOp : public MappableLeafOp {
   // @param op_connector_queue_size - The output connector queue size
   // @param columns_to_load - The list of columns to use (column name)
   // @param operators - ShardOperators for Shuffle, Category, Sample
+  // @param sampler - sampler tells MindRecordOp what to read
   MindRecordOp(int32_t num_mind_record_workers, std::vector<std::string> dataset_file, bool load_dataset,
                int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded_,
                const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_,
-               std::unique_ptr<ShardReader> shard_reader);
+               std::unique_ptr<ShardReader> shard_reader, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~MindRecordOp() override;

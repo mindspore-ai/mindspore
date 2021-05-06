@@ -87,7 +87,11 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
                                  sorted_dataset_files, connector_que_size_, shuffle_files, num_shards_, shard_id_);
   RETURN_IF_NOT_OK(text_file_op->Init());
 
-  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
+  // If a global shuffle is used for TextFile, it will inject a shuffle op over the TextFile.
+  // But, if there is a cache in the tree, we do not need the global shuffle and the shuffle op should not be built.
+  // This is achieved in the cache transform pass where we call MakeSimpleProducer to reset TextFile's shuffle
+  // option to false.
+  if (shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;

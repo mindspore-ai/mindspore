@@ -94,6 +94,9 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<NonMappableSourceNod
 }
 #endif
 
+// Almost the same with NonMappableSourceNode's Visit, only this one is not guarded by the compiler
+// directive #ifndef ENABLE_ANDROID, also and there is no need to call MakeSimpleProducer() because
+// RandomOp doesn't support sampling or sharding
 Status CacheTransformPass::CachePass::Visit(std::shared_ptr<RandomNode> node, bool *const modified) {
   if (node->IsCached()) {
     MS_LOG(INFO) << "Cache transform pass: CacheOp found, identified descendant tree.";
@@ -137,11 +140,25 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MappableSourceNode> 
 }
 
 #ifndef ENABLE_ANDROID
-// Perform leaf node cache transform identification
+// Almost the same with MappableSourceNode's Visit, only in this one we also marked this node's descendant_of_cache_
+// field to true. Later when building, MindDataNode will take different actions based on this information.
 Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MindDataNode> node, bool *const modified) {
-  if (node->IsCached() || is_caching_) {
-    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
-                  "There is currently no support for MindRecordOp under cache.");
+  if (node->IsCached()) {
+    MS_LOG(INFO) << "Cache transform pass: CacheOp found, identified descendant tree.";
+    is_caching_ = true;
+  }
+  // Cache might also be injected to the non-leaf node upper in the tree, so is_caching_ might also be set to true
+  // by the other Visit() with DatasetNode argument
+  if (is_caching_) {
+    node->HasCacheAbove();
+    MS_LOG(DEBUG) << "Cache transform pass: Mappable leaf in a cache descendant tree detected";
+    // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
+    if (leaf_node_) {
+      return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
+                    "There is currently no support for multiple leaf nodes under cache.");
+    }
+    // If we are a leaf in the caching path, then save this leaf
+    leaf_node_ = node;
   }
   return Status::OK();
 }

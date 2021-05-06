@@ -237,7 +237,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return True if this node is not a data source node
   const bool IsNotADataSource() const { return (mappable_ == kNotADataSource); }
 
-  /// \brief Check if this node is a descendant of an operator with cache. Currently used in leaf nodes
+  /// \brief Check if this node is a descendant of an operator with cache.
   /// \return True if a cache-enabled operator is an ancestor of this node
   const bool IsDescendantOfCache() const { return descendant_of_cache_; }
 
@@ -247,7 +247,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
     return node != nullptr && node->parent_ == nullptr && node->Children().empty();
   }
 
-  /// \brief Mark to indicate this node is a descendant of an operator with cache. Currently used in leaf nodes
+  /// \brief Mark to indicate this node is a descendant of an operator with cache.
   void HasCacheAbove() { descendant_of_cache_ = true; }
 
   /// \brief Getter of the number of workers
@@ -335,7 +335,8 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   enum DataSource { kNotADataSource = 0, kNonMappableSource = 1, kMappableSource = 2 };
   enum DataSource mappable_;
   bool nary_op_;  // an indicator of whether the current node supports multiple children, true for concat/zip node
-  bool descendant_of_cache_;
+  bool descendant_of_cache_;  // an indicator of whether the current node is a descendant of cache.
+                              // Initially set to false, will set to true by the optimizer when conditions are met.
 };
 
 // MappableSourceNode represents the leaf nodes that can be randomly accessed with indexes.

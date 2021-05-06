@@ -1247,22 +1247,25 @@ class MindDataDataset : public Dataset {
  public:
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
                            const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded);
+                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
-                           const Sampler *sampler, const nlohmann::json *padded_sample, int64_t num_padded);
+                           const Sampler *sampler, const nlohmann::json *padded_sample, int64_t num_padded,
+                           const std::shared_ptr<DatasetCache> &cache);
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
                            const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded);
+                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<Sampler> &sampler,
-                           const nlohmann::json *padded_sample, int64_t num_padded);
+                           const nlohmann::json *padded_sample, int64_t num_padded,
+                           const std::shared_ptr<DatasetCache> &cache);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
-                           const nlohmann::json *padded_sample, int64_t num_padded);
+                           const nlohmann::json *padded_sample, int64_t num_padded,
+                           const std::shared_ptr<DatasetCache> &cache);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list,
                            const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded);
+                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
   ~MindDataDataset() = default;
 };
 
@@ -1276,13 +1279,14 @@ class MindDataDataset : public Dataset {
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::string &dataset_file, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
-  int64_t num_padded = 0) {
+  int64_t num_padded = 0, const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1293,12 +1297,14 @@ inline std::shared_ptr<MindDataDataset> MindData(
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
                                                  const std::vector<std::string> &columns_list, const Sampler *sampler,
-                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0) {
+                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1309,13 +1315,15 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
                                                  const std::vector<std::string> &columns_list,
                                                  const std::reference_wrapper<Sampler> sampler,
-                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0) {
+                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1327,13 +1335,14 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
-  int64_t num_padded = 0) {
+  int64_t num_padded = 0, const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1343,12 +1352,14 @@ inline std::shared_ptr<MindDataDataset> MindData(
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
                                                  const std::vector<std::string> &columns_list, const Sampler *sampler,
-                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0) {
+                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1358,13 +1369,15 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> 
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
 /// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset
 inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
                                                  const std::vector<std::string> &columns_list,
                                                  const std::reference_wrapper<Sampler> sampler,
-                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0) {
+                                                 nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded);
+                                           padded_sample, num_padded, cache);
 }
 
 class MnistDataset : public Dataset {

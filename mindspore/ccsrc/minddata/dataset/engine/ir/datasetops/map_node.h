@@ -79,9 +79,6 @@ class MapNode : public DatasetNode {
   /// \brief setter to set all tensor operations
   void setOperations(const std::vector<std::shared_ptr<TensorOperation>> &operations);
 
-  /// \brief indicate this Map will be cached
-  void Cached() { under_a_cache_ = true; }
-
   /// \brief Getter functions
   /// \brief Getter of tensor operations
   /// \return Vector of operations the Map node will process
@@ -102,7 +99,6 @@ class MapNode : public DatasetNode {
   std::vector<std::string> output_columns_;
   std::vector<std::string> project_columns_;
   std::vector<std::shared_ptr<DSCallback>> callbacks_;
-  bool under_a_cache_;
 };
 
 }  // namespace dataset

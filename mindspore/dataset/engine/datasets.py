@@ -3052,6 +3052,8 @@ class MindDataset(MappableDataset):
             plus num_padded should be divisible by num_shards.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all samples).
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -3068,9 +3070,9 @@ class MindDataset(MappableDataset):
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None,
-                 shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None):
+                 shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
-                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id)
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         if isinstance(dataset_file, list):
             self.load_dataset = False
         else:

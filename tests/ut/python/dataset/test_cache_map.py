@@ -414,47 +414,6 @@ def test_cache_map_failure5():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_map_failure6():
-    """
-    Test no-cache-supporting MindRecord leaf with Map under cache (failure)
-
-               repeat
-                  |
-                Cache
-                  |
-             Map(resize)
-                  |
-             MindRecord
-
-    """
-    logger.info("Test cache failure 6")
-    if "SESSION_ID" in os.environ:
-        session_id = int(os.environ['SESSION_ID'])
-    else:
-        raise RuntimeError("Testcase requires SESSION_ID environment variable")
-
-    some_cache = ds.DatasetCache(session_id=session_id, size=0)
-
-    columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
-    num_readers = 1
-    # The dataset has 5 records
-    data = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list, num_readers)
-    resize_op = c_vision.Resize((224, 224))
-
-    data = data.map(input_columns=["img_data"], operations=resize_op, cache=some_cache)
-    data = data.repeat(4)
-
-    with pytest.raises(RuntimeError) as e:
-        num_iter = 0
-        for _ in data.create_dict_iterator():
-            num_iter += 1
-    assert "There is currently no support for MindRecordOp under cache" in str(e.value)
-
-    assert num_iter == 0
-    logger.info('test_cache_failure6 Ended.\n')
-
-
-@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_failure7():
     """
     Test no-cache-supporting Generator leaf with Map under cache (failure)
@@ -1998,6 +1957,79 @@ class ReverseSampler(ds.Sampler):
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_mindrecord1():
+    """
+    Test mappable mindrecord leaf with cache op right over the leaf
+
+       cache
+         |
+    MindRecord
+    """
+
+    logger.info("Test cache map mindrecord1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        session_id = 1
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 5 records
+    columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
+    ds1 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 5
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_mindrecord1 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_mindrecord2():
+    """
+    Test mappable mindrecord leaf with the cache op later in the tree above the map(decode)
+
+       cache
+         |
+     Map(decode)
+         |
+     MindRecord
+    """
+
+    logger.info("Test cache map mindrecord2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        session_id = 1
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 5 records
+    columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
+    ds1 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list)
+
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["img_data"], operations=decode_op, cache=some_cache)
+
+    num_epoch = 4
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 5
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_mindrecord2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_python_sampler1():
     """
     Test using a python sampler, and cache after leaf
@@ -2169,7 +2201,6 @@ if __name__ == '__main__':
     test_cache_map_failure3()
     test_cache_map_failure4()
     test_cache_map_failure5()
-    test_cache_map_failure6()
     test_cache_map_failure7()
     test_cache_map_failure8()
     test_cache_map_failure9()
@@ -2210,6 +2241,8 @@ if __name__ == '__main__':
     test_cache_map_cifar4()
     test_cache_map_voc1()
     test_cache_map_voc2()
+    test_cache_map_mindrecord1()
+    test_cache_map_mindrecord2()
     test_cache_map_python_sampler1()
     test_cache_map_python_sampler2()
     test_cache_map_nested_repeat()
