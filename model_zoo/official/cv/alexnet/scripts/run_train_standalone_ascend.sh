@@ -13,11 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 # an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-# DATA_PATH=$1
-# CKPT_PATH=$2
-# --data_path=$DATA_PATH --device_target="Ascend" --ckpt_path=$CKPT_PATH
-python -s ${self_path}/../eval.py > log_eval.txt 2>&1 &
+# echo "Usage: sh run_standalone_train_ascend.sh [cifar10|imagenet] [DATA_PATH] [DEVICE_ID]"
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+
+if [ $# -ge 1 ]; then
+  if [ $1 == 'imagenet' ]; then
+    CONFIG_FILE="${BASE_PATH}/../config_imagenet.yaml"
+  elif [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
+# python train.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH --device_id=$DEVICE_ID --device_target="Ascend" > log 2>&1 &
+python ../train.py --config_path=$CONFIG_FILE > log 2>&1 &

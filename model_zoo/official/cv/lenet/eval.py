@@ -19,43 +19,51 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
 import os
-import argparse
+# import sys
+# sys.path.append(os.path.join(os.getcwd(), 'utils'))
+from utils.config import config
+from utils.moxing_adapter import moxing_wrapper
+
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from src.dataset import create_dataset
-from src.config import mnist_cfg as cfg
 from src.lenet import LeNet5
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MindSpore Lenet Example')
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--data_path', type=str, default="./Data",
-                        help='path where the dataset is saved')
-    parser.add_argument('--ckpt_path', type=str, default="", help='if mode is test, must provide\
-                        path where the trained ckpt file')
+if os.path.exists(config.data_path_local):
+    config.data_path = config.data_path_local
+    ckpt_path = config.ckpt_path_local
+else:
+    ckpt_path = os.path.join(config.data_path, 'checkpoint_lenet-10_1875.ckpt')
 
-    args = parser.parse_args()
+def modelarts_process():
+    pass
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+@moxing_wrapper(pre_process=modelarts_process)
+def eval_lenet():
 
-    network = LeNet5(cfg.num_classes)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+
+    network = LeNet5(config.num_classes)
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    repeat_size = cfg.epoch_size
-    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+    # repeat_size = config.epoch_size
+    net_opt = nn.Momentum(network.trainable_params(), config.lr, config.momentum)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Testing ==============")
-    param_dict = load_checkpoint(args.ckpt_path)
+    param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(network, param_dict)
-    ds_eval = create_dataset(os.path.join(args.data_path, "test"),
-                             cfg.batch_size,
+    ds_eval = create_dataset(os.path.join(config.data_path, "test"),
+                             config.batch_size,
                              1)
     if ds_eval.get_dataset_size() == 0:
         raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
 
     acc = model.eval(ds_eval)
     print("============== {} ==============".format(acc))
+
+
+if __name__ == "__main__":
+    eval_lenet()

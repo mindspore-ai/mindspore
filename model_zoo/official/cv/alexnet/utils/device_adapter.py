@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-# an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-# DATA_PATH=$1
-# CKPT_PATH=$2
-# --data_path=$DATA_PATH --device_target="Ascend" --ckpt_path=$CKPT_PATH
-python -s ${self_path}/../eval.py > log_eval.txt 2>&1 &
+"""Device adapter for ModelArts"""
+
+from .config import config
+
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

@@ -17,7 +17,6 @@ Produce the dataset
 """
 
 import os
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as CV

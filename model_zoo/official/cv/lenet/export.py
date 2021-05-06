@@ -14,37 +14,35 @@
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
 
-import argparse
-import numpy as np
+import os
+# import sys
+# sys.path.append(os.path.join(os.getcwd(), 'utils'))
+from utils.config import config
+from utils.device_adapter import get_device_id
 
+import numpy as np
 import mindspore
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-
-from src.config import mnist_cfg as cfg
 from src.lenet import LeNet5
 
-parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="lenet", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+if os.path.exists(config.data_path_local):
+    ckpt_file = config.ckpt_path_local
+else:
+    ckpt_file = os.path.join(config.data_path, 'checkpoint_lenet-10_1875.ckpt')
+
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=get_device_id())
 
 if __name__ == "__main__":
 
     # define fusion network
-    network = LeNet5(cfg.num_classes)
+    network = LeNet5(config.num_classes)
     # load network checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(ckpt_file)
     load_param_into_net(network, param_dict)
 
     # export network
-    inputs = Tensor(np.ones([args.batch_size, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    export(network, inputs, file_name=args.file_name, file_format=args.file_format)
+    inputs = Tensor(np.ones([config.batch_size, 1, config.image_height, config.image_width]), mindspore.float32)
+    export(network, inputs, file_name=config.file_name, file_format=config.file_format)
