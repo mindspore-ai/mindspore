@@ -283,7 +283,7 @@ Project stable branches will be in one of the following states:
 
 | **Branch** | **Status**       | **Initial Release Date** | **Next Phase**                        | **EOL Date**   |
 |--------|--------------|----------------------|-----------------------------------|------------|
-| **r1.2**   | Development  | 2021-03-31 estimated | Maintained <br> 2021-03-31 estimated   |            |
+| **r1.2**   | Maintained   | 2021-04-15           | Unmaintained <br> 2021-10-15 estimated |            |
 | **r1.1**   | Maintained   | 2020-12-31           | Unmaintained <br> 2021-06-30 estimated |            |
 | **r1.0**   | Maintained   | 2020-09-24           | Unmaintained <br> 2021-03-30 estimated |            |
 | **r0.7**   | Unmaintained | 2020-08-31           | End Of Life <br> 2021-02-28 estimated  |            |
