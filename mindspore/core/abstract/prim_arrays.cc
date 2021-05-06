@@ -1132,5 +1132,29 @@ AbstractBasePtr InferImplArgMaxWithValue(const AnalysisEnginePtr &, const Primit
   AbstractBasePtrList result = {index, value};
   return std::make_shared<AbstractTuple>(result);
 }
+
+AbstractBasePtr InferImplSort(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  TypePtrList supported_types = {kFloat16, kFloat32};
+  (void)CheckTensorDType(input, supported_types, "input for Sort should be %s");
+
+  ValuePtr axis_ptr = primitive->GetAttr("axis");
+  int64_t axis = GetValue<int64_t>(axis_ptr);
+  int64_t input_rank = input->shape()->shape().size();
+  if (!(axis >= -input_rank && axis < input_rank)) {
+    MS_LOG(EXCEPTION) << "axis is not in the valid range [" << -input_rank << ", " << input_rank << ").";
+  }
+
+  auto sorted_values = std::make_shared<AbstractTensor>(input->element(), input->shape());
+  TypePtr idx_type = kInt32;
+  auto indices = std::make_shared<AbstractTensor>(idx_type, input->shape());
+  AbstractBasePtrList result = {sorted_values, indices};
+  return std::make_shared<AbstractTuple>(result);
+}
+
 }  // namespace abstract
 }  // namespace mindspore
