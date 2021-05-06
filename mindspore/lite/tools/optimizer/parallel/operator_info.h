@@ -22,7 +22,6 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -49,24 +48,23 @@ using OperatorInfoPtr = std::shared_ptr<OperatorInfo>;
 
 class OperatorInfo {
  public:
-  OperatorInfo(std::string name, SplitStrategy strategy)
+  OperatorInfo(const std::string &name, const SplitStrategy &strategy)
       : name_(std::move(name)),
         strategy_(std::move(strategy)),
         replace_op_(nullptr),
         func_graph_(nullptr),
         cnode_(nullptr) {}
   virtual ~OperatorInfo() = default;
-  const std::string &name() const { return name_; }
+  const std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
-  void setFmk(const int32_t FmkType) { FmkType_ = FmkType; }
+  void setFmk(const int32_t fmk_type) { fmk_type_ = fmk_type; }
   AnfNodePtr replace_op() { return replace_op_; }
-  lite::STATUS Init();
+  int Init();
 
  protected:
-  lite::STATUS CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num,
-                                              std::vector<AnfNodePtr> *outputs);
+  int CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num, std::vector<AnfNodePtr> *outputs);
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
                                   size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
                                   bool trans_format);
@@ -74,22 +72,22 @@ class OperatorInfo {
                                int32_t concat_dim, size_t input_nodes_num, bool trans_format);
   AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes, int32_t reduce_dim,
                               size_t input_nodes_num, bool trans_format);
-  virtual lite::STATUS GetAttrs() = 0;
-  virtual lite::STATUS InferReplaceOp() = 0;
-  virtual lite::STATUS InferParallelCNodes() = 0;
-  virtual lite::STATUS CheckStrategy(const SplitStrategy &strategy) = 0;
+  virtual int GetAttrs() = 0;
+  virtual int InferReplaceOp() = 0;
+  virtual int InferParallelCNodes() = 0;
+  virtual int CheckStrategy(const SplitStrategy &strategy) = 0;
 
   std::string name_;
   SplitStrategy strategy_;
-  AnfNodePtr replace_op_;
+  AnfNodePtr replace_op_{nullptr};
   std::vector<AnfNodePtr> parallel_output_nodes_;
-  FuncGraphPtr func_graph_;
-  CNodePtr cnode_;
-  int32_t FmkType_{};
+  FuncGraphPtr func_graph_{nullptr};
+  CNodePtr cnode_{nullptr};
+  int32_t fmk_type_{};
 
  private:
-  lite::STATUS SetCNodeBackend();
-  lite::STATUS CheckStrategyValue();
+  int SetCNodeBackend();
+  int CheckStrategyValue();
 };
 
 bool is_any_none(const std::vector<int64_t> &split);

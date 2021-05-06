@@ -66,6 +66,9 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/parallel/dynamic_creator.cc
         ../optimizer/parallel/operator_info.cc
         ../optimizer/parallel/parallel_pass.cc
+        ../optimizer/parallel/split_strategy.cc
+        ../optimizer/parallel/operator_info_register.cc
+        ../optimizer/parallel/spliter.cc
         ../optimizer/graph/conv1d_inout_adjust_pass.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
@@ -93,7 +96,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/unify_format_pass.cc
         ../optimizer/graph/node_infershape.cc
         ../optimizer/graph/transpose_strategy.cc
-        ../optimizer/parallel/split_strategy.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
