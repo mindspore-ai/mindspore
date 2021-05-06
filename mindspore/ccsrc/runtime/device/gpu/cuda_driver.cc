@@ -91,7 +91,8 @@ bool CudaDriver::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &
   return true;
 }
 
-bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream) {
+bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
+                                          CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -101,7 +102,7 @@ bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *s
 }
 
 bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                          DeviceStream stream) {
+                                          CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -111,7 +112,7 @@ bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMem
 }
 
 bool CudaDriver::CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                            DeviceStream stream) {
+                                            CudaDeviceStream stream) {
   auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToDevice, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -143,7 +144,7 @@ size_t CudaDriver::free_mem_size() {
   return free;
 }
 
-bool CudaDriver::CreateStream(DeviceStream *stream) {
+bool CudaDriver::CreateStream(CudaDeviceStream *stream) {
   auto ret = cudaStreamCreateWithFlags(reinterpret_cast<CUstream_st **>(stream), cudaStreamNonBlocking);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaStreamCreate failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -152,7 +153,7 @@ bool CudaDriver::CreateStream(DeviceStream *stream) {
   return true;
 }
 
-bool CudaDriver::DestroyStream(const DeviceStream &stream) {
+bool CudaDriver::DestroyStream(const CudaDeviceStream &stream) {
   auto ret = cudaStreamDestroy((cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaStreamDestroy failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -161,7 +162,7 @@ bool CudaDriver::DestroyStream(const DeviceStream &stream) {
   return true;
 }
 
-bool CudaDriver::SyncStream(const DeviceStream &stream) {
+bool CudaDriver::SyncStream(const CudaDeviceStream &stream) {
   auto ret = cudaStreamSynchronize((cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaStreamSynchronize failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -170,7 +171,7 @@ bool CudaDriver::SyncStream(const DeviceStream &stream) {
   return true;
 }
 
-bool CudaDriver::CreateEvent(DeviceEvent *event, unsigned int flag) {
+bool CudaDriver::CreateEvent(CudaDeviceEvent *event, unsigned int flag) {
   auto ret = cudaEventCreateWithFlags(reinterpret_cast<cudaEvent_t *>(event), flag);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaEventCreateWithFlags failed, ret[" << static_cast<int>(ret) << "], "
@@ -180,7 +181,7 @@ bool CudaDriver::CreateEvent(DeviceEvent *event, unsigned int flag) {
   return true;
 }
 
-bool CudaDriver::DestroyEvent(const DeviceEvent &event) {
+bool CudaDriver::DestroyEvent(const CudaDeviceEvent &event) {
   auto ret = cudaEventDestroy((cudaEvent_t)event);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaEventDestroy failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -189,7 +190,7 @@ bool CudaDriver::DestroyEvent(const DeviceEvent &event) {
   return true;
 }
 
-bool CudaDriver::RecordEvent(DeviceEvent event, DeviceStream stream) {
+bool CudaDriver::RecordEvent(CudaDeviceEvent event, CudaDeviceStream stream) {
   auto ret = cudaEventRecord((cudaEvent_t)event, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaEventRecord failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -198,7 +199,7 @@ bool CudaDriver::RecordEvent(DeviceEvent event, DeviceStream stream) {
   return true;
 }
 
-bool CudaDriver::SyncEvent(const DeviceEvent &event) {
+bool CudaDriver::SyncEvent(const CudaDeviceEvent &event) {
   auto ret = cudaEventSynchronize((cudaEvent_t)event);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaEventSynchronize failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
@@ -207,7 +208,7 @@ bool CudaDriver::SyncEvent(const DeviceEvent &event) {
   return true;
 }
 
-bool CudaDriver::QueryEvent(const DeviceEvent &event) {
+bool CudaDriver::QueryEvent(const CudaDeviceEvent &event) {
   auto ret = cudaEventQuery((cudaEvent_t)event);
   if (ret == cudaSuccess) {
     return true;
@@ -219,7 +220,7 @@ bool CudaDriver::QueryEvent(const DeviceEvent &event) {
   }
 }
 
-bool CudaDriver::ElapsedTime(float *cost_time, const DeviceEvent &start, const DeviceEvent &end) {
+bool CudaDriver::ElapsedTime(float *cost_time, const CudaDeviceEvent &start, const CudaDeviceEvent &end) {
   auto ret = cudaEventElapsedTime(cost_time, (cudaEvent_t)start, (cudaEvent_t)end);
   if (ret == cudaSuccess) {
     return true;

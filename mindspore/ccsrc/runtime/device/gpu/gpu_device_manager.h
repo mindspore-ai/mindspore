@@ -38,9 +38,9 @@ class GPUDeviceManager {
   uint32_t cur_device_id() const;
   bool is_device_id_init() const;
 
-  bool CreateStream(DeviceStream *stream);
-  bool SyncStream(const DeviceStream &stream) const;
-  const DeviceStream &default_stream() const;
+  bool CreateStream(CudaDeviceStream *stream);
+  bool SyncStream(const CudaDeviceStream &stream) const;
+  const CudaDeviceStream &default_stream() const;
 
   const cudnnHandle_t &GetCudnnHandle() const;
   const cublasHandle_t &GetCublasHandle() const;
@@ -49,10 +49,11 @@ class GPUDeviceManager {
   bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const;
   bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const;
 
-  bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size, DeviceStream stream) const;
-  bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream) const;
+  bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
+                                CudaDeviceStream stream) const;
+  bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, CudaDeviceStream stream) const;
   bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                  DeviceStream stream) const;
+                                  CudaDeviceStream stream) const;
 
   static GPUDeviceManager &GetInstance() {
     static GPUDeviceManager instance;
@@ -66,10 +67,10 @@ class GPUDeviceManager {
   GPUDeviceManager &operator=(const GPUDeviceManager &) = delete;
 
   // default CUDA stream used for all the kernels.
-  DeviceStream default_stream_{nullptr};
+  CudaDeviceStream default_stream_{nullptr};
 
   // all gpu CUDA streams including default_stream_.
-  std::vector<DeviceStream> gpu_streams_;
+  std::vector<CudaDeviceStream> gpu_streams_;
 
   // handle used for cuDNN kernels.
   cudnnHandle_t cudnn_handle_{nullptr};

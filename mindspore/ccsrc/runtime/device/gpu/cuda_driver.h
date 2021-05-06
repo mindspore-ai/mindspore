@@ -22,8 +22,8 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-typedef void *DeviceStream;
-typedef void *DeviceEvent;
+typedef void *CudaDeviceStream;
+typedef void *CudaDeviceEvent;
 typedef void *HostMemPtr;
 typedef void *DeviceMemPtr;
 
@@ -39,27 +39,28 @@ class CudaDriver {
   static bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size);
   static bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size);
 
-  static bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream = 0);
+  static bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
+                                       CudaDeviceStream stream = 0);
   static bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                       DeviceStream stream = 0);
+                                       CudaDeviceStream stream = 0);
   static bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                         DeviceStream stream = 0);
+                                         CudaDeviceStream stream = 0);
 
   static size_t total_mem_size();
   static size_t free_mem_size();
 
   // Encapsulate the cuda APIs associated with device resource
   // such as Stream and Event.
-  static bool CreateStream(DeviceStream *stream);
-  static bool DestroyStream(const DeviceStream &stream);
-  static bool SyncStream(const DeviceStream &stream);
+  static bool CreateStream(CudaDeviceStream *stream);
+  static bool DestroyStream(const CudaDeviceStream &stream);
+  static bool SyncStream(const CudaDeviceStream &stream);
 
-  static bool CreateEvent(DeviceEvent *event, unsigned int flag = cudaEventDefault);
-  static bool DestroyEvent(const DeviceEvent &event);
-  static bool RecordEvent(DeviceEvent event, DeviceStream stream = 0);
-  static bool SyncEvent(const DeviceEvent &event);
-  static bool QueryEvent(const DeviceEvent &event);
-  static bool ElapsedTime(float *cost_time, const DeviceEvent &start, const DeviceEvent &end);
+  static bool CreateEvent(CudaDeviceEvent *event, unsigned int flag = cudaEventDefault);
+  static bool DestroyEvent(const CudaDeviceEvent &event);
+  static bool RecordEvent(CudaDeviceEvent event, CudaDeviceStream stream = 0);
+  static bool SyncEvent(const CudaDeviceEvent &event);
+  static bool QueryEvent(const CudaDeviceEvent &event);
+  static bool ElapsedTime(float *cost_time, const CudaDeviceEvent &start, const CudaDeviceEvent &end);
 
   // Encapsulate the cuda APIs associated with device management.
   static int device_count();

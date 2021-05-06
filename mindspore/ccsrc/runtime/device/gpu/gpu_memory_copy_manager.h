@@ -66,10 +66,10 @@ class GPUMemCopyManager : public MemCopyManager {
   void ClearSwapQueueMock() override;
 
  private:
-  DeviceStream swap_out_stream_{nullptr};
-  DeviceStream swap_in_stream_{nullptr};
-  std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_out_queue_;
-  std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_in_queue_;
+  CudaDeviceStream swap_out_stream_{nullptr};
+  CudaDeviceStream swap_in_stream_{nullptr};
+  std::queue<std::pair<DeviceAddressPtr, CudaDeviceStream>> swap_out_queue_;
+  std::queue<std::pair<DeviceAddressPtr, CudaDeviceStream>> swap_in_queue_;
   std::queue<DeviceAddressPtr> swap_out_queue_mock_;
   std::queue<DeviceAddressPtr> swap_in_queue_mock_;
 };

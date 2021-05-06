@@ -35,7 +35,7 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
     if (kernel_name == kAllReduceOpName) {
       allreduce_kernels.emplace_back(kernel_node);
     } else {
-      DeviceStream compute_stream = GPUDeviceManager::GetInstance().default_stream();
+      CudaDeviceStream compute_stream = GPUDeviceManager::GetInstance().default_stream();
       MS_EXCEPTION_IF_NULL(compute_stream);
       AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(compute_stream)), kernel_node);
     }
@@ -44,7 +44,7 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
     // Assign multiple streams only when there're multiple AllReduce nodes.
     std::vector<SendRecvPair> send_recv_pairs;
     if (FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs)) {
-      DeviceStream comm_stream = nullptr;
+      CudaDeviceStream comm_stream = nullptr;
       GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
       std::transform(
         allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(), [&](CNodePtr allreduce_kernel) {

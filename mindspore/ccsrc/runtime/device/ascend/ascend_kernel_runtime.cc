@@ -354,58 +354,6 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   return true;
 }
 
-void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
-  if (kernels.empty()) {
-    return;
-  }
-  auto kernel_events =
-    std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
-  auto &kernel_pre_run_events = kernel_events.first;
-  auto &kernel_post_run_events = kernel_events.second;
-  kernel_pre_run_events.resize(kernels.size());
-  kernel_post_run_events.resize(kernels.size());
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    auto &kernel = kernels[i];
-    if (!AnfAlgo::IsCommunicationOp(kernel)) {
-      continue;
-    }
-    auto pre_event = std::make_shared<AscendEvent>();
-    auto post_event = std::make_shared<AscendEvent>();
-    pre_event->set_wait_stream(communication_stream_);
-    pre_event->set_record_stream(stream_);
-    post_event->set_wait_stream(stream_);
-    post_event->set_record_stream(communication_stream_);
-    kernel_pre_run_events[i].emplace_back([pre_event]() {
-      pre_event->RecordEvent();
-      pre_event->WaitEvent();
-    });
-    kernel_post_run_events[i].emplace_back([post_event]() { post_event->RecordEvent(); });
-    bool found_nearest_child = false;
-    for (size_t j = i + 1; j < kernels.size(); ++j) {
-      auto &child = kernels[j];
-      MS_EXCEPTION_IF_NULL(child);
-      auto input_size = child->inputs().size() - 1;
-      for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
-        if (kernel_index.first == kernel) {
-          found_nearest_child = true;
-          break;
-        }
-      }
-      if (found_nearest_child) {
-        kernel_pre_run_events[j].emplace_back([post_event]() { post_event->WaitEvent(); });
-        break;
-      }
-    }
-    if (!found_nearest_child) {
-      kernel_post_run_events[i].emplace_back([post_event]() { post_event->WaitEvent(); });
-    }
-  }
-  graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
-}
-
 bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "GenDynamicKernel start";
@@ -969,6 +917,12 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
   if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
     MS_LOG(EXCEPTION) << "Too many profiling data";
   }
+}
+
+std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
+  auto ascend_event = std::make_shared<AscendEvent>();
+  MS_EXCEPTION_IF_NULL(ascend_event);
+  return ascend_event;
 }
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {

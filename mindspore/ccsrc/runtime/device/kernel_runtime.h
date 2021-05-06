@@ -107,6 +107,8 @@ class KernelRuntime {
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
   void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
+  void GenKernelEvents(const session::KernelGraph *graph);
+  virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
@@ -129,7 +131,6 @@ class KernelRuntime {
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
-  virtual void GenKernelEvents(const session::KernelGraph *graph) {}
 
  private:
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
