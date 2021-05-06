@@ -4,21 +4,13 @@
 function MS_PRINT_TESTCASE_END_MSG() {
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
     echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
     echo -e "env                  Testcase                                                                                             Result   "
     echo -e "---                  --------                                                                                             ------   "
-}
-
-function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_END_MSG
-    while read line; do
-        arr=("${line}")
-        printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
-    done < "${run_converter_result_file}"
-    MS_PRINT_TESTCASE_END_MSG
 }
 
 function Print_Cropper_Result() {
@@ -28,61 +20,6 @@ function Print_Cropper_Result() {
         printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
     done < "${run_cropper_result}"
     MS_PRINT_TESTCASE_END_MSG
-}
-
-# Run converter on x86 platform:
-function Run_Converter() {
-    # Unzip x86 runtime and converter
-    cd "${x86_path}" || exit 1
-    tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
-    cd "${x86_path}"/mindspore-lite-${version}-inference-linux-x64/ || exit 1
-
-    cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
-
-    rm -rf ${ms_models_path}
-    mkdir -p "${ms_models_path}"
-
-    # Convert models which does not need to be cared about the accuracy:
-    while read line; do
-        if [[ $line == \#* ]]; then
-          continue
-        fi
-        model_name=${line%%;*}
-        model_type=${model_name##*.}
-        case $model_type in
-          pb)
-            model_fmk="TF"
-            ;;
-          tflite)
-            model_fmk="TFLITE"
-            ;;
-          onnx)
-            model_fmk="ONNX"
-            ;;
-          mindir)
-            model_fmk="MINDIR"
-            ;;
-          *)
-            model_type="caffe"
-            model_fmk="CAFFE"
-            ;;
-        esac
-        if [[ $model_fmk == "CAFFE" ]]; then
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='$models_path/${model_name}'.prototxt --weightFile='$models_path'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}
-        else
-          echo ${model_name} >> "${run_converter_log_file}"
-          echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
-          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
-        fi
-        if [ $? = 0 ]; then
-            converter_result='converter '${model_type}' '${model_name}' pass';echo ${converter_result} >> "${run_converter_result_file}"
-        else
-            converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> "${run_converter_result_file}";return 1
-        fi
-    done < ${cropper_config}
 }
 
 function Run_cropper() {
@@ -174,10 +111,6 @@ while getopts "r:d:m:" opt; do
             device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
             ;;
-        m)
-            models_path=${OPTARG}
-            echo "models_path is ${OPTARG}"
-            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -193,7 +126,7 @@ echo ' ' > "${run_cropper_result}"
 run_cropper_log_file="${basepath}"/run_cropper_log.txt
 echo 'run cropper logs: ' > "${run_cropper_log_file}"
 
-cropper_config="${basepath}"/model_config.cfg
+cropper_config="${basepath}"/models_cropper.cfg
 arm64_path=${release_path}/android_aarch64
 x86_path=${release_path}/ubuntu_x86
 
