@@ -2043,6 +2043,10 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     set_fg_fn();
     DumpIR("fg.ir", curr_g_);
   }
+  // Checkout whether need to compile graph when top cell has ran finished
+  if (cell_id == top_cell()->cell_id()) {
+    CheckNeedCompileGraph();
+  }
   // Reset grad flag and checkout whether need to compile graph when top cell has ran finished
   if (cell_stack_.empty() && cell_id == top_cell()->cell_id()) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
@@ -2053,8 +2057,6 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
     MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
     k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node);
-    // Checkout whether need to compile graph when top cell has ran finished
-    CheckNeedCompileGraph();
   }
 }
 
