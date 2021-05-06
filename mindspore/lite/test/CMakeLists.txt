@@ -279,7 +279,16 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
+            ${LITE_DIR}/tools/optimizer/fisson/eliminate_concat_split.cc
+            ${LITE_DIR}/tools/optimizer/fisson/fisson_util.cc
+            ${LITE_DIR}/tools/optimizer/fisson/iter_node_outputs.cc
+            ${LITE_DIR}/tools/optimizer/fisson/node_out_shapes.cc
+            ${LITE_DIR}/tools/optimizer/parallel/parallel_pass.cc
+            ${LITE_DIR}/tools/optimizer/parallel/operator_info.cc
+            ${LITE_DIR}/tools/optimizer/parallel/dynamic_creator.cc
             ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
+            ${LITE_DIR}/tools/optimizer/parallel/operator_info_register.cc
+            ${LITE_DIR}/tools/optimizer/parallel/spliter.cc
             ${LITE_DIR}/tools/common/graph_util.cc
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc

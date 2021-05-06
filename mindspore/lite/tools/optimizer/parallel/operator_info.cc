@@ -36,7 +36,7 @@ bool is_any_not_none(const std::vector<int64_t> &split) {
   return std::any_of(split.begin(), split.end(), [](int64_t v) { return v != static_cast<int64_t>(NoSplit); });
 }
 
-lite::STATUS OperatorInfo::SetCNodeBackend() {
+int OperatorInfo::SetCNodeBackend() {
   for (size_t i = 0; i < strategy_.dev_num; ++i) {
     lite::DeviceType dt_type;
     std::string type = strategy_.dev_types[i];
@@ -57,7 +57,7 @@ lite::STATUS OperatorInfo::SetCNodeBackend() {
   return lite::RET_OK;
 }
 
-lite::STATUS OperatorInfo::CheckStrategyValue() {
+int OperatorInfo::CheckStrategyValue() {
   auto strategy_size = strategy_.strategys.size();
 
   for (size_t index = 0; index < strategy_size; ++index) {
@@ -77,8 +77,8 @@ lite::STATUS OperatorInfo::CheckStrategyValue() {
   return lite::RET_OK;
 }
 
-lite::STATUS OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num,
-                                                          std::vector<AnfNodePtr> *outputs) {
+int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num,
+                                                 std::vector<AnfNodePtr> *outputs) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
   AbstractBasePtrList ptr_list;
@@ -180,7 +180,7 @@ AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::
   return addn_cnode;
 }
 
-lite::STATUS OperatorInfo::Init() {
+int OperatorInfo::Init() {
   if (GetAttrs() != lite::RET_OK) {
     MS_LOG(ERROR) << name_ << ": Parse attrs failed.";
     return lite::RET_ERROR;

@@ -67,6 +67,9 @@
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "tools/optimizer/fisson/iter_node_outputs.h"
+#include "tools/optimizer/fisson/node_out_shapes.h"
+#include "tools/optimizer/parallel/parallel_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -137,12 +140,17 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   }
   auto parallel_pm = std::make_shared<opt::PassManager>("anf parallel pass manager", false);
   // 2. preceding parallel pass
-  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
+  parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 3. multi_conv parallel pass
   parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
   // 4. single conv parallel pass
-  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  parallel_pm->AddPass(std::make_shared<opt::ParallelPass>(split_strategys, config->fmk));
   optimizer->AddPassManager(parallel_pm);
+  if (optimizer->Optimize(old_graph) == nullptr) {
+    MS_LOG(ERROR) << "run const fold failed.";
+    return RET_ERROR;
+  }
   MS_LOG(DEBUG) << "Run ParallelPass end";
   return RET_OK;
 }
