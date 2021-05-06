@@ -76,9 +76,11 @@ constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) <<
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";
 
-constexpr int64_t kSubmitTaskInterval = 1;
-constexpr int64_t kMaxTaskNum = 1024;
-constexpr int64_t kSubmitTimeOut = 3000;
+constexpr int64_t kSubmitTaskIntervalInMs = 1;
+constexpr int64_t kMaxTaskNum = 10240;
+constexpr int64_t kSubmitTimeOutInMs = 30000;
+constexpr int64_t kRetryCount = 60;
+constexpr int64_t kRetryIntervalInMs = 10;
 
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;

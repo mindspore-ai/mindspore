@@ -42,7 +42,13 @@ bool TcpCommunicator::Start() {
       std::shared_ptr<MessageHandler> tcp_msg_handler =
         std::make_shared<TcpMsgHandler>(server_node_, conn, meta, data, size);
       MS_EXCEPTION_IF_NULL(tcp_msg_handler);
-      task_executor_->Submit(msg_callbacks_[msg_type], tcp_msg_handler);
+      // The Submit function timed out for 30s, if it returns false, it will retry 60 times.
+      bool res = CommUtil::Retry([&] { return task_executor_->Submit(msg_callbacks_[msg_type], tcp_msg_handler); },
+                                 kRetryCount, kRetryIntervalInMs);
+      if (res == false) {
+        MS_LOG(EXCEPTION) << "Submit tcp msg handler failed.";
+      }
+
       return;
     },
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
