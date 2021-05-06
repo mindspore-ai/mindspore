@@ -41,6 +41,15 @@ class FloorNet(nn.Cell):
         return self.floor(x)
 
 
+class RoundNet(nn.Cell):
+    def __init__(self):
+        super(RoundNet, self).__init__()
+        self.round = P.Round()
+
+    def construct(self, x):
+        return self.round(x)
+
+
 class ReciprocalNet(nn.Cell):
     def __init__(self):
         super(ReciprocalNet, self).__init__()
@@ -141,6 +150,20 @@ def test_rint():
     x = np.random.randn(3, 4, 5, 6).astype(np.float32) * prop
     output = net(Tensor(x))
     expect_output = np.rint(x).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+def test_round():
+    net = RoundNet()
+
+    x = np.array([0.9920, -0.4077, 0.9734, -1.0362, 1.5, -2.5, 4.5]).astype(np.float16)
+    output = net(Tensor(x))
+    expect_output = np.round(x).astype(np.float16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    x = np.array([0.9920, -0.4077, 0.9734, -1.0362, 1.5, -2.5, 4.5]).astype(np.float32)
+    output = net(Tensor(x))
+    expect_output = np.round(x).astype(np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 

@@ -114,6 +114,7 @@ enum OperateType {
   ACOSHGRAD,
   ATAN2,
   RINT,
+  ROUND,
 };
 
 class CPUKernel : public kernel::KernelMod {

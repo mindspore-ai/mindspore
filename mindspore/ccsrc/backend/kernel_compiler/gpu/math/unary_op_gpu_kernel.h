@@ -49,6 +49,7 @@ enum UnaryOptype {
   UNARY_OP_ABS,
   UNARY_OP_FLOOR,
   UNARY_OP_RINT,
+  UNARY_OP_ROUND,
   UNARY_OP_INVALID_TYPE = 255
 };
 
@@ -63,7 +64,7 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
   {"ACos", UNARY_OP_ACOS},     {"Atan", UNARY_OP_ATAN},
   {"Asinh", UNARY_OP_ASINH},   {"Acosh", UNARY_OP_ACOSH},
   {"Abs", UNARY_OP_ABS},       {"Floor", UNARY_OP_FLOOR},
-  {"Rint", UNARY_OP_RINT}};
+  {"Rint", UNARY_OP_RINT},     {"Round", UNARY_OP_ROUND}};
 
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
@@ -163,6 +164,10 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_RINT: {
         Rint(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ROUND: {
+        Round(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       default: {

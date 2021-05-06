@@ -3919,7 +3919,7 @@ class Round(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
          >>> input_x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
