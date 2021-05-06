@@ -14,9 +14,12 @@
 # ============================================================================
 """Module to provide conversion capabalities from .timestamp async dump files to .npy."""
 import site
-site.addsitedir("/usr/local/Ascend/toolkit/tools/operator_cmp/compare/")
-#pylint: disable=wrong-import-position
 import os
+DIR_PATH = "/usr/local/Ascend/toolkit/tools/operator_cmp/compare/"
+if not os.path.exists(DIR_PATH):
+    raise ValueError("Directory " + DIR_PATH + " does not exist. Please install Ascend toolkit.")
+site.addsitedir(DIR_PATH)
+#pylint: disable=wrong-import-position
 import argparse
 import csv
 from dump_data_parser import DumpDataParser
