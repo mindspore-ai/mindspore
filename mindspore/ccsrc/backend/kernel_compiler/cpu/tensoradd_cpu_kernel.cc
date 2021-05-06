@@ -30,7 +30,7 @@ void TensorAddCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool TensorAddCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                   const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   T *input_addr_a = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_addr_b = reinterpret_cast<T *>(inputs[1]->addr);

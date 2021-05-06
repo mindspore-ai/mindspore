@@ -34,7 +34,7 @@ class PackCpuFwdKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  bool CheckParam(const std::vector<AddressPtr> &outputs);
+  bool CheckParam(const std::vector<AddressPtr> &outputs) const;
   void PackTensor(T *output, size_t start, size_t end);
 
   int axis_;

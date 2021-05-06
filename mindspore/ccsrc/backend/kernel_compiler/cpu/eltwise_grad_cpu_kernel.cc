@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same_v<T, float>) {
     int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
     if (ret == NNACL_ERR) {
@@ -37,7 +37,7 @@ void EltWiseGradCPUKernel<T>::ReluGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same_v<T, float>) {
     int ret = ::Relu6Grad(input1 + start, input2 + start, end - start, out + start);
     if (ret == NNACL_ERR) {
@@ -49,7 +49,7 @@ void EltWiseGradCPUKernel<T>::ReLU6Grad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same_v<T, float>) {
     int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
     if (ret == NNACL_ERR) {
@@ -61,7 +61,7 @@ void EltWiseGradCPUKernel<T>::AbsGrad(const T *input1, const T *input2, T *out, 
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same_v<T, float>) {
     int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
     if (ret == NNACL_ERR) {
@@ -73,14 +73,14 @@ void EltWiseGradCPUKernel<T>::SigmoidGrad(const T *input1, const T *input2, T *o
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     out[i] = input2[i] / (input1[i] * 2);
   }
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (std::is_same_v<T, float>) {
     int ret = ::TanhGrad(input2 + start, input1 + start, end - start, out + start);
     if (ret == NNACL_ERR) {
@@ -92,7 +92,7 @@ void EltWiseGradCPUKernel<T>::TanhGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T x = input2[i];
     auto double_x = static_cast<T>(x);
@@ -104,7 +104,7 @@ void EltWiseGradCPUKernel<T>::GeluGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
@@ -125,7 +125,7 @@ void EltWiseGradCPUKernel<T>::AsinGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = -input2[i];
     T divisor = sqrt(1 - input1[i] * input1[i]);
@@ -146,7 +146,7 @@ void EltWiseGradCPUKernel<T>::ACosGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = 1 + input1[i] * input1[i];
@@ -167,7 +167,7 @@ void EltWiseGradCPUKernel<T>::AtanGrad(const T *input1, const T *input2, T *out,
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sqrt(1 + input1[i] * input1[i]);
@@ -188,7 +188,7 @@ void EltWiseGradCPUKernel<T>::AsinhGrad(const T *input1, const T *input2, T *out
 }
 
 template <typename T>
-void EltWiseGradCPUKernel<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+void EltWiseGradCPUKernel<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
     T divisor = sqrt(input1[i] * input1[i] - 1);
@@ -216,7 +216,7 @@ void EltWiseGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool EltWiseGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   static const std::map<std::string,
                         std::function<void(EltWiseGradCPUKernel *, const T *, const T *, T *, size_t, size_t)>>
