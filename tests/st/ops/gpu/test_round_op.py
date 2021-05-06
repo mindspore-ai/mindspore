@@ -49,12 +49,12 @@ def generate_testcases(nptype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_sign_float32():
+def test_round_float32():
     generate_testcases(np.float32)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_sign_float16():
+def test_round_float16():
     generate_testcases(np.float16)
