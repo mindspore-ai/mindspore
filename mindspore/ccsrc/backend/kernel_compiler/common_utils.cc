@@ -822,6 +822,5 @@ void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, co
     interpolation[i].lerp = in - in_f;
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

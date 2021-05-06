@@ -130,7 +130,6 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
   T bottom = bottom_left + (bottom_right - bottom_left) * x_lerp;
   return top + (bottom - top) * y_lerp;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
 
