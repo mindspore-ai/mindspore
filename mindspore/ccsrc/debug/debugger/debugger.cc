@@ -237,7 +237,7 @@ bool Debugger::CheckDebuggerEnabled() const {
   return false;
 }
 
-void Debugger::CheckDebuggerEnabledParam() {
+void Debugger::CheckDebuggerEnabledParam() const {
   // check the value of env variable ENABLE_MS_DEBUGGER
   const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
   if (env_enable_char != nullptr) {
@@ -1098,16 +1098,19 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
 
-bool Debugger::CheckPort(const char *port) {
-  char *p = const_cast<char *>(port);
+bool Debugger::CheckPort(const char *port) const {
   int num = 0;
-  if (*p == '0' && *(p + 1) != '\0') return false;
-  while (*p != '\0') {
-    if (*p < '0' || *p > '9') return false;
-    num = num * 10 + (*p) - '0';
-    if (num < 1 || num > 65535) return false;
-    p++;
+  const int min_port_num = 1;
+  const int max_port_num = 65535;
+  if (*port == '0' && *(port + 1) != '\0') return false;
+  int i = 0;
+  while (*(port + i) != '\0') {
+    if (*(port + i) < '0' || *(port + i) > '9') return false;
+    num = num * 10 + (*(port + i)) - '0';
+    if (num > max_port_num) return false;
+    i++;
   }
+  if (num < min_port_num) return false;
   return true;
 }
 
