@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class ArithmeticCPUKernel : public CPUKernel {
  public:
   ArithmeticCPUKernel() = default;
@@ -30,283 +31,133 @@ class ArithmeticCPUKernel : public CPUKernel {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-  template <typename T>
-  void LaunchKernelLogic(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
-  void GenIndex(size_t num, std::vector<size_t> *tmp);
-  template <typename T>
-  void Sub(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Add(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Mul(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void RealDiv(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Div(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void FloorDiv(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Mod(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void FloorMod(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Pow(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void AssignAdd(T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Atan2(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Less(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void Equal(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void NotEqual(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void SquaredDifference(const T *input1, const T *input2, T *out, size_t size);
-  template <typename T>
-  void Greater(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void GreaterEqual(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void LessEqual(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void LogicalAnd(const T *input1, const T *input2, bool *out, size_t size);
-  template <typename T>
-  void LogicalOr(const T *input1, const T *input2, bool *out, size_t size);
-  std::vector<size_t> input_shape0_;
+  void GenIndex(size_t num, size_t *idx1, size_t *idx2);
+  void Broadcast(T *broadcastedInput1, T *broadcastedInput2, T *input1, T *input2);
+  void Sub(const T *input1, const T *input2, T *out);
+  void Add(const T *input1, const T *input2, T *out);
+  void Mul(const T *input1, const T *input2, T *out);
+  void RealDiv(const T *input1, const T *input2, T *out);
+  void Div(const T *input1, const T *input2, T *out);
+  void FloorDiv(const T *input1, const T *input2, T *out);
+  void Mod(const T *input1, const T *input2, T *out);
+  void FloorMod(const T *input1, const T *input2, T *out);
+  void Pow(const T *input1, const T *input2, T *out);
+  void AssignAdd(T *input1, const T *input2, T *out);
+  void Atan2(const T *input1, const T *input2, T *out);
+  void SquaredDifference(const T *input1, const T *input2, T *out);
   std::vector<size_t> input_shape1_;
-  std::vector<size_t> input_element_num0_;
+  std::vector<size_t> input_shape2_;
   std::vector<size_t> input_element_num1_;
+  std::vector<size_t> input_element_num2_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_element_num_;
+  size_t output_size_;
   OperateType operate_type_{ADD};
   TypeId dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   Sub, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   Pow, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   Pow, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   Pow, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   RealDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   RealDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   RealDiv, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   Div, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   FloorDiv,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   Mod, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   Mod, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   Mod, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   FloorMod, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   FloorMod, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   FloorMod,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   FloorMod,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Less, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Less, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(
   AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
   Mul, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Mul, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Mul, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Equal, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  NotEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, int);
+MS_REG_CPU_KERNEL_T(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Greater, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Greater,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  Greater, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  GreaterEqual,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  GreaterEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  GreaterEqual,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LogicalAnd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
+  ArithmeticCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
   Atan2,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ArithmeticCPUKernel);
+  ArithmeticCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 
