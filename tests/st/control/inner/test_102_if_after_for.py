@@ -24,7 +24,7 @@ grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
 
-def test_if_after_for():
+def test_if_after_for_01():
     class IfAfterForNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -45,6 +45,60 @@ def test_if_after_for():
                 x = self.sub(x, 2)
             self.param_b = self.add(self.param_b, 2)
             if x < self.param_b:
+                y = self.mul(x, self.param_a)
+
+            z = self.relu(x + y)
+            return z
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([7], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    if_after_for_net = IfAfterForNet()
+    net = GradNet(if_after_for_net)
+    graph_forward_res = if_after_for_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    if_after_for_net = IfAfterForNet()
+    net = GradNet(if_after_for_net)
+    pynative_forward_res = if_after_for_net(x)
+    pynative_backward_res = net(x)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_if_after_for_02():
+    class IfAfterForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = nn.ReLU()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(11, mstype.int32), name='b')
+
+        def construct(self, x):
+            self.assign(self.param_a, x + self.param_a)
+            y = self.add(x, self.param_b)
+            for _ in range(0, 2):
+                x = self.sub(x, 2)
+                self.assign(self.param_b, self.param_a + self.param_b - x)
+            self.param_b = self.add(self.param_b, 2)
+            if x < self.param_b:
+                x = y - x
                 y = self.mul(x, self.param_a)
 
             z = self.relu(x + y)

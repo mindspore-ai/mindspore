@@ -211,3 +211,48 @@ def test_single_for_04():
 
     assert graph_forward_res == pynative_forward_res
     assert graph_backward_res == pynative_backward_res
+
+
+def test_single_for_05():
+    class SingleForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            self.param_a = Parameter(Tensor(np.array(5), mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(np.array(2), mstype.int32), name='b')
+
+        def construct(self, x):
+            self.assign(self.param_a, x + self.param_a)
+            for _ in range(0, 3):
+                self.assign(self.param_b, x - self.param_a)
+            return x
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([6], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    graph_forward_res = single_for_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    single_for_net = SingleForNet()
+    net = GradNet(single_for_net)
+    pynative_forward_res = single_for_net(x)
+    pynative_backward_res = net(x)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res

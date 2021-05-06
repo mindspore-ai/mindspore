@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_for_after_for():
+def test_for_after_for_01():
     class ForAfterForNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -50,6 +50,59 @@ def test_for_after_for():
 
             z = self.relu(y + self.param_a)
             return z
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([7], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    for_after_for_net = ForAfterForNet()
+    net = GradNet(for_after_for_net)
+    graph_forward_res = for_after_for_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    for_after_for_net = ForAfterForNet()
+    net = GradNet(for_after_for_net)
+    pynative_forward_res = for_after_for_net(x)
+    pynative_backward_res = net(x)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_for_after_for_02():
+    class ForAfterForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            param_a = np.full((1,), 5, dtype=np.int32)
+            self.param_a = Parameter(Tensor(param_a), name='a')
+            param_b = np.full((1,), 11, dtype=np.int32)
+            self.param_b = Parameter(Tensor(param_b), name='b')
+
+        def construct(self, x):
+            self.assign(self.param_a, x + self.param_a)
+            y = self.add(x, self.param_a)
+            for _ in range(0, 2):
+                x = self.sub(x, 3)
+                self.assign(self.param_b, x + self.param_b)
+            self.param_a = x + y
+            for _ in range(0, 5):
+                y = self.mul(x, self.param_a)
+                x = x + self.param_a
+            return y
 
     class GradNet(nn.Cell):
         def __init__(self, net):

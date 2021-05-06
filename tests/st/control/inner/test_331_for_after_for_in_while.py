@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_for_after_for_in_while():
+def test_for_after_for_in_while_01():
     class ForAfterForInWhileNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -58,6 +58,59 @@ def test_for_after_for_in_while():
             self.param_a = x - y
             z = y + self.param_b
             return z
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([11], mstype.int32)
+    y = Tensor([7], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    for_after_for_in_while_net = ForAfterForInWhileNet()
+    net = GradNet(for_after_for_in_while_net)
+    graph_forward_res = for_after_for_in_while_net(x, y)
+    graph_backward_res = net(x, y)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    for_after_for_in_while_net = ForAfterForInWhileNet()
+    net = GradNet(for_after_for_in_while_net)
+    pynative_forward_res = for_after_for_in_while_net(x, y)
+    pynative_backward_res = net(x, y)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_for_after_for_in_while_02():
+    class ForAfterForInWhileNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
+            self.param_c = Parameter(Tensor(-10, mstype.int32), name='c')
+
+        def construct(self, x, y):
+            while self.param_c > x:
+                self.param_b = self.add(self.param_c, self.param_b)
+                for _ in range(0, 20):
+                    self.assign(self.param_b, self.param_a + 2)
+                self.assign(self.param_c, self.param_c - 1)
+                x = x + 2
+            for _ in range(0, 4):
+                self.assign(self.param_c, y + self.param_b)
+            x = self.param_a - x - y
+            return x
 
     class GradNet(nn.Cell):
         def __init__(self, net):

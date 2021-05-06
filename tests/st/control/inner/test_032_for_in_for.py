@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 context.set_context(device_target="Ascend")
 
-def test_for_in_for():
+def test_for_in_for_01():
     class ForInForNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -47,6 +47,54 @@ def test_for_in_for():
             y = self.sub(x, self.param_b)
             z = self.relu(x + y)
             return z
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            return grad_all(self.net)(*inputs)
+
+    x = Tensor([2], mstype.int32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    for_in_for_net = ForInForNet()
+    net = GradNet(for_in_for_net)
+    graph_forward_res = for_in_for_net(x)
+    graph_backward_res = net(x)
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    for_in_for_net = ForInForNet()
+    net = GradNet(for_in_for_net)
+    pynative_forward_res = for_in_for_net(x)
+    pynative_backward_res = net(x)
+
+    assert graph_forward_res == pynative_forward_res
+    assert graph_backward_res == pynative_backward_res
+
+
+def test_for_in_for_02():
+    class ForInForNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.assign = P.Assign()
+            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(11, mstype.int32), name='b')
+
+        def construct(self, x):
+            for _ in range(0, 10):
+                x = x * 2
+                self.assign(self.param_a, x + self.param_a)
+                for _ in range(0, 5):
+                    x = self.add(x, x)
+                    self.param_b += 1
+            y = self.sub(x, self.param_b + self.param_a)
+            return y
 
     class GradNet(nn.Cell):
         def __init__(self, net):
