@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_TileFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateTileParameter(const void *prim) {
-  auto *tile_param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
-  if (tile_param == nullptr) {
-    MS_LOG(ERROR) << "malloc TileParameter failed.";
-    return nullptr;
-  }
-  memset(tile_param, 0, sizeof(TileParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TileFusion();
@@ -33,15 +27,23 @@ OpParameter *PopulateTileParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  tile_param->op_parameter_.type_ = primitive->value_type();
+
+  auto *param = reinterpret_cast<TileParameter *>(malloc(sizeof(TileParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc TileParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(TileParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
   auto dims = value->dims();
   if (dims != nullptr) {
     for (size_t i = 0; i < dims->size(); ++i) {
-      tile_param->dims_[i] = static_cast<int>(dims->Get(i));
+      param->dims_[i] = static_cast<int>(dims->Get(i));
     }
-    tile_param->dims_size_ = dims->size();
+    param->dims_size_ = dims->size();
   }
-  return reinterpret_cast<OpParameter *>(tile_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_TileFusion, PopulateTileParameter, SCHEMA_CUR)

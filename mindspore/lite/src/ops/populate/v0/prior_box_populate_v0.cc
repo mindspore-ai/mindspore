@@ -40,6 +40,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   auto min_sizes = prior_box_prim->min_sizes();
   if (min_sizes == nullptr) {
     MS_LOG(ERROR) << "min_sizes is nullptr";
+    free(prior_box_param);
     return nullptr;
   }
   if (min_sizes->size() > MAX_SHAPE_SIZE) {
@@ -53,6 +54,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   auto max_sizes = prior_box_prim->max_sizes();
   if (max_sizes == nullptr) {
     MS_LOG(ERROR) << "max_sizes is nullptr";
+    free(prior_box_param);
     return nullptr;
   }
   if (max_sizes->size() > MAX_SHAPE_SIZE) {
@@ -66,6 +68,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   auto aspect_ratios = prior_box_prim->aspect_ratios();
   if (aspect_ratios == nullptr) {
     MS_LOG(ERROR) << "aspect_ratios is nullptr";
+    free(prior_box_param);
     return nullptr;
   }
   if (aspect_ratios->size() > MAX_SHAPE_SIZE) {
@@ -79,6 +82,7 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   auto variances = prior_box_prim->variances();
   if (variances == nullptr) {
     MS_LOG(ERROR) << "variances is nullptr";
+    free(prior_box_param);
     return nullptr;
   }
   if (variances->size() != COMM_SHAPE_SIZE) {

@@ -19,20 +19,21 @@ using mindspore::schema::PrimitiveType_Where;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateWhereParameter(const void *prim) {
-  auto *where_parameter = reinterpret_cast<WhereParameter *>(malloc(sizeof(WhereParameter)));
-  if (where_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc Where parameter failed.";
-    return nullptr;
-  }
-  memset(where_parameter, 0, sizeof(OpParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  where_parameter->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(where_parameter);
+
+  auto *param = reinterpret_cast<WhereParameter *>(malloc(sizeof(WhereParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc WhereParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(OpParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_Where, PopulateWhereParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

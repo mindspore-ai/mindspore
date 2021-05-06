@@ -19,39 +19,42 @@ using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateCropParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  auto crop_prim = primitive->value_as_Crop();
-  if (crop_prim == nullptr) {
-    MS_LOG(ERROR) << "crop_prim is nullptr";
+  auto value = primitive->value_as_Crop();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  auto param_offset = crop_prim->offsets();
-  if (param_offset == nullptr) {
-    MS_LOG(ERROR) << "param_offset is nullptr";
-    return nullptr;
-  }
-  if (param_offset->size() > COMM_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "crop_param offset size(" << param_offset->size() << ") should <= " << COMM_SHAPE_SIZE;
-    return nullptr;
-  }
-  auto *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
-  if (crop_param == nullptr) {
+
+  auto *param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc CropParameter failed.";
     return nullptr;
   }
-  memset(crop_param, 0, sizeof(CropParameter));
-  crop_param->op_parameter_.type_ = primitive->value_type();
-  crop_param->axis_ = crop_prim->axis();
-  crop_param->offset_size_ = param_offset->size();
-  for (size_t i = 0; i < param_offset->size(); ++i) {
-    crop_param->offset_[i] = *(param_offset->begin() + i);
+  memset(param, 0, sizeof(CropParameter));
+
+  auto param_offset = value->offsets();
+  if (param_offset == nullptr) {
+    MS_LOG(ERROR) << "param_offset is nullptr";
+    free(param);
+    return nullptr;
   }
-  return reinterpret_cast<OpParameter *>(crop_param);
+  if (param_offset->size() > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "param offset size(" << param_offset->size() << ") should <= " << COMM_SHAPE_SIZE;
+    free(param);
+    return nullptr;
+  }
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->axis_ = value->axis();
+  param->offset_size_ = param_offset->size();
+  for (size_t i = 0; i < param_offset->size(); ++i) {
+    param->offset_[i] = *(param_offset->begin() + i);
+  }
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Crop, PopulateCropParameter, SCHEMA_CUR)
 }  // namespace lite

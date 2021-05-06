@@ -19,20 +19,20 @@ using mindspore::schema::PrimitiveType_ZerosLike;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateCommonParameter(const void *prim) {
-  auto *common_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (common_parameter == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
-  memset(common_parameter, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  common_parameter->type_ = primitive->value_type();
-  return common_parameter;
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return param;
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_CUR)
 REG_POPULATE(PrimitiveType_Depend, PopulateCommonParameter, SCHEMA_CUR)

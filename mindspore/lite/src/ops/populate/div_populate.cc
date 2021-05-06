@@ -21,9 +21,10 @@ namespace lite {
 OpParameter *PopulateDivParameter(const void *prim) {
   auto *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
-    MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
+    MS_LOG(ERROR) << "get PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
+
   return reinterpret_cast<OpParameter *>(param);
 }
 

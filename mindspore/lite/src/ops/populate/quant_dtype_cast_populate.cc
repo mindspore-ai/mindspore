@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_QuantDTypeCast;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
-  auto *parameter = reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
-    return nullptr;
-  }
-  memset(parameter, 0, sizeof(QuantDTypeCastParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_QuantDTypeCast();
@@ -33,12 +27,20 @@ OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  parameter->op_parameter_.type_ = primitive->value_type();
-  parameter->srcT = value->src_t();
-  parameter->dstT = value->dst_t();
-  return reinterpret_cast<OpParameter *>(parameter);
-}
-REG_POPULATE(PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter, SCHEMA_CUR);
 
+  auto *param = reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc QuantDTypeCastParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(QuantDTypeCastParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->srcT = value->src_t();
+  param->dstT = value->dst_t();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+REG_POPULATE(PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

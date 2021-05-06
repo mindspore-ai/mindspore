@@ -19,20 +19,20 @@ using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateTransposeParameter(const void *prim) {
-  auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
-  if (transpose_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
-  memset(transpose_param, 0, sizeof(TransposeParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  transpose_param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(transpose_param);
+  memset(param, 0, sizeof(TransposeParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Transpose, PopulateTransposeParameter, SCHEMA_CUR)
 }  // namespace lite

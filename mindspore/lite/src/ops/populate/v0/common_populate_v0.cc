@@ -21,14 +21,16 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateCommonParameter(const void *prim) {
+  auto *primitive = reinterpret_cast<const schema::v0::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
   auto *common_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (common_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
   memset(common_parameter, 0, sizeof(OpParameter));
-  auto *primitive = reinterpret_cast<const schema::v0::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+
   auto type = primitive->value_type();
   if (type == schema::v0::PrimitiveType_ZerosLike) {
     common_parameter->type_ = schema::PrimitiveType_ZerosLike;

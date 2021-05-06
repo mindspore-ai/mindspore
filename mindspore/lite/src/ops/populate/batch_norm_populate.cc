@@ -19,27 +19,27 @@ using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateBatchNorm(const void *prim) {
-  auto *batch_norm_param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
-  if (batch_norm_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_BatchNorm();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<BatchNormParameter *>(malloc(sizeof(BatchNormParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc BatchNormParameter failed.";
     return nullptr;
   }
-  memset(batch_norm_param, 0, sizeof(BatchNormParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  batch_norm_param->op_parameter_.type_ = primitive->value_type();
-  auto prim_batchnorm = primitive->value_as_BatchNorm();
-  if (prim_batchnorm == nullptr) {
-    MS_LOG(ERROR) << "prim_batchnorm is nullptr";
-    return nullptr;
-  }
-  batch_norm_param->epsilon_ = prim_batchnorm->epsilon();
-  batch_norm_param->fused_ = false;
-  return reinterpret_cast<OpParameter *>(batch_norm_param);
+  memset(param, 0, sizeof(BatchNormParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->epsilon_ = value->epsilon();
+  param->fused_ = false;
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_BatchNorm, PopulateBatchNorm, SCHEMA_CUR)
 }  // namespace lite

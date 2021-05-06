@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_ReverseV2;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateReverseParameter(const void *prim) {
-  auto *reverse_param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
-  if (reverse_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ReverseParameter failed.";
-    return nullptr;
-  }
-  memset(reverse_param, 0, sizeof(ReverseParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_ReverseV2();
@@ -33,19 +27,27 @@ OpParameter *PopulateReverseParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  reverse_param->op_parameter_.type_ = primitive->value_type();
 
+  auto *param = reinterpret_cast<ReverseParameter *>(malloc(sizeof(ReverseParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ReverseParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ReverseParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
   auto flatAxis = value->axis();
   if (flatAxis == nullptr) {
     MS_LOG(ERROR) << "flatAxis is nullptr";
+    free(param);
     return nullptr;
   }
-  reverse_param->num_axis_ = flatAxis->size();
+  param->num_axis_ = flatAxis->size();
   int i = 0;
-  for (auto iter = flatAxis->begin(); iter != flatAxis->end(); iter++) {
-    reverse_param->axis_[i++] = *iter;
+  for (auto flatAxi : *flatAxis) {
+    param->axis_[i++] = static_cast<int>(flatAxi);
   }
-  return reinterpret_cast<OpParameter *>(reverse_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_ReverseV2, PopulateReverseParameter, SCHEMA_CUR)

@@ -17,39 +17,42 @@
 #include "nnacl/constant_of_shape_parameter.h"
 using mindspore::schema::PrimitiveType_ConstantOfShape;
 
-namespace mindspore::lite {
-namespace {
+namespace mindspore {
+namespace lite {
 OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_ConstantOfShape();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
   auto *param = reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ConstantOfShapeParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ConstantOfShapeParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+
   param->op_parameter_.type_ = primitive->value_type();
-  auto attr = primitive->value_as_ConstantOfShape();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "attr is nullptr";
-    return nullptr;
-  }
-  auto val = attr->value();
-  if (val == nullptr) {
+  auto prim_val = value->value();
+  if (prim_val == nullptr) {
     MS_LOG(ERROR) << "val is nullptr";
+    free(param);
     return nullptr;
   }
-  auto value = std::vector<float>(val->begin(), val->end());
-  param->data_type_ = static_cast<int>(attr->data_type());
-  if (value.empty() || value.size() > 1) {
+  auto val = std::vector<float>(prim_val->begin(), prim_val->end());
+  param->data_type_ = static_cast<int>(value->data_type());
+  if (val.empty() || val.size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
     switch (param->data_type_) {
       case kNumberTypeFloat32:
-        param->value_.f32_value_ = *(val->begin());
+        param->value_.f32_value_ = *(prim_val->begin());
         break;
       case kNumberTypeInt32:
-        param->value_.int32_value_ = *(val->begin());
+        param->value_.int32_value_ = *(prim_val->begin());
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";
@@ -57,6 +60,7 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter, SCHEMA_CUR);
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

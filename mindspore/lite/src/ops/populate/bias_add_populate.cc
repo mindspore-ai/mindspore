@@ -19,21 +19,21 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateBiasAddParameter(const void *prim) {
-  auto *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
-  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  arithmetic_param->op_parameter_.type_ = primitive->value_type();
+  memset(param, 0, sizeof(ArithmeticParameter));
 
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_BiasAdd, PopulateBiasAddParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

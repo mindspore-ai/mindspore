@@ -19,17 +19,20 @@ using mindspore::schema::PrimitiveType_HashtableLookup;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateHashtableLookupParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
   auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new OpParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+
   param->type_ = primitive->value_type();
   return param;
 }
+
 REG_POPULATE(PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter, SCHEMA_CUR);
 
 }  // namespace lite

@@ -19,14 +19,7 @@ using mindspore::schema::PrimitiveType_PartialFusion;
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulatePartialParameter(const void *prim) {
-  auto *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
-  if (partial_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc partial parameter failed.";
-    return nullptr;
-  }
-  memset(partial_parameter, 0, sizeof(PartialParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PartialFusion();
@@ -34,11 +27,19 @@ OpParameter *PopulatePartialParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  partial_parameter->op_parameter_.type_ = primitive->value_type();
-  partial_parameter->sub_graph_index_ = value->sub_graph_index();
 
-  return reinterpret_cast<OpParameter *>(partial_parameter);
+  auto *param = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc partial parameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(PartialParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->sub_graph_index_ = value->sub_graph_index();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_PartialFusion, PopulatePartialParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

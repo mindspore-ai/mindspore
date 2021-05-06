@@ -42,6 +42,7 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   auto param_axis = slice_prim->axes();
   if (param_begin == nullptr || param_size == nullptr || param_axis == nullptr) {
     MS_LOG(ERROR) << "nullptr";
+    free(slice_param);
     return nullptr;
   }
   if (param_begin->size() != param_size->size() || param_begin->size() != param_axis->size()) {

@@ -19,30 +19,29 @@ using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateLstmParameter(const void *prim) {
-  auto *lstm_param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
-  if (lstm_param == nullptr) {
-    MS_LOG(ERROR) << "malloc LstmParameter failed.";
-    return nullptr;
-  }
-  memset(lstm_param, 0, sizeof(LstmParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  lstm_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_LSTM();
-  if (param == nullptr) {
-    free(lstm_param);
-    MS_LOG(ERROR) << "get Lstm param nullptr.";
+  auto value = primitive->value_as_LSTM();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr.";
     return nullptr;
   }
 
-  lstm_param->bidirectional_ = param->bidirectional();
-  lstm_param->zoneout_cell_ = param->zoneout_cell();
-  lstm_param->zoneout_hidden_ = param->zoneout_hidden();
-  return reinterpret_cast<OpParameter *>(lstm_param);
+  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(LstmParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->bidirectional_ = value->bidirectional();
+  param->zoneout_cell_ = value->zoneout_cell();
+  param->zoneout_hidden_ = value->zoneout_hidden();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_LSTM, PopulateLstmParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

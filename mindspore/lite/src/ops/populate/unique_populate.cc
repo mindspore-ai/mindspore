@@ -19,20 +19,20 @@ using mindspore::schema::PrimitiveType_Unique;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateUniqueParameter(const void *prim) {
-  auto *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
-  if (unique_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc UniqueParameter failed.";
     return nullptr;
   }
-  memset(unique_param, 0, sizeof(UniqueParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  unique_param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(unique_param);
+  memset(param, 0, sizeof(UniqueParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Unique, PopulateUniqueParameter, SCHEMA_CUR)
 }  // namespace lite

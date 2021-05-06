@@ -19,29 +19,29 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateRelu6Parameter(const void *prim) {
-  auto *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
-  if (act_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Activation();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
-  memset(act_param, 0, sizeof(ActivationParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  act_param->op_parameter_.type_ = primitive->value_type();
-  auto acti_prim = primitive->value_as_Activation();
-  if (acti_prim == nullptr) {
-    MS_LOG(ERROR) << "acti_prim is nullptr";
-    return nullptr;
-  }
-  act_param->type_ = static_cast<int>(acti_prim->activation_type());
-  act_param->alpha_ = acti_prim->alpha();
-  act_param->min_val_ = acti_prim->min_val();
-  act_param->max_val_ = acti_prim->max_val();
-  return reinterpret_cast<OpParameter *>(act_param);
+  memset(param, 0, sizeof(ActivationParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->type_ = static_cast<int>(value->activation_type());
+  param->alpha_ = value->alpha();
+  param->min_val_ = value->min_val();
+  param->max_val_ = value->max_val();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Activation, PopulateRelu6Parameter, SCHEMA_CUR)
 }  // namespace lite

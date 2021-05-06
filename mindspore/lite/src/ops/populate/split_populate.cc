@@ -19,15 +19,7 @@ using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateSplitParameter(const void *prim) {
-  auto *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
-  if (split_param == nullptr) {
-    MS_LOG(ERROR) << "malloc SplitParameter failed.";
-    return nullptr;
-  }
-  memset(split_param, 0, sizeof(SplitParameter));
-
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Split();
@@ -35,36 +27,44 @@ OpParameter *PopulateSplitParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  split_param->op_parameter_.type_ = primitive->value_type();
-  split_param->num_split_ = value->output_num();
-  if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
-    MS_LOG(ERROR) << "The value of split_param->num_split_ is too big";
-    free(split_param);
+
+  auto *param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc SplitParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(SplitParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->num_split_ = value->output_num();
+  if (param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+    MS_LOG(ERROR) << "The value of param->num_split_ is too big";
+    free(param);
     return nullptr;
   }
 
   /* free split_sizes_ in split op base */
-  split_param->split_sizes_ = reinterpret_cast<int *>(malloc(split_param->num_split_ * sizeof(int)));
-  if (split_param->split_sizes_ == nullptr) {
-    MS_LOG(ERROR) << "malloc split_param split_sizes_ error";
-    free(split_param);
+  param->split_sizes_ = reinterpret_cast<int *>(malloc(param->num_split_ * sizeof(int)));
+  if (param->split_sizes_ == nullptr) {
+    MS_LOG(ERROR) << "malloc param split_sizes_ error";
+    free(param);
     return nullptr;
   }
-  memset(split_param->split_sizes_, 0, split_param->num_split_ * sizeof(int));
+  memset(param->split_sizes_, 0, param->num_split_ * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
   if (split_sizes_vector_ != nullptr) {
     int i = 0;
     for (auto iter : *split_sizes_vector_) {
-      split_param->split_sizes_[i++] = iter;
+      param->split_sizes_[i++] = iter;
     }
-    split_param->split_count_ = split_param->num_split_;
+    param->split_count_ = param->num_split_;
   } else {
-    split_param->split_count_ = 0;
+    param->split_count_ = 0;
   }
-  split_param->split_dim_ = value->axis();
-  return reinterpret_cast<OpParameter *>(split_param);
+  param->split_dim_ = value->axis();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_Split, PopulateSplitParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

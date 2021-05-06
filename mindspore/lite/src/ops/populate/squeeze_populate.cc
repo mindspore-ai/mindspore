@@ -19,36 +19,35 @@ using mindspore::schema::PrimitiveType_Squeeze;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateSqueezeParameter(const void *prim) {
-  SqueezeParameter *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
-  if (squeeze_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Squeeze();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SqueezeParameter failed.";
     return nullptr;
   }
-  memset(squeeze_param, 0, sizeof(SqueezeParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  squeeze_param->op_parameter_.type_ = primitive->value_type();
+  memset(param, 0, sizeof(SqueezeParameter));
 
-  auto squeeze_prim = primitive->value_as_Squeeze();
-  if (squeeze_prim == nullptr) {
-    MS_LOG(ERROR) << "squeeze_prim is nullptr";
-    return nullptr;
-  }
-  auto axis = squeeze_prim->axis();
-  if (squeeze_prim->axis() != nullptr) {
-    squeeze_param->axis_size_ = axis->size();
-    for (size_t i = 0; i < squeeze_param->axis_size_; i++) {
-      squeeze_param->axis_[i] = *(axis->begin() + i);
+  param->op_parameter_.type_ = primitive->value_type();
+  auto axis = value->axis();
+  if (axis != nullptr) {
+    param->axis_size_ = axis->size();
+    for (size_t i = 0; i < param->axis_size_; i++) {
+      param->axis_[i] = *(axis->begin() + i);
     }
   } else {
-    squeeze_param->axis_size_ = 0;
+    param->axis_size_ = 0;
   }
-
-  return reinterpret_cast<OpParameter *>(squeeze_param);
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_Squeeze, PopulateSqueezeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

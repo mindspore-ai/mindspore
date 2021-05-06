@@ -20,19 +20,19 @@ using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateMulParameter(const void *prim) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_MulFusion, PopulateMulParameter, SCHEMA_CUR)
 }  // namespace lite

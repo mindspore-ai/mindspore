@@ -40,11 +40,12 @@ OpParameter *PopulateTransposeParameter(const void *prim) {
   auto perm_vector_ = transpose_prim->perm();
   if (perm_vector_ == nullptr) {
     MS_LOG(ERROR) << "perm_vector_ is nullptr";
+    free(transpose_param);
     return nullptr;
   }
   int i = 0;
-  for (auto iter = perm_vector_->begin(); iter != perm_vector_->end(); iter++) {
-    transpose_param->perm_[i++] = *iter;
+  for (int iter : *perm_vector_) {
+    transpose_param->perm_[i++] = iter;
   }
   transpose_param->num_axes_ = i;
   transpose_param->perm_size_ = perm_vector_->size();

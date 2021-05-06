@@ -21,22 +21,24 @@ namespace mindspore {
 namespace lite {
 namespace {
 OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
-  auto *depth_space_param = reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
-  if (depth_space_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_DepthToSpace();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc DepthToSpaceParameter failed.";
     return nullptr;
   }
-  memset(depth_space_param, 0, sizeof(DepthToSpaceParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto param = primitive->value_as_DepthToSpace();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  depth_space_param->op_parameter_.type_ = primitive->value_type();
-  depth_space_param->block_size_ = param->block_size();
-  return reinterpret_cast<OpParameter *>(depth_space_param);
+  memset(param, 0, sizeof(DepthToSpaceParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->block_size_ = value->block_size();
+  return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
 

@@ -19,43 +19,43 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
-  auto *detection_post_process_parameter =
-    reinterpret_cast<DetectionPostProcessParameter *>(malloc(sizeof(DetectionPostProcessParameter)));
-  if (detection_post_process_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc EluParameter failed.";
-    return nullptr;
-  }
-  memset(detection_post_process_parameter, 0, sizeof(DetectionPostProcessParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  detection_post_process_parameter->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_DetectionPostProcess();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
+  auto value = primitive->value_as_DetectionPostProcess();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  auto scale = param->scale();
+
+  auto *param = reinterpret_cast<DetectionPostProcessParameter *>(malloc(sizeof(DetectionPostProcessParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc DetectionPostProcessParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(DetectionPostProcessParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  auto scale = value->scale();
   if (scale == nullptr) {
     MS_LOG(ERROR) << "scale is nullptr";
+    free(param);
     return nullptr;
   }
-  detection_post_process_parameter->h_scale_ = *(scale->begin());
-  detection_post_process_parameter->w_scale_ = *(scale->begin() + 1);
-  detection_post_process_parameter->x_scale_ = *(scale->begin() + 2);
-  detection_post_process_parameter->y_scale_ = *(scale->begin() + 3);
-  detection_post_process_parameter->nms_iou_threshold_ = param->nms_iou_threshold();
-  detection_post_process_parameter->nms_score_threshold_ = param->nms_score_threshold();
-  detection_post_process_parameter->max_detections_ = param->max_detections();
-  detection_post_process_parameter->detections_per_class_ = param->detections_per_class();
-  detection_post_process_parameter->max_classes_per_detection_ = param->max_classes_per_detection();
-  detection_post_process_parameter->num_classes_ = param->num_classes();
-  detection_post_process_parameter->use_regular_nms_ = param->use_regular_nms();
-  return reinterpret_cast<OpParameter *>(detection_post_process_parameter);
+  param->h_scale_ = *(scale->begin());
+  param->w_scale_ = *(scale->begin() + 1);
+  param->x_scale_ = *(scale->begin() + 2);
+  param->y_scale_ = *(scale->begin() + 3);
+  param->nms_iou_threshold_ = value->nms_iou_threshold();
+  param->nms_score_threshold_ = value->nms_score_threshold();
+  param->max_detections_ = value->max_detections();
+  param->detections_per_class_ = value->detections_per_class();
+  param->max_classes_per_detection_ = value->max_classes_per_detection();
+  param->num_classes_ = value->num_classes();
+  param->use_regular_nms_ = value->use_regular_nms();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
-REG_POPULATE(PrimitiveType_DetectionPostProcess, PopulateDetectionPostProcessParameter, SCHEMA_CUR);
 
+REG_POPULATE(PrimitiveType_DetectionPostProcess, PopulateDetectionPostProcessParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

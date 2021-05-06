@@ -19,42 +19,45 @@ using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
-  auto *space_batch_param_nd = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
-  if (space_batch_param_nd == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_SpaceToBatchND();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
   }
-  memset(space_batch_param_nd, 0, sizeof(SpaceToBatchParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  space_batch_param_nd->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_SpaceToBatchND();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  auto block_shape = param->block_shape();
+  memset(param, 0, sizeof(SpaceToBatchParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  auto block_shape = value->block_shape();
   if (block_shape == nullptr) {
-    return reinterpret_cast<OpParameter *>(space_batch_param_nd);
+    return reinterpret_cast<OpParameter *>(param);
   }
   auto block_shapes = std::vector<int64_t>(block_shape->begin(), block_shape->end());
   if (block_shapes.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
     MS_LOG(ERROR) << "The value of block_shapes.size() is too big";
-    free(space_batch_param_nd);
+    free(param);
     return nullptr;
   }
-  space_batch_param_nd->m_ = block_shapes.size();
+  param->m_ = block_shapes.size();
 
-  auto param_paddings = param->paddings();
+  auto param_paddings = value->paddings();
   if (param_paddings == nullptr) {
     MS_LOG(ERROR) << "param_paddings is nullptr";
+    free(param);
     return nullptr;
   }
   auto fb_paddings = param_paddings->data();
   if (fb_paddings == nullptr) {
     MS_LOG(ERROR) << "fb_paddings is nullptr";
+    free(param);
     return nullptr;
   }
   if (fb_paddings->size() == 0 ||
@@ -62,14 +65,15 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
        static_cast<uint64_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size()) >
          std::numeric_limits<size_t>::max() / sizeof(int64_t))) {
     MS_LOG(ERROR) << "The value of paddings.size() is zero or too big";
-    free(space_batch_param_nd);
+    free(param);
     return nullptr;
   }
   std::vector<int64_t> paddings;
-  for (auto iter = fb_paddings->begin(); iter != fb_paddings->end(); ++iter) {
-    auto paddings_data = (*iter)->data();
+  for (auto fb_padding : *fb_paddings) {
+    auto paddings_data = fb_padding->data();
     if (paddings_data == nullptr) {
       MS_LOG(ERROR) << "paddings_data is nullptr";
+      free(param);
       return nullptr;
     }
     auto paddings_vec = std::vector<int64_t>(paddings_data->begin(), paddings_data->end());
@@ -77,17 +81,16 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
   }
 
   for (size_t i = 0; i < block_shapes.size(); ++i) {
-    space_batch_param_nd->block_sizes_[i] = static_cast<int>(block_shapes[i]);
+    param->block_sizes_[i] = static_cast<int>(block_shapes[i]);
   }
-
-  space_batch_param_nd->m_ = block_shapes.size();
+  param->m_ = block_shapes.size();
 
   for (size_t i = 0; i < paddings.size(); ++i) {
-    space_batch_param_nd->paddings_[i] = static_cast<int>(paddings[i]);
+    param->paddings_[i] = static_cast<int>(paddings[i]);
   }
-  return reinterpret_cast<OpParameter *>(space_batch_param_nd);
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_SpaceToBatchND, PopulateSpaceToBatchNDParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

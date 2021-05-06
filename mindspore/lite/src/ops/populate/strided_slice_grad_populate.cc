@@ -20,13 +20,6 @@ using mindspore::schema::PrimitiveType_StridedSliceGrad;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
-  auto *strided_slice_param = reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
-  if (strided_slice_param == nullptr) {
-    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
-    return nullptr;
-  }
-  memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
-
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_StridedSliceGrad();
@@ -34,17 +27,23 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  strided_slice_param->op_parameter_.type_ = primitive->value_type();
 
-  strided_slice_param->begins_mask_ = value->begin_mask();
-  strided_slice_param->ends_mask_ = value->end_mask();
-  strided_slice_param->ellipsisMask_ = value->ellipsis_mask();
-  strided_slice_param->newAxisMask_ = value->new_axis_mask();
-  strided_slice_param->shrinkAxisMask_ = value->shrink_axis_mask();
-  return reinterpret_cast<OpParameter *>(strided_slice_param);
+  auto *param = reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(StridedSliceParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->begins_mask_ = value->begin_mask();
+  param->ends_mask_ = value->end_mask();
+  param->ellipsisMask_ = value->ellipsis_mask();
+  param->newAxisMask_ = value->new_axis_mask();
+  param->shrinkAxisMask_ = value->shrink_axis_mask();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_StridedSliceGrad, PopulateStridedSliceGradParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

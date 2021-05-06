@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_PadFusion;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulatePadParameter(const void *prim) {
-  auto *pad_param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
-  if (pad_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PadParameter failed.";
-    return nullptr;
-  }
-  memset(pad_param, 0, sizeof(PadParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_PadFusion();
@@ -33,11 +27,20 @@ OpParameter *PopulatePadParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  pad_param->op_parameter_.type_ = primitive->value_type();
-  pad_param->pad_mode_ = value->padding_mode();
-  pad_param->constant_value_ = value->constant_value();
-  return reinterpret_cast<OpParameter *>(pad_param);
+
+  auto *param = reinterpret_cast<PadParameter *>(malloc(sizeof(PadParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc PadParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(PadParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->pad_mode_ = value->padding_mode();
+  param->constant_value_ = value->constant_value();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_PadFusion, PopulatePadParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -19,29 +19,29 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateArgMinParameter(const void *prim) {
-  ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
-  if (arg_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_ArgMinFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
     return nullptr;
   }
-  memset(arg_param, 0, sizeof(ArgMinMaxParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  arg_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_ArgMinFusion();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  arg_param->axis_ = param->axis();
-  arg_param->topk_ = param->top_k();
-  arg_param->out_value_ = param->out_max_value();
-  arg_param->keep_dims_ = param->keep_dims();
-  arg_param->get_max_ = false;
-  return reinterpret_cast<OpParameter *>(arg_param);
+  memset(param, 0, sizeof(ArgMinMaxParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->axis_ = value->axis();
+  param->topk_ = value->top_k();
+  param->out_value_ = value->out_max_value();
+  param->keep_dims_ = value->keep_dims();
+  param->get_max_ = false;
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_ArgMinFusion, PopulateArgMinParameter, SCHEMA_CUR)
 }  // namespace lite

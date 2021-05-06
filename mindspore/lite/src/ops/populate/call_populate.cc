@@ -19,16 +19,20 @@ using mindspore::schema::PrimitiveType_Call;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateCallParameter(const void *prim) {
-  OpParameter *call_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (call_parameter == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc CallParameter failed.";
     return nullptr;
   }
-  memset(call_parameter, 0, sizeof(OpParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  call_parameter->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(call_parameter);
+  memset(param, 0, sizeof(OpParameter));
+
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_Call, PopulateCallParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

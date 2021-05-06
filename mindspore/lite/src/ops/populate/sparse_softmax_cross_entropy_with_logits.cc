@@ -20,18 +20,20 @@ using mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *prim) {
-  auto *softmax_cross_entropy_param_ =
-    reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
-  if (softmax_cross_entropy_param_ == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
-  memset(softmax_cross_entropy_param_, 0, sizeof(SoftmaxCrossEntropyParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  softmax_cross_entropy_param_->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(softmax_cross_entropy_param_);
+  memset(param, 0, sizeof(SoftmaxCrossEntropyParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_SparseSoftmaxCrossEntropyWithLogits, PopulateSparseSoftmaxCrossEntropyWithLogitsParameter,
              SCHEMA_CUR);
 }  // namespace lite

@@ -19,24 +19,24 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateEltwiseParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_Eltwise();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  auto eltwise_param = primitive->value_as_Eltwise();
-  if (eltwise_param == nullptr) {
-    MS_LOG(ERROR) << "eltwise_param is nullptr";
-    return nullptr;
-  }
-  param->eltwise_mode_ = eltwise_param->mode();
+
+  param->eltwise_mode_ = value->mode();
   return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_Eltwise, PopulateEltwiseParameter, SCHEMA_CUR)
 }  // namespace lite

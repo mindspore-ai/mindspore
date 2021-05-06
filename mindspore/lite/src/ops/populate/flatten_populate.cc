@@ -19,17 +19,18 @@ using mindspore::schema::PrimitiveType_Flatten;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateFlattenParameter(const void *prim) {
-  auto *flatten_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (flatten_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc FlattenParameter failed.";
     return nullptr;
   }
-  memset(flatten_param, 0, sizeof(OpParameter));
+  memset(param, 0, sizeof(OpParameter));
 
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  flatten_param->type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(flatten_param);
+  param->type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_Flatten, PopulateFlattenParameter, SCHEMA_CUR)

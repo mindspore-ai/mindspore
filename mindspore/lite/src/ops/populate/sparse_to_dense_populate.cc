@@ -19,20 +19,20 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateSparseToDenseParameter(const void *prim) {
-  auto *sparse_to_dense_param = reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
-  if (sparse_to_dense_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc SparseToDenseParameter failed.";
     return nullptr;
   }
-  memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  sparse_to_dense_param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
+  memset(param, 0, sizeof(SparseToDenseParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_SparseToDense, PopulateSparseToDenseParameter, SCHEMA_CUR);
 }  // namespace lite

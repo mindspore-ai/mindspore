@@ -16,29 +16,30 @@
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/resize_parameter.h"
 using mindspore::schema::PrimitiveType_CropAndResize;
+
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateCropAndResizeParameter(const void *prim) {
-  auto *crop_resize_param = reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
-  if (crop_resize_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_CropAndResize();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc CropAndResizeParameter failed.";
     return nullptr;
   }
-  memset(crop_resize_param, 0, sizeof(CropAndResizeParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  crop_resize_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_CropAndResize();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  crop_resize_param->method_ = static_cast<int>(param->method());
-  crop_resize_param->extrapolation_value_ = param->extrapolation_value();
-  return reinterpret_cast<OpParameter *>(crop_resize_param);
+  memset(param, 0, sizeof(CropAndResizeParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->method_ = static_cast<int>(value->method());
+  param->extrapolation_value_ = value->extrapolation_value();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
 
 REG_POPULATE(PrimitiveType_CropAndResize, PopulateCropAndResizeParameter, SCHEMA_CUR);
 }  // namespace lite

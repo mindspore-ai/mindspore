@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateResizeParameter(const void *prim) {
-  auto *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
-  if (resize_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ResizeParameter failed.";
-    return nullptr;
-  }
-  memset(resize_param, 0, sizeof(ResizeParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Resize();
@@ -33,18 +27,24 @@ OpParameter *PopulateResizeParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  resize_param->op_parameter_.type_ = primitive->value_type();
 
-  resize_param->method_ = static_cast<int>(value->method());
-  resize_param->new_height_ = value->new_height();
-  resize_param->new_width_ = value->new_width();
-  resize_param->coordinate_transform_mode_ = value->coordinate_transform_mode();
-  resize_param->preserve_aspect_ratio_ = value->preserve_aspect_ratio();
-  resize_param->cubic_coeff_ = value->cubic_coeff();
-  return reinterpret_cast<OpParameter *>(resize_param);
+  auto *param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc ResizeParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(ResizeParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->method_ = static_cast<int>(value->method());
+  param->new_height_ = value->new_height();
+  param->new_width_ = value->new_width();
+  param->coordinate_transform_mode_ = value->coordinate_transform_mode();
+  param->preserve_aspect_ratio_ = value->preserve_aspect_ratio();
+  param->cubic_coeff_ = value->cubic_coeff();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR)
 }  // namespace lite
-
 }  // namespace mindspore

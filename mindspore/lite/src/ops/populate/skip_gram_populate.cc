@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_SkipGram;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSkipGramParameter(const void *prim) {
-  auto *skipGramParameter = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
-  if (skipGramParameter == nullptr) {
-    MS_LOG(ERROR) << "malloc SkipGramParameter failed.";
-    return nullptr;
-  }
-  memset(skipGramParameter, 0, sizeof(SkipGramParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_SkipGram();
@@ -33,12 +27,21 @@ OpParameter *PopulateSkipGramParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  skipGramParameter->op_parameter_.type_ = primitive->value_type();
-  skipGramParameter->ngram_size = value->ngram_size();
-  skipGramParameter->max_skip_size = value->max_skip_size();
-  skipGramParameter->include_all_ngrams = value->include_all_grams();
-  return reinterpret_cast<OpParameter *>(skipGramParameter);
+
+  auto *param = reinterpret_cast<SkipGramParameter *>(malloc(sizeof(SkipGramParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc SkipGramParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(SkipGramParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->ngram_size = value->ngram_size();
+  param->max_skip_size = value->max_skip_size();
+  param->include_all_ngrams = value->include_all_grams();
+  return reinterpret_cast<OpParameter *>(param);
 }
+
 REG_POPULATE(PrimitiveType_SkipGram, PopulateSkipGramParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

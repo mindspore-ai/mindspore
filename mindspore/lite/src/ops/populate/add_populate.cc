@@ -20,24 +20,25 @@ using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateAddParameter(const void *prim) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_AddFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
   ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
+
   param->op_parameter_.type_ = primitive->value_type();
-  auto add_prim = primitive->value_as_AddFusion();
-  if (add_prim == nullptr) {
-    MS_LOG(ERROR) << "add_prim is nullptr";
-    return nullptr;
-  }
-  param->activation_type_ = add_prim->activation_type();
+  param->activation_type_ = value->activation_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_AddFusion, PopulateAddParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

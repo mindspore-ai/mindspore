@@ -35,16 +35,18 @@ using mindspore::schema::PrimitiveType_Square;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateArithmeticSelf(const void *prim) {
-  auto *arithmetic_self_param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
-  if (arithmetic_self_param == nullptr) {
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+
+  auto *param = reinterpret_cast<ArithmeticSelfParameter *>(malloc(sizeof(ArithmeticSelfParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticSelfParameter failed.";
     return nullptr;
   }
-  memset(arithmetic_self_param, 0, sizeof(ArithmeticSelfParameter));
-  auto *primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  arithmetic_self_param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(arithmetic_self_param);
+  memset(param, 0, sizeof(ArithmeticSelfParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 REG_POPULATE(PrimitiveType_Abs, PopulateArithmeticSelf, SCHEMA_CUR)

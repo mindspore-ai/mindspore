@@ -19,26 +19,27 @@ using mindspore::schema::PrimitiveType_TopKFusion;
 
 namespace mindspore {
 namespace lite {
-namespace {
 OpParameter *PopulateTopKParameter(const void *prim) {
-  auto *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
-  if (topk_param == nullptr) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_TopKFusion();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc TopkParameter failed.";
     return nullptr;
   }
-  memset(topk_param, 0, sizeof(TopkParameter));
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
-  topk_param->op_parameter_.type_ = primitive->value_type();
-  auto param = primitive->value_as_TopKFusion();
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param is nullptr";
-    return nullptr;
-  }
-  topk_param->sorted_ = param->sorted();
-  return reinterpret_cast<OpParameter *>(topk_param);
+  memset(param, 0, sizeof(TopkParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->sorted_ = value->sorted();
+  return reinterpret_cast<OpParameter *>(param);
 }
-}  // namespace
+
 REG_POPULATE(PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -20,12 +20,6 @@ using mindspore::schema::PrimitiveType_TensorListSetItem;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateTensorListSetItemParameter(const void *prim) {
-  auto *setItem_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
-  if (setItem_param == nullptr) {
-    MS_LOG(ERROR) << "malloc TensorListParameter failed.";
-    return nullptr;
-  }
-  memset(setItem_param, 0, sizeof(TensorListParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_TensorListSetItem();
@@ -33,11 +27,19 @@ OpParameter *PopulateTensorListSetItemParameter(const void *prim) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
   }
-  setItem_param->op_parameter_.type_ = primitive->value_type();
-  setItem_param->element_dtype_ = value->element_dtype();
-  return reinterpret_cast<OpParameter *>(setItem_param);
-}
-REG_POPULATE(PrimitiveType_TensorListSetItem, PopulateTensorListSetItemParameter, SCHEMA_CUR);
 
+  auto *param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc TensorListParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(TensorListParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->element_dtype_ = value->element_dtype();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+REG_POPULATE(PrimitiveType_TensorListSetItem, PopulateTensorListSetItemParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore
