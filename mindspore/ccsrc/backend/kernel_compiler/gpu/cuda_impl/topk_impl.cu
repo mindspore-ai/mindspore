@@ -221,5 +221,7 @@ void FastTopK(const int outer_size, const int inner_size, const T *input, S k_cu
   }
 }
 
+template void FastTopK(const int outer_size, const int inner_size, const half *input, int k_cut, half *output,
+                       int *output_index, const half init_K, cudaStream_t stream);
 template void FastTopK(const int outer_size, const int inner_size, const float *input, int k_cut, float *output,
                        int *output_index, const float init_K, cudaStream_t stream);
