@@ -117,16 +117,16 @@ int MatMulOpenCLKernel::InitWeights() {
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeB = param->b_transpose_;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  int ci, co;
+  int ci;
   if (transposeB) {
     ci = weight_shape_4d[3];
-    co = weight_shape_4d[2];
+    CO_ = weight_shape_4d[2];
   } else {
     ci = weight_shape_4d[2];
-    co = weight_shape_4d[3];
+    CO_ = weight_shape_4d[3];
   }
   int ci4 = UP_DIV(ci, C4NUM);
-  int co4 = UP_DIV(co, C4NUM);
+  int co4 = UP_DIV(CO_, C4NUM);
   int a = weight_shape_4d[0];
   int b = weight_shape_4d[1];
 
@@ -146,15 +146,15 @@ int MatMulOpenCLKernel::InitWeights() {
   int index = 0;
   for (int aa = 0; aa < a; aa++) {
     for (int bb = 0; bb < b; bb++) {
-      int baseAB = (aa * b + bb) * ci * co;
+      int baseAB = (aa * b + bb) * ci * CO_;
       for (int i = 0; i < ci4; ++i) {
         for (int j = 0; j < co4; ++j) {
           for (int k = 0; k < C4NUM; ++k) {
             for (int l = 0; l < C4NUM; ++l) {
               int src_ci = i * C4NUM + l;
               int src_co = j * C4NUM + k;
-              if (src_ci < ci && src_co < co) {
-                int originId = baseAB + src_ci * co + src_co;
+              if (src_ci < ci && src_co < CO_) {
+                int originId = baseAB + src_ci * CO_ + src_co;
                 if (transposeB) {
                   originId = baseAB + src_co * ci + src_ci;
                 }
@@ -188,7 +188,6 @@ int MatMulOpenCLKernel::InitWeights() {
 
 int MatMulOpenCLKernel::InitBias() {
   // pad FC Bias
-  CO_ = GpuTensorInfo(out_tensors_[0]).C;
   auto allocator = ocl_runtime_->GetAllocator();
   int co4 = UP_DIV(CO_, C4NUM);
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
@@ -259,7 +258,7 @@ int MatMulOpenCLKernel::Run() {
 }
 
 int MatMulOpenCLKernel::StoreConstData() {
-  if (!op_parameter_->infer_flag_) {
+  if (!InferShapeDone()) {
     stored_weight_ = StoreTensorData(in_tensors_.at(kWeightIndex));
     if (stored_weight_ == nullptr) {
       MS_LOG(ERROR) << "Store weight failed.";
@@ -280,7 +279,8 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> 
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   kernel::OpenCLKernel *kernel = nullptr;
-  bool infer_shape_done = opParameter->infer_flag_;
+  auto shape = outputs.front()->shape();
+  bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();
   if (infer_shape_done && IsUseStrassenMatmul(inputs)) {
     MS_LOG(DEBUG) << "use_matmul_strassen";
     kernel = new (std::nothrow)

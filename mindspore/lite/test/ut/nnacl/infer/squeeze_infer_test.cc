@@ -36,7 +36,6 @@ TEST_F(SqueezeInferTest, SqueezeInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SqueezeParameter *parameter = new SqueezeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_size_ = 0;
   int ret = SqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
@@ -67,7 +66,6 @@ TEST_F(SqueezeInferTest, SqueezeInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SqueezeParameter *parameter = new SqueezeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_size_ = 1;
   parameter->axis_[0] = 1;
   int ret = SqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -100,7 +98,6 @@ TEST_F(SqueezeInferTest, SqueezeInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SqueezeParameter *parameter = new SqueezeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_size_ = 2;
   parameter->axis_[0] = 1;
   parameter->axis_[1] = 3;
@@ -133,7 +130,6 @@ TEST_F(SqueezeInferTest, SqueezeInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SqueezeParameter *parameter = new SqueezeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_size_ = 1;
   parameter->axis_[0] = 0;
   int ret = SqueezeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

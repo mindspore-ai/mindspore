@@ -34,7 +34,6 @@ TEST_F(QuantDtypeCastInferTest, QuantDtypeCastInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   QuantDtypeCastParameter *parameter = new QuantDtypeCastParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->srcT_ = kNumberTypeFloat32;
   parameter->dstT_ = kNumberTypeInt;
   int ret = QuantDtypeCastInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

@@ -244,7 +244,8 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
     free(opParameter);
     return nullptr;
   }
-  if (!opParameter->infer_flag_) {
+  auto shape = outputs.front()->shape();
+  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     MS_LOG(WARNING) << "kernel " << opParameter->name_ << "don't infer shape yet!";
     return kernel;
   }

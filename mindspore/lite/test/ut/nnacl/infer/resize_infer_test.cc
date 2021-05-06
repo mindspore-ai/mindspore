@@ -38,7 +38,6 @@ TEST_F(ResizeInferTest, ResizeInferTest0) {
   ResizeParameter *parameter = new ResizeParameter;
   parameter->new_width_ = 2;
   parameter->new_height_ = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ResizeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -78,7 +77,6 @@ TEST_F(ResizeInferTest, ResizeInferTest1) {
   ResizeParameter *parameter = new ResizeParameter;
   // parameter->new_width_ = 2;
   // parameter->new_height_ = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ResizeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -118,7 +116,6 @@ TEST_F(ResizeInferTest, ResizeInferTest2) {
   ResizeParameter *parameter = new ResizeParameter;
   // parameter->new_width_ = 2;
   // parameter->new_height_ = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ResizeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -158,7 +155,6 @@ TEST_F(ResizeInferTest, ResizeInferTest3) {
   ResizeParameter *parameter = new ResizeParameter;
   // parameter->new_width_ = 2;
   // parameter->new_height_ = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ResizeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

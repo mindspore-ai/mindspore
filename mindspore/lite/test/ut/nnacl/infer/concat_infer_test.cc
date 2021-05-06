@@ -37,7 +37,6 @@ TEST_F(ConcatInferTest, ConcatInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 0;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
@@ -68,7 +67,6 @@ TEST_F(ConcatInferTest, ConcatInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 1;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
@@ -101,7 +99,6 @@ TEST_F(ConcatInferTest, ConcatInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 0;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
@@ -137,7 +134,6 @@ TEST_F(ConcatInferTest, ConcatInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 0;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
@@ -174,7 +170,6 @@ TEST_F(ConcatInferTest, ConcatInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = -1;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
@@ -223,7 +218,6 @@ TEST_F(ConcatInferTest, ConcatInferTest5) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConcatParameter *parameter = new ConcatParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 3;
   int ret = ConcatInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));

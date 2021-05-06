@@ -30,7 +30,7 @@ int DepthwiseConv2dInferShape(const TensorC *const *inputs, size_t inputs_size, 
   SetDataTypeFormat(output, input);
   ConvParameter *param = (ConvParameter *)parameter;
 
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int input_h = input->shape_[1];

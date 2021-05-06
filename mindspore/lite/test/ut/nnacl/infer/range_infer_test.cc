@@ -34,7 +34,6 @@ TEST_F(RangeInferTest, RangeInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RangeParameter *parameter = new RangeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->limit_ = 18;
   parameter->start_ = 3;
   parameter->delta_ = 3;  // delta must be decimal
@@ -74,7 +73,6 @@ TEST_F(RangeInferTest, RangeInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RangeParameter *parameter = new RangeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->limit_ = 18;
   // parameter->start_ = 3;
   // parameter->delta_ = 3;
@@ -114,7 +112,6 @@ TEST_F(RangeInferTest, RangeInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RangeParameter *parameter = new RangeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->limit_ = 18;
   // parameter->start_ = 3;
   // parameter->delta_ = 3;

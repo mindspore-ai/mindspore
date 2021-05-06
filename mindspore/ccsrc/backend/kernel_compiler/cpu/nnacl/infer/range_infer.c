@@ -39,7 +39,7 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     output->data_type_ = kNumberTypeInt32;
   }
   output->format_ = input->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

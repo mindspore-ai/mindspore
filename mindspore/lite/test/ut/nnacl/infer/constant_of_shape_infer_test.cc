@@ -37,7 +37,6 @@ TEST_F(ConstantOfShapeInferTest, ConstantOfShapeInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ConstantOfShapeParameter *parameter = new ConstantOfShapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->data_type_ = kNumberTypeInt8;
   int ret = ConstantOfShapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                       reinterpret_cast<OpParameter *>(parameter));

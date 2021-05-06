@@ -33,7 +33,7 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   const TensorC *ids = inputs[inputs_size - 1];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, params_);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

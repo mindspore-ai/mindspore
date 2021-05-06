@@ -32,7 +32,7 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
   output->format_ = Format_NHWC;
   output->tensors_data_type_ = input0->data_type_;
 
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

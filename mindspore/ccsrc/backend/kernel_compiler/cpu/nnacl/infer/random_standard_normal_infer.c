@@ -27,7 +27,7 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
 #endif
   outputs[0]->data_type_ = kNumberTypeFloat32;
   outputs[0]->format_ = inputs[0]->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

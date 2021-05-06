@@ -31,7 +31,7 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
   ConstantOfShapeParameter *param = (ConstantOfShapeParameter *)parameter;
   out_tensor->data_type_ = (TypeIdC)(param->data_type_);
   out_tensor->format_ = in_tensor->format_;
-  if (!parameter->infer_flag_ || in_tensor->data_ == NULL) {
+  if (!InferFlag(inputs, inputs_size) || in_tensor->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
   int size = GetElementNum(in_tensor);

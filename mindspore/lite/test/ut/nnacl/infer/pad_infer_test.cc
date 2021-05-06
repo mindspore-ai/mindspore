@@ -39,7 +39,6 @@ TEST_F(PadInferTest, PadInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PadParameter *parameter = new PadParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = PadInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                           reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -65,7 +64,6 @@ TEST_F(PadInferTest, PadInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PadParameter *parameter = new PadParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->padding_length = 4;
   parameter->paddings_[0] = 1;
   parameter->paddings_[1] = 1;
@@ -97,7 +95,6 @@ TEST_F(PadInferTest, PadInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PadParameter *parameter = new PadParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->padding_length = 6;
   parameter->paddings_[0] = 0;
   parameter->paddings_[1] = 0;
@@ -138,7 +135,6 @@ TEST_F(PadInferTest, PadInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PadParameter *parameter = new PadParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = PadInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                           reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -173,7 +169,6 @@ TEST_F(PadInferTest, PadInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PadParameter *parameter = new PadParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = PadInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                           reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

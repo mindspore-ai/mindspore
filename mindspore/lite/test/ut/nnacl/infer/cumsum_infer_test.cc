@@ -41,7 +41,6 @@ TEST_F(CumSumInferTest, Test0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   CumSumParameter *parameter = new CumSumParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = CumsumInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

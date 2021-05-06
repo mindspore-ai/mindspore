@@ -54,7 +54,6 @@ TEST_F(DeDepthwiseConv2DInferTest, DeDepthwiseConv2DInferTest0) {
   parameter->pad_r_ = 1;
   parameter->pad_d_ = 1;
   parameter->pad_u_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->channel_multiplie_ = 1;
   int ret = DeDepthwiseConv2DInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
@@ -105,7 +104,6 @@ TEST_F(DeDepthwiseConv2DInferTest, DeDepthwiseConv2DInferTest1) {
   parameter->pad_r_ = 1;
   parameter->pad_d_ = 1;
   parameter->pad_u_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = DeDepthwiseConv2DInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -155,7 +153,6 @@ TEST_F(DeDepthwiseConv2DInferTest, DeDepthwiseConv2DInferTest2) {
   parameter->pad_r_ = 0;
   parameter->pad_d_ = 0;
   parameter->pad_u_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = DeDepthwiseConv2DInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

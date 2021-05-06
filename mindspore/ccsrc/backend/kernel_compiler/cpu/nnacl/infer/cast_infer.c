@@ -31,7 +31,7 @@ int CastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   output->format_ = input->format_;
   const TensorC *dst_type = inputs[1];
   output->data_type_ = *((int *)dst_type->data_);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (input->data_type_ != kNumberTypeBool && input->data_type_ != kNumberTypeUInt8 &&

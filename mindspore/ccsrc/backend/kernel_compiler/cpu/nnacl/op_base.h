@@ -81,7 +81,6 @@ typedef enum DataOrder {
 
 typedef struct OpParameter {
   char name_[100];
-  bool infer_flag_;
   int type_;
   int thread_num_;
   int quant_type_;

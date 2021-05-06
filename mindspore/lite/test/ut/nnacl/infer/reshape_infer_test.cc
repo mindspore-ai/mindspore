@@ -34,7 +34,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->shape_dim_ = 1;
   parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -67,7 +66,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -100,7 +98,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -133,7 +130,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -165,7 +161,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -198,7 +193,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest5) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -233,7 +227,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest6) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -268,7 +261,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest7) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -302,7 +294,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest8) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -338,7 +329,6 @@ TEST_F(ReshapeInferTest, ReshapeInferTest9) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReshapeParameter *parameter = new ReshapeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->shape_size_ = 1;
   // parameter->shape_[0] = 6;
   int ret = ReshapeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

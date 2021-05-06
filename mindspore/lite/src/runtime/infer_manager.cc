@@ -66,6 +66,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
     } else {
       TensorC2Tensor(out_tensors.at(i), outputs->at(i));
     }
+    if (ret == NNACL_INFER_INVALID) {
+      outputs->at(i)->set_shape({-1});
+    }
   }
 
   FreeAllTensorC(&in_tensors);

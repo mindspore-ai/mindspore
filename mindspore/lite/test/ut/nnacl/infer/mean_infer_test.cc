@@ -34,7 +34,6 @@ TEST_F(MeanInferTest, MeanInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReduceParameter *parameter = new ReduceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->keep_dims_ = false;
   parameter->axes_[0] = 1;
   parameter->num_axes_ = 1;
@@ -62,7 +61,6 @@ TEST_F(MeanInferTest, MeanInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReduceParameter *parameter = new ReduceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->keep_dims_ = true;
   parameter->axes_[0] = 1;
   parameter->num_axes_ = 1;
@@ -92,7 +90,6 @@ TEST_F(MeanInferTest, MeanInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReduceParameter *parameter = new ReduceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->keep_dims_ = true;
   parameter->axes_[0] = 0;
   parameter->axes_[1] = 1;
@@ -125,7 +122,6 @@ TEST_F(MeanInferTest, MeanInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReduceParameter *parameter = new ReduceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->keep_dims_ = true;
   parameter->num_axes_ = 2;
   parameter->axes_[0] = 1;
@@ -159,7 +155,6 @@ TEST_F(MeanInferTest, MeanInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   ReduceParameter *parameter = new ReduceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->keep_dims_ = false;
   parameter->num_axes_ = 2;
   parameter->axes_[0] = 1;

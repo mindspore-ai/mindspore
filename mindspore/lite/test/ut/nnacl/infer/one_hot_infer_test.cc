@@ -38,7 +38,6 @@ TEST_F(OneHotInferTest, OneHotInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OneHotParameter *parameter = new OneHotParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = -2;
   int ret = OneHotInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));

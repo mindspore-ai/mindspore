@@ -135,7 +135,6 @@ std::vector<T *> RemoveDuplicationsButKeepOrder(const std::vector<T *> &vec) {
 void Merge(LiteKernel *a, LiteKernel *b, bool remove_a) {
   MS_ASSERT(a);
   MS_ASSERT(b);
-  MS_ASSERT(b->op_parameter()->infer_flag_);
   if (remove_a) {  // pred->tensor0->a->tensor1->b: remove a tensor1
     // update pred out_kernels: a.in_kernels.out_kernels.replace(a,b)
     for (auto *pred : a->in_kernels()) {
@@ -232,7 +231,7 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
   }
   LiteKernel *pad = node->in_kernels().front();
   MS_ASSERT(pad);
-  if (!pad->op_parameter()->infer_flag_) {
+  if (!pad->InferShapeDone()) {
     return;
   }
   if (pad->in_tensors().front()->shape().size() != 4) {
@@ -268,8 +267,7 @@ void TryMergeConvReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_se
   // group must be 1
   LiteKernel *conv = reshape->in_kernels().front();
   MS_ASSERT(conv);
-
-  if (!conv->op_parameter()->infer_flag_) {
+  if (!conv->InferShapeDone()) {
     return;
   }
   auto *param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(conv)->GetParameter());
@@ -294,10 +292,10 @@ void TryMergeFcReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set,
   bool NC_N11C_flag = NC_N11C(reshape);
   if (NC_N11C_flag || N11C_NC(reshape)) {
     LiteKernel *fc = reshape->in_kernels().front();
-    if (!fc->op_parameter()->infer_flag_) {
+    MS_ASSERT(fc);
+    if (!fc->InferShapeDone()) {
       return;
     }
-    MS_ASSERT(fc);
     MergeRemoveB(fc, reshape, removed_set);
     MS_LOG(DEBUG) << "Merge FullConnection and Reshape" + (NC_N11C_flag ? std::string("(NC->N11C)") : "(N11C->NC)") +
                        " success";
@@ -314,7 +312,7 @@ void TryMergeReshapeFc(LiteKernel *fc, std::set<LiteKernel *> *removed_set, std:
   }
   LiteKernel *reshape = fc->in_kernels().front();
   MS_ASSERT(reshape);
-  if (!reshape->op_parameter()->infer_flag_) {
+  if (!reshape->InferShapeDone()) {
     return;
   }
   bool NC11_NC_flag = NC11_NC(reshape);
@@ -331,7 +329,7 @@ void TryMergeArithmeticAct(LiteKernel *act, std::set<LiteKernel *> *removed_set)
   MS_ASSERT(removed_set);
   LiteKernel *arithmetic = act->in_kernels().front();
   MS_ASSERT(arithmetic);
-  if (!arithmetic->op_parameter()->infer_flag_) {
+  if (!arithmetic->InferShapeDone()) {
     return;
   }
   auto *arithmetic_param =
@@ -357,7 +355,7 @@ void TryMergeXxxActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set)
   auto *act_param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act)->GetParameter());
   LiteKernel *node = act->in_kernels().front();
   MS_ASSERT(node);
-  if (!node->op_parameter()->infer_flag_) {
+  if (!node->InferShapeDone()) {
     return;
   }
   auto *param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
@@ -400,7 +398,7 @@ void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set, s
   }
   LiteKernel *conv = prelu->in_kernels().front();
   MS_ASSERT(conv);
-  if (!conv->op_parameter()->infer_flag_) {
+  if (!conv->InferShapeDone()) {
     return;
   }
   if (reinterpret_cast<Conv2DOpenCLKernel *>(conv)->use_winograd_) {
@@ -499,7 +497,7 @@ void TryMergeDeconvScale(LiteKernel *scale, std::set<LiteKernel *> *removed_set,
   }
   LiteKernel *deconv = scale->in_kernels().front();
   MS_ASSERT(deconv);
-  if (!deconv->op_parameter()->infer_flag_) {
+  if (!deconv->InferShapeDone()) {
     return;
   }
 
@@ -573,7 +571,7 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
 
 // Eltwise + Eltwise
 int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
-  if (!node->op_parameter()->infer_flag_) {
+  if (!node->InferShapeDone()) {
     return RET_ERROR;
   }
   MS_ASSERT(node);
@@ -590,7 +588,7 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set
   std::map<lite::Tensor *, FusionEltwiseParameter *> pred_params;
   for (LiteKernel *pred : preds) {
     MS_ASSERT(pred);
-    if (!pred->op_parameter()->infer_flag_) {
+    if (!pred->InferShapeDone()) {
       continue;
     }
     if (AIsInB(pred, nodes) && IsEltwiseAndOperatorSupported(pred) && pred->out_kernels().size() == 1) {
@@ -622,7 +620,7 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set
 }
 
 void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
-  if (!node->op_parameter()->infer_flag_) {
+  if (!node->InferShapeDone()) {
     return;
   }
   switch (node->Type()) {

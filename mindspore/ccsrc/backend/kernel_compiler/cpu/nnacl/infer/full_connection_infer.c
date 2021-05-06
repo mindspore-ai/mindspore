@@ -31,7 +31,7 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *output = outputs[0];
   MatMulParameter *param = (MatMulParameter *)parameter;
   SetDataTypeFormat(output, input0);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if ((param->has_bias_ && inputs_size != 3) || (!param->has_bias_ && inputs_size != 2)) {

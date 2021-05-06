@@ -38,7 +38,7 @@ int FusedBatchNormInferShape(const TensorC *const *inputs, size_t inputs_size, T
     outputs[5]->shape_size_ = 1;
     outputs[5]->shape_[0] = 1;
   }
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   return NNACL_OK;

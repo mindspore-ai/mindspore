@@ -115,7 +115,7 @@ int BatchToSpaceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
     return NNACL_ERR;
   }
   SetDataTypeFormat(outputs[0], input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

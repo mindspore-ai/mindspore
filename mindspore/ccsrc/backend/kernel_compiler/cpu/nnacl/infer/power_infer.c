@@ -40,7 +40,7 @@ int PowerInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   TensorC *output_tensor = outputs[0];
 
   SetDataTypeFormat(output_tensor, x_tensor);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (exp_tensor != NULL) {

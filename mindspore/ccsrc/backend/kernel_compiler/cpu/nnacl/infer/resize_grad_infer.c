@@ -32,7 +32,7 @@ int ResizeGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   }
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   const TensorC *input_1 = inputs[1];

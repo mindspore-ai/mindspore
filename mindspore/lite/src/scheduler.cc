@@ -74,8 +74,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   search_sub_graph.SubGraphSplitByOutput();
 #endif
 
-  bool infer_shape_interrupt = false;
-  auto ret = InferSubGraphShape(kMainSubGraphIndex, &infer_shape_interrupt);
+  auto ret = InferSubGraphShape(kMainSubGraphIndex);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "op infer shape failed.";
     return ret;
@@ -121,24 +120,16 @@ void Scheduler::FindNodeInoutTensors(const lite::Model::Node &node, std::vector<
   }
 }
 
-int Scheduler::InferNodeShape(const lite::Model::Node *node, bool *infer_shape_interrupt) {
+int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   MS_ASSERT(node != nullptr);
-  MS_ASSERT(infer_shape_interrupt != nullptr);
   auto primitive = node->primitive_;
   MS_ASSERT(primitive != nullptr);
   if (IsPartialNode(primitive)) {
-    return InferPartialShape(node, infer_shape_interrupt);
+    return InferPartialShape(node);
   }
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  bool infer_valid = std::all_of(inputs.begin(), inputs.end(), [](const Tensor *tensor) {
-    auto shape = tensor->shape();
-    return std::all_of(shape.begin(), shape.end(), [](const int dim) { return dim != -1; });
-  });
-  if (!infer_valid) {
-    *infer_shape_interrupt = true;
-  }
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   auto parame_gen =
     PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
@@ -154,12 +145,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node, bool *infer_shape_i
   parameter->quant_type_ = node->quant_type_;
 
   op_parameters_[node->output_indices_.at(0)] = parameter;
-  parameter->infer_flag_ = !(*infer_shape_interrupt);
   auto ret = KernelInferShape(inputs, &outputs, parameter);
-  if (ret == RET_INFER_INVALID) {
-    parameter->infer_flag_ = false;
-    *infer_shape_interrupt = true;
-  }
   if (ret == RET_OK) {
     for (auto &output : outputs) {
       if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
@@ -171,19 +157,17 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node, bool *infer_shape_i
   return ret;
 }
 
-int Scheduler::InferPartialShape(const lite::Model::Node *node, bool *infer_shape_interrupt) {
+int Scheduler::InferPartialShape(const lite::Model::Node *node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(node != nullptr);
-  MS_ASSERT(infer_shape_interrupt != nullptr);
   if (!IsPartialNode(node->primitive_)) {
     MS_LOG(ERROR) << "Node is not a partial";
     return RET_PARAM_INVALID;
   }
-  return InferSubGraphShape(GetPartialGraphIndex(node->primitive_), infer_shape_interrupt);
+  return InferSubGraphShape(GetPartialGraphIndex(node->primitive_));
 }
 
-int Scheduler::InferSubGraphShape(size_t subgraph_index, bool *infer_shape_interrupt) {
-  MS_ASSERT(infer_shape_interrupt != nullptr);
+int Scheduler::InferSubGraphShape(size_t subgraph_index) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(!src_model_->sub_graphs_.empty());
   MS_ASSERT(src_model_->sub_graphs_.size() > subgraph_index);
@@ -197,11 +181,10 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index, bool *infer_shape_inter
       return RET_ERROR;
     }
     auto type = GetPrimitiveType(primitive);
-    auto ret = InferNodeShape(node, infer_shape_interrupt);
+    auto ret = InferNodeShape(node);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_ << ", type: " << PrimitiveTypeName(type)
                    << ", set infer flag to false.";
-      *infer_shape_interrupt = true;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: " << PrimitiveTypeName(type);
       return RET_INFER_ERR;
@@ -461,7 +444,6 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
-  bool infer_shape_interrupt = !op_parameter->infer_flag_;
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
   kernel::LiteKernel *kernel = nullptr;
   int status;
@@ -474,7 +456,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
                   << node->name_;
     if (status == RET_ERROR) {
-      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      auto ret = InferNodeShape(node);
       if (ret == RET_INFER_INVALID || ret == RET_OK) {
         op_parameter = op_parameters_[node->output_indices_.at(0)];
       } else {
@@ -494,7 +476,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
                   << node->name_;
     if (status == RET_ERROR) {
-      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      auto ret = InferNodeShape(node);
       if (ret == RET_INFER_INVALID || ret == RET_OK) {
         op_parameter = op_parameters_[node->output_indices_.at(0)];
       } else {
@@ -513,7 +495,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       MS_LOG(DEBUG) << "Get fp16 op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
                     << node->name_;
       if (status == RET_ERROR) {
-        auto ret = InferNodeShape(node, &infer_shape_interrupt);
+        auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
         } else {
@@ -532,7 +514,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     if (status == RET_OK) {
       return kernel;
     } else if (status == RET_ERROR) {
-      auto ret = InferNodeShape(node, &infer_shape_interrupt);
+      auto ret = InferNodeShape(node);
       if (!(ret == RET_INFER_INVALID || ret == RET_OK)) {
         MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
       }

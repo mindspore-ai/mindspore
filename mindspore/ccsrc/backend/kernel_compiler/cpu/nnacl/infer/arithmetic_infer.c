@@ -83,7 +83,7 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   size_t input_shape1_size = input1->shape_size_;
   SetOutputDtypeFormat(input0, input1, output);
 
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (input_shape0_size >= MAX_SHAPE_SIZE || input_shape1_size >= MAX_SHAPE_SIZE) {

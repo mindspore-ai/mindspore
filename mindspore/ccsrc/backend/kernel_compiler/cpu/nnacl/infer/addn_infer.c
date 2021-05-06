@@ -32,7 +32,7 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     return NNACL_ERR;
   }
   SetDataTypeFormat(output, input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

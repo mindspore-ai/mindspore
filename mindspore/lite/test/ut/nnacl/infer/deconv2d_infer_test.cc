@@ -54,7 +54,6 @@ TEST_F(Deconv2dInferTest, Deconv2dInferTest0) {
   parameter->pad_r_ = 1;
   parameter->pad_d_ = 1;
   parameter->pad_u_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = Deconv2dInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -103,7 +102,6 @@ TEST_F(Deconv2dInferTest, Deconv2dInferTest1) {
   parameter->pad_r_ = 1;
   parameter->pad_d_ = 1;
   parameter->pad_u_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = Deconv2dInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -152,7 +150,6 @@ TEST_F(Deconv2dInferTest, Deconv2dInferTest2) {
   parameter->pad_r_ = 0;
   parameter->pad_d_ = 0;
   parameter->pad_u_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = Deconv2dInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

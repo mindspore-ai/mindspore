@@ -100,11 +100,6 @@ void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_t
       iv->set_out_tensors(tensors);
       in_convert_op->AddInKernel(iv);
     }
-    if (in_convert_op->in_kernels().empty()) {
-      in_convert_op->op_parameter()->infer_flag_ = true;
-    } else {
-      in_convert_op->op_parameter()->infer_flag_ = in_opencl_op->in_kernels().front()->op_parameter()->infer_flag_;
-    }
   }
 }
 
@@ -148,7 +143,6 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     parameter->op_parameter.type_ = PRIM_TO_FORMAT;
-    parameter->op_parameter.infer_flag_ = false;  // infer_flag_ is set in ReplaceOutTensorAndKernelToConvert()
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
@@ -343,7 +337,7 @@ int OpenCLSubGraph::Prepare() {
         return ret;
       }
     }
-    if (opencl_kernel->op_parameter()->infer_flag_) {
+    if (opencl_kernel->InferShapeDone()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "prepare node " << node->name() << " failed";
@@ -389,17 +383,15 @@ int OpenCLSubGraph::ReSize(bool interrupt) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
       return RET_ERROR;
     }
-    auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
       MS_LOG(ERROR) << "all nodes in should be kernel";
       return RET_ERROR;
     }
-    std::vector<lite::Tensor *> inputs = kernel->in_tensors();
     std::vector<lite::Tensor *> outputs = kernel->out_tensors();
     for (auto &output : outputs) {
       output->FreeData();
+      output->set_shape({-1});
     }
-    opencl_kernel->op_parameter()->infer_flag_ = false;
   }
   for (auto kernel : nodes_) {
     auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);

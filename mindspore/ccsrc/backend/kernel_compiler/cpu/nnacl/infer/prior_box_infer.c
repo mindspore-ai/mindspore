@@ -31,7 +31,7 @@ int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   TensorC *output = outputs[0];
   output->data_type_ = kNumberTypeFloat32;
   output->format_ = input->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   float different_aspect_ratios[MAX_SHAPE_SIZE * 2 + 1];  // NOTE: flip double the number

@@ -32,7 +32,7 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   SetDataTypeFormat(output, input0);
   MatMulParameter *param = (MatMulParameter *)parameter;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

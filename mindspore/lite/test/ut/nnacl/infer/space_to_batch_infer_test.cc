@@ -43,7 +43,6 @@ TEST_F(SpaceToBatchInferTest, SpaceToBatchInferTest0) {
   parameter->paddings_[1] = 0;
   parameter->paddings_[2] = 0;
   parameter->paddings_[3] = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToBatchInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -81,7 +80,6 @@ TEST_F(SpaceToBatchInferTest, SpaceToBatchInferTest1) {
   parameter->paddings_[1] = 0;
   parameter->paddings_[2] = 0;
   parameter->paddings_[3] = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToBatchInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -119,7 +117,6 @@ TEST_F(SpaceToBatchInferTest, SpaceToBatchInferTest2) {
   parameter->paddings_[1] = 0;
   parameter->paddings_[2] = 0;
   parameter->paddings_[3] = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToBatchInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -157,7 +154,6 @@ TEST_F(SpaceToBatchInferTest, SpaceToBatchInferTest3) {
   parameter->paddings_[1] = 0;
   parameter->paddings_[2] = 2;
   parameter->paddings_[3] = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToBatchInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -36,7 +36,7 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   if (param->group_ == 0) {
     param->group_ = weight->shape_[0];
   }
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int32_t input_h = GetHeight(input);

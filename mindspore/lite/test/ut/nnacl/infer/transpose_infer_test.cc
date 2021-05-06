@@ -35,7 +35,6 @@ TEST_F(TransposeInferTest, TransposeInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   TransposeParameter *parameter = new TransposeParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   // parameter->conjugate_ = false;
   parameter->perm_size_ = 4;
   parameter->perm_[0] = 2;

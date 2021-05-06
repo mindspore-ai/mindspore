@@ -47,7 +47,6 @@ TEST_F(GruInferTest, GruInferTest0) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   GruParameter *parameter = new GruParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->bidirectional_ = true;
   OpParameter *param = reinterpret_cast<OpParameter *>(parameter);
   int ret = GruInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), param);
@@ -103,7 +102,6 @@ TEST_F(GruInferTest, GruInferTest1) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   GruParameter *parameter = new GruParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->bidirectional_ = false;
   int ret = GruInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                           reinterpret_cast<OpParameter *>(parameter));

@@ -27,7 +27,7 @@ int CropInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
 #endif
 
   SetDataTypeFormat(outputs[0], inputs[0]);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   SetShapeTensor(outputs[0], inputs[1]);

@@ -35,7 +35,6 @@ TEST_F(UnstackInferTest, UnstackInferTest0) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   UnstackParameter *parameter = new UnstackParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->axis_ = 1;
   int ret = UnstackInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));

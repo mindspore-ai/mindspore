@@ -35,7 +35,6 @@ TEST_F(BinaryCrossEntropyInferTest, BinaryCrossEntropyInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BinaryCrossEntropyParameter *parameter = new BinaryCrossEntropyParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->reduction = 3;
   int ret = BinaryCrossEntropyInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                          reinterpret_cast<OpParameter *>(parameter));
@@ -66,7 +65,6 @@ TEST_F(BinaryCrossEntropyInferTest, BinaryCrossEntropyInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BinaryCrossEntropyParameter *parameter = new BinaryCrossEntropyParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->reduction = 2;
   int ret = BinaryCrossEntropyInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                          reinterpret_cast<OpParameter *>(parameter));

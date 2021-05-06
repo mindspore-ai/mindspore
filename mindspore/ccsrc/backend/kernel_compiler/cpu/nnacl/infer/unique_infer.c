@@ -33,7 +33,7 @@ int UniqueInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetDataTypeFormat(output0, input);
   output1->data_type_ = kNumberTypeInt32;
   output1->format_ = input->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   SetShapeTensor(output0, input);

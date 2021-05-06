@@ -55,46 +55,17 @@ void SetConvWeightFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *
   }
 }
 
-bool DuceInferFlag(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
+void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
+  if (fmk_type != lite::converter::FmkType_ONNX) {
+    return;
+  }
   for (auto &input : inputs) {
     auto shape = input->shape();
-    if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-      if (fmk_type == lite::converter::FmkType_ONNX && shape.size() == 4 && shape[3] == 3 && shape[1] == -1) {
-        input->set_format(schema::Format_NHWC);
-      }
-      return false;
+    if (shape.size() == 4 && shape[3] == 3 && shape[1] == -1) {
+      input->set_format(schema::Format_NHWC);
     }
   }
-  auto origin_inputs = cnode->inputs();
-  lite::RemoveIfDepend(cnode);
-  lite::RemoveIfMakeTuple(cnode);
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    if (!utils::isa<CNodePtr>(cnode->input(i))) {
-      continue;
-    }
-    auto input_cnode = cnode->input(i)->cast<CNodePtr>();
-    if (CheckPrimitiveType(cnode->input(i), prim::kPrimTupleGetItem)) {
-      input_cnode = input_cnode->input(1)->cast<CNodePtr>();
-    }
-    if (input_cnode == nullptr) {
-      MS_LOG(ERROR) << "input is not cnode.";
-      cnode->set_inputs(origin_inputs);
-      return false;
-    }
-    auto prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-    if (prim == nullptr || prim->GetAttr(kInferDone) == nullptr) {
-      MS_LOG(ERROR) << "prim is invalid.";
-      cnode->set_inputs(origin_inputs);
-      return false;
-    }
-    if (!GetValue<bool>(prim->GetAttr(kInferDone))) {
-      cnode->set_inputs(origin_inputs);
-      return false;
-    }
-  }
-  cnode->set_inputs(origin_inputs);
-  return true;
 }
 
 tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
@@ -178,13 +149,13 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     fbb.Clear();
     return lite::RET_ERROR;
   }
-  parameter->infer_flag_ = DuceInferFlag(cnode, inputs, fmk_type_);
+  RectifyFormat(cnode, inputs, fmk_type_);
   auto status = KernelInferShape(inputs, &outputs, parameter);
   if (status == lite::RET_OK) {
     anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
   }
   if (status == lite::RET_OK || status == lite::RET_INFER_INVALID) {
-    auto set_status = SetCNodeAbstract(cnode, outputs);
+    auto set_status = SetCNodeAbstract(cnode, outputs, status);
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
       return set_status;
@@ -204,18 +175,30 @@ std::vector<int> NodeInferShape::GetInputShape(const CNodePtr &cnode, size_t ind
   if (index >= cnode->size()) {
     return {};
   }
-  auto origin_inputs = cnode->inputs();
-  std::vector<AnfNodePtr> specify_inputs = {origin_inputs[0], origin_inputs[index]};
-  cnode->set_inputs(specify_inputs);
-  std::vector<lite::Tensor *> specify_tensors;
-  if (GetCNodeInputTensors(cnode, &specify_tensors) != lite::RET_OK || specify_tensors.empty()) {
-    cnode->set_inputs(origin_inputs);
+  lite::DataInfo data_info;
+  int status = lite::RET_OK;
+  CNodePtr base_node = cnode;
+  size_t position = index;
+  if (CheckPrimitiveType(cnode->input(index), prim::kPrimMakeTuple) ||
+      CheckPrimitiveType(cnode->input(index), kPrimMakeTupleV2)) {
+    base_node = cnode->input(index)->cast<CNodePtr>();
+    position = 1;
+  }
+  if (utils::isa<CNode>(base_node->input(position))) {
+    status = lite::FetchDataFromCNode(base_node, position, fmk_type_, train_flag_, &data_info);
+  } else if (utils::isa<Parameter>(base_node->input(position))) {
+    status = lite::FetchDataFromParameterNode(base_node, position, fmk_type_, train_flag_, &data_info);
+  } else if (utils::isa<ValueNodePtr>(base_node->input(position))) {
+    status = lite::FetchDataFromValueNode(base_node, position, fmk_type_, train_flag_, &data_info);
+  } else {
+    MS_LOG(ERROR) << "input node is invalid.";
     return {};
   }
-  cnode->set_inputs(origin_inputs);
-  auto shape = specify_tensors.front()->shape();
-  FreeTensors(&specify_tensors);
-  return shape;
+  if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "fetch data failed.";
+    return {};
+  }
+  return data_info.shape_;
 }
 
 std::vector<int> NodeInferShape::GetIntVecInput(const CNodePtr &cnode, size_t index) {
@@ -349,6 +332,17 @@ STATUS NodeInferShape::GetCNodeVarInput(const CNodePtr &cnode, std::vector<lite:
       MS_LOG(ERROR) << "new a lite tensor failed";
       return lite::RET_ERROR;
     }
+    auto input_cnode = cnode->input(i)->cast<CNodePtr>();
+    PrimitivePtr input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
+      auto item_input_cnode = input_cnode->input(1)->cast<CNodePtr>();
+      MS_ASSERT(item_input_cnode != nullptr);
+      input_prim = GetValueNode<PrimitivePtr>(item_input_cnode->input(0));
+    }
+    MS_ASSERT(input_prim != nullptr);
+    if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
+      tensor->set_shape({-1});
+    }
     var_ms_inputs->emplace_back(tensor);
   }
   return lite::RET_OK;
@@ -471,8 +465,8 @@ STATUS NodeInferShape::ConvertToLiteTensor(const std::vector<lite::DataInfo> &da
   return lite::RET_OK;
 }
 
-STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode,
-                                        const std::vector<lite::Tensor *> &outputs) {
+STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs,
+                                        int status) {
   MS_ASSERT(cnode != nullptr);
   if (outputs.size() == 0) {
     MS_LOG(ERROR) << "empty output_tensors";
@@ -483,7 +477,15 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode,
     auto tensor = outputs.front();
     auto new_abstract = ConvertLiteTensorToAbstract(tensor);
     if (new_abstract == nullptr) {
+      MS_LOG(ERROR) << "new abstract failed.";
       return RET_ERROR;
+    }
+    if (status == lite::RET_INFER_INVALID) {
+      ShapeVector shape;
+      if (tensor->data_type() == kObjectTypeTensorType) {
+        shape = {0};
+      }
+      new_abstract->set_shape(std::make_shared<abstract::Shape>(shape));
     }
     cnode->set_abstract(new_abstract);
   } else {
@@ -492,7 +494,15 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode,
       auto tensor = outputs.at(i);
       auto new_abstract = ConvertLiteTensorToAbstract(tensor);
       if (new_abstract == nullptr) {
+        MS_LOG(ERROR) << "new abstract failed.";
         return RET_ERROR;
+      }
+      if (status == lite::RET_INFER_INVALID) {
+        ShapeVector shape;
+        if (tensor->data_type() == kObjectTypeTensorType) {
+          shape = {0};
+        }
+        new_abstract->set_shape(std::make_shared<abstract::Shape>(shape));
       }
       abstract_list.emplace_back(new_abstract);
     }

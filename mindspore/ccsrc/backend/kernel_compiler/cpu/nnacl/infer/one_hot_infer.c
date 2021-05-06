@@ -38,7 +38,7 @@ int OneHotInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_NULL_PTR;
   }
   SetDataTypeFormat(output, on_value);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   OneHotParameter *param = (OneHotParameter *)parameter;

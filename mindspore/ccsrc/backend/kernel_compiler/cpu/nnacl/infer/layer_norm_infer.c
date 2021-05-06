@@ -34,7 +34,7 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   SetDataTypeFormat(output, input);
 
   LayerNormParameter *param = (LayerNormParameter *)parameter;
-  if (!param->op_parameter_.infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   param->begin_norm_axis_ =

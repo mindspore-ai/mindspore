@@ -45,7 +45,6 @@ TEST_F(TestTransposeFp32, 10D) {
     MS_LOG(ERROR) << "New param fails.";
     return;
   }
-  param->op_parameter_.infer_flag_ = true;
   param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
@@ -84,7 +83,6 @@ TEST_F(TestTransposeFp32, 10DSingleThread) {
     MS_LOG(ERROR) << "New param fails.";
     return;
   }
-  param->op_parameter_.infer_flag_ = true;
   param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
@@ -218,7 +216,6 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   std::vector<int> output_shape = {2, 2, 3, 2, 1};
   int perm[5] = {4, 3, 2, 1, 0};
   TransposeParameter *param = new (std::nothrow) TransposeParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   lite::Tensor input_tensor;
   input_tensor.set_data(input.data());

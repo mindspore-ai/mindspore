@@ -86,9 +86,7 @@ int SubGraphKernel::Run(const KernelCallBack &before, const KernelCallBack &afte
   return RET_OK;
 }
 
-int SubGraphKernel::ReSize() { return ReSize(false); }
-
-int SubGraphKernel::ReSize(bool is_interrupt) {
+int SubGraphKernel::ReSize() {
   for (auto kernel : nodes_) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
@@ -108,31 +106,24 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    parameter->infer_flag_ = !is_interrupt;
 
     auto ret = lite::KernelInferShape(inputs, &outputs, parameter);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()))
                    << "flag set to false.";
-      parameter->infer_flag_ = false;
-      is_interrupt = true;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
                     << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()));
       return RET_INFER_ERR;
     }
-    if (!is_interrupt) {
+    if (ret == RET_OK) {
       ret = kernel->ReSize();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "kernel " << kernel->name() << " resize fail!ret = " << ret;
         return ret;
       }
     }
-  }
-  if (is_interrupt) {
-    MS_LOG(INFO) << "Infer shape failed.";
-    return RET_INFER_INVALID;
   }
   return RET_OK;
 }

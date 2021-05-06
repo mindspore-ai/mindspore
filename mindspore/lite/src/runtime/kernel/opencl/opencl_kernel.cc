@@ -194,22 +194,20 @@ int OpenCLKernel::PostProcess() {
 }
 
 int OpenCLKernel::InferShape() {
-  if (op_parameter_->infer_flag_) {
+  if (InferShapeDone()) {
     return RET_OK;
   }
-  op_parameter_->infer_flag_ = true;
   auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InferShape failed, type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(Type()));
-    op_parameter_->infer_flag_ = false;
     return ret;
   }
   return RET_OK;
 }
 
 int OpenCLKernel::ReSize() {
-  if (op_parameter_->infer_flag_) {
+  if (InferShapeDone()) {
     return RET_OK;
   }
   auto ret = InferShape();

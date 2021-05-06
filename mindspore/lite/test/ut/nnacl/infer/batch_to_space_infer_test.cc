@@ -38,7 +38,6 @@ TEST_F(BatchToSpaceInferTest, BatchToSpaceInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BatchToSpaceParameter *parameter = new BatchToSpaceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->block_shape_[0] = 2;
   parameter->block_shape_[1] = 2;
   parameter->crops_[0] = 0;
@@ -78,7 +77,6 @@ TEST_F(BatchToSpaceInferTest, BatchToSpaceInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BatchToSpaceParameter *parameter = new BatchToSpaceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->block_shape_[0] = 2;
   parameter->block_shape_[1] = 2;
   parameter->crops_[0] = 0;
@@ -118,7 +116,6 @@ TEST_F(BatchToSpaceInferTest, BatchToSpaceInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BatchToSpaceParameter *parameter = new BatchToSpaceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->block_shape_[0] = 2;
   parameter->block_shape_[1] = 2;
   parameter->crops_[0] = 0;
@@ -158,7 +155,6 @@ TEST_F(BatchToSpaceInferTest, BatchToSpaceInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   BatchToSpaceParameter *parameter = new BatchToSpaceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->block_shape_[0] = 2;
   parameter->block_shape_[1] = 2;
   parameter->crops_[0] = 0;

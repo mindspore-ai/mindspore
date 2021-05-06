@@ -35,7 +35,6 @@ TEST_F(PoolingInferTest, PoolingInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 2;
   parameter->window_h_ = 2;
   parameter->stride_w_ = 2;
@@ -76,7 +75,6 @@ TEST_F(PoolingInferTest, PoolingInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 3;
   parameter->window_h_ = 3;
   parameter->stride_w_ = 1;
@@ -118,7 +116,6 @@ TEST_F(PoolingInferTest, PoolingInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 3;
   parameter->window_h_ = 3;
   parameter->stride_w_ = 2;
@@ -160,7 +157,6 @@ TEST_F(PoolingInferTest, PoolingInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 7;
   parameter->window_h_ = 7;
   parameter->stride_w_ = 1;
@@ -202,7 +198,6 @@ TEST_F(PoolingInferTest, PoolingInferTest4) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 2;
   parameter->window_h_ = 2;
   parameter->stride_w_ = 2;
@@ -244,7 +239,6 @@ TEST_F(PoolingInferTest, PoolingInferTest5) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   PoolingParameter *parameter = new PoolingParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_w_ = 2;
   parameter->window_h_ = 2;
   parameter->stride_w_ = 2;

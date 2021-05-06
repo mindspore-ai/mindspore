@@ -108,6 +108,7 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
   dst->format_ = src->format();
+  dst->shape_value_ = src->shape().empty() ? 0 : src->shape().front();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
 
   dst->tensors_ = reinterpret_cast<TensorC *>(malloc(dst->element_num_ * sizeof(TensorC)));

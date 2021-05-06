@@ -690,7 +690,6 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
 }
 
 int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
-  bool infer_shape_interrupt = false;
   for (auto kernel : kernels) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
@@ -708,11 +707,10 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
 #endif
     } else {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-      ret = sub_graph->ReSize(infer_shape_interrupt);
+      ret = sub_graph->ReSize();
     }
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
-      infer_shape_interrupt = true;
       continue;
     }
     if (ret != RET_OK) {

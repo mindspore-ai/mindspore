@@ -50,7 +50,7 @@ int AudioSpectrogramInferShape(const TensorC *const *inputs, size_t inputs_size,
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (input->shape_size_ != 2) {

@@ -39,7 +39,6 @@ TEST_F(SliceInferTest, SliceInferTest0) {
   parameter->size_[1] = 3;
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -75,7 +74,6 @@ TEST_F(SliceInferTest, SliceInferTest1) {
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
   parameter->axis_[2] = 2;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -112,7 +110,6 @@ TEST_F(SliceInferTest, SliceInferTest2) {
   parameter->axis_[0] = 0;
   parameter->axis_[1] = 1;
   parameter->axis_[2] = 2;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -156,7 +153,6 @@ TEST_F(SliceInferTest, SliceInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   SliceParameter *parameter = new SliceParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SliceInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -71,7 +71,6 @@ TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = reinterpret_cast<TensorC *>(new TensorListC);
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = TensorListSetItemInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                         reinterpret_cast<OpParameter *>(parameter));
   TensorListC *res = reinterpret_cast<TensorListC *>(outputs[0]);

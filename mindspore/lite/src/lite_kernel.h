@@ -188,14 +188,15 @@ class LiteKernel {
   int DecOutTensorRefCount();
 #endif
 
- protected:
-  bool InferShapeDone() {
-    if (op_parameter_ != nullptr) {
-      return op_parameter_->infer_flag_;
+  bool InferShapeDone() const {
+    auto shape = out_tensors_.front()->shape();
+    if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+      return false;
     }
-    return false;
+    return true;
   }
 
+ protected:
   KernelKey desc_{};
   std::string name_;
   OpParameter *op_parameter_ = nullptr;

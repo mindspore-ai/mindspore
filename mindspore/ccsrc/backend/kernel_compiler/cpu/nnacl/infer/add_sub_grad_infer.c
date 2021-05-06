@@ -33,7 +33,7 @@ int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   TensorC *dx1 = outputs[0];
   TensorC *dx2 = outputs[1];
 
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 

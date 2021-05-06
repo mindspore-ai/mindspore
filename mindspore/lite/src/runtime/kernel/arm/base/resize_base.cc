@@ -108,7 +108,7 @@ int ResizeBaseCPUKernel::Init() {
 
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
-  if (!input_shape.empty() && input_shape.size() != COMM_SHAPE_SIZE) {
+  if (InferShapeDone() && input_shape.size() != COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Resize op support input rank 4, got " << input_shape.size();
     return RET_ERROR;
   }

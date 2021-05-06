@@ -40,7 +40,6 @@ TEST_F(AddnInferTest, AddnInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = AddnInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -74,7 +73,6 @@ TEST_F(AddnInferTest, AddnInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = AddnInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                            reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

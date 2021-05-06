@@ -46,7 +46,6 @@ TEST_F(SelectInferTest, SelectInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = SelectInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -102,7 +101,6 @@ TEST_F(SelectInferTest, SelectInferTest1) {
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = SelectInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -149,7 +147,6 @@ TEST_F(SelectInferTest, SelectInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = reinterpret_cast<TensorC *>(new TensorListC);
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = SelectInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   TensorListC *outputs0 = reinterpret_cast<TensorListC *>(outputs[0]);
@@ -205,7 +202,6 @@ TEST_F(SelectInferTest, SelectInferTest3) {
   outputs[0] = reinterpret_cast<TensorC *>(new TensorListC);
   outputs[1] = reinterpret_cast<TensorC *>(new TensorListC);
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = SelectInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                              reinterpret_cast<OpParameter *>(parameter));
   TensorListC *outputs0 = reinterpret_cast<TensorListC *>(outputs[0]);

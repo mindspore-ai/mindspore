@@ -49,7 +49,7 @@ class NodeInferShape {
   lite::Tensor *GetCNodeTensorListVarInput(const lite::DataInfo &data_info);
   STATUS GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<lite::Tensor *> *outputs);
   STATUS ConvertToLiteTensor(const std::vector<lite::DataInfo> &data_infos, std::vector<lite::Tensor *> *tensors);
-  STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs);
+  STATUS SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, const std::vector<lite::Tensor *> &outputs, int status);
   abstract::AbstractBasePtr ConvertLiteTensorToAbstract(lite::Tensor *tensor);
   abstract::AbstractBasePtr ConvertTensorListToAbstract(lite::Tensor *tensor);
   FmkType fmk_type_{lite::converter::FmkType_MS};

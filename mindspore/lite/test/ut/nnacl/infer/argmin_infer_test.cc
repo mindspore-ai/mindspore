@@ -35,7 +35,6 @@ TEST_F(ArgminInferTest, ArgminInferTest0) {
   parameter->topk_ = 1;
   parameter->keep_dims_ = true;
   parameter->axis_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -63,7 +62,6 @@ TEST_F(ArgminInferTest, ArgminInferTest1) {
   parameter->topk_ = 1;
   parameter->keep_dims_ = true;
   parameter->axis_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -92,7 +90,6 @@ TEST_F(ArgminInferTest, ArgminInferTest2) {
   parameter->topk_ = 1;
   parameter->keep_dims_ = true;
   parameter->axis_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -121,7 +118,6 @@ TEST_F(ArgminInferTest, ArgminInferTestTopK2) {
   parameter->topk_ = 2;
   parameter->keep_dims_ = true;
   parameter->axis_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                 reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

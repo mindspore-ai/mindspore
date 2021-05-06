@@ -34,7 +34,7 @@ int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   TensorC *output = outputs[0];
 
   SetDataTypeFormat(output, update);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int *shape_data = (int *)(shape->data_);

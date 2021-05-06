@@ -40,7 +40,6 @@ TEST_F(FullConnectionInferTest, FullConnectionInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *param = new MatMulParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->has_bias_ = false;
   param->use_axis_ = false;
   int ret = FullConnectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -72,7 +71,6 @@ TEST_F(FullConnectionInferTest, FullConnectionInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *param = new MatMulParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->has_bias_ = false;
   param->use_axis_ = false;
   int ret = FullConnectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
@@ -104,7 +102,6 @@ TEST_F(FullConnectionInferTest, FullConnectionInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   MatMulParameter *param = new MatMulParameter;
-  param->op_parameter_.infer_flag_ = true;
   param->has_bias_ = false;
   param->use_axis_ = false;
   int ret = FullConnectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

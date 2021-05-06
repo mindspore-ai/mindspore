@@ -31,7 +31,7 @@ int ShapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   out_tensor->data_type_ = kNumberTypeInt32;
   out_tensor->format_ = in_tensor->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   out_tensor->shape_size_ = 1;

@@ -36,7 +36,6 @@ TEST_F(AudioSpectrogramInferTest, AudioSpectrogramInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   AudioSpectrogramParameter *parameter = new AudioSpectrogramParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->window_size_ = 3;
   parameter->stride_ = 2;
   int ret = AudioSpectrogramInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),

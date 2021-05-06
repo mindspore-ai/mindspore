@@ -29,7 +29,7 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   TensorListC *input0 = (TensorListC *)(inputs[0]);
   output->data_type_ = input0->tensors_data_type_;
   output->format_ = input0->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (input0->element_num_ == 0) {

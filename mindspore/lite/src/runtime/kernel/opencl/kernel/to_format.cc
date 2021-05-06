@@ -101,8 +101,7 @@ int ToFormatOpenCLKernel::Run() {
 }
 
 int ToFormatOpenCLKernel::InferShape() {
-  if (!op_parameter_->infer_flag_) {
-    op_parameter_->infer_flag_ = true;
+  if (!InferShapeDone()) {
     out_tensors_.front()->set_shape(in_tensors_.front()->shape());
   }
   return RET_OK;

@@ -37,7 +37,6 @@ TEST_F(LshProjectionInferTest, LshProjectionInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LshProjectionParameter *parameter = new LshProjectionParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->lsh_type_ = LshProjectionType_SPARSE;
   int ret = LshProjectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                     reinterpret_cast<OpParameter *>(parameter));
@@ -69,7 +68,6 @@ TEST_F(LshProjectionInferTest, LshProjectionInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LshProjectionParameter *parameter = new LshProjectionParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->lsh_type_ = LshProjectionType_DENSE;
   int ret = LshProjectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                     reinterpret_cast<OpParameter *>(parameter));
@@ -105,7 +103,6 @@ TEST_F(LshProjectionInferTest, LshProjectionInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   LshProjectionParameter *parameter = new LshProjectionParameter;
-  parameter->op_parameter_.infer_flag_ = true;
   parameter->lsh_type_ = LshProjectionType_DENSE;
   int ret = LshProjectionInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                     reinterpret_cast<OpParameter *>(parameter));

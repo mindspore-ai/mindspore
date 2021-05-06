@@ -37,7 +37,6 @@ TEST_F(SpaceToDepthInferTest, SpaceToDepthInferTest0) {
   outputs[0] = new TensorC;
   SpaceToDepthParameter *parameter = new SpaceToDepthParameter;
   parameter->block_size_ = 2;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToDepthInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -69,7 +68,6 @@ TEST_F(SpaceToDepthInferTest, SpaceToDepthInferTest1) {
   outputs[0] = new TensorC;
   SpaceToDepthParameter *parameter = new SpaceToDepthParameter;
   parameter->block_size_ = 2;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SpaceToDepthInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                    reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -190,7 +190,7 @@ int GatherOpenCLKernel::InitWeights() {
 }
 
 int GatherOpenCLKernel::PreProcess() {
-  if (!op_parameter_->infer_flag_) {
+  if (!InferShapeDone()) {
     auto indices_tensor = in_tensors_[1];
     if (!indices_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();

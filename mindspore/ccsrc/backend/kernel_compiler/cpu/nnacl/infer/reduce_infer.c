@@ -63,7 +63,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
   ReduceParameter *param = (ReduceParameter *)parameter;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   bool keep_dims = param->keep_dims_;

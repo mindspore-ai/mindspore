@@ -42,7 +42,6 @@ TEST_F(ArithmeticInferTest, ArithmeticInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret =
     ArithmeticInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), parameter);
   ASSERT_EQ(ret, NNACL_ERR);
@@ -74,7 +73,6 @@ TEST_F(ArithmeticInferTest, ArithmeticInferTest1) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret =
     ArithmeticInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), parameter);
   ASSERT_EQ(ret, NNACL_OK);
@@ -112,7 +110,6 @@ TEST_F(ArithmeticInferTest, ArithmeticInferTest2) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret =
     ArithmeticInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), parameter);
   ASSERT_EQ(ret, NNACL_OK);
@@ -151,7 +148,6 @@ TEST_F(ArithmeticInferTest, ArithmeticInferTest3) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret =
     ArithmeticInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(), parameter);
   ASSERT_EQ(ret, NNACL_OK);

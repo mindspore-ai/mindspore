@@ -40,7 +40,6 @@ TEST_F(SplitInferTest, SplitInferTest0) {
   std::vector<int> split_sizes = {4, 15, 11};
   parameter->split_sizes_ = split_sizes.data();
   parameter->split_dim_ = 1;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SplitInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -78,7 +77,6 @@ TEST_F(SplitInferTest, SplitInferTest1) {
   // parameter->num_split_ = 2;
   // parameter->split_count_ = 0;
   parameter->split_dim_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SplitInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -120,7 +118,6 @@ TEST_F(SplitInferTest, SplitInferTest2) {
   parameter->split_sizes_[1] = 4;
   parameter->split_sizes_[2] = 2;
   parameter->split_dim_ = 3;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SplitInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -166,7 +163,6 @@ TEST_F(SplitInferTest, SplitInferTest3) {
   // parameter->num_split_ = 2;
   // parameter->split_count_ = 0;
   parameter->split_dim_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SplitInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -207,7 +203,6 @@ TEST_F(SplitInferTest, SplitInferTest4) {
   // parameter->num_split_ = 2;
   // parameter->split_count_ = 0;
   parameter->split_dim_ = 0;
-  parameter->op_parameter_.infer_flag_ = true;
   int ret = SplitInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

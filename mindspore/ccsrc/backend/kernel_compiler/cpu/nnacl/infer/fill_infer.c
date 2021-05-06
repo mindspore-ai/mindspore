@@ -35,7 +35,7 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   for (size_t i = 0; i < dst_shape_tensor->shape_size_; ++i) {
     num_dims *= dst_shape_tensor->shape_[i];
   }
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   if (num_dims != 0 && dst_shape == NULL) {

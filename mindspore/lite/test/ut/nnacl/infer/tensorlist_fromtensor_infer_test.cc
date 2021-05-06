@@ -45,7 +45,6 @@ TEST_F(TensorlistFromtensorInferTest, TensorlistFromtensorInferTest0) {
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorListC)));
   OpParameter *parameter = new OpParameter;
-  parameter->infer_flag_ = true;
   int ret = TensorListFromTensorInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(),
                                            outputs.size(), reinterpret_cast<OpParameter *>(parameter));
   TensorListC *out = reinterpret_cast<TensorListC *>(outputs[0]);

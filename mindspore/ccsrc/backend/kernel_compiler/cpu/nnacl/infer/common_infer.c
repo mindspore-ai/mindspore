@@ -343,7 +343,7 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_NULL_PTR;
   }
   SetDataTypeFormat(outputs[0], inputs[0]);
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   SetShapeTensor(outputs[0], inputs[0]);
@@ -356,7 +356,7 @@ int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
   TensorC *output = outputs[0];
   output->data_type_ = kNumberTypeFloat32;
   output->format_ = input->format_;
-  if (!parameter->infer_flag_) {
+  if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
   int input_shape[MAX_SHAPE_SIZE] = {0};
@@ -452,6 +452,30 @@ bool VectorCEqual(VectorC *vc1, VectorC *vc2) {
 void VectorCFree(VectorC *vc) {
   free(vc->data_);
   vc->data_ = NULL;
+}
+
+bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
+  if (inputs == NULL) {
+    return false;
+  }
+  for (size_t i = 0; i < inputs_size; i++) {
+    if (inputs[i] == NULL) {
+      return false;
+    }
+    if (inputs[i]->data_type_ == kObjectTypeTensorType) {
+      TensorListC *input_tensor_list = (TensorListC *)inputs[i];
+      if (input_tensor_list->shape_value_ == -1) {
+        return false;
+      }
+    } else {
+      for (size_t j = 0; j < inputs[i]->shape_size_; ++j) {
+        if (inputs[i]->shape_[j] == -1) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
 }
 
 REG_INFER(Abs, PrimType_Abs, CommonInferShape)
