@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from .beam_search import BeamSearchDecoder
 from .transformer_for_train import TransformerTraining, LabelSmoothedCrossEntropyCriterion, \
     TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
 from .infer_mass import infer, infer_ppl
+from .transformer_for_infer import TransformerInferModel
 
 __all__ = [
     "infer",
@@ -31,5 +32,6 @@ __all__ = [
     "Transformer",
     "TransformerEncoder",
     "TransformerDecoder",
-    "BeamSearchDecoder"
+    "BeamSearchDecoder",
+    "TransformerInferModel"
 ]

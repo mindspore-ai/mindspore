@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from .transformer import LabelSmoothedCrossEntropyCriterion
 from .transformer import TransformerTrainOneStepWithLossScaleCell
 from .transformer import TransformerTraining
 from .transformer import infer
+from .transformer import TransformerInferModel
 from .language_model import LooseMaskedLanguageModel
 from .language_model import MaskedLanguageModel
 from .language_model import NoiseChannelLanguageModel
@@ -40,5 +41,6 @@ __all__ = [
     "LabelSmoothedCrossEntropyCriterion",
     "LooseMaskedLanguageModel",
     "MaskedLanguageModel",
+    "TransformerInferModel",
     "NoiseChannelLanguageModel"
 ]
