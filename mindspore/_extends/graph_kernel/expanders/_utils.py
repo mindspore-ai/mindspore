@@ -143,3 +143,61 @@ class ExpanderInfoValidator:
             return cls
 
         return wrapper
+
+def to_frac_z_axis(ori_shape, ori_axis):
+    """
+    judge the format is fractal NZ
+    Parameters
+    ----------
+    ori_shape: list or tuple
+        original shape of input
+    ori_axis: list or tuple
+        original axis of original shape to operate
+    Returns
+    -------
+    output: list
+        axis of the fractal Nz shape
+    """
+    frac_z_axis = list(ori_axis)
+    shape_len = len(ori_shape)
+    axis_count = len(frac_z_axis)
+    axis_negative_1 = shape_len - 1
+    axis_negative_2 = shape_len - 2
+    for i in range(axis_count):
+        axis_index = (frac_z_axis[i] + shape_len) % shape_len
+        if axis_index == axis_negative_1:
+            if frac_z_axis[i] > shape_len - 2: # akg:[2,3] [1,4] tbe:[2,4] [1,3]
+                frac_z_axis[i] = axis_index - 1
+                frac_z_axis.append(axis_index + 2)
+            else: # no case cover this branch now
+                frac_z_axis[i] = axis_index - 1
+                frac_z_axis.append(axis_index + 2)
+        elif axis_index == axis_negative_2:
+            frac_z_axis[i] = axis_index + 1
+            frac_z_axis.append(axis_index + 2)
+        else:
+            frac_z_axis[i] = axis_index
+    return frac_z_axis
+
+def infer_shape_from_fractalNz(fractal):
+    "get original shape from fractalNz shape"
+    shape = []
+    dims = len(fractal)
+    batch = dims - 4
+    for i in range(batch):
+        shape.append(fractal[i])
+    m = fractal[dims - 3] * fractal[dims - 2]
+    n = fractal[dims - 4] * fractal[dims - 1]
+    shape.append(m)
+    shape.append(n)
+    return shape
+
+def get_reduced_ori_shape(shape, axis):
+    "get shape after reduced which is based on original shape"
+    reduced_ori_shape = []
+    for i, value in enumerate(shape):
+        if i in axis:
+            reduced_ori_shape.append(1)
+        else:
+            reduced_ori_shape.append(value)
+    return reduced_ori_shape
