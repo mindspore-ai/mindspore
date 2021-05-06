@@ -887,10 +887,10 @@ void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor();
 #ifdef ONLINE_DBG_MODE
 bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                                      const std::string &host_fmt, const std::vector<int64_t> &host_shape,
-                                     TypeId host_type, TypeId addr_type_id, const std::string &addr_format,
+                                     TypeId host_type, TypeId device_type, const std::string &addr_format,
                                      size_t slot) const {
   return tensor_loader_->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
-                                          addr_type_id, addr_format, slot);
+                                          device_type, addr_format, slot);
 }
 #endif
 

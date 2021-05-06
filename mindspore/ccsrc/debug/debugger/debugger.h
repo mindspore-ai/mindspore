@@ -91,7 +91,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId addr_type_id, const std::string &addr_format, size_t slot) const;
+                        TypeId device_type, const std::string &addr_format, size_t slot) const;
 
   bool DebugServicesIsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
