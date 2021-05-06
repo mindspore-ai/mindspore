@@ -2842,6 +2842,16 @@ std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &n
   return param_names;
 }
 
+bool IsGatherPInfo(const std::string &name) {
+  std::vector<std::string> gather_p_info_names = {"GatherPInfo", "SparseGatherV2Info", "EmbeddingLookupInfo"};
+  for (std::string info_name : gather_p_info_names) {
+    if (name.find(info_name) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   StrategyMap stra_map;
   TensorInfoMap tensor_info_map;
@@ -2873,8 +2883,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
         }
         tensor_info_map[param_name_pair.first] = input_tensor_info[param_name_pair.second - 1];
       }
-      if (operator_info->name().find(EMBEDDING_LOOKUP) != std::string::npos ||
-          operator_info->name().find(GATHERV2) != std::string::npos) {
+      if (IsGatherPInfo(operator_info->name())) {
         auto gatherv2_info = std::dynamic_pointer_cast<GatherPInfo>(operator_info);
         auto param_split_shapes = gatherv2_info->param_split_shapes();
         auto index_offsets = gatherv2_info->index_offsets();

@@ -95,7 +95,7 @@ Status GatherNdInfo::InferTensorMap() {
 
   // cannot use dev_matrix_shape_ replace inputs_shape_[0], because it may not be fully split in all devices.
   TensorMap indices_tensor_map;
-  int64_t size = SizeToLong(inputs_shape_[0].size());
+  int64_t size = SizeToLong(inputs_shape_[1].size());
   for (int64_t i = 0; i < size; ++i) {
     indices_tensor_map.push_back(size - i - 1);
   }
