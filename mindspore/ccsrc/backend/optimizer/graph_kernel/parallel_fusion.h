@@ -64,7 +64,7 @@ class ParallelConfig {
   explicit ParallelConfig(size_t max_n) : max_num_for_fuse_(max_n) {}
   ParallelConfig(const ParallelConfig &obj) { max_num_for_fuse_ = obj.max_num_for_fuse_; }
   ~ParallelConfig() = default;
-  size_t max_num_for_fuse() { return max_num_for_fuse_; }
+  size_t max_num_for_fuse() const { return max_num_for_fuse_; }
 
  private:
   size_t max_num_for_fuse_{10};  // Too many nodes to fuse together may produce bad result.
@@ -86,7 +86,7 @@ class ParallelOpFusion : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  std::tuple<AnfNodePtrList, std::vector<int>> GetAvaliableNodesByOffset(int start, const std::vector<int> &offsets,
+  std::tuple<AnfNodePtrList, std::vector<int>> GetAvaliableNodesByOffset(int start, const std::vector<size_t> &offsets,
                                                                          const std::vector<bool> &used,
                                                                          const AnfNodePtrList &nodes,
                                                                          const std::set<int> &excludes);

@@ -45,7 +45,7 @@
 
 namespace mindspore {
 namespace opt {
-PassManagerPtr GraphKernelOptimizer::PreProcess() {
+PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage1_preprocess");
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>());
@@ -63,7 +63,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::Cluster() {
+PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage2_cluster");
   // Expand complex basic kernels to composite kernels
   pm->AddPass(std::make_shared<GraphKernelExpander>());
@@ -76,7 +76,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
+PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage3_highlevelopt1");
   // normalize the Reduce axis
   pm->AddPass(std::make_shared<AxisNormalizer>());
@@ -98,7 +98,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::Split() {
+PassManagerPtr GraphKernelOptimizer::Split() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage4_split");
   // Move the non-scalar tensor (in composite node) to parameter list
   pm->AddPass(std::make_shared<TensorPromotion>());
@@ -128,7 +128,7 @@ PassManagerPtr GraphKernelOptimizer::Split() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() {
+PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage5_highlevelopt2");
   // Enable atomic add
   if (is_gpu) {
@@ -140,7 +140,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::Combine() {
+PassManagerPtr GraphKernelOptimizer::Combine() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage6_combine");
   // Enable parallel fusion
   if (is_gpu) {
@@ -152,7 +152,7 @@ PassManagerPtr GraphKernelOptimizer::Combine() {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::PostProcess() {
+PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage7_postprocess");
   // Add the new tensors to the kernel_graph
   pm->AddPass(std::make_shared<BindValueToGraph>());

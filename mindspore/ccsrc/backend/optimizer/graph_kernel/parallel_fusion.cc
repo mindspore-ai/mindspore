@@ -17,6 +17,7 @@
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <list>
 #include <map>
 #include <memory>
@@ -484,10 +485,10 @@ std::vector<std::vector<AnfNodePtrList>> ParallelOpFusion::SearchParallelGroups(
 }
 
 std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodesByOffset(
-  int start, const std::vector<int> &offsets, const std::vector<bool> &used, const AnfNodePtrList &nodes,
+  int start, const std::vector<size_t> &offsets, const std::vector<bool> &used, const AnfNodePtrList &nodes,
   const std::set<int> &excludes) {
   // Get unused nodes by offset index, the result will contain the node with start index.
-  int node_limit = nodes.size();
+  int node_limit = static_cast<int>(nodes.size());
   if (start >= node_limit) {
     MS_LOG(EXCEPTION) << "Index offset is exceed the limit of given nodes.";
   }
@@ -499,7 +500,7 @@ std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodes
       unused.push_back(i);
     }
   }
-  int limit = unused.size();
+  size_t limit = unused.size();
   for (auto offset : offsets) {
     if (offset >= limit) {
       MS_LOG(EXCEPTION) << "Index offset is exceed the limit of unused nodes.";
@@ -550,7 +551,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
     size_t begin = 1, end = unused_num;
     while (begin <= end) {
       size_t mid = (begin + end) / 2;
-      std::vector<int> tc(mid);
+      std::vector<size_t> tc(mid);
       std::iota(tc.begin(), tc.end(), 1);
       AnfNodePtrList other_candidates;
       std::tie(other_candidates, std::ignore) =
@@ -565,7 +566,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
     }
 
     if (begin > 1) {
-      std::vector<int> tc(begin - 1);
+      std::vector<size_t> tc(begin - 1);
       std::iota(tc.begin(), tc.end(), 1);
       AnfNodePtrList other_candidates;
       std::tie(other_candidates, std::ignore) =
@@ -590,7 +591,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
 
   // Current nodes is not suitable to fuse, so pop first node to try other fusion possibility.
   if (parallel_infos.size() == 0) {
-    origin_candidates_used[get_index(origin_indices, candidates[0])] = true;
+    origin_candidates_used[get_index(origin_indices, candidates[parallel_infos.size()])] = true;
   }
 
   return std::make_tuple(origin_candidates_used, parallel_infos);
