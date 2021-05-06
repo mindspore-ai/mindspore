@@ -67,11 +67,13 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 .
 └─Inception-v4
   ├─README.md
+  ├─ascend310_infer                     # application for 310 inference
   ├─scripts
     ├─run_distribute_train_gpu.sh       # launch distributed training with gpu platform(8p)
     ├─run_eval_gpu.sh                   # launch evaluating with gpu platform
     ├─run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
+    ├─run_infer_310.sh                  # shell script for 310 inference
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
   ├─src
     ├─config.py                       # parameter configuration
@@ -80,6 +82,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     └─callback.py                     # eval callback function
   ├─eval.py                           # eval net
   ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
+  ├─postprogress.py                   # post process for 310 inference
   └─train.py                          # train net
 ```
 
@@ -221,6 +224,35 @@ metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
 
 ```python
 metric: {'Loss': 0.8144, 'Top1-Acc': 0.8009, 'Top5-Acc': 0.9457}
+```
+
+## Model Export
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## Inference Process
+
+### Usage
+
+Before performing inference, the model file must be exported by export script on the Ascend910 environment.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+-NOTE:Ascend310 inference use Imagenet dataset . The label of the image is the number of folder which is started from 0 after sorting.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```python
+accuracy:80.044
 ```
 
 # [Model description](#contents)

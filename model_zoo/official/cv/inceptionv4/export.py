@@ -25,9 +25,10 @@ from src.inceptionv4 import Inceptionv4
 
 parser = argparse.ArgumentParser(description='inceptionv4 export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument('--ckpt_file', type=str, required=True, help='inceptionv4 ckpt file.')
 parser.add_argument('--file_name', type=str, default='inceptionv4', help='inceptionv4 output air name.')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='AIR', help='file format')
 parser.add_argument('--width', type=int, default=299, help='input width')
 parser.add_argument('--height', type=int, default=299, help='input height')
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
@@ -43,5 +44,5 @@ if __name__ == '__main__':
     param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.ones([config.batch_size, 3, args.width, args.height]), ms.float32)
+    input_arr = Tensor(np.ones([args.batch_size, 3, args.width, args.height]), ms.float32)
     export(net, input_arr, file_name=args.file_name, file_format=args.file_format)

@@ -216,7 +216,7 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
     ├─lr_schedule.py    // 学习率生成器
     ├─network_define.py    // Faster R-CNN网络定义
     └─util.py    // 例行操作
-  ├─export.py    // 导出 AIR,MINDIR,ONNX模型的脚本
+  ├─export.py    // 导出 AIR,MINDIR模型的脚本
   ├─eval.py    // 评估脚本
   ├─postprogress.py    // 310推理后处理脚本
   └─train.py    // 训练脚本

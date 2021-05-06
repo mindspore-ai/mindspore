@@ -85,12 +85,14 @@ InceptionV3的总体网络架构如下：
 .
 └─Inception-v3
   ├─README.md
+  ├─ascend310_infer                           # 实现310推理源代码
   ├─scripts
     ├─run_standalone_train_cpu.sh             # 启动CPU训练
     ├─run_standalone_train_gpu.sh             # 启动GPU单机训练（单卡）
     ├─run_distribute_train_gpu.sh             # 启动GPU分布式训练（8卡）
     ├─run_standalone_train.sh                 # 启动Ascend单机训练（单卡）
     ├─run_distribute_train.sh                 # 启动Ascend分布式训练（8卡）
+    ├─run_infer_310.sh                        # Ascend推理shell脚本
     ├─run_eval_cpu.sh                         # 启动CPU评估
     ├─run_eval_gpu.sh                         # 启动GPU评估
     └─run_eval.sh                             # 启动Ascend评估
@@ -101,7 +103,8 @@ InceptionV3的总体网络架构如下：
     ├─loss.py                         # 自定义交叉熵损失函数
     ├─lr_generator.py                 # 学习率生成器
   ├─eval.py                           # 评估网络
-  ├─export.py                         # 转换检查点
+  ├─export.py                         # 导出 AIR,MINDIR模型的脚本
+  ├─postprogress.py                   # 310推理后处理脚本
   └─train.py                          # 训练网络
 
 ```
@@ -241,6 +244,35 @@ epoch time: 6358482.104 ms, per step time: 16303.800 ms
 
 ```log
 metric:{'Loss':1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
+```
+
+## 模型导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+## 推理过程
+
+### 使用方法
+
+在推理之前需要在昇腾910环境上完成模型的导出。
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+-注意：310推理使用ImageNet数据集. 图片的标签是将所在文件夹排序后获得的从0开始的编号
+
+### 结果
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+```python
+accuracy:78.742
 ```
 
 # 模型描述
