@@ -43,7 +43,7 @@ def test_lenet_MNIST():
 
     per_step_time = utils.get_perf_data(train_log)
     print("per_step_time is", per_step_time)
-    assert per_step_time < 1.3
+    assert per_step_time < 1.5
 
     pattern = r"'Accuracy': ([\d\.]+)}"
     acc = utils.parse_log_file(pattern, infer_log)
