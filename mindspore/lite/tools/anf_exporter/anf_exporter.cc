@@ -164,7 +164,6 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
         auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
         MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                       << " zp: " << input_quant_param_ptr->zeroPoint;
-        input_quant_param_ptr->dstDtype = tensor_input->dataType;
         tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
       }
     }
@@ -185,7 +184,6 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
           std::make_unique<schema::QuantParamT>(channel_quant_param);
         MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                       << " zp: " << output_quant_param_ptr->zeroPoint;
-        output_quant_param_ptr->dstDtype = output_tensor->dataType;
         output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
       }
     }
@@ -222,7 +220,6 @@ int AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &m
         tensor->format = schema::Format_NHWC;
         if (!IsContain(subgraph->inputIndices, input)) {
           if (subgraph_index == kMainGraphIndex) {
-            TensorDataType::GetInstance()->UpdateGraphInputDType(meta_graphT->inputIndex.size(), tensor->dataType);
             meta_graphT->inputIndex.push_back(input);
           }
           subgraph->inputIndices.push_back(input);
@@ -624,40 +621,36 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     }
     auto elements = tuple->elements();
     for (size_t i = 0; i < lite::GetCNodeOutputsSize(cnode, train_flag_); i++) {
-      auto msTensor = new (std::nothrow) schema::TensorT();
-      if (msTensor == nullptr) {
+      auto ms_tensor = new (std::nothrow) schema::TensorT();
+      if (ms_tensor == nullptr) {
         MS_LOG(ERROR) << "new msTensor failed";
         return;
       }
-      msTensor->nodeType = NodeType_CNode;
+      ms_tensor->nodeType = NodeType_CNode;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
       if (train_flag_) {
         std::string name = cnode_name + "_o:" + std::to_string(i);
         node_id_map_[name] = meta_graphT->allTensors.size();
-        meta_graphT->allTensors.emplace_back(msTensor);
+        meta_graphT->allTensors.emplace_back(ms_tensor);
       } else {
         if (elements.size() == 1) {
           node_id_map_[cnode_name] = meta_graphT->allTensors.size();
-          msTensor->name = cnode_name;
+          ms_tensor->name = cnode_name;
         } else {
           std::string name = cnode_name + "_o:" + std::to_string(i);
           node_id_map_[name] = meta_graphT->allTensors.size();
-          msTensor->name = name;
+          ms_tensor->name = name;
         }
 
         if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
           MS_LOG(ERROR) << "abstract is not AbstractTensor";
-          delete (msTensor);
+          delete (ms_tensor);
           return;
         }
-        auto type = kNumberTypeFloat32;
-        if (utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
-          auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
-          auto typePtr = abstract_tensor->element()->GetTypeTrack();
-          type = typePtr->type_id();
-        }
-        msTensor->dataType = type;
-        meta_graphT->allTensors.emplace_back(msTensor);
+        auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
+        auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+        ms_tensor->dataType = type_ptr->type_id();
+        meta_graphT->allTensors.emplace_back(ms_tensor);
         if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
             opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm)) {
           break;

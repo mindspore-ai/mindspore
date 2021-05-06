@@ -25,6 +25,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/converter_context.h"
+#include "tools/common/graph_util.h"
 #include "load_mindir/load_model.h"
 
 namespace mindspore {
@@ -62,6 +63,12 @@ class MindsporeImporter : public Converter {
     }
     func_graph->set_attr("graph_name", MakeValue("main_graph"));
     func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+
+    auto status = UpdateFuncGraphInputsAndOutputsDtype(func_graph);
+    if (RET_OK != status) {
+      MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
+      return nullptr;
+    }
     return func_graph;
   }
 };

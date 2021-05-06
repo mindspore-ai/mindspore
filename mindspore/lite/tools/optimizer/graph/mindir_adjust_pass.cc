@@ -30,15 +30,15 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
-  auto inputMin = prim->GetAttr("input_minq");
-  auto inputMax = prim->GetAttr("input_maxq");
-  if (inputMin != nullptr && inputMax != nullptr) {
-    auto inputMinPtr = inputMin->cast<tensor::TensorPtr>();
-    auto inputMaxPtr = inputMax->cast<tensor::TensorPtr>();
-    auto *minBuf = static_cast<float *>(inputMinPtr->data_c());
-    auto *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
-    quant_param.min = *minBuf;
-    quant_param.max = *maxBuf;
+  auto input_min = prim->GetAttr("input_minq");
+  auto input_max = prim->GetAttr("input_maxq");
+  if (input_min != nullptr && input_max != nullptr) {
+    auto input_min_ptr = input_min->cast<tensor::TensorPtr>();
+    auto input_max_ptr = input_max->cast<tensor::TensorPtr>();
+    auto *min_buf = static_cast<float *>(input_min_ptr->data_c());
+    auto *max_buf = static_cast<float *>(input_max_ptr->data_c());
+    quant_param.min = *min_buf;
+    quant_param.max = *max_buf;
     auto ret =
       lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, narrow_range, numbits);
     if (ret != RET_OK) {
@@ -50,19 +50,19 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
   }
 
   quants.clear();
-  auto filterMin = prim->GetAttr("filter_minq");
-  auto filterMax = prim->GetAttr("filter_maxq");
-  if (filterMin != nullptr && filterMax != nullptr) {
-    auto filterMinPtr = filterMin->cast<tensor::TensorPtr>();
-    auto filterMaxPtr = filterMax->cast<tensor::TensorPtr>();
-    auto *minBuf = static_cast<float *>(filterMinPtr->data_c());
-    auto *maxBuf = static_cast<float *>(filterMaxPtr->data_c());
+  auto filter_min = prim->GetAttr("filter_minq");
+  auto filter_max = prim->GetAttr("filter_maxq");
+  if (filter_min != nullptr && filter_max != nullptr) {
+    auto filter_min_ptr = filter_min->cast<tensor::TensorPtr>();
+    auto filter_max_ptr = filter_max->cast<tensor::TensorPtr>();
+    auto *min_buf = static_cast<float *>(filter_min_ptr->data_c());
+    auto *max_buf = static_cast<float *>(filter_max_ptr->data_c());
     quant_param.min = FLT_MAX;
     quant_param.max = FLT_MIN;
-    for (int i = 0; i < filterMinPtr->ElementsNum(); ++i) {
+    for (int i = 0; i < filter_min_ptr->ElementsNum(); ++i) {
       schema::QuantParamT tmp_quant_param;
-      tmp_quant_param.min = *minBuf;
-      tmp_quant_param.max = *maxBuf;
+      tmp_quant_param.min = *min_buf;
+      tmp_quant_param.max = *max_buf;
       auto ret =
         lite::quant::CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max, true, numbits);
       if (ret != RET_OK) {
@@ -70,8 +70,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
         return ret;
       }
       quants.emplace_back(tmp_quant_param);
-      minBuf++;
-      maxBuf++;
+      min_buf++;
+      max_buf++;
     }
     quant_param_holder->set_input_quant_param(1, quants);
   }
