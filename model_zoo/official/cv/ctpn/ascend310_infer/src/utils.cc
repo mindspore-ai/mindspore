@@ -48,8 +48,7 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
     std::string homePath = "./result_Files";
     for (size_t i = 0; i < outputs.size(); ++i) {
         size_t outputSize;
-        std::shared_ptr<const void> netOutput;
-        netOutput = outputs[i].Data();
+        std::shared_ptr<const void> netOutput = outputs[i].Data();
         outputSize = outputs[i].DataSize();
         int pos = imageFile.rfind('/');
         std::string fileName(imageFile, pos + 1);
@@ -104,8 +103,7 @@ DIR *OpenDir(std::string_view dirName) {
         std::cout << "dirName is not a valid directory !" << std::endl;
         return nullptr;
     }
-    DIR *dir;
-    dir = opendir(realPath.c_str());
+    DIR *dir = opendir(realPath.c_str());
     if (dir == nullptr) {
         std::cout << "Can not open dir " << dirName << std::endl;
         return nullptr;

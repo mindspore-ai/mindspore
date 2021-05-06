@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
-    std::cout << "EEEEEEEERROR Build failed." << std::endl;
+    std::cout << "ERROR Build failed." << std::endl;
     return 1;
   }
 
@@ -86,11 +86,11 @@ int main(int argc, char **argv) {
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
 
-  auto decode(new Decode());
-  auto swapredblue(new SwapRedBlue());
-  auto resize(new Resize({96, 96}));
-  auto normalize(new Normalize({127.5, 127.5, 127.5}, {127.5, 127.5, 127.5}));
-  auto hwc2chw(new HWC2CHW());
+  auto decode = Decode();
+  auto swapredblue = SwapRedBlue();
+  auto resize = Resize({96, 96});
+  auto normalize = Normalize({127.5, 127.5, 127.5}, {127.5, 127.5, 127.5});
+  auto hwc2chw = HWC2CHW();
   Execute preprocess({decode, swapredblue, resize, normalize, hwc2chw});
 
   for (size_t i = 0; i < size; ++i) {

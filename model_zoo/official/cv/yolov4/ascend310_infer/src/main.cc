@@ -69,7 +69,6 @@ int main(int argc, char **argv) {
   mindspore::Graph graph;
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
 
-
   if (!FLAGS_precision_mode.empty()) {
     ascend310->SetPrecisionMode(FLAGS_precision_mode);
   }
@@ -83,7 +82,7 @@ int main(int argc, char **argv) {
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
-    std::cout << "EEEEEEEERROR Build failed." << std::endl;
+    std::cout << "ERROR Build failed." << std::endl;
     return 1;
   }
 

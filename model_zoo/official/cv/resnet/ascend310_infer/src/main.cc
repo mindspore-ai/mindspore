@@ -70,7 +70,6 @@ int main(int argc, char **argv) {
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
-
   if (ret != kSuccess) {
     std::cout << "ERROR: Build failed." << std::endl;
     return 1;
