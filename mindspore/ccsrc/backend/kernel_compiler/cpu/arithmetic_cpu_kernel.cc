@@ -292,7 +292,7 @@ bool ArithmeticCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const
   } else if (operate_type_ == POW) {
     Pow(broadcastedInput1, broadcastedInput2, output);
   } else if (operate_type_ == ASSIGNADD) {
-    AssignAdd(broadcastedInput1, broadcastedInput2, output);
+    AssignAdd(input1, input2, output);
   } else if (operate_type_ == ATAN2) {
     Atan2(broadcastedInput1, broadcastedInput2, output);
   } else if (operate_type_ == SQUAREDDIFFERENCE) {
