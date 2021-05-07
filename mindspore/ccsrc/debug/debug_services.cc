@@ -666,15 +666,22 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       }
       closedir(d);
     } else {
+      bool found = false;
       // if async mode
       for (const std::string &file_path : async_file_pool) {
         if (file_path.find(prefix_dump_file_name) != std::string::npos &&
             file_path.find(".output." + std::to_string(slot[i])) != std::string::npos) {
+          found = true;
           shape.clear();
           ReadTensorFromNpy(file_path, &type_name, &data_size, &shape, &buffer);
           AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], data_size, type_name,
                           shape, buffer, result_list);
         }
+      }
+      // If no npy file is found, add empty tensor data.
+      if (!found) {
+        AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], 0, type_name, shape,
+                        buffer, result_list);
       }
     }
   }
