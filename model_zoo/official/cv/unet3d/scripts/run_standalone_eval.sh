@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]
+if [ $# != 2 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
@@ -23,7 +23,7 @@ then
     echo "=============================================================================================================="
 fi
 
-if [ $# != 3 ]
+if [ $# != 2 ]
 then
     echo "Usage: sh run_eval_ascend.sh [IMAGE_PATH] [SEG_PATH] [CHECKPOINT_PATH]"
 exit 1
@@ -36,22 +36,14 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-IMAGE_PATH=$(get_real_path $1)
-SEG_PATH=$(get_real_path $2)
-CHECKPOINT_FILE_PATH=$(get_real_path $3)
-echo $IMAGE_PATH
-echo $SEG_PATH
+PATH1=$(get_real_path $1)
+CHECKPOINT_FILE_PATH=$(get_real_path $2)
+echo $PATH1
 echo $CHECKPOINT_FILE_PATH
 
-if [ ! -d $IMAGE_PATH ]
+if [ ! -d $PATH1 ]
 then
-    echo "error: IMAGE_PATH=$IMAGE_PATH is not a path"
-exit 1
-fi
-
-if [ ! -d $SEG_PATH ]
-then
-    echo "error: SEG_PATH=$SEG_PATH is not a path"
+    echo "error: PATH1=$PATH1 is not a path"
 exit 1
 fi
 
@@ -74,9 +66,10 @@ fi
 mkdir ./eval
 cp ../*.py ./eval
 cp *.sh ./eval
+cp ../*.yaml ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 echo "start eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
-python eval.py --data_url=$IMAGE_PATH --seg_url=$SEG_PATH --ckpt_path=$CHECKPOINT_FILE_PATH > eval.log 2>&1 &
+python eval.py --data_path=$PATH1 --checkpoint_file_path=$CHECKPOINT_FILE_PATH > eval.log 2>&1 &
 echo "end eval for checkpoint file: ${CHECKPOINT_FILE_PATH}"
 cd ..

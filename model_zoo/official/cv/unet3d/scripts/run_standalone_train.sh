@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 2 ]
+if [ $# -ne 1 ]
 then
     echo "Usage: sh run_distribute_train_ascend.sh [IMAGE_PATH] [SEG_PATH]"
 exit 1
@@ -36,14 +36,6 @@ then
 exit 1
 fi
 
-PATH2=$(get_real_path $2)
-echo $PATH2
-if [ ! -d $PATH2 ]
-then
-    echo "error: SEG_PATH=$PATH2 is not a file"
-exit 1
-fi
-
 ulimit -u unlimited
 export DEVICE_NUM=1
 export DEVICE_ID=0
@@ -54,9 +46,10 @@ rm -rf ./train
 mkdir ./train
 cp ../*.py ./train
 cp *.sh ./train
+cp ../*.yaml ./train
 cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --data_url=$PATH1 --seg_url=$PATH2 > train.log 2>&1 &
+python train.py --data_path=$PATH1 --output_path './output' > train.log 2>&1 &
 cd ..
