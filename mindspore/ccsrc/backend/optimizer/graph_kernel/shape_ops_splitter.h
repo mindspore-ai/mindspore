@@ -28,7 +28,7 @@ class ShapeOpsSplitter : public Pass {
   explicit ShapeOpsSplitter(std::vector<PrimitivePtr> shape_ops)
       : Pass("shape_ops_splitter"), shape_ops_(std::move(shape_ops)) {}
   ~ShapeOpsSplitter() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   bool Process(const FuncGraphPtr &func_graph);
