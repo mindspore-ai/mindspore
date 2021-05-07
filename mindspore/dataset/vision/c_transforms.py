@@ -374,10 +374,6 @@ class Normalize(ImageTensorOperation):
 
     @check_normalize_c
     def __init__(self, mean, std):
-        if len(mean) == 1:
-            mean = [mean[0]] * 3
-        if len(std) == 1:
-            std = [std[0]] * 3
         self.mean = mean
         self.std = std
 

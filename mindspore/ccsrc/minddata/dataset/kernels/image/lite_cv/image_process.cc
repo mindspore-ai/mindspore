@@ -747,7 +747,7 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
         uint32_t src_start = (h * src.width_ + w) * src.channel_;
         for (int c = 0; c < src.channel_; c++) {
           uint32_t index = src_start + c;
-          dst_start_p[index] = (src_start_p[index] - mean[c]) / std[c];
+          dst_start_p[index] = (src_start_p[index] / std[c]) - mean[c];
         }
       }
     }

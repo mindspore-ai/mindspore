@@ -190,8 +190,8 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 /// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
 /// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
 /// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
-Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                 const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std);
+Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
+                 std::vector<float> std);
 
 /// \brief Returns Normalized and paded image
 /// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
