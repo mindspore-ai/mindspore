@@ -206,8 +206,13 @@ int SubGraphNpuKernel::Init() {
 
     MS_ASSERT(npu_manager_ != nullptr);
 
-    npu_manager_->AddModel(model_buffer_data, GetOMModelName(),
-                           static_cast<const lite::InnerContext *>(context_)->GetNpuInfo().frequency_);
+    int frequency = static_cast<const lite::InnerContext *>(context_)->GetNpuInfo().frequency_;
+    if (frequency != hiai::AiModelDescription_Frequency_LOW && frequency != hiai::AiModelDescription_Frequency_MEDIUM &&
+        frequency != hiai::AiModelDescription_Frequency_HIGH &&
+        frequency != hiai::AiModelDescription_Frequency_EXTREME) {
+      frequency = hiai::AiModelDescription_Frequency_HIGH;
+    }
+    npu_manager_->AddModel(model_buffer_data, GetOMModelName(), frequency);
 
     executor_ = new (std::nothrow) mindspore::lite::NPUExecutor(GetOMModelName(), npu_manager_);
 
