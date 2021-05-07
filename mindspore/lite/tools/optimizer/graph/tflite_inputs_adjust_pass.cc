@@ -138,13 +138,16 @@ STATUS TfliteInputsAdjustPass::AdjustSlice(const AnfNodePtr &node, const FuncGra
 
   auto begin_param_node = cnode->input(2)->cast<ParameterPtr>();
   auto size_param_node = cnode->input(3)->cast<ParameterPtr>();
-  if (ReplaceInt64ParameterNode(graph, begin_param_node) == RET_OK &&
-      ReplaceInt64ParameterNode(graph, size_param_node) == RET_OK) {
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Adjust inputs for Slice failed";
+  // slice's begin and size could be variable
+  if (begin_param_node != nullptr && ReplaceInt64ParameterNode(graph, begin_param_node) != RET_OK) {
+    MS_LOG(ERROR) << "Adjust begin for Slice failed";
     return RET_ERROR;
   }
+  if (size_param_node != nullptr && ReplaceInt64ParameterNode(graph, size_param_node) != RET_OK) {
+    MS_LOG(ERROR) << "Adjust size for Slice failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {

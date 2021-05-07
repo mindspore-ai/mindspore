@@ -17,6 +17,21 @@
 #include "nnacl/infer/slice_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+static bool CheckInputsDataType(const TensorC *const *inputs, size_t inputs_size) {
+  // not support data_type of slice's begin and size is not int32
+  if (inputs_size >= 2) {
+    if (inputs[1]->data_type_ != kNumberTypeInt32) {
+      return false;
+    }
+  }
+  if (inputs_size == 3) {
+    if (inputs[2]->data_type_ != kNumberTypeInt32) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
   if (inputs_size < 1 || outputs_size != 1) {
@@ -25,6 +40,10 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
+
+  if (!CheckInputsDataType(inputs, inputs_size)) {
+    return NNACL_ERR;
+  }
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
