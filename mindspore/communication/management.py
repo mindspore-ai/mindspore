@@ -83,7 +83,8 @@ def init(backend_name=None):
         elif device_target == "GPU":
             backend_name = "nccl"
         else:
-            raise RuntimeError("Device target {} is not supported.".format(device_target))
+            raise RuntimeError("Device target {} is not supported in parallel initialization, "
+                               "please use Ascend or GPU.".format(device_target))
     if not isinstance(backend_name, str):
         raise TypeError("Backend name must be a string, but got {}".format(type(backend_name)))
 
