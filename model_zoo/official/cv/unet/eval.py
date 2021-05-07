@@ -19,7 +19,7 @@ import logging
 from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.data_loader import create_dataset, create_cell_nuclei_dataset
+from src.data_loader import create_dataset, create_multi_class_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
@@ -44,9 +44,12 @@ def test_net(data_dir,
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
     net = UnetEval(net)
-    if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
-        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False,
-                                                   eval_resize=cfg["eval_resize"], split=0.8)
+    if 'dataset' in cfg and cfg['dataset'] != "ISBI":
+        split = cfg['split'] if 'split' in cfg else 0.8
+        valid_dataset = create_multi_class_dataset(data_dir, cfg['img_size'], 1, 1,
+                                                   num_classes=cfg['num_classes'], is_train=False,
+                                                   eval_resize=cfg["eval_resize"], split=split,
+                                                   python_multiprocessing=False, shuffle=False)
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
                                           do_crop=cfg['crop'], img_size=cfg['img_size'])

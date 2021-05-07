@@ -57,7 +57,58 @@ UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督
 - 数据格式：二进制文件（TIF）
     - 注意：数据在src/data_loader.py中处理
 
-我们也支持一个在 [Unet++](https://arxiv.org/abs/1912.05074) 原论文中使用的数据集 `Cell_nuclei`。可以通过修改`src/config.py`中`'dataset': 'Cell_nuclei'`配置使用.
+我们也支持一种 Multi-Class 数据集格式，通过固定的目录结构获取图片和对应标签数据。
+在同一个目录中保存原图片及对应标签，其中图片名为 `"image.png"`，标签名为 `"mask.png"`。
+目录结构如下：
+
+```path
+.
+└─dataset
+  └─0001
+    ├─image.png
+    └─mask.png
+  └─0002
+    ├─image.png
+    └─mask.png
+    ...
+  └─xxxx
+    ├─image.png
+    └─mask.png
+```
+
+通过在`config`中的`split`参数将所有的图片分为训练集和验证集，`split` 默认为 0.8。
+当设置 `split`为 1.0时，通过目录来分训练集和验证集，目录结构如下：
+
+```path
+.
+└─dataset
+  └─train
+    └─0001
+      ├─image.png
+      └─mask.png
+      ...
+    └─xxxx
+      ├─image.png
+      └─mask.png
+  └─val
+    └─0001
+      ├─image.png
+      └─mask.png
+      ...
+    └─xxxx
+      ├─image.png
+      └─mask.png
+```
+
+我们提供了一个脚本来将 COCO 和 Cell_Nuclei 数据集（[Unet++ 原论文](https://arxiv.org/abs/1912.05074) 中使用）转换为multi-class格式。
+
+1. 在`src/config.py`中修改`cfg_unet`，修改细节请参考`src/config.py`中的`cfg_unet_nested_cell` 和 `cfg_unet_simple_coco`。
+
+2. 运行转换脚本:
+
+```shell
+python preprocess_dataset.py -d /data/save_data_path
+```
 
 ## 环境要求
 
@@ -149,6 +200,7 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         ├── mindspore_hub_conf.py           // hub 配置脚本
         ├── postprocess.py                  // 310 推理后处理脚本
         ├── preprocess.py                   // 310 推理前处理脚本
+        ├── preprocess_dataset.py           // 适配MultiClass数据集脚本
         ├── requirements.txt                // 需要的三方库.
 ```
 
