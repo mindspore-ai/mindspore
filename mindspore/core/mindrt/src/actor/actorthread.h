@@ -33,6 +33,7 @@ class ActorThread {
   ~ActorThread();
   void Finalize();
   void AddThread(int threadCount);
+  void TerminateThread(int threadCount);
   void EnqueReadyActor(const std::shared_ptr<ActorBase> &actor);
 
  private:
@@ -46,6 +47,7 @@ class ActorThread {
   std::list<std::unique_ptr<std::thread>> workers;
   std::string threadName;
 
+  size_t threadsInUse_ = 0;
   size_t maxThreads_;
   std::mutex initLock_;
 };

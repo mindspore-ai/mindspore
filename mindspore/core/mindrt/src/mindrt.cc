@@ -59,6 +59,8 @@ const MindrtAddress &GetMindrtAddress() {
 
 void SetThreadCount(int threadCount) { ActorMgr::GetActorMgrRef()->Initialize(threadCount); }
 
+void TerminateCurThreads(int threadCount) { ActorMgr::GetActorMgrRef()->TerminateCurThreads(threadCount); }
+
 class MindrtExit {
  public:
   MindrtExit() { MS_LOG(DEBUG) << "trace: enter MindrtExit()---------"; }

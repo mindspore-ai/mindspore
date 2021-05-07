@@ -71,6 +71,7 @@ void MindrtTerminate(std::vector<std::shared_ptr<LiteOpActor>> actor_list) {
   for (auto actor : actor_list) {
     mindspore::Terminate(actor->GetAID());
   }
+  mindspore::TerminateCurThreads(1);
   return;
 }
 
