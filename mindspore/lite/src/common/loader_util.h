@@ -17,15 +17,12 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
 
-#ifndef _WIN32
-#include <dlfcn.h>
-
 namespace mindspore {
 namespace lite {
 
-class SoLoader {
+class DynamicLibraryLoader {
  public:
-  int Open(const char *so_path, int mode = RTLD_LAZY);
+  int Open(const char *lib_path);
   void *GetFunc(const char *func_name);
   int Close();
 
@@ -36,5 +33,4 @@ class SoLoader {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif
 #endif

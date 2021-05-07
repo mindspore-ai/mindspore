@@ -18,43 +18,73 @@
 #include <string.h>
 #include <climits>
 #include "include/errorcode.h"
-#include "src/common/log_util.h"
-
 #ifndef _WIN32
+#include <dlfcn.h>
+#else
+#include <windows.h>
+#endif
+
+#define LOG_ERROR(content, args...) \
+  { printf("[ERROR] %s|%d|%s: " #content "\r\n", __FILE__, __LINE__, __func__, ##args); }
 
 namespace mindspore {
 namespace lite {
-int SoLoader::Open(const char *so_path, int mode) {
-  if ((strlen(so_path)) >= PATH_MAX) {
-    MS_LOG(ERROR) << "path is too long";
+int DynamicLibraryLoader::Open(const char *lib_path) {
+  if ((strlen(lib_path)) >= PATH_MAX) {
+    LOG_ERROR("path is too long");
     return RET_ERROR;
   }
   char resolved_path[PATH_MAX];
-  auto resolve_res = realpath(so_path, resolved_path);
-  if (resolve_res == nullptr) {
-    MS_LOG(ERROR) << "path not exist";
+
+#ifndef _WIN32
+  char *real_path = realpath(lib_path, resolved_path);
+#else
+  char *real_path = _fullpath(resolved_path, lib_path, 1024);
+#endif
+
+  if (real_path == nullptr) {
+    LOG_ERROR("path not exist");
     return RET_ERROR;
   }
-  handler_ = dlopen(so_path, mode);
+
+#ifndef _WIN32
+  handler_ = dlopen(lib_path, RTLD_LAZY);
+#else
+  handler_ = LoadLibrary(lib_path);
+#endif
+
   if (handler_ == nullptr) {
-    MS_LOG(ERROR) << "open path failed";
+    LOG_ERROR("open path failed");
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-void *SoLoader::GetFunc(const char *func_name) { return dlsym(handler_, func_name); }
+void *DynamicLibraryLoader::GetFunc(const char *func_name) {
+#ifndef _WIN32
+  return dlsym(handler_, func_name);
+#else
+  auto func = GetProcAddress(reinterpret_cast<HINSTANCE__ *>(handler_), func_name);
+  return reinterpret_cast<void *>(func);
+#endif
+}
 
-int SoLoader::Close() {
+int DynamicLibraryLoader::Close() {
+#ifndef _WIN32
   auto close_res = dlclose(handler_);
   if (close_res != 0) {
-    MS_LOG(ERROR) << "can not close handler";
+    LOG_ERROR("can not close handler");
     return RET_ERROR;
   }
+#else
+  auto close_res = FreeLibrary(reinterpret_cast<HINSTANCE__ *>(handler_));
+  if (close_res == 0) {
+    LOG_ERROR("can not close handler");
+    return RET_ERROR;
+  }
+#endif
   return RET_OK;
 }
 
 }  // namespace lite
 }  // namespace mindspore
-
-#endif
