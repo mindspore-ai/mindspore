@@ -18,6 +18,7 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+from mindspore import context
 from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
@@ -192,6 +193,7 @@ class Deeptext_VGG16(nn.Cell):
         self.concat1 = P.Concat(axis=1)
         self.roi_align_fuse = _conv(in_channels=1024, out_channels=512, kernel_size=1, padding=0, stride=1)
         self.vgg16_feature_extractor = VGG16FeatureExtraction()
+        self.device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
 
     def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids):
         _, _, _, f4, f5 = self.vgg16_feature_extractor(img_data)
@@ -260,6 +262,8 @@ class Deeptext_VGG16(nn.Cell):
                 bboxes_all = self.concat(bboxes_tuple)
             else:
                 bboxes_all = bboxes_tuple[0]
+            if self.device_type == "Ascend":
+                bboxes_all = self.cast(bboxes_all, mstype.float16)
             rois = self.concat_1((self.roi_align_index_test_tensor, bboxes_all))
 
         rois = self.cast(rois, mstype.float32)
