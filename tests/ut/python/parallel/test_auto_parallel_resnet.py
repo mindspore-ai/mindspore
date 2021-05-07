@@ -31,11 +31,13 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as resset_op_id
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
+from mindspore.communication._comm_helper import GlobalComm
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=0)
+GlobalComm.CHECK_ENVS = False
 init()
-
+GlobalComm.CHECK_ENVS = True
 
 def weight_variable():
     return TruncatedNormal(0.02)

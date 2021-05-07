@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.communication.management import init
 from mindspore.ops import operations as P
-
+from mindspore.communication._comm_helper import GlobalComm
 
 class DataParallelNet(nn.Cell):
     def __init__(self):
@@ -49,7 +49,9 @@ def test_param_broadcast():
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="data_parallel", parameter_broadcast=True)
+    GlobalComm.CHECK_ENVS = False
     init()
+    GlobalComm.CHECK_ENVS = True
     network = DataParallelNet()
     network.set_train()
 
@@ -62,7 +64,9 @@ def test_param_not_broadcast():
     context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="data_parallel", parameter_broadcast=False)
+    GlobalComm.CHECK_ENVS = False
     init()
+    GlobalComm.CHECK_ENVS = True
     network = ModelParallelNet()
     network.set_train()
 

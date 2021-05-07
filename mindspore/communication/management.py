@@ -36,6 +36,28 @@ def _get_group(group):
     return group
 
 
+def _check_parallel_envs():
+    """
+    Check whether parallel environment variables have been exported or not.
+
+    Raises:
+        RuntimeError: If parallel environment variables have not been exported or have been exported to wrong values.
+    """
+    if not GlobalComm.CHECK_ENVS:
+        return
+    import os
+    rank_id_str = os.getenv("RANK_ID")
+    if not rank_id_str:
+        raise RuntimeError("Environment variables RANK_ID has not been exported")
+    try:
+        int(rank_id_str)
+    except ValueError:
+        print("RANK_ID should be number")
+    rank_table_file_str = os.getenv("MINDSPORE_HCCL_CONFIG_PATH")
+    rank_table_file_str_old = os.getenv("RANK_TABLE_FILE")
+    if not rank_table_file_str and not rank_table_file_str_old:
+        raise RuntimeError("Get hccl rank_table_file failed, "
+                           "please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE.")
 
 def init(backend_name=None):
     """
@@ -68,6 +90,7 @@ def init(backend_name=None):
     if backend_name == "hccl":
         if device_target != "Ascend":
             raise RuntimeError("Device target should be 'Ascend' to init hccl, but got {}".format(device_target))
+        _check_parallel_envs()
         init_hccl()
         GlobalComm.BACKEND = Backend("hccl")
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP

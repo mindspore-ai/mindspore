@@ -24,7 +24,7 @@ HCCL_LIB_CTYPES = ""
 
 def check_group(group):
     """
-    A function that check if a collection communication group is leagal.
+    A function that check if a collection communication group is legal.
 
     Returns:
         None
@@ -39,7 +39,7 @@ def check_group(group):
 
 def check_rank_num(rank_num):
     """
-    A function that check if a collection communication rank number is leagal.If not raise error.
+    A function that check if a collection communication rank number is legal.If not raise error.
 
     Returns:
         None
@@ -53,7 +53,7 @@ def check_rank_num(rank_num):
 
 def check_rank_id(rank_id):
     """
-    A function that check if a collection communication rank id is leagal.If not raise error.
+    A function that check if a collection communication rank id is legal.If not raise error.
 
     Returns:
         None
@@ -112,7 +112,7 @@ def create_group(group, rank_num, rank_ids):
         c_group = c_str(group)
         ret = HCCL_LIB_CTYPES.HcomCreateGroup(c_group, c_rank_num, c_array_rank_ids)
         if ret != 0:
-            raise RuntimeError('Create group error.')
+            raise RuntimeError('Create group error, the error code is ', ret)
     else:
         raise TypeError('Rank ids must be a python list.')
 
