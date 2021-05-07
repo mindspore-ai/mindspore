@@ -27,12 +27,14 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
                               const std::vector<int> &stride, std::vector<int> *padding_l, std::vector<int> *padding_r,
                               const std::vector<int> &dilation) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  if (src_shape.size() < 2) {
+  auto dim = src_shape.size();
+  if (dim < 2) {
     MS_LOG(EXCEPTION) << "set pad only support src dim >= 2!";
   }
   std::vector<int> weight_height;
-  weight_height.emplace_back(src_shape[src_shape.size() - 2]);
-  weight_height.emplace_back(src_shape[src_shape.size() - 1]);
+  for (size_t i = 2; i < dim; ++i) {
+    weight_height.emplace_back(src_shape[i]);
+  }
 
   MS_LOG(INFO) << "pad mode: " << pad_mode;
   if (pad_mode == PAD_MODE_LOWER_SAME || pad_mode == PAD_MODE_UPPER_SAME) {
@@ -47,10 +49,10 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
     }
   } else if (pad_mode == PAD_MODE_LOWER_VALID || pad_mode == PAD_MODE_UPPER_VALID) {
     MS_LOG(INFO) << "pad valid";
-    padding_l->emplace_back(0);
-    padding_l->emplace_back(0);
-    padding_r->emplace_back(0);
-    padding_r->emplace_back(0);
+    for (size_t i = 0; i < dim - 2; ++i) {
+      padding_l->emplace_back(0);
+      padding_r->emplace_back(0);
+    }
   } else {
     std::vector<int> pad;
     std::vector<int64_t> pad_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);

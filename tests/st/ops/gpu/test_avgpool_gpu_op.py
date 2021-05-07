@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import Tensor
 
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_k2s1pv():
     x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(np.float32)
@@ -43,7 +43,7 @@ def test_avgpool_k2s1pv():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_k2s2pv():
     x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(np.float32)
@@ -59,7 +59,7 @@ def test_avgpool_k2s2pv():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_k3s2pv():
     x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(np.float32)
@@ -74,7 +74,7 @@ def test_avgpool_k3s2pv():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avgpool_k3s2ps():
     x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(np.float32)
@@ -90,10 +90,10 @@ def test_avgpool_k3s2ps():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
     kernel_size = (2, 2, 3)
     strides = 1
@@ -117,10 +117,10 @@ def test_avg_pool3d_1():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
     kernel_size = 2
     strides = 1
@@ -144,10 +144,10 @@ def test_avg_pool3d_2():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_3():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
     kernel_size = 2
     strides = 3
@@ -165,10 +165,10 @@ def test_avg_pool3d_3():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_4():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
     kernel_size = (2, 2, 3)
     strides = 1
@@ -216,10 +216,10 @@ def test_avg_pool3d_4():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_avg_pool3d_5():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
     kernel_size = (2, 2, 3)
     strides = 1
