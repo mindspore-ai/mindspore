@@ -88,8 +88,7 @@ CNodePtr StitchAtomicCleanInsertter::CreateInplaceAssignNode(const FuncGraphPtr 
   return inplace_assign_node;
 }
 
-void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
-                                                    const FuncGraphManagerPtr &mng) {
+void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
   auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
