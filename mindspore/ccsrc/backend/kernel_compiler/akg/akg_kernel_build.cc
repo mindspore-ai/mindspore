@@ -163,10 +163,20 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     MS_LOG(DEBUG) << "There is no kernel needed to be compiled.";
     return true;
   }
+
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
+
   bool res = AkgOpParallelBuild(json_and_node);
   if (!res) {
-    MS_LOG(ERROR) << "Akg-Op Parallel Building fail.";
+    MS_LOG(ERROR) << "Akg build kernel failed.";
   }
+
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Akg kernel build time: " << cost << " us.";
   return true;
 }
 }  // namespace kernel
