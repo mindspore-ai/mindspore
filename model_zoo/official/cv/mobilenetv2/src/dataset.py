@@ -26,7 +26,7 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
 
-def create_dataset(dataset_path, do_train, config, repeat_num=1):
+def create_dataset(dataset_path, do_train, config, repeat_num=1, enable_cache=False, cache_session_id=None):
     """
     create a train or eval dataset
 
@@ -35,30 +35,43 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
         do_train(bool): whether dataset is used for train or eval.
         config(struct): the config of train and eval in diffirent platform.
         repeat_num(int): the repeat times of dataset. Default: 1.
+        enable_cache(bool): whether tensor caching service is used for dataset on nfs. Default: False
+        cache_session_id(string): If enable_cache, cache session_id need to be provided. Default: None
 
     Returns:
         dataset
     """
+    if enable_cache:
+        if not cache_session_id:
+            raise ValueError("A cache session_id must be provided to use cache.")
+        nfs_dataset_cache = ds.DatasetCache(session_id=int(cache_session_id), size=0)
+    else:
+        nfs_dataset_cache = None
+
     if config.platform == "Ascend":
         rank_size = int(os.getenv("RANK_SIZE", '1'))
         rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
-            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             cache=nfs_dataset_cache)
         else:
             data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                             num_shards=rank_size, shard_id=rank_id)
+                                             num_shards=rank_size, shard_id=rank_id, cache=nfs_dataset_cache)
     elif config.platform == "GPU":
         if do_train:
             if config.run_distribute:
                 from mindspore.communication.management import get_rank, get_group_size
                 data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                                 num_shards=get_group_size(), shard_id=get_rank())
+                                                 num_shards=get_group_size(), shard_id=get_rank(),
+                                                 cache=nfs_dataset_cache)
             else:
-                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                                 cache=nfs_dataset_cache)
         else:
-            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             cache=nfs_dataset_cache)
     elif config.platform == "CPU":
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True, cache=nfs_dataset_cache)
 
     resize_height = config.image_height
     resize_width = config.image_width
