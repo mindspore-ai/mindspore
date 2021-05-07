@@ -142,6 +142,7 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
               "MatmulFp32.S",
               "MatmulFp32Opt.S",
               "MatmulFp32Opt12x4.S",
+              "MatVecMulFp32.S",
             });
   } else if (target_ == kARM64) {
     Collect(context, {}, {},
