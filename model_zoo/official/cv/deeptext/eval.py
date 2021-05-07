@@ -19,14 +19,15 @@ import os
 import time
 
 import numpy as np
+import mindspore.common.dtype as mstype
+from mindspore import context
+from mindspore.common import set_seed
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
 from src.Deeptext.deeptext_vgg16 import Deeptext_VGG16
 from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_deeptext_dataset
 from src.utils import metrics
-
-from mindspore import context
-from mindspore.common import set_seed
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 set_seed(1)
 
@@ -54,6 +55,10 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
     load_param_into_net(net, param_dict)
     net.set_train(False)
     eval_iter = 0
+
+    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
+    if device_type == "Ascend":
+        net.to_float(mstype.float16)
 
     print("\n========================================\n")
     print("Processing, please wait a moment.")

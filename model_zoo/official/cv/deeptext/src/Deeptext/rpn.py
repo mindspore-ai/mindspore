@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
-from mindspore import Tensor
+from mindspore import context, Tensor
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer
 from .bbox_assign_sample import BboxAssignSample
@@ -127,6 +127,8 @@ class RPN(nn.Cell):
                  cls_out_channels):
         super(RPN, self).__init__()
         cfg_rpn = config
+        self.ms_type = mstype.float32
+        self.device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
         self.num_bboxes = cfg_rpn.num_bboxes
         self.slice_index = ()
         self.feature_anchor_shape = ()
@@ -204,9 +206,12 @@ class RPN(nn.Cell):
         weight_reg = initializer('Normal', shape=shp_weight_reg, dtype=mstype.float32).to_tensor()
         bias_reg = initializer(0, shape=shp_bias_reg, dtype=mstype.float32).to_tensor()
 
-        rpn_layer.append(RpnRegClsBlock(in_channels, feat_channels, num_anchors, cls_out_channels, \
-                                        weight_conv, bias_conv, weight_cls, \
-                                        bias_cls, weight_reg, bias_reg))
+        rpn_reg_cls_block = RpnRegClsBlock(in_channels, feat_channels, num_anchors, cls_out_channels, \
+                                           weight_conv, bias_conv, weight_cls, \
+                                           bias_cls, weight_reg, bias_reg)
+        if self.device_type == "Ascend":
+            rpn_reg_cls_block.to_float(mstype.float16)
+        rpn_layer.append(rpn_reg_cls_block)
 
         rpn_layer[0].rpn_conv.weight = rpn_layer[0].rpn_conv.weight
         rpn_layer[0].rpn_cls.weight = rpn_layer[0].rpn_cls.weight
@@ -271,6 +276,7 @@ class RPN(nn.Cell):
                                                                                            mstype.bool_),
                                                                                  anchor_using_list, gt_valids_i)
 
+                bbox_target = self.cast(bbox_target, mstype.float32)
                 bbox_weight = self.cast(bbox_weight, mstype.float32)
                 label = self.cast(label, mstype.float32)
                 label_weight = self.cast(label_weight, mstype.float32)
@@ -305,8 +311,8 @@ class RPN(nn.Cell):
             label_ = F.stop_gradient(label_with_batchsize)
             label_weight_ = F.stop_gradient(label_weight_with_batchsize)
 
-            cls_score_i = rpn_cls_score[0]
-            reg_score_i = rpn_bbox_pred[0]
+            cls_score_i = self.cast(rpn_cls_score[0], self.ms_type)
+            reg_score_i = self.cast(rpn_bbox_pred[0], self.ms_type)
 
             loss_cls = self.loss_cls(cls_score_i, label_)
             loss_cls_item = loss_cls * label_weight_
