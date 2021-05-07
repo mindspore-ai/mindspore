@@ -471,6 +471,8 @@ constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
+constexpr auto kOpFormat_ChannelFirst = "ChannelFirst";
+constexpr auto kOpFormat_ChannelLast = "ChannelLast";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
 constexpr auto kOpFormat_ND = "ND";
 constexpr auto kOpFormat_NCHW = "NCHW";

@@ -350,6 +350,21 @@ std::vector<size_t> NcdhwDeviceShape(const std::vector<size_t> &shape) {
   return shape;
 }
 
+// change channel-first shape to channel-last shape.
+// eg. [2,3,4] => [2,4,3]; [2,3,4,5] => [2,4,5,3]
+std::vector<size_t> ChannelLastDeviceShape(const std::vector<size_t> &shape) {
+  auto dim = shape.size();
+  std::vector<int64_t> axis;
+  axis.resize(dim);
+  std::iota(axis.begin() + 1, axis.end(), 2);
+  axis[dim - 1] = 1;
+
+  std::vector<size_t> device_shape;
+  std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape), [&shape](int n) { return shape[n]; });
+
+  return device_shape;
+}
+
 std::vector<size_t> PaddingShapeTo4dByDefault(const std::vector<size_t> &shape) {
   std::vector<size_t> shape_4d(kNchwDims, 1);
   switch (shape.size()) {
@@ -381,7 +396,7 @@ bool IsNeedPadding(const std::string &format, const size_t shape_size) {
   if (shape_size == 0) {
     return false;
   }
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ || format == kOpFormat_ChannelLast) {
     return false;
   } else if (shape_size < kNchwDims) {
     return true;
@@ -555,6 +570,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
                                                                     {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceShape},
                                                                     {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceShape},
                                                                     {kOpFormat_NCDHW, NcdhwDeviceShape},
+                                                                    {kOpFormat_ChannelLast, ChannelLastDeviceShape},
                                                                     {kOpFormat_NDC1HWC0, Ndc1hwc0DeviceShape},
                                                                     {kOpFormat_FRACTAL_Z_3D, Fracz3DDeviceShape}};
 
@@ -592,7 +608,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     device_shape.push_back(kCubeSize);
     return device_shape;
   }
-  if (shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (format != kOpFormat_ChannelLast && shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dByDefault(shape);
   }
