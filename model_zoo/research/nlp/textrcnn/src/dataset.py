@@ -84,13 +84,13 @@ def collect_weight(glove_path, vocab, word_to_idx, embed_size):
     idx_to_word = {i + 1: word for i, word in enumerate(vocab)}
     idx_to_word[0] = '<unk>'
 
-    for i in range(len(wvmodel.index2word)):
+    for i in range(len(wvmodel.index_to_key)):
         try:
-            index = word_to_idx[wvmodel.index2word[i]]
+            index = word_to_idx[wvmodel.index_to_key[i]]
         except KeyError:
             continue
         weight_np[index, :] = wvmodel.get_vector(
-            idx_to_word[word_to_idx[wvmodel.index2word[i]]])
+            idx_to_word[word_to_idx[wvmodel.index_to_key[i]]])
     return weight_np
 
 
