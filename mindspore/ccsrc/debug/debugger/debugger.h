@@ -80,7 +80,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // analyze tensors and wait for command
   // don't need a graph_ptr because it is saved during pre_execute
-  void PostExecute(const KernelGraphPtr &graph_ptr = nullptr);
+  void PostExecute();
 
   bool ReadNodeDataRequired(const CNodePtr &kernel) const;
 
@@ -235,6 +235,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::string device_target_;
   int32_t num_step_;
   bool debugger_enabled_;
+  bool suspended_at_last_kernel_;
   std::string run_level_;
   std::string node_name_;
   std::string cur_name_;
