@@ -297,7 +297,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
 std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
                                                               const std::vector<bool> &split_flag_list);
-
+std::string StrategyToString(const Strategys &strategy);
 void PrintStrategy(const StrategyPtr &strategy);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
 Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
