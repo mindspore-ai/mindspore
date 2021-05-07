@@ -92,10 +92,11 @@ void KernelQueryAll(const CNodePtr &kernel_node,
     HostMetadataInfo(kernel_node, kernel_info_list);
   }
   if (kernel_info_list->empty()) {
-    MS_EXCEPTION(NotExistsError)
-      << "Failed to obtain operator info, Please check whether the operator info is registered, Op full name:"
-      << kernel_node->fullname_with_scope() << "Node Type: " << op_name
-      << ", Node DebugString: " << kernel_node->DebugString() << "\n trace: " << trace::DumpSourceLines(kernel_node);
+    MS_EXCEPTION(NotExistsError) << "Can not find any available operator info for op [" << op_name << ", "
+                                 << kernel_node->fullname_with_scope()
+                                 << "]. Node DebugString:" << kernel_node->DebugString()
+                                 << ", maybe the operator can not supported on current platform. \n trace "
+                                 << trace::DumpSourceLines(kernel_node);
   }
 }
 
@@ -121,9 +122,11 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   }
 
   if (kernel_info_list->empty()) {
-    MS_EXCEPTION(NotExistsError)
-      << "Failed to obtain operator info. Please check whether the operator info is registered, Op full name:"
-      << kernel_node->fullname_with_scope() << ". Node DebugString: " << kernel_node->DebugString();
+    MS_EXCEPTION(NotExistsError) << "Can not find any available operator info for op ["
+                                 << AnfAlgo::GetCNodeName(kernel_node) << ", " << kernel_node->fullname_with_scope()
+                                 << "]. Node DebugString:" << kernel_node->DebugString()
+                                 << ", maybe the operator can not supported on current platform. \n trace "
+                                 << trace::DumpSourceLines(kernel_node);
   }
   // check output
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
