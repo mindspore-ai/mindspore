@@ -159,7 +159,7 @@ class TensorLoader {
 #ifdef ONLINE_DBG_MODE
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
-                        TypeId addr_type_id, const std::string &addr_format, size_t slot) {
+                        TypeId device_type, const std::string &addr_format, size_t slot) {
     if (filepath.empty()) {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;
@@ -177,7 +177,7 @@ class TensorLoader {
     if (trans_flag) {
       path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt + file_extension;
     } else {
-      path = filepath + '_' + shape + '_' + TypeIdToType(addr_type_id)->ToString() + '_' + addr_format + file_extension;
+      path = filepath + '_' + shape + '_' + TypeIdToType(device_type)->ToString() + '_' + addr_format + file_extension;
     }
 
     MS_LOG(INFO) << "Dump path is " << path;
