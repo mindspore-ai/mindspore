@@ -8,8 +8,8 @@ android {
         applicationId "com.mindspore.himindspore"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 14
-        versionName "1.2.7"
+        versionCode 15
+        versionName "1.2.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
@@ -80,4 +80,5 @@ dependencies {
     implementation project(':imageObject')
     implementation project(':styletransfer')
     implementation project(':hms')
+    implementation project(':dance')
 }

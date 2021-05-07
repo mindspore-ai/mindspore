@@ -17,4 +17,6 @@
     <string name="image_camera_title">Image Classification</string>
     <string name="object_camery_title">Camera Detection</string>
     <string name="activity_photo_title">Photo Detection</string>
+    <string name="image_save_success">Save Success</string>
+    <string name="image_save_failed">Save Failed</string>
 </resources>

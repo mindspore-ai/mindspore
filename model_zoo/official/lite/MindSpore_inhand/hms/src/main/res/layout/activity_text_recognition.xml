@@ -36,21 +36,20 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:layout_margin="10dp"
-            />
+            android:layout_margin="10dp" />
 
         <TextView
             android:id="@+id/tv_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            app:drawableTopCompat="@drawable/icon_style"
             android:drawablePadding="10dp"
             android:gravity="center"
             android:text="@string/title_image_or_camera"
             android:textAllCaps="false"
             android:textColor="@color/text_gray"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            app:drawableTopCompat="@drawable/icon_style" />
 
         <ProgressBar
             android:id="@+id/progress"
@@ -64,11 +63,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="14dp"
-        android:orientation="horizontal"
         android:layout_margin="10dp"
+        android:layout_marginTop="14dp"
         android:gravity="center"
-        >
+        android:orientation="horizontal">
 
         <Button
             android:layout_width="0dp"
@@ -85,30 +83,16 @@
         <Button
             android:layout_width="0dp"
             android:layout_height="37dp"
+            android:layout_marginLeft="10dp"
             android:layout_weight="1"
             android:background="@drawable/btn_small_item"
             android:gravity="center"
-            android:layout_marginLeft="10dp"
             android:onClick="onClickCamera"
             android:text="@string/btn_camera"
             android:textAllCaps="false"
             android:textColor="@drawable/btn_small_item_text_color"
             android:textSize="14sp" />
 
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="37dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_weight="1"
-            android:background="@drawable/btn_small_item"
-            android:gravity="center"
-            android:onClick="onClickRealTime"
-            android:text="@string/btn_real_time"
-            android:textAllCaps="false"
-            android:textColor="@drawable/btn_small_item_text_color"
-            android:textSize="14sp"
-            android:visibility="gone" />
 
     </LinearLayout>
 
@@ -119,23 +103,21 @@
         android:layout_height="0dp"
         android:layout_weight="3"
         android:background="@color/gray_btn"
+        android:maxLines="10"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
-        android:maxLines="10"
         android:scrollbars="vertical"
         android:textColor="@color/black"
-        android:textIsSelectable="true"
-        />
+        android:textIsSelectable="true" />
 
     <Button
         android:id="@+id/btn_copy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/dialog_normal_white_bg"
         android:onClick="onClickCopy"
         android:text="@string/btn_copy"
-        android:textColor="@color/black"
-        android:background="@drawable/dialog_normal_white_bg"
-        />
+        android:textColor="@color/black" />
 
 
 </LinearLayout>

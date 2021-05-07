@@ -16,6 +16,7 @@
 package com.mindspore.himindspore.ui.college;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -31,12 +32,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.mindspore.common.config.MSLinkUtils;
 import com.mindspore.common.sp.Preferences;
 import com.mindspore.common.utils.Utils;
 import com.mindspore.customview.dialog.NoticeDialog;
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.ui.college.adapter.CollegeItemAdapter;
 import com.mindspore.himindspore.ui.college.bean.CollegeItemBean;
+import com.mindspore.himindspore.ui.webview.WebViewUtilsActivity;
 
 import java.util.Arrays;
 import java.util.List;
@@ -140,19 +143,19 @@ public class CollegeFragment extends Fragment implements CollegeItemAdapter.Coll
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_CLOUD, true).apply();
                 collegeDataList.get(1).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_CLOUD, false));
                 collegeItemAdapter.notifyData();
-                ARouter.getInstance().build("/app/CollegeOneHourActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_MAIN_CLOUD));
                 break;
             case 3:
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_FAQ, true).apply();
                 collegeDataList.get(3).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_FAQ, false));
                 collegeItemAdapter.notifyData();
-                ARouter.getInstance().build("/app/CollegeFAQActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_MAIN_FAQ));
                 break;
             case 4:
                 prefs.edit().putBoolean(Preferences.KEY_COLLEGE_ASK, true).apply();
                 collegeDataList.get(4).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_ASK, false));
                 collegeItemAdapter.notifyData();
-                ARouter.getInstance().build("/app/CollegeForumActivity").navigation();
+                startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_MAIN_ASK));
                 break;
         }
     }
@@ -168,13 +171,13 @@ public class CollegeFragment extends Fragment implements CollegeItemAdapter.Coll
         collegeDataList.get(2).setHasChecked(prefs.getBoolean(Preferences.KEY_COLLEGE_QUICK, false));
         collegeItemAdapter.notifyData();
         if (position == 0) {
-            ARouter.getInstance().build("/app/CollegeTrainingmodelActivity").navigation();
+            startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_QUICK_TRAIN));
         } else if (position == 1) {
-            ARouter.getInstance().build("/app/CollegePerformReasoningActivity").navigation();
+            startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_QUICK_EXECUTE));
         } else if (position == 2) {
-            ARouter.getInstance().build("/app/CollegeBrokensideActivity").navigation();
+            startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_QUICK_APP));
         } else if (position == 3) {
-            ARouter.getInstance().build("/app/CollegeReferencevideoActivity").navigation();
+            startActivity(new Intent(getActivity(), WebViewUtilsActivity.class).putExtra("WebView", MSLinkUtils.COLLEGE_QUICK_VIDEO));
         }
     }
 }

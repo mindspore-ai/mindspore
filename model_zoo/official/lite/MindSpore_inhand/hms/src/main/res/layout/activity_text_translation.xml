@@ -105,20 +105,6 @@
             android:textColor="@drawable/btn_small_item_text_color"
             android:textSize="14sp" />
 
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="37dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_weight="1"
-            android:background="@drawable/btn_small_item"
-            android:gravity="center"
-            android:onClick="onClickRealTime"
-            android:text="@string/btn_real_time"
-            android:textAllCaps="false"
-            android:textColor="@drawable/btn_small_item_text_color"
-            android:textSize="14sp"
-            android:visibility="gone" />
 
         <Button
             android:id="@+id/btn_copy"

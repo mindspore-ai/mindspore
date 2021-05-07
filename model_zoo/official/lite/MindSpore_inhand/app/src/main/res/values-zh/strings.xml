@@ -16,14 +16,14 @@
     <string name="title_image">图像分类</string>
     <string name="title_image_garbage">垃圾分类</string>
     <string name="title_intelligent_poetry">智能写诗</string>
-    <string name="title_intelligent_poetry_new">NEW</string>
+    <string name="title_button_text_angle">HOT</string>
     <string name="title_object">对象检测(图片)</string>
     <string name="title_object_camera">对象检测(实时)</string>
     <string name="title_pose_net"> 骨骼检测</string>
     <string name="title_style_transfer">风格迁移</string>
     <string name="title_segmentation">人像分割</string>
     <string name="title_source">代码</string>
-    <string name="title_scene">场景检测</string>
+    <string name="title_dance">舞蹈梦工厂</string>
     <string name="title_help">反馈</string>
     <string name="title_star">打星</string>
     <string name="title_version">版本号： </string>

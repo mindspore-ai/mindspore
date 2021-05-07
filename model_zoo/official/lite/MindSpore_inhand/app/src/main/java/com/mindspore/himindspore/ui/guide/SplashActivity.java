@@ -42,7 +42,7 @@ import com.mindspore.common.sp.Preferences;
 import com.mindspore.common.utils.Utils;
 import com.mindspore.customview.countdown.MSCountDownView;
 import com.mindspore.himindspore.R;
-import com.mindspore.himindspore.base.BaseActivity;
+import com.mindspore.common.base.mvp.BaseActivity;
 import com.mindspore.himindspore.ui.main.MainActivity;
 import com.mindspore.himindspore.ui.main.PrivacyPolicyActivity;
 
