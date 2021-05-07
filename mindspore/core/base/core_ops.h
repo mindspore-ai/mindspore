@@ -58,6 +58,8 @@ constexpr auto kReLU6 = "ReLU6";
 constexpr auto kGeLUGrad = "GeLUGrad";
 constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
+constexpr auto kZerosLike = "ZerosLike";
+constexpr auto kOnesLike = "OnesLike";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
@@ -296,8 +298,8 @@ inline const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>("ReLUV2");
 inline const PrimitivePtr kPrimPRelu = std::make_shared<Primitive>("PReLU");
 inline const PrimitivePtr kPrimSoftplus = std::make_shared<Primitive>("Softplus");
 inline const PrimitivePtr kPrimZeros = std::make_shared<Primitive>("Zeros");
-inline const PrimitivePtr kPrimZerosLike = std::make_shared<Primitive>("ZerosLike");
-inline const PrimitivePtr kPrimOnesLike = std::make_shared<Primitive>("OnesLike");
+inline const PrimitivePtr kPrimZerosLike = std::make_shared<Primitive>(kZerosLike);
+inline const PrimitivePtr kPrimOnesLike = std::make_shared<Primitive>(kOnesLike);
 inline const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 inline const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 inline const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");

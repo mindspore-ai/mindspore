@@ -1379,7 +1379,7 @@ class OnesLike(Primitive):
         """Initialize OnesLike"""
 
 
-class ZerosLike(PrimitiveWithCheck):
+class ZerosLike(Primitive):
     """
     Creates a new tensor. All elements value are 0.
 
@@ -1410,9 +1410,6 @@ class ZerosLike(PrimitiveWithCheck):
     def __init__(self):
         """Initialize ZerosLike"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def check_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
 
 
 class TupleToArray(PrimitiveWithInfer):

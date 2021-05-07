@@ -46,22 +46,4 @@ Float::Float(const int nbits) : Number(FloatBitsToTypeId(nbits), nbits, false) {
     MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
-
-const TypePtr kBool = std::make_shared<Bool>();
-const TypePtr kInt8 = std::make_shared<Int>(8);
-const TypePtr kInt16 = std::make_shared<Int>(16);
-const TypePtr kInt32 = std::make_shared<Int>(32);
-const TypePtr kInt64 = std::make_shared<Int>(64);
-const TypePtr kUInt8 = std::make_shared<UInt>(8);
-const TypePtr kUInt16 = std::make_shared<UInt>(16);
-const TypePtr kUInt32 = std::make_shared<UInt>(32);
-const TypePtr kUInt64 = std::make_shared<UInt>(64);
-const TypePtr kFloat16 = std::make_shared<Float>(16);
-const TypePtr kFloat32 = std::make_shared<Float>(32);
-const TypePtr kFloat64 = std::make_shared<Float>(64);
-const TypePtr kInt = std::make_shared<Int>();
-const TypePtr kUInt = std::make_shared<UInt>();
-const TypePtr kFloat = std::make_shared<Float>();
-const TypePtr kNumber = std::make_shared<Number>();
-const TypePtr kComplex64 = std::make_shared<Complex64>();
 }  // namespace mindspore

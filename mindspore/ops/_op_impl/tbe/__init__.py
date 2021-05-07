@@ -124,6 +124,7 @@ from .xdivy import _xdivy_tbe
 from .xlogy import _xlogy_tbe
 from .floor_div import _floor_div_tbe
 from .zeros_like import _zeros_like_tbe
+from .zeros_like_ds import _zeros_like_ds_tbe
 from .neg import _neg_tbe
 from .npu_clear_float_status import _npu_clear_float_status_tbe
 from .npu_get_float_status import _npu_get_float_status_tbe
@@ -223,6 +224,7 @@ from .avg_pool import _avg_pool_tbe
 from .avg_pool_grad import _avg_pool_grad_tbe
 from .avg_pool_grad_vm import _avg_pool_grad_vm_tbe
 from .ones_like import _ones_like_tbe
+from .ones_like_ds import _ones_like_ds_tbe
 from .batch_to_space import _batch_to_space_tbe
 from .space_to_batch import _space_to_batch_tbe
 from .depth_to_space import _depth_to_space_tbe
