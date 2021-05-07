@@ -307,7 +307,7 @@ def test_random_affine_exception_translate_size():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(
             e) == "Argument translate with value 0.1 is not of type [<class 'list'>," \
-                  " <class 'tuple'>]."
+                  " <class 'tuple'>], but got <class 'float'>."
 
 
 def test_random_affine_exception_scale_size():
@@ -321,7 +321,7 @@ def test_random_affine_exception_scale_size():
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Argument scale with value 0.5 is not of type [<class 'tuple'>," \
-                         " <class 'list'>]."
+                         " <class 'list'>], but got <class 'float'>."
 
 
 def test_random_affine_exception_shear_size():

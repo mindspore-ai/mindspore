@@ -265,9 +265,11 @@ def type_check(arg, types, arg_name):
 
     if int in types and bool not in types:
         if isinstance(arg, bool):
-            raise TypeError("Argument {0} with value {1} is not of type {2}.".format(arg_name, print_value, types))
+            raise TypeError("Argument {0} with value {1} is not of type {2}, but got {3}.".format(arg_name, print_value,
+                                                                                                  types, type(arg)))
     if not isinstance(arg, types):
-        raise TypeError("Argument {0} with value {1} is not of type {2}.".format(arg_name, print_value, list(types)))
+        raise TypeError("Argument {0} with value {1} is not of type {2}, but got {3}.".format(arg_name, print_value,
+                                                                                              list(types), type(arg)))
 
 
 def check_filename(path):
@@ -299,8 +301,9 @@ def check_filename(path):
 
 
 def check_dir(dataset_dir):
+    type_check(dataset_dir, (str,), "dataset_dir")
     if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
-        raise ValueError("The folder {} does not exist or permission denied!".format(dataset_dir))
+        raise ValueError("The folder {} does not exist or is not a directory or permission denied!".format(dataset_dir))
 
 
 def check_file(dataset_file):
