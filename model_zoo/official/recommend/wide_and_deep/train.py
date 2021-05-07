@@ -89,5 +89,5 @@ if __name__ == "__main__":
     config = WideDeepConfig()
     config.argparse_init()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=config.device_target)
     test_train(config)
