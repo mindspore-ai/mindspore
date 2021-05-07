@@ -230,6 +230,15 @@ class VOCOp : public MappableLeafOp {
   // @return Status The status code returned
   Status ParseAnnotationBbox(const std::string &path);
 
+  // @param xmin - the left coordinate of bndbox
+  // @param ymin - the top coordinate of bndbox
+  // @param xmax - the right coordinate of bndbox
+  // @param ymax - the bottom coordinate of bndbox
+  // @param path - the file path of bndbox xml
+  // @return Status The status code returned
+  Status CheckIfBboxValid(const float &xmin, const float &ymin, const float &xmax, const float &ymax,
+                          const std::string &path);
+
   // @param XMLElement *bbox_node - bbox node info found in json object
   // @param const char *name - sub node name in object
   // @param float *value - value of certain sub node

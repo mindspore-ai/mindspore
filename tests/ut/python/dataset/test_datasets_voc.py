@@ -181,6 +181,14 @@ def test_voc_exception():
     except RuntimeError:
         pass
 
+    try:
+        data7 = ds.VOCDataset(DATA_DIR, task="Detection", usage="xmlinvalidbbox")
+        for _ in data7.create_dict_iterator(num_epochs=1):
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "Invalid bndbox: {321, 121, 421, 120}" in str(e)
+
     def exception_func(item):
         raise Exception("Error occur!")
 
