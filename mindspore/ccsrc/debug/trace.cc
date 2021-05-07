@@ -93,7 +93,7 @@ void DumpInferStack(std::ostringstream &oss) {
       infer_vec.clear();
       break;
     }
-    auto graph_context = graph_infer->graph_context();
+    auto graph_context = graph_infer->context();
     if (graph_context == nullptr) {
       MS_LOG(INFO) << "Null context continue";
       continue;
@@ -253,7 +253,7 @@ std::vector<AnalysisContextPtr> AnalyzedFuncGraphExporter::ProcessFuncGraphCall(
     }
 
     auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
-    auto ctx = base_fg_evaluator->graph_context();
+    auto ctx = base_fg_evaluator->context();
     if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
       MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
       context_vec_.push_back(ctx);
@@ -298,7 +298,7 @@ void AnalyzedFuncGraphExporter::OutputStatementComment(std::ofstream &ofs, const
     }
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
     std::string func_graph_id = fg->debug_info()->get_id();
-    comment << " fg_" << func_graph_id << "=" << fg->ToString() << "." << func_graph_id;
+    comment << " fg_" << func_graph_id << "=" << fg->ToString();
     if (ctxs.size() > i && ctxs[i] != nullptr) {
       comment << "(@ctx.addr=" << ctxs[i].get() << ")";
     }
@@ -392,8 +392,7 @@ void AnalyzedFuncGraphExporter::ExportOneFuncGraph(std::ofstream &ofs, const Fun
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> param_map;
 
-  ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "."
-      << func_graph->debug_info()->get_id();
+  ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText();
   if (cur_ctx_ != nullptr) {
     ofs << " @ctx.addr=" << cur_ctx_.get();
   }

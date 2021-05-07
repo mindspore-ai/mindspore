@@ -115,6 +115,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
 
   // Running the analyzer.
   ResetFunctionCallDepth();
+  ResetStackFrameDepth();
   AnalysisContextPtr root_context = Run(func_graph, empty_context, args_conf_list);
   MS_EXCEPTION_IF_NULL(root_context);
   MS_EXCEPTION_IF_NULL(root_context->func_graph());
@@ -133,7 +134,7 @@ AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Ana
                                        const ConfigPtrList &args_conf_list) {
   std::shared_ptr<FuncGraphEvaluator> eval = std::make_shared<FuncGraphEvaluator>(func_graph, context);
   (void)eval->Run(shared_from_this(), args_conf_list, nullptr);
-  return eval->graph_context();
+  return eval->context();
 }
 
 EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
@@ -152,7 +153,7 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &
   }
   MS_LOG(DEBUG) << "Evaluate node on demond for NodeConfig: " << conf->ToString()
                 << ", result: " << result->abstract().get() << ", " << result->abstract()->ToString();
-  analysis_cache_.set_value(conf, result);
+  SaveEvalResultInCache(conf, result);
   return result;
 }
 
@@ -179,7 +180,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     auto abstract = EvalValueNode(value_node, conf);
     eval_result = std::make_shared<EvalResult>(abstract, std::make_shared<AttrValueMap>());
   } else if (node->isa<CNode>()) {
-    CheckNoStackInSameFuncGraph(conf);
+    // CheckNoStackInSameFuncGraph(conf);
     auto cnode = node->cast<CNodePtr>();
     trace::TraceEvalCNodeEnter(conf);
     eval_result = EvalCNode(cnode, conf);
@@ -224,7 +225,7 @@ void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
     MS_LOG(EXCEPTION) << "Top evaluator is " << top_evaluator->ToString();
   }
   auto top_fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(top_evaluator);
-  auto top_context_fg = top_fg_evaluator->graph_context()->func_graph();
+  auto top_context_fg = top_fg_evaluator->context()->func_graph();
   if (current_cnode_fg != top_context_fg) {  // Ignore FV call.
     return;
   }
@@ -249,18 +250,15 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return out;
 }
 
-EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  MS_EXCEPTION_IF_NULL(conf);
+AbstractFunctionPtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "CNode->inputs() is empty, CNode: " << cnode->DebugString();
   }
-
   AnfNodePtr func_node = inputs[0];
   MS_EXCEPTION_IF_NULL(func_node);
   MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
-  AnalysisContextPtr context = conf->context();
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, context);
   MS_EXCEPTION_IF_NULL(func_conf);
   // Keep it in a local variable, otherwise smart pointer will free it.
@@ -270,32 +268,40 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
-  if (maybe_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
-    MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
-    return std::make_shared<EvalResult>(maybe_func->Clone(), std::make_shared<AttrValueMap>());
-  }
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
   if (func == nullptr) {
     MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString() << ", func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
+  return func;
+}
+
+EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  MS_EXCEPTION_IF_NULL(cnode);
+  AbstractFunctionPtr func = GetCNodeOperatorAbstract(cnode, conf->context());
+  if (func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+    MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
+    return std::make_shared<EvalResult>(func->Clone(), std::make_shared<AttrValueMap>());
+  }
 
   ConfigPtrList args_conf_list;
-  // ignore the first node which is function name
+  // Ignore the first node which is function name
+  auto &inputs = cnode->inputs();
   for (std::size_t i = 1; i < inputs.size(); i++) {
     const AnfNodePtr &node = inputs[i];
-    args_conf_list.push_back(MakeConfig(node, context));
+    args_conf_list.push_back(MakeConfig(node, conf->context()));
   }
-  std::vector<EvaluatorPtr> infs;
+  std::vector<EvaluatorPtr> evaluators;
 
-  auto build_evaluator = [this, &infs, &cnode](const AbstractFuncAtomPtr &poss) {
+  auto build_evaluator = [this, &evaluators, &cnode](const AbstractFuncAtomPtr &poss) {
     auto evaluator = this->GetEvaluatorFor(poss);
     evaluator->set_bound_node(cnode);
-    infs.push_back(evaluator);
+    evaluators.push_back(evaluator);
   };
   func->Visit(build_evaluator);
 
-  auto eval_result = ExecuteEvaluators(infs, conf, args_conf_list);
+  auto eval_result = ExecuteEvaluators(evaluators, conf, args_conf_list);
   return eval_result;
 }
 
@@ -314,7 +320,7 @@ EvalResultPtr AnalysisEngine::Execute(const AbstractFunctionPtr &func, const Abs
 }
 
 void AnalysisEngine::ClearEvaluatorCache() {
-  for (std::pair<AbstractFunctionPtr, EvaluatorPtr> element : constructors_) {
+  for (std::pair<AbstractFunctionPtr, EvaluatorPtr> element : evaluators_) {
     EvaluatorPtr evaluator = element.second;
     MS_EXCEPTION_IF_NULL(evaluator);
     MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_map());
@@ -338,7 +344,7 @@ void AnalysisEngine::Clear() {
   analysis_cache_.Clear();
   anfnode_config_map_.clear();
   eval_trace_.clear();
-  constructors_.clear();
+  evaluators_.clear();
   constructors_app_.clear();
   continued_evals_.clear();
 }
@@ -407,38 +413,38 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
 }  // namespace
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbstractClosure> &func) {
-  auto inf_pair = constructors_.find(func);
-  if (inf_pair != constructors_.end()) {
+  auto inf_pair = evaluators_.find(func);
+  if (inf_pair != evaluators_.end()) {
     return inf_pair->second;
   }
   MS_EXCEPTION_IF_NULL(func);
   auto primitive = func->prim();
   auto evaluator = GetPrimEvaluator(primitive, shared_from_this());
-  constructors_[func] = evaluator;
+  evaluators_[func] = evaluator;
   return evaluator;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func) {
-  auto inf_pair = constructors_.find(func);
-  if (inf_pair != constructors_.end()) {
+  auto inf_pair = evaluators_.find(func);
+  if (inf_pair != evaluators_.end()) {
     return inf_pair->second;
   }
   MS_EXCEPTION_IF_NULL(func);
   std::shared_ptr<FuncGraphEvaluator> func_graph_evaluator =
     std::make_shared<FuncGraphEvaluator>(func->func_graph(), func->context());
-  constructors_[func] = func_graph_evaluator;
+  evaluators_[func] = func_graph_evaluator;
   return func_graph_evaluator;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<MetaFuncGraphAbstractClosure> &func) {
-  auto inf_pair = constructors_.find(func);
-  if (inf_pair != constructors_.end()) {
+  auto inf_pair = evaluators_.find(func);
+  if (inf_pair != evaluators_.end()) {
     return inf_pair->second;
   }
   MS_EXCEPTION_IF_NULL(func);
   std::shared_ptr<MetaFuncGraphEvaluator> evaluator =
     std::make_shared<MetaFuncGraphEvaluator>(func->meta_func_graph(), func->context(), func->GetScope());
-  constructors_[func] = evaluator;
+  evaluators_[func] = evaluator;
   return evaluator;
 }
 
@@ -505,18 +511,18 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
 }
 
 EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
+  MS_EXCEPTION_IF_NULL(func);
   MS_LOG(DEBUG) << "The func value: " << func->ToString();
   if (func->tracking_id() != nullptr) {
     MS_LOG(DEBUG) << "The tracking_id: " << func->tracking_id()->DebugString();
   }
-  MS_EXCEPTION_IF_NULL(func);
   if (func->tracking_id() == nullptr || func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
       func->isa<abstract::FuncGraphAbstractClosure>()) {
     EvaluatorPtr evaluator = _GetEvaluatorFor(func);
     return evaluator;
   }
-  auto inf_pair = constructors_.find(func);
-  if (inf_pair != constructors_.end()) {
+  auto inf_pair = evaluators_.find(func);
+  if (inf_pair != evaluators_.end()) {
     return inf_pair->second;
   }
 
@@ -524,7 +530,7 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
   func_generic->set_tracking_id(nullptr);
   EvaluatorPtr eval = _GetEvaluatorFor(func_generic);
   auto tracked_eval = std::make_shared<TrackedEvaluator>(eval);
-  constructors_[func] = tracked_eval;
+  evaluators_[func] = tracked_eval;
 
   return tracked_eval;
 }

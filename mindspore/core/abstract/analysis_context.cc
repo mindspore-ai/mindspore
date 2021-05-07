@@ -23,39 +23,39 @@
 
 namespace mindspore {
 namespace abstract {
-AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent, FuncGraphPtr fg,
+AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent_context, FuncGraphPtr fg,
                                                const AbstractBasePtrList &args_spec_list) {
-  auto children_context_map_iter = parent->children_cache_.find(fg);
-  if (children_context_map_iter != parent->children_cache_.end()) {
+  auto children_context_map_iter = parent_context->children_cache_.find(fg);
+  if (children_context_map_iter != parent_context->children_cache_.end()) {
     auto children_context_map = children_context_map_iter->second;
     auto children_context_iter = children_context_map.find(args_spec_list);
     if (children_context_iter != children_context_map.end()) {
       return children_context_iter->second.lock();
     }
   }
-  AnalysisContextPtr context_new = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
+  AnalysisContextPtr new_context = std::make_shared<AnalysisContext>(parent_context, fg, args_spec_list);
   // Reference to myself, so use weak_ptr to break reference cycle.
-  auto weak_context = std::weak_ptr<AnalysisContext>(context_new);
-  context_new->parent_cache_[fg] = weak_context;
-  parent->children_cache_[fg][args_spec_list] = weak_context;
-  return context_new;
+  auto weak_context = std::weak_ptr<AnalysisContext>(new_context);
+  new_context->parent_cache_[fg] = weak_context;
+  parent_context->children_cache_[fg][args_spec_list] = weak_context;
+  return new_context;
 }
 
 AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func_graph,
                                                         const AbstractBasePtrList &args_spec_list) {
-  FuncGraphPtr graph_parent = func_graph->parent();
-  auto iter = parent_cache_.find(graph_parent);
+  FuncGraphPtr parent_graph = func_graph->parent();
   AnalysisContextPtr parent_context = nullptr;
+  auto iter = parent_cache_.find(parent_graph);
   if (iter != parent_cache_.end()) {
     parent_context = iter->second.lock();
   }
-  // if this happen, it will be bug in code. but we raise exception to keep the scene.
+  // If this happen, it will be a bug in code. But we raise exception to keep the scene.
   if (parent_context == nullptr) {
     std::ostringstream oss;
-    oss << "BUG: cannot found parent_context in current context: " << this->ToString()
-        << ", func_graph: " << func_graph->ToString() << ", graph_parent: ";
-    if (graph_parent != nullptr) {
-      oss << graph_parent->ToString();
+    oss << "BUG: Failed to find parent context in current context: " << this->ToString()
+        << ", func_graph: " << func_graph->ToString() << ", parent_graph: ";
+    if (parent_graph != nullptr) {
+      oss << parent_graph->ToString();
     } else {
       oss << "nullptr";
     }
@@ -64,7 +64,7 @@ AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func
   return NewContext(parent_context, func_graph, args_spec_list);
 }
 
-AnalysisContextPtr AnalysisContext::Filter(const FuncGraphPtr &func_graph) {
+AnalysisContextPtr AnalysisContext::FindParentContext(const FuncGraphPtr &func_graph) {
   auto p_iter = parent_cache_.find(func_graph);
   AnalysisContextPtr parent_context = nullptr;
   if (p_iter != parent_cache_.end()) {
@@ -75,10 +75,10 @@ AnalysisContextPtr AnalysisContext::Filter(const FuncGraphPtr &func_graph) {
       parent_context = iter_parent->second.lock();
     }
   }
-  // if this happen, it will be bug in code. but we raise exception to keep the scene.
+  // If this happen, it would be a bug in code. But we raise exception to keep the scene.
   if (parent_context == nullptr) {
     std::ostringstream oss;
-    oss << "BUG: Filter graph failed: " << func_graph->ToString() << ", graph_parent: ";
+    oss << "BUG: Failed to find parent context for: " << func_graph->ToString() << ", parent_graph: ";
     if (func_graph->parent() != nullptr) {
       oss << func_graph->parent()->ToString();
     } else {

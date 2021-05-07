@@ -861,7 +861,7 @@ class SideEffectFinder {
   const SccPtr &GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString() << "." << func_graph->debug_info()->get_id();
+      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString();
     }
     return found->second;
   }
