@@ -166,7 +166,7 @@ def check_pad_end(method):
 
         if pad_value is not None:
             type_check(pad_value, (str, float, bool, int, bytes), "pad_value")
-        type_check(pad_shape, (list,), "pad_end")
+        type_check(pad_shape, (list,), "pad_shape")
 
         for dim in pad_shape:
             if dim is not None:

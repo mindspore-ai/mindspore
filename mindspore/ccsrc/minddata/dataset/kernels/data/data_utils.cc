@@ -386,7 +386,9 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
     }
   }
   CHECK_FAIL_RETURN_UNEXPECTED(src->type().IsNumeric() == pad_val->type().IsNumeric(),
-                               "PadEnd: Source and pad_value are not of the same type.");
+                               "PadEnd: pad_value and item of dataset are not of the same type, type of pad_value is:" +
+                                 pad_val->type().ToString() +
+                                 ", and type of dataset item is:" + src->type().ToString() + ".");
   if (pad_val->type().IsNumeric()) {
     std::shared_ptr<Tensor> float_pad_value;
     RETURN_IF_NOT_OK(TypeCast(pad_val, &float_pad_value, DataType(DataType::DE_FLOAT32)));

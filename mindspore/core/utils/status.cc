@@ -58,7 +58,11 @@ Status::Status(enum StatusCode code, int line_of_code, const char *file_name, co
 
   std::ostringstream ss;
 #ifndef ENABLE_ANDROID
+#ifdef DEBUG
   ss << "Thread ID " << std::this_thread::get_id() << " " << CodeAsString(code) << ". ";
+#else
+  ss << CodeAsString(code) << ". ";
+#endif
   if (!data_->err_description.empty()) {
     ss << data_->err_description;
   }
@@ -168,7 +172,11 @@ std::vector<char> Status::SetErrDescription(const std::vector<char> &err_descrip
   data_->err_description = CharToString(err_description);
   std::ostringstream ss;
 #ifndef ENABLE_ANDROID
+#ifdef DEBUG
   ss << "Thread ID " << std::this_thread::get_id() << " " << CodeAsString(data_->status_code) << ". ";
+#else
+  ss << CodeAsString(data_->status_code) << ". ";
+#endif
   if (!data_->err_description.empty()) {
     ss << data_->err_description;
   }
