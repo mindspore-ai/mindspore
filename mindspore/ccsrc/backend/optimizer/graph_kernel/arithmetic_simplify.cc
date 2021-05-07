@@ -348,7 +348,8 @@ ShapeVector GetNodeShape(const AnfNodePtr &node) {
 
 std::vector<std::pair<int64_t, int64_t>> GetUnmodifiedDim(const ShapeVector &a, const ShapeVector &b) {
   std::vector<std::pair<int64_t, int64_t>> unmodified;
-  for (size_t i = 0, j = 0, patial_a = 1, patial_b = 1;;) {
+  int64_t patial_a = 1, patial_b = 1;
+  for (size_t i = 0, j = 0;;) {
     if (i >= a.size() && j >= b.size()) {
       break;
     }
