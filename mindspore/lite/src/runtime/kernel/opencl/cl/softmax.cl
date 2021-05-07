@@ -36,14 +36,14 @@ __kernel void SoftmaxAxis3_NHWC4(__read_only image2d_t input, __write_only image
     sum += dot(exp(t - input_max_f4), (float4)(1.f));
   }
   float4 t = convert_float4(READ_IMAGE(input, smp_zero, (int2)(Y * C4 + C4 - 1, n * H + X)));
-  sum += dot(exp(min(t - input_max_f4, 0)), mask);
+  sum += dot(exp(min(t - input_max_f4, (float4)(0.f))), mask);
   for (int d = 0; d < C4 - 1; ++d) {
     float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(Y * C4 + d, n * H + X)));
     result = exp(result - input_max_f4) / sum;
     WRITE_IMAGEOUT(output, (int2)(Y * C4 + d, n * H + X), OUT_FLT4(result));
   }
   float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(Y * C4 + C4 - 1, n * H + X)));
-  result = exp(min(result - input_max_f4, 0)) / sum;
+  result = exp(min(result - input_max_f4, (float4)(0.f))) / sum;
   result = result * mask;
   WRITE_IMAGEOUT(output, (int2)(Y * C4 + C4 - 1, n * H + X), OUT_FLT4(result));
 }
