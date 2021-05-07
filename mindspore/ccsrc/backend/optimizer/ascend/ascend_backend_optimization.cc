@@ -428,7 +428,9 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<MatmulConfusionTranposeFusionPass>(fusion_id_allocator));
-  ub_fusion_pm->AddPass(std::make_shared<BatchMatmulFusedMulAddFusionPass>(fusion_id_allocator));
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    ub_fusion_pm->AddPass(std::make_shared<BatchMatmulFusedMulAddFusionPass>(fusion_id_allocator));
+  }
   ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
