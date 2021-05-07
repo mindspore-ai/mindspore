@@ -63,6 +63,8 @@ parser.add_argument("--eval_interval", type=int, default=1,
 parser.add_argument('--enable_cache', type=ast.literal_eval, default=False,
                     help='Caching the eval dataset in memory to speedup evaluation, default is False.')
 parser.add_argument('--cache_session_id', type=str, default="", help='The session id for cache service.')
+parser.add_argument('--mode', type=str, default='GRAPH', choices=('GRAPH', 'PYNATIVE'),
+                    help="Graph mode or PyNative mode, default is Graph mode")
 args_opt = parser.parse_args()
 
 set_seed(1)
@@ -77,7 +79,10 @@ if args_opt.net in ("resnet18", "resnet50"):
         from src.dataset import create_dataset1 as create_dataset
     else:
         from src.config import config2 as config
-        from src.dataset import create_dataset2 as create_dataset
+        if args_opt.mode == "GRAPH":
+            from src.dataset import create_dataset2 as create_dataset
+        else:
+            from src.dataset import create_dataset_pynative as create_dataset
 
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
@@ -119,7 +124,10 @@ if __name__ == '__main__':
     ckpt_save_dir = config.save_checkpoint_path
 
     # init context
-    context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+    if args_opt.mode == 'GRAPH':
+        context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+    else:
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=target, save_graphs=False)
     if args_opt.parameter_server:
         context.set_ps_context(enable_ps=True)
     if args_opt.run_distribute:
