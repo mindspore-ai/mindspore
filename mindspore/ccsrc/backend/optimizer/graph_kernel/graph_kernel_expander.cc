@@ -53,6 +53,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimBiasAddGrad,
     prim::kPrimGeLU,
     prim::kPrimSoftmax,
+    prim::kPrimLogSoftmax,
+    prim::kPrimLogSoftmaxGrad,
     prim::kPrimTile,
 #if ENABLE_D
     prim::kPrimSqrtGrad,
