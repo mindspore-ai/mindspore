@@ -79,12 +79,12 @@ class DebugServices {
     RANGE
   };
 
-  typedef struct condition {
+  struct condition_t {
     CONDITION_TYPE type;
     float parameter = 0;
-  } condition_t;
+  };
 
-  typedef struct parameter {
+  struct parameter_t {
     std::string name;
     bool disabled;
     double_t value;
@@ -110,9 +110,9 @@ class DebugServices {
 
       hit = condition_check[inequality_type];
     }
-  } parameter_t;
+  };
 
-  typedef struct watchpoint {
+  struct watchpoint_t {
     unsigned int id;
     condition_t condition;
     std::vector<std::tuple<std::string, bool>> check_node_list;
@@ -180,7 +180,7 @@ class DebugServices {
     bool change_condition() const {
       return condition.type == CHANGE_TOO_LARGE || condition.type == CHANGE_TOO_SMALL || condition.type == NOT_CHANGED;
     }
-  } watchpoint_t;
+  };
 
   void AddWatchpoint(
     unsigned int id, unsigned int watch_condition, float parameter,

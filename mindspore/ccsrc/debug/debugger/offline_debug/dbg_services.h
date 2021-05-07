@@ -30,8 +30,8 @@
 #include "debug/debug_services.h"
 namespace py = pybind11;
 
-typedef struct parameter {
-  parameter(const std::string &name, bool disabled, double value, bool hit, double actual_value)
+struct parameter_t {
+  parameter_t(const std::string &name, bool disabled, double value, bool hit, double actual_value)
       : name(name), disabled(disabled), value(value), hit(hit), actual_value(actual_value) {}
   const std::string get_name() const { return name; }
   const bool get_disabled() const { return disabled; }
@@ -43,12 +43,12 @@ typedef struct parameter {
   double value;
   bool hit;
   double actual_value;
-} parameter_t;
+};
 
-typedef struct watchpoint_hit {
-  watchpoint_hit(const std::string &name, uint32_t slot, int condition, uint32_t watchpoint_id,
-                 const std::vector<parameter_t> &parameters, int32_t error_code, uint32_t device_id,
-                 uint32_t root_graph_id)
+struct watchpoint_hit_t {
+  watchpoint_hit_t(const std::string &name, uint32_t slot, int condition, uint32_t watchpoint_id,
+                   const std::vector<parameter_t> &parameters, int32_t error_code, uint32_t device_id,
+                   uint32_t root_graph_id)
       : name(name),
         slot(slot),
         condition(condition),
@@ -73,11 +73,11 @@ typedef struct watchpoint_hit {
   int32_t error_code;
   uint32_t device_id;
   uint32_t root_graph_id;
-} watchpoint_hit_t;
+};
 
-typedef struct tensor_info {
-  tensor_info(const std::string &node_name, uint32_t slot, uint32_t iteration, uint32_t device_id,
-              uint32_t root_graph_id, bool is_parameter)
+struct tensor_info_t {
+  tensor_info_t(const std::string &node_name, uint32_t slot, uint32_t iteration, uint32_t device_id,
+                uint32_t root_graph_id, bool is_parameter)
       : node_name(node_name),
         slot(slot),
         iteration(iteration),
@@ -96,10 +96,10 @@ typedef struct tensor_info {
   uint32_t device_id;
   uint32_t root_graph_id;
   bool is_parameter;
-} tensor_info_t;
+};
 
-typedef struct tensor_data {
-  tensor_data(char *data_ptr, uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
+struct tensor_data_t {
+  tensor_data_t(char *data_ptr, uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
       : data_size(data_size), dtype(dtype), shape(shape) {
     if (data_ptr != NULL) {
       this->data_ptr = py::bytes(data_ptr, data_size);
@@ -115,7 +115,7 @@ typedef struct tensor_data {
   uint64_t data_size;
   int dtype;
   std::vector<int64_t> shape;
-} tensor_data_t;
+};
 
 class DbgServices {
  private:
