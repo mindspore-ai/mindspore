@@ -32,7 +32,7 @@ std::vector<bool> StringToBitVector(const std::string &str) {
 }
 
 STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
-  MS_LOG(ERROR) << "un-index weight";
+  MS_LOG(DEBUG) << "un-index weight";
   auto bit_num = src_tensor.quantParams()->Get(0)->numBits();
 
   std::string str(reinterpret_cast<const char *>(src_tensor.data()->data()), src_tensor.data()->size());

@@ -50,7 +50,10 @@ class TrainExport {
   std::unique_ptr<schema::TensorT> CreateTensor(const mindspore::lite::Tensor *tensor, schema::Tensor *scTensor);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex);
-  int SaveToFile(const schema::MetaGraphT *graph, const std::string &outputPath);
+
+  bool NeedQuantization(const mindspore::lite::Tensor *tensor);
+  virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
+  mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);
 };
 };  // namespace lite
 }  // namespace mindspore

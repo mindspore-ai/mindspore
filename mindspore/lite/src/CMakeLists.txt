@@ -49,6 +49,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/loader_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c
@@ -124,6 +125,7 @@ if(SUPPORT_TRAIN)
             ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
             )
     if(ENABLE_V0)
       set(LITE_SRC
@@ -192,7 +194,10 @@ if(BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
 endif()
 if(SUPPORT_TRAIN)
+    add_dependencies(mindspore-lite fbs_inner_src)
+    add_dependencies(mindspore-lite_static fbs_inner_src)
     target_link_libraries(mindspore-lite minddata-lite)
+    target_link_libraries(mindspore-lite_static minddata-lite)
 endif()
 
 

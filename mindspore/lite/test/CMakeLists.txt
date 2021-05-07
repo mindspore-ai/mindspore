@@ -159,6 +159,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/loader_util.cc
         ${LITE_DIR}/src/common/string_util.cc
+        ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/tools/common/flag_parser.cc
         ${LITE_DIR}/tools/benchmark/benchmark.cc
         ${LITE_DIR}/test/st/benchmark_test.cc
@@ -306,6 +307,7 @@ if(SUPPORT_TRAIN)
             ${LITE_DIR}/src/train/train_utils.cc
             ${LITE_DIR}/src/train/transfer_session.cc
             ${LITE_DIR}/src/lite_session.cc
+            ${LITE_DIR}/tools/common/storage.cc
             )
 else()
     set(TEST_LITE_SRC
@@ -396,6 +398,10 @@ endif()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
+
+if(SUPPORT_TRAIN)
+    add_dependencies(lite-test fbs_inner_src)
+endif()
 
 target_link_libraries(lite-test dl mindspore::gtest)
 

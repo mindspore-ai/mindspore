@@ -44,6 +44,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/file_utils.h"
+#include "src/common/quant_utils.h"
 #include "src/common/utils.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 
@@ -1282,8 +1283,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
 
-  if (calibrator_->config_param_.mixed) {
-    // get opname_bit map
+  if (calibrator_->config_param_.mixed) {  // get opname_bit map
     auto weight_quant_func_graph = CopyFuncGraph(func_graph);
     if (weight_quant_func_graph == nullptr) {
       MS_LOG(ERROR) << "CopyFuncGraph error";
@@ -1315,7 +1315,6 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "create session failed!";
     return RET_ERROR;
   }
-
   MS_LOG(INFO) << "start to update divergence's max value";
   status = DoInference();
   if (status != RET_OK) {
@@ -1363,14 +1362,12 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       MS_LOG(ERROR) << "create session failed!";
       return RET_ERROR;
     }
-
     MS_LOG(INFO) << "do bias correction";
     status = BiasCorrection(func_graph);
     if (status != RET_OK) {
       MS_LOG(WARNING) << "BiasCorrection failed.";
     }
   }
-
   return RET_OK;
 }
 
@@ -1477,7 +1474,7 @@ KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
         quant_param_t.scale = quant_params[0].scale;
         quant_param_t.zeroPoint = quant_params[0].zeroPoint;
         for (auto float_data : fp32_op_input) {
-          auto quant_data = QuantizeData<int8_t>(float_data, quant_param_t, quant_max, quant_min);
+          auto quant_data = QuantizeData<int8_t>(float_data, &quant_param_t, quant_max, quant_min);
           quant_datas.push_back(quant_data);
         }
 

@@ -82,22 +82,27 @@ function Run_x86() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        export_file=""
+        inference_file=""
         if [[ $model_name == \#* ]]; then
           continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        else
+            export_file="${ms_models_path}/${model_name}_tod"
+            rm -f ${export_file}"*"
         fi
-        if [[ "${save_lite}" == "1" ]]; then
-          inference_file="${ms_models_path}/${model_name}_infer"
-        fi
+        inference_file="${ms_models_path}/${model_name}_infer"
+        rm -f ${inference_file}"*"
         echo ${model_name} >> "${run_x86_log_file}"
         ${run_valgrind}./tools/benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}.ms \
-        --inDataFile=${train_io_path}/${model_prefix}_input1.bin,${train_io_path}/${model_prefix}_input2.bin \
+        --inDataFile=${train_io_path}/${model_prefix}_input \
         --expectedDataFile=${train_io_path}/${model_prefix}_output --epochs=${epoch_num} --numThreads=${threads} \
-        --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} >> "${run_x86_log_file}"
+        --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
+        --exportFile=${export_file} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
@@ -168,20 +173,21 @@ function Run_arm() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
+        export_file=""
         if [[ $model_name == \#* ]]; then
             continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
+        else
+            export_file="${tmp_dir}/${model_name}_tod"
         fi
+        inference_file="${tmp_dir}/${model_name}_infer"
 
         if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
             run_result=$1': '${model_name}' irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
             continue
-        fi
-        if [[ "${save_lite}" == "1" ]]; then
-          inference_file="${ms_models_path}/${model_name}_infer"
         fi
         # run benchmark_train test without clib data
         echo ${model_name} >> "${run_arm_log_file}"
@@ -193,15 +199,20 @@ function Run_arm() {
         elif [ "$1" == arm32 ]; then
             echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
         fi 
-        echo "rm -f ${tmp_dir}/${model_name}_exported.ms" >> ${run_arm_log_file}
-        echo "rm -f ${tmp_dir}/${model_name}_exported.ms" >> ${adb_cmd_run_file}
+        adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
+        echo "rm -f ${export_file} ${inference_file}.ms" >> ${run_arm_log_file}
+        echo "rm -f ${export_file} ${inference_file}.ms" >> ${adb_cmd_run_file}
+        adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         adb_cmd=$(cat <<-ENDM
         export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
         --epochs=${epoch_num} \
         --modelFile=${model_name}.ms \
-        --inDataFile=${tmp_dir}/${model_prefix}_input1.bin,${tmp_dir}/${model_prefix}_input2.bin \
+        --inDataFile=${tmp_dir}/${model_prefix}_input \
         --expectedDataFile=${tmp_dir}/${model_prefix}_output \
-        --numThreads=${threads} --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file}
+        --numThreads=${threads} \
+        --accuracyThreshold=${accuracy_limit} \
+        --inferenceFile=${inference_file} \
+        --exportFile=${export_file}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -252,7 +263,7 @@ models_mindspore_train_config=${basepath}/models_ms_train.cfg
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:M:c:m:d:i:e:vt:q:DF" opt; do
+while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -295,8 +306,6 @@ while getopts "r:M:c:m:d:i:e:vt:q:DF" opt; do
             epoch_num=${OPTARG}
             echo "train epoch num is ${epoch_num}"
             ;;
-        F)  save_lite=1
-            ;;                          
         ?)
             echo "unknown para"
             exit 1;;

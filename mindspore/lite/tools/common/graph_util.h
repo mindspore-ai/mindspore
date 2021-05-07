@@ -143,7 +143,7 @@ bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   tensor->data.resize(new_data_str.size());
 
   tensor->weightQunatCompressType = schema::WeightQunatCompressType_INDEXING;
-  MS_LOG(ERROR) << "set WeightQunatCompressType_INDEXING";
+  MS_LOG(DEBUG) << "set WeightQunatCompressType_INDEXING";
   return true;
 }
 
@@ -285,21 +285,21 @@ bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
   auto pack_sparsity_size_in_bit =
     1 * 8 + 4 * 8 + bit_num + bit_num * unique_value_cnt + unique_value_bit * nz_cnt + nz_cnt * coor_best_bit;
   size_t pack_sparsity_size_in_byte = ceil(pack_sparsity_size_in_bit / 8.0);
-  MS_LOG(ERROR) << "coor_best_bit: " << coor_best_bit << " ori: " << origin_size_in_byte
+  MS_LOG(DEBUG) << "coor_best_bit: " << coor_best_bit << " ori: " << origin_size_in_byte
                 << " indexing: " << pack_repetition_size_in_byte << " sparse: " << pack_sparsity_size_in_byte;
   auto min_byte_need = std::min({origin_size_in_byte, pack_repetition_size_in_byte, pack_sparsity_size_in_byte});
   if (min_byte_need == origin_size_in_byte) {
     return false;
   } else if (min_byte_need == pack_repetition_size_in_byte) {
-    MS_LOG(ERROR) << "from " << origin_size_in_byte << " to " << pack_repetition_size_in_byte;
+    MS_LOG(DEBUG) << "from " << origin_size_in_byte << " to " << pack_repetition_size_in_byte;
     return IndexingCompress<T>(quant_data_set, unique_value_index_map, unique_value_bit, unique_value_cnt,
                                pack_repetition_size_in_byte, bit_num, tensor);
   } else if (min_byte_need == pack_sparsity_size_in_byte) {
-    MS_LOG(ERROR) << "from " << origin_size_in_byte << " to " << pack_sparsity_size_in_byte;
+    MS_LOG(DEBUG) << "from " << origin_size_in_byte << " to " << pack_sparsity_size_in_byte;
     return SparsityCompress<T>(quant_data_set, unique_value_index_map, unique_value_bit, unique_value_cnt,
                                pack_sparsity_size_in_byte, nz_cnt, coor_best_bit, bit_num, tensor);
   } else {
-    MS_LOG(ERROR) << "unexpected: " << min_byte_need << " not in {" << origin_size_in_byte << " "
+    MS_LOG(DEBUG) << "unexpected: " << min_byte_need << " not in {" << origin_size_in_byte << " "
                   << pack_repetition_size_in_byte << " " << pack_sparsity_size_in_byte << "}";
   }
   return false;

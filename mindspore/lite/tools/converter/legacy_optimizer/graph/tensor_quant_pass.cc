@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+#include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
 #include <vector>
 #include <cmath>
-#include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
+#include <algorithm>
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/node_util.h"
+#include "src/common/quant_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -49,7 +51,7 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor, int32_t index) 
       return RET_OK;
     }
     for (size_t j = 0; j < wShapeSize; j++) {
-      qDatas[j] = quant::QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
+      qDatas[j] = QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
     }
   } else {  // convert uint8 to int8
     auto *weightData = static_cast<uint8_t *>(oriWeightData);
@@ -141,7 +143,7 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
         auto *dst_data_int32 = reinterpret_cast<int32_t *>(dst_data.data());
         dst_data_int32[index] = quant_data;
       } else {
-        auto quant_data = quant::QuantizeData<int8_t>(raw_data, tensor->quantParams.at(i).get());
+        auto quant_data = QuantizeData<int8_t>(raw_data, tensor->quantParams.at(i).get());
         dst_data[index] = quant_data;
       }
     }

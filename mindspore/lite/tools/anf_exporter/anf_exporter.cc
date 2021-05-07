@@ -107,7 +107,7 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     int bit_num = tensor_input->quantParams.at(0)->numBits;
     // Pack Repetition
     auto repetition_packed = false;
-    MS_LOG(ERROR) << dst_node->name;
+    MS_LOG(DEBUG) << dst_node->name;
     if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
       if (bit_num <= 8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);

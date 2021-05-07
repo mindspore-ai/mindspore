@@ -22,6 +22,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/tensor_util.cc
