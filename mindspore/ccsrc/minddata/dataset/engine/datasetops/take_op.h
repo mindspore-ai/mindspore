@@ -53,7 +53,7 @@ class TakeOp : public PipelineOp {
   // Constructor of the TakeOp.
   // @note The builder class should be used to call it
   // @param count - The number of takes to do
-  explicit TakeOp(int32_t count, int32_t op_connector_size);
+  explicit TakeOp(int32_t count);
 
   // Destructor
   ~TakeOp() = default;
@@ -81,6 +81,10 @@ class TakeOp : public PipelineOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kTakeOp; }
+
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  int32_t num_consumers() const override;
+  int32_t num_producers() const override;
 
  private:
   int32_t max_takes_;   // The number of takes that the user requested

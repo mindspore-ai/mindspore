@@ -104,15 +104,16 @@ class ZipOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kZipOp; }
 
- private:
-  // Handles preprocessing of the main loop, used when starting new epoch
-  Status prepare();
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  int32_t num_consumers() const override;
+  int32_t num_producers() const override;
 
+ private:
   // Special handle case where an empty row has been received from child iterator
   // @note - we need to drain eoe signals from all children connectors.
   // @details - when this function is called, then we encountered eoe at child iterator
   // we have to drain rows from other child iterators until we hit eoe from all other child iterators
-  Status drainPipeline();
+  Status drainPipeline(int32_t skip_child, int32_t worker_id, bool retry_if_eoe);
 
   // Merges 1 row from each childIterator together
   // @param new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
@@ -125,16 +126,11 @@ class ZipOp : public PipelineOp {
   //       1    a     T
   //       \    |     /
   //         1, a, T
-  Status getNextTensorRow(TensorRow *const new_zip_row);
+  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, int32_t worker_id, bool retry_if_eoe);
 
   // Computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
-
-  int32_t children_num_;
-  bool draining_;
-  bool eof_;
-  std::vector<std::unique_ptr<ChildIterator>> child_iterators_;
 };
 }  // namespace dataset
 }  // namespace mindspore

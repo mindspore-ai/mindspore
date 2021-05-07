@@ -70,9 +70,8 @@ class ConcatOp : public PipelineOp {
   // Constructor of the ConcatOp.
   // @note The builder class should be used to call it
   // @param op_connector_size - connector size
-  explicit ConcatOp(int32_t op_connector_size);
-  ConcatOp(int32_t op_connector_size, const std::shared_ptr<SamplerRT> &sampler,
-           const std::vector<std::pair<int, int>> &children_flag_and_nums,
+  ConcatOp();
+  ConcatOp(const std::shared_ptr<SamplerRT> &sampler, const std::vector<std::pair<int, int>> &children_flag_and_nums,
            const std::vector<std::pair<int, int>> &children_start_end_index);
 
   // Destructor
@@ -111,18 +110,29 @@ class ConcatOp : public PipelineOp {
   /// \return Status - The status code return
   Status GetNumClasses(int64_t *num_classes) override;
 
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  int32_t num_consumers() const override;
+  int32_t num_producers() const override;
+
+  /// Check if the current sample will be taken or dropped
+  /// \return bool
+  bool IgnoreSample();
+
  private:
   Status Verify(int32_t id, const TensorRow &tensor_row);
 
-  int32_t children_num_;                                     // The num of child of parent node.
   std::unordered_map<std::string, int32_t> column_name_id_;  // Mapping between col index and col name
   std::vector<DataType> data_type_;
   std::vector<dsize_t> data_rank_;
-  std::shared_ptr<SamplerRT> sampler_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
 
-  std::vector<std::unique_ptr<ChildIterator>> children_iterators_;  // Iterator for fetching.
+  int32_t cur_child_;
+  bool verified_;
+  int64_t sample_number_;
+
+  int32_t num_shard_;
+  int32_t shard_index_;
 };
 }  // namespace dataset
 }  // namespace mindspore

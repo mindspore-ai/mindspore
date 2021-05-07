@@ -85,7 +85,7 @@ def test_profiling_complex_pipeline():
         data = json.load(f)
         op_info = data["op_info"]
         assert len(op_info) == 5
-        for i in range(5):
+        for i in range(4):
             assert "size" in op_info[i]["metrics"]["output_queue"]
             assert "length" in op_info[i]["metrics"]["output_queue"]
             assert "throughput" in op_info[i]["metrics"]["output_queue"]
