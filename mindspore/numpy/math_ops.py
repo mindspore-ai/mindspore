@@ -2507,6 +2507,7 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, 2], [3, np.nan]])
         >>> output = np.nanmax(a)
         >>> print(output)
@@ -2554,6 +2555,7 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([[1, 2], [3, np.nan]])
         >>> output = np.nanmin(a)
         >>> print(output)
@@ -4242,19 +4244,14 @@ def argmax(a, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(10, 16).reshape(2, 3)
         >>> print(np.argmax(a))
         5
-        >>> a = np.arange(10, 16).reshape(2, 3)
-        >>> print(np.argmax(a), axis=0)
+        >>> print(np.argmax(a, axis=0))
         [1 1 1]
-        >>> a = np.arange(10, 16).reshape(2, 3)
-        >>> print(np.argmax(a), axis=0)
+        >>> print(np.argmax(a, axis=0))
         [2 2]
-        >>> b = np.array([0, 5, 2, 3, 4, 5])
-        >>> b[1] = 5
-        >>> print(np.argmax(b))
-        1
     """
     a = _to_tensor(a)
     return a.argmax(axis)
@@ -4283,19 +4280,14 @@ def argmin(a, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(10, 16).reshape(2, 3)
         >>> print(np.argmin(a))
         0
-        >>> a = np.arange(10, 16).reshape(2, 3)
-        >>> print(np.argmin(a), axis=0)
+        >>> print(np.argmin(a, axis=0))
         [0 0 0]
-        >>> a = np.arange(10, 16).reshape(2, 3)
-        >>> print(np.argmin(a), axis=0)
+        >>> print(np.argmin(a, axis=0))
         [0 0]
-        >>> b = np.array([0, 5, 2, 3, 4, 5])
-        >>> b[1] = 5
-        >>> print(np.argmin(b))
-        0
     """
     a = _to_tensor(a)
     return a.argmin(axis)
@@ -4400,7 +4392,6 @@ def interp(x, xp, fp, left=None, right=None):
         >>> xp = [1, 2, 3]
         >>> fp = [3, 2, 0]
         >>> print(np.interp([0, 1, 1.5, 2.72, 3.14], xp, fp))
-        >>> print(np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3]))
         [3.         3.         2.5        0.55999994 0.        ]
         >>> UNDEF = -99.0
         >>> print(np.interp(3.14, xp, fp, right=UNDEF))
@@ -4735,7 +4726,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     if density:
         count = F.cast(count, mstype.float32)
         count = count/diff(bin_edges)/F.reduce_sum(count)
-    return count, bin_edges
+    return count.astype(mstype.int32), bin_edges
 
 
 @constexpr
@@ -4874,7 +4865,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
             shape = _expanded_shape(ndim, dedges[i].size, i)
             count /= _to_tensor(dedges[i]).reshape(shape)
         count /= s
-    return count, bin_edges
+    return count.astype(mstype.int32), bin_edges
 
 
 def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
@@ -4938,7 +4929,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         5.33333349e+00,  6.00000000e+00]))
     """
     count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
-    return count, bin_edges[0], bin_edges[1]
+    return count.astype(mstype.int32), bin_edges[0], bin_edges[1]
 
 
 def matrix_power(a, n):
