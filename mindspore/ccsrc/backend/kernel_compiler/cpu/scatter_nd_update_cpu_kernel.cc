@@ -85,11 +85,12 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     out_stride *= shape[i + 1];
     out_strides_.push_back(out_stride);
   }
+  reverse(out_strides_.begin(), out_strides_.end());
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
 bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
