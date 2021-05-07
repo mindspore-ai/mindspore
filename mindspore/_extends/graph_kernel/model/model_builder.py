@@ -147,7 +147,8 @@ class CompositeGraph:
                         for i in a['value']:
                             red_axis.append(i if i >= 0 else dim_size + i)
                     attr['reduce_axis'] = red_axis
-                    break
+                if a['name'] == "reduce_output_fuse":
+                    attr['reduce_output_fuse'] = a['value']
             return attr
 
         builder = GraphBuilder()
