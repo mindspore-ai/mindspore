@@ -30,11 +30,15 @@
 #include "vm/vm.h"
 #include "backend/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
+#include "runtime/framework/graph_scheduler.h"
 
 namespace mindspore {
 namespace compile {
 using OpRunInfo = session::OpRunInfo;
 using DeviceContext = device::DeviceContext;
+using ActorInfo = runtime::ActorInfo;
+using GraphCompilerInfo = runtime::GraphCompilerInfo;
+
 enum SwitchCondStatus {
   kCondOk = 0,
   kCondAlreadyRun,
@@ -95,28 +99,32 @@ class MindRTBackend : public Backend {
   MindRTBackend(const std::string &backend_name, const std::string &device_name, uint32_t device_id);
   ~MindRTBackend() override = default;
 
-  // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs,
-  // the return is the kernelGraph id of the root graph. It will traverse all subgraphs to call CompileGraph.
-  GraphId CompileGraphs(const FuncGraphPtr &root_graph);
+  // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs, It will traverse
+  // all sub graphs to call CompileGraph.
+  ActorInfo CompileGraphs(const FuncGraphPtr &root_graph);
+
   // Compile single op kernel graph in the pyNative mode.
-  GraphId CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
+  ActorInfo CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                         const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
 
   // Run Graph in the graph mode.
-  VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
+  VectorRef RunGraph(const ActorInfo &actor_info, const VectorRef &args);
+
   // Run Graph in the pyNative mode.
-  VectorRef RunGraph(const GraphInfo &graph_info, const VectorRef &args);
+  VectorRef RunGraph(const GraphInfo &graph_info, const std::vector<tensor::TensorPtr> &input_tensors);
 
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
-  // the return is the corresponding kernelGraph id of the graph.
-  GraphId CompileGraph(const FuncGraphPtr &func_graph);
+  // The result of graph compiler is stored in graph_to_device_context_ and control_nodes_.
+  void CompileGraph(const FuncGraphPtr &func_graph);
 
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.
   std::unordered_map<GraphId, DeviceContext *> graph_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
+
+  std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
   GraphPartitionPtr graph_partition_;
   std::string device_name_;

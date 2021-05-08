@@ -60,6 +60,11 @@ void DataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
+  // No output.
+  if (output_op_arrows_.size() == 0) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }

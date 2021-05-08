@@ -118,6 +118,8 @@ class HostQueueDataSourceActor : public DataSourceActor {
   HostTensorQueuePtr host_queue_;
   // Input data nodes fetch data from host queue.
   std::vector<AnfNodePtr> data_nodes_;
+  // The location of the data node in the data source actor.
+  std::unordered_map<AnfNodePtr, size_t> data_node_position_map_;
 };
 
 using DataSourceActorPtr = std::shared_ptr<DataSourceActor>;

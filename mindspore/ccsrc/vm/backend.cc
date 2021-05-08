@@ -29,7 +29,6 @@
 #include "utils/ms_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/framework/graph_compiler.h"
-#include "runtime/framework/graph_scheduler.h"
 #include "utils/scoped_long_running.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
@@ -237,37 +236,46 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   graph_partition_ = std::make_shared<GraphPartition>(cut_list, backend_name);
 }
 
-GraphId MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
+ActorInfo MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphPtr root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
 
   // Compile root graph.
-  auto root_graph_id = CompileGraph(root_graph);
+  graph_to_device_context_.clear();
+  control_nodes_.clear();
+  CompileGraph(root_graph);
 
   // Compile sub graphs.
   FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
   for (auto sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
-      (void)CompileGraph(sub_graph);
+      CompileGraph(sub_graph);
     }
   }
 
-  // Transform graph to actor DAG, and schedule the actor DAG.
+  // Construct the graph compiler info.
   std::vector<KernelGraphPtr> graphs;
   std::vector<DeviceContext *> device_contexts;
+  std::string name = "kernel_graph";
   for (const auto &graph_id_to_context : graph_to_device_context_) {
     graphs.emplace_back(runtime::GraphCompiler::GetInstance().Fetch(graph_id_to_context.first));
     device_contexts.emplace_back(graph_id_to_context.second);
+    name.append("_").append(std::to_string(graph_id_to_context.first));
   }
-  const auto &actor_set =
-    runtime::GraphScheduler::GetInstance().Transform(graphs, device_contexts, nullptr, &control_nodes_);
+  std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
+  auto graph_compiler_info = std::make_unique<GraphCompilerInfo>(graphs, device_contexts, input_tensors, control_nodes_,
+                                                                 root_graph->parameters(), name);
+
+  // Transform graph to actor DAG, and schedule the actor DAG.
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*(graph_compiler_info.get()));
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 
-  return root_graph_id;
+  actor_to_graph_compiler_info_.emplace(actor_set->name_, std::move(graph_compiler_info));
+  return actor_set->name_;
 }
 
-GraphId MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
+void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_partition_);
 
@@ -309,12 +317,10 @@ GraphId MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
       control_nodes_.push_back(cut_node);
     }
   }
-
-  return graph_to_device_context_.begin()->first;
 }
 
-VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
-  MS_LOG(INFO) << "Run graph begin, graph id: " << graph_id;
+VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args) {
+  MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
   const auto &context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
@@ -322,39 +328,41 @@ VectorRef MindRTBackend::RunGraph(GraphId graph_id, const VectorRef &args) {
     return VectorRef();
   }
 
-  // Fetch the kernel graph.
-  const auto &kernel_graph = runtime::GraphCompiler::GetInstance().Fetch(graph_id);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // Fetch the graph compiler info.
+  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
+  if (graph_iter == actor_to_graph_compiler_info_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find the graph compiler info.";
+  }
+  const auto &graph_compiler_info = *(graph_iter->second.get());
+  const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
 
   // Transform args to input tensors.
-  std::vector<tensor::TensorPtr> inputs;
-  for (const auto &input_node : kernel_graph->input_nodes()) {
-    const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-    MS_EXCEPTION_IF_NULL(front_node);
-    MS_EXCEPTION_IF_NULL(front_node->func_graph());
-    const auto &origin_parameters = front_node->func_graph()->parameters();
-    const auto &iter = std::find(origin_parameters.begin(), origin_parameters.end(), front_node);
-    if (iter == origin_parameters.end()) {
-      MS_LOG(EXCEPTION) << "Parameter node: " << front_node->fullname_with_scope() << " is not exist.";
+  std::vector<std::vector<tensor::TensorPtr>> input_tensors;
+  for (const auto &kernel_graph : graph_compiler_info.graphs_) {
+    std::vector<tensor::TensorPtr> input_tensor;
+    for (const auto &input_node : kernel_graph->input_nodes()) {
+      const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
+      const auto &iter = std::find(origin_parameters.begin(), origin_parameters.end(), front_node);
+      if (iter == origin_parameters.end()) {
+        input_tensor.emplace_back(nullptr);
+        continue;
+      }
+      auto position = IntToSize(std::distance(origin_parameters.begin(), iter));
+      PushInputTensor(args[position], &input_tensor);
     }
-    auto position = IntToSize(std::distance(origin_parameters.begin(), iter));
-    PushInputTensor(args[position], &inputs);
+    input_tensors.emplace_back(input_tensor);
   }
-
-  // Fetch the actor DAG.
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(kernel_graph);
-  MS_EXCEPTION_IF_NULL(actor_set);
 
   // Run actor DAG.
   mindspore::ScopedLongRunning long_running;
   VectorRef outputs;
-  runtime::GraphScheduler::GetInstance().PrepareRun(kernel_graph, &inputs, &outputs);
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors, &outputs);
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
-    MS_LOG(EXCEPTION) << "The graph runs failed, graph id: " << graph_id
-                      << ", graph name: " << kernel_graph->ToString();
+    MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
-  MS_LOG(INFO) << "Run graph end, graph id: " << graph_id;
+  MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
   return outputs;
 }
 }  // namespace compile

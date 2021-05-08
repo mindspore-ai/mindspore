@@ -756,11 +756,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     } else if (anf->isa<Parameter>()) {
       auto new_parameter = CreateNewParameterFromParameter(anf, graph);
       cnode_inputs->push_back(new_parameter);
-      if (GetGraphIdByNode(anf) == kInvalidGraphId) {
-        graph->FrontBackendlMapAdd(anf, new_parameter);
-      } else {
-        (*other_graph_cnode)[anf] = new_parameter;
-      }
+      graph->FrontBackendlMapAdd(anf, new_parameter);
       continue;
     } else {
       // the input node is a cnode from other graph

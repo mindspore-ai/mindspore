@@ -1109,6 +1109,14 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   }
 }
 
+AnfNodePtr KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
+  const auto &iter = internal_parameters_to_front_map_.find(parameter);
+  if (iter != internal_parameters_to_front_map_.end()) {
+    return iter->second;
+  }
+  return nullptr;
+}
+
 AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {
   auto iter = front_to_internal_outputs_map_.find(front_node);
   if (iter != front_to_internal_outputs_map_.end()) {
