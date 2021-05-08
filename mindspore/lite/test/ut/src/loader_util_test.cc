@@ -24,7 +24,7 @@ class LoaderUtilTest : public mindspore::CommonTest {
 };
 
 /*
- in file add.cc, the code is:
+ in file add.c, the code is:
  int add(int a, int b) {return a + b;}
  use this command to generate so file:
  gcc add.cc -fPIC -shared -o libadd.so
@@ -32,14 +32,12 @@ class LoaderUtilTest : public mindspore::CommonTest {
  nm -D libadd.so
 */
 TEST_F(LoaderUtilTest, TestAdd) {
-#ifndef _WIN32
-  lite::SoLoader loader;
+  lite::DynamicLibraryLoader loader;
   loader.Open("./libadd.so");
   int (*add)(int a, int b);
-  add = (int (*)(int, int))loader.GetFunc("_Z3addii");
+  add = (int (*)(int, int))loader.GetFunc("add");
   int res = add(7, 8);
   loader.Close();
   ASSERT_EQ(15, res);
-#endif
 }
 }  // namespace mindspore
