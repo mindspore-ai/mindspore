@@ -281,24 +281,26 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
     return RET_OK;
   }
   for (auto *tensor : tensors) {
-    // only cast const tensor
-    // tensorlist not support fp16 now
-    if (!tensor->IsConst() || tensor->data_type() == kObjectTypeTensorType) {
+    // only copy non-copied const tensor
+    if (!tensor->IsConst() || tensor->own_data()) {
       continue;
     }
-    if (tensor->own_data()) {
-      continue;
+    if (tensor->data_type() == kObjectTypeTensorType) {
+      // tensorlist's data is nullptr since ConvertTensors
+      // we never set or malloc data of tensorlist but malloc tensors in tensorlist
+      MS_ASSERT(tensor->data_c() == nullptr);
+    } else {
+      auto copy_tensor = Tensor::CopyTensor(*tensor, true);
+      if (copy_tensor == nullptr) {
+        MS_LOG(ERROR) << "Copy tensor failed";
+        return RET_ERROR;
+      }
+      tensor->FreeData();
+      tensor->set_data(copy_tensor->data_c());
+      tensor->set_own_data(true);
+      copy_tensor->set_data(nullptr);
+      delete (copy_tensor);
     }
-    auto copy_tensor = Tensor::CopyTensor(*tensor, true);
-    if (copy_tensor == nullptr) {
-      MS_LOG(ERROR) << "Copy tensor failed";
-      return RET_ERROR;
-    }
-    tensor->FreeData();
-    tensor->set_data(copy_tensor->data_c());
-    tensor->set_own_data(true);
-    copy_tensor->set_data(nullptr);
-    delete (copy_tensor);
   }
   return RET_OK;
 }
