@@ -92,6 +92,7 @@ def test_for_after_for_in_for_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.div = P.Div()
+            self.relu = nn.ReLU()
             self.assign = P.Assign()
             self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
             self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
