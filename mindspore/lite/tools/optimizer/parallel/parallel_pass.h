@@ -32,8 +32,8 @@ namespace mindspore {
 namespace opt {
 class ParallelPass : public opt::NodePass {
  public:
-  explicit ParallelPass(const std::unordered_map<std::string, SplitStrategy> strategys, const int32_t FmkType)
-      : NodePass("parallel_pass"), split_strategys_(strategys), FmkType_(FmkType) {}
+  explicit ParallelPass(const std::unordered_map<std::string, SplitStrategy> &strategys, const int32_t fmk_type)
+      : NodePass("parallel_pass"), split_strategys_(strategys), fmk_type_(fmk_type) {}
   ~ParallelPass() override = default;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 
@@ -46,7 +46,7 @@ class ParallelPass : public opt::NodePass {
 
   std::string type_name_;
   std::unordered_map<std::string, SplitStrategy> split_strategys_;
-  int32_t FmkType_;
+  int32_t fmk_type_;
 };
 
 }  // namespace opt

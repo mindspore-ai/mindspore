@@ -127,10 +127,10 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
 
 int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_LOG(DEBUG) << "Run ParallelPass start";
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  if (config->trainModel || !config->parallelMode) {
+  if (config->trainModel || static_cast<opt::SplitMode>(config->parallelMode) == opt::NoSplit) {
     return RET_OK;
   }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
   // 1. deal with split strategy
   std::unordered_map<std::string, opt::SplitStrategy> split_strategys =
     ParserSplitStrategy(static_cast<opt::SplitMode>(config->parallelMode));

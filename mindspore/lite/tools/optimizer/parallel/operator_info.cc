@@ -101,7 +101,10 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     }
     tuple_getitem->set_fullname_with_scope(cnode->fullname_with_scope() + "_TupleGetItem" + std::to_string(i));
     outputs->push_back(tuple_getitem);
-    ptr_list.push_back(abstract_scalar);
+    auto type_id = static_cast<TypeId>(operator_type_id_);
+    auto type_ptr = TypeIdToType(type_id);
+    std::vector<int64_t> shape_vector;
+    ptr_list.push_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
   }
   node->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
   return lite::RET_OK;
@@ -151,7 +154,8 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
   }
   concat_cnode->set_fullname_with_scope("Concat_" + name_);
   concat_cnode->set_scope(orig_node->scope());
-
+  std::vector<AnfNodePtr> outputs;
+  CreateMultipleOutputsOfAnfNode(concat_cnode, 1, &outputs);
   return concat_cnode;
 }
 

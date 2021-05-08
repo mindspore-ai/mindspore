@@ -75,7 +75,7 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   }
   operator_->set_cnode(cnode);
   operator_->set_func_graph(func_graph);
-  operator_->setFmk(FmkType_);
+  operator_->setFmk(fmk_type_);
   if (operator_->Init() == RET_ERROR) {
     MS_LOG(EXCEPTION) << "Failure: operator " << name << " init failed";
   }
