@@ -124,6 +124,8 @@ class ParallelContext {
 
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
+  void set_sharding_propagation(const bool);
+  bool sharding_propagation() const { return sharding_propagation_; }
 
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
@@ -160,6 +162,9 @@ class ParallelContext {
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
+  // In AUTO_PARALLEL mode, 'sharding_propagation_' = True indicates that sharding-configured operators
+  // will propagate the sharding strategies to other operators with minimum redistribution cost.
+  bool sharding_propagation_;
 };
 
 }  // namespace parallel

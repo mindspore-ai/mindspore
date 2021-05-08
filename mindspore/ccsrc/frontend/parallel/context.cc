@@ -71,6 +71,7 @@ void ParallelContext::Reset() {
   communi_parallel_mode_ = ALL_GROUP_PARALLEL;
   optimizer_weight_shard_size_ = -1;
   optimizer_weight_shard_aggregated_save_ = false;
+  sharding_propagation_ = false;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -266,5 +267,7 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
 
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
 }
+
+void ParallelContext::set_sharding_propagation(const bool stra_pto) { sharding_propagation_ = stra_pto; }
 }  // namespace parallel
 }  // namespace mindspore

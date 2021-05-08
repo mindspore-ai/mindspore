@@ -81,6 +81,9 @@ class Edge {
   // Init cost_map_: for each output layout and input layout, calculate the cost
   Status InitEdgeCost();
   std::map<CostPtrKey, CostPtrList> GetCostMap() { return cost_map_; }
+  CostPtr GetCostByStrategyPair(const CostPtrKey &);
+  StrategyPtr GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPtr &);
+  StrategyPtr GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPtr &);
   void SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &);
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
@@ -153,7 +156,7 @@ class Edge {
   // the index of outputs of prev_op, and the index of inputs of next_op
   size_t prev_op_output_index_, next_op_input_index_;
 
-  // 'pre_op_output_indexs_' and 'next_op_input_indexs_' store the indexes of inputs and outputs if is_combined = true
+  // pre_op_output_indexs_ and next_op_input_indexs_ store the indices of inputs and outputs if is_combined = true
   std::vector<size_t> pre_op_output_indexs_;
   std::vector<size_t> next_op_input_indexs_;
   // is this edge constructed by combining multiple edges? If is is, then is_combined = true, else is_combined = false
