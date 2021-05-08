@@ -141,6 +141,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "MatmulFp32.S",
               "MatmulFp32Opt.S",
               "PreSum4x16Int8Peroc.S",
+              "MatVecMulFp32.S",
               "PreSum4x16Int8Pert.S",
               "IndirectGemmInt16to32_8x4.S",
               "MatmulInt8.S",
