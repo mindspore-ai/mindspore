@@ -135,7 +135,6 @@ std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode,
 bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr> &todos,
                   std::unordered_set<AnfNodePtr> *fused_ops) {
   bool changed = false;
-  auto mng = kernel_graph->manager();
 
   // depend_prior[depend] = pair(prior, controlDependNode)
   std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> depend_prior;
