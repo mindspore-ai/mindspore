@@ -351,7 +351,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 ### 用法
 
 在执行推理之前，需要通过export.py导出mindir文件。
-目前仅可处理batch_Size为1，由于使用了DVPP硬件进行图片处理，因此图片必须满足JPEG编码格式，否则将会报错。
+目前仅可处理batch_Size为1，由于使用了DVPP硬件进行图片处理，因此图片必须满足JPEG编码格式，否则将会报错。比如coco2014数据集中的COCO_val2014_000000320612.jpg需要删除。
 
 ```shell
 # Ascend310 推理

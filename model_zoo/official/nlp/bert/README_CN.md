@@ -30,6 +30,10 @@
             - [Ascend处理器上运行后评估cluener数据集](#ascend处理器上运行后评估cluener数据集)
             - [Ascend处理器上运行后评估msra数据集](#ascend处理器上运行后评估msra数据集)
             - [Ascend处理器上运行后评估squad v1.1数据集](#ascend处理器上运行后评估squad-v11数据集)
+    - [导出mindir模型](#导出mindir模型)
+    - [推理过程](#推理过程)
+        - [用法](#用法-2)
+        - [结果](#结果-2)
     - [模型描述](#模型描述)
     - [性能](#性能)
         - [预训练性能](#预训练性能)
@@ -548,6 +552,37 @@ bash scripts/squad.sh
 
 ```text
 {"exact_match": 80.3878923040233284, "f1": 87.6902384023850329}
+```
+
+## 导出mindir模型
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+
+## 推理过程
+
+### 用法
+
+在执行推理之前，需要通过export.py导出mindir文件。输入数据文件为bin格式。
+
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [LABEL_PATH] [DATA_FILE_PATH] [DATASET_FORMAT] [SCHEMA_PATH] [USE_CRF] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+`NEED_PREPROCESS` 为必选项, 在[y|n]中取值，表示数据是否预处理为bin格式。
+`USE_CRF` 为必选项, 在 [true|false]中取值，大小写不敏感。
+`DEVICE_ID` 可选，默认值为 0。
+
+### 结果
+
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+```eval log
+F1 0.931243
 ```
 
 ## 模型描述

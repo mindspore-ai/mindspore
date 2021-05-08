@@ -12,6 +12,8 @@
     - [Configuration File](#configuration-file)
     - [Training Process](#training-process)
     - [Inference Process](#inference-process)
+    - [Export MindIR](#export-mindir)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
@@ -218,6 +220,43 @@ Parameters for both training and evaluation can be set in config.py. All the dat
     ```
 
 Note: The `DATASET_PATH` is path to mindrecord. eg. train: /dataset_path/multi30k_train_mindrecord_0  eval: /dataset_path/multi30k_test_mindrecord
+
+## [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py. Input files must be in bin format.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+`NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+we will get target.txt and output.txt.Then we can use scripts/parse_output.sh to get the translation.
+
+``` bash
+sh parse_output.sh target.txt output.txt /path/vocab.en
+```
+
+After parse output, we will get target.txt.forbleu and output.txt.forbleu.To calculate BLEU score, you may use this [perl script](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl) and run following command to get the BLEU score.
+
+```bash
+perl multi-bleu.perl target.txt.forbleu < output.txt.forbleu
+```
 
 # [Model Description](#content)
 
