@@ -111,7 +111,7 @@ python eval.py --net=se-resnet50 --dataset=imagenet2012 --checkpoint_path=[CHECK
 
 Parameters for both training and evaluation can be set in config.py.
 
-- Config for SE-ResNet50, ImageNet2012 dataset
+- Config for SE-Net, ImageNet2012 dataset
 
 ```bash
 "class_num": 1001,                # dataset class number
@@ -159,7 +159,7 @@ Training result will be stored in the example path, whose folder name begins wit
 
 ### Result
 
-- Training SE-ResNet50 with ImageNet2012 dataset
+- Training SE-Net with ImageNet2012 dataset
 
 ```bash
 # distribute training result(8 pcs)
@@ -189,7 +189,7 @@ bash run_eval.sh /imagenet/val/  /path/to/resnet-90_625.ckpt
 
 ### Result
 
-- Evaluating SE-ResNet50 with ImageNet2012 dataset
+- Evaluating SE-Net with ImageNet2012 dataset
 
 ```bash
 result: {'top_5_accuracy': 0.9385269007731959, 'top_1_accuracy': 0.7774645618556701}
@@ -201,40 +201,38 @@ result: {'top_5_accuracy': 0.9385269007731959, 'top_1_accuracy': 0.7774645618556
 
 ### Evaluation Performance
 
-#### SE-ResNet50 on ImageNet2012
+#### SE-Net on ImageNet2012
 
 | Parameters                 | Ascend 910
 | -------------------------- | ------------------------------------------------------------------------ |
-| Model Version              | SE-ResNet50                                               |
+| Model Version              | SE-Net                                               |
 | Resource                   | Ascend 910，CPU 2.60GHz 192cores，Memory 755G  |
 | uploaded Date              | 03/19/2021 (month/day/year)                         |
-| MindSpore Version          | 0.7.0-alpha                                                 |
+| MindSpore Version          | 1.1.0                                                 |
 | Dataset                    | ImageNet2012                                                |
 | Training Parameters        | epoch=90, steps per epoch=5004, batch_size = 256             |
 | Optimizer                  | Momentum                                              |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 1.5931969                                                   |
-| Speed                      | # ms/step（8pcs）                     |
-| Total time                 | # mins                                                  |
-| Parameters (M)             | 285M                                                     |
-| Checkpoint for Fine tuning | # M (.ckpt file)                                         |
-| Scripts                    | [Link](XXXXXXXhttps://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
+| Speed                      | 330.012 ms/step（8pcs）                     |
+| Total time                 | 155 mins                                                  |
+| Checkpoint for Fine tuning | 285M (.ckpt file)                                         |
+| Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/research/cv/SE-Net) |
 
 ### Inference Performance
 
-#### SE-ResNet50 on ImageNet2012
+#### SE-Net on ImageNet2012
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
-| Model Version       | SE-ResNet50                 |
+| Model Version       | SE-Net                 |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 03/19/2021 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
+| MindSpore Version   | 1.1.0                 |
 | Dataset             | ImageNet2012                |
 | batch_size          | 256                          |
 | Accuracy            | 77.74%                      |
-| Model for inference | # (.air file)            |
 
 # [Description of Random Situation](#contents)
 

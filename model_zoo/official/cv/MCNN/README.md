@@ -102,7 +102,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 
 ## [Script Parameters](#contents)
 
-```python # 介绍主要参数
+```python # parameters
 Major parameters in train.py and config.py as follows:
 
 --data_path: The absolute full path to the train and evaluation datasets.
