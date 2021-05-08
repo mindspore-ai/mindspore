@@ -605,6 +605,19 @@ build_lite()
     fi
 
     if [[ "${LOCAL_LITE_PLATFORM}" == "arm64" ]]; then
+      if [ "${OS}" == "Darwin" ]; then
+        cmake -DCMAKE_BUILD_TYPE="Release" \
+              -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake \
+              -DARCHS="arm64" -DENABLE_BITCODE=0 \
+              -DSUPPORT_TRAIN="off" \
+              -DENABLE_MINDRT=off \
+              -DPLATFORM_ARM64="on" -DENABLE_NEON=on -DENABLE_FP16="on" \
+              -DENABLE_TOOLS="on" -DENABLE_CONVERTER="off" -DBUILD_TESTCASES="off" \
+              -DSUPPORT_GPU="" -DSUPPORT_NPU="off" -DENABLE_V0="on" \
+              -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA="" \
+              -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp \
+              -G Xcode ..
+      else
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
@@ -616,7 +629,21 @@ build_lite()
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
               "${BASEPATH}/mindspore/lite"
+      fi
     elif [[ "${LOCAL_LITE_PLATFORM}" == "arm32" ]]; then
+      if [ "${OS}" == "Darwin" ]; then
+        cmake -DCMAKE_BUILD_TYPE="Release" \
+              -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake \
+              -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0 \
+              -DSUPPORT_TRAIN="off" \
+              -DENABLE_MINDRT=off \
+              -DPLATFORM_ARM32="on" -DENABLE_NEON=on \
+              -DENABLE_TOOLS="on" -DENABLE_CONVERTER="off" -DBUILD_TESTCASES="off" \
+              -DSUPPORT_GPU="" -DSUPPORT_NPU="off" -DENABLE_V0=on \
+              -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA="" \
+              -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp \
+              -G Xcode ..
+      else
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
@@ -628,6 +655,7 @@ build_lite()
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
                "${BASEPATH}/mindspore/lite"
+      fi
     else
         cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
@@ -637,13 +665,27 @@ build_lite()
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
         -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DX86_64_SIMD=${X86_64_SIMD} "${BASEPATH}/mindspore/lite"
     fi
-    make -j$THREAD_NUM && make install && make package
+    if [ "${OS}" == "Darwin" ]; then
+      xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore_lite -target mindspore_lite -sdk iphoneos -quiet
+    else
+      make -j$THREAD_NUM && make install && make package
+    fi
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
         exit 1
     else
         if [[ "${LITE_LANGUAGE}" == "cpp"  ]]; then
-          mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+          if [ "${OS}" == "Darwin" ]; then
+            mkdir -p ${BASEPATH}/output
+            cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore_lite.framework ${BASEPATH}/output/mindspore_lite.framework
+            cd ${BASEPATH}/output
+            tar -zcvf mindspore_lite.framework-${VERSION_STR}-${LOCAL_LITE_PLATFORM}.tar.gz mindspore_lite.framework/
+            sha256sum mindspore_lite.framework-${VERSION_STR}-${LOCAL_LITE_PLATFORM}.tar.gz > \
+                      mindspore_lite.framework-${VERSION_STR}-${LOCAL_LITE_PLATFORM}.tar.gz.sha256
+            rm -r mindspore_lite.framework
+          else
+            mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+          fi
         elif [[ "${LITE_LANGUAGE}" == "java" ]]; then
           mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/mindspore/lite/build/java
         fi
@@ -651,6 +693,9 @@ build_lite()
         echo "---------------- mindspore lite: build success ----------------"
         if [[ "X$LITE_LANGUAGE" = "Xcpp" ]]; then
             exit 0
+        fi
+        if [ "${OS}" == "Darwin" ]; then
+          exit 0
         fi
     fi
 }
@@ -899,6 +944,7 @@ make_clean()
   cmake --build . --target clean
 }
 
+OS=$(uname)
 if [[ "X$COMPILE_LITE" = "Xon" ]]; then
   if [[ "X$LITE_LANGUAGE" = "Xjava" ]]; then
     build_java
@@ -915,5 +961,6 @@ fi
 
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
 cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
+
 
 echo "---------------- mindspore: build end   ----------------"

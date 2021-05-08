@@ -17,9 +17,11 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     endif()
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32")
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fno-aligned-allocation -DTARGET_OS_OSX")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing -ffunction-sections \
-        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32")
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fno-aligned-allocation -DTARGET_OS_OSX")
     endif()
 endif()
 
@@ -277,10 +279,10 @@ if(DEFINED ARCHS)
             XCODE_ATTRIBUTE_INSTALL_PAYH "@rpath"
             )
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS})
-        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/)
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/)
     ENDFOREACH()
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS})
-        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/ir/dtype/)
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/ir/dtype/)
     ENDFOREACH()
     target_link_libraries(mindspore_lite)
 endif()
