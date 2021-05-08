@@ -69,6 +69,8 @@ void ParallelContext::Reset() {
   pipeline_stage_split_num_ = 1;
   grad_accumulation_step_ = 1;
   communi_parallel_mode_ = ALL_GROUP_PARALLEL;
+  optimizer_weight_shard_size_ = -1;
+  optimizer_weight_shard_integrated_save_ = false;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -130,6 +132,14 @@ void ParallelContext::set_strategy_ckpt_save_file(const std::string &strategy_ck
 
 void ParallelContext::set_group_ckpt_save_file(const std::string &group_ckpt_save_file) {
   group_ckpt_save_file_ = group_ckpt_save_file;
+}
+
+void ParallelContext::set_optimizer_weight_shard_size(int64_t optimizer_weight_shard_size) {
+  optimizer_weight_shard_size_ = optimizer_weight_shard_size;
+}
+
+void ParallelContext::set_optimizer_weight_shard_integrated_save(bool optimizer_weight_shard_integrated_save) {
+  optimizer_weight_shard_integrated_save_ = optimizer_weight_shard_integrated_save;
 }
 
 void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group) {

@@ -15,6 +15,7 @@
 """Context of auto parallel"""
 import threading
 import mindspore.context as context
+import mindspore.log as logger
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
 from mindspore.parallel._ps_context import _is_role_pserver
 from mindspore._c_expression import AutoParallelContext
@@ -501,6 +502,48 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_communi_parallel_mode()
 
+    def set_optimizer_weight_shard_size(self, optimizer_weight_shard_size):
+        """
+        Set optimizer_weight_shard_size.
+
+        Args:
+            optimizer_weight_shard_size (int): Opt shard group size when not globally use parallel
+                                               optimizer across devices.
+        """
+        self.check_context_handle()
+        if not isinstance(optimizer_weight_shard_size, int):
+            raise TypeError('optimizer_weight_shard_size is invalid type')
+        if optimizer_weight_shard_size <= 1:
+            logger.warning("The setting 'optimizer_weight_shard_size' is invalid. "
+                           "Please use the integer larger than 1.")
+            return
+        self._context_handle.set_optimizer_weight_shard_size(optimizer_weight_shard_size)
+
+    def get_optimizer_weight_shard_size(self):
+        """Get optimizer_weight_shard_size."""
+        self.check_context_handle()
+        return self._context_handle.get_optimizer_weight_shard_size()
+
+    def set_optimizer_weight_shard_integrated_save(self, optimizer_weight_shard_integrated_save):
+        """
+        Set optimizer_weight_shard_integrated_save.
+
+        Args:
+            optimizer_weight_shard_integrated_save (bool): Whether to integrated save weight shard when
+                                                           enable parallel optimizer.
+        """
+        self.check_context_handle()
+        if not isinstance(optimizer_weight_shard_integrated_save, bool):
+            raise TypeError('optimizer_weight_shard_integrated_save is invalid type')
+        self._context_handle.set_optimizer_weight_shard_integrated_save(optimizer_weight_shard_integrated_save)
+
+
+    def get_optimizer_weight_shard_integrated_save(self):
+        """Get optimizer_weight_shard_size."""
+        self.check_context_handle()
+        return self._context_handle.get_optimizer_weight_shard_integrated_save()
+
+
     def reset(self):
         """Reset all settings."""
         self.check_context_handle()
@@ -540,7 +583,9 @@ _set_auto_parallel_context_func_map = {
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
-    "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode}
+    "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
+    "optimizer_weight_shard_size": auto_parallel_context().set_optimizer_weight_shard_size,
+    "optimizer_weight_shard_integrated_save": auto_parallel_context().set_optimizer_weight_shard_integrated_save}
 
 
 _get_auto_parallel_context_func_map = {
@@ -559,7 +604,9 @@ _get_auto_parallel_context_func_map = {
     "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer,
     "grad_accumulation_step": auto_parallel_context().get_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices,
-    "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode}
+    "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
+    "optimizer_weight_shard_size": auto_parallel_context().get_optimizer_weight_shard_size,
+    "optimizer_weight_shard_integrated_save": auto_parallel_context().get_optimizer_weight_shard_integrated_save}
 
 
 @args_type_check(device_num=int, global_rank=int, gradients_mean=bool, gradient_fp32_sync=bool,
@@ -567,7 +614,8 @@ _get_auto_parallel_context_func_map = {
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
-                 communi_parallel_mode=str)
+                 communi_parallel_mode=str, optimizer_weight_shard_size=int,
+                 optimizer_weight_shard_integrated_save=bool)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -615,7 +663,7 @@ def _set_auto_parallel_context(**kwargs):
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
                         the devices are distributed alone the pipeline. The total devices will be divided into
                         'pipeline_stags' stages. This currently could only be used when
-                        parall mode semi_auto_parallel is enabled. Default: 0
+                        parallel mode semi_auto_parallel is enabled. Default: 0
         communi_parallel_mode (str): There are tree kinds of communication parallel modes, "all_group_parallel",
                      "same_server_group_parallel" and "no_group_parallel". Default: "all_group_parallel".
 
@@ -624,6 +672,11 @@ def _set_auto_parallel_context(**kwargs):
                      - same_server_group_parallel: Only the communication groups within the same server are parallel.
 
                      - no_group_parallel: All communication groups are not parallel.
+        optimizer_weight_shard_size (int): Set optimizer shard group size when not fully use parallel optimizer.
+                                    It should be larger than one and less than or equal with the data parallel size.
+                                    Default: -1, which means fully use parallel optimizer in data parallel dimension.
+        optimizer_weight_shard_integrated_save (bool): Whether to integrated save weight shard when enable parallel
+                                                       optimizer. Default: False.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.

@@ -21,6 +21,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/context.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 #include "utils/log_adapter.h"
 
@@ -431,6 +432,10 @@ Status TensorLayout::GenerateOptShardSliceShape() {
   int64_t repeated_num =
     std::accumulate(repeated_dev.begin(), repeated_dev.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t split_num;
+  int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
+  if (optimizer_weight_shard_size != -1) {
+    repeated_num = optimizer_weight_shard_size;
+  }
   if (tensor_map[0] == MAP_NONE) {
     split_num = repeated_num;
   } else {

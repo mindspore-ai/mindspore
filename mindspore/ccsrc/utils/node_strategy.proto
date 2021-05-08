@@ -54,6 +54,8 @@ message ParallelLayouts {
     repeated ParamSplitShape param_split_shape = 3;
     repeated IndicesOffset indices_offset = 4;
     required int32 field = 5;
+    required int32 opt_weight_shard_step = 6;
+    required int32 opt_weight_shard_size = 7;
 }
 
 message ParallelLayoutItem {

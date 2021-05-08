@@ -17,7 +17,6 @@
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 
 #include <fstream>
-#include <memory>
 #include <vector>
 
 #include "utils/ms_utils.h"
@@ -141,20 +140,19 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
     }
   }
   for (auto &node_tensor_info : tensor_info_map) {
-    TensorInfo tensor_info = node_tensor_info.second;
-    TensorLayout tensor_layout = tensor_info.tensor_layout();
+    TensorLayoutPtr tensor_layout = node_tensor_info.second;
     straspb::ParallelLayoutItem *parallel_layout_item = parallel_strategy_map.add_parallel_layout_item();
     MS_EXCEPTION_IF_NULL(parallel_layout_item);
     parallel_layout_item->set_param_name(node_tensor_info.first);
     straspb::ParallelLayouts *parallel_layouts = parallel_layout_item->mutable_parallel_layouts();
     straspb::DevMatrix *dev_matrix = parallel_layouts->add_dev_matrix();
     MS_EXCEPTION_IF_NULL(dev_matrix);
-    for (auto dim : tensor_layout.device_arrangement().array()) {
+    for (auto dim : tensor_layout->device_arrangement().array()) {
       dev_matrix->add_dim(LongToUlong(dim));
     }
     straspb::TensorMap *tensor_map = parallel_layouts->add_tensor_map();
     MS_EXCEPTION_IF_NULL(tensor_map);
-    for (auto dim : tensor_layout.tensor_map().array()) {
+    for (auto dim : tensor_layout->tensor_map().array()) {
       tensor_map->add_dim(dim);
     }
     straspb::ParamSplitShape *param_split_shape = parallel_layouts->add_param_split_shape();
@@ -165,7 +163,9 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
       param_split_shape->add_dim(dim_pair.first);
       indices_offset->add_dim(dim_pair.second);
     }
-    parallel_layouts->set_field(tensor_layout.get_field_size());
+    parallel_layouts->set_field(tensor_layout->get_field_size());
+    parallel_layouts->set_opt_weight_shard_step(tensor_layout->opt_weight_shard_step());
+    parallel_layouts->set_opt_weight_shard_size(tensor_layout->opt_weight_shard_size());
   }
 
   std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
