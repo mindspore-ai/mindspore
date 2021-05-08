@@ -41,11 +41,11 @@ struct KernelKey {
   TypeId data_type;
   int type;
   std::string kernel_arch;
-  std::string vendor{kBuiltin};
+  std::string provider{kBuiltin};
 
   bool operator<(const KernelKey &dst) const {
-    if (vendor != dst.vendor) {
-      return vendor < dst.vendor;
+    if (provider != dst.provider) {
+      return provider < dst.provider;
     } else if (kernel_arch != dst.kernel_arch) {
       return kernel_arch < dst.kernel_arch;
     } else if (arch != dst.arch) {

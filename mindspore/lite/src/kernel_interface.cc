@@ -23,8 +23,13 @@ RegisterKernelInterface *RegisterKernelInterface::Instance() {
   return &instance;
 }
 
-int RegisterKernelInterface::Reg(const std::string &vendor, const int op_type, KernelInterfaceCreator creator) {
-  return lite::KernelInterfaceRegistry::Instance()->Reg(vendor, op_type, creator);
+int RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+  return lite::KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
+}
+
+int RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
+                                       KernelInterfaceCreator creator) {
+  return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 }
 }  // namespace kernel
 }  // namespace mindspore

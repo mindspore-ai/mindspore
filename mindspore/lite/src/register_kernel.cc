@@ -23,9 +23,14 @@ RegisterKernel *RegisterKernel::GetInstance() {
   return &instance;
 }
 
-int RegisterKernel::RegKernel(const std::string &arch, const std::string &vendor, const TypeId data_type,
-                              const int op_type, CreateKernel creator) {
-  return lite::KernelRegistry::GetInstance()->RegKernel(arch, vendor, data_type, op_type, creator);
+int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+                                    const std::string &type, CreateKernel creator) {
+  return lite::KernelRegistry::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
+}
+
+int RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int op_type,
+                              CreateKernel creator) {
+  return lite::KernelRegistry::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 }
 }  // namespace kernel
 }  // namespace mindspore

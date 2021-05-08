@@ -32,7 +32,7 @@ struct CapabilityParam {
 class KernelInterface {
  public:
   virtual ~KernelInterface() = default;
-  virtual int Infer(const std::vector<tensor::MSTensor *> &tensor_in, std::vector<tensor::MSTensor *> *outputs,
+  virtual int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
                     const schema::Primitive *primitive) {
     return 0;
   }
@@ -47,7 +47,8 @@ typedef KernelInterface *(*KernelInterfaceCreator)();
 class RegisterKernelInterface {
  public:
   static RegisterKernelInterface *Instance();
-  int Reg(const std::string &vendor, const int op_type, KernelInterfaceCreator creator);
+  int CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
+  int Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
   virtual ~RegisterKernelInterface() = default;
 
  private:
@@ -56,14 +57,21 @@ class RegisterKernelInterface {
 
 class KernelInterfaceReg {
  public:
-  KernelInterfaceReg(const std::string &vendor, const int op_type, KernelInterfaceCreator creator) {
-    RegisterKernelInterface::Instance()->Reg(vendor, op_type, creator);
+  KernelInterfaceReg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+    RegisterKernelInterface::Instance()->Reg(provider, op_type, creator);
+  }
+
+  KernelInterfaceReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator) {
+    RegisterKernelInterface::Instance()->CustomReg(provider, op_type, creator);
   }
   ~KernelInterfaceReg() = default;
 };
 
-#define REGISTER_KERNEL_INTERFACE(vendor, op_type, creator) \
-  static KernelInterfaceReg g_##vendor##op_type##_inter_reg(vendor, op_type, creator);
+#define REGISTER_KERNEL_INTERFACE(provider, op_type, creator) \
+  static KernelInterfaceReg g_##provider##op_type##_inter_reg(provider, op_type, creator);
+
+#define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator) \
+  static KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(provider, op_type, creator);
 }  // namespace kernel
 }  // namespace mindspore
 

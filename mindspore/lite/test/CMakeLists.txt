@@ -141,6 +141,8 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/inner_context.cc
+        ${LITE_DIR}/src/kernel_interface.cc
+        ${LITE_DIR}/src/kernel_interface_registry.cc
         ${LITE_DIR}/src/kernel_registry.cc
         ${LITE_DIR}/src/register_kernel.cc
         ${LITE_DIR}/src/lite_kernel.cc

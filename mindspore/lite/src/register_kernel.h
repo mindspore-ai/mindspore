@@ -29,22 +29,30 @@ typedef kernel::LiteKernel *(*CreateKernel)(const std::vector<tensor::MSTensor *
 class RegisterKernel {
  public:
   static RegisterKernel *GetInstance();
-  int RegKernel(const std::string &arch, const std::string &vendor, const TypeId data_type, const int type,
-                CreateKernel creator);
+  int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type, CreateKernel creator);
+  int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &type,
+                      CreateKernel creator);
 };
 
 class KernelReg {
  public:
   ~KernelReg() = default;
 
-  KernelReg(const std::string &arch, const std::string &vendor, const TypeId data_type, const int op_type,
+  KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, int op_type, CreateKernel creator) {
+    RegisterKernel::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+  }
+
+  KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &op_type,
             CreateKernel creator) {
-    RegisterKernel::GetInstance()->RegKernel(arch, vendor, data_type, op_type, creator);
+    RegisterKernel::GetInstance()->RegCustomKernel(arch, provider, data_type, op_type, creator);
   }
 };
 
-#define REGISTER_KERNEL(arch, vendor, data_type, op_type, creator) \
-  static KernelReg g_##arch##vendor##data_type##op_type##kernelReg(arch, vendor, data_type, op_type, creator);
+#define REGISTER_KERNEL(arch, provider, data_type, op_type, creator) \
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(arch, provider, data_type, op_type, creator);
+
+#define REGISTER_CUSTOM_KERNEL(arch, provider, data_type, op_type, creator) \
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(arch, provider, data_type, op_type, creator);
 }  // namespace kernel
 }  // namespace mindspore
 
