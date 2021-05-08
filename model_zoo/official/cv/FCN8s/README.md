@@ -204,7 +204,7 @@ For more information, see `config.py`.
 | Dataset             | PASCAL VOC 2012
 | batch_size          | 16
 | outputs             | probability
-| mean IoU            | 64.25
+| mean IoU            | 0.627
 
 # [Description of Random Situation](#contents)
 
