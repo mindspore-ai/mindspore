@@ -25,6 +25,7 @@
 
 #include "load_mindir/load_model.h"
 #include "load_mindir/anf_model_parser.h"
+#include "proto/mind_ir.pb.h"
 
 using std::string;
 using std::vector;
