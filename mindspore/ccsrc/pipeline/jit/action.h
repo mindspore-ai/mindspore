@@ -43,10 +43,14 @@ bool ExecuteAction(const ResourcePtr &res);
 bool StartPSWorkerAction(const ResourcePtr &res);
 bool StartPSServerAction(const ResourcePtr &res);
 bool StartPSSchedulerAction(const ResourcePtr &res);
+// This action is only for federated learning only. In later version, parameter server mode and federated learning will
+// use the same action.
+bool StartServerAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline();
 std::vector<ActionItem> PServerPipeline();
+std::vector<ActionItem> ServerPipeline();
 std::vector<ActionItem> PSchedulerPipeline();
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear = false);

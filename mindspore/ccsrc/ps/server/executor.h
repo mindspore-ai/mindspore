@@ -43,7 +43,7 @@ class Executor {
   // be used for aggregators.
   // As noted in header file parameter_aggregator.h, we create aggregators by trainable parameters, which is the
   // optimizer cnode's input. So we need to initialize server executor using func_graph.
-  void Init(const FuncGraphPtr &func_graph, size_t aggregation_count);
+  void Initialize(const FuncGraphPtr &func_graph, size_t aggregation_count);
 
   // Called in parameter server training mode to do Push operation.
   // For the same trainable parameter, HandlePush method must be called aggregation_count_ times before it's considered

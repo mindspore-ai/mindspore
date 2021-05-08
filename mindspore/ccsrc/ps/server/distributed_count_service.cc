@@ -112,19 +112,19 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
     std::unique_lock<std::mutex> lock(mutex_[name]);
     return global_current_count_[name].size() == global_threshold_count_[name];
   } else {
-    CountReachThresholdRequest count_reach_threashold_req;
-    count_reach_threashold_req.set_name(name);
+    CountReachThresholdRequest count_reach_threshold_req;
+    count_reach_threshold_req.set_name(name);
 
     std::shared_ptr<std::vector<unsigned char>> query_cnt_enough_rsp_msg = nullptr;
-    if (!communicator_->SendPbRequest(count_reach_threashold_req, counting_server_rank_,
+    if (!communicator_->SendPbRequest(count_reach_threshold_req, counting_server_rank_,
                                       core::TcpUserCommand::kReachThreshold, &query_cnt_enough_rsp_msg)) {
       MS_LOG(ERROR) << "Sending querying whether count reaches threshold message to leader server failed for " << name;
       return false;
     }
 
-    CountReachThresholdResponse count_reach_threashold_rsp;
-    count_reach_threashold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(), query_cnt_enough_rsp_msg->size());
-    return count_reach_threashold_rsp.is_enough();
+    CountReachThresholdResponse count_reach_threshold_rsp;
+    count_reach_threshold_rsp.ParseFromArray(query_cnt_enough_rsp_msg->data(), query_cnt_enough_rsp_msg->size());
+    return count_reach_threshold_rsp.is_enough();
   }
 }
 
@@ -200,9 +200,9 @@ void DistributedCountService::HandleCountReachThresholdRequest(const std::shared
     return;
   }
 
-  CountReachThresholdRequest count_reach_threashold_req;
-  count_reach_threashold_req.ParseFromArray(message->data(), message->len());
-  const std::string &name = count_reach_threashold_req.name();
+  CountReachThresholdRequest count_reach_threshold_req;
+  count_reach_threshold_req.ParseFromArray(message->data(), message->len());
+  const std::string &name = count_reach_threshold_req.name();
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
   if (global_threshold_count_.count(name) == 0) {
@@ -210,10 +210,10 @@ void DistributedCountService::HandleCountReachThresholdRequest(const std::shared
     return;
   }
 
-  CountReachThresholdResponse count_reach_threashold_rsp;
-  count_reach_threashold_rsp.set_is_enough(global_current_count_[name].size() == global_threshold_count_[name]);
-  communicator_->SendResponse(count_reach_threashold_rsp.SerializeAsString().data(),
-                              count_reach_threashold_rsp.SerializeAsString().size(), message);
+  CountReachThresholdResponse count_reach_threshold_rsp;
+  count_reach_threshold_rsp.set_is_enough(global_current_count_[name].size() == global_threshold_count_[name]);
+  communicator_->SendResponse(count_reach_threshold_rsp.SerializeAsString().data(),
+                              count_reach_threshold_rsp.SerializeAsString().size(), message);
   return;
 }
 

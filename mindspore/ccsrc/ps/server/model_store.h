@@ -40,7 +40,7 @@ class ModelStore {
   }
 
   // Initialize ModelStore with max count of models need to be stored.
-  void Init(uint32_t max_count = 3);
+  void Initialize(uint32_t max_count = 3);
 
   // Store the model of the given iteration. The model is acquired from Executor. If the current model count is already
   // max_model_count_, the earliest model will be replaced.

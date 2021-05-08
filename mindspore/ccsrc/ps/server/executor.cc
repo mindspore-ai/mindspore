@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ps {
 namespace server {
-void Executor::Init(const FuncGraphPtr &func_graph, size_t aggregation_count) {
+void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_count) {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (aggregation_count == 0) {
     MS_LOG(EXCEPTION) << "Server aggregation count must be greater than 0";

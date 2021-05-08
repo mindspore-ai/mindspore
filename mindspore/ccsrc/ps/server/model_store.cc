@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ps {
 namespace server {
-void ModelStore::Init(uint32_t max_count) {
+void ModelStore::Initialize(uint32_t max_count) {
   if (!Executor::GetInstance().initialized()) {
     MS_LOG(EXCEPTION) << "Server's executor must be initialized before model storage.";
     return;

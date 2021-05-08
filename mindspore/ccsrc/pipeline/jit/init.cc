@@ -326,7 +326,24 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("insert_accumu_init_info", &PSContext::InsertAccumuInitInfo, "Insert accumulation initialization value.")
     .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
     .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.")
-    .def("set_rank_id", &PSContext::set_rank_id, "Set rank id for worker on ps mode.");
+    .def("set_rank_id", &PSContext::set_rank_id, "Set rank id for worker on ps mode.")
+    .def("set_server_mode", &PSContext::set_server_mode, "Set server mode.")
+    .def("server_mode", &PSContext::server_mode, "Get server mode.")
+    .def("set_ms_role", &PSContext::set_ms_role, "Set role for this process.")
+    .def("ms_role", &PSContext::ms_role, "Get role for this process.")
+    .def("set_worker_num", &PSContext::set_worker_num, "Set worker number.")
+    .def("set_server_num", &PSContext::set_server_num, "Set server number.")
+    .def("set_scheduler_ip", &PSContext::set_scheduler_ip, "Set scheduler ip.")
+    .def("set_scheduler_port", &PSContext::set_scheduler_port, "Set scheduler port.")
+    .def("set_fl_server_port", &PSContext::set_fl_server_port, "Set federated learning server port.")
+    .def("set_fl_client_enable", &PSContext::set_fl_client_enable, "Set federated learning client.")
+    .def("set_start_fl_job_threshold", &PSContext::set_start_fl_job_threshold, "Set threshold count for start_fl_job.")
+    .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
+    .def("set_fl_iteration_num", &PSContext::set_fl_iteration_num, "Set federated learning iteration number.")
+    .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")
+    .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
+    .def("set_secure_aggregation", &PSContext::set_secure_aggregation,
+         "Set federated learning client using secure aggregation.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())
