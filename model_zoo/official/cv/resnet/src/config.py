@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
 # config optimizer for resnet50, imagenet2012. Momentum is default, Thor is optional.
+# infer_label is a directory and label mapping table. such as 'infer_label': {"directory0": 0, "directory1": 1, ...}
 cfg = ed({
     'optimizer': 'Momentum',
+    'infer_label': {}
     })
 
 # config for resent50, cifar10
