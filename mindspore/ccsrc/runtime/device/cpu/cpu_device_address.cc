@@ -37,10 +37,9 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
       shape += '_' + std::to_string(value);
     }
   }
-  std::string file_extension = ".bin";
-  std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_ + file_extension;
+  std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_;
   MS_LOG(DEBUG) << "E2E Dump path is " << path;
-  ret = DumpJsonParser::DumpToFile(path, ptr_, size_);
+  ret = DumpJsonParser::DumpToFile(path, ptr_, size_, host_shape, host_type);
   return ret;
 }
 

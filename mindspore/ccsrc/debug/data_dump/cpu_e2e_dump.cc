@@ -19,7 +19,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
-void CPUE2eDump::DumpCNodeData(const CNodePtr &node) {
+void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string kernel_name = node->fullname_with_scope();
@@ -29,7 +29,7 @@ void CPUE2eDump::DumpCNodeData(const CNodePtr &node) {
 
   MS_LOG(DEBUG) << "E2e dump CNode data start: " << kernel_name << ", current iteration is "
                 << dump_json_parser.cur_dump_iter();
-  std::string dump_path = GenerateDumpPath();
+  std::string dump_path = GenerateDumpPath(graph_id);
   if (dump_json_parser.InputNeedDump()) {
     DumpCNodeInputs(node, dump_path);
   }
@@ -129,12 +129,12 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
 }
 
-void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph) {
+void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Start e2e dump parameters and Const values";
   std::map<std::string, size_t> const_map;
   GetConstantId(graph, &const_map);
-  const std::string &dump_path = GenerateDumpPath();
+  const std::string &dump_path = GenerateDumpPath(graph_id);
 
   // dump parameters
   const auto &parameters = graph->inputs();

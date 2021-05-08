@@ -37,11 +37,11 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
   }
 
   int ret;
-  char filename[] = "/tmp/dumpToFileTestFile";
-  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
+  const std::string filename = "/tmp/dumpToFileTestFile";
+  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {10, 100}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open(filename, O_RDONLY);
+  int fd = open((filename + ".bin").c_str(), O_RDONLY);
   int readBack[1000] = {0};
   int readSize = read(fd, readBack, len * sizeof(int));
   (void)close(fd);
@@ -69,11 +69,11 @@ TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
   }
 
   int ret;
-  char filename[] = "../../dumpToFileTestFile";
-  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
+   const std::string filename = "../../dumpToFileTestFile";
+  ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{100, 10}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open(filename, O_RDONLY);
+  int fd = open((filename + ".bin").c_str(), O_RDONLY);
   int readBack[1000] = {0};
   int readSize = read(fd, readBack, len * sizeof(int));
   (void)close(fd);
@@ -101,11 +101,11 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
     data[i] = i % 10;
   }
 
-  char filename[] = "./tmp/dumpToFileTestFile";
-  int ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int));
+  const std::string filename = "./tmp/dumpToFileTestFile";
+  int ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {1,}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open(filename, O_RDONLY);
+  int fd = open((filename + ".bin").c_str(), O_RDONLY);
   int readBack[1000] = {0};
   int readSize = read(fd, readBack, len * sizeof(int));
   (void)close(fd);

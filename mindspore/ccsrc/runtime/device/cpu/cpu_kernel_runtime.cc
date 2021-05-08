@@ -380,6 +380,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   dump_json_parser.UpdateDumpIter();
   bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
+  uint32_t graph_id = kernel_graph->graph_id();
 
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
@@ -421,7 +422,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
       MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
     }
     if (iter_dump_flag) {
-      CPUE2eDump::DumpCNodeData(kernel);
+      CPUE2eDump::DumpCNodeData(kernel, graph_id);
     }
     if (profiler_inst->GetEnableFlag()) {
       profiler_inst->OpDataProducerEnd();
@@ -439,7 +440,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
 #endif
   }
   if (iter_dump_flag) {
-    CPUE2eDump::DumpParametersAndConst(kernel_graph);
+    CPUE2eDump::DumpParametersAndConst(kernel_graph, graph_id);
   }
   return true;
 }

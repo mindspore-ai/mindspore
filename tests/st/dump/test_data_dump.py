@@ -14,8 +14,10 @@
 # ============================================================================
 import os
 import json
+import sys
 import time
 import shutil
+
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -29,7 +31,6 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Net(nn.Cell):
     def __init__(self):
@@ -39,8 +40,10 @@ class Net(nn.Cell):
     def construct(self, x_, y_):
         return self.add(x_, y_)
 
-x = np.random.randn(1, 3, 3, 4).astype(np.float32)
-y = np.random.randn(1, 3, 3, 4).astype(np.float32)
+
+x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
+
 
 def change_current_dump_json(file_name, dump_path):
     with open(file_name, 'r+') as f:
@@ -49,6 +52,7 @@ def change_current_dump_json(file_name, dump_path):
     data["common_dump_settings"]["path"] = dump_path
     with open(file_name, 'w') as f:
         json.dump(data, f)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -61,7 +65,7 @@ def test_async_dump():
     change_current_dump_json('async_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/async_dump.json"
     device_id = context.get_context("device_id")
-    dump_file_path = pwd + '/async_dump/device_{}/Net_graph_0/0/0/'.format(device_id)
+    dump_file_path = dump_path + '/device_{}/Net_graph_0/0/0/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
@@ -69,24 +73,90 @@ def test_async_dump():
     time.sleep(5)
     assert len(os.listdir(dump_file_path)) == 1
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_e2e_dump():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+def run_e2e_dump_bin():
+    if sys.platform != 'linux':
+        return
     pwd = os.getcwd()
-    dump_path = pwd + "/e2e_dump"
-    change_current_dump_json('e2e_dump.json', dump_path)
-    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/e2e_dump.json"
+    dump_path = pwd + '/e2e_dump'
+    change_current_dump_json('e2e_dump_bin.json', dump_path)
+    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_bin.json'
     device_id = context.get_context("device_id")
-    dump_file_path = pwd + '/e2e_dump/Net/device_{}/iteration_1/'.format(device_id)
+    dump_file_path = dump_path + '/rank_{}/Net/graph_0/iteration_1/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
     add(Tensor(x), Tensor(y))
-    time.sleep(5)
-    assert len(os.listdir(dump_file_path)) == 5
+    if context.get_context("device_target") == "Ascend":
+        output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.bin"
+    else:
+        output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.bin"
+    output_path = dump_file_path + output_name
+    real_path = os.path.realpath(output_path)
+    output = np.fromfile(real_path, dtype=np.float32)
+    expect = np.array([8, 10, 12, 14, 16, 18], np.float32)
+    assert output.dtype == expect.dtype
+    assert np.array_equal(output, expect)
+
+
+def run_e2e_dump_npy():
+    if sys.platform != 'linux':
+        return
+    pwd = os.getcwd()
+    dump_path = pwd + '/e2e_dump'
+    change_current_dump_json('e2e_dump_npy.json', dump_path)
+    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_npy.json'
+    device_id = context.get_context("device_id")
+    dump_file_path = dump_path + '/rank_{}/Net/graph_0/iteration_1/'.format(device_id)
+    if os.path.isdir(dump_path):
+        shutil.rmtree(dump_path)
+    add = Net()
+    add(Tensor(x), Tensor(y))
+    if context.get_context("device_target") == "Ascend":
+        output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.npy"
+    else:
+        output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.npy"
+    output_path = dump_file_path + output_name
+    real_path = os.path.realpath(output_path)
+    output = np.load(real_path)
+    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
+    assert output.dtype == expect.dtype
+    assert np.array_equal(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_e2e_dump_bin():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_e2e_dump_bin()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_e2e_dump_npy():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_e2e_dump_npy()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cpu_e2e_dump_bin():
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    run_e2e_dump_bin()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cpu_e2e_dump_npy():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target="CPU")
+    run_e2e_dump_npy()
+
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
@@ -116,11 +186,13 @@ def search_path(path, keyword):
             search_path(each_path, keyword)
     return None
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_async_dump_net_multi_layer_mode1():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_name = "test_async_dump_net_multi_layer_mode1"
     json_file = os.path.join(os.getcwd(), "{}.json".format(test_name))
     device_id = context.get_context("device_id")
@@ -131,7 +203,8 @@ def test_async_dump_net_multi_layer_mode1():
     bias = Tensor(np.ones((1000,)).astype(np.float32))
     net = ReluReduceMeanDenseRelu(weight, bias, 2048, 1000)
     criterion = SoftmaxCrossEntropyWithLogits(sparse=False)
-    optimizer = Momentum(learning_rate=0.1, momentum=0.1, params=filter(lambda  x: x.requires_grad, net.get_parameters()))
+    optimizer = Momentum(learning_rate=0.1, momentum=0.1,
+                         params=filter(lambda x: x.requires_grad, net.get_parameters()))
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()

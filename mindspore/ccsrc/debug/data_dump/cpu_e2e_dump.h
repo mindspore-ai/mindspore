@@ -29,9 +29,9 @@ class CPUE2eDump {
   CPUE2eDump() = default;
   ~CPUE2eDump() = default;
   // Dump data when task error.
-  static void DumpParametersAndConst(const session::KernelGraph *graph);
+  static void DumpParametersAndConst(const session::KernelGraph *graph, uint32_t graph_id);
 
-  static void DumpCNodeData(const CNodePtr &node);
+  static void DumpCNodeData(const CNodePtr &node, uint32_t graph_id);
 
  private:
   static void DumpCNodeInputs(const CNodePtr &node, const std::string &dump_path);

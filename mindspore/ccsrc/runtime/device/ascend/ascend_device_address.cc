@@ -664,10 +664,8 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
   } else {
     shape = shape + "_0";
   }
-  std::string file_extension = ".bin";
   if (trans_flag) {
-    std::string path =
-      filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt + file_extension;
+    std::string path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt;
     MS_LOG(INFO) << "E2E Dump path is " << path;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     size_t host_size = out_tensor->data().nbytes();
@@ -676,17 +674,16 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
     }
-    ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size);
+    ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size, host_shape, host_type);
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
     auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
     }
-    std::string path =
-      filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_ + file_extension;
+    std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
-    ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_);
+    ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape_, type_id_);
   }
 
   return ret;
