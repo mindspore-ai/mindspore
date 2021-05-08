@@ -42,9 +42,7 @@ class SplitCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  void Reshape();
   void LaunchSplit(T *input, T **output, size_t size);
-  void FreeTmpBuff();
   int64_t axis_;
   int64_t output_num_;
   int64_t axis_step_;
@@ -57,9 +55,6 @@ class SplitCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<int> input_shape_int_;
   TypeId dtype_{kTypeUnknown};
-
- protected:
-  SplitParameter *param_ = nullptr;
 };
 
 MS_REG_CPU_KERNEL_T(
