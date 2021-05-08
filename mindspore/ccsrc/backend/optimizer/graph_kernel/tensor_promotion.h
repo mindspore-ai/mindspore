@@ -25,7 +25,7 @@ class TensorPromotion : public Pass {
  public:
   TensorPromotion() : Pass("tensor_promotion") {}
   ~TensorPromotion() override = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 using TensorPromotionPtr = std::shared_ptr<TensorPromotion>;
 }  // namespace opt

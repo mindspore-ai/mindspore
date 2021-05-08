@@ -250,10 +250,10 @@ AnfNodePtr SimplifySelect(const AnfNodePtr &node) {
   return nullptr;
 }
 
-#define PERFORM_REPLACE(OldNode, NewNode, Graph, FLAG) \
-  if ((NewNode) != nullptr) {                          \
-    (Graph)->manager()->Replace((OldNode), (NewNode)); \
-    (FLAG) = true;                                     \
+#define PERFORM_REPLACE(OldNode, NewNode, Graph, FLAG)                    \
+  if ((NewNode) != nullptr) {                                             \
+    static_cast<void>((Graph)->manager()->Replace((OldNode), (NewNode))); \
+    (FLAG) = true;                                                        \
   }
 
 bool TryTransposeToReshape(const AnfNodePtr &node) {
@@ -261,11 +261,11 @@ bool TryTransposeToReshape(const AnfNodePtr &node) {
   auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   std::vector<int64_t> remove_one_perm;
   for (auto idx : perm) {
-    if (idx < 0 || IntToSize(idx) >= ori_shape.size()) {
+    if (idx < 0 || LongToSize(idx) >= ori_shape.size()) {
       MS_EXCEPTION(ValueError);
       return false;
     }
-    if (ori_shape[idx] != 1) {
+    if (ori_shape[LongToSize(idx)] != 1) {
       remove_one_perm.emplace_back(idx);
     }
   }
@@ -540,7 +540,9 @@ void EliminateEmptyGraph(const FuncGraphPtr &func_graph) {
       auto node = cnode->cast<AnfNodePtr>();
       auto new_node = MatchIdentity(node);
       if (new_node != nullptr) {
-        mng->Replace(node, new_node);
+        if (!mng->Replace(node, new_node)) {
+          MS_LOG(EXCEPTION) << "Manager replace node failed in arithmetic simplify";
+        }
       }
     }
   }

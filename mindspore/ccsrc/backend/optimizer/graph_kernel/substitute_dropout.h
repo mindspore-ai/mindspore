@@ -28,7 +28,7 @@ class SubstituteDropout : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  static unsigned int seed_;
+  static int64_t seed_;
 };
 }  // namespace opt
 }  // namespace mindspore

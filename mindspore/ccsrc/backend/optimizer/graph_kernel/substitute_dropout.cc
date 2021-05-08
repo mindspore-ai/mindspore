@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace opt {
-unsigned int SubstituteDropout::seed_ = time(NULL);
+int64_t SubstituteDropout::seed_ = time(nullptr);
 
 const BaseRef SubstituteDropout::DefinePattern() const {
   VarPtr Xs = std::make_shared<Var>();
@@ -72,7 +72,7 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
-  AbstractBasePtr old_abstract = cnode->abstract()->Clone();
+  auto old_abstract = cnode->abstract()->Clone();
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
@@ -98,8 +98,8 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
 
   // create new uniform_real_node
   auto uniform_real_node = func_graph->NewCNode(uniform_input);
-  SetNodeAttrSafely("seed", MakeValue(SizeToLong(seed_++)), uniform_real_node);
-  SetNodeAttrSafely("seed2", MakeValue(SizeToLong(seed_++)), uniform_real_node);
+  SetNodeAttrSafely("seed", MakeValue(seed_++), uniform_real_node);
+  SetNodeAttrSafely("seed2", MakeValue(seed_++), uniform_real_node);
   auto uniform_abstract = std::make_shared<abstract::AbstractTensor>(std::make_shared<Float>(32), shape_i64);
   uniform_real_node->set_abstract(uniform_abstract);
   uniform_real_node->set_kernel_info(std::make_shared<device::KernelInfo>());
