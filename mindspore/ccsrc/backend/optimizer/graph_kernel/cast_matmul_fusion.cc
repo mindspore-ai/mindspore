@@ -18,6 +18,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 
 namespace mindspore {
 namespace opt {
@@ -99,7 +100,7 @@ bool CastMatmulFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     // Cast cannot fuse with its input
-    if (IsFusibleOp((cast_node->cast<CNodePtr>())->input(1))) {
+    if (IsClusterableOp((cast_node->cast<CNodePtr>())->input(1))) {
       continue;
     }
 

@@ -25,7 +25,7 @@
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
-#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
@@ -65,8 +65,8 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   // Expand complex basic kernels to composite kernels
   pm->AddPass(std::make_shared<GraphKernelExpander>());
 
-  // Fuse basic kernels and composite kernels
-  pm->AddPass(std::make_shared<BasicOpsFusion>());
+  // Cluster basic kernels and composite kernels
+  pm->AddPass(std::make_shared<GraphKernelCluster>());
 
   // Eliminate the outputs without external user
   pm->AddPass(std::make_shared<EliminateRedundantOutput>());
