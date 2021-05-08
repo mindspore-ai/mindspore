@@ -24,7 +24,7 @@ checkpoint_path: './checkpoint/'
 checkpoint_file_path: 'train_textcnn-4_149.ckpt'
 word_len: 51
 vec_length: 40
-base_lr: 1e-3
+base_lr: 5e-3
 
 # Export options
 device_id: 0
