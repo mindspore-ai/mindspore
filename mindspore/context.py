@@ -519,7 +519,7 @@ def set_context(**kwargs):
     Set context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
-    the "Ascend" device target will be used by default. GRAPH_MODE or
+    it will automatic acquisition according to device target by default. GRAPH_MODE or
     PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
     mode is PYNATIVE_MODE.
 
@@ -553,7 +553,7 @@ def set_context(**kwargs):
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
-        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU". Default: "Ascend".
+        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should be no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
@@ -685,6 +685,7 @@ def set_context(**kwargs):
 def get_context(attr_key):
     """
     Get context attribute value according to the input key.
+    If some attribute are not set, it will be automatically obtained.
 
     Args:
         attr_key (str): The key of the attribute.
