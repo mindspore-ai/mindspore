@@ -36,7 +36,8 @@ class AdamCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  bool use_nesterov{false};
+  bool use_nesterov_{false};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(Adam,

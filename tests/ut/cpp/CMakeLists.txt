@@ -25,6 +25,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 include_directories(${CUDA_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
 link_directories(${MS_CCSRC_BUILD_PATH})
@@ -153,6 +154,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/transform/graph_ir/op_declare/*.cc"
         "../../../mindspore/ccsrc/ps/*.cc"
         "../../../mindspore/ccsrc/profiler/device/common/*.cc"
+        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/adam_fp32.c"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST

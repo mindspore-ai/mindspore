@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/adam_cpu_kernel.h"
-
 #include <cmath>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "backend/kernel_compiler/cpu/adam_cpu_kernel.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/fp32/adam_fp32.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -25,23 +26,31 @@ namespace kernel {
 template <typename T>
 void AdamCPUKernel::LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
                                size_t size) {
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      m[i] += (gradient[i] - m[i]) * (1 - beta1);
-      v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
-      if (use_nesterov) {
-        var[i] -= lr * (m[i] * beta1 + (1 - beta1) * gradient[i]) / (std::sqrt(v[i]) + epsilon);
-      } else {
-        var[i] -= lr * m[i] / (std::sqrt(v[i]) + epsilon);
+  std::function<void(size_t, size_t)> task;
+  if (dtype_ == kNumberTypeFloat32) {
+    task = [&](size_t start, size_t end) {
+      AdamFp32(var, m, v, lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
+    };
+  } else {
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        m[i] += (gradient[i] - m[i]) * (1 - beta1);
+        v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
+        if (use_nesterov_) {
+          var[i] -= lr * (m[i] * beta1 + (1 - beta1) * gradient[i]) / (std::sqrt(v[i]) + epsilon);
+        } else {
+          var[i] -= lr * m[i] / (std::sqrt(v[i]) + epsilon);
+        }
       }
-    }
-  };
+    };
+  }
   CPUKernelUtils::ParallelFor(task, size);
 }
 
 void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_num != 10) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Adam needs 10 inputs.";
   }
@@ -49,7 +58,7 @@ void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (output_num != 3) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but Adam needs 3 outputs.";
   }
-  use_nesterov = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
+  use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
 }
 
 bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -83,7 +92,6 @@ bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "The beta1_power can't be set 1.";
   }
   float new_lr = lr * std::sqrt(1.0 - beta2_power) / (1 - beta1_power);
-
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
   LaunchAdam<float>(var, m, v, new_lr, beta1, beta2, epsilon, gradient, lens);

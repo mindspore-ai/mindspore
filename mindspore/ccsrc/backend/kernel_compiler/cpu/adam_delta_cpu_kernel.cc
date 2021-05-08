@@ -13,59 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/adam_delta_cpu_kernel.h"
 #include <thread>
 #include <vector>
 #include <string>
 #include <memory>
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "backend/kernel_compiler/cpu/adam_delta_cpu_kernel.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/fp32/adam_fp32.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t kAdamDeltaInputSize = 9;
-namespace {
-struct ComputeParam {
-  float *delta_{nullptr};
-  float *m_{nullptr};
-  float *v_{nullptr};
-  float *grad_{nullptr};
-  float beta1_{0};
-  float beta2_{0};
-  float epsilon_{0};
-  float lr_{0};
-  bool use_nesterov_{0};
-};
-
-void ComputeWeightDelta(const std::shared_ptr<ComputeParam> &input_params, size_t start, size_t end) {
-  MS_EXCEPTION_IF_NULL(input_params);
-  MS_EXCEPTION_IF_NULL(input_params->delta_);
-  MS_EXCEPTION_IF_NULL(input_params->m_);
-  MS_EXCEPTION_IF_NULL(input_params->v_);
-  MS_EXCEPTION_IF_NULL(input_params->grad_);
-  auto delta = input_params->delta_;
-  auto m = input_params->m_;
-  auto v = input_params->v_;
-  auto lr = input_params->lr_;
-  auto beta1 = input_params->beta1_;
-  auto beta2 = input_params->beta2_;
-  auto epsilon = input_params->epsilon_;
-  auto use_nesterov = input_params->use_nesterov_;
-  auto grad = input_params->grad_;
-  for (size_t i = start; i < end; ++i) {
-    m[i] *= beta1;
-    v[i] *= beta2;
-    m[i] += (1 - beta1) * grad[i];
-    v[i] += (1 - beta2) * grad[i] * grad[i];
-    if (use_nesterov) {
-      delta[i] = -lr * (m[i] * beta1 + (1 - beta1) * grad[i]) / (std::sqrt(v[i]) + epsilon);
-    } else {
-      delta[i] = -lr * m[i] / (std::sqrt(v[i]) + epsilon);
-    }
+template <typename T>
+void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon,
+                                         const T *gradient, size_t size) {
+  std::function<void(size_t, size_t)> task;
+  if (dtype_ == kNumberTypeFloat32) {
+    task = [&](size_t start, size_t end) {
+      AdamDeltaFp32(delta, m, v, lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
+    };
+  } else {
+    task = [&](size_t start, size_t end) {
+      for (size_t c1 = start; c1 < end; ++c1) {
+        m[c1] *= beta1;
+        m[c1] += (1 - beta1) * gradient[c1];
+        v[c1] *= beta2;
+        v[c1] += (1 - beta2) * gradient[c1] * gradient[c1];
+        if (use_nesterov_) {
+          delta[c1] = -lr * (m[c1] * beta1 + (1 - beta1) * gradient[c1]) / (std::sqrt(v[c1]) + epsilon);
+        } else {
+          delta[c1] = -lr * m[c1] / (std::sqrt(v[c1]) + epsilon);
+        }
+      }
+    };
   }
+  CPUKernelUtils::ParallelFor(task, size);
 }
-}  // namespace
 
 void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -73,6 +59,7 @@ void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 8);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (!IsSameShape(delta_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "Delta and m should have the same shape";
   }
@@ -134,42 +121,15 @@ bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto epsilon = reinterpret_cast<float *>(inputs[7]->addr)[0];
   auto grad = reinterpret_cast<float *>(inputs[8]->addr);
   auto delta = reinterpret_cast<float *>(outputs[0]->addr);
-  lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
-  size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  if (elem_num_ < thread_num) {
-    thread_num = elem_num_;
-  }
-  std::vector<common::Task> tasks;
-  std::vector<std::shared_ptr<ComputeParam>> thread_params;
-  tasks.reserve(thread_num);
+  MS_EXCEPTION_IF_NULL(m);
+  MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(grad);
+  MS_EXCEPTION_IF_NULL(delta);
 
-  size_t end = 0;
-  size_t offset = elem_num_ / thread_num;
-  size_t left = elem_num_ % thread_num;
-  for (size_t i = 0; i < thread_num; ++i) {
-    auto params = std::make_shared<ComputeParam>();
-    params->delta_ = delta;
-    params->m_ = m;
-    params->v_ = v;
-    params->grad_ = grad;
-    params->beta1_ = beta1;
-    params->beta2_ = beta2;
-    params->use_nesterov_ = use_nesterov_;
-    params->lr_ = lr;
-    params->epsilon_ = epsilon;
-    size_t start = end;
-    end = start + offset;
-    if (i < left) {
-      end += 1;
-    }
-    auto task = [&params, start, end]() {
-      ComputeWeightDelta(params, start, end);
-      return common::SUCCESS;
-    };
-    tasks.emplace_back(task);
-    thread_params.emplace_back(params);
-  }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
+  // multithreading
+  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
+  LaunchAdamDelta<float>(delta, m, v, lr, beta1, beta2, epsilon, grad, lens);
   return true;
 }
 }  // namespace kernel

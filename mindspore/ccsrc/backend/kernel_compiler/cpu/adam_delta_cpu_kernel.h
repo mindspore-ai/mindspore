@@ -32,8 +32,12 @@ class AdamDeltaCPUKernel : public CPUKernel {
  protected:
   void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                    const std::vector<AddressPtr> &outputs) const;
+  template <typename T>
+  void LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
+                       size_t size);
   bool use_nesterov_{false};
   size_t elem_num_{0};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(AdamNoUpdateParam,
