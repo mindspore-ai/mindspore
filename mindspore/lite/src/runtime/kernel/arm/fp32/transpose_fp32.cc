@@ -40,13 +40,22 @@ int TransposeCPUKernel::ReSize() {
   if (in_tensors_.size() == 2) {
     param->num_axes_ = in_tensors_.at(1)->ElementsNum();
   }
-  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_)) {
-    return RET_OK;
+  int trans3d[3] = {0, 2, 1};
+  int *perm_data = nullptr;
+  auto input_tensor = in_tensors_.at(kInputIndex);
+  if (input_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
+    if (input_tensor->shape().size() == 3 && param->num_axes_ == 4) {
+      param->num_axes_ = 3;
+      perm_data = trans3d;
+    } else {
+      return RET_OK;
+    }
+  } else {
+    MS_ASSERT(in_tensors_.size() == 2);
+    auto perm_tensor = in_tensors_.at(1);
+    perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
   }
-  // get perm data
-  MS_ASSERT(in_tensors_.size() == 2);
-  auto perm_tensor = in_tensors_.at(1);
-  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  // set perm data
   MS_ASSERT(perm_data != nullptr);
   for (int i = 0; i < param->num_axes_; ++i) {
     param->perm_[i] = perm_data[i];
@@ -143,18 +152,6 @@ int TransposeCPUKernel::Run() {
   if (in_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
     memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
     return RET_OK;
-  }
-  if (in_tensors_.size() == 2) {
-    auto input_perm = in_tensors_.at(1);
-    MS_ASSERT(input_perm != nullptr);
-    MS_ASSERT(input_perm->data_c() != nullptr);
-    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
-    for (int i = 0; i < input_perm->ElementsNum(); ++i) {
-      param_->perm_[i] = perm_data[i];
-    }
-    for (int i = input_perm->ElementsNum(); i < MAX_TRANSPOSE_DIM_SIZE; ++i) {
-      param_->perm_[i] = 0;
-    }
   }
   thread_count_ = op_parameter_->thread_num_;
   GetNHNCTransposeFunc(in_tensor, out_tensor, param_);
