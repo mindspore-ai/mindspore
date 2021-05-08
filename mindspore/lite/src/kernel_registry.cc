@@ -143,7 +143,7 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   return nullptr;
 }
 
-kernel::CreateKernel KernelRegistry::GetDelegateCreator(const kernel::KernelKey &desc) {
+kernel::CreateKernel KernelRegistry::GetProviderCreator(const kernel::KernelKey &desc) {
   kernel::CreateKernel creator = nullptr;
   auto index = GetFuncIndex(desc);
   if (index >= kKernelMaxNum || index < 0) {
@@ -239,7 +239,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       return RET_ERROR;
     }
   } else {
-    auto creator = GetDelegateCreator(key);
+    auto creator = GetProviderCreator(key);
     if (creator == nullptr) {
       return RET_NOT_SUPPORT;
     }
