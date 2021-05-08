@@ -48,6 +48,7 @@ class ActorMgr {
 
   void Finalize();
   void Initialize(int threadCount);
+  void TerminateCurThreads(int threadCount);
   void RemoveActor(const std::string &name);
   ActorReference GetActor(const AID &id);
   const std::string GetUrl(const std::string &protocol = "tcp");

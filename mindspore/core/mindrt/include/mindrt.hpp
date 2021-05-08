@@ -33,6 +33,9 @@ struct MindrtAddress {
 int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv = "", const std::string &udpUrl = "",
                const std::string &udpUrlAdv = "", int threadCount = 0);
 
+// brief terminate the threads for current session
+void TerminateCurThreads(int threadCount = 0);
+
 // brief spawn a process to run an actor
 AID Spawn(ActorReference actor, bool sharedThread = true, bool start = true);
 

@@ -100,6 +100,8 @@ void ActorMgr::TerminateAll() {
 
 void ActorMgr::Initialize(int threadCount) { threadPool.AddThread(threadCount); }
 
+void ActorMgr::TerminateCurThreads(int threadCount) { threadPool.TerminateThread(threadCount); }
+
 void ActorMgr::Finalize() {
   this->TerminateAll();
   MS_LOG(INFO) << "mindrt Actors finish exiting.";

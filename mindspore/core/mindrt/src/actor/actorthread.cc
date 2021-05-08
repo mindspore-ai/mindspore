@@ -59,7 +59,8 @@ ActorThread::ActorThread() : readyActors(), workers() {
 ActorThread::~ActorThread() {}
 void ActorThread::AddThread(int threadCount) {
   std::unique_lock<std::mutex> lock(initLock_);
-  for (int i = 0; i < threadCount; ++i) {
+  int threadsNeed = threadCount - (workers.size() - threadsInUse_);
+  for (int i = 0; i < threadsNeed; ++i) {
     if (workers.size() >= maxThreads_) {
       MS_LOG(DEBUG) << "threads number in mindrt reach upper limit. maxThreads:" << maxThreads_;
       break;
@@ -68,8 +69,15 @@ void ActorThread::AddThread(int threadCount) {
     MINDRT_OOM_EXIT(worker)
 
     workers.push_back(std::move(worker));
+    threadsInUse_ += 1;
   }
 }
+
+void ActorThread::TerminateThread(int threadCount) {
+  // temp scheme, not actually terminate the threads when current session destructs
+  threadsInUse_ -= threadCount;
+}
+
 void ActorThread::Finalize() {
   MS_LOG(INFO) << "Actor's threads are exiting.";
   // terminate all thread; enqueue nullptr actor to terminate;
