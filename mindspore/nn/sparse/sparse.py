@@ -29,20 +29,24 @@ class SparseToDense(Cell):
     Returns:
         Tensor, the tensor converted.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
-        >>> class SparseToDenseCell(nn.Cell):
-        ...     def __init__(self, dense_shape):
-        ...         super(SparseToDenseCell, self).__init__()
-        ...         self.dense_shape = dense_shape
-        ...         self.sparse_to_dense = nn.SparseToDense()
-        ...     def construct(self, indices, values):
-        ...         sparse = SparseTensor(indices, values, self.dense_shape)
-        ...         return self.sparse_to_dense(sparse)
-        ...
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, SparseTensor
+        >>> import mindspore.nn as nn
+
         >>> indices = Tensor([[0, 1], [1, 2]])
-        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> values = Tensor([1, 2], dtype=ms.int32)
         >>> dense_shape = (3, 4)
-        >>> SparseToDenseCell(dense_shape)(indices, values)
+        >>> sparse_tensor = SparseTensor(indices, values, dense_shape)
+        >>> sparse_to_dense = nn.SparseToDense()
+        >>> result = sparse_to_dense(sparse_tensor)
+        >>> print(result)
+        [[0 1 0 0]
+         [0 0 2 0]
+         [0 0 0 0]]
     """
     def __init__(self):
         super(SparseToDense, self).__init__()
