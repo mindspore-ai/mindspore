@@ -73,11 +73,13 @@ Users are free to choose whether to use the LEARNED_SCALE optimize option for qu
 ```python
 ├── mobileNetv2_quant
   ├── Readme.md     # descriptions about MobileNetV2-Quant
+  ├── ascend310_infer   # application for 310 inference
   ├── scripts
   │   ├──run_train.sh    # shell script for train on Ascend or GPU
   │   ├──run_infer.sh    # shell script for evaluation on Ascend or GPU
   │   ├──run_lsq_train.sh    # shell script for train (using the LEARNED_SCALE optimize option) on Ascend or GPU
   │   ├──run_lsq_infer.sh    # shell script for evaluation (using the LEARNED_SCALE optimize option) on Ascend or GPU
+  │   ├──run_infer_310.sh   # shell script for 310 inference
   ├── src
   │   ├──config.py      # parameter configuration
   │   ├──dataset.py     # creating dataset
@@ -87,7 +89,9 @@ Users are free to choose whether to use the LEARNED_SCALE optimize option for qu
   │   ├──utils.py       # supply the monitor module
   ├── train.py      # training script
   ├── eval.py       # evaluation script
-  ├── export.py     # export checkpoint files into air/onnx
+  ├── export.py     # export checkpoint files into air/mindir
+  ├── export_bin_file.py   # export bin file of ImageNet for 310 inference
+  ├── postprocess.py       # post process for 310 inference
 ```
 
 ## [Script Parameters](#contents)
@@ -230,6 +234,28 @@ python export.py --checkpoint_path [CKPT_PATH] --file_format [EXPORT_FORMAT] --d
 
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
 `OptimizeOption` should be in ["QAT", "LEARNED_SCALE"].
+
+## [Ascend 310 inference](#contents)
+
+You should export AIR model at Ascend 910 before  running the command below.
+You can use export_bin_file.py to export ImageNet bin and label for 310 inference.
+
+```shell
+python export_bin_file.py --dataset_dir [EVAL_DATASET_PATH] --save_dir [SAVE_PATH]
+```
+
+Run run_infer_310.sh and get the accuracy：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+You can view the results through the file "acc.log". The accuracy of the test dataset will be as follows:
+
+```bash
+'Accuracy':0.7221
+```
 
 # [Model description](#contents)
 

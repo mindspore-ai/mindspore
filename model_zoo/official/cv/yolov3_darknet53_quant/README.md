@@ -106,11 +106,13 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
 .
 └─yolov3_darknet53_quant
   ├─README.md
+  ├─ascend310_infer   # application for 310 inference
   ├─mindspore_hub_conf.md             # config for mindspore hub
   ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
     └─run_eval.sh                     # launch evaluating in ascend
+    └─run_infer_310.sh                # shell script for 310 inference
   ├─src
     ├─__init__.py                     # python init file
     ├─config.py                       # parameter configuration
@@ -126,6 +128,8 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
     ├─yolo_dataset.py                 # create dataset for YOLOV3
   ├─eval.py                           # eval net
   └─train.py                          # train net
+  └─export_bin_file.py                # export bin file of coco2014 for 310 inference
+  └─postprocess.py                    # post process for 310 inference
 ```
 
 ### [Script Parameters](#contents)
@@ -255,6 +259,48 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.429
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.232
 Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.450
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
+```
+
+## [Model Export](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+
+## [Ascend 310 inference](#contents)
+
+You should export AIR model at Ascend 910 before  running the command below.
+You can use export_bin_file.py to export coco2014 bin, image_shape.npy and image_id.npy for 310 inference.
+
+```shell
+python export_bin_file.py --data_dir [DATASET_PATH] --save_path [SAVE_PATH]
+```
+
+Run run_infer_310.sh and get the accuracy：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANNO_PATH] [IMAGESHAPE_PATH] [IMAGEID_PATH] [DEVICE_ID]
+```
+
+You can view the results through the file "acc.log". The accuracy of the test dataset will be as follows:
+
+```bash
+=============coco eval reulst=========
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.306
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.528
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.315
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.122
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.322
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.426
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.259
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.398
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.423
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.226
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.442
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.555
 ```
 
 ## [Model Description](#contents)

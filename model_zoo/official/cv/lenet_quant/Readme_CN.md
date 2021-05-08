@@ -90,6 +90,9 @@ python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_
     ├── README.md                        // 所有型号的描述
     ├── lenet_quant
         ├── README.md                    // LeNet-Quant描述
+        ├── ascend310_infer              //实现310推理源代码
+        ├── scripts
+            ├── run_infer_310.sh         // Ascend推理shell脚本
         ├──src
         │   ├── config.py                // 参数配置
         │   ├── dataset.py               // 创建数据集
@@ -98,7 +101,9 @@ python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_
         │   ├── loss_monitor.py          // 监控网络损失和其他数据
         ├── requirements.txt             // 需要的包
         ├── train.py               // 使用Ascend训练LeNet-Quant网络
-        ├── eval.py                // 使用Ascend评估LeNet-Quant网络d
+        ├── eval.py                // 使用Ascend评估LeNet-Quant网络
+        ├── export_bin_file.py     // 导出MNIST数据集的bin文件用于310推理
+        ├── postprocess.py         // 310推理后处理脚本
 ```
 
 ### 脚本参数
@@ -154,6 +159,34 @@ python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_937.ckpt > l
 ```bash
 # grep "Accuracy:" log.txt
 'Accuracy':0.9842
+```
+
+### 模型导出
+
+```shell
+python export.py --ckpt_path [CKPT_PATH] --data_path [DATA_PATH] --device_target [PLATFORM]
+```
+
+### Ascend 310推理
+
+在推理之前需要在昇腾910环境上完成AIR模型的导出。
+并使用export_bin_file.py导出MNIST数据集的bin文件和对应的label文件：
+
+```shell
+python export_bin_file.py --dataset_dir [DATASET_PATH] --save_dir [SAVE_PATH]
+```
+
+执行推理并得到推理精度：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+您可以通过acc.log文件查看结果。推理准确性如下：
+
+```bash
+'Accuracy':0.9883
 ```
 
 ## 模型描述

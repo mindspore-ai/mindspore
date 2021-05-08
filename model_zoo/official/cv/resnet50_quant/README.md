@@ -73,9 +73,11 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ```python
 ├── resnet50_quant
   ├── README.md     # descriptions about Resnet50-Quant
+  ├── ascend310_infer   # application for 310 inference
   ├── scripts
   │   ├──run_train.sh   # shell script for train on Ascend
   │   ├──run_infer.sh   # shell script for evaluation on Ascend
+  │   ├──run_infer_310.sh   # shell script for 310 inference
   ├── models
   │   ├──resnet_quant.py           # define the network model of resnet50-quant
   │   ├──resnet_quant_manual.py    # define the manually quantized network model of resnet50-quant
@@ -88,6 +90,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── train.py      # training script
   ├── eval.py       # evaluation script
   ├── export.py     # export script
+  ├── export_bin_file.py   # export bin file of ImageNet for 310 inference
+  ├── postprocess.py       # post process for 310 inference
 
 ```
 
@@ -167,6 +171,36 @@ Inference result will be stored in the example path, you can find result like th
 
 ```bash
 result: {'acc': 0.76576314102564111}
+```
+
+## [Model Export](#contents)
+
+```shell
+python export.py --checkpoint_path [CKPT_PATH] --file_format [EXPORT_FORMAT] --device_target [PLATFORM]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+
+## [Ascend 310 inference](#contents)
+
+You should export AIR model at Ascend 910 before  running the command below.
+You can use export_bin_file.py to export ImageNet bin and label for 310 inference.
+
+```shell
+python export_bin_file.py --dataset_dir [EVAL_DATASET_PATH] --save_dir [SAVE_PATH]
+```
+
+Run run_infer_310.sh and get the accuracy：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+You can view the results through the file "acc.log". The accuracy of the test dataset will be as follows:
+
+```bash
+'Accuracy':0.77052
 ```
 
 # [Model description](#contents)
