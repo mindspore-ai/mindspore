@@ -89,7 +89,7 @@ TEST_F(TestOpenCL_MatMul, 3D) {
              param, fp16_enable);
   }
 }
-
+// Check and optimize
 TEST_F(TestOpenCL_MatMul, ActWeightTransposeB3D) {
   int a = 2;
   int m = 2;
@@ -109,7 +109,7 @@ TEST_F(TestOpenCL_MatMul, ActWeightTransposeB3D) {
              fp16_enable);
   }
 }
-
+// Check and optimize
 TEST_F(TestOpenCL_MatMul, ActWeight3D) {
   int a = 2;
   int m = 2;
