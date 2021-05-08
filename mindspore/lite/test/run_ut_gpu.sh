@@ -7,8 +7,8 @@ echo ${basepath}
 while getopts "r:d:" opt; do
     case ${opt} in
         r)
-            release_path=${OPTARG}
-            echo "release_path is ${OPTARG}"
+            lite_test_path=${OPTARG}
+            echo "lite_test_path is ${OPTARG}"
             ;;
         d)
             device_id=${OPTARG}
@@ -24,7 +24,7 @@ ut_test_path=${basepath}/ut_test
 rm -rf ${ut_test_path}
 mkdir -p ${ut_test_path}
 
-run_ut_result_file=${basepath}/run_benchmark_result.txt
+run_ut_result_file=${basepath}/run_gpu_ut_result.txt
 echo ' ' > ${run_ut_result_file}
 run_gpu_ut_log_file=${basepath}/run_gpu_ut_log.txt
 echo 'run gpu ut logs: ' > ${run_gpu_ut_log_file}
@@ -32,9 +32,9 @@ echo 'run gpu ut logs: ' > ${run_gpu_ut_log_file}
 ut_gpu_config=${basepath}/ut_gpu.cfg
 
 function Run_gpu_ut() {
-    cd ${release_path} || exit 1
+    cd ${lite_test_path} || exit 1
 
-    cp -a ${release_path}/lite-test ${ut_test_path}/lite-test || exit 1
+    cp -a ${lite_test_path}/lite-test ${ut_test_path}/lite-test || exit 1
     cp -r ${basepath}/ut/src/runtime/kernel/opencl/test_data ${ut_test_path} || exit 1
 
     # adb push all needed files to the phone
