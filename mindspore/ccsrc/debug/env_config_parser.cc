@@ -104,6 +104,9 @@ void EnvConfigParser::ParseFromEnv() {
     has_rdr_setting_ = true;
     std::string path = path_env.value();
     if (!path.empty()) {
+      if (path.back() != '/') {
+        path += '/';
+      }
       rdr_path_ = path;
     }
   }
