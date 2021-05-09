@@ -235,7 +235,7 @@ void PSContext::GenerateResetterRound() {
   }
 
   binary_server_context = (is_parameter_server_mode << 0) | (is_federated_learning_mode << 1) |
-                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3) | (worker_overwrite_weights_ << 4);
+                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3) | (worker_upload_weights_ << 4);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
   } else {
@@ -277,11 +277,11 @@ void PSContext::set_client_batch_size(uint64_t client_batch_size) { client_batch
 
 uint64_t PSContext::client_batch_size() const { return client_batch_size_; }
 
-void PSContext::set_worker_overwrite_weights(uint64_t worker_overwrite_weights) {
-  worker_overwrite_weights_ = worker_overwrite_weights;
+void PSContext::set_worker_upload_weights(uint64_t worker_upload_weights) {
+  worker_upload_weights_ = worker_upload_weights;
 }
 
-uint64_t PSContext::worker_overwrite_weights() const { return worker_overwrite_weights_; }
+uint64_t PSContext::worker_upload_weights() const { return worker_upload_weights_; }
 
 void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
 

@@ -624,7 +624,6 @@ bool StartServerAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
   size_t worker_num = ps::PSContext::instance()->initial_worker_num();
-  size_t server_num = ps::PSContext::instance()->initial_server_num();
   uint64_t fl_server_port = ps::PSContext::instance()->fl_server_port();
 
   // Update model threshold is a certain ratio of start_fl_job threshold.
@@ -633,17 +632,9 @@ bool StartServerAction(const ResourcePtr &res) {
   float percent_for_update_model = 1;
   size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * percent_for_update_model));
 
-  std::vector<ps::server::RoundConfig> rounds_config = {
-    {"startFLJob", false, 3000, false, start_fl_job_threshold},
-    {"updateModel", false, 3000, false, update_model_threshold},
-    {"getModel", false, 3000},
-    {"asyncUpdateModel"},
-    {"asyncGetModel"},
-    {"push", false, 3000, true, worker_num},
-    {"pull", false, 3000, true, worker_num},
-    {"getWeightsByKey", false, 3000, true, 1},
-    {"overwriteWeightsByKey", false, 3000, true, server_num},
-  };
+  std::vector<ps::server::RoundConfig> rounds_config = {{"startFLJob", false, 3000, true, start_fl_job_threshold},
+                                                        {"updateModel", false, 3000, true, update_model_threshold},
+                                                        {"getModel", false, 3000}};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

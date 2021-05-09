@@ -58,6 +58,9 @@ class MemoryRegister {
     } else if (typeid(T) == typeid(size_t)) {
       auto uint64_arr = CastUniquePtr<size_t, T>(array);
       StoreUint64Array(&uint64_arr);
+    } else if (typeid(T) == typeid(char)) {
+      auto char_arr = CastUniquePtr<char, T>(array);
+      StoreCharArray(&char_arr);
     } else {
       MS_LOG(ERROR) << "MemoryRegister does not support type " << typeid(T).name();
       return;
@@ -72,10 +75,12 @@ class MemoryRegister {
   std::vector<std::unique_ptr<float[]>> float_arrays_;
   std::vector<std::unique_ptr<int[]>> int32_arrays_;
   std::vector<std::unique_ptr<size_t[]>> uint64_arrays_;
+  std::vector<std::unique_ptr<char[]>> char_arrays_;
 
   void StoreInt32Array(std::unique_ptr<int[]> *array);
   void StoreFloatArray(std::unique_ptr<float[]> *array);
   void StoreUint64Array(std::unique_ptr<size_t[]> *array);
+  void StoreCharArray(std::unique_ptr<char[]> *array);
 
   template <typename T, typename S>
   std::unique_ptr<T[]> CastUniquePtr(std::unique_ptr<S[]> *array) {

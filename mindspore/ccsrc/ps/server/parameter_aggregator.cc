@@ -183,10 +183,10 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
 }
 
 bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
-  // if (PSContext::instance()->server_mode() == kServerModeFL) {
-  //   MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
-  //   return false;
-  // }
+  if (PSContext::instance()->server_mode() == kServerModeFL) {
+    MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(cnode);
   const std::string &name = AnfAlgo::GetCNodeName(cnode);
   auto optimizer_kernel = kernel::OptimizerKernelFactory::GetInstance().Create(name, cnode);
@@ -275,6 +275,7 @@ bool ParameterAggregator::GenerateAggregationKernelParams(const std::shared_ptr<
   std::transform(output_names.begin(), output_names.end(), std::back_inserter(aggr_params.outputs),
                  [&](const std::string &name) { return memory_register->addresses()[name]; });
 
+  aggr_kernel->SetParameterAddress(aggr_params.inputs, aggr_params.workspace, aggr_params.outputs);
   aggregation_kernel_parameters_.push_back(std::make_pair(aggr_kernel, aggr_params));
   return true;
 }
@@ -302,7 +303,16 @@ bool ParameterAggregator::GenerateOptimizerKernelParams(const std::shared_ptr<ke
 }
 
 std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &cnode) {
-  std::vector<std::string> aggregation_algorithm = {kFedAvg};
+  std::vector<std::string> aggregation_algorithm = {};
+  if (PSContext::instance()->server_mode() == kServerModeFL ||
+      PSContext::instance()->server_mode() == kServerModeHybrid) {
+    aggregation_algorithm.push_back("FedAvg");
+  } else if (PSContext::instance()->server_mode() == kServerModePS) {
+    aggregation_algorithm.push_back("DenseGradAccum");
+  } else {
+    MS_LOG(ERROR) << "Server doesn't support mode " << PSContext::instance()->server_mode();
+  }
+
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
   return aggregation_algorithm;
 }
