@@ -29,6 +29,8 @@ void MemoryRegister::StoreFloatArray(std::unique_ptr<float[]> *array) { float_ar
 void MemoryRegister::StoreInt32Array(std::unique_ptr<int[]> *array) { int32_arrays_.push_back(std::move(*array)); }
 
 void MemoryRegister::StoreUint64Array(std::unique_ptr<size_t[]> *array) { uint64_arrays_.push_back(std::move(*array)); }
+
+void MemoryRegister::StoreCharArray(std::unique_ptr<char[]> *array) { char_arrays_.push_back(std::move(*array)); }
 }  // namespace server
 }  // namespace ps
 }  // namespace mindspore

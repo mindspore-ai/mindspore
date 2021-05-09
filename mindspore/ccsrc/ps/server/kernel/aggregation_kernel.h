@@ -58,6 +58,12 @@ class AggregationKernel : public CPUKernel {
 
   virtual bool IsAggregationDone() = 0;
 
+  // Some kernels should know the inputs/workspace/outputs addresses at initializing phase. For example, FedAvgKernel.
+  virtual void SetParameterAddress(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs) {
+    return;
+  }
+
   // Setter and getter of kernels parameters information.
   void set_params_info(const ParamsInfo &params_info) { params_info_ = params_info; }
   const std::vector<std::string> &input_names() { return params_info_.inputs_names(); }

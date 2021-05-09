@@ -44,6 +44,7 @@ class FedAvgKernel : public AggregationKernel {
  public:
   FedAvgKernel() : participated_(false) {}
   ~FedAvgKernel() override = default;
+
   void InitKernel(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     std::string cnode_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -97,6 +98,7 @@ class FedAvgKernel : public AggregationKernel {
     DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler, last_cnt_handler});
     return;
   }
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     std::unique_lock<std::mutex> lock(weight_mutex_);
@@ -125,14 +127,25 @@ class FedAvgKernel : public AggregationKernel {
       name_, std::to_string(DistributedCountService::GetInstance().local_rank()) + "_" + std::to_string(accum_count_));
     return true;
   }
-  void Reset() {
+
+  void Reset() override {
     accum_count_ = 0;
     done_ = false;
     participated_ = false;
     DistributedCountService::GetInstance().ResetCounter(name_);
     return;
   }
-  bool IsAggregationDone() { return done_; }
+
+  bool IsAggregationDone() override { return done_; }
+
+  void SetParameterAddress(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs) {
+    weight_addr_ = inputs[0];
+    data_size_addr_ = inputs[1];
+    new_weight_addr_ = inputs[2];
+    new_data_size_addr_ = inputs[3];
+    return;
+  }
 
  private:
   void GenerateReuseKernelNodeInfo() override {

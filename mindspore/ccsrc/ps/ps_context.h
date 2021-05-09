@@ -132,8 +132,8 @@ class PSContext {
   uint64_t client_batch_size() const;
 
   // Set true if worker will overwrite weights on server. Used in hybrid training.
-  void set_worker_overwrite_weights(uint64_t worker_overwrite_weights);
-  uint64_t worker_overwrite_weights() const;
+  void set_worker_upload_weights(uint64_t worker_upload_weights);
+  uint64_t worker_upload_weights() const;
 
   // Set true if using secure aggregation for federated learning.
   void set_secure_aggregation(bool secure_aggregation);
@@ -149,7 +149,19 @@ class PSContext {
         worker_num_(0),
         server_num_(0),
         scheduler_host_(""),
-        scheduler_port_(0) {}
+        scheduler_port_(0),
+        role_(kEnvRoleOfNotPS),
+        server_mode_(""),
+        resetter_round_(ResetterRound::kNoNeedToReset),
+        fl_server_port_(0),
+        fl_client_enable_(false),
+        fl_name_(""),
+        start_fl_job_threshold_(0),
+        fl_iteration_num_(0),
+        client_epoch_num_(0),
+        client_batch_size_(0),
+        secure_aggregation_(false),
+        worker_upload_weights_(false) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -160,22 +172,42 @@ class PSContext {
   std::string scheduler_host_;
   uint16_t scheduler_port_;
 
+  // The server process's role.
   std::string role_;
 
-  // Members for federated learning.
+  // Server mode which could be Parameter Server, Federated Learning and Hybrid Training mode.
   std::string server_mode_;
-  ResetterRound resetter_round_;
-  uint16_t fl_server_port_;
-  bool fl_client_enable_;
-  std::string fl_name_;
-  size_t start_fl_job_threshold_;
-  uint64_t fl_iteration_num_;
-  uint64_t client_epoch_num_;
-  uint64_t client_batch_size_;
-  bool worker_overwrite_weights_;
 
-  // Federated learning security.
+  // The round which will reset the iteration. Used in federated learning for now.
+  ResetterRound resetter_round_;
+
+  // Http port of federated learning server.
+  uint16_t fl_server_port_;
+
+  // Whether this process is the federated client. Used in cross-silo scenario of federated learning.
+  bool fl_client_enable_;
+
+  // Federated learning job name.
+  std::string fl_name_;
+
+  // The threshold count of startFLJob round. Used in federated learning for now.
+  size_t start_fl_job_threshold_;
+
+  // Iteration number of federeated learning, which is the number of interactions between client and server.
+  uint64_t fl_iteration_num_;
+
+  // Client training epoch number. Used in federated learning for now.
+  uint64_t client_epoch_num_;
+
+  // Client training data batch size. Used in federated learning for now.
+  uint64_t client_batch_size_;
+
+  // Whether to use secure aggregation algorithm. Used in federated learning for now.
   bool secure_aggregation_;
+
+  // Whether there's a federated learning worker uploading weights to federated learning server. Used in hybrid training
+  // mode for now.
+  bool worker_upload_weights_;
 };
 }  // namespace ps
 }  // namespace mindspore

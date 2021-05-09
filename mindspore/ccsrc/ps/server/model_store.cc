@@ -68,7 +68,7 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
   auto &stored_model = memory_register->addresses();
   for (const auto &weight : new_model) {
     const std::string &weight_name = weight.first;
-    if (stored_model.count(weight_name) != 0) {
+    if (stored_model.count(weight_name) == 0) {
       MS_LOG(ERROR) << "The stored model has no weight " << weight_name;
       continue;
     }
