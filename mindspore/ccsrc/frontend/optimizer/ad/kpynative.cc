@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <algorithm>
@@ -219,7 +220,7 @@ class PynativeAdjoint {
  private:
   const FuncGraphPtr tape_;
   AnfNodePtr dout_{nullptr};
-  // Used by whoes
+  // Used by whose
   AnfNodePtrList users_;
   // cache these arguments from ad caller.
   const ValuePtrList op_args_;

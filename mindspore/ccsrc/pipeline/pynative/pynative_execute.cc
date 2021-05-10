@@ -57,7 +57,6 @@
 
 #include "frontend/optimizer/ad/grad.h"
 #include "pipeline/jit/resource.h"
-#include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/pass.h"
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
