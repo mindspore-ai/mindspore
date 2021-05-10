@@ -36,6 +36,11 @@ OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   memset(param, 0, sizeof(ConstantOfShapeParameter));
   param->op_parameter_.type_ = schema::PrimitiveType_ConstantOfShape;
   auto value = constant_of_shape_prim->value();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    free(param);
+    return nullptr;
+  }
   param->data_type_ = constant_of_shape_prim->dataType();
   if (value->size() == 0 || value->size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";

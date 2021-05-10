@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "schema/inner/model_generated.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
@@ -74,7 +75,7 @@ class AnfExporter {
   bool HasExported(const FuncGraphPtr &func_graph);
 
  private:
-  std::map<std::string, int> node_id_map_;
+  std::map<std::pair<AnfNodePtr, int>, int> node_id_map_;
   std::vector<schema::CNodeT *> graph_input_nodes_;
   // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph
   std::map<FuncGraphPtr, int> fg_subgraph_map_;
