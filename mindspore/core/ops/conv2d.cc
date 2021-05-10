@@ -27,93 +27,180 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &w_shape,
-                                const std::vector<int64_t> &x_shape, const int64_t &out_channel) {
-  auto kernel_size_h = w_shape[2];
-  auto kernel_size_w = w_shape[3];
-  auto stride = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
-  auto dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr(kDilation));
-  auto stride_h = stride[2];
-  auto stride_w = stride[3];
-  auto dilation_h = dilation[2];
-  auto dilation_w = dilation[3];
-  int64_t h_out = -1;
-  int64_t w_out = -1;
-  std::vector<int64_t> pad_list(4, 0);
-  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
-  if (pad_mode == VALID) {
-    h_out = ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h);
-    w_out = ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w);
-  } else if (pad_mode == SAME) {
-    h_out = ceil(x_shape[2] / stride_h);
-    w_out = ceil(x_shape[3] / stride_w);
-
-    auto pad_needed_h =
-      std::max(static_cast<int64_t>(0), (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2]);
-    pad_list[0] = floor(pad_needed_h / 2);
-    pad_list[1] = pad_needed_h / 2;
-    auto pad_needed_w =
-      std::max(static_cast<int64_t>(0), (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3]);
-    auto pad_left = floor(pad_needed_w / 2);
-    pad_list[2] = pad_left;
-    pad_list[3] = pad_needed_h - pad_left;
-  } else if (pad_mode == PAD) {
-    auto pad = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
-    (void)std::copy(pad.begin(), pad.end(), std::back_inserter(pad_list));
-    auto pad_top = pad[0];
-    auto pad_bottom = pad[1];
-    auto pad_right = pad[2];
-    auto pad_left = pad[3];
-
-    h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) / stride_h;
-    w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) / stride_w;
-    h_out = floor(h_out);
-    w_out = floor(w_out);
+// check functions
+void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if ((shape[i] < 0) && (shape[i] != abstract::Shape::SHP_ANY)) {
+      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
+                               << shape[i];
+    }
   }
-  (void)CheckAndConvertUtils::CheckInteger("pad_size", pad_list.size(), kEqual, 4, primitive->name());
-  (void)primitive->AddAttr(kPadList,
-                           MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad_list, primitive->name())));
-  std::vector<int64_t> out_shape = {x_shape[0], out_channel, h_out, w_out};
-  return out_shape;
 }
+
+void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] < 0) {
+      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer, but got " << shape[i];
+    }
+  }
+}
+
+int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
+  int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+  if (attr_val <= 0) {
+    MS_LOG(EXCEPTION) << op << " invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
+  }
+  return attr_val;
+}
+
+std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &attr, const size_t start_idx,
+                                         const size_t num_element) {
+  std::vector<int64_t> result;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueTuple>()) {
+    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    auto it_start = attr_vec.begin() + start_idx;
+    (void)std::transform(it_start, it_start + num_element, std::back_inserter(result),
+                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+  } else {
+    int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+    (void)result.insert(result.begin(), num_element, attr_val);
+  }
+  return result;
+}
+
+void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pad_list, const int64_t x_h,
+                       const int64_t x_w, const std::vector<int64_t> &kernel, const std::vector<int64_t> &stride,
+                       const std::vector<int64_t> &dilation, const int64_t &pad_mode,
+                       const std::vector<int64_t> &padding) {
+  if (pad_mode == PadMode::VALID) {
+    output_hw->push_back(static_cast<int64_t>(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0])));
+    output_hw->push_back(static_cast<int64_t>(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1])));
+    (void)pad_list->insert(pad_list->begin(), 4, 0);
+  } else if (pad_mode == PadMode::SAME) {
+    output_hw->push_back(static_cast<int64_t>(std::ceil((x_h * 1.0) / stride[0])));
+    output_hw->push_back(static_cast<int64_t>(std::ceil((x_w * 1.0) / stride[1])));
+    int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
+    pad_needed_h = std::max((int64_t)0, pad_needed_h);
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_h / 2)));
+    pad_list->push_back(pad_needed_h - pad_list->at(0));
+    int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
+    pad_needed_w = std::max((int64_t)0, pad_needed_w);
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_w / 2)));
+    pad_list->push_back(pad_needed_w - pad_list->at(2));
+  } else if (pad_mode == PadMode::PAD) {
+    (void)pad_list->insert(pad_list->begin(), padding.begin(), padding.end());
+    output_hw->push_back(static_cast<int64_t>(std::floor(
+      1 + ((x_h * 1.0) + pad_list->at(0) + pad_list->at(1) - kernel[0] - (kernel[0] - 1) * (dilation[0] - 1)) /
+            stride[0])));
+    output_hw->push_back(static_cast<int64_t>(std::floor(
+      1 + ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
+            stride[1])));
+  }
+}
+
 abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInRange<size_t>("conv2d_infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
-  if (format == NHWC) {
-    x_shape = {x_shape[0], x_shape[3], x_shape[1], x_shape[2]};
-    w_shape = {w_shape[0], w_shape[3], w_shape[1], w_shape[2]};
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto x_shape = x_shape_map[kShape];
+  auto w_shape = w_shape_map[kShape];
+  CheckAndConvertUtils::CheckInteger("x shape size", x_shape.size(), kEqual, 4, primitive->name());
+  CheckAndConvertUtils::CheckInteger("w shape size", w_shape.size(), kEqual, 4, primitive->name());
+  auto x_min_shape = x_shape_map[kMinShape];
+  auto x_max_shape = x_shape_map[kMaxShape];
+  auto w_min_shape = w_shape_map[kMinShape];
+  auto w_max_shape = w_shape_map[kMaxShape];
+  CheckAndConvertUtils::CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
+  CheckAndConvertUtils::CheckMinMaxShape(w_shape, &w_min_shape, &w_max_shape);
+  CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
+  CheckShapeAnyAndPositive(prim_name + " w_shape", w_shape);
+  CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
+  CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
+  CheckShapeAllPositive(prim_name + " w_min_shape", w_min_shape);
+  CheckShapeAllPositive(prim_name + " w_max_shape", w_max_shape);
+  const uint64_t n_axis = 0;
+  uint64_t c_axis = 1;
+  uint64_t h_axis = 2;
+  uint64_t w_axis = 3;
+  int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  if (data_format == Format::NHWC) {
+    c_axis = 3;
+    h_axis = 1;
+    w_axis = 2;
   }
-  (void)CheckAndConvertUtils::CheckInteger("weight rank", w_shape.size(), kEqual, 4, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
-  (void)CheckAndConvertUtils::Check("x_shape[1] / group", x_shape[1] / GetValue<int64_t>(primitive->GetAttr(kGroup)),
-                                    kEqual, "w_shape[1]", w_shape[1], prim_name);
-  auto out_channel = GetValue<int64_t>(primitive->GetAttr(kOutChannel));
-  (void)CheckAndConvertUtils::Check("out_channel", out_channel, kEqual, "w_shape[0]", w_shape[0], prim_name);
-  std::vector<int64_t> temp_w;
-  (void)std::copy(w_shape.begin() + 2, w_shape.end(), std::back_inserter(temp_w));
-  (void)CheckAndConvertUtils::Check("kernel_size", GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize)),
-                                    kEqual, "w_shape[2:4]", temp_w, prim_name);
-  auto out_shape = SetPadList(primitive, w_shape, x_shape, out_channel);
-  if (format == NHWC) {
-    out_shape = {out_shape[0], out_shape[3], out_shape[1], out_shape[2]};
+  int64_t group = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("group"), "group");
+  if ((x_shape[c_axis] != abstract::Shape::SHP_ANY) && (w_shape[c_axis] != abstract::Shape::SHP_ANY) &&
+      ((x_shape[c_axis] / group) != w_shape[c_axis])) {
+    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must equal to w_shape[C_in] = " << w_shape[c_axis] << ", but got "
+                      << (x_shape[c_axis] / group);
   }
-  return std::make_shared<abstract::Shape>(out_shape);
+  int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
+  if ((w_shape[n_axis] != abstract::Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
+    MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
+  }
+  std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("kernel_size"), 0, 2);
+  if ((w_shape[h_axis] != abstract::Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
+    MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
+  }
+  if ((w_shape[w_axis] != abstract::Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
+    MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
+  }
+  std::vector<int64_t> stride = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("stride"), 2, 2);
+  std::vector<int64_t> dilation = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("dilation"), 2, 2);
+  std::vector<int64_t> padding = CheckAttrIntOrTuple(prim_name, primitive->GetAttr("pad"), 0, 4);
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
+  std::vector<int64_t> output_hw;
+  std::vector<int64_t> pad_list;
+  std::vector<int64_t> output_hw_min;
+  std::vector<int64_t> pad_list_min;
+  std::vector<int64_t> output_hw_max;
+  std::vector<int64_t> pad_list_max;
+  Conv2DPadFunction(&output_hw, &pad_list, x_shape[h_axis], x_shape[w_axis], kernel_size, stride, dilation, pad_mode,
+                    padding);
+  if (x_shape[h_axis] == abstract::Shape::SHP_ANY) {
+    output_hw[0] = abstract::Shape::SHP_ANY;
+  }
+  if (x_shape[w_axis] == abstract::Shape::SHP_ANY) {
+    output_hw[1] = abstract::Shape::SHP_ANY;
+  }
+  Conv2DPadFunction(&output_hw_min, &pad_list_min, x_min_shape[h_axis], x_min_shape[w_axis], kernel_size, stride,
+                    dilation, pad_mode, padding);
+  Conv2DPadFunction(&output_hw_max, &pad_list_max, x_max_shape[h_axis], x_max_shape[w_axis], kernel_size, stride,
+                    dilation, pad_mode, padding);
+  std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),
+                                        MakeValue(pad_list[3])};
+  primitive->set_attr("pad_list", MakeValue(pad_list_val));
+  ShapeVector output_shape;
+  ShapeVector output_shape_min;
+  ShapeVector output_shape_max;
+  if (data_format == Format::NHWC) {
+    output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], out_channel};
+    output_shape_min = {x_min_shape[n_axis], output_hw_min[0], output_hw_min[1], out_channel};
+    output_shape_max = {x_max_shape[n_axis], output_hw_max[0], output_hw_max[1], out_channel};
+  } else {
+    output_shape = {x_shape[n_axis], out_channel, output_hw[0], output_hw[1]};
+    output_shape_min = {x_min_shape[n_axis], out_channel, output_hw_min[0], output_hw_min[1]};
+    output_shape_max = {x_max_shape[n_axis], out_channel, output_hw_max[0], output_hw_max[1]};
+  }
+  CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
+  CheckShapeAllPositive(prim_name + " output_shape_min", output_shape_min);
+  CheckShapeAllPositive(prim_name + " output_shape_max", output_shape_max);
+  return std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);
 }
 
 TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckInRange<size_t>("", input_args.size(), kIncludeBoth, {2, 3}, prim->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("w", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  auto out_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  if (out_type->type_id() == TypeId::kNumberTypeInt8) {
+    out_type = kInt32;
+  }
+  return out_type;
 }
 }  // namespace
 void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode, const PadMode &pad_mode,
@@ -225,9 +312,10 @@ Format Conv2D::get_format() const {
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
+  CheckAndConvertUtils::CheckInteger("Conv2d infer", input_args.size(), kGreaterEqual, 2, primitive->name());
   return std::make_shared<abstract::AbstractTensor>(Conv2dInferType(primitive, input_args),
-                                                    Conv2dInferShape(primitive, input_args)->shape());
+                                                    Conv2dInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameConv2D, Conv2D);
+REGISTER_PRIMITIVE_EVAL_IMPL(Conv2D, prim::kPrimConv2D, Conv2dInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

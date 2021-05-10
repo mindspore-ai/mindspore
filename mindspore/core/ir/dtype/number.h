@@ -166,23 +166,23 @@ class Complex64 : public Number {
   }
 };
 
-extern const TypePtr kBool;
-extern const TypePtr kInt8;
-extern const TypePtr kInt16;
-extern const TypePtr kInt32;
-extern const TypePtr kInt64;
-extern const TypePtr kUInt8;
-extern const TypePtr kUInt16;
-extern const TypePtr kUInt32;
-extern const TypePtr kUInt64;
-extern const TypePtr kFloat16;
-extern const TypePtr kFloat32;
-extern const TypePtr kFloat64;
-extern const TypePtr kInt;
-extern const TypePtr kUInt;
-extern const TypePtr kFloat;
-extern const TypePtr kNumber;
-extern const TypePtr kComplex64;
+inline const TypePtr kBool = std::make_shared<Bool>();
+inline const TypePtr kInt8 = std::make_shared<Int>(8);
+inline const TypePtr kInt16 = std::make_shared<Int>(16);
+inline const TypePtr kInt32 = std::make_shared<Int>(32);
+inline const TypePtr kInt64 = std::make_shared<Int>(64);
+inline const TypePtr kUInt8 = std::make_shared<UInt>(8);
+inline const TypePtr kUInt16 = std::make_shared<UInt>(16);
+inline const TypePtr kUInt32 = std::make_shared<UInt>(32);
+inline const TypePtr kUInt64 = std::make_shared<UInt>(64);
+inline const TypePtr kFloat16 = std::make_shared<Float>(16);
+inline const TypePtr kFloat32 = std::make_shared<Float>(32);
+inline const TypePtr kFloat64 = std::make_shared<Float>(64);
+inline const TypePtr kInt = std::make_shared<Int>();
+inline const TypePtr kUInt = std::make_shared<UInt>();
+inline const TypePtr kFloat = std::make_shared<Float>();
+inline const TypePtr kNumber = std::make_shared<Number>();
+inline const TypePtr kComplex64 = std::make_shared<Complex64>();
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_

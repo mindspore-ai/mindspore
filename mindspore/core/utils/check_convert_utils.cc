@@ -610,4 +610,18 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::str
   }
   return result;
 }
+
+void CheckAndConvertUtils::CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape) {
+  *min_shape = (*min_shape).empty() ? shape : *min_shape;
+  *max_shape = (*max_shape).empty() ? shape : *max_shape;
+}
+
+int64_t CheckAndConvertUtils::GetAndCheckFormat(const ValuePtr &value) {
+  int64_t data_format;
+  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
+  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
+    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW, NHWC and NCDHW";
+  }
+  return data_format;
+}
 }  // namespace mindspore

@@ -24,6 +24,54 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
+    MS_EXCEPTION(TypeError) << "The input of AddN must be list or tuple of tensors.";
+  }
+  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
+                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
+                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, primitive->name());
+  primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
+  auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape());
+  auto in_shape = element0_shape_map[kShape];
+  auto min_shape = element0_shape_map[kMinShape];
+  auto max_shape = element0_shape_map[kMaxShape];
+  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+}
+
+TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
+    MS_EXCEPTION(TypeError) << "The input of AddN must be list or tuple of tensors.";
+  }
+  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
+                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
+                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, prim->name());
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape())[kShape];
+  std::map<std::string, TypePtr> types;
+  types.emplace("element0", elements[0]->BuildType());
+  for (size_t i = 1; i < elements.size(); ++i) {
+    std::string elementi = "element" + std::to_string(i);
+    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", elementi_shape.size(), kEqual, element0_shape.size(),
+                                       prim_name);
+    for (size_t j = 0; j < element0_shape.size(); ++j) {
+      if (elementi_shape[j] != element0_shape[j]) {
+        MS_EXCEPTION(ValueError) << "element " << i << " shape in input can not concat with first element.";
+      }
+    }
+    types.emplace(elementi, elements[i]->BuildType());
+  }
+  std::set<TypePtr> valid_types = common_valid_types;
+  valid_types.insert(kBool);
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+}
+}  // namespace
 AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -32,33 +80,9 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(input_tuple);
-  auto elements = input_tuple->elements();
-  CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, prim_name);
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
-
-  std::map<std::string, TypePtr> types;
-  types.emplace("element0", element0->BuildType());
-  for (size_t i = 1; i < elements.size(); ++i) {
-    std::string elementi = "element" + std::to_string(i);
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
-    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", elementi_shape.size(), kEqual, element0_shape.size(),
-                                       prim_name);
-    for (size_t j = 0; j < element0_shape.size(); ++j) {
-      if (elementi_shape[j] != element0_shape[j]) {
-        MS_LOG(EXCEPTION) << "element " << i << " shape in input can not concat with first element.";
-      }
-    }
-    types.emplace(elementi, elements[i]->BuildType());
-  }
-  std::set<TypePtr> valid_types = common_valid_types;
-  valid_types.insert(kBool);
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return std::make_shared<abstract::AbstractTensor>(infer_type, std::make_shared<abstract::Shape>(element0_shape));
+  return std::make_shared<abstract::AbstractTensor>(AddNInferType(primitive, input_args),
+                                                    AddNInferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameAddN, AddN);
+REGISTER_PRIMITIVE_EVAL_IMPL(AddN, prim::kPrimAddN, AddNInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
