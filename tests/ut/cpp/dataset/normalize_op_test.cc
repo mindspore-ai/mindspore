@@ -35,11 +35,11 @@ TEST_F(MindDataTestNormalizeOP, TestOp) {
   std::shared_ptr<Tensor> output_tensor;
 
   // Numbers are from the resnet50 model implementation
-  float mean[3] = {121.0, 115.0, 100.0};
-  float std[3] = {70.0, 68.0, 71.0};
+  std::vector<float> mean = {121.0, 115.0, 100.0};
+  std::vector<float> std = {70.0, 68.0, 71.0};
 
   // Normalize Op
-  std::unique_ptr<NormalizeOp> op(new NormalizeOp(mean[0], mean[1], mean[2], std[0], std[1], std[2]));
+  std::unique_ptr<NormalizeOp> op(new NormalizeOp(mean, std));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

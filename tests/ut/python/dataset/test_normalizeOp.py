@@ -340,6 +340,35 @@ def test_normalize_grayscale_exception():
         assert "Input is not within the required range" in str(e)
 
 
+def test_multiple_channels():
+    logger.info("test_multiple_channels")
+
+    def util_test(item, mean, std):
+        data = ds.NumpySlicesDataset([item], shuffle=False)
+        data = data.map(c_vision.Normalize(mean, std))
+        for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            actual = d[0]
+            mean = np.array(mean, dtype=item.dtype)
+            std = np.array(std, dtype=item.dtype)
+            expected = item
+            if len(item.shape) != 1 and len(mean) == 1:
+                mean = [mean[0]] * expected.shape[-1]
+                std = [std[0]] * expected.shape[-1]
+            if len(item.shape) == 2:
+                expected = np.expand_dims(expected, 2)
+            for c in range(expected.shape[-1]):
+                expected[:, :, c] = (expected[:, :, c] - mean[c]) / std[c]
+            expected = expected.squeeze()
+
+            np.testing.assert_almost_equal(actual, expected, decimal=6)
+
+    util_test(np.ones(shape=[2, 2, 3]), mean=[0.5, 0.6, 0.7], std=[0.1, 0.2, 0.3])
+    util_test(np.ones(shape=[20, 45, 3]) * 1.3, mean=[0.5, 0.6, 0.7], std=[0.1, 0.2, 0.3])
+    util_test(np.ones(shape=[20, 45, 4]) * 1.3, mean=[0.5, 0.6, 0.7, 0.8], std=[0.1, 0.2, 0.3, 0.4])
+    util_test(np.ones(shape=[2, 2]), mean=[0.5], std=[0.1])
+    util_test(np.ones(shape=[2, 2, 5]), mean=[0.5], std=[0.1])
+
+
 if __name__ == "__main__":
     test_decode_op()
     test_decode_normalize_op()

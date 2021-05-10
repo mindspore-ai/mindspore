@@ -665,48 +665,91 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return Status::OK();
 }
 
-Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                 const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std) {
-  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-  if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Normalize: load image failed.");
-  }
-  if (input_cv->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Normalize: image shape is not <H,W,C>.");
-  }
-  cv::Mat in_image = input_cv->mat();
-  std::shared_ptr<CVTensor> output_cv;
-  RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), DataType(DataType::DE_FLOAT32), &output_cv));
-  mean->Squeeze();
-  if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
-    std::string err_msg = "Normalize: mean should be of size 3 and type float.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
-  }
-  std->Squeeze();
-  if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
-    std::string err_msg = "Normalize: std tensor should be of size 3 and type float.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
-  }
-  try {
-    // NOTE: We are assuming the input image is in RGB and the mean
-    // and std are in RGB
-    std::vector<cv::Mat> rgb;
-    cv::split(in_image, rgb);
-    if (rgb.size() != 3) {
-      RETURN_STATUS_UNEXPECTED("Normalize: input image is not in RGB.");
+template <typename T>
+void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
+               std::vector<float> std) {
+  auto itr_out = (*output)->begin<float>();
+  auto itr = input->begin<T>();
+  auto end = input->end<T>();
+  int64_t num_channels = (*output)->shape()[2];
+
+  while (itr != end) {
+    for (int64_t i = 0; i < num_channels; i++) {
+      *itr_out = static_cast<float>(*itr) / std[i] - mean[i];
+      ++itr_out;
+      ++itr;
     }
-    for (uint8_t i = 0; i < 3; i++) {
-      float mean_c, std_c;
-      RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
-      RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
-      rgb[i].convertTo(rgb[i], CV_32F, 1.0 / std_c, (-mean_c / std_c));
-    }
-    cv::merge(rgb, output_cv->mat());
-    *output = std::static_pointer_cast<Tensor>(output_cv);
-    return Status::OK();
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Normalize: " + std::string(e.what()));
   }
+}
+
+Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
+                 std::vector<float> std) {
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), output));
+  if (input->Rank() == 2) {
+    RETURN_IF_NOT_OK((*output)->ExpandDim(2));
+  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED((*output)->Rank() == 3, "Normalize: image shape is not <H,W,C>.");
+  CHECK_FAIL_RETURN_UNEXPECTED(std.size() == mean.size(), "Normalize: mean and std vectors are not of same size.");
+
+  // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
+  if (mean.size() == 1 && (*output)->shape()[2] != 1) {
+    std::vector<float> mean_t, std_t;
+    for (int64_t i = 0; i < (*output)->shape()[2] - 1; i++) {
+      mean.push_back(mean[0]);
+      std.push_back(std[0]);
+    }
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[2] == mean.size(),
+                               "Normalize: number of channels does not match the size of mean and std vectors.");
+
+  switch (input->type().value()) {
+    case DataType::DE_BOOL:
+      Normalize<bool>(input, output, mean, std);
+      break;
+    case DataType::DE_INT8:
+      Normalize<int8_t>(input, output, mean, std);
+      break;
+    case DataType::DE_UINT8:
+      Normalize<uint8_t>(input, output, mean, std);
+      break;
+    case DataType::DE_INT16:
+      Normalize<int16_t>(input, output, mean, std);
+      break;
+    case DataType::DE_UINT16:
+      Normalize<uint16_t>(input, output, mean, std);
+      break;
+    case DataType::DE_INT32:
+      Normalize<int32_t>(input, output, mean, std);
+      break;
+    case DataType::DE_UINT32:
+      Normalize<uint32_t>(input, output, mean, std);
+      break;
+    case DataType::DE_INT64:
+      Normalize<int64_t>(input, output, mean, std);
+      break;
+    case DataType::DE_UINT64:
+      Normalize<uint64_t>(input, output, mean, std);
+      break;
+#ifndef ENABLE_MD_LITE_X86_64
+    case DataType::DE_FLOAT16:
+      Normalize<float16>(input, output, mean, std);
+      break;
+#endif
+    case DataType::DE_FLOAT32:
+      Normalize<float>(input, output, mean, std);
+      break;
+    case DataType::DE_FLOAT64:
+      Normalize<double>(input, output, mean, std);
+      break;
+    default:
+      RETURN_STATUS_UNEXPECTED("Normalize: unsupported type.");
+  }
+
+  if (input->Rank() == 2) {
+    (*output)->Squeeze();
+  }
+  return Status::OK();
 }
 
 Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,

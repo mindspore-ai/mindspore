@@ -305,8 +305,8 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
   return Status::OK();
 }
 
-Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                 const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std) {
+Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> vec_mean,
+                 std::vector<float> vec_std) {
   if (input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("Normalize: image shape is not <H,W,C>.");
   }
@@ -315,28 +315,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     RETURN_STATUS_UNEXPECTED("Normalize: image datatype is not uint8 or float32.");
   }
 
-  mean->Squeeze();
-  if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
-    std::string err_msg = "Normalize: mean should be of size 3 and type float.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
-  }
-  std->Squeeze();
-  if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
-    std::string err_msg = "Normalize: std should be of size 3 and type float.";
-    return Status(StatusCode::kMDShapeMisMatch, err_msg);
-  }
-  // convert mean, std back to vector
-  std::vector<float> vec_mean;
-  std::vector<float> vec_std;
   try {
-    for (uint8_t i = 0; i < 3; i++) {
-      float mean_c, std_c;
-      RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
-      RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
-      vec_mean.push_back(mean_c);
-      vec_std.push_back(std_c);
-    }
-
     LiteMat lite_mat_norm;
     bool ret = false;
     LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
