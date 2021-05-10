@@ -2871,18 +2871,6 @@ if [[ $backend == "all" || $backend == "arm_cpu" || $backend == "arm64_fp16" ]];
     sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
-    cd ${basepath} || exit 1
-    bash ${basepath}/run_cropper.sh -r ${release_path} -d ${device_id}
-    Run_cropper_status=$?
-    if [[ ${Run_cropper_status} != 0 ]];then
-        echo "Run cropper failed"
-        cat ${run_npu_log_file}
-        isFailed=1
-        exit 1
-    fi
-fi
-
 if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "gpu" ]]; then
     # Run on gpu
     arm64_path=${release_path}/android_aarch64
@@ -3018,6 +3006,18 @@ if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
         echo "Run_npu failed"
         cat ${run_npu_log_file}
         isFailed=1
+    fi
+fi
+
+if [[ $backend == "all" || $backend == "gpu_npu" || $backend == "npu" ]]; then
+    cd ${basepath} || exit 1
+    bash ${basepath}/run_cropper.sh -r ${release_path} -d ${device_id}
+    Run_cropper_status=$?
+    if [[ ${Run_cropper_status} != 0 ]];then
+        echo "Run cropper failed"
+        cat ${run_npu_log_file}
+        isFailed=1
+        exit 1
     fi
 fi
 
