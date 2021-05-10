@@ -50,7 +50,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/loader_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc

@@ -35,6 +35,23 @@ bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
 }
 
+void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int i, std::vector<int32_t> *shape) {
+  if (layer.type() == "InnerProduct") {
+    if (i == 0) {
+      if (shape->size() == 4) {
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+      }
+    } else if (i == 1) {
+      if (shape->size() == 4) {
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+      }
+    }
+  }
+}
+
 CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
@@ -343,6 +360,8 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
   for (int i = 0; i < layer.blobs_size(); i++) {
     std::vector<int32_t> shape;
     ConvertShape(layer.blobs(i), &shape);
+
+    FcSqueezeWeightBias(layer, i, &shape);
 
     // cal Weight num
     auto parameter = res_graph_->add_parameter();

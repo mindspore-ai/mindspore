@@ -159,7 +159,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/utils.cc
-        ${LITE_DIR}/src/common/loader_util.cc
+        ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/tools/common/flag_parser.cc
@@ -340,7 +340,7 @@ set(TEST_SRC
         ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
-        ${TEST_DIR}/ut/src/loader_util_test.cc
+        ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         )
 

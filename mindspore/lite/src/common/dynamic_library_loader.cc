@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/common/loader_util.h"
+#include "src/common/dynamic_library_loader.h"
 #include <string.h>
 #include <climits>
 #include "include/errorcode.h"
@@ -30,6 +30,9 @@
 namespace mindspore {
 namespace lite {
 int DynamicLibraryLoader::Open(const char *lib_path) {
+  if (handler_ != nullptr) {
+    return RET_ERROR;
+  }
   if ((strlen(lib_path)) >= PATH_MAX) {
     LOG_ERROR("path is too long");
     return RET_ERROR;
@@ -70,6 +73,9 @@ void *DynamicLibraryLoader::GetFunc(const char *func_name) {
 }
 
 int DynamicLibraryLoader::Close() {
+  if (handler_ == nullptr) {
+    return RET_OK;
+  }
 #ifndef _WIN32
   auto close_res = dlclose(handler_);
   if (close_res != 0) {
@@ -83,7 +89,14 @@ int DynamicLibraryLoader::Close() {
     return RET_ERROR;
   }
 #endif
+  handler_ = nullptr;
   return RET_OK;
+}
+
+DynamicLibraryLoader::~DynamicLibraryLoader() {
+  if (handler_ != nullptr) {
+    Close();
+  }
 }
 
 }  // namespace lite
