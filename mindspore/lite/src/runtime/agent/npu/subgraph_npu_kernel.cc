@@ -226,7 +226,7 @@ int SubGraphNpuKernel::Init() {
 }
 
 int SubGraphNpuKernel::Prepare() {
-  if (executor_->Prepare(nodes_) != RET_OK) {
+  if (executor_->Prepare(nodes_, in_tensors_, out_tensors_) != RET_OK) {
     MS_LOG(ERROR) << "NPU executor prepare failed.";
     return RET_ERROR;
   }

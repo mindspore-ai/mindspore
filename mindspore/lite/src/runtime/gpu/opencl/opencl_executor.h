@@ -31,7 +31,10 @@ class OpenCLExecutor : public Executor {
 
   ~OpenCLExecutor() override = default;
 
-  int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override { return RET_OK; }
+  int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+              const std::vector<Tensor *> &outputs) override {
+    return RET_OK;
+  }
 
   int Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
           const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,

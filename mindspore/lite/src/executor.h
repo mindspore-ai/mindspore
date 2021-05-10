@@ -28,7 +28,8 @@ class Executor {
   Executor() = default;
   virtual ~Executor() = default;
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+                      const std::vector<Tensor *> &outputs) {
     ctx_ = static_cast<const lite::InnerContext *>(kernels[0]->context());
     return RET_OK;
   }

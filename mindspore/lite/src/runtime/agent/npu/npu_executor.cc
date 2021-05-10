@@ -32,7 +32,8 @@ NPUExecutor::~NPUExecutor() {
   npu_output_tensors_.clear();
 }
 
-int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
+int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+                         const std::vector<Tensor *> &outputs) {
   MS_ASSERT(npu_manager_ != nullptr);
   this->client_ = npu_manager_->GetClient(model_name_);
   if (this->client_ == nullptr) {
