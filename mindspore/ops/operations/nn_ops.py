@@ -1169,16 +1169,16 @@ class BatchNorm(PrimitiveWithInfer):
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
         - **bias** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
-        - **mean** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
-        - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `mean`.
+        - **mean** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
 
         If `is_training` is True, `scale`, `bias`, `mean` and `variance` are Parameters.
 
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
         - **scale** (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
         - **bias** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
-        - **mean** (Parameter) - Parameter of shape :math:`(C,)`, with float16 or float32 data type.
-        - **variance** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `mean`.
+        - **mean** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
+        - **variance** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
 
     Outputs:
         Tuple of 5 Tensor, the normalized inputs and the updated parameters.
@@ -1252,15 +1252,8 @@ class BatchNorm(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x, scale, bias, mean, variance):
         validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
-        args = {"scale": scale, "bias": bias}
+        args = {"scale": scale, "bias": bias, "mean": mean, "variance": variance}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        args_moving = {"mean": mean, "variance": variance}
-        if self.is_training:
-            valid_dtypes = [mstype.tensor_type(mstype.float16), mstype.tensor_type(mstype.float32), None]
-            validator.check_types_same_and_valid(args_moving, valid_dtypes, self.name)
-        else:
-            args_moving = {"mean": mean, "variance": variance}
-            validator.check_tensors_dtypes_same_and_valid(args_moving, [mstype.float16, mstype.float32], self.name)
         return (input_x, mstype.float32, mstype.float32, mstype.float32, mstype.float32)
 
 
