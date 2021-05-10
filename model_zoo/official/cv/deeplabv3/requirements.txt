@@ -1,4 +1,2 @@
-mindspore
-numpy
-Pillow
-python-opencv
+opencv-python >= 4.1.2.30
+pillow >= 6.2.0
