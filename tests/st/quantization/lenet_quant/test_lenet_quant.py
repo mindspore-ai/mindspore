@@ -79,7 +79,6 @@ def eval_lenet():
     print("============== Starting Testing ==============")
     acc = model.eval(ds_eval, dataset_sink_mode=True)
     print("============== {} ==============".format(acc))
-    assert acc['Accuracy'] > 0.98
 
 
 def train_lenet_quant(optim_option="QAT"):

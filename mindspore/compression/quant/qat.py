@@ -524,12 +524,14 @@ class QuantizationAwareTraining(Quantizer):
         r"""
         Set network's quantization strategy, this function is currently only valid for `LEARNED_SCALE`
         optimize_option.
-        Input:
+
+        Inputs:
             network (Cell): input network
             strategy (List): the quantization strategy for layers that need to be quantified (eg. [[8], [8],
             ..., [6], [4], [8]]), currently only the quant_dtype for weights of the dense layer and the
             convolution layer is supported.
-        Output:
+
+        Outputs:
             network (Cell)
         """
         if OptimizeOption.LEARNED_SCALE not in self.optimize_option:
