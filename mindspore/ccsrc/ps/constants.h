@@ -54,7 +54,8 @@ constexpr char kSparseLazyAdamOp[] = "LazyAdam";
 constexpr char kSparseFtrlOp[] = "FTRL";
 
 constexpr char kCertificateChain[] = "server.crt";
-constexpr char kPrivateKey[] = "server.key.unsecure";
+constexpr char kPrivateKey[] = "server.key";
+constexpr char kCAcrt[] = "ca.crt";
 
 constexpr int64_t kInitWeightsCmd = 10;
 constexpr int64_t kInitWeightToOptimIdCmd = 11;
@@ -81,6 +82,8 @@ constexpr int64_t kMaxTaskNum = 10240;
 constexpr int64_t kSubmitTimeOutInMs = 30000;
 constexpr int64_t kRetryCount = 60;
 constexpr int64_t kRetryIntervalInMs = 10;
+
+constexpr int64_t kThreadNum = 32;
 
 using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;

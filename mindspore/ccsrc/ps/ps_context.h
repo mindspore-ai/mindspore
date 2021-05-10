@@ -80,6 +80,8 @@ class PSContext {
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
   void set_cache_enable(bool cache_enable) const;
   void set_rank_id(int rank_id) const;
+  bool enable_ssl() const;
+  void set_enable_ssl(bool enabled);
 
   // In new server framework, process role, worker number, server number, scheduler ip and scheduler port should be set
   // by ps_context.
@@ -145,6 +147,7 @@ class PSContext {
         is_worker_(false),
         is_pserver_(false),
         is_sched_(false),
+        enable_ssl_(false),
         rank_id_(-1),
         worker_num_(0),
         server_num_(0),
@@ -166,6 +169,7 @@ class PSContext {
   bool is_worker_;
   bool is_pserver_;
   bool is_sched_;
+  bool enable_ssl_;
   int rank_id_;
   uint32_t worker_num_;
   uint32_t server_num_;
