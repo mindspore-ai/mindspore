@@ -62,7 +62,7 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
       MS_LOG(EXCEPTION) << "For 'StrideSlice', the first input node should be a 'ValueNode' or a 'CNode', but got "
                         << input->ToString();
     }
-    int base_number = 2;
+    const int base_number = 2;
     if (shrink_axis_mask >= std::pow<int, int>(base_number, input_dims - 1) && input_dims > 1) {
       return false;
     }

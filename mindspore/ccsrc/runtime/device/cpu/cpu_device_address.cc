@@ -40,13 +40,7 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
   std::string file_extension = ".bin";
   std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_ + file_extension;
   MS_LOG(DEBUG) << "E2E Dump path is " << path;
-  auto host_tmp = std::vector<uint8_t>(size_);
-  auto ret_code = memcpy_s(host_tmp.data(), size_, ptr_, size_);
-  if (ret_code != EOK) {
-    MS_LOG(ERROR) << "Failed to copy tensor!";
-    return ret;
-  }
-  ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_);
+  ret = DumpJsonParser::DumpToFile(path, ptr_, size_);
   return ret;
 }
 
