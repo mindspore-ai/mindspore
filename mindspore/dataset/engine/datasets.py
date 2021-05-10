@@ -2644,6 +2644,8 @@ class RenameDataset(Dataset):
 def to_list(items):
     if items is None:
         return []
+    if isinstance(items, tuple):
+        return list(items)
     if not isinstance(items, list):
         return [items]
     return items

@@ -334,7 +334,7 @@ def check_sampler_shuffle_shard_options(param_dict):
             raise RuntimeError("sampler and num_samples cannot be specified at the same time.")
 
     if num_shards is not None:
-        check_pos_int32(num_shards)
+        check_pos_int32(num_shards, "num_shards")
         if shard_id is None:
             raise RuntimeError("num_shards is specified and currently requires shard_id as well.")
         check_value(shard_id, [0, num_shards - 1], "shard_id")
