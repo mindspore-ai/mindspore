@@ -13,9 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-if [ $# -ne 2 ]
+echo "=============================================================================================================="
+echo "Please run the script as: "
+echo "sh run_standalone_train.sh [TASK_TYPE] [PRETRAINED_PATH] [DEVICE_ID]"
+echo "for example: sh run_standalone_train.sh Pretraining /path/vgg16_backbone.ckpt 0"
+echo "when device id is occupied, choose for another one"
+echo "It is better to use absolute path."
+echo "=============================================================================================================="
+if [ $# -ne 3 ]
 then 
-    echo "Usage: sh run_distribute_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH]"
+    echo "Usage: sh run_standalone_train_ascend.sh [TASK_TYPE] [PRETRAINED_PATH] [DEVICE_ID]"
 exit 1
 fi
 
@@ -38,7 +45,7 @@ fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=0
+export DEVICE_ID=$3
 export RANK_ID=0
 export RANK_SIZE=1
 
