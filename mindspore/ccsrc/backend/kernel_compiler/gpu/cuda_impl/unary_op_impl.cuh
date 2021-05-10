@@ -62,5 +62,7 @@ template <typename T>
 void Rint(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Round(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Sign(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOPIMPL_H_

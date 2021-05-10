@@ -3883,7 +3883,7 @@ class Sign(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
