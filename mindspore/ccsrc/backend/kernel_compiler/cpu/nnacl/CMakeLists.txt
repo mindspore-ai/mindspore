@@ -61,14 +61,16 @@ endif()
 
 ########################### build nnacl static library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-if(ENABLE_CPU)
-    add_library(nnacl SHARED ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
-else()
-    add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
-endif()
+
 add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+
+if(ENABLE_CPU)
+    add_library(nnacl SHARED $<TARGET_OBJECTS:nnacl_mid>)
+else()
+    add_library(nnacl STATIC $<TARGET_OBJECTS:nnacl_mid>)
+endif()
+
 if(NOT ENABLE_CPU)
-    add_dependencies(nnacl fbs_src)
     add_dependencies(nnacl_mid fbs_src)
 endif()
 

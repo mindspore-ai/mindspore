@@ -9,12 +9,9 @@ set(CCSRC_SRC
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
-file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
-        )
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_flags.cc
@@ -164,27 +161,6 @@ if(ENABLE_MINDRT)
         )
 endif()
 
-set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
-file(GLOB KERNEL_SRC
-        ${ARM_DIR}/base/*.cc
-        ${NNACL_DIR}/*.c
-        ${NNACL_DIR}/fp32/*.c
-        ${NNACL_DIR}/infer/*.c
-        ${NNACL_DIR}/int8/*.c
-        ${NNACL_DIR}/base/*.c
-        ${NNACL_DIR}/quantization/*.c
-        ${ARM_DIR}/fp32/*.cc
-        ${ARM_DIR}/int8/*.cc
-        )
-
-if(PLATFORM_ARM64)
-    # assembly
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.s
-            ${NNACL_DIR}/assembly/arm64/*.S)
-    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-    set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
-endif()
-
 file(GLOB PROTO_FILE ""
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf/proto/*.proto
@@ -200,16 +176,12 @@ ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
-set_property(SOURCE ${OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
-set_property(SOURCE ${KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${MINDRT_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_executable(converter_lite
         main.cc
         ${CCSRC_SRC}
         ${CONVERTER_SRC}
-        ${OPS_SRC}
-        ${KERNEL_SRC}
         ${LITE_SRC}
         ${MINDRT_SRC}
         )
@@ -217,6 +189,9 @@ add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 
 target_link_libraries(converter_lite PRIVATE
+        cpu_ops_mid
+        nnacl_mid
+        cpu_kernel_mid
         mslite_converter_plugin_reg
         tflite_parser_mid
         tf_parser_mid
