@@ -2,22 +2,22 @@ set(onednn_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(onednn_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     mindspore_add_pkg(onednn
-        VER 2.1
+        VER 2.2
         LIBS dnnl mkldnn
         HEAD_ONLY ./include
         RELEASE on
-        URL https://github.com/oneapi-src/oneDNN/releases/download/v2.1/dnnl_win_2.1.0_cpu_vcomp.zip
-        MD5 b3111c4851dad06f7a796b27083dffa8)
+        URL https://github.com/oneapi-src/oneDNN/releases/download/v2.2/dnnl_win_2.2.0_cpu_vcomp.zip
+        MD5 fa12c693b2ec07700d174e1e99d60a7e)
 else()
     if(ENABLE_GITEE)
-        set(REQ_URL "https://gitee.com/mirrors/MKL-DNN/repository/archive/v2.1.tar.gz")
-        set(MD5 "f4c10ad4197ce2358ad1a917e84c288c")
+        set(REQ_URL "https://gitee.com/mirrors/MKL-DNN/repository/archive/v2.2.tar.gz")
+        set(MD5 "386933f4c4fecb2d42d8433eb3f542f9")
     else()
-        set(REQ_URL "https://github.com/oneapi-src/oneDNN/archive/v2.1.tar.gz")
-        set(MD5 "2ed85f2c0c3771a7618db04a9e08ae57")
+        set(REQ_URL "https://github.com/oneapi-src/oneDNN/archive/v2.2.tar.gz")
+        set(MD5 "6a062e36ea1bee03ff55bf44ee243e27")
     endif()
     mindspore_add_pkg(onednn
-        VER 2.1
+        VER 2.2
         LIBS dnnl mkldnn
         URL ${REQ_URL}
         MD5 ${MD5}
