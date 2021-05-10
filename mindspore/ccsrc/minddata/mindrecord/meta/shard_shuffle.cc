@@ -66,6 +66,97 @@ MSRStatus ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
   return SUCCESS;
 }
 
+MSRStatus ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
+  if (no_of_samples_ == 0) {
+    no_of_samples_ = static_cast<int>(tasks.Size());
+  }
+  if (no_of_samples_ <= 0) {
+    MS_LOG(ERROR) << "no_of_samples need to be positive.";
+    return FAILED;
+  }
+  auto shard_sample_cout = GetShardSampleCount();
+
+  // shuffle the files index
+  std::vector<uint32_t> shuffle_files;
+  for (uint32_t i = 0; i < shard_sample_cout.size(); i++) {
+    shuffle_files.push_back(i);
+  }
+  std::shuffle(shuffle_files.begin(), shuffle_files.end(), std::default_random_engine(shuffle_seed_));
+
+  // reconstruct the permutation between files
+  // -- before --
+  // file1: [0, 1, 2]
+  // file2: [3, 4, 5, 6]
+  // file3: [7, 8]
+  // file4: [9, 10]
+  // files: [file1, file2, file3, file4]
+  // permutation: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  // -- after --
+  // files: [file4, file1, file3, file2]
+  // permutation : [9, 10, 0, 1, 2, 7, 8, 3, 4, 5, 6]
+  auto original_permutation = tasks.permutation_;
+  uint32_t whole_index = 0;
+  for (uint32_t i = 0; i < shuffle_files.size(); i++) {
+    uint32_t start_index = 0;
+    uint32_t current_size = 0;
+    if (shuffle_files[i] == 0) {
+      start_index = 0;
+      current_size = shard_sample_cout[shuffle_files[i]];
+    } else {
+      start_index = shard_sample_cout[shuffle_files[i] - 1];
+      current_size = shard_sample_cout[shuffle_files[i]] - start_index;
+    }
+    std::copy(original_permutation.begin() + start_index, original_permutation.begin() + start_index + current_size,
+              tasks.permutation_.begin() + whole_index);
+    whole_index += current_size;
+  }
+
+  auto total_no = static_cast<int64_t>(tasks.Size());
+  size_t samples_to_assign =
+    (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
+  ShardTaskList new_tasks;
+  for (size_t i = 0; i < samples_to_assign; ++i) {
+    new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+  }
+  ShardTaskList::TaskListSwap(tasks, new_tasks);
+}
+
+MSRStatus ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
+  if (no_of_samples_ == 0) {
+    no_of_samples_ = static_cast<int>(tasks.Size());
+  }
+  if (no_of_samples_ <= 0) {
+    MS_LOG(ERROR) << "no_of_samples need to be positive.";
+    return FAILED;
+  }
+  // reconstruct the permutation in file
+  // -- before --
+  // file1: [0, 1, 2]
+  // file2: [3, 4, 5, 6]
+  // file3: [7, 8]
+  // file4: [9, 10]
+  // files: [file1, file2, file3, file4]
+  // permutation: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  // -- after --
+  // permutation: [2, 0, 1, 4, 6, 3, 5, 8, 7, 9, 10]
+  auto shard_sample_cout = GetShardSampleCount();
+  uint32_t start_index = 0;
+  for (uint32_t i = 0; i < shard_sample_cout.size(); i++) {
+    auto current_size = shard_sample_cout[i] - start_index;
+    std::shuffle(tasks.permutation_.begin() + start_index, tasks.permutation_.begin() + start_index + current_size,
+                 std::default_random_engine(shuffle_seed_));
+    start_index = shard_sample_cout[i];
+  }
+  auto total_no = static_cast<int64_t>(tasks.Size());
+  ShardTaskList new_tasks;
+  size_t samples_to_assign =
+    (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
+  for (size_t i = 0; i < samples_to_assign; ++i) {
+    new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+  }
+  ShardTaskList::TaskListSwap(tasks, new_tasks);
+}
+
 MSRStatus ShardShuffle::Execute(ShardTaskList &tasks) {
   if (reshuffle_each_epoch_) shuffle_seed_++;
   if (tasks.categories < 1) {
@@ -75,28 +166,40 @@ MSRStatus ShardShuffle::Execute(ShardTaskList &tasks) {
     if (tasks.permutation_.empty() == true) {
       tasks.MakePerm();
     }
-    if (replacement_ == true) {
-      ShardTaskList new_tasks;
-      if (no_of_samples_ == 0) no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
-      if (no_of_samples_ <= 0) {
-        MS_LOG(ERROR) << "no_of_samples need to be positive.";
-        return FAILED;
-      }
-      for (uint32_t i = 0; i < no_of_samples_; ++i) {
-        new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
-      }
+    if (GetShuffleMode() == dataset::ShuffleMode::kGlobal) {
+      if (replacement_ == true) {
+        ShardTaskList new_tasks;
+        if (no_of_samples_ == 0) no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
+        if (no_of_samples_ <= 0) {
+          MS_LOG(ERROR) << "no_of_samples need to be positive.";
+          return FAILED;
+        }
+        for (uint32_t i = 0; i < no_of_samples_; ++i) {
+          new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
+        }
 
-      ShardTaskList::TaskListSwap(tasks, new_tasks);
-    } else {
-      std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
-      auto total_no = static_cast<int64_t>(tasks.Size());
-      ShardTaskList new_tasks;
-      size_t samples_to_assign =
-        (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
-      for (size_t i = 0; i < samples_to_assign; ++i) {
-        new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+        ShardTaskList::TaskListSwap(tasks, new_tasks);
+      } else {
+        std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
+        auto total_no = static_cast<int64_t>(tasks.Size());
+        ShardTaskList new_tasks;
+        size_t samples_to_assign =
+          (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
+        for (size_t i = 0; i < samples_to_assign; ++i) {
+          new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+        }
+        ShardTaskList::TaskListSwap(tasks, new_tasks);
       }
-      ShardTaskList::TaskListSwap(tasks, new_tasks);
+    } else if (GetShuffleMode() == dataset::ShuffleMode::kInfile) {
+      auto ret = ShuffleInfile(tasks);
+      if (ret != SUCCESS) {
+        return ret;
+      }
+    } else if (GetShuffleMode() == dataset::ShuffleMode::kFiles) {
+      auto ret = ShuffleFiles(tasks);
+      if (ret != SUCCESS) {
+        return ret;
+      }
     }
   } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
     return this->CategoryShuffle(tasks);

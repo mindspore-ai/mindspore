@@ -1247,25 +1247,31 @@ class MindDataDataset : public Dataset {
  public:
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
                            const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
+                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
                            const Sampler *sampler, const nlohmann::json *padded_sample, int64_t num_padded,
-                           const std::shared_ptr<DatasetCache> &cache);
+                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
                            const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
+                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<Sampler> &sampler,
                            const nlohmann::json *padded_sample, int64_t num_padded,
-                           const std::shared_ptr<DatasetCache> &cache);
+                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
                            const nlohmann::json *padded_sample, int64_t num_padded,
-                           const std::shared_ptr<DatasetCache> &cache);
+                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
                            const std::vector<std::vector<char>> &columns_list,
                            const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, const std::shared_ptr<DatasetCache> &cache);
+                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~MindDataDataset() = default;
 };
 
@@ -1284,9 +1290,10 @@ class MindDataDataset : public Dataset {
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::string &dataset_file, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
-  int64_t num_padded = 0, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  int64_t num_padded = 0, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1302,9 +1309,10 @@ inline std::shared_ptr<MindDataDataset> MindData(
 inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
                                                  const std::vector<std::string> &columns_list, const Sampler *sampler,
                                                  nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1321,9 +1329,10 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
                                                  const std::vector<std::string> &columns_list,
                                                  const std::reference_wrapper<Sampler> sampler,
                                                  nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(StringToChar(dataset_file), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1340,9 +1349,10 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
-  int64_t num_padded = 0, const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  int64_t num_padded = 0, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1357,9 +1367,10 @@ inline std::shared_ptr<MindDataDataset> MindData(
 inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
                                                  const std::vector<std::string> &columns_list, const Sampler *sampler,
                                                  nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 /// \brief Function to create a MindDataDataset
@@ -1375,9 +1386,10 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> 
                                                  const std::vector<std::string> &columns_list,
                                                  const std::reference_wrapper<Sampler> sampler,
                                                  nlohmann::json *padded_sample = nullptr, int64_t num_padded = 0,
+                                                 ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
-                                           padded_sample, num_padded, cache);
+                                           padded_sample, num_padded, shuffle_mode, cache);
 }
 
 class MnistDataset : public Dataset {

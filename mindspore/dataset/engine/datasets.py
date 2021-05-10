@@ -72,7 +72,41 @@ except ModuleNotFoundError:
 
 class Shuffle(str, Enum):
     GLOBAL: str = "global"
-    FILES: str = "file"
+    FILES: str = "files"
+    INFILE: str = "infile"
+
+
+ShuffleToShuffleMode = {Shuffle.FILES: cde.ShuffleMode.FILES,
+                        Shuffle.GLOBAL: cde.ShuffleMode.GLOBAL,
+                        Shuffle.INFILE: cde.ShuffleMode.INFILE}
+
+
+def shuffle_to_shuffle_mode(shuffle):
+    """class Shuffle Enum to int"""
+    shuffle_mode = cde.ShuffleMode.GLOBAL  # Global shuffle
+    if not isinstance(shuffle, Shuffle):
+        if shuffle is None or shuffle:
+            shuffle_mode = cde.ShuffleMode.GLOBAL  # Global shuffle
+        else:
+            shuffle_mode = cde.ShuffleMode.FALSE   # No shuffle
+    else:
+        shuffle_mode = ShuffleToShuffleMode[shuffle]
+    return shuffle_mode
+
+
+def shuffle_to_bool(shuffle):
+    """class Shuffle Enum to bool"""
+    shuffle_bool = True
+    if not isinstance(shuffle, Shuffle):
+        if shuffle is None:
+            shuffle_bool = None
+        elif shuffle:
+            shuffle_bool = True
+        else:
+            shuffle_bool = False
+    else:
+        shuffle_bool = True
+    return shuffle_bool
 
 
 @check_zip
@@ -1660,8 +1694,8 @@ class SourceDataset(Dataset):
         self.shard_id = replace_none(shard_id, 0)
 
         if shuffle is not None and not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError(
-                "shuffle must be of boolean or enum of 'Shuffle' values like 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like 'Shuffle.GLOBAL' or "
+                            "'Shuffle.FILES' or 'Shuffle.INFILE'.")
 
         self.shuffle_flag = 2  # Global shuffle
         if not isinstance(shuffle, Shuffle):
@@ -1674,6 +1708,8 @@ class SourceDataset(Dataset):
                 self.shuffle_flag = 2  # Global shuffle
             elif shuffle == Shuffle.FILES:
                 self.shuffle_flag = 1  # Files shuffle
+            elif shuffle == Shuffle.INFILE:
+                self.shuffle_flag = 3  # Infile shuffle
 
     def parse(self, children=None):
         raise NotImplementedError("Dataset has to implement parse method.")
@@ -3121,8 +3157,18 @@ class MindDataset(MappableDataset):
             it represents for a list of dataset files to be read directly.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
-        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
-            (default=None, performs shuffle).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=None, performs global shuffle).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are three levels of shuffling:
+
+            - Shuffle.GLOBAL: Global shuffle of all rows of data in dataset.
+
+            - Shuffle.FILES: Shuffle the file sequence but keep the order of data within each file.
+
+            - Shuffle.INFILE: Keep the file sequence the same but shuffle the data within each file.
+
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, 'num_samples' reflects the max sample number of per shard.
         shard_id (int, optional): The shard ID within num_shards (default=None). This
@@ -3151,20 +3197,23 @@ class MindDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.MindDataNode(self.dataset_file, self.columns_list, self.sampler, self.new_padded_sample,
-                                self.num_padded)
+                                self.num_padded, shuffle_to_shuffle_mode(self.shuffle_option))
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None, shuffle=None, num_shards=None,
                  shard_id=None, sampler=None, padded_sample=None, num_padded=None, num_samples=None, cache=None):
+        if shuffle is not None and not isinstance(shuffle, (bool, Shuffle)):
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like 'Shuffle.GLOBAL' or "
+                            "'Shuffle.FILES' or 'Shuffle.INFILE'.")
+        self.shuffle_option = shuffle
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
-                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+                         shuffle=shuffle_to_bool(shuffle), num_shards=num_shards, shard_id=shard_id, cache=cache)
         if isinstance(dataset_file, list):
             self.load_dataset = False
         else:
             self.load_dataset = True
         self.dataset_file = dataset_file
         self.columns_list = replace_none(columns_list, [])
-        self.shuffle_option = shuffle
 
         if shuffle is False:
             logger.warning("WARN: global shuffle is not used.")

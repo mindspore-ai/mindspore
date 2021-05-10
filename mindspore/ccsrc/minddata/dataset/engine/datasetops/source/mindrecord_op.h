@@ -116,6 +116,11 @@ class MindRecordOp : public MappableLeafOp {
       return *this;
     }
 
+    Builder &SetShuffleMode(const ShuffleMode shuffle_mode) {
+      build_shuffle_mode_ = shuffle_mode;
+      return *this;
+    }
+
     Status SanityCheck() const;
 
     static int32_t num_mind_record_workers() { return kDefaultMindRecordWorkers; }
@@ -138,6 +143,7 @@ class MindRecordOp : public MappableLeafOp {
     py::handle build_sample_;
     std::map<std::string, std::string> build_sample_bytes_;
     std::shared_ptr<SamplerRT> builder_sampler_;
+    ShuffleMode build_shuffle_mode_;
   };
 
   // Constructor of the MindRecordOp.
@@ -152,7 +158,8 @@ class MindRecordOp : public MappableLeafOp {
                int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded_,
                const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes_,
-               std::unique_ptr<ShardReader> shard_reader, std::shared_ptr<SamplerRT> sampler);
+               const ShuffleMode shuffle_mode_, std::unique_ptr<ShardReader> shard_reader,
+               std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~MindRecordOp() override;
@@ -240,6 +247,8 @@ class MindRecordOp : public MappableLeafOp {
   std::unique_ptr<ShardReader> shard_reader_;
 
   std::mutex ended_worker_mutex_;
+
+  ShuffleMode shuffle_mode_;
 };
 }  // namespace dataset
 }  // namespace mindspore

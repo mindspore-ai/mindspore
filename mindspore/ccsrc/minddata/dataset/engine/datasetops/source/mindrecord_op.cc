@@ -53,6 +53,7 @@ MindRecordOp::Builder::Builder() : build_dataset_file_({}), builder_sampler_(nul
   build_load_dataset_ = false;
   build_num_padded_ = 0;
   build_sample_ = nullptr;
+  build_shuffle_mode_ = ShuffleMode::kGlobal;
 }
 
 // The builder "build" method creates the final object.
@@ -75,7 +76,7 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
 
   new_mind_record_op = std::make_shared<MindRecordOp>(
     build_num_mind_record_workers_, build_dataset_file_, build_load_dataset_, build_op_connector_queue_size_,
-    build_columns_to_load_, build_operators_, build_num_padded_, sample_json, build_sample_bytes_,
+    build_columns_to_load_, build_operators_, build_num_padded_, sample_json, build_sample_bytes_, build_shuffle_mode_,
     std::move(shard_reader), builder_sampler_);
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
@@ -118,7 +119,8 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
                            int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
                            const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes,
-                           std::unique_ptr<ShardReader> shard_reader, std::shared_ptr<SamplerRT> sampler)
+                           const ShuffleMode shuffle_mode, std::unique_ptr<ShardReader> shard_reader,
+                           std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::move(sampler)),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
@@ -129,6 +131,7 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
       num_padded_(num_padded),
       sample_json_(sample_json),
       sample_bytes_(sample_bytes),
+      shuffle_mode_(shuffle_mode),
       shard_reader_(std::move(shard_reader)) {
   io_block_queues_.Init(num_workers_, op_connector_queue_size);
   epoch_sync_flag_ = true;  // MindRecordOp needs to turn this flag on, otherwise, calling ShuffleTask() before all

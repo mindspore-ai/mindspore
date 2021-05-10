@@ -173,25 +173,25 @@ PYBIND_REGISTER(MindDataNode, 2, ([](const py::module *m) {
                   (void)py::class_<MindDataNode, DatasetNode, std::shared_ptr<MindDataNode>>(*m, "MindDataNode",
                                                                                              "to create a MindDataNode")
                     .def(py::init([](std::string dataset_file, py::list columns_list, py::handle sampler,
-                                     py::dict padded_sample, int64_t num_padded) {
+                                     py::dict padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
                       auto minddata = std::make_shared<MindDataNode>(dataset_file, toStringVector(columns_list),
                                                                      toSamplerObj(sampler, true), padded_sample_json,
-                                                                     num_padded, nullptr);
+                                                                     num_padded, shuffle_mode, nullptr);
                       minddata->SetSampleBytes(&sample_bytes);
                       THROW_IF_ERROR(minddata->ValidateParams());
                       return minddata;
                     }))
                     .def(py::init([](py::list dataset_file, py::list columns_list, py::handle sampler,
-                                     py::dict padded_sample, int64_t num_padded) {
+                                     py::dict padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
                       auto minddata = std::make_shared<MindDataNode>(
                         toStringVector(dataset_file), toStringVector(columns_list), toSamplerObj(sampler, true),
-                        padded_sample_json, num_padded, nullptr);
+                        padded_sample_json, num_padded, shuffle_mode, nullptr);
                       minddata->SetSampleBytes(&sample_bytes);
                       THROW_IF_ERROR(minddata->ValidateParams());
                       return minddata;

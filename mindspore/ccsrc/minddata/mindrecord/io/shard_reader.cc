@@ -148,6 +148,10 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
   }
   num_rows_ = 0;
   auto row_group_summary = ReadRowGroupSummary();
+
+  // clear the shard_sample_count_, because it will be insert when Launch func
+  shard_sample_count_.clear();
+
   for (const auto &rg : row_group_summary) {
     num_rows_ += std::get<3>(rg);
   }
@@ -305,6 +309,7 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
       shard_sample_count_.push_back(total_count);
     }
   }
+
   return row_group_summary;
 }
 
@@ -1224,6 +1229,7 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
       break;
     }
   }
+
   if (-1 == category_operator) {
     if (lazy_load_ == false) {
       if (SUCCESS != CreateTasksByRow(row_group_summary, operators)) {
@@ -1254,6 +1260,11 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
   for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
     const auto &op = operators[operator_no];
     if (std::dynamic_pointer_cast<ShardCategory>(op)) continue;
+
+    if (std::dynamic_pointer_cast<ShardDistributedSample>(op) || std::dynamic_pointer_cast<ShardShuffle>(op)) {
+      op->SetShardSampleCount(shard_sample_count_);
+    }
+
     if (SUCCESS != (*op)(tasks_)) {
       return FAILED;
     }

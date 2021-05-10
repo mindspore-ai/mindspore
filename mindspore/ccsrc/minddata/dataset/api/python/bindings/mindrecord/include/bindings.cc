@@ -18,6 +18,7 @@
 
 #include "minddata/dataset/api/python/pybind_register.h"
 
+#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_operator.h"
@@ -83,6 +84,15 @@ PYBIND_REGISTER(
         return std::make_shared<mindrecord::ShardShuffle>(GetSeed(), num_samples, replacement, reshuffle_each_epoch);
       }));
   }));
+
+PYBIND_REGISTER(ShuffleMode, 1, ([](const py::module *m) {
+                  (void)py::enum_<ShuffleMode>(*m, "ShuffleMode", py::arithmetic())
+                    .value("FALSE", ShuffleMode::kFalse)
+                    .value("FILES", ShuffleMode::kFiles)
+                    .value("GLOBAL", ShuffleMode::kGlobal)
+                    .value("INFILE", ShuffleMode::kInfile)
+                    .export_values();
+                }));
 
 }  // namespace dataset
 }  // namespace mindspore

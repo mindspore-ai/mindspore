@@ -36,7 +36,7 @@ enum class DatasetType { kUnknown, kArrow, kTf };
 enum class TensorImpl { kNone, kFlexible, kCv, kNP };
 
 // Possible values for shuffle
-enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2 };
+enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2, kInfile = 3 };
 
 // Possible values for Border types
 enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };

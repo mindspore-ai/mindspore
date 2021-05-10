@@ -39,6 +39,12 @@ class __attribute__((visibility("default"))) ShardShuffle : public ShardOperator
   // Private helper function
   MSRStatus CategoryShuffle(ShardTaskList &tasks);
 
+  // Keep the file sequence the same but shuffle the data within each file
+  MSRStatus ShuffleInfile(ShardTaskList &tasks);
+
+  // Shuffle the file sequence but keep the order of data within each file
+  MSRStatus ShuffleFiles(ShardTaskList &tasks);
+
   uint32_t shuffle_seed_;
   int64_t no_of_samples_;
   bool replacement_;

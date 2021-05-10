@@ -463,7 +463,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMindRecordCApi) {
   std::string file_path = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
 
   // Create a MindRecord Dataset, 20 records in it
-  std::shared_ptr<Dataset> ds = MindData(file_path, {}, std::make_shared<RandomSampler>(), nullptr, 0, some_cache);
+  std::shared_ptr<Dataset> ds = MindData(file_path, {}, std::make_shared<RandomSampler>(), nullptr, 0,
+                                         ShuffleMode::kGlobal, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

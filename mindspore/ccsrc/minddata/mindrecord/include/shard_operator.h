@@ -18,7 +18,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_SHARD_OPERATOR_H_
 
 #include <memory>
+#include <vector>
 #include "minddata/mindrecord/include/shard_task_list.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace mindrecord {
@@ -38,6 +40,7 @@ class __attribute__((visibility("default"))) ShardOperator {
     }
     return SUCCESS;
   }
+
   virtual bool HasChildOp() { return child_op_ != nullptr; }
 
   virtual MSRStatus SetChildOp(std::shared_ptr<ShardOperator> child_op) {
@@ -55,8 +58,26 @@ class __attribute__((visibility("default"))) ShardOperator {
 
   virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return 0; }
 
+  virtual void UpdateShuffleMode(dataset::ShuffleMode shuffle_mode) { shuffle_mode_ = shuffle_mode; }
+
+  virtual dataset::ShuffleMode GetShuffleMode() { return shuffle_mode_; }
+
+  virtual void SetShardSampleCount(const std::vector<uint32_t> &shard_sample_count) {
+    shard_sample_count_ = shard_sample_count;
+  }
+
+  virtual std::vector<uint32_t> GetShardSampleCount() { return shard_sample_count_; }
+
  private:
   std::shared_ptr<ShardOperator> child_op_ = nullptr;
+
+  // indicate shard_id : inc_count
+  // 0 : 15  -  shard0 has 15 samples
+  // 1 : 41  -  shard1 has 26 samples
+  // 2 : 58  -  shard2 has 17 samples
+  std::vector<uint32_t> shard_sample_count_;
+
+  dataset::ShuffleMode shuffle_mode_ = dataset::ShuffleMode::kGlobal;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
