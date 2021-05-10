@@ -56,27 +56,6 @@ class HcclDynamicKernel : public DynamicKernel {
 
   void StaticShapeExecute();
 };
-
-class HcclExecutorManager {
- public:
-  static HcclExecutorManager &GetInstance() {
-    static HcclExecutorManager instance;
-    return instance;
-  }
-
-  bool Initialize();
-  bool Finalize();
-  void *GetHcomOpertion();
-  void CloseHandle();
-
- private:
-  HcclExecutorManager() = default;
-  ~HcclExecutorManager() = default;
-  DISABLE_COPY_AND_ASSIGN(HcclExecutorManager);
-
-  void *handle_{nullptr};
-  bool initialized_{false};
-};
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

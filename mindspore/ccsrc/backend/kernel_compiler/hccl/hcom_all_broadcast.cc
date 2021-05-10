@@ -17,8 +17,7 @@
 #include "backend/kernel_compiler/hccl/hcom_all_broadcast.h"
 #include <memory>
 #include "utils/ms_context.h"
-#include "backend/kernel_compiler/hccl/hccl_context.h"
-#include "external/hccl/hccl.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,8 +30,8 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs,
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = HcclBroadcast(inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_,
-                                   HcclContext::GetInstance().hccl_comm(), stream_ptr);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(inputs[0]->addr, hccl_count_,
+                                                                    hccl_data_type_list_[0], root_id_, stream_ptr);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast fail, return: " << hccl_result;
     return false;
