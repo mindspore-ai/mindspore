@@ -18,6 +18,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/convolution_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
@@ -148,9 +149,21 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_), out_unit,
         origin_weight_, origin_bias_);
     } else {
-      kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter_, in_tensors_, out_tensors_,
-                                                               static_cast<const lite::InnerContext *>(this->context_),
-                                                               origin_weight_, origin_bias_);
+      if (context_->thread_num_ == 1 && conv_param->input_channel_ > 64) {
+        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
+          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+          origin_weight_, origin_bias_);
+      } else {
+#ifdef ENABLE_AVX
+        kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+          origin_weight_, origin_bias_);
+#else
+        kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
+          op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+          origin_weight_, origin_bias_);
+#endif
+      }
     }
   }
 

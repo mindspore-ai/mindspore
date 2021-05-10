@@ -169,16 +169,16 @@ void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
-void PackNHWC4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  int ic_remainder_ = channel % C4NUM;
+void PackNHWCXToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel, int cx_num) {
+  int c_algin = UP_DIV(channel, cx_num);
+  int ic_remainder_ = channel % cx_num;
   if (ic_remainder_ != 0) {
     int nhwc_batch_unit_offset = channel * plane;
     for (int b = 0; b < batch; b++) {
-      int batch_offset = b * c4 * C4NUM * plane;
+      int batch_offset = b * c_algin * cx_num * plane;
       for (int i = 0; i < plane; i++) {
-        memcpy((float *)dst + b * nhwc_batch_unit_offset + i * channel, (float *)src + batch_offset + i * c4 * C4NUM,
-               channel * sizeof(float));
+        memcpy((float *)dst + b * nhwc_batch_unit_offset + i * channel,
+               (float *)src + batch_offset + i * c_algin * cx_num, channel * sizeof(float));
       }
     }
   } else {

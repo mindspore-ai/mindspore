@@ -63,7 +63,7 @@ typedef struct SlidingWindowParam {
   int bottom_;
   int c_block_;
   int block_channel_;
-  int ic4_channel_;
+  int ic_align_;
   int out_step_;
   int out_h_step_;
   int in_step_;
