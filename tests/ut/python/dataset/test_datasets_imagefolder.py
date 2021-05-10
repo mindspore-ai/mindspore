@@ -759,6 +759,15 @@ def test_imagefolder_exception():
     except RuntimeError as e:
         assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
 
+    data_dir_invalid = "../data/dataset/testPK"
+    try:
+        data = ds.ImageFolderDataset(data_dir_invalid)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "should be file, but got directory" in str(e)
+
 
 if __name__ == '__main__':
     test_imagefolder_basic()
