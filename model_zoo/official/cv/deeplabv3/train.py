@@ -31,7 +31,8 @@ from src.data import dataset as data_generator
 from src.loss import loss
 from src.nets import net_factory
 from src.utils import learning_rates
-
+from src.utils.eval_utils import BuildEvalNetwork
+from src.utils.eval_callback import EvalCallBack, apply_eval
 set_seed(1)
 
 
@@ -72,7 +73,6 @@ def parse_args():
 
     # model
     parser.add_argument('--model', type=str, default='deeplab_v3_s16', help='select model')
-    parser.add_argument('--freeze_bn', action='store_true', help='freeze bn')
     parser.add_argument('--ckpt_pre_trained', type=str, default='', help='pretrained model')
     parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
                         help="Filter the last weight parameters, default is False.")
@@ -86,6 +86,22 @@ def parse_args():
     parser.add_argument('--save_steps', type=int, default=3000, help='steps interval for saving')
     parser.add_argument('--keep_checkpoint_max', type=int, default=int, help='max checkpoint for saving')
 
+    # validate
+    parser.add_argument("--run_eval", type=ast.literal_eval, default=False,
+                        help="Run evaluation when training, default is False.")
+    parser.add_argument("--save_best_ckpt", type=ast.literal_eval, default=True,
+                        help="Save best checkpoint when run_eval is True, default is True.")
+    parser.add_argument("--eval_start_epoch", type=int, default=200,
+                        help="Evaluation start epoch when run_eval is True, default is 200.")
+    parser.add_argument("--eval_interval", type=int, default=1,
+                        help="Evaluation interval when run_eval is True, default is 1.")
+    parser.add_argument('--ann_file', type=str, default='', help='path to annotation')
+    parser.add_argument('--data_root', type=str, default='', help='root path of val data')
+    parser.add_argument('--val_data', type=str, default='', help='list of val data')
+    parser.add_argument('--scales', type=float, action='append', help='scales of evaluation')
+    parser.add_argument('--flip', action='store_true', help='perform left-right flip')
+    parser.add_argument("--input_format", type=str, choices=["NCHW", "NHWC"], default="NCHW",
+                        help="NCHW or NHWC")
     args, _ = parser.parse_known_args()
     return args
 
@@ -126,9 +142,9 @@ def train():
 
     # network
     if args.model == 'deeplab_v3_s16':
-        network = net_factory.nets_map[args.model]('train', args.num_classes, 16, args.freeze_bn)
+        network = net_factory.nets_map[args.model](args.num_classes, 16)
     elif args.model == 'deeplab_v3_s8':
-        network = net_factory.nets_map[args.model]('train', args.num_classes, 8, args.freeze_bn)
+        network = net_factory.nets_map[args.model](args.num_classes, 8)
     else:
         raise NotImplementedError('model [{:s}] not recognized'.format(args.model))
 
@@ -169,6 +185,7 @@ def train():
     # loss scale
     manager_loss_scale = FixedLossScaleManager(args.loss_scale, drop_overflow_update=False)
     amp_level = "O0" if args.device_target == "CPU" else "O3"
+    train_net.set_train(True)
     model = Model(train_net, optimizer=opt, amp_level=amp_level, loss_scale_manager=manager_loss_scale)
 
     # callback for saving ckpts
@@ -182,6 +199,16 @@ def train():
         ckpoint_cb = ModelCheckpoint(prefix=args.model, directory=args.train_dir, config=config_ck)
         cbs.append(ckpoint_cb)
 
+    if args.run_eval and args.rank == 0:
+        network_eval = BuildEvalNetwork(network, args.input_format)
+        eval_dataset = args.val_data
+        save_ckpt_path = args.train_dir
+        eval_param_dict = {"net": network_eval, "dataset": eval_dataset, "args": args}
+        eval_cb = EvalCallBack(apply_eval, eval_param_dict, interval=args.eval_interval,
+                               eval_start_epoch=args.eval_start_epoch, save_best_ckpt=True,
+                               ckpt_directory=save_ckpt_path, besk_ckpt_name="best_map.ckpt",
+                               metrics_name="mIou")
+        cbs.append(eval_cb)
     model.train(args.train_epochs, dataset, callbacks=cbs, dataset_sink_mode=(args.device_target != "CPU"))
 
 
