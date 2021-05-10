@@ -493,8 +493,15 @@ class QuantizationAwareTraining(Quantizer):
         """
         act_class = activation.__class__
         act_list = [nn.ReLU, nn.ReLU6, nn.Sigmoid]
+        neg_trunc_act_list = [nn.ReLU, nn.ReLU6]
         act_list_with_fake_before = [nn.LeakyReLU, nn.HSigmoid, nn.HSwish]
 
+        if act_class in neg_trunc_act_list and OptimizeOption.LEARNED_SCALE in self.optimize_option:
+            self.quant_config = self.quant_config._replace(
+                activation=self.quant_config.activation.partial_init(neg_trunc=True, narrow_range=False))
+            return quant.ActQuant(activation=activation,
+                                  quant_config=self.quant_config,
+                                  quant_dtype=self.act_dtype)
         if act_class in act_list:
             return quant.ActQuant(activation=activation,
                                   quant_config=self.quant_config,
