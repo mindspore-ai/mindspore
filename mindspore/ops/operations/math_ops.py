@@ -2421,7 +2421,7 @@ class Mod(_MathBinaryOp):
         ValueError: When `input_x` and `input_y` are not the same dtype.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
@@ -2482,7 +2482,8 @@ class Floor(PrimitiveWithInfer):
 
 class FloorMod(_MathBinaryOp):
     """
-    Computes the remainder of division element-wise.
+    Computes the remainder of division element-wise. It's a flooring divide.
+    E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
