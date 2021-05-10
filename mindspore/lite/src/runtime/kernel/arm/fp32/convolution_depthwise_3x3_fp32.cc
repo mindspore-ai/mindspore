@@ -137,7 +137,7 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::Eval() {
-  LiteKernel::Eval();
+  InnerKernel::Eval();
   if (is_trainable()) {
     InitWeightBias();
   }

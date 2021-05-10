@@ -119,7 +119,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
   for (int i = 0; i < 3; i++) {
     kernel->Run();
@@ -143,7 +143,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   delete[] input_data;
   delete[] dy_data;
   delete[] dw_data;
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   dw_tensor.set_data(nullptr);
@@ -196,7 +196,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -222,7 +222,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   w_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
   dx_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
 
@@ -272,7 +272,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   kernel->Run();
 
   int loop_count = 100;
@@ -295,7 +295,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -345,7 +345,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
   for (int i = 0; i < 3; i++) {
     kernel->Run();
@@ -372,7 +372,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   dy_tensor.set_data(nullptr);
 
   delete kernel;
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
@@ -420,7 +420,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -446,7 +446,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   dw_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -496,7 +496,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
@@ -517,7 +517,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   dx_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
   w_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
   // delete conv_param;
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
@@ -566,7 +566,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
                                                                   outputs, &context);
   ASSERT_NE(kernel, nullptr);
   kernel->Init();
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   kernel->Train();
   EXPECT_EQ(kernel->IsTrain(), 1);
@@ -596,7 +596,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   x_tensor.set_data(nullptr);
   y_tensor.set_data(nullptr);
   w_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   delete kernel;
 
   MS_LOG(INFO) << "TestConvolutionFp32 Filter Grad passed";
@@ -673,7 +673,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -703,7 +703,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   dw_tensor.set_data(nullptr);
   x_tensor.set_data(nullptr);
   dy_tensor.set_data(nullptr);
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 
@@ -780,7 +780,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
+  mindspore::kernel::InnerKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
@@ -807,7 +807,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   dy_tensor.set_data(nullptr);
   w_tensor.set_data(nullptr);
   delete kernel;
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   MS_LOG(INFO) << "TestConvolutionGradFp32 Filter Grad passed";
 }
 

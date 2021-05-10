@@ -138,9 +138,9 @@ int NormalizeCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuNormalizeKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuNormalizeKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   auto *kernel =
     new (std::nothrow) NormalizeCPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {

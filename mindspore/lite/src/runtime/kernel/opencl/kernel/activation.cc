@@ -73,7 +73,7 @@ int ActivationOpenCLKernel::Prepare() {
   std::string program_name = "Activation";
   ocl_runtime_->LoadSource(program_name, source);
   std::string kernel_name = GetActTypeString(type_);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   SetConstArgs();
   SetGlobalLocal();

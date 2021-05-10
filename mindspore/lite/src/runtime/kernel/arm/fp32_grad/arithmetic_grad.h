@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_ARITHMETIC_GRAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "schema/model_generated.h"
 
@@ -33,14 +33,14 @@ namespace mindspore::kernel {
 
 class ArithmeticGradCPUKernel;
 
-class ArithmeticGradCPUKernel : public LiteKernel {
+class ArithmeticGradCPUKernel : public InnerKernel {
   typedef void (ArithmeticGradCPUKernel::*ArithmeticGradOperation)(float *, int, float *, int, float *, int);
 
  public:
   explicit ArithmeticGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
-    switch (Type()) {
+      : InnerKernel(parameter, inputs, outputs, ctx), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
+    switch (type()) {
       case PrimitiveType_MulGrad:
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul;  // this will be adjusted in InferShape
         break;

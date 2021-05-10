@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/detection_post_process_base.h"
 #include "nnacl/fp32/detection_post_process_fp32.h"
@@ -39,10 +39,11 @@ class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKern
   int quant_size_ = 0;
   int thread_n_stride_ = 0;
   int DequantizeInt8ToFp32(const int task_id);
+  void FreeAllocatedBuffer() override;
 
  private:
   int Dequantize(lite::Tensor *tensor, float **data);
-  int GetInputData();
+  int GetInputData() override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_

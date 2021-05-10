@@ -202,9 +202,9 @@ bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
     return false;
   }
   for (auto &node : subgraph_kernel->nodes()) {
-    if (node->Type() == schema::PrimitiveType_Switch &&
+    if (node->type() == schema::PrimitiveType_Switch &&
         InputsContainsSpecificNode(node, schema::PrimitiveType_PartialFusion) && node->out_kernels().size() == 1 &&
-        node->out_kernels().front()->Type() == schema::PrimitiveType_Call) {
+        node->out_kernels().front()->type() == schema::PrimitiveType_Call) {
       return true;
     }
   }
@@ -215,7 +215,7 @@ bool LiteKernelUtil::IsSwitchCall(kernel::LiteKernel *kernel) {
 kernel::LiteKernel *LiteKernelUtil::GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                           const schema::PrimitiveType &primitive_type) {
   for (auto input : kernel->in_kernels()) {
-    if (input->Type() == primitive_type) {
+    if (input->type() == primitive_type) {
       return input;
     }
   }

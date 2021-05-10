@@ -36,7 +36,7 @@ int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<ker
     MS_LOG(ERROR) << "NPU Transform pass does not find in kernel with 4d output";
     return RET_ERROR;
   }
-  if (is_input_kernel || (*it)->desc().arch != kNPU || npu_trans_nodes.find((*it)->Type()) == npu_trans_nodes.end()) {
+  if (is_input_kernel || (*it)->desc().arch != kNPU || npu_trans_nodes.find((*it)->type()) == npu_trans_nodes.end()) {
     kernel::LiteKernel *pre_kernel = nullptr;
     if (!is_input_kernel) {
       pre_kernel = *it;
@@ -95,7 +95,7 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
   std::vector<kernel::LiteKernel *> post_non_insert_kernels;
   for (int i = 0; i < kernel->out_kernels().size(); i++) {
     auto post_kernel = kernel->out_kernels()[i];
-    if (post_kernel->desc().arch != kNPU || npu_trans_nodes.find(post_kernel->Type()) == npu_trans_nodes.end()) {
+    if (post_kernel->desc().arch != kNPU || npu_trans_nodes.find(post_kernel->type()) == npu_trans_nodes.end()) {
       post_insert_kernels.push_back(post_kernel);
     } else {
       post_non_insert_kernels.push_back(post_kernel);
@@ -186,15 +186,15 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
 int NPUTransformPass::Run() {
   for (size_t i = 0; i < all_kernels_->size();) {
     auto kernel = (*all_kernels_)[i];
-    if (kernel->desc().arch != kNPU || npu_trans_nodes.find(kernel->Type()) == npu_trans_nodes.end()) {
+    if (kernel->desc().arch != kNPU || npu_trans_nodes.find(kernel->type()) == npu_trans_nodes.end()) {
       i++;
       continue;
     }
-    if (kernel->Type() == schema::PrimitiveType_ScaleFusion && !NPUPassUtils::Scale4dCase(kernel)) {
+    if (kernel->type() == schema::PrimitiveType_ScaleFusion && !NPUPassUtils::Scale4dCase(kernel)) {
       i++;
       continue;
     }
-    if (kernel->Type() == schema::PrimitiveType_Resize &&
+    if (kernel->type() == schema::PrimitiveType_Resize &&
         kernel->in_tensors()[0]->Height() > kernel->out_tensors()[0]->Height()) {
       i++;
       continue;

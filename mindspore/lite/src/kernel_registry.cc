@@ -133,7 +133,7 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.provider == kBuiltin) {
     int index = GetCreatorFuncIndex(desc);
     if (index >= array_size_ || index < 0) {
-      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type " << desc.data_type << ",op type "
                     << desc.type;
       return nullptr;
     }
@@ -231,10 +231,17 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
   if (key.provider == kBuiltin) {
     auto creator = GetCreator(key);
     if (creator != nullptr) {
-      *kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-      if (*kernel != nullptr) {
-        (*kernel)->set_desc(key);
-        return RET_OK;
+      auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+      if (inner_kernel != nullptr) {
+        inner_kernel->set_registry_data_type(key.data_type);
+        auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+        if (lite_kernel != nullptr) {
+          lite_kernel->set_desc(key);
+          *kernel = lite_kernel;
+          return RET_OK;
+        } else {
+          delete inner_kernel;
+        }
       }
       return RET_ERROR;
     }
@@ -247,9 +254,16 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     Tensor2MSTensor(std::move(in_tensors), &tensors_in);
     std::vector<tensor::MSTensor *> tensors_out;
     Tensor2MSTensor(std::move(out_tensors), &tensors_out);
-    *kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
-    if (*kernel != nullptr) {
-      return RET_OK;
+    auto base_kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
+    if (base_kernel != nullptr) {
+      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
+      if (lite_kernel != nullptr) {
+        lite_kernel->set_desc(key);
+        *kernel = lite_kernel;
+        return RET_OK;
+      } else {
+        delete base_kernel;
+      }
     }
     return RET_ERROR;
   }

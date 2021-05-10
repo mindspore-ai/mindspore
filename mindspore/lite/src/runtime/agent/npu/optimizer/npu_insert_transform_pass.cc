@@ -48,7 +48,7 @@ std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
 
 int NPUInsertTransformPass::GetInsertState(kernel::LiteKernel *kernel) {
   // filter out irrelevant kernel
-  if (npu_insert_nodes.find(kernel->Type()) == npu_insert_nodes.end()) {
+  if (npu_insert_nodes.find(kernel->type()) == npu_insert_nodes.end()) {
     return InsertNone;
   }
 

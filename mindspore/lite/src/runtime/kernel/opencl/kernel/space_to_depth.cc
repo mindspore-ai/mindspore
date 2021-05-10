@@ -44,7 +44,7 @@ int SpaceToDepthOpenCLKernel::Prepare() {
   std::string kernel_name;
   in_shape_ = GpuTensorInfo(in_tensors_[0]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
-  if (Type() == PrimitiveType_DepthToSpace) {
+  if (type() == PrimitiveType_DepthToSpace) {
     kernel_name = "DepthToSpace";
   } else {
     kernel_name = "SpaceToDepth";
@@ -58,7 +58,8 @@ int SpaceToDepthOpenCLKernel::Prepare() {
   std::string source = space_to_depth_source;
   std::string program_name = "SpaceToDepth";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   SetConstArgs();
@@ -76,7 +77,7 @@ void SpaceToDepthOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->block_size_);
-  if (Type() == PrimitiveType_DepthToSpace) {
+  if (type() == PrimitiveType_DepthToSpace) {
     int co_size = out_shape_.C;
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, co_size);
   } else {

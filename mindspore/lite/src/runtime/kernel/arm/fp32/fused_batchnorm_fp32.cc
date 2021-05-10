@@ -103,7 +103,7 @@ int FusedBatchnormCPUKernel::Run() {
 }
 
 int FusedBatchnormCPUKernel::Eval() {
-  LiteKernel::Eval();
+  InnerKernel::Eval();
   if (trained_) {
     float *save_mean = static_cast<float *>(in_tensors_.at(3)->MutableData());
     float *save_var = static_cast<float *>(in_tensors_.at(4)->MutableData());

@@ -126,6 +126,7 @@ set(LITE_SRC
         ${SRC_DIR}/kernel_interface_registry.cc
         ${SRC_DIR}/kernel_registry.cc
         ${SRC_DIR}/register_kernel.cc
+        ${SRC_DIR}/inner_kernel.cc
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/lite_kernel_util.cc
         ${SRC_DIR}/scheduler.cc

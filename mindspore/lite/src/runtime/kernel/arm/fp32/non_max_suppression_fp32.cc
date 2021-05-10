@@ -103,6 +103,87 @@ void ExpandDims(std::vector<int> *shape, size_t size) {
   }
 }
 
+int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num,
+                                            float *scores_data, float *box_data) {
+  std::vector<NMSBox> selected_box_per_class;
+  selected_box_per_class.reserve(std::min(static_cast<int32_t>(box_num), max_output_per_class_));
+  std::vector<NMSIndex> selected_index;
+
+  for (auto i = 0; i < batch_num; ++i) {
+    int batch_offset = i * class_num * box_num;
+    for (auto j = 0; j < class_num; ++j) {
+      // per batch per class filter
+      float *per_class_scores = scores_data + batch_offset + j * box_num;
+      float *box = box_data + i * box_num * kBoxPointNum;
+      std::vector<NMSBox> above_score_candidates;
+      above_score_candidates.reserve(box_num);
+      for (auto k = 0; k < box_num; ++k) {
+        if (per_class_scores[k] > score_threshold_) {
+          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[0], box[1], box[2],
+                                              box[3]);
+        }
+        box += kBoxPointNum;
+      }
+      std::priority_queue<NMSBox, std::vector<NMSBox>, std::less<NMSBox>> sorted_candidates(
+        std::less<NMSBox>(), std::move(above_score_candidates));
+
+      selected_box_per_class.clear();
+      while (!sorted_candidates.empty() && static_cast<int32_t>(selected_index.size()) < max_output_per_class_) {
+        auto cand = sorted_candidates.top();
+        bool selected = true;
+        auto IoUSuppressed = [this, &cand](const NMSBox &box) {
+          float intersec_x1 = std::max(cand.x1_, box.x1_);
+          float intersec_x2 = std::min(cand.x2_, box.x2_);
+          float intersec_y1 = std::max(cand.y1_, box.y1_);
+          float intersec_y2 = std::min(cand.y2_, box.y2_);
+          const float intersec_area =
+            std::max(intersec_x2 - intersec_x1, 0.0f) * std::max(intersec_y2 - intersec_y1, 0.0f);
+          if (intersec_area <= 0.0f) {
+            return false;
+          }
+          const float intersec_over_union = intersec_area / (cand.area_ + box.area_ - intersec_area);
+          return intersec_over_union > this->iou_threshold_;
+        };
+        if (std::any_of(selected_box_per_class.begin(), selected_box_per_class.end(), IoUSuppressed)) {
+          selected = false;
+        }
+        if (selected) {
+          selected_box_per_class.push_back(cand);
+          selected_index.emplace_back(
+            NMSIndex{static_cast<int32_t>(i), static_cast<int32_t>(j), static_cast<int32_t>(cand.index_)});
+        }
+        sorted_candidates.pop();
+      }
+    }
+  }
+  auto output = out_tensors_.at(0);
+  int selected_num = static_cast<int>(selected_index.size());
+  if (!simple_out) {
+    const int output_last_dim = 3;
+    output->set_shape({selected_num, output_last_dim});
+    MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
+    auto *out_data = reinterpret_cast<int32_t *>(output->ReallocData());
+    if (out_data == nullptr) {
+      MS_LOG(ERROR) << "out_data is nullptr.";
+      return RET_ERROR;
+    }
+    memcpy(out_data, selected_index.data(), selected_index.size() * sizeof(NMSIndex));
+  } else {
+    output->set_shape({selected_num});
+    std::vector<int> result;
+    for (size_t i = 0; i < selected_index.size(); i++) {
+      result.push_back(selected_index[i].box_index_);
+    }
+    auto *out_data = reinterpret_cast<int32_t *>(output->ReallocData());
+    if (out_data == nullptr) {
+      MS_LOG(ERROR) << "out_data is nullptr.";
+      return RET_ERROR;
+    }
+    memcpy(out_data, result.data(), result.size() * sizeof(int));
+  }
+  return RET_OK;
+}
+
 int NonMaxSuppressionCPUKernel::Run() {
   auto box_tensor = in_tensors_.at(kBoxTensorIndex);
   if (box_tensor == nullptr) {
@@ -161,83 +242,7 @@ int NonMaxSuppressionCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  std::vector<NMSBox> selected_box_per_class;
-  selected_box_per_class.reserve(std::min(static_cast<int32_t>(box_num), max_output_per_class_));
-  std::vector<NMSIndex> selected_index;
-
-  for (auto i = 0; i < batch_num; ++i) {
-    int batch_offset = i * class_num * box_num;
-    for (auto j = 0; j < class_num; ++j) {
-      // per batch per class filter
-      float *per_class_scores = scores_data + batch_offset + j * box_num;
-      float *box = box_data + i * box_num * kBoxPointNum;
-      std::vector<NMSBox> above_score_candidates;
-      above_score_candidates.reserve(box_num);
-      for (auto k = 0; k < box_num; ++k) {
-        if (per_class_scores[k] > score_threshold_) {
-          above_score_candidates.emplace_back(per_class_scores[k], k, center_point_box_, box[0], box[1], box[2],
-                                              box[3]);
-        }
-        box += kBoxPointNum;
-      }
-      std::priority_queue<NMSBox, std::vector<NMSBox>, std::less<NMSBox>> sorted_candidates(
-        std::less<NMSBox>(), std::move(above_score_candidates));
-
-      selected_box_per_class.clear();
-      while (!sorted_candidates.empty() && static_cast<int32_t>(selected_index.size()) < max_output_per_class_) {
-        auto cand = sorted_candidates.top();
-        bool selected = true;
-        auto IoUSuppressed = [this, &cand](const NMSBox &box) {
-          float intersec_x1 = std::max(cand.x1_, box.x1_);
-          float intersec_x2 = std::min(cand.x2_, box.x2_);
-          float intersec_y1 = std::max(cand.y1_, box.y1_);
-          float intersec_y2 = std::min(cand.y2_, box.y2_);
-          const float intersec_area =
-            std::max(intersec_x2 - intersec_x1, 0.0f) * std::max(intersec_y2 - intersec_y1, 0.0f);
-          if (intersec_area <= 0.0f) {
-            return false;
-          }
-          const float intersec_over_union = intersec_area / (cand.area_ + box.area_ - intersec_area);
-          return intersec_over_union > this->iou_threshold_;
-        };
-        if (std::any_of(selected_box_per_class.begin(), selected_box_per_class.end(), IoUSuppressed)) {
-          selected = false;
-        }
-        if (selected) {
-          selected_box_per_class.push_back(cand);
-          selected_index.emplace_back(
-            NMSIndex{static_cast<int32_t>(i), static_cast<int32_t>(j), static_cast<int32_t>(cand.index_)});
-        }
-        sorted_candidates.pop();
-      }
-    }
-  }
-  auto output = out_tensors_.at(0);
-  int selected_num = static_cast<int>(selected_index.size());
-  if (!simple_out) {
-    const int output_last_dim = 3;
-    output->set_shape({selected_num, output_last_dim});
-    MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
-    auto *out_data = reinterpret_cast<int32_t *>(output->MutableData());
-    if (out_data == nullptr) {
-      MS_LOG(ERROR) << "out_data is nullptr.";
-      return RET_ERROR;
-    }
-    memcpy(out_data, selected_index.data(), selected_index.size() * sizeof(NMSIndex));
-  } else {
-    output->set_shape({selected_num});
-    std::vector<int> result;
-    for (size_t i = 0; i < selected_index.size(); i++) {
-      result.push_back(selected_index[i].box_index_);
-    }
-    auto *out_data = reinterpret_cast<int32_t *>(output->MutableData());
-    if (out_data == nullptr) {
-      MS_LOG(ERROR) << "out_data is nullptr.";
-      return RET_ERROR;
-    }
-    memcpy(out_data, result.data(), result.size() * sizeof(int));
-  }
-  return RET_OK;
+  return Run_Selecte(simple_out, box_num, batch_num, class_num, scores_data, box_data);
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_NonMaxSuppression, LiteKernelCreator<NonMaxSuppressionCPUKernel>)

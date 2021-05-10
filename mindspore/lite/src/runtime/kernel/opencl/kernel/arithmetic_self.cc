@@ -33,8 +33,8 @@ int ArithmeticSelfOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (!IsArithmeticSelf(Type())) {
-    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
+  if (!IsArithmeticSelf(type())) {
+    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) {
@@ -81,15 +81,15 @@ void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
 
 int ArithmeticSelfOpenCLKernel::Prepare() {
   std::string kernel_name = "ArithmeticSelf_Element";
-  if (Type() == schema::PrimitiveType_ExpFusion) {
+  if (type() == schema::PrimitiveType_ExpFusion) {
     kernel_name += "Exp_NHWC4";
   } else {
-    kernel_name += std::string(schema::EnumNamePrimitiveType(Type())) + "_NHWC4";
+    kernel_name += std::string(schema::EnumNamePrimitiveType(type())) + "_NHWC4";
   }
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
   std::string program_name = "ArithmeticSelf";
   ocl_runtime_->LoadSource(program_name, arithmeticself_source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   SetGlobalLocal();
   SetConstArgs();

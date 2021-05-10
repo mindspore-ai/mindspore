@@ -79,11 +79,11 @@ void TrainSession::RestoreOps(const std::vector<CreatorOp> &restore) {
 void TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
   for (auto kernel : this->train_kernels_) {
-    if (workspace_size < kernel->workspace_size()) {
-      workspace_size = kernel->workspace_size();
+    if (workspace_size < static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size()) {
+      workspace_size = static_cast<kernel::InnerKernel *>(kernel->kernel())->workspace_size();
     }
   }
-  mindspore::kernel::LiteKernel::AllocWorkspace(workspace_size);
+  mindspore::kernel::InnerKernel::AllocWorkspace(workspace_size);
 }
 
 int TrainSession::CompileGraph(lite::Model *model) { return lite::RET_ERROR; }
@@ -113,7 +113,7 @@ int TrainSession::CompileTrainGraph(mindspore::lite::Model *model) {
 }
 
 TrainSession::~TrainSession() {
-  mindspore::kernel::LiteKernel::FreeWorkspace();
+  mindspore::kernel::InnerKernel::FreeWorkspace();
   if (model_ != nullptr) {
     delete model_;
     model_ = nullptr;
@@ -144,19 +144,9 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
 
   for (auto *kernel : run_kernel) {
     MS_ASSERT(nullptr != kernel);
-    ret = kernel->PreProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->Run(before, after);
+    ret = kernel->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->PostProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
       return ret;
     }
   }
@@ -425,12 +415,12 @@ int TrainSession::OptimizerStep() {
 }
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
-  return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
-          kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits ||
-          kernel->Type() == schema::PrimitiveType_SmoothL1Loss ||
-          kernel->Type() == schema::PrimitiveType_SmoothL1LossGrad ||
-          kernel->Type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
-          kernel->Type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad) ||
+  return (kernel->type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
+          kernel->type() == schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits ||
+          kernel->type() == schema::PrimitiveType_SmoothL1Loss ||
+          kernel->type() == schema::PrimitiveType_SmoothL1LossGrad ||
+          kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
+          kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad) ||
          kernel->name().find(get_loss_name()) != std::string::npos;
 }
 
@@ -439,17 +429,17 @@ bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
 }
 
 bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
-  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_SGD) ||
-          (kernel->Type() == schema::PrimitiveType_ApplyMomentum));
+  return ((kernel->type() == schema::PrimitiveType_Adam) || (kernel->type() == schema::PrimitiveType_SGD) ||
+          (kernel->type() == schema::PrimitiveType_ApplyMomentum));
 }
 
 bool TrainSession::IsMaskOutput(kernel::LiteKernel *kernel) const {
-  return (IsOptimizer(kernel) || (kernel->Type() == schema::PrimitiveType_Assign));
+  return (IsOptimizer(kernel) || (kernel->type() == schema::PrimitiveType_Assign));
 }
 
 bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
-  return ((kernel->Type() == schema::PrimitiveType_BatchNorm) ||
-          (kernel->Type() == schema::PrimitiveType_FusedBatchNorm));
+  return ((kernel->type() == schema::PrimitiveType_BatchNorm) ||
+          (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
 int TrainSession::SetLossName(std::string loss_name) {

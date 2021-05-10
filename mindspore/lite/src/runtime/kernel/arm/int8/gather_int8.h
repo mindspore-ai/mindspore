@@ -20,14 +20,14 @@
 #include <vector>
 #include "nnacl/gather_parameter.h"
 #include "nnacl/int8/quantize.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class GatherInt8CPUKernel : public LiteKernel {
+class GatherInt8CPUKernel : public InnerKernel {
  public:
   GatherInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~GatherInt8CPUKernel() {}
 
   int Init() override;

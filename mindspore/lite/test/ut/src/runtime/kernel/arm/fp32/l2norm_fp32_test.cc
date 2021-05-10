@@ -38,7 +38,7 @@ class TestL2NormFp32 : public mindspore::CommonTest {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
-  kernel::LiteKernel *kernel_ = nullptr;
+  kernel::InnerKernel *kernel_ = nullptr;
 };
 
 void TestL2NormFp32::TearDown() {

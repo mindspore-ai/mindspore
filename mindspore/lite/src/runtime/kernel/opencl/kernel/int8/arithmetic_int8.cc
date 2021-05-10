@@ -60,11 +60,11 @@ int ArithmeticInt8OpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (!IsArithmetic(Type())) {
-    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
+  if (!IsArithmetic(type())) {
+    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
-  if (Type() == schema::PrimitiveType_Eltwise) {
+  if (type() == schema::PrimitiveType_Eltwise) {
     auto mode = param->eltwise_mode_;
     if (mode != EltwiseMode_PROD && mode != EltwiseMode_SUM && mode != EltwiseMode_MAXIMUM) {
       MS_LOG(ERROR) << "Eltwise mode not support, mode:" << mode;
@@ -158,12 +158,12 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (Type() == PrimitiveType_BiasAdd) {
+  if (type() == PrimitiveType_BiasAdd) {
     const_cast<ArithmeticParameter *>(param)->broadcasting_ = true;
   }
   element_flag_ = !param->broadcasting_;
   kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
-  switch (Type()) {
+  switch (type()) {
     case PrimitiveType_MulFusion:
       kernel_name_ += "MulInt8";
       break;
@@ -188,7 +188,7 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
       break;
     }
     default:
-      kernel_name_ += schema::EnumNamePrimitiveType(Type());
+      kernel_name_ += schema::EnumNamePrimitiveType(type());
   }
 
   if (param->activation_type_ == ActivationType_RELU) {
@@ -209,7 +209,7 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
 
   SetGlobalLocal();
   // BiasAdd InitWeight will be called in opencl_subgraph prepare
-  if (Type() != PrimitiveType_BiasAdd) {
+  if (type() != PrimitiveType_BiasAdd) {
     InitWeights();
   }
   SetConstArgs();

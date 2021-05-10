@@ -36,11 +36,11 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
-kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                const InnerContext *ctx, const kernel::KernelKey &desc) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::InnerKernel *kernel = nullptr;
 
   auto act_quant_size =
     MSMAX(inputs.at(kInputIndex)->quant_params().size(), outputs.at(kOutputIndex)->quant_params().size());
@@ -60,11 +60,11 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
 }
 
 /* Kernel creator func part */
-kernel::LiteKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const InnerContext *ctx) {
+kernel::InnerKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &inputs,
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const InnerContext *ctx) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::InnerKernel *kernel = nullptr;
   if (conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_h_ == 1 &&
       conv_param->stride_w_ == 1 && conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1) {
 #ifdef ENABLE_ARM64
@@ -84,9 +84,10 @@ kernel::LiteKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
-kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const lite::InnerContext *ctx, int group) {
+kernel::InnerKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs,
+                                                   OpParameter *op_parameter, const lite::InnerContext *ctx,
+                                                   int group) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   GroupConvCreator group_conv_creator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
   group_conv_creator.SetShapeOfTensors();
@@ -107,13 +108,13 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
     GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, *(group_conv_creator.get_group_conv()), group);
 }
 
-kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::InnerKernel *kernel = nullptr;
 
   if (conv_param->group_ == 1) {
     kernel = CpuConvInt8KernelSelect(inputs, outputs, op_parameter, static_cast<const lite::InnerContext *>(ctx));

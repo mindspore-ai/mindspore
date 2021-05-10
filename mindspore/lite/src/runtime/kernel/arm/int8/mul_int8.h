@@ -19,18 +19,18 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/mul_parameter.h"
 #include "nnacl/int8/mul_int8.h"
 #include "nnacl/int8/arithmetic_int8.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
-class MulInt8CPUKernel : public LiteKernel {
+class MulInt8CPUKernel : public InnerKernel {
  public:
   explicit MulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
     tile_para = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~MulInt8CPUKernel() override;

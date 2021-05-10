@@ -75,7 +75,7 @@ int MergeCPUKernel::ReSize() { return RET_OK; }
 InputPart MergeCPUKernel::FindReadyPart(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
   bool is_root_tensor_ready =
-    std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *in_tensor) {
+    std::all_of(this->in_tensors_.begin(), this->in_tensors_.end(), [&](lite::Tensor *in_tensor) {
       // if not in scope_tensors, not care
       if (!IsContain(scope_tensors, in_tensor)) {
         return true;
@@ -94,12 +94,12 @@ InputPart MergeCPUKernel::FindReadyPart(const std::vector<lite::Tensor *> &scope
   // if not in scope_tensors, not care
   // if in scope_tensors, in_tensor need to be ready
   if (std::all_of(
-        this->in_tensors().begin() + in_tensors().size() / 2, this->in_tensors().end(),
+        this->in_tensors_.begin() + in_tensors().size() / 2, this->in_tensors_.end(),
         [&](lite::Tensor *in_tensor) { return !IsContain(scope_tensors, in_tensor) || in_tensor->IsReady(); })) {
     return RIGHT_INPUT_PART;
   }
   if (std::all_of(
-        this->in_tensors().begin(), this->in_tensors().begin() + in_tensors().size() / 2,
+        this->in_tensors_.begin(), this->in_tensors_.begin() + in_tensors().size() / 2,
         [&](lite::Tensor *in_tensor) { return !IsContain(scope_tensors, in_tensor) || in_tensor->IsReady(); })) {
     return LEFT_INPUT_PART;
   }

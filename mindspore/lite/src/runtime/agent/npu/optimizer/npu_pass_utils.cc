@@ -46,18 +46,24 @@ kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor
   transpose_param->perm_[3] = 1;
   transpose_param->num_axes_ = 4;
 
-  auto kernel = new (std::nothrow)
+  auto inner_kernel = new (std::nothrow)
     kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
-  if (kernel != nullptr) {
-    kernel->set_desc(key);
+
+  if (inner_kernel != nullptr) {
+    auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+    if (kernel != nullptr) {
+      kernel->set_desc(key);
+      kernel->set_name(name);
+      return kernel;
+    } else {
+      free(transpose_param);
+      delete inner_kernel;
+    }
   } else {
     MS_LOG(ERROR) << "New Nchw2Nhwc Kernel failed.";
     free(transpose_param);
-    return nullptr;
   }
-
-  kernel->set_name(name);
-  return kernel;
+  return nullptr;
 }
 
 kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor *> &in_tensors,
@@ -77,17 +83,24 @@ kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor
   transpose_param->perm_[3] = 2;
   transpose_param->num_axes_ = 4;
 
-  auto kernel = new (std::nothrow)
+  auto inner_kernel = new (std::nothrow)
     kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
-  if (kernel != nullptr) {
-    kernel->set_desc(key);
+
+  if (inner_kernel != nullptr) {
+    auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+    if (kernel != nullptr) {
+      kernel->set_desc(key);
+      kernel->set_name(name);
+      return kernel;
+    } else {
+      free(transpose_param);
+      delete inner_kernel;
+    }
   } else {
     MS_LOG(ERROR) << "New Nhwc2Nchw Kernel failed.";
-    return nullptr;
+    free(transpose_param);
   }
-
-  kernel->set_name(name);
-  return kernel;
+  return nullptr;
 }
 
 void NPUPassUtils::UpdateKernel(kernel::LiteKernel *kernel, const std::vector<kernel::LiteKernel *> &in_kernels,
@@ -187,7 +200,7 @@ bool NPUPassUtils::IsNhwc2Nchw(const kernel::LiteKernel *kernel) {
   if (kernel == nullptr) {
     return false;
   }
-  if (kernel->Type() != schema::PrimitiveType_Transpose) {
+  if (kernel->type() != schema::PrimitiveType_Transpose) {
     return false;
   }
   auto parameter = reinterpret_cast<TransposeParameter *>(kernel->op_parameter());
@@ -207,7 +220,7 @@ bool NPUPassUtils::IsNchw2Nhwc(const kernel::LiteKernel *kernel) {
   if (kernel == nullptr) {
     return false;
   }
-  if (kernel->Type() != schema::PrimitiveType_Transpose) {
+  if (kernel->type() != schema::PrimitiveType_Transpose) {
     return false;
   }
   auto parameter = reinterpret_cast<TransposeParameter *>(kernel->op_parameter());

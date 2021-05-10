@@ -21,7 +21,7 @@ void SetOutputDtypeFormat(const TensorC *input0, const TensorC *input1, TensorC 
   output->format_ = input0->format_;
   output->data_type_ = input0->data_type_;
   // when input0 is const, it is quanted before insert quant trans op, so use input1 data type instead
-  if (input0->data_ != NULL ||
+  if (((input0->data_ != NULL) && (input1->data_type_ != kTypeUnknown)) ||
       ((input0->data_type_ == kNumberTypeInt8) && (input1->data_type_ == kNumberTypeFloat32))) {
     output->data_type_ = input1->data_type_;
   }

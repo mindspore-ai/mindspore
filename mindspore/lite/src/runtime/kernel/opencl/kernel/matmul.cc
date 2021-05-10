@@ -92,7 +92,7 @@ int MatMulOpenCLKernel::Prepare() {
   std::string source = matmul_source;
   std::string program_name = "MatMul";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 
 #endif
@@ -275,9 +275,9 @@ int MatMulOpenCLKernel::StoreConstData() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
   kernel::OpenCLKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   bool infer_shape_done = std::find(shape.begin(), shape.end(), -1) == shape.end();

@@ -31,16 +31,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
-kernel::LiteKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::Context *ctx, const KernelKey &desc) {
+kernel::InnerKernel *CpuActivationInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                                    const lite::Context *ctx, const KernelKey &desc) {
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "parameter is nullptr";
     return nullptr;
   }
   MS_ASSERT(inputs.at(0));
   auto type = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::InnerKernel *kernel = nullptr;
   switch (static_cast<schema::ActivationType>(type)) {
     case schema::ActivationType_RELU:
       kernel =

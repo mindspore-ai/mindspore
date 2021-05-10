@@ -113,6 +113,7 @@ getCommonFile() {
   runtime_files_h=()
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
   others_files_h=(
+    mindspore/lite/src/kernel.h
     mindspore/lite/src/populate/populate_register.h
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h

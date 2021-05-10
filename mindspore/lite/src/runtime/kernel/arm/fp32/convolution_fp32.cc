@@ -181,7 +181,7 @@ void ConvolutionCPUKernel::PackWeight() {
 }
 
 int ConvolutionCPUKernel::Eval() {
-  LiteKernel::Eval();
+  InnerKernel::Eval();
   if (is_trainable()) {
     PackWeight();
   }

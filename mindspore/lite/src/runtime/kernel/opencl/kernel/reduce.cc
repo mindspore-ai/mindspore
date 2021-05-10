@@ -186,7 +186,7 @@ int ReduceOpenCLKernel::Prepare() {
   std::string source = reduce_source;
   std::string program_name = "Reduce";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   if (ret != RET_OK) {
     return ret;

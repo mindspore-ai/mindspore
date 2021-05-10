@@ -230,7 +230,7 @@ int ConvolutionWinogradCPUKernel::Run() {
 }
 
 int ConvolutionWinogradCPUKernel::Eval() {
-  LiteKernel::Eval();
+  InnerKernel::Eval();
   if (is_trainable()) {
     InitWeightBias();
   }

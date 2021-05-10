@@ -24,7 +24,8 @@ int GroupConvolutionFp32CPUKernel::SeparateInput(int group_id) {
   int in_plane = in_tensor->Height() * in_tensor->Width() * in_tensor->Batch();
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
-  auto sub_in_data = reinterpret_cast<float *>(group_convs_.at(group_id)->in_tensors().front()->data_c());
+  auto sub_in_data =
+    reinterpret_cast<float *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data_c());
   float *src_ptr = reinterpret_cast<float *>(ori_in_data_) + group_id * sub_in_channel;
   float *dst_ptr = sub_in_data;
   for (int i = 0; i < in_plane; ++i) {
@@ -40,7 +41,8 @@ int GroupConvolutionFp32CPUKernel::PostConcat(int group_id) {
   int out_plane = out_tensor->Height() * out_tensor->Width() * out_tensor->Batch();
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
-  auto sub_out_data = reinterpret_cast<float *>(group_convs_.at(group_id)->out_tensors().front()->data_c());
+  auto sub_out_data =
+    reinterpret_cast<float *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->out_tensors().front())->data_c());
   float *src_ptr = sub_out_data;
   float *dst_ptr = reinterpret_cast<float *>(ori_out_data_) + group_id * sub_out_channel;
   for (int i = 0; i < out_plane; ++i) {

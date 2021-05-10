@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/detection_post_process_base.h"
 #include "nnacl/fp32/detection_post_process_fp32.h"
@@ -34,7 +34,7 @@ class DetectionPostProcessCPUKernel : public DetectionPostProcessBaseCPUKernel {
   ~DetectionPostProcessCPUKernel() = default;
 
  private:
-  int GetInputData();
+  int GetInputData() override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_H_

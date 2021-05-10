@@ -21,11 +21,11 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class ConvolutionTrainCPUKernel : public LiteKernel {
+class ConvolutionTrainCPUKernel : public InnerKernel {
  public:
   explicit ConvolutionTrainCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionTrainCPUKernel() override {}
 
   int Init() override;
@@ -44,9 +44,9 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
 #endif
 };
 
-kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::Context *ctx, const kernel::KernelKey &desc);
+kernel::InnerKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                                   const lite::Context *ctx, const kernel::KernelKey &desc);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_CONVOLUTION_H_

@@ -48,19 +48,9 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
     auto cur_kernel = kernel_queue.front();
     kernel_queue.pop();
     MS_ASSERT(nullptr != cur_kernel);
-    ret = cur_kernel->PreProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << cur_kernel->name();
-      return ret;
-    }
-    ret = cur_kernel->Run(before, after);
+    ret = cur_kernel->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << cur_kernel->name();
-      return ret;
-    }
-    ret = cur_kernel->PostProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << cur_kernel->name();
       return ret;
     }
     for (auto &out_kernel : cur_kernel->out_kernels()) {

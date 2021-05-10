@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_UNSTACK_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/base/unstack_base.h"
 
 namespace mindspore::kernel {
-class UnstackCPUKernel : public LiteKernel {
+class UnstackCPUKernel : public InnerKernel {
  public:
   UnstackCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~UnstackCPUKernel() { free(output_addr_array_); }
 
   int Init() override;

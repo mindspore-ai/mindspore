@@ -151,7 +151,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
 }
 
 int OpenCLKernel::PreProcess() {
-  auto ret = RET_OK;
+  int ret = RET_OK;
   ret = ReSize();
   if (ret != RET_OK) {
     return ret;
@@ -182,25 +182,25 @@ int OpenCLKernel::PreProcess() {
     }
     output->set_allocator(allocator);
   }
-  return RET_OK;
-}
-
-int OpenCLKernel::PostProcess() {
-  for (auto *output : this->out_tensors()) {
+  for (auto *output : out_tensors_) {
     MS_ASSERT(output != nullptr);
-    output->ResetRefCount();
+    ret = output->MallocData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
+      return ret;
+    }
   }
-  return FreeInWorkTensor();
+  return RET_OK;
 }
 
 int OpenCLKernel::InferShape() {
   if (InferShapeDone()) {
     return RET_OK;
   }
-  auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
+  auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InferShape failed, type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(Type()));
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type()));
     return ret;
   }
   return RET_OK;

@@ -21,15 +21,15 @@
 #include <arm_neon.h>
 #endif
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::kernel {
-class MatmulBaseFP16CPUKernel : public LiteKernel {
+class MatmulBaseFP16CPUKernel : public InnerKernel {
  public:
   explicit MatmulBaseFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulBaseFP16CPUKernel() override;

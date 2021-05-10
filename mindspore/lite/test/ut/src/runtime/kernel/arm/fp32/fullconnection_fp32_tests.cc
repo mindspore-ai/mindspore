@@ -69,7 +69,7 @@ int FcTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   matmal_param->has_bias_ = true;
   matmal_param->act_type_ = ActType_No;
   matmal_param->op_parameter_.type_ = 67;
-  KernelInferShape(*inputs_, outputs_, reinterpret_cast<OpParameter *>(matmal_param));
+  KernelInferShape(*inputs_, *outputs_, reinterpret_cast<OpParameter *>(matmal_param));
   return out_t->ElementsNum();
 }
 
@@ -128,7 +128,7 @@ int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   matmal_param->has_bias_ = true;
   matmal_param->act_type_ = ActType_No;
   matmal_param->op_parameter_.type_ = 67;
-  KernelInferShape(*inputs_, outputs_, reinterpret_cast<OpParameter *>(matmal_param));
+  KernelInferShape(*inputs_, *outputs_, reinterpret_cast<OpParameter *>(matmal_param));
   return out_t->ElementsNum();
 }
 

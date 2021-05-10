@@ -49,7 +49,7 @@ TEST_F(InferManagerTest, InferManagerTest0) {
   Tensor *output = reinterpret_cast<Tensor *>(tensorList);
   outputs.push_back(output);
 
-  int ret = KernelInferShape(inputs, &outputs, parameter);
+  int ret = KernelInferShape(inputs, outputs, parameter);
 
   TensorList *out = reinterpret_cast<TensorList *>(outputs[0]);
 
@@ -122,7 +122,7 @@ TEST_F(InferManagerTest, InferManagerTest1) {
   std::vector<lite::Tensor *> outputs;
   Tensor *output = new Tensor;
   outputs.push_back(output);
-  int res = KernelInferShape(inputs, &outputs, parameter);
+  int res = KernelInferShape(inputs, outputs, parameter);
   ASSERT_EQ(res, RET_OK);
   ASSERT_EQ(outputs[0]->shape().size(), 4);
   ASSERT_EQ(outputs[0]->shape().at(0), 6);
@@ -168,7 +168,7 @@ TEST_F(InferManagerTest, InferManagerTest2) {
   Tensor *output = reinterpret_cast<Tensor *>(tensorList);
   outputs.push_back(output);
 
-  int ret = KernelInferShape(inputs, &outputs, parameter);
+  int ret = KernelInferShape(inputs, outputs, parameter);
 
   TensorList *out = reinterpret_cast<TensorList *>(outputs[0]);
 

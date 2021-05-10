@@ -18,17 +18,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RANDOM_STANDARD_NORMAL_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/random_parameter.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class RandomStandardNormalCPUKernel : public LiteKernel {
+class RandomStandardNormalCPUKernel : public InnerKernel {
  public:
   RandomStandardNormalCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<RandomParam *>(parameter);
   }
   ~RandomStandardNormalCPUKernel() override = default;

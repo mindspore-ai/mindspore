@@ -28,18 +28,6 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
 using mindspore::schema::ActivationType_TANH;
 
-namespace mindspore::lite {
-kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                    OpParameter *parameter, const InnerContext *ctx, const kernel::KernelKey &key) {
-  auto creator = KernelRegistry::GetInstance()->GetCreator(key);
-  if (creator != nullptr) {
-    auto kernel = creator(in_tensors, out_tensors, parameter, nullptr, key);
-    return kernel;
-  }
-  return nullptr;
-}
-}  // namespace mindspore::lite
-
 namespace mindspore::kernel {
 
 const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveType_MulFusion,

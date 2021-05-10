@@ -21,7 +21,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/errorcode.h"
 #include "src/runtime/gpu/gpu_runtime.h"
 

@@ -189,7 +189,7 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quantType;
-  auto ret = KernelInferShape(inputs, outputs, parameter);
+  auto ret = KernelInferShape(inputs, *outputs, parameter);
   fbb.Clear();
   free(parameter);
   return ret;

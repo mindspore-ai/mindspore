@@ -90,7 +90,7 @@ int ConcatOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;
   }
-  if (out_tensors_shape_size < 4 && Type() == PrimitiveType_Concat && axis_ != 0) {
+  if (out_tensors_shape_size < 4 && type() == PrimitiveType_Concat && axis_ != 0) {
     if (out_tensors_shape_size == 2) {
       axis_ = axis_ + 2;
     } else if (out_tensors_shape_size == 3) {
@@ -224,7 +224,7 @@ int ConcatOpenCLKernel::Prepare() {
   std::string source = concat_source;
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
