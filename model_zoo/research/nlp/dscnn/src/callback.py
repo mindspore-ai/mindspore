@@ -16,6 +16,7 @@
 import time
 
 from mindspore.train.callback import ModelCheckpoint
+from mindspore.train.callback import TimeMonitor
 from mindspore.train.callback import CheckpointConfig, Callback
 
 
@@ -85,4 +86,5 @@ def callback_func(args, cb, prefix):
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval, keep_checkpoint_max=ckpt_max_num)
         ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=args.outputs_dir, prefix=prefix)
         callbacks.append(ckpt_cb)
+    callbacks.append(TimeMonitor(args.per_batch_size))
     return callbacks
