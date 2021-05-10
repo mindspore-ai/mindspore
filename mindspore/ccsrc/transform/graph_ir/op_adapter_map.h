@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ constexpr const char kNameReduceProd[] = "ReduceProd";
 constexpr const char kNameCumProd[] = "CumProd";
 constexpr const char kNameDiagpart[] = "Diagpart";
 constexpr const char kNameSplitD[] = "Split";
-constexpr const char kNameBatchToSpaceNd[] = "BatchToSpaceNd";
+constexpr const char kNameBatchToSpaceNd[] = "BatchToSpaceND";
 constexpr const char kNameFloor[] = "Floor";
 constexpr const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
 constexpr const char kNameAssign[] = "Assign";
@@ -132,10 +132,46 @@ constexpr const char kNameNPUClearFloatStatus[] = "NPUClearFloatStatus";
 constexpr const char kNameReshape[] = "Reshape";
 constexpr const char kNameTransShape[] = "TransShape";
 constexpr const char kNameDiv[] = "Div";
+constexpr const char kNameDivNoNan[] = "DivNoNan";
 constexpr const char kNameRealDiv[] = "RealDiv";
 constexpr const char kNameBitwiseAnd[] = "BitwiseAnd";
 constexpr const char kNameBitwiseOr[] = "BitwiseOr";
 constexpr const char kNameBitwiseXor[] = "BitwiseXor";
+constexpr const char kNameBesselI0e[] = "BesselI0e";
+constexpr const char kNameBesselI1e[] = "BesselI1e";
+constexpr const char kNameBNTrainingReduce[] = "BNTrainingReduce";
+constexpr const char kNameBNTrainingReduceGrad[] = "BNTrainingReduceGrad";
+constexpr const char kNameBNTrainingUpdate[] = "BNTrainingUpdate";
+constexpr const char kNameBNTrainingUpdateGrad[] = "BNTrainingUpdateGrad";
+constexpr const char kNameErf[] = "Erf";
+constexpr const char kNameErfc[] = "Erfc";
+constexpr const char kNameExpm1[] = "Expm1";
+constexpr const char kNameFillD[] = "Fill";
+constexpr const char kNameInplaceAddD[] = "InplaceAdd";
+constexpr const char kNameInplaceSubD[] = "InplaceSub";
+constexpr const char kNameInplaceUpdateD[] = "InplaceUpdate";
+constexpr const char kNameInTopK[] = "InTopK";
+constexpr const char kNameInv[] = "Inv";
+constexpr const char kNameInvGrad[] = "InvGrad";
+constexpr const char kNameInvert[] = "Invert";
+constexpr const char kNameLinSpaceD[] = "LinSpace";
+constexpr const char kNameLog1p[] = "Log1p";
+constexpr const char kNameLRN[] = "LRN";
+constexpr const char kNameLRNGrad[] = "LRNGrad";
+constexpr const char kNameLSTMInputGrad[] = "LSTMInputGrad";
+constexpr const char kNameMatMul[] = "MatMul";
+constexpr const char kNameMatrixDiagD[] = "MatrixDiag";
+constexpr const char kNameMatrixDiagPartD[] = "MatrixDiagPart";
+constexpr const char kNameMatrixSetDiagD[] = "MatrixSetDiag";
+constexpr const char kNameMaxPool3DGradGrad[] = "MaxPool3DGradGrad";
+constexpr const char kNameMaxPoolGradGrad[] = "MaxPoolGradGrad";
+constexpr const char kNameMaxPoolGradGradWithArgmax[] = "MaxPoolGradGradWithArgmax";
+constexpr const char kNameMish[] = "Mish";
+constexpr const char kNameMulNoNan[] = "MulNoNan";
+constexpr const char kNameParallelConcat[] = "ParallelConcat";
+constexpr const char kNamePopulationCount[] = "PopulationCount";
+constexpr const char kNameReduceAnyD[] = "ReduceAny";
+constexpr const char kNameReluGradV2[] = "ReluGradV2";
 constexpr const char kNameCeil[] = "Ceil";
 constexpr const char kNameCosineEmbeddingLoss[] = "CosineEmbeddingLoss";
 constexpr const char kNameXdivy[] = "Xdivy";

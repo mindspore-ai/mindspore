@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/split_combination_ops_declare.h"
+#include <vector>
 
 namespace mindspore::transform {
 // SplitD
@@ -30,6 +31,16 @@ DYN_INPUT_MAP(Pack) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(Pack) = {{"num", ATTR_DESC(N, AnyTraits<int64_t>())}, {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Pack) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pack, prim::kStack, ADPT_DESC(Pack))
+
+// ParallelConcat
+INPUT_MAP(ParallelConcat) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(ParallelConcat) = {{1, DYN_INPUT_DESC(values)}};
+ATTR_MAP(ParallelConcat) = {
+  {"shape", ATTR_DESC(shape, AnyTraits<std::vector<int64_t>>())},
+  {"N", ATTR_DESC(N, AnyTraits<int64_t>())},
+};
+OUTPUT_MAP(ParallelConcat) = {{0, OUTPUT_DESC(output_data)}};
+REG_ADPT_DESC(ParallelConcat, kNameParallelConcat, ADPT_DESC(ParallelConcat))
 
 // ConcatD
 INPUT_MAP(ConcatD) = EMPTY_INPUT_MAP;

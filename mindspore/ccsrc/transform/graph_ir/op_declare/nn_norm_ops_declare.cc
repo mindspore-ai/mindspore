@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,25 @@ INPUT_MAP(LayerNormGrad) = {
 ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
+
+// LRN
+INPUT_MAP(LRN) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(LRN) = {{"depth_radius", ATTR_DESC(depth_radius, AnyTraits<int64_t>())},
+                 {"bias", ATTR_DESC(bias, AnyTraits<float>())},
+                 {"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
+                 {"beta", ATTR_DESC(beta, AnyTraits<float>())},
+                 {"norm_region", ATTR_DESC(norm_region, AnyTraits<string>())}};
+OUTPUT_MAP(LRN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(LRN, kNameLRN, ADPT_DESC(LRN))
+
+// LRNGrad
+INPUT_MAP(LRNGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(y)}};
+ATTR_MAP(LRNGrad) = {{"depth_radius", ATTR_DESC(depth_radius, AnyTraits<int64_t>())},
+                     {"bias", ATTR_DESC(bias, AnyTraits<float>())},
+                     {"alpha", ATTR_DESC(alpha, AnyTraits<float>())},
+                     {"beta", ATTR_DESC(beta, AnyTraits<float>())}};
+OUTPUT_MAP(LRNGrad) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(LRNGrad, kNameLRNGrad, ADPT_DESC(LRNGrad))
 
 // DropoutDoMask
 INPUT_MAP(DropOutDoMask) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(keep_prob)}};

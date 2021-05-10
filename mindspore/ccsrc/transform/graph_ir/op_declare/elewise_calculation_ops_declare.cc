@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,12 @@ INPUT_MAP(Div) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Div) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Div) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Div, kNameDiv, ADPT_DESC(Div))
+
+// DivNoNan
+INPUT_MAP(DivNoNan) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(DivNoNan) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DivNoNan) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DivNoNan, kNameDivNoNan, ADPT_DESC(DivNoNan))
 
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
@@ -197,6 +203,12 @@ ATTR_MAP(Exp) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Exp) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Exp, kNameExp, ADPT_DESC(Exp))
 
+// Expm1
+INPUT_MAP(Expm1) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Expm1) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Expm1) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Expm1, kNameExpm1, ADPT_DESC(Expm1))
+
 // BiasAdd
 INPUT_MAP(BiasAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(bias)}};
 ATTR_MAP(BiasAdd) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
@@ -243,6 +255,42 @@ ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))
 
+// BesselI0e
+INPUT_MAP(BesselI0e) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BesselI0e) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BesselI0e) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BesselI0e, kNameBesselI0e, ADPT_DESC(BesselI0e))
+
+// BesselI1e
+INPUT_MAP(BesselI1e) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BesselI1e) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BesselI1e) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BesselI1e, kNameBesselI1e, ADPT_DESC(BesselI1e))
+
+// Inv
+INPUT_MAP(Inv) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Inv) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Inv) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Inv, kNameInv, ADPT_DESC(Inv))
+
+// InvGrad
+INPUT_MAP(InvGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}};
+ATTR_MAP(InvGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(InvGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InvGrad, kNameInvGrad, ADPT_DESC(InvGrad))
+
+// Invert
+INPUT_MAP(Invert) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Invert) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Invert) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Invert, kNameInvert, ADPT_DESC(Invert))
+
+// Log1p
+INPUT_MAP(Log1p) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Log1p) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Log1p) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Log1p, kNameLog1p, ADPT_DESC(Log1p))
+
 // RsqrtGrad
 INPUT_MAP(RsqrtGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(RsqrtGrad) = EMPTY_ATTR_MAP;
@@ -273,6 +321,12 @@ INPUT_MAP(Mul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Mul) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Mul) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Mul, prim::kPrimMul->name(), ADPT_DESC(Mul))
+
+// MulNoNan
+INPUT_MAP(MulNoNan) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(MulNoNan) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MulNoNan) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MulNoNan, kNameMulNoNan, ADPT_DESC(MulNoNan))
 
 // RealDiv
 INPUT_MAP(RealDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -369,6 +423,12 @@ INPUT_MAP(Pow) = {
 ATTR_MAP(Pow) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Pow) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pow, kNamePow, ADPT_DESC(Pow))
+
+// PopulationCount
+INPUT_MAP(PopulationCount) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(PopulationCount) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(PopulationCount) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(PopulationCount, kNamePopulationCount, ADPT_DESC(PopulationCount))
 
 // Equal
 INPUT_MAP(Equal) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};

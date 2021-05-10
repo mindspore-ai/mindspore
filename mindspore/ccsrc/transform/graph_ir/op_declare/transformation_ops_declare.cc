@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,4 +74,12 @@ ATTR_MAP(BatchToSpaceD) = {
   {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceD, kNameBatchToSpace, ADPT_DESC(BatchToSpaceD))
+
+// BatchToSpaceNDD
+INPUT_MAP(BatchToSpaceNDD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BatchToSpaceNDD) = {
+  {"block_shape", ATTR_DESC(block_shape, AnyTraits<std::vector<int64_t>>())},
+  {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(BatchToSpaceNDD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BatchToSpaceNDD, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceNDD))
 }  // namespace mindspore::transform

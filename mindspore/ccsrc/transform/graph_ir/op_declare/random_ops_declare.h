@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@
 namespace mindspore::transform {
 DECLARE_OP_ADAPTER(DropOutGenMask)
 DECLARE_OP_USE_OUTPUT(DropOutGenMask)
+
+DECLARE_OP_ADAPTER(LinSpaceD)
+DECLARE_OP_USE_OUTPUT(LinSpaceD)
 
 DECLARE_OP_ADAPTER(RandomChoiceWithMask)
 DECLARE_OP_USE_OUTPUT(RandomChoiceWithMask)
