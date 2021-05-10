@@ -156,6 +156,11 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
+  void HandleInternalOutput(const AnfNodePtr &input_front_node, const AnfNodePtr &backend_node,
+                            const FuncGraphManagerPtr &front_func_graph_manager,
+                            const std::shared_ptr<KernelGraph> &backend_graph);
+  std::string AddPartialParametersMap(const FuncGraphManagerPtr &front_func_graph_manager,
+                                      const AnfNodePtr &partial_node);
 
  protected:
   friend class Executor;
@@ -255,6 +260,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   std::unordered_map<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
+  std::unordered_map<AnfNodePtr, std::string> partial_target_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;

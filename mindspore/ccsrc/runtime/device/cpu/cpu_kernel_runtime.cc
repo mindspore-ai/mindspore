@@ -189,16 +189,19 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
   MS_EXCEPTION_IF_NULL(address);
   TypeId infer_type_id = AnfAlgo::GetOutputInferDataType(node, index);
   TypeId device_type_id = AnfAlgo::GetOutputDeviceDataType(node, index);
-  tensor::TensorPtr tensor = kernel_graph->GetInternalOutputTensor(node, index);
-  if (tensor == nullptr) {
-    auto shape = AnfAlgo::GetOutputInferShape(node, index);
-    ShapeVector temp_shape;
-    (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
-    tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
-    bool is_internal_output = kernel_graph->IsInternalOutput(node, index);
-    if (is_internal_output) {
-      kernel_graph->AddInternalOutputTensor(node, index, tensor);
+  auto shape = AnfAlgo::GetOutputInferShape(node, index);
+  ShapeVector temp_shape;
+  tensor::TensorPtr tensor;
+  bool is_internal_output = kernel_graph->IsInternalOutput(node, index);
+  (void)temp_shape.insert(temp_shape.end(), shape.begin(), shape.end());
+  if (is_internal_output) {
+    tensor = kernel_graph->GetInternalOutputTensor(node, index);
+    if (tensor == nullptr) {
+      tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
+    kernel_graph->AddInternalOutputTensor(node, index, tensor);
+  } else {
+    tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
   }
   tensor->set_device_address(address);
   if (bound_addresses_.find(address) == bound_addresses_.end()) {
