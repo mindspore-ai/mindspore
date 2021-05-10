@@ -71,8 +71,20 @@ Status ScatterUpdateInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   if (std::accumulate(stra[2].begin(), stra[2].begin() + stra[1].size(), 1, std::multiplies<int64_t>()) != 1) {
-    MS_LOG(ERROR) << name_ << ": The indices can not be split";
+    MS_LOG(ERROR) << name_ << ": The first " << stra[1].size() << " dimensions of updates can not be split";
     return FAILED;
+  }
+
+  if (stra[0].size() - 1 != stra[2].size() - stra[1].size()) {
+    MS_LOG(ERROR) << name_ << ": updates.strategy must be equal to indices.strategy + input.strategy[1:]";
+    return FAILED;
+  }
+
+  for (size_t i = 1; i < stra[0].size(); ++i) {
+    if (stra[0][i] != stra[2][stra[1].size() + i - 1]) {
+      MS_LOG(ERROR) << name_ << ": updates.strategy must be equal to indices.strategy + input.strategy[1:]";
+      return FAILED;
+    }
   }
 
   return SUCCESS;
