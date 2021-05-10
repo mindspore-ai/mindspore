@@ -2138,7 +2138,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
   py::function bprop_func = py::getattr(cell, parse::CUSTOM_BPROP_NAME);
   auto bprop_func_cellid = GetId(bprop_func);
   bprop_cell_list_.emplace_back(bprop_func_cellid);
-  auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name(), py::object());
+  auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name());
   fake_prim->set_hook(bprop_func);
   const auto &cell_id = GetCellId(cell, args);
   (void)fake_prim->AddAttr("cell_id", MakeValue(cell_id));

@@ -189,7 +189,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt_ = opt::OptPassConfig({
     irpass.inline_,
-    irpass.item_tuple_or_list_eliminate_,
+    irpass.tuple_list_get_set_item_eliminator_,
     irpass.depend_value_elim_,
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
