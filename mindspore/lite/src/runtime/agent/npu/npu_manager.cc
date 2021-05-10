@@ -94,7 +94,7 @@ bool NPUManager::IsSupportNPU() {
   // Avoid multiple checks
   if (!is_check_version_) {
     is_check_version_ = true;
-    if (IsKirinChip() && CheckEMUIVersion() && CheckDDKVersion()) {
+    if (IsKirinChip() && CheckDDKVersion()) {
       is_support_ = true;
       MS_LOG(INFO) << "The current device support NPU.";
     } else {
