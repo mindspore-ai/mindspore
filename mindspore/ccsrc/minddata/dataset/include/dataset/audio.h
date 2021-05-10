@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_AUDIO_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_AUDIO_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
 
 namespace mindspore {
 namespace dataset {
@@ -24,4 +24,4 @@ namespace audio {}  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_AUDIO_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
