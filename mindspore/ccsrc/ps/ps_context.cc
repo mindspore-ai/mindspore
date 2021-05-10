@@ -196,7 +196,14 @@ void PSContext::set_ms_role(const std::string &role) {
   role_ = role;
 }
 
-void PSContext::set_worker_num(uint32_t worker_num) { worker_num_ = worker_num; }
+void PSContext::set_worker_num(uint32_t worker_num) {
+  // Hybrid training mode only supports one worker for now.
+  if (server_mode_ == kServerModeHybrid && worker_num != 1) {
+    MS_LOG(EXCEPTION) << "The worker number should be set to 1 in hybrid training mode.";
+    return;
+  }
+  worker_num_ = worker_num;
+}
 uint32_t PSContext::worker_num() const { return worker_num_; }
 
 void PSContext::set_server_num(uint32_t server_num) {
@@ -235,7 +242,7 @@ void PSContext::GenerateResetterRound() {
   }
 
   binary_server_context = (is_parameter_server_mode << 0) | (is_federated_learning_mode << 1) |
-                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3) | (worker_upload_weights_ << 4);
+                          (is_mixed_training_mode << 2) | (secure_aggregation_ << 3);
   if (kServerContextToResetRoundMap.count(binary_server_context) == 0) {
     resetter_round_ = ResetterRound::kNoNeedToReset;
   } else {
@@ -255,11 +262,27 @@ void PSContext::set_fl_client_enable(bool enabled) { fl_client_enable_ = enabled
 
 bool PSContext::fl_client_enable() { return fl_client_enable_; }
 
-void PSContext::set_start_fl_job_threshold(size_t start_fl_job_threshold) {
+void PSContext::set_start_fl_job_threshold(uint64_t start_fl_job_threshold) {
   start_fl_job_threshold_ = start_fl_job_threshold;
 }
 
-size_t PSContext::start_fl_job_threshold() const { return start_fl_job_threshold_; }
+uint64_t PSContext::start_fl_job_threshold() const { return start_fl_job_threshold_; }
+
+void PSContext::set_start_fl_job_time_window(uint64_t start_fl_job_time_window) {
+  start_fl_job_time_window_ = start_fl_job_time_window;
+}
+
+uint64_t PSContext::start_fl_job_time_window() const { return start_fl_job_time_window_; }
+
+void PSContext::set_update_model_ratio(float update_model_ratio) { update_model_ratio_ = update_model_ratio; }
+
+float PSContext::update_model_ratio() const { return update_model_ratio_; }
+
+void PSContext::set_update_model_time_window(uint64_t update_model_time_window) {
+  update_model_time_window_ = update_model_time_window;
+}
+
+uint64_t PSContext::update_model_time_window() const { return update_model_time_window_; }
 
 void PSContext::set_fl_name(const std::string &fl_name) { fl_name_ = fl_name; }
 
@@ -277,11 +300,9 @@ void PSContext::set_client_batch_size(uint64_t client_batch_size) { client_batch
 
 uint64_t PSContext::client_batch_size() const { return client_batch_size_; }
 
-void PSContext::set_worker_upload_weights(uint64_t worker_upload_weights) {
-  worker_upload_weights_ = worker_upload_weights;
-}
+void PSContext::set_client_learning_rate(float client_learning_rate) { client_learning_rate_ = client_learning_rate; }
 
-uint64_t PSContext::worker_upload_weights() const { return worker_upload_weights_; }
+float PSContext::client_learning_rate() const { return client_learning_rate_; }
 
 void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
 

@@ -47,6 +47,7 @@ class ApplyMomentumKernel : public ApplyMomentumCPUKernel, public OptimizerKerne
   }
 
   void GenerateReuseKernelNodeInfo() override {
+    MS_LOG(INFO) << "FedAvg reuse 'weight', 'accumulation', 'learning rate' and 'momentum' of the kernel node.";
     reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, 0));
     reuse_kernel_node_inputs_info_.insert(std::make_pair(kAccumulation, 1));
     reuse_kernel_node_inputs_info_.insert(std::make_pair(kLearningRate, 2));

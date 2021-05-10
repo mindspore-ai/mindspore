@@ -69,6 +69,7 @@ table ResponseFLJob {
 }
 
 table FLPlan {
+  server_mode:string;
   fl_name:string;
   iterations:int;
   epochs:int;

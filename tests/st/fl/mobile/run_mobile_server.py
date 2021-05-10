@@ -26,10 +26,14 @@ parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--fl_server_port", type=int, default=6666)
 parser.add_argument("--start_fl_job_threshold", type=int, default=1)
+parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
+parser.add_argument("--update_model_ratio", type=float, default=1.0)
+parser.add_argument("--update_model_time_window", type=int, default=3000)
 parser.add_argument("--fl_name", type=str, default="Lenet")
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
 parser.add_argument("--client_batch_size", type=int, default=32)
+parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--secure_aggregation", type=ast.literal_eval, default=False)
 parser.add_argument("--local_server_num", type=int, default=-1)
 
@@ -43,10 +47,14 @@ if __name__ == "__main__":
     scheduler_port = args.scheduler_port
     fl_server_port = args.fl_server_port
     start_fl_job_threshold = args.start_fl_job_threshold
+    start_fl_job_time_window = args.start_fl_job_time_window
+    update_model_ratio = args.update_model_ratio
+    update_model_time_window = args.update_model_time_window
     fl_name = args.fl_name
     fl_iteration_num = args.fl_iteration_num
     client_epoch_num = args.client_epoch_num
     client_batch_size = args.client_batch_size
+    client_learning_rate = args.client_learning_rate
     secure_aggregation = args.secure_aggregation
     local_server_num = args.local_server_num
 
@@ -70,10 +78,14 @@ if __name__ == "__main__":
         cmd_server += " --scheduler_port=" + str(scheduler_port)
         cmd_server += " --fl_server_port=" + str(fl_server_port + i)
         cmd_server += " --start_fl_job_threshold=" + str(start_fl_job_threshold)
+        cmd_server += " --start_fl_job_time_window=" + str(start_fl_job_time_window)
+        cmd_server += " --update_model_ratio=" + str(update_model_ratio)
+        cmd_server += " --update_model_time_window=" + str(update_model_time_window)
         cmd_server += " --fl_name=" + fl_name
         cmd_server += " --fl_iteration_num=" + str(fl_iteration_num)
         cmd_server += " --client_epoch_num=" + str(client_epoch_num)
         cmd_server += " --client_batch_size=" + str(client_batch_size)
+        cmd_server += " --client_learning_rate=" + str(client_learning_rate)
         cmd_server += " --secure_aggregation=" + str(secure_aggregation)
         cmd_server += " > server.log 2>&1 &"
 

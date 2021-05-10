@@ -32,13 +32,15 @@ namespace server {
 namespace kernel {
 class StartFLJobKernel : public RoundKernel {
  public:
-  StartFLJobKernel() = default;
+  StartFLJobKernel() : executor_(nullptr), iteration_time_window_(0), iter_next_req_timestamp_(0) {}
   ~StartFLJobKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
+
+  void OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) override;
 
  private:
   // Returns whether the startFLJob count of this iteration has reached the threshold.
@@ -66,6 +68,9 @@ class StartFLJobKernel : public RoundKernel {
 
   // The time window of one iteration.
   size_t iteration_time_window_;
+
+  // Timestamp of next request time for this iteration.
+  uint64_t iter_next_req_timestamp_;
 };
 }  // namespace kernel
 }  // namespace server

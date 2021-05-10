@@ -25,9 +25,12 @@ namespace ps {
 namespace server {
 namespace kernel {
 void StartFLJobKernel::InitKernel(size_t) {
+  // The time window of one iteration should be started at the first message of startFLJob round.
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
+  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
 
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
@@ -85,11 +88,17 @@ bool StartFLJobKernel::Reset() {
   return true;
 }
 
+void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
+  iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
+  LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
+}
+
 bool StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb) {
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     std::string reason = "Current amount for startFLJob has reached the threshold. Please startFLJob later.";
-    BuildStartFLJobRsp(fbb, schema::ResponseCode_OutOfTime, reason, false,
-                       std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
     return true;
   }
@@ -117,8 +126,9 @@ bool StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
     ret = false;
   }
   if (!ret) {
-    BuildStartFLJobRsp(fbb, schema::ResponseCode_NotSelected, reason, false,
-                       std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_NotSelected, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
   }
   return ret;
@@ -128,8 +138,9 @@ bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                           const schema::RequestFLJob *start_fl_job_req) {
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason = "startFLJob counting failed.";
-    BuildStartFLJobRsp(fbb, schema::ResponseCode_OutOfTime, reason, false,
-                       std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
+    BuildStartFLJobRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason, false,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(ERROR) << reason;
     return false;
   }
@@ -139,11 +150,18 @@ bool StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
 void StartFLJobKernel::StartFLJob(const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
   PBMetadata metadata;
   *metadata.mutable_device_meta() = device_meta;
-  DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata);
+  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata)) {
+    std::string reason = "Updating device metadata failed.";
+    BuildStartFLJobRsp(fbb, schema::ResponseCode_SystemError, reason, false,
+                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
+                       {});
+    return;
+  }
 
   std::map<std::string, AddressPtr> feature_maps = executor_->GetModel();
   BuildStartFLJobRsp(fbb, schema::ResponseCode_SUCCEED, "success", true,
-                     std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_), feature_maps);
+                     std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
+                     feature_maps);
   return;
 }
 
@@ -153,13 +171,16 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           std::map<std::string, AddressPtr> feature_maps) {
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
+  auto fbs_server_mode = fbb->CreateString(PSContext::instance()->server_mode());
   auto fbs_fl_name = fbb->CreateString(PSContext::instance()->fl_name());
 
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));
   fl_plan_builder.add_fl_name(fbs_fl_name);
+  fl_plan_builder.add_server_mode(fbs_server_mode);
   fl_plan_builder.add_iterations(PSContext::instance()->fl_iteration_num());
   fl_plan_builder.add_epochs(PSContext::instance()->client_epoch_num());
   fl_plan_builder.add_mini_batch(PSContext::instance()->client_batch_size());
+  fl_plan_builder.add_lr(PSContext::instance()->client_learning_rate());
   auto fbs_fl_plan = fl_plan_builder.Finish();
 
   std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;

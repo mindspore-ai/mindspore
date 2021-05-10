@@ -41,15 +41,13 @@ constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
 // 1: Server is in federated learning mode.
 // 2: Server is in mixed training mode.
 // 3: Server enables sucure aggregation.
-// 4: Server needs worker to overwrite weights.
-// For example: 01010 stands for that the server is in federated learning mode and sucure aggregation  is enabled.
-enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kWorkerOverwriteWeights };
-const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {
-  {0b00010, ResetterRound::kUpdateModel},
-  {0b01010, ResetterRound::kReconstructSeccrets},
-  {0b11100, ResetterRound::kWorkerOverwriteWeights},
-  {0b10100, ResetterRound::kWorkerOverwriteWeights},
-  {0b00100, ResetterRound::kUpdateModel}};
+// For example: 1010 stands for that the server is in federated learning mode and sucure aggregation  is enabled.
+enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kWorkerUploadWeights };
+const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {{0b0010, ResetterRound::kUpdateModel},
+                                                                         {0b1010, ResetterRound::kReconstructSeccrets},
+                                                                         {0b1100, ResetterRound::kWorkerUploadWeights},
+                                                                         {0b0100, ResetterRound::kWorkerUploadWeights},
+                                                                         {0b0100, ResetterRound::kUpdateModel}};
 
 class PSContext {
  public:
@@ -115,8 +113,17 @@ class PSContext {
   void set_fl_client_enable(bool enabled);
   bool fl_client_enable();
 
-  void set_start_fl_job_threshold(size_t start_fl_job_threshold);
-  size_t start_fl_job_threshold() const;
+  void set_start_fl_job_threshold(uint64_t start_fl_job_threshold);
+  uint64_t start_fl_job_threshold() const;
+
+  void set_start_fl_job_time_window(uint64_t start_fl_job_time_window);
+  uint64_t start_fl_job_time_window() const;
+
+  void set_update_model_ratio(float update_model_ratio);
+  float update_model_ratio() const;
+
+  void set_update_model_time_window(uint64_t update_model_time_window);
+  uint64_t update_model_time_window() const;
 
   void set_fl_name(const std::string &fl_name);
   const std::string &fl_name() const;
@@ -133,9 +140,8 @@ class PSContext {
   void set_client_batch_size(uint64_t client_batch_size);
   uint64_t client_batch_size() const;
 
-  // Set true if worker will overwrite weights on server. Used in hybrid training.
-  void set_worker_upload_weights(uint64_t worker_upload_weights);
-  uint64_t worker_upload_weights() const;
+  void set_client_learning_rate(float client_learning_rate);
+  float client_learning_rate() const;
 
   // Set true if using secure aggregation for federated learning.
   void set_secure_aggregation(bool secure_aggregation);
@@ -160,11 +166,14 @@ class PSContext {
         fl_client_enable_(false),
         fl_name_(""),
         start_fl_job_threshold_(0),
-        fl_iteration_num_(0),
-        client_epoch_num_(0),
-        client_batch_size_(0),
-        secure_aggregation_(false),
-        worker_upload_weights_(false) {}
+        start_fl_job_time_window_(3000),
+        update_model_ratio_(1.0),
+        update_model_time_window_(3000),
+        fl_iteration_num_(20),
+        client_epoch_num_(25),
+        client_batch_size_(32),
+        client_learning_rate_(0.001),
+        secure_aggregation_(false) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -195,7 +204,16 @@ class PSContext {
   std::string fl_name_;
 
   // The threshold count of startFLJob round. Used in federated learning for now.
-  size_t start_fl_job_threshold_;
+  uint64_t start_fl_job_threshold_;
+
+  // The time window of startFLJob round in millisecond.
+  uint64_t start_fl_job_time_window_;
+
+  // Update model threshold is a certain ratio of start_fl_job threshold which is set as update_model_ratio_.
+  float update_model_ratio_;
+
+  // The time window of updateModel round in millisecond.
+  uint64_t update_model_time_window_;
 
   // Iteration number of federeated learning, which is the number of interactions between client and server.
   uint64_t fl_iteration_num_;
@@ -206,12 +224,11 @@ class PSContext {
   // Client training data batch size. Used in federated learning for now.
   uint64_t client_batch_size_;
 
+  // Client training learning rate. Used in federated learning for now.
+  float client_learning_rate_;
+
   // Whether to use secure aggregation algorithm. Used in federated learning for now.
   bool secure_aggregation_;
-
-  // Whether there's a federated learning worker uploading weights to federated learning server. Used in hybrid training
-  // mode for now.
-  bool worker_upload_weights_;
 };
 }  // namespace ps
 }  // namespace mindspore

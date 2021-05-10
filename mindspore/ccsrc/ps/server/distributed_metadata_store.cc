@@ -79,10 +79,10 @@ void DistributedMetadataStore::ResetMetadata(const std::string &name) {
   return;
 }
 
-void DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBMetadata &meta) {
+bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBMetadata &meta) {
   if (router_ == nullptr) {
     MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
-    return;
+    return false;
   }
 
   uint32_t stored_rank = router_->Find(name);
@@ -90,18 +90,26 @@ void DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
   if (local_rank_ == stored_rank) {
     if (!DoUpdateMetadata(name, meta)) {
       MS_LOG(ERROR) << "Updating meta data failed.";
-      return;
+      return false;
     }
   } else {
     PBMetadataWithName metadata_with_name;
     metadata_with_name.set_name(name);
     *metadata_with_name.mutable_metadata() = meta;
-    if (!communicator_->SendPbRequest(metadata_with_name, stored_rank, core::TcpUserCommand::kUpdateMetadata)) {
+    std::shared_ptr<std::vector<unsigned char>> update_meta_rsp_msg = nullptr;
+    if (!communicator_->SendPbRequest(metadata_with_name, stored_rank, core::TcpUserCommand::kUpdateMetadata,
+                                      &update_meta_rsp_msg)) {
       MS_LOG(ERROR) << "Sending updating metadata message to server " << stored_rank << " failed.";
-      return;
+      return false;
+    }
+
+    std::string update_meta_rsp = reinterpret_cast<const char *>(update_meta_rsp_msg->data());
+    if (update_meta_rsp != kSuccess) {
+      MS_LOG(ERROR) << "Updating metadata in server " << stored_rank << " failed.";
+      return false;
     }
   }
-  return;
+  return true;
 }
 
 PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
@@ -166,6 +174,7 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   std::string update_meta_rsp_msg;
   if (!DoUpdateMetadata(name, meta_with_name.metadata())) {
     update_meta_rsp_msg = "Updating meta data failed.";
+    MS_LOG(ERROR) << update_meta_rsp_msg;
   } else {
     update_meta_rsp_msg = "Success";
   }

@@ -174,21 +174,22 @@ bool Server::InitCommunicatorWithWorker() {
 }
 
 void Server::InitIteration() {
-  iteration_ = std::make_shared<Iteration>();
+  iteration_ = &Iteration::GetInstance();
   MS_EXCEPTION_IF_NULL(iteration_);
 
   // 1.Add rounds to the iteration according to the server mode.
   for (const RoundConfig &config : rounds_config_) {
     std::shared_ptr<Round> round = std::make_shared<Round>(config.name, config.check_timeout, config.time_window,
                                                            config.check_count, config.threshold_count);
-    MS_LOG(INFO) << "Add round " << config.name << ", check_count: " << config.check_count
-                 << ", threshold:" << config.threshold_count;
+    MS_LOG(INFO) << "Add round " << config.name << ", check_timeout: " << config.check_timeout
+                 << ", time window: " << config.time_window << ", check_count: " << config.check_count
+                 << ", threshold: " << config.threshold_count;
     iteration_->AddRound(round);
   }
 
   // 2.Initialize all the rounds.
-  TimeOutCb time_out_cb = std::bind(&Iteration::ProceedToNextIter, iteration_);
-  FinishIterCb finish_iter_cb = std::bind(&Iteration::ProceedToNextIter, iteration_);
+  TimeOutCb time_out_cb = std::bind(&Iteration::ProceedToNextIter, iteration_, std::placeholders::_1);
+  FinishIterCb finish_iter_cb = std::bind(&Iteration::ProceedToNextIter, iteration_, std::placeholders::_1);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
   return;
 }

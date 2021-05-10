@@ -30,7 +30,8 @@ void ModelStore::Initialize(uint32_t max_count) {
   }
 
   max_model_count_ = max_count;
-  iteration_to_model_[kInitIterationNum] = AssignNewModelMemory();
+  initial_model_ = AssignNewModelMemory();
+  iteration_to_model_[kInitIterationNum] = initial_model_;
   model_size_ = ComputeModelSize();
 }
 
@@ -52,7 +53,6 @@ bool ModelStore::StoreModelByIterNum(size_t iteration, const std::map<std::strin
       MS_LOG(ERROR) << "Memory for the new model is nullptr.";
       return false;
     }
-
     iteration_to_model_[iteration] = memory_register;
   } else {
     // If iteration_to_model_ size is already max_model_count_, we need to replace earliest model with the newest model.
@@ -97,6 +97,12 @@ std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration
   return model;
 }
 
+void ModelStore::Reset() {
+  initial_model_ = iteration_to_model_.rbegin()->second;
+  iteration_to_model_.clear();
+  iteration_to_model_[kInitIterationNum] = initial_model_;
+}
+
 const std::map<size_t, std::shared_ptr<MemoryRegister>> &ModelStore::iteration_to_model() const {
   return iteration_to_model_;
 }
@@ -118,6 +124,14 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
     auto weight_data = std::make_unique<char[]>(weight_size);
     if (weight_data == nullptr) {
       MS_LOG(EXCEPTION) << "Assign memory for weight failed.";
+      return nullptr;
+    }
+
+    auto src_data_size = weight_size;
+    auto dst_data_size = weight_size;
+    int ret = memcpy_s(weight_data.get(), dst_data_size, weight.second->addr, src_data_size);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return nullptr;
     }
 

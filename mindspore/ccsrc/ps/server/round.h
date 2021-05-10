@@ -52,6 +52,7 @@ class Round {
 
   const std::string &name() const;
   size_t threshold_count() const;
+  bool check_timeout() const;
   size_t time_window() const;
 
  private:

@@ -30,6 +30,9 @@ namespace mindspore {
 namespace ps {
 namespace server {
 namespace kernel {
+// The initial data size sum of federated learning is 0, which will be accumulated in updateModel round.
+constexpr uint64_t kInitialDataSizeSum = 0;
+
 class UpdateModelKernel : public RoundKernel {
  public:
   UpdateModelKernel() = default;
