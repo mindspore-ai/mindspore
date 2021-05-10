@@ -4335,7 +4335,7 @@ def searchsorted(a, v, side='left', sorter=None):
         [0 5 1 2]
     """
     if side not in ('left', 'right'):
-        _raise_value_error(f'{side} is an invalid value for keyword "side"')
+        _raise_value_error('invalid value for keyword "side"')
     a = _to_tensor(a).astype(mstype.float32)
     v = _to_tensor(v)
     shape = F.shape(v)
@@ -4705,14 +4705,14 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     Examples:
         >>> from mindspore import numpy as np
         >>> print(np.histogram([1, 2, 1], bins=[0, 1, 2, 3]))
-        (Tensor(shape=[3], dtype=Int32, value= [0, 2, 1]),
+        (Tensor(shape=[3], dtype=Float32, value= [0, 2, 1]),
         Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
         >>> print(np.histogram(np.arange(4), bins=np.arange(5), density=True))
         (Tensor(shape=[4], dtype=Float32, value=
         [ 2.50000000e-01,  2.50000000e-01,  2.50000000e-01,  2.50000000e-01]),
         Tensor(shape=[5], dtype=Int32, value= [0, 1, 2, 3, 4]))
         >>> print(np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3]))
-        (Tensor(shape=[3], dtype=Int32, value= [1, 4, 1]),
+        (Tensor(shape=[3], dtype=Float32, value= [1, 4, 1]),
         Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 3]))
     """
     a = _to_tensor(a).ravel()
@@ -4726,7 +4726,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     if density:
         count = F.cast(count, mstype.float32)
         count = count/diff(bin_edges)/F.reduce_sum(count)
-    return count.astype(mstype.int32), bin_edges
+    return count, bin_edges
 
 
 @constexpr
@@ -4794,7 +4794,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
         [ 9 10 11]
         [12 13 14]]
         >>> print(np.histogramdd(sample, bins=(2, 3, 4)))
-        (Tensor(shape=[2, 3, 4], dtype=Int32, value=
+        (Tensor(shape=[2, 3, 4], dtype=Float32, value=
         [[[1, 1, 0, 0],
         [0, 0, 0, 0],
         [0, 0, 0, 0]],
@@ -4865,7 +4865,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
             shape = _expanded_shape(ndim, dedges[i].size, i)
             count /= _to_tensor(dedges[i]).reshape(shape)
         count /= s
-    return count.astype(mstype.int32), bin_edges
+    return count, bin_edges
 
 
 def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
@@ -4917,7 +4917,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         >>> x = np.arange(5)
         >>> y = np.arange(2, 7)
         >>> print(np.histogram2d(x, y, bins=(4, 6)))
-        (Tensor(shape=[4, 6], dtype=Int32, value=
+        (Tensor(shape=[4, 6], dtype=Float32, value=
         [[1, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0],
         [0, 0, 0, 1, 0, 0]
@@ -4929,7 +4929,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         5.33333349e+00,  6.00000000e+00]))
     """
     count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
-    return count.astype(mstype.int32), bin_edges[0], bin_edges[1]
+    return count, bin_edges[0], bin_edges[1]
 
 
 def matrix_power(a, n):

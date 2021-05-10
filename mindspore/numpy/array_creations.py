@@ -83,7 +83,10 @@ def array(obj, dtype=None, copy=True, ndmin=0):
         [1 2 3]
     """
     res = asarray(obj, dtype)
+
     if ndmin > res.ndim:
+        if res.size == 0:
+            _raise_value_error("Empty tensor cannot be expanded beyond the current dimension.")
         res = _expand(res, ndmin)
 
     if copy:
@@ -253,6 +256,8 @@ def copy_(a):
     """
     if not isinstance(a, Tensor):
         a = asarray_const(a)
+    if a.size == 0:
+        return a
     # The current implementation registers a new memory location for copied tensor by
     # doing some reduandent operations.
     origin_dtype = a.dtype
