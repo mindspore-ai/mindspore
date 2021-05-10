@@ -1,0 +1,24 @@
+flatbuffers:
+  cpeName: flatbuffers
+  version: 1.11.0
+  url: 'https://github.com/google/flatbuffers/'
+Eigen:
+  cpeName: Eigen
+  version: 3.3.7
+  url: 'https://gitlab.com/libeigen/eigen'
+libevent:
+  cpeName: libevent
+  version: 2.1.12
+  url: 'https://https://github.com/libevent/libevent'
+openmpi:
+  cpeName: openmpi
+  version: 4.0.3
+  url: 'https://https://github.com/open-mpi/ompi/'
+OpenCV:
+  cpeName: OpenCV
+  version: 4.2.0
+  url: 'https://https://github.com/opencv/opencv'
+Cppjieba:
+  cpeName: Cppjieba
+  version: 5.0.3
+  url: 'https://https://github.com/yanyiwu/libcppjieba'
