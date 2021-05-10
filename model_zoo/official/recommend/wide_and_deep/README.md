@@ -34,7 +34,7 @@ Wide&Deep model is a classical model in Recommendation and Click Prediction area
 
 Wide&Deep model jointly trained wide linear models and deep neural network, which combined the benefits of memorization and generalization for recommender systems.
 
-Currently we support host-device mode with column partition and  parameter server mode, and we implement the cache mode that supported multi-dimensional slice for huge embedding table which cooperated with Noah's Ark Lab([ScaleFreeCTR](https://arxiv.org/abs/2104.08542)).
+Currently we support host-device mode with multi-dimensional partition parallel for embedding table and parameter server mode, and we implement the cache mode for huge embedding table which cooperated with Noah's Ark Lab([ScaleFreeCTR](https://arxiv.org/abs/2104.08542)).
 
 # [Dataset](#contents)
 
