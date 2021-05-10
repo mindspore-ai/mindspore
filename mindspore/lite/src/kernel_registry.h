@@ -40,7 +40,7 @@ class KernelRegistry {
   static KernelRegistry *GetInstance();
   static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
-  virtual kernel::CreateKernel GetDelegateCreator(const kernel::KernelKey &desc);
+  virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelKey &desc);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   int GetFuncIndex(const kernel::KernelKey &desc);
   const std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> &kernel_creators() {

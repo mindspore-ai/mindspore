@@ -27,7 +27,12 @@ namespace mindspore {
 namespace lite {
 namespace {
 static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN;
+std::string GetCustomType(const schema::Primitive *primitive) {
+  auto param = primitive->value_as_Custom();
+  MS_ASSERT(param != nullptr);
+  return param->type()->str();
 }
+}  // namespace
 
 bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node) {
   if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
@@ -40,45 +45,95 @@ bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node) {
 
   auto op_type = primitive->value_type();
   if (op_type == schema::PrimitiveType_Custom) {
-    return std::any_of(custom_interfaces_.begin(), custom_interfaces_.end(), [node](auto &&item) {
-      if (item.second[node->name_] != nullptr) {
+    auto &&custom_type = GetCustomType(primitive);
+    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type](auto &&item) {
+      if (item.second[custom_type] != nullptr) {
         return true;
       }
       return false;
     });
   }
 
-  return std::any_of(kernel_interfaces_.begin(), kernel_interfaces_.end(),
-                     [op_type, &mutex = this->mutex_](auto &&item) {
-                       std::unique_lock<std::mutex> lock(mutex);
-                       if (item.second[op_type] != nullptr) {
-                         return true;
-                       }
-                       return false;
-                     });
+  return std::any_of(kernel_creators_.begin(), kernel_creators_.end(), [op_type, &mutex = this->mutex_](auto &&item) {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (item.second[op_type] != nullptr) {
+      return true;
+    }
+    return false;
+  });
 }
 
-int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &op_type,
+int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
                                        KernelInterfaceCreator creator) {
-  custom_interfaces_[provider][op_type] = creator;
+  custom_creators_[provider][type] = creator;
   return RET_OK;
 }
 
-kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::string &provider, int op_type) {
+kernel::KernelInterface *KernelInterfaceRegistry::GetCacheInterface(const std::string &provider, int op_type) {
+  auto provider_iter = kernel_interfaces_.find(provider);
+  if (provider_iter != kernel_interfaces_.end()) {
+    auto kernel_iter = provider_iter->second.find(op_type);
+    if (kernel_iter != provider_iter->second.end()) {
+      return kernel_iter->second;
+    }
+  }
+  return nullptr;
+}
+
+kernel::KernelInterface *KernelInterfaceRegistry::GetCustomCacheInterface(const std::string &provider,
+                                                                          const std::string &type) {
+  auto provider_iter = custom_kernels_.find(provider);
+  if (provider_iter == custom_kernels_.end()) {
+    return nullptr;
+  }
+  auto kernel_iter = provider_iter->second.find(type);
+  if (kernel_iter != provider_iter->second.end()) {
+    return kernel_iter->second;
+  }
+  return nullptr;
+}
+
+kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::string &provider,
+                                                                     const schema::Primitive *primitive) {
+  MS_ASSERT(primitive != nullptr);
+  int op_type = primitive->value_type();
   if (op_type < PrimitiveType_MIN || op_type > kMaxKernelNum) {
     MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << kMaxKernelNum;
     return nullptr;
   }
 
   std::unique_lock<std::mutex> lock(mutex_);
-  auto iter = kernel_interfaces_.find(provider);
-  if (iter == kernel_interfaces_.end()) {
+  if (op_type == schema::PrimitiveType_Custom) {
+    auto &&type = GetCustomType(primitive);
+    auto kernel = GetCustomCacheInterface(provider, type);
+    if (kernel != nullptr) {
+      return kernel;
+    }
+    auto provider_iter = custom_creators_.find(provider);
+    if (provider_iter == custom_creators_.end()) {
+      return nullptr;
+    }
+    auto creator_iter = provider_iter->second.find(type);
+    if (creator_iter != provider_iter->second.end()) {
+      kernel = creator_iter->second();
+      custom_kernels_[provider][type] = kernel;
+    }
+    return nullptr;
+  }
+  auto kernel = GetCacheInterface(provider, op_type);
+  if (kernel != nullptr) {
+    return kernel;
+  }
+  auto iter = kernel_creators_.find(provider);
+  if (iter == kernel_creators_.end()) {
     return nullptr;
   }
 
   auto creator = iter->second[op_type];
   if (creator != nullptr) {
-    return creator();
+    kernel = creator();
+    kernel_interfaces_[provider][op_type] = kernel;
+    return kernel;
   }
   return nullptr;
 }
@@ -90,24 +145,37 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
   }
 
   std::unique_lock<std::mutex> lock(mutex_);
-  auto iter = kernel_interfaces_.find(provider);
-  if (iter == kernel_interfaces_.end()) {
-    kernel_interfaces_[provider] =
+  auto iter = kernel_creators_.find(provider);
+  if (iter == kernel_creators_.end()) {
+    kernel_creators_[provider] =
       reinterpret_cast<KernelInterfaceCreator *>(malloc(kMaxKernelNum * sizeof(KernelInterfaceCreator)));
-    if (kernel_interfaces_[provider] == nullptr) {
+    if (kernel_creators_[provider] == nullptr) {
       MS_LOG(ERROR) << "malloc kernel dev delegate creator fail!";
       return RET_ERROR;
     }
+    memset(kernel_creators_[provider], 0, kMaxKernelNum * sizeof(KernelInterfaceCreator));
   }
 
-  kernel_interfaces_[provider][op_type] = creator;
+  kernel_creators_[provider][op_type] = creator;
   return RET_OK;
 }
 
 KernelInterfaceRegistry::~KernelInterfaceRegistry() {
-  for (auto &&item : kernel_interfaces_) {
+  for (auto &&item : kernel_creators_) {
     free(item.second);
     item.second = nullptr;
+  }
+  for (auto &&i : kernel_interfaces_) {
+    for (auto &&j : i.second) {
+      delete (j.second);
+      j.second = nullptr;
+    }
+  }
+  for (auto &&i : custom_kernels_) {
+    for (auto &&j : i.second) {
+      delete (j.second);
+      j.second = nullptr;
+    }
   }
 }
 }  // namespace lite
