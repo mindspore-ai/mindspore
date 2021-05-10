@@ -39,11 +39,11 @@ const std::vector<std::string> kSplitDevTypes = {"CPU", "GPU"};
 using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
 
 enum SplitMode {
-  SplitN = 0,
-  SplitH = 1,
-  SplitCIN = 2,
-  SplitCOUT = 3,
-  NoSplit = 4,
+  NoSplit = 0,
+  SplitN = 1,
+  SplitH = 2,
+  SplitCIN = 3,
+  SplitCOUT = 4,
 };
 
 struct SplitStrategy {

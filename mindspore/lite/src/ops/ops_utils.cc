@@ -35,7 +35,7 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const AnfNodePtr &node) {
     return nullptr;
   }
 
-  MS_LOG(INFO) << "export prim: " << prim->name();
+  MS_LOG(DEBUG) << "export prim: " << prim->name();
   auto creator = MSOpsRegistry::GetInstance()->GetPrimitiveCreator(prim->name());
   if (creator != nullptr) {
     return creator(node);
@@ -766,6 +766,11 @@ std::unique_ptr<schema::PrimitiveT> CumSumPrimitiveCreator(const AnfNodePtr &nod
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+std::unique_ptr<schema::PrimitiveT> SplitWithOverlapPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SplitWithOverlap>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -982,6 +987,7 @@ RegistryMSOps g_SplicePrimitiveCreatorRegistry("Splice", SplicePrimitiveCreator)
 RegistryMSOps g_LogSoftmaxPrimitiveCreatorRegistry("LogSoftmax", LogSoftmaxPrimitiveCreator);
 RegistryMSOps g_CallPrimitiveCreatorRegistry("call", CallPrimitiveCreator);
 RegistryMSOps g_CumSumPrimitiveCreatorRegistry("CumSum", CumSumPrimitiveCreator);
+RegistryMSOps g_SplitWithOverlapCreatorRegistry("SplitWithOverlap", SplitWithOverlapPrimitiveCreator);
 
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Custom>>(node);

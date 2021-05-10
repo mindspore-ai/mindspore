@@ -45,9 +45,9 @@ constexpr auto kPadDown = 1;
 constexpr auto kPadLeft = 2;
 constexpr auto kPadRight = 3;
 
-lite::STATUS Conv2DInfo::GetAttrs() { return lite::RET_OK; }
+int Conv2DInfo::GetAttrs() { return lite::RET_OK; }
 
-lite::STATUS Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
+int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;
 
@@ -95,7 +95,7 @@ lite::STATUS Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   return lite::RET_OK;
 }
 
-AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(CNodePtr orig_node, size_t input_index,
+AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
                                             std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
                                             const std::vector<int64_t> &splits, bool trans_format) {
   if (orig_node == nullptr) {
@@ -123,7 +123,7 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(CNodePtr orig_node, size_t input_ind
     split_prim->set_stride(0);
     split_prim->set_pad_top(0);
   }
-  std::vector<AnfNodePtr> split_inputs = {NewValueNode(std::make_shared<ops::SplitWithOverlap>())};
+  std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
   split_inputs.push_back(orig_node->input(input_index + 1));
   auto split_cnode = func_graph_->NewCNode(split_inputs);
   if (split_cnode == nullptr) {
@@ -138,12 +138,22 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(CNodePtr orig_node, size_t input_ind
   return split_cnode;
 }
 
-lite::STATUS Conv2DInfo::InferParallelCNodes() {
+int Conv2DInfo::CheckConv2DPrimitiveType() {
   if (CheckIfFuncGraphIsNull(func_graph_) != lite::RET_OK) {
     return lite::RET_ERROR;
   }
   if (CheckIfAnfNodeIsNull(cnode_) != lite::RET_OK) {
     return lite::RET_ERROR;
+  }
+  if (!CheckPrimitiveType(cnode_, prim::kPrimConv2D) && !CheckPrimitiveType(cnode_, prim::kPrimConv2DFusion)) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Conv2DInfo::InferParallelCNodes() {
+  if (!CheckConv2DPrimitiveType()) {
+    return RET_OK;
   }
   Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
@@ -213,15 +223,16 @@ lite::STATUS Conv2DInfo::InferParallelCNodes() {
   }
   name_ = orig_name;
 
-  return ConstructOutputCNodes(conv_prim);
+  return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
-lite::STATUS Conv2DInfo::ConstructOutputCNodes(std::shared_ptr<ops::Conv2DFusion> conv_prim) {
+int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                                      const std::vector<AnfNodePtr> &feature_split_outputs,
+                                      const std::vector<AnfNodePtr> &kernel_split_outputs,
+                                      const std::vector<AnfNodePtr> &bias_split_outputs) {
   Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
-  std::vector<AnfNodePtr> feature_split_outputs;
-  std::vector<AnfNodePtr> kernel_split_outputs;
-  std::vector<AnfNodePtr> bias_split_outputs;
+
   int cin_strategy_sum = std::accumulate(strategys[0][kAxisCIn].begin(), strategys[0][kAxisCIn].end(), 0);
   int cout_strategy_sum = std::accumulate(strategys[1][kAxisCOut].begin(), strategys[1][kAxisCOut].end(), 0);
   std::string conv_cnode_name = cnode_->fullname_with_scope();
@@ -235,6 +246,7 @@ lite::STATUS Conv2DInfo::ConstructOutputCNodes(std::shared_ptr<ops::Conv2DFusion
     }
     // copy attr
     auto prim = std::make_shared<ops::Conv2DFusion>();
+    prim->set_pad(conv_prim->get_pad());
     prim->set_in_channel(conv_prim->get_in_channel());
     prim->set_out_channel(conv_prim->get_out_channel());
     prim->set_dilation(conv_prim->get_dilation());
@@ -278,7 +290,7 @@ lite::STATUS Conv2DInfo::ConstructOutputCNodes(std::shared_ptr<ops::Conv2DFusion
       default:
         break;
     }
-    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(std::make_shared<ops::Conv2DFusion>())};
+    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
     // if split Cout, feature will not be splited
     if (splitMode_ == SplitCOUT) {
       conv_inputs.push_back(cnode_->input(1));
@@ -310,7 +322,7 @@ lite::STATUS Conv2DInfo::ConstructOutputCNodes(std::shared_ptr<ops::Conv2DFusion
   return lite::RET_OK;
 }
 
-lite::STATUS Conv2DInfo::InferReplaceOp() {
+int Conv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
   if (splitMode_ == SplitCIN) {
     MS_LOG(DEBUG) << name_ << " : Split Cin, infer Forward op.";
@@ -334,7 +346,14 @@ lite::STATUS Conv2DInfo::InferReplaceOp() {
   return lite::RET_OK;
 }
 
-lite::STATUS DepthwiseConv2DInfo::InferParallelCNodes() {
+AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
+                                                     std::vector<AnfNodePtr> *split_outputs, size_t split_dim,
+                                                     size_t split_num, const std::vector<int64_t> &splits,
+                                                     bool trans_format) {
+  return nullptr;
+}
+
+int DepthwiseConv2DInfo::InferParallelCNodes() {
   if (CheckIfFuncGraphIsNull(func_graph_) != lite::RET_OK) {
     return lite::RET_ERROR;
   }
@@ -387,6 +406,7 @@ lite::STATUS DepthwiseConv2DInfo::InferParallelCNodes() {
     // copy attr
     auto prim = std::make_shared<ops::Conv2DFusion>();
     prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim->set_pad(conv_prim->get_pad());
     prim->set_in_channel(conv_prim->get_in_channel());
     prim->set_out_channel(conv_prim->get_out_channel());
     prim->set_dilation(conv_prim->get_dilation());
@@ -398,7 +418,7 @@ lite::STATUS DepthwiseConv2DInfo::InferParallelCNodes() {
     prim->set_stride(conv_prim->get_stride());
     prim->set_activation_type(conv_prim->get_activation_type());
 
-    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(std::make_shared<ops::Conv2DFusion>())};
+    std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
     conv_inputs.push_back(feature_split_outputs[i]);
     conv_inputs.push_back(cnode_->input(2));
     if (cnode_->size() >= 4) {
@@ -417,7 +437,7 @@ lite::STATUS DepthwiseConv2DInfo::InferParallelCNodes() {
   return lite::RET_OK;
 }
 
-lite::STATUS DepthwiseConv2DInfo::InferReplaceOp() {
+int DepthwiseConv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
   replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, kAxisN, dev_num, true);
   if (replace_op_ == nullptr) {

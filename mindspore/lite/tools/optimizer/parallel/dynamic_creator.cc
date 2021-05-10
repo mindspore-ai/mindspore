@@ -15,10 +15,13 @@
  */
 
 #include "tools/optimizer/parallel/dynamic_creator.h"
+#include "tools/optimizer/parallel/conv2d_info.h"
 
 namespace mindspore {
 namespace opt {
 // operator register
+REGISTER(Conv2DInfo);
+REGISTER(DepthwiseConv2DInfo);
 
 std::string GetDisOpName(const std::string &prim_name) {
   std::string op_name = prim_name;
@@ -31,7 +34,7 @@ std::string GetDisOpName(const std::string &prim_name) {
 // create the OperatorInfo instance
 OperatorInfoPtr OperatorInstance(const std::string &type_name, const std::string &orig_name,
                                  const SplitStrategy &strategy) {
-  if (type_name.length() == 0) {
+  if (type_name.empty()) {
     MS_LOG(EXCEPTION) << "Length of name is zero!";
   }
   std::string distribute_opname = GetDisOpName(type_name);

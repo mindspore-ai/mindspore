@@ -60,14 +60,14 @@ class OperatorInfo {
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
   void setFmk(const int32_t fmk_type) { fmk_type_ = fmk_type; }
-  AnfNodePtr replace_op() { return replace_op_; }
+  AnfNodePtr replace_op() const { return replace_op_; }
   int Init();
 
  protected:
   int CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num, std::vector<AnfNodePtr> *outputs);
-  AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
-                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
-                                  bool trans_format);
+  virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
+                                          std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
+                                          const std::vector<int64_t> &splits, bool trans_format);
   AnfNodePtr CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                int32_t concat_dim, size_t input_nodes_num, bool trans_format);
   AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes, int32_t reduce_dim,
@@ -84,6 +84,7 @@ class OperatorInfo {
   FuncGraphPtr func_graph_{nullptr};
   CNodePtr cnode_{nullptr};
   int32_t fmk_type_{};
+  TypeId operator_type_id_ = kNumberTypeFloat32;
 
  private:
   int SetCNodeBackend();
