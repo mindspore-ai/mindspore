@@ -17,7 +17,7 @@ import os
 import argparse
 from pathlib import Path
 import SimpleITK as sitk
-from src.config import config
+from src.model_utils.config import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path", type=str, help="Input image directory to be processed.")

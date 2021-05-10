@@ -14,43 +14,36 @@
 # ============================================================================
 
 import os
-import argparse
-import ast
 import mindspore
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, Model, context
 from mindspore.context import ParallelMode
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
 from src.dataset import create_dataset
 from src.unet3d_model import UNet3d
-from src.config import config as cfg
 from src.lr_schedule import dynamic_lr
 from src.loss import SoftmaxCrossEntropyWithLogits
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, \
                     device_id=device_id)
 mindspore.set_seed(1)
 
-def get_args():
-    parser = argparse.ArgumentParser(description='Train the UNet3D on images and target masks')
-    parser.add_argument('--data_url', dest='data_url', type=str, default='', help='image data directory')
-    parser.add_argument('--seg_url', dest='seg_url', type=str, default='', help='seg data directory')
-    parser.add_argument('--run_distribute', dest='run_distribute', type=ast.literal_eval, default=False, \
-                        help='Run distribute, default: false')
-    return parser.parse_args()
-
-def train_net(data_dir,
-              seg_dir,
-              run_distribute,
-              config=None):
+@moxing_wrapper()
+def train_net(data_path,
+              run_distribute):
+    data_dir = data_path + "/image/"
+    seg_dir = data_path + "/seg/"
     if run_distribute:
         init()
-        rank_id = get_rank()
-        rank_size = get_group_size()
+        rank_id = get_device_id()
+        rank_size = get_device_num()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode,
                                           device_num=rank_size,
@@ -58,12 +51,12 @@ def train_net(data_dir,
     else:
         rank_id = 0
         rank_size = 1
-    train_dataset = create_dataset(data_path=data_dir, seg_path=seg_dir, config=config, \
+    train_dataset = create_dataset(data_path=data_dir, seg_path=seg_dir, \
                                     rank_size=rank_size, rank_id=rank_id, is_training=True)
     train_data_size = train_dataset.get_dataset_size()
     print("train dataset length is:", train_data_size)
 
-    network = UNet3d(config=config)
+    network = UNet3d()
 
     loss = SoftmaxCrossEntropyWithLogits()
     lr = Tensor(dynamic_lr(config, train_data_size), mstype.float32)
@@ -77,8 +70,9 @@ def train_net(data_dir,
     loss_cb = LossMonitor()
     ckpt_config = CheckpointConfig(save_checkpoint_steps=train_data_size,
                                    keep_checkpoint_max=config.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix='{}'.format(config.model),
-                                 directory='./ckpt_{}/'.format(device_id),
+    ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
+    ckpoint_cb = ModelCheckpoint(prefix='Unet3d',
+                                 directory=ckpt_save_dir+'./ckpt_{}/'.format(device_id),
                                  config=ckpt_config)
     callbacks_list = [loss_cb, time_cb, ckpoint_cb]
     print("============== Starting Training ==============")
@@ -86,9 +80,5 @@ def train_net(data_dir,
     print("============== End Training ==============")
 
 if __name__ == '__main__':
-    args = get_args()
-    print("Training setting:", args)
-    train_net(data_dir=args.data_url,
-              seg_dir=args.seg_url,
-              run_distribute=args.run_distribute,
-              config=cfg)
+    train_net(data_path=config.data_path,
+              run_distribute=config.run_distribute)

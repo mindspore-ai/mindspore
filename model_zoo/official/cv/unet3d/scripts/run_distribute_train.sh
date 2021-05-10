@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 3 ]
+if [ $# -ne 2 ]
 then
     echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [IMAGE_PATH] [SEG_PATH]"
 exit 1
@@ -45,14 +45,6 @@ then
 exit 1
 fi
 
-PATH3=$(get_real_path $3)
-echo $PATH3
-if [ ! -d $PATH3 ]
-then
-    echo "error: SEG_PATH=$PATH3 is not a file"
-exit 1
-fi
-
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
@@ -65,6 +57,7 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
@@ -73,8 +66,8 @@ do
 
     python train.py \
     --run_distribute=True \
-    --data_url=$PATH2 \
-    --seg_url=$PATH3 > log.txt 2>&1 &
+    --data_path=$PATH2 \
+    --output_path './output' > log.txt 2>&1 &
 
     cd ../
 done

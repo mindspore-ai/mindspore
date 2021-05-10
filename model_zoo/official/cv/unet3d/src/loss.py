@@ -17,7 +17,7 @@ import mindspore.nn as nn
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.nn.loss.loss import _Loss
-from src.config import config
+from src.model_utils.config import config
 
 class SoftmaxCrossEntropyWithLogits(_Loss):
     def __init__(self):
@@ -27,11 +27,12 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         self.loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
         self.cast = P.Cast()
         self.reduce_mean = P.ReduceMean()
+        self.num_classes = config.num_classes
 
     def construct(self, logits, label):
         logits = self.transpose(logits, (0, 2, 3, 4, 1))
         label = self.transpose(label, (0, 2, 3, 4, 1))
         label = self.cast(label, mstype.float32)
-        loss = self.reduce_mean(self.loss_fn(self.reshape(logits, (-1, config['num_classes'])), \
-                                self.reshape(label, (-1, config['num_classes']))))
+        loss = self.reduce_mean(self.loss_fn(self.reshape(logits, (-1, self.num_classes)), \
+                                self.reshape(label, (-1, self.num_classes))))
         return self.get_loss(loss)
