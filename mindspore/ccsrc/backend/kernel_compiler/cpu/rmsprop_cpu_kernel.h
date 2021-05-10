@@ -23,6 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
+
+template <typename T>
 class RMSPropCPUKernel : public CPUKernel {
  public:
   RMSPropCPUKernel() : size_(1), use_center_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
@@ -34,36 +36,42 @@ class RMSPropCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void LaunchRMSPropUnuseCenter(T *variable, T *mean_square, T *moment, T *gradients, float *learning_rate);
+  void LaunchRMSPropUseCenter(T *variable, T *mean_square, T *moment, T *gradients, T *mean_gradients, float *momentum,
+                              float *learning_rate, float *decay, float *epsilon);
+
+ private:
   size_t size_;
   bool use_center_;
   float decay_;
   float momentum_;
   float epsilon_;
+  TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(ApplyRMSProp,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  RMSPropCPUKernel);
+MS_REG_CPU_KERNEL_T(ApplyRMSProp,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddOutputAttr(kNumberTypeFloat32),
+                    RMSPropCPUKernel, float);
 
-MS_REG_CPU_KERNEL(ApplyCenteredRMSProp,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  RMSPropCPUKernel);
+MS_REG_CPU_KERNEL_T(ApplyCenteredRMSProp,
+                    KernelAttr()
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddInputAttr(kNumberTypeFloat32)
+                      .AddOutputAttr(kNumberTypeFloat32),
+                    RMSPropCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RMSPROP_CPU_KERNEL_H_

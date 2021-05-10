@@ -24,7 +24,6 @@
 #include <math.h>
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/adam_fp32.h"
-#include "nnacl/op_base.h"
 
 int AdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2, float epsilon, const float *gradient,
              size_t start, size_t end, bool use_nesterov) {
@@ -105,7 +104,7 @@ int AdamFp32(float *var, float *m, float *v, float lr, float beta1, float beta2,
 
 int AdamDeltaFp32(float *delta, float *m, float *v, float lr, float beta1, float beta2, float epsilon,
                   const float *gradient, size_t start, size_t end, bool use_nesterov) {
-  size_t c1 = 0;
+  size_t c1 = start;
 #ifdef ENABLE_AVX
   float coeff1 = 1 - beta1;
   float coeff2 = 1 - beta2;

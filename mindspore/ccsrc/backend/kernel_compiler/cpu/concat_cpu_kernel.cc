@@ -47,7 +47,6 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   }
 
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto buff_size = outputs[0]->size;
   // each input's row of shape after flat are same
   auto before_axis = input_flat_shape_list[0][0];
   for (size_t i = 0; i < before_axis; ++i) {
@@ -58,12 +57,11 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
       auto copy_num = input_flat_shape_list[j][1];
       auto offset = copy_num * i;
-      auto ret = memcpy_s(output_addr, buff_size, input_j_addr + offset, copy_num * sizeof(T));
+      auto ret = memcpy_s(output_addr, copy_num * sizeof(T), input_j_addr + offset, copy_num * sizeof(T));
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "memcpy failed.";
       }
       output_addr += copy_num;
-      buff_size -= copy_num * sizeof(T);
     }
   }
   return true;
