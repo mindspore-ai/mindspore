@@ -41,7 +41,7 @@ Graph::GraphData::GraphData(Buffer om_data, enum ModelType model_type)
   ge::ModelData model_data;
   model_data.model_data = om_data.MutableData();
   model_data.model_len = om_data.DataSize();
-  ge::Status ret = helper.LoadModel(model_data);
+  ge::Status ret = helper.LoadRootModel(model_data);
   if (ret != ge::SUCCESS) {
     MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
   }
