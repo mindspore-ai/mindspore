@@ -20,7 +20,6 @@
 #include <string>
 #include <memory>
 
-#include "proto/mind_ir.pb.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
