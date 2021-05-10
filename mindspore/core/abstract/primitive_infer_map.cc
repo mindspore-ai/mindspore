@@ -176,7 +176,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimMul, {InferImplMul, nullptr, true}},
     {prim::kPrimAdd, {InferImplAdd, nullptr, true}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
-    {prim::kPrimSub, {InferImplSub, nullptr, true}},
+    {prim::kPrimSub, {InferImplSub, nullptr, false}},
     {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
     {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},
