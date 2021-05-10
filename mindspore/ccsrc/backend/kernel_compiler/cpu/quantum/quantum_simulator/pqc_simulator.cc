@@ -20,20 +20,18 @@
 
 namespace mindspore {
 namespace mindquantum {
-PQCSimulator::PQCSimulator() : Simulator(1), n_qubits_(1) {
-  PQCSimulator::AllocateAll();
+PQCSimulator::PQCSimulator() : Simulator(1, 1), n_qubits_(1) {
   for (Index i = 0; i < n_qubits_; i++) {
     ordering_.push_back(i);
   }
-  len_ = (1UL << n_qubits_);
+  len_ = (1UL << (n_qubits_ + 1));
 }
 
-PQCSimulator::PQCSimulator(Index seed = 1, Index N = 1) : Simulator(seed), n_qubits_(N) {
-  PQCSimulator::AllocateAll();
+PQCSimulator::PQCSimulator(Index seed = 1, Index N = 1) : Simulator(seed, N), n_qubits_(N) {
   for (Index i = 0; i < n_qubits_; i++) {
     ordering_.push_back(i);
   }
-  len_ = (1UL << n_qubits_);
+  len_ = (1UL << (n_qubits_ + 1));
 }
 
 void PQCSimulator::ApplyGate(std::shared_ptr<BasicGate> g, const ParameterResolver &paras, bool diff) {
@@ -65,14 +63,15 @@ void PQCSimulator::Evolution(BasicCircuit const &circuit, ParameterResolver cons
   PQCSimulator::ApplyBlocks(circuit.GetGateBlocks(), paras);
 }
 
-CalcType PQCSimulator::Measure(Index mask1, Index mask2, bool apply) {
+CalcType PQCSimulator::Measure(const Indexes &masks, bool apply) {
   CalcType out = 0;
 #pragma omp parallel for reduction(+ : out) schedule(static)
   for (unsigned i = 0; i < (1UL << n_qubits_); i++) {
-    if (((i & mask1) == mask1) && ((i | mask2) == mask2)) {
-      out = out + std::real(vec_[i]) * std::real(vec_[i]) + std::imag(vec_[i]) * std::imag(vec_[i]);
+    if (((i & masks[0]) == masks[0]) && ((i | masks[1]) == masks[1])) {
+      out = out + vec_[2 * i] * vec_[2 * i] + vec_[2 * i + 1] * vec_[2 * i + 1];
     } else if (apply) {
-      vec_[i] = 0;
+      vec_[2 * i] = 0;
+      vec_[2 * i + 1] = 0;
     }
   }
   return out;
@@ -85,6 +84,8 @@ std::vector<std::vector<float>> PQCSimulator::CalcGradient(const std::shared_ptr
   auto circuit = input_params->circuit_cp;
   auto circuit_hermitian = input_params->circuit_hermitian_cp;
   auto hamiltonians = input_params->hamiltonians_cp;
+  auto projectors = input_params->projectors_cp;
+  auto is_projector = input_params->is_projector_cp;
   auto paras = input_params->paras_cp;
   auto encoder_params_names = input_params->encoder_params_names_cp;
   auto ansatz_params_names = input_params->ansatz_params_names_cp;
@@ -102,16 +103,27 @@ std::vector<std::vector<float>> PQCSimulator::CalcGradient(const std::shared_ptr
     MS_LOG(EXCEPTION) << "Empty quantum circuit!";
   }
   unsigned len = circ_gate_blocks.at(0).size();
-  std::vector<float> grad(hamiltonians->size() * poi.size(), 0);
-  std::vector<float> e0(hamiltonians->size(), 0);
+  size_t mea_size = 0;
+  if (is_projector) {
+    mea_size = projectors->size();
+  } else {
+    mea_size = hamiltonians->size();
+  }
+  std::vector<float> grad(mea_size * poi.size(), 0);
+  std::vector<float> e0(mea_size, 0);
 
   // #pragma omp parallel for
-  for (size_t h_index = 0; h_index < hamiltonians->size(); h_index++) {
-    auto &hamiltonian = hamiltonians->at(h_index);
+  for (size_t h_index = 0; h_index < mea_size; h_index++) {
     s_right.set_wavefunction(vec_, ordering_);
     s_left.set_wavefunction(s_right.vec_, ordering_);
-    s_left.apply_qubit_operator(hamiltonian.GetCTD(), ordering_);
-    e0[h_index] = static_cast<float>(ComplexInnerProduct(vec_, s_left.vec_, len_).real());
+    if (is_projector) {
+      auto &proj = projectors->at(h_index);
+      e0[h_index] = s_left.Measure(proj.GetMasks(), true);
+    } else {
+      auto &hamiltonian = hamiltonians->at(h_index);
+      s_left.apply_qubit_operator(hamiltonian.GetCTD(), ordering_);
+      e0[h_index] = static_cast<float>(ComplexInnerProduct(vec_, s_left.vec_, len_).real());
+    }
     if (dummy_circuit_) {
       continue;
     }
@@ -144,7 +156,7 @@ std::vector<std::vector<float>> PQCSimulator::CalcGradient(const std::shared_ptr
   }
   std::vector<float> grad1;
   std::vector<float> grad2;
-  for (size_t i = 0; i < hamiltonians->size(); i++) {
+  for (size_t i = 0; i < mea_size; i++) {
     for (size_t j = 0; j < poi.size(); j++) {
       if (j < encoder_params_names->size()) {
         grad1.push_back(grad[i * poi.size() + j]);
@@ -156,16 +168,6 @@ std::vector<std::vector<float>> PQCSimulator::CalcGradient(const std::shared_ptr
   return {e0, grad1, grad2};
 }
 
-void PQCSimulator::AllocateAll() {
-  for (unsigned i = 0; i < n_qubits_; i++) {
-    Simulator::allocate_qubit(i);
-  }
-}
-void PQCSimulator::DeallocateAll() {
-  for (unsigned i = 0; i < n_qubits_; i++) {
-    Simulator::deallocate_qubit(i);
-  }
-}
 void PQCSimulator::SetState(const StateVector &wavefunction) { Simulator::set_wavefunction(wavefunction, ordering_); }
 
 std::size_t PQCSimulator::GetControlMask(Indexes const &ctrls) {
@@ -184,9 +186,9 @@ CalcType PQCSimulator::GetExpectationValue(const Hamiltonian &ham) {
 void PQCSimulator::SetZeroState() {
 #pragma omp parallel for schedule(static)
   for (size_t i = 0; i < len_; i++) {
-    vec_[i] = {0, 0};
+    vec_[i] = 0;
   }
-  vec_[0] = {1, 0};
+  vec_[0] = 1;
 }
 }  // namespace mindquantum
 }  // namespace mindspore

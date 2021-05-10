@@ -42,6 +42,7 @@ class BasicGate {
   bool IsParameterGate();
   Indexes GetObjQubits();
   Indexes GetCtrlQubits();
+  virtual ~BasicGate() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

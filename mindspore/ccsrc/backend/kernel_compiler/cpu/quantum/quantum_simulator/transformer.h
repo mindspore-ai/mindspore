@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/utils.h"
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/parameter_resolver.h"
 #include "backend/kernel_compiler/cpu/quantum/quantum_simulator/hamiltonian.h"
+#include "backend/kernel_compiler/cpu/quantum/quantum_simulator/projector.h"
 
 namespace mindspore {
 namespace mindquantum {
@@ -49,6 +50,7 @@ using PauliQubitType = std::vector<int64_t>;
 using PauliQubitsType = std::vector<PauliQubitType>;
 using PaulisQubitsType = std::vector<PauliQubitsType>;
 using Hamiltonians = std::vector<Hamiltonian>;
+using Projectors = std::vector<Projector>;
 
 Hamiltonians HamiltoniansTransfor(const PaulisCoeffsType &, const PaulisWordsType &, const PaulisQubitsType &);
 
@@ -59,6 +61,7 @@ std::vector<BasicCircuit> CircuitTransfor(const NamesType &, const ComplexMatrix
 Matrix MatrixConverter(const MatrixType &, const MatrixType &, bool);
 
 ParameterResolver ParameterResolverConverter(const ParaNameType &, const CoeffType &, const RequireType &, bool);
+Projectors ProjectorsTransfor(const NamesType &);
 }  // namespace transformer
 }  // namespace mindquantum
 }  // namespace mindspore

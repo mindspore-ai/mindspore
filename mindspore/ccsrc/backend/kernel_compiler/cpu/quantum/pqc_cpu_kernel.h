@@ -52,7 +52,7 @@ class PQCCPUKernel : public CPUKernel {
   mindquantum::BasicCircuit circ_;
   mindquantum::BasicCircuit herm_circ_;
   mindquantum::transformer::Hamiltonians hams_;
-  std::vector<std::vector<std::shared_ptr<mindquantum::PQCSimulator>>> tmp_sims_;
+  mindquantum::transformer::Projectors projectors_;
 
   // parameters
   mindquantum::transformer::NamesType encoder_params_names_;
@@ -71,6 +71,10 @@ class PQCCPUKernel : public CPUKernel {
   mindquantum::transformer::PaulisCoeffsType hams_pauli_coeff_;
   mindquantum::transformer::PaulisWordsType hams_pauli_word_;
   mindquantum::transformer::PaulisQubitsType hams_pauli_qubit_;
+
+  // subspace measurement ops
+  mindquantum::transformer::NamesType projector_strs_;
+  bool is_projector_;
 };
 
 MS_REG_CPU_KERNEL(PQC,

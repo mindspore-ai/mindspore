@@ -36,10 +36,12 @@ struct ComputeParam {
   mindquantum::BasicCircuit *circ_cp;
   mindquantum::BasicCircuit *herm_circ_cp;
   mindquantum::transformer::Hamiltonians *hams_cp;
+  mindquantum::transformer::Projectors *projectors_cp;
   mindquantum::transformer::NamesType *encoder_params_names_cp;
   mindquantum::transformer::NamesType *ansatz_params_names_cp;
   std::vector<std::vector<std::shared_ptr<mindquantum::PQCSimulator>>> *tmp_sims_cp;
   bool dummy_circuit_cp{false};
+  bool is_projector_cp{false};
   size_t result_len_cp{0};
   size_t encoder_g_len_cp{0};
   size_t ansatz_g_len_cp{0};
@@ -60,6 +62,8 @@ void ComputerForwardBackward(const std::shared_ptr<ComputeParam> &input_params, 
   auto circ = input_params->circ_cp;
   auto herm_circ = input_params->herm_circ_cp;
   auto hams = input_params->hams_cp;
+  auto projectors = input_params->projectors_cp;
+  auto is_projector = input_params->is_projector_cp;
   auto encoder_params_names = input_params->encoder_params_names_cp;
   auto ansatz_params_names = input_params->ansatz_params_names_cp;
   auto tmp_sims = input_params->tmp_sims_cp;
@@ -91,6 +95,8 @@ void ComputerForwardBackward(const std::shared_ptr<ComputeParam> &input_params, 
     calc_gradient_param->circuit_cp = circ;
     calc_gradient_param->circuit_hermitian_cp = herm_circ;
     calc_gradient_param->hamiltonians_cp = hams;
+    calc_gradient_param->projectors_cp = projectors;
+    calc_gradient_param->is_projector_cp = is_projector;
     calc_gradient_param->paras_cp = &pr;
     calc_gradient_param->encoder_params_names_cp = encoder_params_names;
     calc_gradient_param->ansatz_params_names_cp = ansatz_params_names;
@@ -142,6 +148,8 @@ void PQCCPUKernel::InitPQCStructure(const CNodePtr &kernel_node) {
     AnfAlgo::GetNodeAttr<mindquantum::transformer::PaulisWordsType>(kernel_node, mindquantum::kHamsPauliWord);
   hams_pauli_qubit_ =
     AnfAlgo::GetNodeAttr<mindquantum::transformer::PaulisQubitsType>(kernel_node, mindquantum::kHamsPauliQubit);
+  projector_strs_ = AnfAlgo::GetNodeAttr<mindquantum::transformer::NamesType>(kernel_node, mindquantum::kProjectors);
+  is_projector_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, mindquantum::kIsProjector);
 }
 
 void PQCCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -174,17 +182,11 @@ void PQCCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   herm_circ_ = circs[1];
 
   hams_ = mindquantum::transformer::HamiltoniansTransfor(hams_pauli_coeff_, hams_pauli_word_, hams_pauli_qubit_);
+  projectors_ = mindquantum::transformer::ProjectorsTransfor(projector_strs_);
 
   n_threads_user_ = std::min(n_threads_user_, common::ThreadPool::GetInstance().GetSyncRunThreadNum());
   if (n_samples_ < n_threads_user_) {
     n_threads_user_ = n_samples_;
-  }
-  for (size_t i = 0; i < n_threads_user_; i++) {
-    tmp_sims_.push_back({});
-    for (size_t j = 0; j < 4; j++) {
-      auto tmp = std::make_shared<mindquantum::PQCSimulator>(1, n_qubits_);
-      tmp_sims_.back().push_back(tmp);
-    }
   }
 }
 
@@ -205,6 +207,16 @@ bool PQCCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   MS_EXCEPTION_IF_NULL(gradient_encoder);
   MS_EXCEPTION_IF_NULL(gradient_ansatz);
 
+  std::vector<std::vector<std::shared_ptr<mindquantum::PQCSimulator>>> tmp_sims(
+    n_threads_user_, std::vector<std::shared_ptr<mindquantum::PQCSimulator>>(4, nullptr));
+#pragma omp parallel for collapse(2) schedule(static)
+  for (size_t i = 0; i < n_threads_user_; i++) {
+    for (size_t j = 0; j < 4; j++) {
+      auto tmp = std::make_shared<mindquantum::PQCSimulator>(1, n_qubits_);
+      tmp_sims[i][j] = tmp;
+    }
+  }
+
   std::vector<common::Task> tasks;
   std::vector<std::shared_ptr<ComputeParam>> thread_params;
   tasks.reserve(n_threads_user_);
@@ -222,9 +234,11 @@ bool PQCCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     params->circ_cp = &circ_;
     params->herm_circ_cp = &herm_circ_;
     params->hams_cp = &hams_;
+    params->projectors_cp = &projectors_;
+    params->is_projector_cp = is_projector_;
     params->encoder_params_names_cp = &encoder_params_names_;
     params->ansatz_params_names_cp = &ansatz_params_names_;
-    params->tmp_sims_cp = &tmp_sims_;
+    params->tmp_sims_cp = &tmp_sims;
     params->dummy_circuit_cp = dummy_circuit_;
     params->result_len_cp = result_len_;
     params->encoder_g_len_cp = encoder_g_len_;
