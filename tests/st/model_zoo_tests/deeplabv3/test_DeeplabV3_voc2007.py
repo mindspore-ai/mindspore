@@ -18,7 +18,7 @@ import pytest
 from tests.st.model_zoo_tests import utils
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
@@ -29,16 +29,10 @@ def test_DeeplabV3_voc2007():
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
 
-    old_list = ['/PATH/TO/EXPERIMENTS_DIR',
-                '/PATH/TO/MODEL_ZOO_CODE',
-                '/PATH/TO/MINDRECORD_NAME',
-                '/PATH/TO/PRETRAIN_MODEL',
-                "\\${train_code_path}/src/tools/rank_table_8p.json"]
-    new_list = [cur_model_path + '/train',
-                cur_model_path,
-                os.path.join(utils.data_root, "voc/voc2012/mindrecord_train/vocaug_mindrecord0"),
-                os.path.join(utils.ckpt_root, "deeplabv3/resnet101_ascend.ckpt"),
-                utils.rank_table_path]
+    old_list = ['/PATH_TO_DATA/vocaug/vocaug_mindrecord/vocaug_mindrecord0',
+                '/PATH/TO/PRETRAIN_MODEL']
+    new_list = [os.path.join(utils.data_root, "voc/voc2012/mindrecord_train/vocaug_mindrecord0"),
+                os.path.join(utils.ckpt_root, "deeplabv3/resnet101_ascend.ckpt")]
     utils.exec_sed_command(old_list, new_list,
                            os.path.join(cur_model_path, "scripts/run_distribute_train_s16_r1.sh"))
 
@@ -48,14 +42,15 @@ def test_DeeplabV3_voc2007():
                 'callbacks=cbs, sink_size=2']
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
-    exec_network_shell = "cd {}; sh scripts/run_distribute_train_s16_r1.sh".format(model_name)
+    exec_network_shell = "cd {}/scripts; sh run_distribute_train_s16_r1.sh {}".format(
+        model_name, utils.rank_table_path)
     ret = os.system(exec_network_shell)
     assert ret == 0
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
     assert ret
 
-    log_file = os.path.join(cur_model_path, "train/device{}/log")
+    log_file = os.path.join(cur_model_path, "scripts/s16_aug_train/device{}/log")
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i))
         print("per_step_time is", per_step_time)
