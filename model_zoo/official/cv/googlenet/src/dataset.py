@@ -21,20 +21,18 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vision
-from src.config import cifar_cfg, imagenet_cfg
 
-
-def create_dataset_cifar10(data_home, repeat_num=1, training=True):
+def create_dataset_cifar10(data_home, repeat_num=1, training=True, cifar_cfg=None):
     """Data operations."""
     data_dir = os.path.join(data_home, "cifar-10-batches-bin")
     if not training:
         data_dir = os.path.join(data_home, "cifar-10-verify-bin")
 
-    rank_size, rank_id = _get_rank_info()
     if training:
+        rank_size, rank_id = _get_rank_info()
         data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id, shuffle=True)
     else:
-        data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id, shuffle=False)
+        data_set = ds.Cifar10Dataset(data_dir, shuffle=False)
 
     resize_height = cifar_cfg.image_height
     resize_width = cifar_cfg.image_width
@@ -67,7 +65,7 @@ def create_dataset_cifar10(data_home, repeat_num=1, training=True):
 
 
 def create_dataset_imagenet(dataset_path, repeat_num=1, training=True,
-                            num_parallel_workers=None, shuffle=None):
+                            num_parallel_workers=None, shuffle=None, imagenet_cfg=None):
     """
     create a train or eval imagenet2012 dataset for resnet50
 
@@ -81,14 +79,15 @@ def create_dataset_imagenet(dataset_path, repeat_num=1, training=True,
     Returns:
         dataset
     """
-
-    device_num, rank_id = _get_rank_info()
-
-    if device_num == 1:
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers, shuffle=shuffle)
+    if training:
+        device_num, rank_id = _get_rank_info()
+        if device_num == 1:
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers, shuffle=shuffle)
+        else:
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers, shuffle=shuffle,
+                                             num_shards=device_num, shard_id=rank_id)
     else:
-        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers, shuffle=shuffle,
-                                         num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers, shuffle=shuffle)
 
     assert imagenet_cfg.image_height == imagenet_cfg.image_width, "image_height not equal image_width"
     image_size = imagenet_cfg.image_height
