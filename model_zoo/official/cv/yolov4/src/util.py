@@ -57,6 +57,7 @@ class AverageMeter:
 def load_backbone(net, ckpt_path, args):
     """Load cspdarknet53 backbone checkpoint."""
     param_dict = load_checkpoint(ckpt_path)
+    param_dict = {key.split("network.")[-1]: value for key, value in param_dict.items()}
     yolo_backbone_prefix = 'feature_map.backbone'
     darknet_backbone_prefix = 'backbone'
     find_param = []

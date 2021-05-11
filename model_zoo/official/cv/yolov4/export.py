@@ -39,12 +39,12 @@ if args.device_target == "Ascend":
 if __name__ == "__main__":
     ts_shape = args.testing_shape
 
-    network = YOLOV4CspDarkNet53(is_training=False)
+    network = YOLOV4CspDarkNet53()
+    network.set_train(False)
 
     param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(network, param_dict)
 
-    input_shape = Tensor(tuple([ts_shape, ts_shape]), mindspore.float32)
     input_data = Tensor(np.zeros([args.batch_size, 3, ts_shape, ts_shape]), mindspore.float32)
 
-    export(network, input_data, input_shape, file_name=args.file_name, file_format=args.file_format)
+    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
