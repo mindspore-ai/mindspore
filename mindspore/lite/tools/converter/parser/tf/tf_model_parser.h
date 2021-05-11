@@ -29,6 +29,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
+#include "tools/converter/registry/model_parser_registry.h"
 #include "ops/primitive_c.h"
 
 namespace mindspore {
@@ -38,14 +39,15 @@ class TFModelParser : public ModelParser {
   TFModelParser() = default;
   ~TFModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
+  int ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile) override;
 
   int PostAdjust() override;
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
-  STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
-                            const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
+  static STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
+                                   const TypeId &type, const ParameterPtr &parameter,
+                                   std::vector<int64_t> *shape_vector);
   static STATUS SetTensorInfoFromType(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
@@ -63,7 +65,7 @@ class TFModelParser : public ModelParser {
                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                     const FuncGraphPtr &func_graph_ptr, std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
 
-  STATUS ProcessControlFlowOp(CNodePtr anf_node, const string op_type, const tensorflow::NodeDef &node_def);
+  STATUS ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type, const tensorflow::NodeDef &node_def);
 
   STATUS ConvertRootGraphOutputs();
 
@@ -71,17 +73,18 @@ class TFModelParser : public ModelParser {
 
   STATUS ConvertSubgraphInputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
                                std::unordered_map<std::string, AnfNodePtr> *anf_sub_node_map,
-                               const tensorflow::FunctionDef &tf_sub_fuction, CNodePtr cnode,
-                               FuncGraphPtr sub_func_graph);
+                               const tensorflow::FunctionDef &tf_sub_fuction, const CNodePtr &cnode,
+                               const FuncGraphPtr &sub_func_graph);
 
   static STATUS ConvertSubgraphOutputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
                                        const std::unordered_map<std::string, AnfNodePtr> &anf_sub_node_map,
-                                       const tensorflow::FunctionDef &tf_sub_fuction, FuncGraphPtr sub_func_graph);
+                                       const tensorflow::FunctionDef &tf_sub_fuction,
+                                       const FuncGraphPtr &sub_func_graph);
 
   STATUS ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
                                     const std::map<CNodePtr, FuncGraphPtr> &second_func_map);
 
-  STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, ops::PrimitiveC *primitive_c);
+  static STATUS ConvertQuantParams(const size_t &input_size, const size_t &output_size, ops::PrimitiveC *primitive_c);
 
   static STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 

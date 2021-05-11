@@ -46,6 +46,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc

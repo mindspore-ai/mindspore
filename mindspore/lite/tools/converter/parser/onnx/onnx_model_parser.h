@@ -29,8 +29,10 @@
 #include <unordered_map>
 #include "securec/include/securec.h"
 #include "tools/converter/model_parser.h"
+#include "tools/converter/registry/model_parser_registry.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include "proto/onnx.pb.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {
@@ -40,8 +42,7 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                       const QuantType &quant_type) override;
+  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
 
   int PostAdjust() override;
 
@@ -73,9 +74,9 @@ class OnnxModelParser : public ModelParser {
                                std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, const CNodePtr &cnode);
   STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
   STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
-  STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
-  STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
-  STATUS CopyTensorQuantParam(const std::string &tensor_name, QuantParamT *quant_param, bool scale_or_not);
+  STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<schema::QuantParamT> *quant_params);
+  STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<schema::QuantParamT> *quant_params);
+  STATUS CopyTensorQuantParam(const std::string &tensor_name, schema::QuantParamT *quant_param, bool scale_or_not);
   STATUS ConvertLoopOnnxNode(const onnx::NodeProto &onnx_node,
                              std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                              const std::string &root_node_name);

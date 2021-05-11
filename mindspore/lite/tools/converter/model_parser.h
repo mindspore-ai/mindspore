@@ -34,8 +34,8 @@ class ModelParser {
 
   virtual ~ModelParser() = default;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file, const QuantType &quant_type) {
-    auto ret = ParseToFuncGraph(model_file, weight_file, quant_type);
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) {
+    auto ret = ParseToFuncGraph(model_file, weight_file);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Parse to func graph failed : " << ret;
       return nullptr;
@@ -49,14 +49,25 @@ class ModelParser {
   }
 
  protected:
-  virtual int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                               const QuantType &quant_type) = 0;
+  virtual int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) = 0;
 
   virtual int PostAdjust() = 0;
 
  protected:
   FuncGraphPtr res_graph_ = nullptr;
 };
+
+typedef ModelParser *(*ModelParserCreator)();
+
+template <class T>
+ModelParser *LiteModelParserCreator() {
+  auto *parser = new (std::nothrow) T();
+  if (parser == nullptr) {
+    MS_LOG(ERROR) << "new model parser failed";
+    return nullptr;
+  }
+  return parser;
+}
 }  // namespace mindspore::lite
 
 #endif

@@ -22,9 +22,11 @@
 #include <set>
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
+#include "tools/converter/registry/model_parser_registry.h"
 #include "proto/caffe.pb.h"
 #include "ops/primitive_c.h"
 
+using STATUS = int;
 namespace mindspore::lite {
 class CaffeModelParser : public ModelParser {
  public:
@@ -32,8 +34,7 @@ class CaffeModelParser : public ModelParser {
 
   ~CaffeModelParser() override;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                       const QuantType &quant_type) override;
+  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
 
   int PostAdjust() override;
 

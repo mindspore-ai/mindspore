@@ -32,6 +32,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/dynamic_library_loader.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
@@ -106,6 +107,7 @@ add_subdirectory(parser/onnx)
 add_subdirectory(parser/tf)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
+add_subdirectory(registry)
 add_subdirectory(${CORE_DIR} mindspore_core)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
@@ -215,6 +217,7 @@ add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 
 target_link_libraries(converter_lite PRIVATE
+        mslite_converter_plugin_reg
         tflite_parser_mid
         tf_parser_mid
         caffe_parser_mid
@@ -233,3 +236,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::flatbuffers
         pthread
         )
+
+if(NOT WIN32)
+    target_link_libraries(converter_lite PRIVATE dl)
+endif()

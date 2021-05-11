@@ -15,9 +15,13 @@
  */
 
 #include "tools/converter/converter_flags.h"
-#include <regex>
+#include <climits>
+#include <cstdlib>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <vector>
+#include <memory>
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {
@@ -180,6 +184,28 @@ int Flags::InitTrainModel() {
   return RET_OK;
 }
 
+int Flags::InitConfigFile() {
+  auto plugins_path_str = GetStrFromConfigFile(this->configFile, "plugin_path");
+  if (!plugins_path_str.empty()) {
+    const char *delimiter = ";";
+    this->pluginsPath = SplitStringToVector(plugins_path_str, *delimiter);
+  }
+
+  auto disable_fusion_flag = GetStrFromConfigFile(this->configFile, "disable_fusion");
+  if (!disable_fusion_flag.empty()) {
+    if (disable_fusion_flag == "on") {
+      this->disableFusion = true;
+    } else if (disable_fusion_flag == "off") {
+      this->disableFusion = false;
+    } else {
+      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+
+  return RET_OK;
+}
+
 int Flags::Init(int argc, const char **argv) {
   int ret;
   if (argc == 1) {
@@ -222,6 +248,14 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
+  if (!this->configFile.empty()) {
+    ret = InitConfigFile();
+    if (ret != RET_OK) {
+      std::cerr << "Init config file failed.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+
   ret = InitInputOutputDataType();
   if (ret != RET_OK) {
     std::cerr << "Init input output datatype failed.";
@@ -248,6 +282,80 @@ int Flags::Init(int argc, const char **argv) {
 
   return RET_OK;
 }
+
+std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key) {
+  std::string res;
+  if (file.empty()) {
+    MS_LOG(ERROR) << "file is nullptr";
+    return res;
+  }
+
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    MS_LOG(ERROR) << "new resolved_path failed";
+    return "";
+  }
+
+#ifdef _WIN32
+  char *real_path = _fullpath(resolved_path.get(), file.c_str(), 1024);
+#else
+  char *real_path = realpath(file.c_str(), resolved_path.get());
+#endif
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    MS_LOG(ERROR) << "file path is not valid : " << file;
+    return "";
+  }
+  std::ifstream ifs(resolved_path.get());
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
+    return res;
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << real_path << "open failed";
+    return res;
+  }
+  std::string line;
+  while (std::getline(ifs, line)) {
+    lite::Trim(&line);
+    if (line.empty()) {
+      continue;
+    }
+    auto index = line.find('=');
+    if (index == std::string::npos) {
+      MS_LOG(ERROR) << "the config file is invalid, can not find '=', please check";
+      return "";
+    }
+    auto key = line.substr(0, index);
+    auto value = line.substr(index + 1);
+    lite::Trim(&key);
+    lite::Trim(&value);
+    if (key == target_key) {
+      return value;
+    }
+  }
+  return res;
+}
+
+std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter) {
+  if (raw_str.empty()) {
+    MS_LOG(ERROR) << "input string is empty.";
+    return {};
+  }
+  std::vector<std::string> res;
+  std::string::size_type last_pos = 0;
+  auto cur_pos = raw_str.find(delimiter);
+  while (cur_pos != std::string::npos) {
+    res.push_back(raw_str.substr(last_pos, cur_pos - last_pos));
+    cur_pos++;
+    last_pos = cur_pos;
+    cur_pos = raw_str.find(delimiter, cur_pos);
+  }
+  if (last_pos < raw_str.size()) {
+    res.push_back(raw_str.substr(last_pos, raw_str.size() - last_pos + 1));
+  }
+  return res;
+}
+
 }  // namespace converter
 }  // namespace lite
 }  // namespace mindspore

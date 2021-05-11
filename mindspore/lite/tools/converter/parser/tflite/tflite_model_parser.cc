@@ -19,12 +19,14 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
-#include "tools/converter/converter_flags.h"
-#include "src/common/file_utils.h"
-#include "tools/converter/ops/ops_def.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"
+#include "src/common/file_utils.h"
+#include "tools/converter/ops/ops_def.h"
 #include "tools/common/graph_util.h"
+#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/converter_context.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite {
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
@@ -42,8 +44,7 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
-int TfliteModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                                        const QuantType &quant_type) {
+int TfliteModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
   // load graph
   tflite_model_ = ReadTfliteModel(model_file.c_str());
   if (tflite_model_ == nullptr) {
@@ -489,4 +490,6 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
 }
 
 int TfliteModelParser::PostAdjust() { return 0; }
+
+REG_MODEL_PARSER(TFLITE, LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

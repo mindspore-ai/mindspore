@@ -429,6 +429,7 @@ if(ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_exporter_mid
+            mslite_converter_plugin_reg
             tflite_parser_mid
             caffe_parser_mid
             onnx_parser_mid
