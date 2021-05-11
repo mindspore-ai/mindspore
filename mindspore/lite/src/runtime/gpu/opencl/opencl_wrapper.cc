@@ -89,8 +89,6 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   func_name = reinterpret_cast<func_name##Func>(dlsym(*handle_ptr, #func_name));               \
   if (func_name == nullptr) {                                                                  \
     MS_LOG(ERROR) << "load func (" << #func_name << ") from (" << library_path << ") failed!"; \
-    UnLoadOpenCLLibrary(*handle_ptr);                                                          \
-    return false;                                                                              \
   }
 
   LOAD_OPENCL_FUNCTION_PTR(clGetPlatformIDs);
