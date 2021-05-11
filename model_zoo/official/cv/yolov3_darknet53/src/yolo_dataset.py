@@ -155,12 +155,12 @@ def create_yolo_dataset(image_dir, anno_path, batch_size, max_epoch, device_num,
 
     yolo_dataset = COCOYoloDataset(root=image_dir, ann_file=anno_path, filter_crowd_anno=filter_crowd,
                                    remove_images_without_annotations=remove_empty_anno, is_training=is_training)
-    distributed_sampler = DistributedSampler(len(yolo_dataset), device_num, rank, shuffle=shuffle)
     hwc_to_chw = CV.HWC2CHW()
 
     config.dataset_size = len(yolo_dataset)
     cores = multiprocessing.cpu_count()
     num_parallel_workers = int(cores / device_num)
+    distributed_sampler = DistributedSampler(len(yolo_dataset), device_num, rank, shuffle=shuffle)
     if is_training:
         multi_scale_trans = MultiScaleTrans(config, device_num)
         dataset_column_names = ["image", "annotation", "bbox1", "bbox2", "bbox3",
