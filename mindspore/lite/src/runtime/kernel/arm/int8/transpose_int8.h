@@ -56,10 +56,6 @@ class TransposeInt8CPUKernel : public InnerKernel {
   int *dim_size_ = nullptr;
   int *position_ = nullptr;
   bool extra_dims_ = false;
-  int thread_num_ = 1;
-  int thread_h_stride_ = 0;
-  int thread_h_num_ = 0;
-  int num_unit_ = 0;
   int in_shape_[20] = {0};
   int out_shape_[20] = {0};
   int nhnc_param_[3] = {0};
