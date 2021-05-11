@@ -20,6 +20,7 @@
 #include <string>
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,10 +28,11 @@ class LiteKernel;
 }
 
 namespace lite {
-
 kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter);
 size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter);
-
+size_t TSFindTensorByName(const std::vector<lite::Tensor *> &where, const std::string &searchParameter);
+kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter);
+size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter);
 float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output);
 float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output);
 

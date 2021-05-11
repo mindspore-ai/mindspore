@@ -26,7 +26,7 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs
 
 n = mobilenet_v3_small(num_classes=10)
 loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False, reduction='mean')
-optimizer = nn.Adam(n.trainable_params(), learning_rate=1e-2, beta1=0.5, beta2=0.7, eps=1e-2, use_locking=True,
+optimizer = nn.Adam(n.trainable_params(), learning_rate=1e-3, beta1=0.5, beta2=0.7, eps=1e-2, use_locking=True,
                     use_nesterov=False, weight_decay=0.1, loss_scale=0.3)
 net = TrainWrap(n, loss_fn, optimizer)
 

@@ -20,6 +20,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <memory>
+#include <map>
 #include "include/train/train_session.h"
 #include "src/lite_session.h"
 
@@ -125,6 +126,14 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
   int AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   int OptimizerStep();
+  int ExecKernels(const KernelCallBack &before, const KernelCallBack &after,
+                  std::vector<kernel::LiteKernel *> run_kernel);
+  int MixPrecisionExecKernels(const KernelCallBack &before, const KernelCallBack &after,
+                              std::vector<kernel::LiteKernel *> run_kernel);
+  int CopyTensor(Tensor *tensor, TypeId dst_data_type);
+  void RestoreTensorData();
+  void FreeRestoreTensors();
+  std::map<Tensor *, Tensor *> restored_origin_tensors_;
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;
 };
