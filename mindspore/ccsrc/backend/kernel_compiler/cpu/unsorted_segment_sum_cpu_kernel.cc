@@ -52,44 +52,38 @@ bool UnsortedSegmentSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
                                          const std::vector<kernel::AddressPtr> & /*workspace*/,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   bool ret{true};
+  void *input_addr = inputs[0]->addr;
+  const int *indices_addr = reinterpret_cast<const int *>(inputs[1]->addr);
+  void *output_addr = outputs[0]->addr;
+  auto ret1 = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret1 != EOK) {
+    MS_LOG(ERROR) << "Output buff memset fail. ret:" << ret1;
+    return false;
+  }
+
   if (dtype_ == kNumberTypeInt32 && segment_ids_dtype_ == kNumberTypeInt32) {
-    ret = LaunchKernel<int, int>(inputs, outputs);
+    ret1 = UnsortedSegmentSum(int, static_cast<const int *>(input_addr), unit_num_, input_dim1_, indices_addr,
+                              static_cast<int *>(output_addr), output_dim0_, output_dim1_);
   } else if (dtype_ == kNumberTypeFloat32 && segment_ids_dtype_ == kNumberTypeInt32) {
-    ret = LaunchKernel<float, int>(inputs, outputs);
+    ret1 = UnsortedSegmentSum(float, static_cast<const float *>(input_addr), unit_num_, input_dim1_, indices_addr,
+                              static_cast<float *>(output_addr), output_dim0_, output_dim1_);
   } else if (dtype_ == kNumberTypeInt32 && segment_ids_dtype_ == kNumberTypeInt64) {
-    ret = LaunchKernel<int, int64_t>(inputs, outputs);
+    ret1 = UnsortedSegmentSum(int, static_cast<const int *>(input_addr), unit_num_, input_dim1_, indices_addr,
+                              static_cast<int *>(output_addr), output_dim0_, output_dim1_);
   } else if (dtype_ == kNumberTypeFloat32 && segment_ids_dtype_ == kNumberTypeInt64) {
-    ret = LaunchKernel<float, int64_t>(inputs, outputs);
+    ret1 = UnsortedSegmentSum(float, static_cast<const float *>(input_addr), unit_num_, input_dim1_, indices_addr,
+                              static_cast<float *>(output_addr), output_dim0_, output_dim1_);
   } else {
     MS_LOG(ERROR) << "Only support input_x int32 and float32, indices int32 and int64";
     return false;
   }
-  return ret;
-}
 
-template <typename S, typename T>
-bool UnsortedSegmentSumCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
-  S *input_addr = reinterpret_cast<S *>(inputs[0]->addr);
-  T *indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  S *output_addr = reinterpret_cast<S *>(outputs[0]->addr);
-  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Output buff memset fail. ret:" << ret;
+  if (ret1 != EOK) {
+    MS_LOG(ERROR) << "unsortedSegmentSum failed. ret:" << ret1;
     return false;
   }
-  for (size_t i = 0; i < unit_num_; ++i) {
-    size_t j = i / input_dim1_;
-    size_t k = i % input_dim1_;
 
-    T index = indices_addr[j];
-    if (index < 0 || index >= SizeToInt(output_dim0_)) {
-      continue;
-    }
-    size_t output_index = index * output_dim1_ + k;
-    output_addr[output_index] += input_addr[i];
-  }
-  return true;
+  return ret;
 }
 }  // namespace kernel
 }  // namespace mindspore

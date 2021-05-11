@@ -21,6 +21,7 @@
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/tile_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,6 +38,10 @@ class TileCPUKernel : public CPUKernel {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  void TileTensorParamrInit(const CNodePtr &kernel_node);
+
+  void TileMultipleCompute(void);
+
  private:
   void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> x_shape_;
@@ -47,6 +52,9 @@ class TileCPUKernel : public CPUKernel {
     std::function<void(TileCPUKernel *, const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs)>;
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
+  TileParameter tile_parameter_;
+  bool one_dim_tile_;
+  size_t input_size_;
 };
 
 MS_REG_CPU_KERNEL(Tile, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), TileCPUKernel);
