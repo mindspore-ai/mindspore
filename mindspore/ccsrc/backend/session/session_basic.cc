@@ -1891,7 +1891,7 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
   if (internal_output) {
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
-      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial)) {
+      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
         auto partial_target = AddPartialParametersMap(front_func_graph_manager, user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
