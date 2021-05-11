@@ -27,7 +27,6 @@ from mindspore import Tensor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore as ms
 
 from src.yolo import YOLOV4CspDarkNet53
 from src.logger import get_logger
@@ -271,7 +270,7 @@ def test():
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=1)
 
     args.logger.info('Creating Network....')
-    network = YOLOV4CspDarkNet53(is_training=False)
+    network = YOLOV4CspDarkNet53()
 
     args.logger.info(args.pretrained)
     if os.path.isfile(args.pretrained):
@@ -310,7 +309,6 @@ def test():
     # init detection engine
     detection = DetectionEngine(args)
 
-    input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
     args.logger.info('Start inference....')
     for i, data in enumerate(ds.create_dict_iterator()):
         image = Tensor(data["image"])
@@ -318,7 +316,7 @@ def test():
         image_shape = Tensor(data["image_shape"])
         image_id = Tensor(data["img_id"])
 
-        prediction = network(image, input_shape)
+        prediction = network(image)
         output_big, output_me, output_small = prediction
         output_big = output_big.asnumpy()
         output_me = output_me.asnumpy()

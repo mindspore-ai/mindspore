@@ -17,6 +17,7 @@ from src.yolo import YOLOV4CspDarkNet53
 
 def create_network(name, *args, **kwargs):
     if name == "yolov4_cspdarknet53":
-        yolov4_cspdarknet53_net = YOLOV4CspDarkNet53(is_training=False)
+        yolov4_cspdarknet53_net = YOLOV4CspDarkNet53()
+        yolov4_cspdarknet53_net.set_train(False)
         return yolov4_cspdarknet53_net
     raise NotImplementedError(f"{name} is not implemented in the repo")

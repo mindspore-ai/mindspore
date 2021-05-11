@@ -21,7 +21,7 @@ import time
 import numpy as np
 from pycocotools.coco import COCO
 from src.logger import get_logger
-from eval import DetectionEngine
+from src.eval_utils import DetectionEngine
 
 
 parser = argparse.ArgumentParser('mindspore coco testing')

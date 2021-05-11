@@ -220,7 +220,7 @@ class DetectionBlock(nn.Cell):
          DetectionBlock(scale='l',stride=32)
      """
 
-    def __init__(self, scale, config=ConfigYOLOV4CspDarkNet53(), is_training=True):
+    def __init__(self, scale, config=ConfigYOLOV4CspDarkNet53()):
         super(DetectionBlock, self).__init__()
         self.config = config
         if scale == 's':
@@ -246,7 +246,6 @@ class DetectionBlock(nn.Cell):
         self.reshape = P.Reshape()
         self.tile = P.Tile()
         self.concat = P.Concat(axis=-1)
-        self.conf_training = is_training
 
     def construct(self, x, input_shape):
         """construct method"""
@@ -286,7 +285,7 @@ class DetectionBlock(nn.Cell):
         box_confidence = self.sigmoid(box_confidence)
         box_probs = self.sigmoid(box_probs)
 
-        if self.conf_training:
+        if self.training:
             return prediction, box_xy, box_wh
         return self.concat((box_xy, box_wh, box_confidence, box_probs))
 
@@ -430,9 +429,10 @@ class YOLOV4CspDarkNet53(nn.Cell):
         YOLOV4CspDarkNet53(True)
     """
 
-    def __init__(self, is_training):
+    def __init__(self):
         super(YOLOV4CspDarkNet53, self).__init__()
         self.config = ConfigYOLOV4CspDarkNet53()
+        self.test_img_shape = Tensor(tuple(self.config.test_img_shape), ms.float32)
 
         # YOLOv4 network
         self.feature_map = YOLOv4(backbone=CspDarkNet53(ResidualBlock, detect=True),
@@ -440,11 +440,13 @@ class YOLOV4CspDarkNet53(nn.Cell):
                                   out_channel=self.config.out_channel)
 
         # prediction on the default anchor boxes
-        self.detect_1 = DetectionBlock('l', is_training=is_training)
-        self.detect_2 = DetectionBlock('m', is_training=is_training)
-        self.detect_3 = DetectionBlock('s', is_training=is_training)
+        self.detect_1 = DetectionBlock('l')
+        self.detect_2 = DetectionBlock('m')
+        self.detect_3 = DetectionBlock('s')
 
-    def construct(self, x, input_shape):
+    def construct(self, x, input_shape=None):
+        if input_shape is None:
+            input_shape = self.test_img_shape
         big_object_output, medium_object_output, small_object_output = self.feature_map(x)
         output_big = self.detect_1(big_object_output, input_shape)
         output_me = self.detect_2(medium_object_output, input_shape)
