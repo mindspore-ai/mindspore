@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """Utils for cyclegan."""
+
 import random
 import numpy as np
 from PIL import Image
@@ -23,15 +25,12 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 class ImagePool():
     """
     This class implements an image buffer that stores previously generated images.
-
     This buffer enables us to update discriminators using a history of generated images
     rather than the ones produced by the latest generators.
     """
-
     def __init__(self, pool_size):
         """
         Initialize the ImagePool class
-
         Args:
             pool_size (int): the size of image buffer, if pool_size=0, no buffer will be created.
         """
@@ -43,12 +42,9 @@ class ImagePool():
     def query(self, images):
         """
         Return an image from the pool.
-
         Args:
             images: the latest generated images from the generator
-
         Returns images Tensor from the buffer.
-
         By 50/100, the buffer will return input images.
         By 50/100, the buffer will return images previously stored in the buffer,
         and insert the current images to the buffer.
@@ -80,7 +76,6 @@ class ImagePool():
 
 def save_image(img, img_path):
     """Save a numpy image to the disk
-
     Parameters:
         img (numpy array / Tensor): image to save.
         image_path (str): the path of the image.
@@ -101,7 +96,11 @@ def decode_image(img):
 
 
 def get_lr(args):
-    """Learning rate generator."""
+    """
+    Learning rate generator.
+    For 'linear', we keep the same learning rate for the first <opt.n_epochs> epochs
+    and linearly decay the rate to zero over the next <opt.n_epochs_decay> epochs.
+    """
     if args.lr_policy == 'linear':
         lrs = [args.lr] * args.dataset_size * args.n_epochs
         lr_epoch = 0
@@ -127,15 +126,3 @@ def load_ckpt(args, G_A, G_B, D_A=None, D_B=None):
     if D_B is not None and args.D_B_ckpt is not None:
         param_DB = load_checkpoint(args.D_B_ckpt)
         load_param_into_net(D_B, param_DB)
-
-
-def load_teacher_ckpt(net, ckpt_path, teacher, student):
-    """Replace parameter name to teacher net and load parameter from checkpoint."""
-    param = load_checkpoint(ckpt_path)
-    new_param = {}
-    for k, v in param.items():
-        new_name = k.replace(student, teacher)
-        new_param_name = v.name.replace(student, teacher)
-        v.name = new_param_name
-        new_param[new_name] = v
-    load_param_into_net(net, new_param)

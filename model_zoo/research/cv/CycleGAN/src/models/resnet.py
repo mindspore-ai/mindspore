@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 """ResNet Generator."""
+
 import mindspore.nn as nn
 import mindspore.ops as ops
 from .networks import ConvNormReLU, ConvTransposeNormReLU
 
+
 class ResidualBlock(nn.Cell):
     """
-    ResNet residual block definition.
-
+    A resnet block is a conv block with skip connections
+    We construct a conv block with build_conv_block function,
+    and implement skip connections in <forward> function..
     Args:
         dim (int): Input and output channel.
         norm_mode (str): Specifies norm method. The optional values are "batch", "instance".
         dropout (bool): Use dropout or not. Default: False.
         pad_mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
-
     Returns:
         Tensor, output tensor.
     """
-
     def __init__(self, dim, norm_mode='batch', dropout=False, pad_mode="CONSTANT"):
         super(ResidualBlock, self).__init__()
         self.conv1 = ConvNormReLU(dim, dim, 3, 1, 0, norm_mode, pad_mode)
@@ -51,7 +53,6 @@ class ResidualBlock(nn.Cell):
 class ResNetGenerator(nn.Cell):
     """
     ResNet Generator of GAN.
-
     Args:
         in_planes (int): Input channel.
         ngf (int): Output channel.
@@ -61,7 +62,6 @@ class ResNetGenerator(nn.Cell):
         dropout (bool): Use dropout or not. Default: False.
         pad_mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
-
     Returns:
         Tensor, output tensor.
     """
