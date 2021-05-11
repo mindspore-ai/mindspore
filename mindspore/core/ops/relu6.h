@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLU6 = "ReLU6";
+constexpr auto kNameReLU6 = prim::kReLU6;
 class ReLU6 : public PrimitiveC {
  public:
   ReLU6() : PrimitiveC(kNameReLU6) { InitIOName({"x"}, {"output"}); }
