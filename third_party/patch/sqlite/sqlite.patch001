@@ -1,6 +1,6 @@
 diff -Npur sqlite-version-3.32.2/src/expr.c sqlite-version-3.32.2-patched/src/expr.c
---- sqlite-version-3.32.2/src/expr.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/expr.c	2020-06-15 16:03:29.343573250 +0800
+--- sqlite-version-3.32.2/src/expr.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/expr.c	2021-04-29 04:06:04.544208700 -0400
 @@ -3813,6 +3813,7 @@ expr_code_doover:
        AggInfo *pAggInfo = pExpr->pAggInfo;
        struct AggInfo_col *pCol;
@@ -33,8 +33,8 @@ diff -Npur sqlite-version-3.32.2/src/expr.c sqlite-version-3.32.2-patched/src/ex
      struct SrcCount *p = pWalker->u.pSrcCount;
      SrcList *pSrc = p->pSrc;
 diff -Npur sqlite-version-3.32.2/src/global.c sqlite-version-3.32.2-patched/src/global.c
---- sqlite-version-3.32.2/src/global.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/global.c	2020-06-15 16:03:29.343573250 +0800
+--- sqlite-version-3.32.2/src/global.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/global.c	2021-04-29 04:06:04.544208700 -0400
 @@ -300,6 +300,11 @@ sqlite3_uint64 sqlite3NProfileCnt = 0;
  int sqlite3PendingByte = 0x40000000;
  #endif
@@ -48,8 +48,8 @@ diff -Npur sqlite-version-3.32.2/src/global.c sqlite-version-3.32.2-patched/src/
  /*
  ** Properties of opcodes.  The OPFLG_INITIALIZER macro is
 diff -Npur sqlite-version-3.32.2/src/resolve.c sqlite-version-3.32.2-patched/src/resolve.c
---- sqlite-version-3.32.2/src/resolve.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/resolve.c	2020-06-15 16:03:29.343573250 +0800
+--- sqlite-version-3.32.2/src/resolve.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/resolve.c	2021-04-29 04:06:04.545208700 -0400
 @@ -1715,6 +1715,14 @@ static int resolveSelectStep(Walker *pWa
            return WRC_Abort;
          }
@@ -66,8 +66,8 @@ diff -Npur sqlite-version-3.32.2/src/resolve.c sqlite-version-3.32.2-patched/src
  #endif
  
 diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/select.c
---- sqlite-version-3.32.2/src/select.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/select.c	2020-06-15 16:03:29.343573250 +0800
+--- sqlite-version-3.32.2/src/select.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/select.c	2021-04-29 04:07:21.458212191 -0400
 @@ -15,20 +15,6 @@
  #include "sqliteInt.h"
  
@@ -105,7 +105,18 @@ diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/
  #endif
  
  #ifdef SQLITE_DEBUG
-@@ -5766,6 +5755,9 @@ int sqlite3Select(
+@@ -5553,7 +5542,9 @@ static void explainSimpleCount(
+ static int havingToWhereExprCb(Walker *pWalker, Expr *pExpr){
+   if( pExpr->op!=TK_AND ){
+     Select *pS = pWalker->u.pSelect;
+-    if( sqlite3ExprIsConstantOrGroupBy(pWalker->pParse, pExpr, pS->pGroupBy) ){
++    if( sqlite3ExprIsConstantOrGroupBy(pWalker->pParse, pExpr, pS->pGroupBy)
++     && ExprAlwaysFalse(pExpr)==0
++    ){
+       sqlite3 *db = pWalker->pParse->db;
+       Expr *pNew = sqlite3Expr(db, TK_INTEGER, "1");
+       if( pNew ){
+@@ -5766,6 +5757,9 @@ int sqlite3Select(
    }
    if( sqlite3AuthCheck(pParse, SQLITE_SELECT, 0, 0, 0) ) return 1;
    memset(&sAggInfo, 0, sizeof(sAggInfo));
@@ -115,7 +126,7 @@ diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/
  #if SELECTTRACE_ENABLED
    SELECTTRACE(1,pParse,p, ("begin processing:\n", pParse->addrExplain));
    if( sqlite3SelectTrace & 0x100 ){
-@@ -5804,19 +5796,6 @@ int sqlite3Select(
+@@ -5804,19 +5798,6 @@ int sqlite3Select(
      generateColumnNames(pParse, p);
    }
  
@@ -135,7 +146,7 @@ diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/
    pTabList = p->pSrc;
    isAgg = (p->selFlags & SF_Aggregate)!=0;
    memset(&sSort, 0, sizeof(sSort));
-@@ -6144,7 +6123,7 @@ int sqlite3Select(
+@@ -6144,7 +6125,7 @@ int sqlite3Select(
    if( (p->selFlags & (SF_Distinct|SF_Aggregate))==SF_Distinct 
     && sqlite3ExprListCompare(sSort.pOrderBy, pEList, -1)==0
  #ifndef SQLITE_OMIT_WINDOWFUNC
@@ -144,7 +155,7 @@ diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/
  #endif
    ){
      p->selFlags &= ~SF_Distinct;
-@@ -6791,6 +6770,14 @@ int sqlite3Select(
+@@ -6791,6 +6772,14 @@ int sqlite3Select(
  select_end:
    sqlite3ExprListDelete(db, pMinMaxOrderBy);
    sqlite3DbFree(db, sAggInfo.aCol);
@@ -160,8 +171,8 @@ diff -Npur sqlite-version-3.32.2/src/select.c sqlite-version-3.32.2-patched/src/
  #if SELECTTRACE_ENABLED
    SELECTTRACE(0x1,pParse,p,("end processing\n"));
 diff -Npur sqlite-version-3.32.2/src/sqliteInt.h sqlite-version-3.32.2-patched/src/sqliteInt.h
---- sqlite-version-3.32.2/src/sqliteInt.h	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/sqliteInt.h	2020-06-15 16:03:29.347573247 +0800
+--- sqlite-version-3.32.2/src/sqliteInt.h	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/sqliteInt.h	2021-04-29 04:06:04.547208700 -0400
 @@ -976,7 +976,12 @@ typedef INT16_TYPE LogEst;
  */
  #if defined(SQLITE_ENABLE_SELECTTRACE)
@@ -214,8 +225,8 @@ diff -Npur sqlite-version-3.32.2/src/sqliteInt.h sqlite-version-3.32.2-patched/s
  extern sqlite3_uint64 sqlite3NProfileCnt;
  #endif
 diff -Npur sqlite-version-3.32.2/src/test1.c sqlite-version-3.32.2-patched/src/test1.c
---- sqlite-version-3.32.2/src/test1.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/test1.c	2020-06-15 16:03:29.347573247 +0800
+--- sqlite-version-3.32.2/src/test1.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/test1.c	2021-04-29 04:06:04.548208700 -0400
 @@ -8164,7 +8164,7 @@ int Sqlitetest1_Init(Tcl_Interp *interp)
  #endif
  #endif
@@ -226,8 +237,8 @@ diff -Npur sqlite-version-3.32.2/src/test1.c sqlite-version-3.32.2-patched/src/t
  
    for(i=0; i<sizeof(aCmd)/sizeof(aCmd[0]); i++){
 diff -Npur sqlite-version-3.32.2/src/window.c sqlite-version-3.32.2-patched/src/window.c
---- sqlite-version-3.32.2/src/window.c	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/src/window.c	2020-06-15 16:03:29.347573247 +0800
+--- sqlite-version-3.32.2/src/window.c	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/src/window.c	2021-04-29 04:06:04.548208700 -0400
 @@ -942,7 +942,7 @@ static int sqlite3WindowExtraAggFuncDept
  */
  int sqlite3WindowRewrite(Parse *pParse, Select *p){
@@ -237,9 +248,37 @@ diff -Npur sqlite-version-3.32.2/src/window.c sqlite-version-3.32.2-patched/src/
      Vdbe *v = sqlite3GetVdbe(pParse);
      sqlite3 *db = pParse->db;
      Select *pSub = 0;             /* The subquery */
+diff -Npur sqlite-version-3.32.2/test/having.test sqlite-version-3.32.2-patched/test/having.test
+--- sqlite-version-3.32.2/test/having.test	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/test/having.test	2021-04-29 04:08:11.785214475 -0400
+@@ -154,5 +154,24 @@ do_execsql_test 4.3 {
+   SELECT a, sum(b) FROM t3 WHERE nondeter(a) GROUP BY a
+ } {1 4 2 2}
+
++#-------------------------------------------------------------------------
++reset_db
++do_execsql_test 5.0 {
++  CREATE TABLE t1(a, b);
++  CREATE TABLE t2(x, y);
++  INSERT INTO t1 VALUES('a', 'b');
++}
++
++# The WHERE clause (a=2), uses an aggregate column from the outer query.
++# If the HAVING term (0) is moved into the WHERE clause in this case,
++# SQLite would at one point optimize (a=2 AND 0) to simply (0). Which
++# is logically correct, but happened to cause problems in aggregate
++# processing for the outer query. This test case verifies that those
++# problems are no longer present.
++do_execsql_test 5.1 {
++  SELECT min(b), (
++    SELECT x FROM t2 WHERE a=2 GROUP BY y HAVING 0
++  ) FROM t1;
++} {b {}}
+
+ finish_test
 diff -Npur sqlite-version-3.32.2/test/window1.test sqlite-version-3.32.2-patched/test/window1.test
---- sqlite-version-3.32.2/test/window1.test	2020-06-04 20:58:43.000000000 +0800
-+++ sqlite-version-3.32.2-patched/test/window1.test	2020-06-15 16:03:29.347573247 +0800
+--- sqlite-version-3.32.2/test/window1.test	2020-06-04 08:58:43.000000000 -0400
++++ sqlite-version-3.32.2-patched/test/window1.test	2021-04-29 04:06:04.549208700 -0400
 @@ -1743,5 +1743,47 @@ do_execsql_test 53.0 {
                 WHERE a.c);
  } {4 4 4 4}
