@@ -105,7 +105,8 @@ def test_train_eval(config):
 if __name__ == "__main__":
     wide_deep_config = WideDeepConfig()
     wide_deep_config.argparse_init()
-
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=wide_deep_config.device_target)
+    _enable_graph_kernel = wide_deep_config.device_target == "GPU"
+    context.set_context(mode=context.GRAPH_MODE,
+                        enable_graph_kernel=_enable_graph_kernel, device_target=wide_deep_config.device_target)
     context.set_context(enable_sparse=wide_deep_config.sparse)
     test_train_eval(wide_deep_config)

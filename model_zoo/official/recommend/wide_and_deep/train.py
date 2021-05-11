@@ -88,6 +88,7 @@ def test_train(configure):
 if __name__ == "__main__":
     config = WideDeepConfig()
     config.argparse_init()
-
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=config.device_target)
+    _enable_graph_kernel = config.device_target == "GPU"
+    context.set_context(mode=context.GRAPH_MODE,
+                        enable_graph_kernel=_enable_graph_kernel, device_target=config.device_target)
     test_train(config)
