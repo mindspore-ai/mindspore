@@ -120,7 +120,7 @@ QuantHelperRegister::QuantHelperRegister() {
   register_map_[schema::PrimitiveType_StridedSlice] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
   register_map_[schema::PrimitiveType_Transpose] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
   register_map_[schema::PrimitiveType_PadFusion] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_ReduceFusion] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_ReduceFusion] = new QuantNodeHelper(base_propogator, carry_data_determiner);
   register_map_[schema::PrimitiveType_Gather] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
 
   register_map_[schema::PrimitiveType_Concat] = new QuantNodeHelper(concat_propogator, base_determiner);

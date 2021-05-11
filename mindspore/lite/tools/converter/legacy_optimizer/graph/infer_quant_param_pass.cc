@@ -28,6 +28,7 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     return RET_NULL_PTR;
   }
 
+  // forward infer nodes' quant params
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     if (node == nullptr) {
@@ -35,9 +36,17 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
       return RET_NULL_PTR;
     }
 
-    // make sure reenter node will keep the node status
-    if (node->quantType != schema::QuantType_QUANT_NONE) {
-      continue;
+    auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
+
+    quant_helper->NodeQuantPreprocess(graph, node.get());
+  }
+
+  // backward infer nodes' quant params
+  for (auto iter = graph->nodes.rbegin(); iter != graph->nodes.rend(); iter++) {
+    auto &node = *iter;
+    if (node == nullptr) {
+      MS_LOG(ERROR) << "node is null";
+      return RET_NULL_PTR;
     }
 
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
