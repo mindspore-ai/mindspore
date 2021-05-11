@@ -521,9 +521,10 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
 ```
 
+- `NET_TYPE` can choose from [resnet18, se-resnet50].
 - `DEVICE_ID` is optional, default value is 0.
 
 ### result

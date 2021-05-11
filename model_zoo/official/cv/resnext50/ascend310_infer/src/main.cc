@@ -53,7 +53,6 @@ using mindspore::dataset::Execute;
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
-DEFINE_string(network, "resnet18", "networktype");
 DEFINE_int32(device_id, 0, "device id");
 
 int main(int argc, char **argv) {
@@ -92,18 +91,9 @@ int main(int argc, char **argv) {
                                                            {58.395, 57.12, 57.375}));
   std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
 
-  std::shared_ptr<TensorTransform> sr_resize(new Resize({292}));
-  std::shared_ptr<TensorTransform> sr_centercrop(new CenterCrop({256}));
-  std::shared_ptr<TensorTransform> sr_normalize(new Normalize({123.68, 116.78, 103.94},
-                                                              {1.0, 1.0, 1.0}));
-
   std::vector<std::shared_ptr<TensorTransform>> trans_list;
+  trans_list = {decode, resize, centercrop, normalize, hwc2chw};
 
-  if (FLAGS_network == "se-resnet50") {
-    trans_list = {decode, sr_resize, sr_centercrop, sr_normalize, hwc2chw};
-  } else {
-    trans_list = {decode, resize, centercrop, normalize, hwc2chw};
-  }
   mindspore::dataset::Execute SingleOp(trans_list);
 
   for (size_t i = 0; i < size; ++i) {

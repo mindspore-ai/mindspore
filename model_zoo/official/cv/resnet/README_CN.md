@@ -487,9 +487,10 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
 ```
 
+- `NET_TYPE` 选择范围：[resnet18, se-resnet50]。
 - `DEVICE_ID` 可选，默认值为0。
 
 ### 结果
