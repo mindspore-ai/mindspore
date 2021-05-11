@@ -92,5 +92,6 @@ ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, cons
 }
 
 OnnxNodeRegistrar g_onnxSliceParser("Slice", new OnnxSliceParser());
+OnnxNodeRegistrar g_onnxDynamicSliceParser("DynamicSlice", new OnnxSliceParser());
 }  // namespace lite
 }  // namespace mindspore
