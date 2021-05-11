@@ -1,0 +1,91 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    min-width: 1440px;
+    margin: 0px;
+    padding: 0px;
+}
+
+.main-container {
+    width: 100%;
+    height: 100%;
+    min-width: 1440px;
+    padding: 40px;
+}
+
+.input, .output {
+    width: 100%;
+    height: 500px;
+}
+
+.left {
+    float: left;
+}
+
+.input-box {
+    width: calc((100% - 150px) / 2);
+    height: 500px;
+}
+
+.output-box {
+    width: calc((100% - 150px) / 2);
+    height: 500px;
+}
+
+.mid-box {
+    width: 150px;
+    height: 500px;
+    display: -webkit-box;
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+}
+
+.btn {
+    width: 100px;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0px 0px 4px 2px #d4d4d4;
+    border-radius: 5px;
+    background: #03A9F4;
+    color: #fff;
+    outline: none;
+    font-size: 14px;
+}
+
+.btn:active {
+    margin-top: 1px;
+    box-shadow: none;
+}
+
+.btn:hover {
+    background: rgb(2, 153, 223);
+}
+
+textarea {
+    box-sizing: border-box;
+    font-size: 14px;
+    resize: none;
+    padding: 15px;
+    border: none;
+    border-radius: 3px;
+    background: #f5f5f5;
+    outline: none;
+    word-wrap: normal;
+    white-space: nowrap
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 7px;
+    background-color: #ccc;
+}
+
