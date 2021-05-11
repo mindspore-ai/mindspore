@@ -2437,14 +2437,14 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
 
 def nanmax(a, axis=None, dtype=None, keepdims=False):
     """
-    Return the maximum of an array or maximum along an axis, ignoring any NaNs. .
+    Return the maximum of an array or maximum along an axis, ignoring any NaNs.
 
     Note:
         Numpy arguments `out` is not supported.
         For all NaN slices, a very small negative number is returned instead of NaN.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers whose maximum
+        a (Union[int, float, list, tuple, Tensor]): Array containing numbers whose maximum
             is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the maximum is
             computed. The default is to compute the maximum of the flattened array.
@@ -2485,14 +2485,14 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
 
 def nanmin(a, axis=None, dtype=None, keepdims=False):
     """
-    Returns the minimum of array elements over a given axis treating Not a Numbers (NaNs) as zero.
+    Returns the minimum of array elements over a given axis, ignoring any NaNs.
 
     Note:
         Numpy arguments `out` is not supported.
         For all-NaN slices, a very large number is returned instead of NaN.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers whose minimum
+        a (Union[int, float, list, tuple, Tensor]): Array containing numbers whose minimum
             is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the minimum is
             computed. The default is to compute the minimum of the flattened array.
@@ -2547,7 +2547,7 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
         Numpy arguments `out` is not supported.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers
+        a (Union[int, float, list, tuple, Tensor]): Array containing numbers
             whose sum is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the sum is
             computed. The default is to compute the sum of the flattened array.
@@ -2604,7 +2604,7 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
         Numpy arguments `out` is not supported.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers
+        a (Union[int, float, list, tuple, Tensor]): Array containing numbers
             whose mean is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the mean is
             computed. The default is to compute the mean of the flattened array.
@@ -2666,7 +2666,7 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Array containing numbers
+        a (Union[int, float, list, tuple, Tensor]): Array containing numbers
             whose variance is desired. If `a` is not an array, a conversion is attempted.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the variance is
             computed. The default is to compute the variance of the flattened array.
@@ -2721,7 +2721,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Calculates the standard deviation of the non-NaN values.
+        a (Union[int, float, list, tuple, Tensor]): Calculates the standard deviation of the non-NaN values.
         axis (Union[int, tuple of int, None], optional): Axis or axes along which the standard
             deviation is computed. The default is to compute the standard deviation of the
             flattened array.
@@ -2877,7 +2877,8 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         Tensor, vector cross product(s).
 
     Raises:
-        ValueError: when the dimensions of the vector(s) in `a` and/or `b` equal 2 or 3.
+        ValueError: when the dimensions of the vector(s) in `a` and/or `b` does not equal 2
+            or 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2940,7 +2941,7 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         cy = F.tensor_sub(_get_slice_product(2, 0), _get_slice_product(0, 2)) # az*bx - ax*bz
     elif a_has_z:
         cx = F.neg_tensor(_get_slice_product(2, 1)) # -az*by
-        cy = _get_slice_product(0, 2)               # az*bx
+        cy = _get_slice_product(2, 0)               # az*bx
     else: # b_has_z
         cx = _get_slice_product(1, 2)               # ay*bz
         cy = F.neg_tensor(_get_slice_product(0, 2)) # -ax*bz
