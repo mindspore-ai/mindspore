@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ void LayerNormMeanAndSquare(const float *src, int num, float *mean, float *squar
 #ifdef ENABLE_NEON
   float32x4_t sum = vdupq_n_f32(0);
   float32x4_t square_sum = vdupq_n_f32(0);
-  for (; index < num - C4NUM; index += C4NUM) {
+  for (; index <= num - C4NUM; index += C4NUM) {
     float32x4_t srcv = vld1q_f32(src + index);
     float32x4_t squarev = vmulq_f32(srcv, srcv);
     sum = vaddq_f32(sum, srcv);
@@ -47,7 +47,7 @@ void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data
 #ifdef ENABLE_NEON
   float32x4_t meanv = vdupq_n_f32(mean);
   float32x4_t denov = vdupq_n_f32(deno);
-  for (; index < num - C4NUM; index += C4NUM) {
+  for (; index <= num - C4NUM; index += C4NUM) {
     float32x4_t srcv = vld1q_f32(src + index);
     float32x4_t outv = vsubq_f32(srcv, meanv);
     outv = vmulq_f32(outv, denov);

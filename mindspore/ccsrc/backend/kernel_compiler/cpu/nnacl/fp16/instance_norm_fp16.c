@@ -37,7 +37,7 @@ int InstanceNormFp16(const float16_t *src_data, float16_t *dst_data, const float
       float square_mean = 0.0f;
 
       int index = 0;
-      for (; index < param->inner_size_ - C8NUM; index += C8NUM) {
+      for (; index <= param->inner_size_ - C8NUM; index += C8NUM) {
         float16x8_t srcv = vld1q_f16(src + index);
         float16x8_t squarev = vmulq_f16(srcv, srcv);
 
@@ -61,7 +61,7 @@ int InstanceNormFp16(const float16_t *src_data, float16_t *dst_data, const float
       index = 0;
       float16x8_t meanv = vdupq_n_f16(mean);
       float16x8_t denov = vdupq_n_f16(deno);
-      for (; index < param->inner_size_ - C8NUM; index += C8NUM) {
+      for (; index <= param->inner_size_ - C8NUM; index += C8NUM) {
         float16x8_t srcv = vld1q_f16(src + index);
         float16x8_t outv = vsubq_f16(srcv, meanv);
         outv = vmulq_f16(outv, denov);
