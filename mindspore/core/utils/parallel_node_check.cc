@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "utils/parallel_node_check.h"
-
 #include <set>
 #include <string>
 
+#include "utils/parallel_node_check.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -32,11 +31,21 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, 
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "ControlDepend", "DropoutGenMask", "embed", "create_instance", "RefToEmbed",
   "stop_gradient", "Send", "UpdateState", "Load"};
+static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather};
 // clang-format on
 
 bool IsInParallelBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (PARALLEL_BLACK_LIST_.find(prim->name()) != PARALLEL_BLACK_LIST_.end());
+}
+
+bool IsInAllGatherNodeList(const CNodePtr &cnode) {
+  for (auto &value : ALLGATHER_NODE_LIST_) {
+    if (IsPrimitiveCNode(cnode, value)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool IsParallelConsiderCNode(const CNodePtr &cnode) {
@@ -51,9 +60,6 @@ bool IsParallelConsiderCNode(const CNodePtr &cnode) {
   if (prim == nullptr) {
     return false;
   }
-  if (IsInParallelBlackList(prim)) {
-    return false;
-  }
-  return true;
+  return !IsInParallelBlackList(prim);
 }
 }  // namespace mindspore

@@ -104,6 +104,18 @@ class TensorLayout {
 
   std::string opt_shard_group() { return opt_shard_group_; }
 
+  void set_opt_shard_mirror_group(std::string name) { opt_shard_mirror_group_ = std::move(name); }
+
+  std::string opt_shard_mirror_group() { return opt_shard_mirror_group_; }
+
+  void set_opt_weight_shard_step(int32_t step) { opt_weight_shard_step_ = step; }
+
+  int32_t opt_weight_shard_step() { return opt_weight_shard_step_; }
+
+  void set_opt_weight_shard_size(int32_t size) { opt_weight_shard_size_ = size; }
+
+  int32_t opt_weight_shard_size() { return opt_weight_shard_size_; }
+
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -129,7 +141,10 @@ class TensorLayout {
   bool layout_transfer_ = false;
   int32_t field_size_ = 0;
   Shape opt_shard_slice_shape_;
-  std::string opt_shard_group_ = "";
+  std::string opt_shard_group_ = "";         // for allgather
+  std::string opt_shard_mirror_group_ = "";  // for mirror ops
+  int32_t opt_weight_shard_step_ = 0;
+  int32_t opt_weight_shard_size_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore
