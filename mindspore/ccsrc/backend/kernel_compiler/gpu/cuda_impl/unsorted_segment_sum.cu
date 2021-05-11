@@ -54,6 +54,11 @@ template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t ou
                                  float* input_addr, int64_t* ids_addr, float* output_addr, cudaStream_t stream);
 
 template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                 half* input_addr, int* ids_addr, half* output_addr, cudaStream_t stream);
+template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                 half* input_addr, int64_t* ids_addr, half* output_addr, cudaStream_t stream);
+
+template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
                                  int* input_addr, int* ids_addr, int* output_addr, cudaStream_t stream);
 template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
                                  int* input_addr, int64_t* ids_addr, int* output_addr, cudaStream_t stream);
