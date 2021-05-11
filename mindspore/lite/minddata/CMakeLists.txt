@@ -283,22 +283,37 @@ if(BUILD_MINDDATA STREQUAL "full")
         )
 
     add_library(minddata-lite SHARED
-    ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
-    ${CORE_DIR}/utils/ms_utils.cc
-    ${MINDDATA_FULL_SRC}
-    )
+            ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+            ${CORE_DIR}/utils/ms_utils.cc
+            ${MINDDATA_FULL_SRC}
+            )
+
+    add_library(minddata-lite_static STATIC
+            ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
+            ${CORE_DIR}/utils/ms_utils.cc
+            ${MINDDATA_FULL_SRC}
+            )
 
     add_dependencies(minddata-lite fbs_src)
+    add_dependencies(minddata-lite_static fbs_src)
 
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
-      securec
-      mindspore::jpeg_turbo
-      mindspore::turbojpeg
-      mindspore::json
-      Threads::Threads
-    )
+        securec
+        mindspore::jpeg_turbo
+        mindspore::turbojpeg
+        mindspore::json
+        Threads::Threads
+        )
+    target_link_libraries(minddata-lite_static
+        securec
+        mindspore::jpeg_turbo
+        mindspore::turbojpeg
+        mindspore::json
+        Threads::Threads
+        )
 
     # ref: https://github.com/android/ndk/issues/1202
     if(PLATFORM_ARM32)
@@ -307,10 +322,12 @@ if(BUILD_MINDDATA STREQUAL "full")
     MESSAGE(FATAL_ERROR "Cannot find libclang_rt.builtins-arm-androi2d.a in $ENV{ANDROID_NDK}")
     endif()
     target_link_libraries(minddata-lite ${LIBCLANG_RT_LIB})
+    target_link_libraries(minddata-lite_static ${LIBCLANG_RT_LIB})
     endif()
 
     if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    target_link_libraries(minddata-lite log)
+        target_link_libraries(minddata-lite log)
+        target_link_libraries(minddata-lite_static log)
     elseif()
 endif()
 elseif(BUILD_MINDDATA STREQUAL "wrapper")
