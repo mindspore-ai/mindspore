@@ -17,6 +17,7 @@
 #include "tools/optimizer/parallel/parallel_pass.h"
 #include "include/errorcode.h"
 #include "ir/tensor.h"
+#include "tools/optimizer/parallel/operator_info_register.h"
 
 namespace mindspore {
 namespace opt {
@@ -54,7 +55,6 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   }
   std::string cnode_name = cnode->fullname_with_scope();
   std::string name = cnode_name;
-  std::string orig_name = cnode_name;
   // find operator name first, then operator type name.
   if (split_strategys_.find(name) == split_strategys_.end()) {
     name = type_name_;
@@ -69,7 +69,15 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     return nullptr;
   }
   cnode->set_fullname_with_scope(cnode_name + PARALLEL_NAME_SUFFIX);
-  OperatorInfoPtr operator_ = OperatorInstance(type_name_, orig_name, split_strategys_[name]);
+
+  cnode_name = cnode->fullname_with_scope();
+  // foreach kernel_list && data_type
+  SplitOpKey op_key = SplitOpKey(schema::PrimitiveType_Conv2DFusion, kNumberTypeFloat32);
+  auto op_create_func = OperatorInfoFactory::GeInstance()->FindOperatorInfo(op_key);
+  if (op_create_func == nullptr) {
+    return nullptr;
+  }
+  OperatorInfoPtr operator_ = op_create_func(cnode_name, split_strategys_[name]);
   if (operator_ == nullptr) {
     MS_LOG(EXCEPTION) << "Failure: Create " << name << " OperatorInstance failed";
   }

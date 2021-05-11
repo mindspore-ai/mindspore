@@ -20,9 +20,10 @@
 #include "schema/inner/model_generated.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/core/ops/split_with_overlap.h"
-#include "mindspore/core/ops/concat.h"
-#include "mindspore/core/base/core_ops.h"
+#include "ops/split_with_overlap.h"
+#include "ops/concat.h"
+#include "base/core_ops.h"
+#include "tools/optimizer/parallel/spliter.h"
 
 namespace mindspore {
 
@@ -68,9 +69,10 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   if (!CheckPrimitiveType(pre_cnode, prim::kPrimConcat)) {
     return;
   }
-
-  auto finder = g_graph_nodes_output.find(pre_cnode->fullname_with_scope());
-  if (finder == g_graph_nodes_output.end()) {
+  std::unordered_map<std::string, std::vector<AnfNodePtr>> graph_node_outputs =
+    Spliter::GetInstance()->graph_node_outputs();
+  auto finder = graph_node_outputs.find(pre_cnode->fullname_with_scope());
+  if (finder == graph_node_outputs.end()) {
     return;
   }
   if (finder->second.size() > 1) return;
@@ -91,8 +93,8 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   }
 
   // get inputs node
-  auto it = g_graph_nodes_output.find(cnode->fullname_with_scope());
-  if (it == g_graph_nodes_output.end()) {
+  auto it = graph_node_outputs.find(cnode->fullname_with_scope());
+  if (it == graph_node_outputs.end()) {
     return;
   }
   int out_num = it->second.size();
@@ -110,8 +112,8 @@ void ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     if (!CheckPrimitiveType(tmp_cnode, prim::kPrimTupleGetItem)) {
       return;
     }
-    auto tmp_it = g_graph_nodes_output.find(tmp_cnode->fullname_with_scope());
-    if (tmp_it == g_graph_nodes_output.end()) {
+    auto tmp_it = graph_node_outputs.find(tmp_cnode->fullname_with_scope());
+    if (tmp_it == graph_node_outputs.end()) {
       return;
     }
     if (tmp_it->second.size() != 1) return;

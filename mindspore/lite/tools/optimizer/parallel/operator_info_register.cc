@@ -19,33 +19,48 @@
 namespace mindspore {
 namespace opt {
 
+// find the only key of operator_info
+bool SplitOpKey::operator<(const SplitOpKey &rhs) const {
+  return std::tie(this->op_type_, this->data_type_) < std::tie(rhs.op_type_, rhs.data_type_);
+}
+
+std::string SplitOpKey::ToString() const {
+  std::ostringstream split_info;
+  split_info << "op_type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_type_)) << "\t"
+             << "data_type_: " << data_type_ << "\t";
+  return split_info.str();
+}
+
 OperatorInfoFactory *OperatorInfoFactory::GeInstance() {
   static OperatorInfoFactory factory;
   return &factory;
 }
 
-int OperatorInfoFactory::RegisterOperatorInfo(const std::string &name, const SplitStrategy &strategy,
+int OperatorInfoFactory::RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id,
                                               const OperatorInfoCreatorFunc &creator_func) {
-  if (operator_info_map_.find(name) != operator_info_map_.end()) {
-    MS_LOG(ERROR) << "Operator already exist" << name;
+  // create a key to find the only create function
+  SplitOpKey op_key(operator_type, type_id);
+
+  if (operator_info_map_.find(op_key) != operator_info_map_.end()) {
+    MS_LOG(ERROR) << "Operator already exist" << op_key.ToString();
     return lite::RET_ERROR;
   }
-  this->operator_info_map_.insert(std::pair<std::string, OperatorInfoCreatorFunc>(name, creator_func));
+  this->operator_info_map_.insert(std::pair<SplitOpKey, OperatorInfoCreatorFunc>(op_key, creator_func));
   return lite::RET_OK;
 }
 
-OperatorInfoCreatorFunc OperatorInfoFactory::FindOperatorInfo(const std::string &name, const SplitStrategy &strategy) {
-  auto iterator = this->operator_info_map_.find(name);
+OperatorInfoCreatorFunc OperatorInfoFactory::FindOperatorInfo(const SplitOpKey &op_key) {
+  auto iterator = this->operator_info_map_.find(op_key);
   if (iterator != this->operator_info_map_.end()) {
     return iterator->second;
   }
-  MS_LOG(ERROR) << "operator_info do not register" << name;
+  MS_LOG(ERROR) << "operator_info do not register" << op_key.ToString();
   return nullptr;
 }
 
-OperatorInfoRegister::OperatorInfoRegister(const std::string &name, const SplitStrategy &strategy,
+OperatorInfoRegister::OperatorInfoRegister(schema::PrimitiveType operator_type, TypeId type_id,
                                            const OperatorInfoCreatorFunc &creator_func) {
-  OperatorInfoFactory::GeInstance()->RegisterOperatorInfo(name, strategy, creator_func);
+  OperatorInfoFactory::GeInstance()->RegisterOperatorInfo(operator_type, type_id, creator_func);
 }
 }  // namespace opt
 }  // namespace mindspore

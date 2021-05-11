@@ -19,11 +19,10 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-
 #include "ir/anf.h"
-#include "tools/optimizer/parallel/dynamic_creator.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/ccsrc/backend/optimizer/common/node_pass.h"
+#include "backend/optimizer/common/node_pass.h"
+#include "tools/optimizer/parallel/split_strategy.h"
 
 #ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
