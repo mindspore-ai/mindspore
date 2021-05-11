@@ -14,22 +14,14 @@
 # ============================================================================
 """export checkpoint file into air, onnx, mindir models"""
 
-import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
-from utils.device_adapter import get_device_id
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
+from src.lenet import LeNet5
 
 import numpy as np
 import mindspore
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-from src.lenet import LeNet5
 
-
-if os.path.exists(config.data_path_local):
-    ckpt_file = config.ckpt_path_local
-else:
-    ckpt_file = os.path.join(config.data_path, 'checkpoint_lenet-10_1875.ckpt')
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
@@ -40,7 +32,7 @@ if __name__ == "__main__":
     # define fusion network
     network = LeNet5(config.num_classes)
     # load network checkpoint
-    param_dict = load_checkpoint(ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(network, param_dict)
 
     # export network
