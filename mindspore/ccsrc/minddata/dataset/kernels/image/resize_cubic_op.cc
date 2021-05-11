@@ -231,7 +231,7 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
     for (int i = 0; i < y_size; i++) {
       vert_region[i * 2] -= rect_y0;
     }
-    temp.Init(x_size, rect_y1 - rect_y0, 3);
+    temp.Init(x_size, rect_y1 - rect_y0, 3, LDataType::UINT8, false);
 
     ImagingHorizontalInterp(temp, input, rect_y0, horiz_kernel, horiz_region, horiz_coeff);
     if (temp.IsEmpty()) {
@@ -242,7 +242,7 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
 
   /* vertical resize */
   if (vertical_interp) {
-    output.Init(input.width_, y_size, 3);
+    output.Init(input.width_, y_size, 3, LDataType::UINT8, false);
     if (!output.IsEmpty()) {
       ImagingVerticalInterp(output, input, 0, vert_kernel, vert_region, vert_coeff);
     }
