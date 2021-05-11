@@ -156,7 +156,7 @@ class ResidualBlock(nn.Cell):
                                                                                            pad_mode='same',
                                                                                            padding=0)
         self.add = nn.TensorAddQuant()
-        self.relu = P.ReLU()
+        self.relu = nn.ActQuant(nn.ReLU())
 
     def construct(self, x):
         identity = x
@@ -233,6 +233,7 @@ class ResNet(nn.Cell):
                                        stride=strides[3])
 
         self.mean = P.ReduceMean(keep_dims=True)
+        self.reduce_fake = nn.FakeQuantWithMinMaxObserver(ema=True, ema_decay=_ema_decay)
         self.flatten = nn.Flatten()
         self.end_point = nn.DenseQuant(out_channels[3], num_classes, has_bias=True, quant_config=_quant_config)
         self.output_fake = nn.FakeQuantWithMinMaxObserver(ema=True, ema_decay=_ema_decay)
@@ -275,6 +276,7 @@ class ResNet(nn.Cell):
         c5 = self.layer4(c4)
 
         out = self.mean(c5, (2, 3))
+        out = self.reduce_fake(out)
         out = self.flatten(out)
         out = self.end_point(out)
         out = self.output_fake(out)

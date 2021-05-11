@@ -52,6 +52,8 @@ def fake_learned_scale_quant_perchannel_compute(input_data, alpha_data, quant_ma
                                                 kernel_name="fake_learned_scale_quant_perchannel"):
     """FakeLearnedScaleQuantPerChannel"""
     input_shape = te.lang.cce.util.shape_to_list(input_data.shape)
+    eps = tvm.const(1e-6, input_data.dtype)
+    alpha_data = te.lang.cce.vcmpsel(te.lang.cce.vabs(alpha_data), eps, 'ge', alpha_data, eps)
     alpha_data = te.lang.cce.broadcast(alpha_data, input_shape, input_data.dtype)
     quant_max_data = te.lang.cce.broadcast(quant_max_data, input_shape, input_data.dtype)
 
