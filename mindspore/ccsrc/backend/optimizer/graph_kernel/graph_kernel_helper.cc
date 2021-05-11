@@ -762,6 +762,11 @@ bool IsKeepBasicNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
+  // Dynamic shape is unsupported yet.
+  if (AnfAlgo::HasDynamicShapeFlag(AnfAlgo::GetCNodePrimitive(cnode))) {
+    return true;
+  }
+
   static const std::vector<std::string> contagious_attrs = {"inplace_group", "inplace_algo", "inplace_output_index",
                                                             "aggregate", "aggregate_input_indexx"};
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.
