@@ -1353,7 +1353,7 @@ std::string Somas::GetSplitName(const std::string &scope_name) const {
   }
 }
 
-std::string Somas::SomasInfo(bool calc_hash) {
+std::string Somas::SomasInfo(bool calc_hash) const {
   std::ostringstream oss;
   if (!calc_hash) {
     DumpParameters(oss);
@@ -1469,7 +1469,7 @@ void Somas::DumpParameters(std::ostringstream &oss) const {
   }
 }
 
-void Somas::DumpSomasInfoIR(const string filename) {
+void Somas::DumpSomasInfoIR(const string filename) const {
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
@@ -1492,7 +1492,7 @@ void Somas::DumpSomasInfoIR(const string filename) {
   ofs.close();
 }
 
-std::string Somas::Offline() {
+std::string Somas::Offline() const {
   std::ostringstream oss;
 
   for (auto tensor : tensors_list_) {
@@ -1536,7 +1536,7 @@ std::string Somas::Offline() {
   return oss.str();
 }
 
-void Somas::DumpOfflineIR(const string filename) {
+void Somas::DumpOfflineIR(const string filename) const {
   MS_LOG(INFO) << "Printing somas-log-from-graph log: " << filename;
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
@@ -1561,7 +1561,7 @@ void Somas::DumpOfflineIR(const string filename) {
   ofs.close();
 }
 
-std::string Somas::SomasMemory() {
+std::string Somas::SomasMemory() const {
   std::ostringstream oss;
 
   std::map<size_t, size_t> mem_map;
@@ -1628,7 +1628,7 @@ std::string Somas::SomasMemory() {
   return oss.str();
 }
 
-void Somas::DumpSomasMemoryIR(const string filename) {
+void Somas::DumpSomasMemoryIR(const string filename) const {
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
