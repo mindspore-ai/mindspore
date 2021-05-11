@@ -373,7 +373,7 @@ class BatchNorm2d(_BatchNorm):
             - If None, The use_batch_statistics is automatically assigned process according to
               the training and eval mode. During training, batchnorm2d process will be the same
               with use_batch_statistics=True. Contrarily, in eval, batchnorm2d process will be the same
-              with use_batch_statistics=False.
+              with use_batch_statistics=False. Default: None.
 
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
