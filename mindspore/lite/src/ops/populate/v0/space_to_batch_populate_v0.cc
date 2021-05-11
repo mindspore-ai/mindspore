@@ -39,6 +39,7 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   auto block_sizes = space_to_batch_prim->blockShape();  // maybe error
   if (block_sizes == nullptr) {
     MS_LOG(ERROR) << "block_sizes is nullptr";
+    free(space_batch_param);
     return nullptr;
   }
   space_batch_param->m_ = block_sizes->size();
@@ -51,6 +52,7 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
   auto paddings = space_to_batch_prim->paddings();
   if (paddings == nullptr) {
     MS_LOG(ERROR) << "paddings is nullptr";
+    free(space_batch_param);
     return nullptr;
   }
   if (((size_t)paddings->size()) > std::numeric_limits<size_t>::max() / sizeof(int)) {

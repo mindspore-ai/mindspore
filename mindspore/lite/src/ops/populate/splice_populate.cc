@@ -64,6 +64,7 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
   auto forward_indexes = value->forward_indexes();
   if (forward_indexes == nullptr) {
     MS_LOG(ERROR) << "forward_indexes is nullptr";
+    free(param->context_);
     free(param);
     return nullptr;
   }
