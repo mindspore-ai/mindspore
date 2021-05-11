@@ -31,8 +31,6 @@ from .mul import _mul_akg
 from .notequal import _notequal_akg
 from .relu6 import _relu6_akg
 from .relu6_grad import _relu6_grad_akg
-from .squeeze import _squeeze_akg
-from .squeeze_grad import _squeeze_grad_akg
 from .sub import _sub_akg
 from .tile import _tile_akg
 # Please insert op register in lexicographical order of the filename.
