@@ -59,6 +59,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void PreInit() override;
   uint64_t GetAvailableMemMaxSize() const override;
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kAscend; };
+  std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
 
@@ -68,7 +69,6 @@ class AscendKernelRuntime : public KernelRuntime {
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
-  void GenKernelEvents(const session::KernelGraph *graph) override;
 
  private:
   bool InitDevice();

@@ -80,6 +80,8 @@ class GPUSession : public SessionBasic {
 
   void RunOpClearMemory(KernelGraph *kernel_graph) const;
 
+  void RunOpGenKernelEvent(const KernelGraph *graph) const;
+
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
   void Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const;

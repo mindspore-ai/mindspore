@@ -737,6 +737,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   // malloc mem
   RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
+  RunOpGenKernelEvent(graph.get());
   // Build dynamic kernel
   if (op_run_info->is_dynamic_shape) {
     BuildDynamicKernel(graph);
@@ -1156,6 +1157,13 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
   MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->GenKernelEvents(graph);
 }
 
 void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
