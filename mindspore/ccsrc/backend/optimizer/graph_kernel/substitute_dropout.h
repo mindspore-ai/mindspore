@@ -26,7 +26,7 @@ class DropoutExpander : public DefaultExpander {
 
  private:
   AnfNodePtr PreProcess(const FuncGraphPtr &, const AnfNodePtr &);
-  static unsigned int seed_;
+  static int64_t seed_;
 };
 }  // namespace opt
 }  // namespace mindspore

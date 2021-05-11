@@ -47,7 +47,9 @@ bool TensorPromotion::Run(const FuncGraphPtr &func_graph) {
     kernel::GetFuncGraphOutputNodes(fg, &outputs);
     auto new_cnode = CreateNewFuseCNode(func_graph, fg, inputs, outputs);
     SetNewKernelInfo(new_cnode, fg, inputs, outputs);
-    mng->Replace(node, new_cnode);
+    if (!mng->Replace(node, new_cnode)) {
+      MS_LOG(EXCEPTION) << "Manager replace node failed in tensor promotion";
+    }
     changed = true;
   }
 
