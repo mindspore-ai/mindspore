@@ -1,24 +1,217 @@
-flatbuffers:
-  cpeName: flatbuffers
-  version: 1.11.0
-  url: 'https://github.com/google/flatbuffers/'
-Eigen:
-  cpeName: Eigen
-  version: 3.3.7
-  url: 'https://gitlab.com/libeigen/eigen'
-libevent:
-  cpeName: libevent
-  version: 2.1.12
-  url: 'https://https://github.com/libevent/libevent'
-openmpi:
-  cpeName: openmpi
-  version: 4.0.3
-  url: 'https://https://github.com/open-mpi/ompi/'
-OpenCV:
-  cpeName: OpenCV
-  version: 4.2.0
-  url: 'https://https://github.com/opencv/opencv'
-Cppjieba:
-  cpeName: Cppjieba
-  version: 5.0.3
-  url: 'https://https://github.com/yanyiwu/libcppjieba'
+mindspore:
+    flatbuffers:
+        cpeName: flatbuffers
+        version: 1.11.0
+        url: https://google.github.io/flatbuffers/
+    gensim:
+        cpeName: gensim
+        version: 3.8.1
+        url: http://radimrehurek.com/gensim
+    sentencepiece:
+        cpeName: sentencepiece
+        version: v0.1.92
+        url: https://github.com/google/sentencepiece
+    setuptools:
+        cpeName: setuptools
+        version: 41.1.0
+        url: https://github.com/pypa/setuptools
+    Eigen:
+        cpeName: Eigen
+        version: 3.3.7
+        url: http://eigen.tuxfamily.org/index.php?title=Main_Page
+    ProjectQ:
+        cpeName: ProjectQ
+        version: 0.5.1
+        url: https://projectq.ch/
+    google/glog:
+        cpeName: google/glog
+        version: 0.4.0
+        url: https://github.com/google/glog
+    googletest:
+        cpeName: googletest
+        version: 1.8.1
+        url: http://code.google.com/p/googletest/
+    opencv-python:
+        cpeName: opencv-python
+        version: 4.1.2.30
+        url: https://github.com/skvark/opencv-python
+    Libtiff:
+        cpeName: Libtiff
+        version: 4.2.0
+        url: http://www.libtiff.org/
+    Scipy:
+        cpeName: Scipy
+        version: 1.5.2
+        url: http://scipy.org/
+    Cython:
+        cpeName: Cython
+        version: 0.29.15
+        url: http://cython.org/
+    Pillow:
+        cpeName: Pillow
+        version: 7.1.2
+        url: https://python-pillow.org
+    abseil-cpp:
+        cpeName: abseil-cpp
+        version: 20200225
+        url: https://github.com/abseil/abseil-cpp/@https://abseil.io
+    mkl-dnn:
+        cpeName: mkl-dnn
+        version: '1.6'
+        url: https://github.com/intel/mkl-dnn;https://github.com/oneapi-src/oneDNN
+    JSON for Modern C++:
+        cpeName: JSON for Modern C++
+        version: 3.6.1
+        url: https://github.com/nlohmann/json
+    dataclasses:
+        cpeName: dataclasses
+        version: '0.7'
+        url: https://github.com/ericvsmith/dataclasses
+    onnx:
+        cpeName: onnx
+        version: 1.6.0
+        url: https://onnx.ai/
+    SymPy:
+        cpeName: SymPy
+        version: '1.4'
+        url: http://www.sympy.org/en/index.html
+    pybind11:
+        cpeName: pybind11
+        version: 2.6.1
+        url: https://pybind11.readthedocs.io/en/latest/
+    tinyxml2:
+        cpeName: tinyxml2
+        version: 8.0.0
+        url: http://www.grinninglizard.com/tinyxml2/index.html
+    QuTiP:
+        cpeName: QuTiP
+        version: 4.5.3
+        url: http://qutip.org/
+    pip:
+        cpeName: pip
+        version: 20.0.2
+        url: https://pip.pypa.io/
+    numpy:
+        cpeName: numpy
+        version: 1.17.0
+        url: https://www.numpy.org
+    matplotlib:
+        cpeName: matplotlib
+        version: 3.2.1
+        url: https://matplotlib.org
+    CMSIS:
+        cpeName: CMSIS
+        version: 5.7.0
+        url: http://www.arm.com/zh/products/processors/cortex-m/cortex-microcontroller-software-interface-standard.php
+    asttokens:
+        cpeName: asttokens
+        version: 1.1.13
+        url: https://github.com/gristlabs/asttokens
+    Python:
+        cpeName: Python
+        version: 3.9.2
+        url: https://www.python.org/
+    icu:
+        cpeName: icu
+        version: '67.1'
+        url: https://chromium.googlesource.com/chromium/deps/icu/
+    openmpi:
+        cpeName: openmpi
+        version: 4.0.3
+        url: https://www.open-mpi.org/
+    libevent:
+        cpeName: libevent
+        version: 2.1.12
+        url: https://libevent.org/
+    pyzmq:
+        cpeName: pyzmq
+        version: 19.0.1
+        url: https://pypi.python.org/pypi/defusedxml
+    google/protobuf:
+        cpeName: google/protobuf
+        version: 3.8.0
+        url: https://github.com/protocolbuffers/protobuf
+    cffi:
+        cpeName: cffi
+        version: 1.12.3
+        url: http://cffi.readthedocs.org
+    pycocotools:
+        cpeName: pycocotools
+        version: 2.0.1
+        url: https://github.com/cocodataset/cocoapi/tree/master/PythonAPI
+    OpenCL-CLHPP:
+        cpeName: OpenCL-CLHPP
+        version: 2.0.12
+        url: https://github.com/KhronosGroup/OpenCL-CLHPP
+    gRPC:
+        cpeName: gRPC
+        version: 1.27.3
+        url: https://grpc.io
+    c-ares:
+        cpeName: c-ares
+        version: 1.15.0
+        url: https://c-ares.haxx.se/
+    sacrebleu:
+        cpeName: sacrebleu
+        version: 1.4.14
+        url: https://github.com/mjpost/sacrebleu
+    pandas:
+        cpeName: pandas
+        version: 1.0.4
+        url: https://pandas.pydata.org/
+    sqlite3:
+        cpeName: sqlite3
+        version: 3.32.2
+        url: http://www3.sqlite.org/index.html
+    easydict:
+        cpeName: easydict
+        version: '1.9'
+        url: https://github.com/makinacorpus/easydict
+    libjpeg-turbo:
+        cpeName: libjpeg-turbo
+        version: 2.0.4
+        url: https://libjpeg-turbo.org/
+    OpenCV:
+        cpeName: OpenCV
+        version: 4.5.1
+        url: http://www.opencv.org/
+    six:
+        cpeName: six
+        version: 1.12.0
+        url: https://six.readthedocs.io/
+    Khronos Group - Vulkan:
+        cpeName: Khronos Group - Vulkan
+        version: 1.2.144
+        url: https://www.khronos.org/vulkan/
+    OpenFermion:
+        cpeName: OpenFermion
+        version: 1.0.0
+        url: https://github.com/quantumlib/OpenFermion
+    subword-nmt:
+        cpeName: subword-nmt
+        version: 0.3.7
+        url: https://github.com/rsennrich/subword-nmt
+    zlib:
+        cpeName: zlib
+        version: 1.2.11
+        url: https://www.zlib.net/
+    nccl:
+        cpeName: nccl
+        version: 2.7.6-1
+        url: https://github.com/NVIDIA/nccl/
+    sacremoses:
+        cpeName: sacremoses
+        version: 0.0.35
+        url: https://github.com/alvations/sacremoses
+    Cppjieba:
+        cpeName: Cppjieba
+        version: 5.0.3
+        url: https://github.com/yanyiwu/cppjieba
+    pytest:
+        cpeName: pytest
+        version: 5.4.3
+        url: https://docs.pytest.org/en/latest/
+    Khronos Group - OpenCL - Headers:
+        cpeName: Khronos Group - OpenCL - Headers
+        version: v2020.06.16
+        url: https://github.com/KhronosGroup/OpenCL-Headers/
