@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/lite/src/common/loader_util.h"
+#include "mindspore/lite/src/common/dynamic_library_loader.h"
 #include "common/common_test.h"
 
 namespace mindspore {

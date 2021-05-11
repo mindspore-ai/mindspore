@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
-#define MINDSPORE_LITE_SRC_COMMON_LOADER_UTIL_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DYNAMIC_LIBRARY_LOADER_H_
+#define MINDSPORE_LITE_SRC_COMMON_DYNAMIC_LIBRARY_LOADER_H_
 
 namespace mindspore {
 namespace lite {
-
 class DynamicLibraryLoader {
  public:
+  DynamicLibraryLoader() = default;
+  ~DynamicLibraryLoader();
   int Open(const char *lib_path);
   void *GetFunc(const char *func_name);
   int Close();
 
  private:
-  void *handler_;
+  void *handler_ = nullptr;
 };
 
 }  // namespace lite
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_LITE_SRC_COMMON_DYNAMIC_LIBRARY_LOADER_H_
