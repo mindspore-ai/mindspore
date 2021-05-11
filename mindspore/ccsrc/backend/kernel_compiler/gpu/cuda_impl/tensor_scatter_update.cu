@@ -41,7 +41,7 @@ __global__ void TensorScatterUpdateKernel(T *input, S *indices, T *update, T *ou
     out_bound |= write_index >= output_size;
 
     if (!out_bound) {
-      input[write_index] = update[read_index];
+      output[write_index] = update[read_index];
     }
   }
 }
