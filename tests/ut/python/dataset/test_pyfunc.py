@@ -250,6 +250,28 @@ def test_case_9():
         i = i + 4
 
 
+def test_case_10():
+    """
+    Test PyFunc
+    """
+    logger.info("Test multiple map with multiprocess: lambda x : x + x")
+
+    # apply dataset operations
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+
+    data1 = data1.map(operations=[(lambda x: x * 10)], input_columns="col0",
+                      output_columns="out", num_parallel_workers=4, python_multiprocessing=True)
+    data1 = data1.map(operations=[(lambda x: x + x), (lambda x: x + 1), (lambda x: x + 2)], input_columns="out",
+                      output_columns="out", num_parallel_workers=4, python_multiprocessing=True)
+
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+        # In this test, the dataset is 2x2 sequential tensors
+        golden = np.array([[i * 20 + 3, (i + 1) * 20 + 3], [(i + 2) * 20 + 3, (i + 3) * 20 + 3]])
+        np.testing.assert_array_equal(item["out"], golden)
+        i = i + 4
+
+
 def test_pyfunc_implicit_compose():
     """
     Test Implicit Compose with pyfunc
