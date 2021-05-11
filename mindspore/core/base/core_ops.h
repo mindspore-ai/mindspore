@@ -46,6 +46,7 @@ constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
 constexpr auto kSub = "Sub";
+constexpr auto kMul = "Mul";
 
 // Arrays
 constexpr auto kStack = "Stack";
@@ -384,7 +385,7 @@ inline const PrimitivePtr kPrimNeg = std::make_shared<Primitive>("Neg");
 inline const PrimitivePtr kPrimSin = std::make_shared<Primitive>("Sin");
 inline const PrimitivePtr kPrimCos = std::make_shared<Primitive>("Cos");
 inline const PrimitivePtr kPrimSub = std::make_shared<Primitive>(kSub);
-inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
+inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>(kMul);
 inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
 inline const PrimitivePtr kPrimMod = std::make_shared<Primitive>("Mod");
 inline const PrimitivePtr kPrimFloor = std::make_shared<Primitive>("Floor");

@@ -174,7 +174,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
-    {prim::kPrimMul, {InferImplMul, nullptr, true}},
+    {prim::kPrimMul, {InferImplMul, nullptr, false}},
     {prim::kPrimAdd, {InferImplAdd, nullptr, true}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, {InferImplSub, nullptr, false}},
