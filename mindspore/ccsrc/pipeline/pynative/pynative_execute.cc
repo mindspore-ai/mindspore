@@ -737,8 +737,14 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   auto op_name = py::cast<std::string>(args[PY_NAME]);
   op_exec_info->op_name = op_name;
 
-  auto prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
-  MS_EXCEPTION_IF_NULL(prim);
+  auto adapter = py::cast<PrimitivePyAdapterPtr>(args[PY_PRIM]);
+  MS_EXCEPTION_IF_NULL(adapter);
+  auto prim = adapter->attached_primitive();
+  if (prim == nullptr) {
+    prim = std::make_shared<PrimitivePy>(args[PY_PRIM], adapter);
+    adapter->set_attached_primitive(prim);
+  }
+
   if (!prim->HasPyObj()) {
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
