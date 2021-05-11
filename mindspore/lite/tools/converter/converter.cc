@@ -20,33 +20,37 @@
 #include "tools/converter/converter_flags.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/storage.h"
-#include "parser/caffe/caffe_converter.h"
-#include "parser/tflite/tflite_converter.h"
-#include "parser/onnx/onnx_converter.h"
-#include "parser/tf/tf_converter.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
 #include "src/train/train_populate_parameter.h"
+#include "tools/converter/registry/model_parser_registry.h"
+#include "src/common/dynamic_library_loader.h"
 
 namespace mindspore {
 namespace lite {
-using FmkType = converter::FmkType;
+FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
+  if (flag.fmkIn == "MINDIR") {
+    kernel::PopulateTrainParameters();
+    auto func_graph = LoadMindIR(flag.modelFile);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "get funcgraph failed.";
+      return nullptr;
+    }
+    func_graph->set_attr("graph_name", MakeValue("main_graph"));
+    func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
 
-MindsporeImporter::MindsporeImporter() { kernel::PopulateTrainParameters(); }
-
-std::unique_ptr<Converter> Converter::CreateConverter(converter::FmkType fmk) {
-  switch (fmk) {
-    case FmkType::FmkType_MS:
-      return std::make_unique<MindsporeImporter>();
-    case FmkType::FmkType_CAFFE:
-      return std::make_unique<CaffeConverter>();
-    case FmkType::FmkType_TFLITE:
-      return std::make_unique<TfliteConverter>();
-    case FmkType::FmkType_ONNX:
-      return std::make_unique<OnnxConverter>();
-    case FmkType::FmkType_TF:
-      return std::make_unique<TFConverter>();
-    default: {
+    auto status = UpdateFuncGraphInputsAndOutputsDtype(func_graph);
+    if (RET_OK != status) {
+      MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
+      return nullptr;
+    }
+    return func_graph;
+  } else {
+    model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmkIn);
+    if (model_parser_ != nullptr) {
+      return model_parser_->Parse(flag.modelFile, flag.weightFile);
+    } else {
+      MS_LOG(ERROR) << "get funcGraph failed for fmk:" << flag.fmkIn;
       return nullptr;
     }
   }
@@ -57,7 +61,21 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     MS_LOG(ERROR) << "Input flag is nullptr";
     return nullptr;
   }
-  auto graph = BuildFuncGraph(flag->modelFile, flag->weightFile, flag->quantType);
+
+  // load plugin
+  if (!flag->pluginsPath.empty()) {
+    DynamicLibraryLoader dynamic_library_loader{};
+    for (auto &path : flag->pluginsPath) {
+      auto status = dynamic_library_loader.Open(path.c_str());
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "open dynamic library failed.";
+        return nullptr;
+      }
+      dynamic_library_loader.Close();
+    }
+  }
+
+  auto graph = BuildFuncGraph(*flag);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
@@ -110,16 +128,8 @@ int RunConverter(int argc, const char **argv) {
   }
   // Load graph
   MS_LOG(DEBUG) << "start reading model file";
-  auto converter = Converter::CreateConverter(flags->fmk);
-  if (converter == nullptr) {
-    oss.clear();
-    oss << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << " "
-        << GetErrorInfo(RET_INPUT_PARAM_INVALID);
-    MS_LOG(ERROR) << oss.str();
-    std::cout << oss.str() << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  auto meta_graph = converter->Convert(flags);
+  Converter cvt;
+  auto meta_graph = cvt.Convert(flags);
   NotSupportOp::GetInstance()->PrintOps();
   status = ReturnCode::GetSingleReturnCode()->status_code();
   if (meta_graph == nullptr) {

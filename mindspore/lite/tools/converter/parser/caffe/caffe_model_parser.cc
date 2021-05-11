@@ -26,6 +26,8 @@
 #include "tools/converter/ops/ops_def.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/converter_context.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite {
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
@@ -56,8 +58,7 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                                       const QuantType &quant_type) {
+int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -493,4 +494,6 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
 }
 
 int CaffeModelParser::PostAdjust() { return RET_OK; }
+
+REG_MODEL_PARSER(CAFFE, LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

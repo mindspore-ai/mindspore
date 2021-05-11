@@ -34,7 +34,7 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
   std::vector<int64_t> shape_vector(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end());
   auto tensor_info = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "new a paramValueLite failed.";
+    MS_LOG(ERROR) << "new a tensor::Tensor failed.";
     return RET_ERROR;
   }
   if (OnnxModelParser::CopyOnnxTensorData(onnx_const_tensor, tensor_info) != RET_OK) {

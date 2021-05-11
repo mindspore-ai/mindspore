@@ -70,6 +70,7 @@
 #include "tools/optimizer/fisson/iter_node_outputs.h"
 #include "tools/optimizer/fisson/node_out_shapes.h"
 #include "tools/optimizer/parallel/parallel_pass.h"
+#include "tools/converter/registry/pass_registry.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -323,6 +324,22 @@ int AnfTransform::RunPrecedingPass(const FuncGraphPtr &old_graph, const converte
   return RET_OK;
 }
 
+STATUS AnfTransform::RunPluginPass(const FuncGraphPtr &old_graph, int position) {
+  auto instance = opt::PassRegistry::GetInstance();
+  auto plugin_passes = instance->GetPasses();
+  if (plugin_passes.find(position) == plugin_passes.end()) {
+    MS_LOG(DEBUG) << "there is no plugin pass in current position.";
+    return RET_OK;
+  }
+
+  auto plugin_pass = plugin_passes.at(position);
+  if (!plugin_pass->Run(old_graph)) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
@@ -383,11 +400,28 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
       MS_LOG(ERROR) << "Run convert pass failed.";
       return nullptr;
     }
+  }
 
-    status = RunFusionPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run fusion pass failed.";
-      return nullptr;
+  auto format_pass = std::make_shared<opt::UnifyFormatPass>();
+  format_pass->Init(config->fmk, config->trainModel);
+  if (!format_pass->RunOnlyForShape(old_graph)) {
+    MS_LOG(ERROR) << "Run format pass failed.";
+    return nullptr;
+  }
+
+  status = RunPluginPass(old_graph, opt::POSITION_BEGIN);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run plugin pass failed.";
+    return nullptr;
+  }
+
+  for (auto &fg : func_graphs_) {
+    if (!config->disableFusion) {
+      status = RunFusionPass(fg, config);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Run fusion pass failed.";
+        return nullptr;
+      }
     }
 
     status = RunConv1DAdjustPass(fg, config);
@@ -397,10 +431,16 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  auto format_pass = std::make_shared<opt::UnifyFormatPass>();
+  format_pass = std::make_shared<opt::UnifyFormatPass>();
   format_pass->Init(config->fmk, config->trainModel);
   if (!format_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run format pass failed.";
+    return nullptr;
+  }
+
+  status = RunPluginPass(old_graph, opt::POSITION_END);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run plugin pass failed.";
     return nullptr;
   }
 

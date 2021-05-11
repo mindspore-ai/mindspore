@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include "tools/converter/model_parser.h"
+#include "tools/converter/registry/model_parser_registry.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
 
@@ -32,8 +33,7 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                       const QuantType &quant_type) override;
+  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
 
   int PostAdjust() override;
 
