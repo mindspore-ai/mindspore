@@ -47,7 +47,7 @@ class Conv2DInfo : public OperatorInfo {
                                   bool trans_format) override;
   int CheckConv2DPrimitiveType();
 
-  SplitMode splitMode_ = NoSplit;
+  SplitMode split_mode_ = NoSplit;
   bool format_NCHW_ = false;
   std::vector<int32_t> splits_;
 };

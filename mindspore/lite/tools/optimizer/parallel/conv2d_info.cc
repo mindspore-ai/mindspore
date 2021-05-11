@@ -15,7 +15,6 @@
  */
 
 #include "tools/optimizer/parallel/conv2d_info.h"
-#include <algorithm>
 #include <memory>
 #include <vector>
 #include <string>
@@ -26,10 +25,11 @@
 #include "mindspore/ccsrc/utils/utils.h"
 #include "tools/converter/converter_flags.h"
 #include "include/errorcode.h"
+#include "tools/optimizer/parallel/operator_info_register.h"
 
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
 namespace opt {
-
 // strategy format is NHWC-KHWC
 constexpr int32_t kAxisN = 0;
 constexpr int32_t kAxisCIn = 3;
@@ -54,12 +54,12 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   // if split N
   if (is_any_not_none(strategys[0][kAxisN])) {
     split_count++;
-    splitMode_ = SplitN;
+    split_mode_ = SplitN;
   }
   // if split C_in
   if (is_any_not_none(strategys[0][kAxisCIn])) {
     split_count++;
-    splitMode_ = SplitCIN;
+    split_mode_ = SplitCIN;
     if (strategys[0][kAxisCIn] != strategys[1][kAxisCIn]) {
       MS_LOG(ERROR) << "Strategy ERROR, split C_in, input and kernel must use same strategy.";
       return lite::RET_ERROR;
@@ -68,12 +68,12 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   // if split C_out
   if (is_any_not_none(strategys[1][kAxisCOut])) {
     split_count++;
-    splitMode_ = SplitCOUT;
+    split_mode_ = SplitCOUT;
   }
   // if split H
   if (is_any_not_none(strategys[0][kAxisH])) {
     split_count++;
-    splitMode_ = SplitH;
+    split_mode_ = SplitH;
   }
   if (is_any_not_none(strategys[0][kAxisW])) {
     MS_LOG(ERROR) << "Strategy ERROR, doesn't support split W.";
@@ -109,7 +109,7 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
   split_prim->set_number_split(split_num);
   split_prim->set_ratio(splits);
   split_prim->set_trans_format(trans_format);
-  if (splitMode_ == SplitH) {
+  if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     auto extend_bottom = conv_prim->get_kernel_size().at(kIndexH) - conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
@@ -152,8 +152,8 @@ int Conv2DInfo::CheckConv2DPrimitiveType() {
 }
 
 int Conv2DInfo::InferParallelCNodes() {
-  if (!CheckConv2DPrimitiveType()) {
-    return RET_OK;
+  if (CheckConv2DPrimitiveType() != lite::RET_OK) {
+    return RET_ERROR;
   }
   Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
@@ -165,7 +165,7 @@ int Conv2DInfo::InferParallelCNodes() {
   parallel_output_nodes_.clear();
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
   // split feature and kernel
-  switch (splitMode_) {
+  switch (split_mode_) {
     case SplitH: {
       name_ = orig_name + "_input";
       auto feature_split_cnode =
@@ -241,7 +241,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     std::vector<AnfNodePtr> tmp_outputs;
     bool has_bias = cnode_->size() >= 4;
     // if split cin, only one parallel operator has bias
-    if ((i != 0) && splitMode_ == SplitCIN) {
+    if ((i != 0) && split_mode_ == SplitCIN) {
       has_bias = false;
     }
     // copy attr
@@ -258,7 +258,7 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     prim->set_stride(conv_prim->get_stride());
     prim->set_activation_type(conv_prim->get_activation_type());
 
-    switch (splitMode_) {
+    switch (split_mode_) {
       case SplitH: {
         if (i != 0) {
           auto pad = prim->get_pad_list();
@@ -292,19 +292,19 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     }
     std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
     // if split Cout, feature will not be splited
-    if (splitMode_ == SplitCOUT) {
+    if (split_mode_ == SplitCOUT) {
       conv_inputs.push_back(cnode_->input(1));
     } else {
       conv_inputs.push_back(feature_split_outputs[i]);
     }
     // kernel splited only when split Cin and Cout
-    if (splitMode_ == SplitCIN || splitMode_ == SplitCOUT) {
+    if (split_mode_ == SplitCIN || split_mode_ == SplitCOUT) {
       conv_inputs.push_back(kernel_split_outputs[i]);
     } else {
       conv_inputs.push_back(cnode_->input(2));
     }
     if (has_bias) {
-      if (splitMode_ == SplitCOUT) {
+      if (split_mode_ == SplitCOUT) {
         conv_inputs.push_back(bias_split_outputs[i]);
       } else {
         conv_inputs.push_back(cnode_->input(3));
@@ -324,14 +324,14 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
 
 int Conv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
-  if (splitMode_ == SplitCIN) {
+  if (split_mode_ == SplitCIN) {
     MS_LOG(DEBUG) << name_ << " : Split Cin, infer Forward op.";
     replace_op_ = CreateReduceNode(cnode_, parallel_output_nodes_, kAxisCIn, dev_num, true);
   } else {
     int32_t concat_dim;
-    if (splitMode_ == SplitN) {
+    if (split_mode_ == SplitN) {
       concat_dim = kAxisN;
-    } else if (splitMode_ == SplitCOUT) {
+    } else if (split_mode_ == SplitCOUT) {
       // output format is same as feature map
       concat_dim = kAxisCIn;
     } else {
@@ -365,7 +365,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
   std::vector<AnfNodePtr> feature_split_outputs;
   std::string orig_name = name_;
 
-  switch (splitMode_) {
+  switch (split_mode_) {
     case SplitCIN: {
       MS_LOG(ERROR) << "DepthwiseConv2DInfo doesn't support split Cin.";
       return lite::RET_ERROR;
@@ -389,7 +389,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     return lite::RET_ERROR;
   }
   // split feature and kernel
-  if (splitMode_ == SplitN) {
+  if (split_mode_ == SplitN) {
     name_ = orig_name + "_input";
     auto feature_split_cnode =
       CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, kAxisN, dev_num, strategys[0][kAxisN], true);
@@ -446,5 +446,7 @@ int DepthwiseConv2DInfo::InferReplaceOp() {
   return lite::RET_OK;
 }
 
+OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeFloat32, OperatorInfoCreator<Conv2DInfo>)
+OPERATOR_INFO_REGISTER(PrimitiveType_Conv2DFusion, kNumberTypeInt8, OperatorInfoCreator<Conv2DInfo>)
 }  // namespace opt
 }  // namespace mindspore

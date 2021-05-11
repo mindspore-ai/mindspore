@@ -15,8 +15,8 @@
  */
 
 #include "tools/optimizer/fisson/iter_node_outputs.h"
-#include <vector>
 #include "tools/optimizer/fisson/fisson_util.h"
+#include "tools/optimizer/parallel/spliter.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,15 +36,8 @@ AnfNodePtr IterNodeOutputs::Run(const FuncGraphPtr &func_graph, const AnfNodePtr
       continue;
     }
     auto input_cnode = input_node->cast<CNodePtr>();
-    auto name = input_cnode->fullname_with_scope();
-    if (g_graph_nodes_output.find(name) != g_graph_nodes_output.end()) {
-      std::vector<AnfNodePtr>::iterator it;
-      it = find(g_graph_nodes_output[name].begin(), g_graph_nodes_output[name].end(), node);
-      if (it != g_graph_nodes_output[name].end()) {
-        continue;
-      }
-    }
-    g_graph_nodes_output[name].push_back(node);
+    auto input_name = input_cnode->fullname_with_scope();
+    Spliter::GetInstance()->UpdateNodeOutputs(input_name, node);
   }
   return nullptr;
 }

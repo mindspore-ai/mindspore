@@ -30,8 +30,6 @@
 namespace mindspore {
 using mindspore::schema::PrimitiveType;
 namespace opt {
-extern std::unordered_map<std::string, std::vector<AnfNodePtr>> g_graph_nodes_output;
-extern std::unordered_map<std::string, std::vector<std::vector<ShapeVector>>> g_graph_nodes_out_shapes;
 
 struct SplitInfo {
   int32_t axis;

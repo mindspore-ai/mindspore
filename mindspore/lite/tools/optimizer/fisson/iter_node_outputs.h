@@ -28,7 +28,6 @@ class IterNodeOutputs : public opt::NodePass {
   ~IterNodeOutputs() override = default;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 

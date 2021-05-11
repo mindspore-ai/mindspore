@@ -26,7 +26,7 @@ class NodeOutShapes : public opt::NodePass {
  public:
   NodeOutShapes() : NodePass("node_out_shapes") {}
   ~NodeOutShapes() override = default;
-  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node);
+  AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 };
 
 }  // namespace opt

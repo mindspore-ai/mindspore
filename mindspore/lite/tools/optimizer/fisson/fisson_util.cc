@@ -18,16 +18,13 @@
 #include <unordered_map>
 #include <memory>
 #include "tools/optimizer/fisson/fisson_util.h"
-#include "mindspore/core/base/core_ops.h"
+#include "base/core_ops.h"
 #include "src/common/utils.h"
-#include "tools/common/node_util.h"
 
 namespace mindspore {
 using lite::converter::FmkType;
 
 namespace opt {
-std::unordered_map<std::string, std::vector<AnfNodePtr>> g_graph_nodes_output = {};
-std::unordered_map<std::string, std::vector<std::vector<ShapeVector>>> g_graph_nodes_out_shapes = {};
 
 AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const CNodePtr &conv_cnode,
                                  const std::vector<AnfNodePtr> &conv_outputs, const SplitInfo &split_info,

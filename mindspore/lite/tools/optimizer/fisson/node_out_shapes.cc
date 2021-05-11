@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "tools/optimizer/fisson/fisson_util.h"
+#include "tools/optimizer/parallel/spliter.h"
 
 namespace mindspore {
 namespace opt {
@@ -26,13 +27,13 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     return nullptr;
   }
-  std::vector<ShapeVector> input_shapes;
-  std::vector<ShapeVector> output_shapes;
   if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }
+  std::vector<ShapeVector> input_shapes;
+  std::vector<ShapeVector> output_shapes;
   auto cnode = node->cast<CNodePtr>();
-  // input
+  // assume multi inputs
   for (auto input_node : cnode->inputs()) {
     if (utils::isa<CNodePtr>(input_node) || utils::isa<ParameterPtr>(input_node)) {
       auto in_shape = input_node->Shape();
@@ -49,7 +50,7 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
       }
     }
   }
-  // output
+  // assume multi outputs
   auto out_shape = cnode->Shape();
   if (out_shape == nullptr) {
     MS_LOG(ERROR) << "The shape is null.";
@@ -71,10 +72,9 @@ AnfNodePtr NodeOutShapes::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &
     const auto &shape = out_shape->cast<abstract::ShapePtr>()->shape();
     output_shapes.push_back(shape);
   }
-
-  std::string name = cnode->fullname_with_scope();
-  g_graph_nodes_out_shapes[name].push_back(input_shapes);
-  g_graph_nodes_out_shapes[name].push_back(output_shapes);
+  std::string node_name = cnode->fullname_with_scope();
+  Spliter::GetInstance()->UpdateNodeInputShapes(node_name, input_shapes);
+  Spliter::GetInstance()->UpdateNodeOutputShapes(node_name, output_shapes);
   return nullptr;
 }
 }  // namespace opt

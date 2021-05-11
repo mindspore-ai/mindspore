@@ -91,6 +91,13 @@ class OperatorInfo {
   int CheckStrategyValue();
 };
 
+// a template func for normal op_coder creator
+template <typename T>
+std::unique_ptr<OperatorInfo> OperatorInfoCreator(const std::string &name, const SplitStrategy &strategy) {
+  std::unique_ptr<T> coder = std::make_unique<T>(name, strategy);
+  return coder;
+}
+
 bool is_any_none(const std::vector<int64_t> &split);
 bool is_any_not_none(const std::vector<int64_t> &split);
 
