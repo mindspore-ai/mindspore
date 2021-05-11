@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include "include/context.h"
+#include "include/lite_session.h"
 #include "src/utils.h"
 
 static unsigned int seed = time(NULL);
@@ -122,14 +123,14 @@ std::vector<int> NetRunner::FillInputData(const std::vector<DataLabelTuple> &dat
   return labels_vec;
 }
 
-float NetRunner::CalculateAccuracy(const std::vector<DataLabelTuple> &dataset) const {
+float NetRunner::CalculateAccuracy(const std::vector<DataLabelTuple> &dataset,
+                                   mindspore::session::LiteSession *session) const {
   float accuracy = 0.0;
   int tests = dataset.size() / batch_size_;
 
-  session_->Eval();
   for (int i = 0; i < tests; i++) {
     auto labels = FillInputData(dataset, i);
-    session_->RunGraph();
+    session->RunGraph();
     auto outputsv = SearchOutputsForSize(batch_size_ * num_of_classes_);
     MS_ASSERT(outputsv != nullptr);
     auto scores = reinterpret_cast<float *>(outputsv->MutableData());
@@ -145,7 +146,6 @@ float NetRunner::CalculateAccuracy(const std::vector<DataLabelTuple> &dataset) c
       if (labels[b] == max_idx) accuracy += 1.0;
     }
   }
-  session_->Train();
   accuracy /= static_cast<float>(batch_size_ * tests);
   return accuracy;
 }
@@ -192,7 +192,9 @@ int NetRunner::TrainLoop() {
 
     std::cout << i + 1 << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
     if ((i + 1) % 20 == 0) {
-      float acc = CalculateAccuracy(ds_.test_data());
+      session_->Eval();
+      float acc = CalculateAccuracy(ds_.test_data(), session_);
+      session_->Train();
       if (max_acc < acc) max_acc = acc;
       std::cout << "accuracy on test data = " << acc << " max accuracy = " << max_acc << std::endl;
       if (acc > 0.9) return 0;
@@ -207,13 +209,20 @@ int NetRunner::Main() {
   InitDB();
 
   TrainLoop();
-
-  float acc = CalculateAccuracy(ds_.val_data());
+  session_->Eval();
+  float acc = CalculateAccuracy(ds_.val_data(), session_);
   std::cout << "accuracy on validation data = " << acc << std::endl;
 
   if (cycles_ > 0 && head_model_ != nullptr) {
     auto trained_fn = ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained.ms";
     mindspore::lite::Model::Export(head_model_, trained_fn.c_str());
+  }
+  if (!save_inference_.empty()) {
+    int status = session_->ExportInference(save_inference_);
+    if (status != mindspore::lite::RET_OK) {
+      std::cout << "Failed to save inference file";
+      return mindspore::lite::RET_ERROR;
+    }
   }
   return 0;
 }
@@ -221,12 +230,13 @@ int NetRunner::Main() {
 void NetRunner::Usage() {
   std::cout << "Usage: net_runner -f <.ms head model file> -b <.ms backbone model file> -d <data_dir> "
             << "[-c <num of training cycles>] [-v (verbose mode)] "
-            << "[-s <save checkpoint every X iterations>]" << std::endl;
+            << "[-s <save checkpoint every X iterations>]"
+            << "[-i <save inference file>]" << std::endl;
 }
 
 bool NetRunner::ReadArgs(int argc, char *argv[]) {
   int opt;
-  while ((opt = getopt(argc, argv, "b:f:e:d:s:ihc:v")) != -1) {
+  while ((opt = getopt(argc, argv, "b:f:e:d:s:i:hc:v")) != -1) {
     switch (opt) {
       case 'b':
         ms_backbone_file_ = std::string(optarg);
@@ -245,6 +255,9 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         break;
       case 's':
         save_checkpoint_ = atoi(optarg);
+        break;
+      case 'i':
+        save_inference_ = std::string(optarg);
         break;
       case 'h':
       default:

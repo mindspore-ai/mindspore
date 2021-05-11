@@ -61,6 +61,7 @@ class TransferSession : public lite::TrainSession {
   mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override;
 
   int CompileTransferGraph();
+  int ExportInference(std::string file_name) override;
 
  protected:
   lite::LiteSession *backbone_session_ = nullptr;
@@ -71,7 +72,9 @@ class TransferSession : public lite::TrainSession {
 
  private:
   bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask, size_t mask_len);
+  std::unordered_map<size_t, size_t> ConnectionMap();
   bool nchw2nhwc_ = false;
+  size_t size_backbone_;
 };
 }  // namespace lite
 }  // namespace mindspore

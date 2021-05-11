@@ -34,6 +34,8 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "src/train/train_export.h"
+#include "src/train/train_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -41,6 +43,7 @@ namespace lite {
 TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, lite::Context *context)
     : is_valid_(false) {
   lite_model_ = reinterpret_cast<char *>(malloc(size_backbone));
+  size_backbone_ = size_backbone;
   if (lite_model_ != nullptr) {
     std::copy(model_buf_backbone, model_buf_backbone + size_backbone, lite_model_);
     backbone_session_ =
@@ -152,6 +155,60 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
   }
   ret = lite::TrainSession::RunGraph(before, after);
   return ret;
+}
+
+std::unordered_map<size_t, size_t> TransferSession::ConnectionMap() {
+  std::unordered_map<size_t, size_t> map;
+  for (auto &backbone_head_pair : backbone_head_map_) {
+    auto input = backbone_head_pair.first;
+    auto output = backbone_head_pair.second;
+    auto in_id = TSFindTensorByName(tensors_, input->tensor_name());
+    if (in_id == tensors_.size()) {
+      MS_LOG(ERROR) << "cannot find input tensor " << input->tensor_name();
+      map.clear();
+      return map;
+    }
+    auto out_id = TSFindTensorByName(backbone_session_->tensors_, output->tensor_name());
+    if (out_id == backbone_session_->tensors_.size()) {
+      MS_LOG(ERROR) << "cannot find input tensor " << output->tensor_name();
+      map.clear();
+      return map;
+    }
+    map[in_id] = out_id;
+  }
+  return map;
+}
+
+int TransferSession::ExportInference(std::string file_name) {
+  bool orig_train_state = IsTrain();
+  Eval();
+  TrainExport texport(file_name);
+  int status = texport.LoadModel(lite_model_, size_backbone_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "cannot init export";
+    return status;
+  }
+  auto connect_map = ConnectionMap();
+  texport.set_connect(connect_map);
+  if (nchw2nhwc_) {
+    status = texport.AddTransformNode();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "cannot add transform node";
+      return status;
+    }
+  }
+  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "cannot serialize head";
+    return status;
+  }
+  status = texport.SaveToFile();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "failed to save to " << file_name;
+    return status;
+  }
+  if (orig_train_state) Train();
+  return status;
 }
 
 }  // namespace lite

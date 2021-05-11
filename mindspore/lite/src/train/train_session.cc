@@ -457,8 +457,22 @@ int TrainSession::SetLossName(std::string loss_name) {
 int TrainSession::ExportInference(std::string file_name) {
   bool orig_train_state = IsTrain();
   Eval();
-  TrainExport texport(file_name, model_);
-  int status = texport.Export(inference_kernels_, tensors_, GetOutputTensorNames());
+  TrainExport texport(file_name);
+  int status = texport.ExportInit(model_->name_, model_->version_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "cannot init export";
+    return status;
+  }
+  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "cannot export Network";
+    return status;
+  }
+  status = texport.SaveToFile();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "failed to save to " << file_name;
+    return status;
+  }
   if (orig_train_state) Train();
   return status;
 }

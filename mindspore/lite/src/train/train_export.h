@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
+#include <unordered_map>
 #include "schema/inner/model_generated.h"
 #include "src/lite_kernel.h"
 #include "src/lite_model.h"
@@ -34,23 +36,36 @@ namespace lite {
 
 class TrainExport {
  public:
-  TrainExport(const std::string file_name, const mindspore::lite::Model *model)
-      : model_(model), file_name_(file_name) {}
-  virtual ~TrainExport() {}
-  int Export(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
-             const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names);
+  explicit TrainExport(const std::string file_name) : file_name_(file_name) {}
+  virtual ~TrainExport();
+  int ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
+                const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names,
+                const Model *model);
+  int ExportInit(const std::string model_name, std::string version);
+  int SaveToFile();
+  void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
+  int LoadModel(void *buf, size_t buf_size);
+  int AddTransformNode();
 
  protected:
   virtual std::vector<uint8_t> CreateData(const mindspore::lite::Tensor *tensor);
 
  private:
-  const Model *model_;
   std::string file_name_;
-  mindspore::lite::Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel);
-  std::unique_ptr<schema::TensorT> CreateTensor(const mindspore::lite::Tensor *tensor, schema::Tensor *scTensor);
+  schema::MetaGraphT *meta_graph_ = nullptr;
+  std::vector<size_t> out_idx_;
+  std::map<size_t, size_t> remap_;
+  std::unordered_map<size_t, size_t> connect_;  // connection map (backbone tenor id-> head tensor id)
+  Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model);
+  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
-                                              std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex);
-
+                                              std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
+                                              const Model *model);
+  std::unique_ptr<schema::CNodeT> CreateTransformNode(std::vector<uint32_t> inputIndex,
+                                                      std::vector<uint32_t> outputIndex, size_t id);
+  std::unique_ptr<schema::TensorT> CreateTransformTensor(size_t id);
+  std::unique_ptr<schema::TensorT> CreateTransformConst(size_t last_id);
+  int AddTransform();
   bool NeedQuantization(const mindspore::lite::Tensor *tensor);
   virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
   mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);

@@ -135,6 +135,7 @@ class LiteSession : public session::LiteSession {
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = false;
   bool is_train_session_ = false;
+  friend class TransferSession;
 #if SUPPORT_NPU
   NPUManager *npu_manager_ = nullptr;
   NPUPassManager *npu_pass_manager_ = nullptr;
