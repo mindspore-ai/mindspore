@@ -173,6 +173,11 @@ void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::v
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
+  // No output.
+  if ((output_op_arrows_.size() == 0) && (output_op_controls_.size() == 0)) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
   // Send output data.
   for (auto &op_arrow : output_op_arrows_) {
     MS_EXCEPTION_IF_NULL(op_arrow);
