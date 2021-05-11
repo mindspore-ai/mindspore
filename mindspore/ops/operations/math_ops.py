@@ -831,6 +831,7 @@ class MatMul(PrimitiveWithCheck):
         if np.all(np.array(x1) != -1) and np.all(np.array(x2) != -1):
             if x1_col != x2_row:
                 raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
+                                 f' dimensions must be equal,'
                                  + f' got {x1_col} and {x2_row}, with x1 shape {x1}(transpose_a={self.transpose_a})'
                                  + f', x2 shape {x2}(transpose_b={self.transpose_b}).')
         # set attribute
