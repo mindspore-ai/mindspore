@@ -488,7 +488,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     stitch_tensors = [tensor for tensor in dom_outs if tensor in a_ins]
                     if _same_stitch_axis(stitch_tensors, a_final_outs):
                         for tensor in stitch_tensors:
-                            if _tensor_size(tensor) >= 1024 * 1024 * 12:
+                            if _tensor_size(tensor) >= 1024 * 1024:
                                 return True
             return False
 
