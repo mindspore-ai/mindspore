@@ -63,7 +63,7 @@ class ExceptionThread(threading.Thread):
             self.exception = e
             self.exc_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
 
-def check_filename(path):
+def check_filename(path, arg_name=""):
     """
     check the filename in the path.
 
@@ -77,8 +77,12 @@ def check_filename(path):
     Returns:
         Bool, whether filename is valid.
     """
+    if arg_name == "":
+        arg_name = "File path"
+    else:
+        arg_name = "'{}'".format(arg_name)
     if not path:
-        raise ParamValueError('File path is not allowed None or empty!')
+        raise ParamValueError('{} is not allowed None or empty!'.format(arg_name))
     if not isinstance(path, str):
         raise ParamValueError("File path: {} is not string.".format(path))
     if path.endswith("/"):
@@ -113,7 +117,7 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         MRMUnsupportedSchemaError: If schema is invalid.
     """
     if raw:
-        # remove dummy fileds
+        # remove dummy fields
         raw = {k: v for k, v in raw.items() if k in schema}
     else:
         raw = {}
