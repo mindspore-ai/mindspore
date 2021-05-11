@@ -193,8 +193,9 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out);
   void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g, const py::object &out,
-                                const py::args &args);
-  void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
+                                const py::args &args, const std::string &graph_phase);
+  void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
+                              const OpExecInfoPtr &op_exec_info, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode);
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource);

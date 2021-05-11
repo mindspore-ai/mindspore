@@ -1334,7 +1334,10 @@ void GradExecutor::DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr 
 }
 
 void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args,
-                                          ValuePtrList *input_values, CNodePtr *ms_function_cnode) {
+                                          const OpExecInfoPtr &op_exec_info, ValuePtrList *input_values,
+                                          CNodePtr *ms_function_cnode) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  op_exec_info->op_inputs = args;
   // Get input node info of ms_function
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
@@ -1349,6 +1352,7 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
     MS_LOG(DEBUG) << "The input " << i << " value of ms_function graph is: " << inp_i_value->ToString();
     (*input_values).emplace_back(inp_i_value);
   }
+
   // Get weights info of ms_function
   auto df_builder = GetDfbuilder(top_cell()->cell_id());
   MS_EXCEPTION_IF_NULL(df_builder);
@@ -1361,12 +1365,14 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
       auto default_value = param->default_param();
       MS_EXCEPTION_IF_NULL(default_value);
       (*input_values).emplace_back(default_value);
+      op_exec_info->op_inputs.append(default_value);
       // Add weights to df_builder
       SetParamNodeMapInGraphInfoMap(df_builder, param->name(), param);
       MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
                     << default_value->ToString() << ". Its name is: " << param->name();
     }
   }
+
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
   *ms_function_cnode = curr_g_->NewCNode(input_nodes);
@@ -1375,16 +1381,24 @@ void GradExecutor::MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, con
 
 // Make adjoint for ms_function fprop graph and connect it with previous op
 void GradExecutor::MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &fprop_g,
-                                            const py::object &out, const py::args &args) {
+                                            const py::object &out, const py::args &args,
+                                            const std::string &graph_phase) {
   ValuePtrList input_values;
   CNodePtr ms_function_cnode = nullptr;
-  MakeCNodeForMsFunction(ms_func_graph, args, &input_values, &ms_function_cnode);
+  OpExecInfoPtr op_exec_info = std::make_shared<OpExecInfo>();
+  MakeCNodeForMsFunction(ms_func_graph, args, op_exec_info, &input_values, &ms_function_cnode);
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
   SetTupleArgsToGraphInfoMap(curr_g_, out, ms_function_cnode);
   SetNodeMapInGraphInfoMap(curr_g_, GetId(out), ms_function_cnode);
+  // Record ms_function cnode info and update forward tensors
+  op_exec_info->op_name = graph_phase;
+  RecordGradOpInfo(op_exec_info);
+  MS_LOG(DEBUG) << "Ms_function cnode op info: " << op_exec_info->op_info;
+  UpdateForwardTensorInfoInBpropGraph(op_exec_info, out);
   // Add out and dout
   auto out_value = parse::data_converter::PyDataToValue(out);
   MS_EXCEPTION_IF_NULL(out_value);
+  // Do ad grad for ms_function cnode
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
   if (!k_pynative_cell_ptr->KPynativeWithFProp(ms_function_cnode, input_values, out_value, fprop_g)) {
@@ -1936,7 +1950,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
       // top cell
       const auto &pre_top_cell = already_run_top_cell_.at(cell_id);
-      if (!pre_top_cell->is_dynamic() && !pre_top_cell->ms_function_flag()) {
+      if (!pre_top_cell->is_dynamic()) {
         MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic or ms_function, no need to run NewGraphInner again";
         ResetTopCellInfo(pre_top_cell, args);
         set_top_cell(pre_top_cell);
@@ -2420,7 +2434,7 @@ void GradExecutor::CheckNeedCompileGraph() {
   auto new_all_op_info = new_top_cell->all_op_info();
   MS_LOG(DEBUG) << "Pre all op info " << pre_all_op_info;
   MS_LOG(DEBUG) << "New all op info " << new_all_op_info;
-  if (pre_all_op_info != new_all_op_info || new_top_cell->ms_function_flag()) {
+  if (pre_all_op_info != new_all_op_info) {
     MS_LOG(DEBUG) << "The op info has been changed or new top cell has ms_function, need to compile graph again";
     EraseTopCellFromTopCellList(pre_top_cell);
     pre_top_cell->clear();
@@ -2471,7 +2485,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   *ret = BaseRefToPyData(value);
   if (top_cell()->vm_compiled()) {
     MakeNestedCnode(cell, cell_id, forward_args, resource, *ret);
-  } else if (GetHighOrderStackSize() > 2) {
+  } else if (GetHighOrderStackSize() >= 2) {
     SwitchTopcell();
   }
 }
@@ -2497,6 +2511,10 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const std::string &ce
                                    const ResourcePtr &resource, const py::object &out) {
   if (cell_stack_.empty()) {
     MS_LOG(DEBUG) << "No nested grad find";
+    if (GetHighOrderStackSize() == 1) {
+      MS_LOG(DEBUG) << "High order stack size is 1, pop high order stack";
+      (void)PopHighOrderGraphStack();
+    }
     return;
   }
   FuncGraphPtr first_grad_fg = nullptr;
@@ -2699,10 +2717,11 @@ void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &arg
   if (graph_phase().empty()) {
     MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain backend graph which is complied by ms_function";
   }
+  MS_LOG(DEBUG) << "Ms_function graph phase: " << graph_phase();
   // Get ms_function graph
   auto executor = pipeline::ExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
-  auto ms_func_graph = BasicClone(executor->GetFuncGraph(graph_phase()));
+  auto ms_func_graph = executor->GetFuncGraph(graph_phase());
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("before_grad_ms_function.ir", ms_func_graph);
@@ -2717,7 +2736,7 @@ void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &arg
     DumpIR("after_grad_ms_function.ir", fprop_g);
   }
   // Make adjoint for fprop graph of ms function graph
-  grad_executor()->MakeAdjointForMsFunction(ms_func_graph, fprop_g, out, args);
+  grad_executor()->MakeAdjointForMsFunction(ms_func_graph, fprop_g, out, args, graph_phase());
   set_graph_phase("");
 }
 
