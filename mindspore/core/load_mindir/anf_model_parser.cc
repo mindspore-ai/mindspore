@@ -555,6 +555,27 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   return true;
 }
 
+bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value_node_name,
+                                                        const mind_ir::AttributeProto &attr_proto) {
+  std::vector<tensor::TensorPtr> tensor_vec;
+  for (int i = 0; i < attr_proto.tensors_size(); ++i) {
+    mind_ir::TensorProto attr_tensor = attr_proto.tensors(i);
+    const int attr_tensor_type = attr_tensor.data_type();
+    ShapeVector shape;
+    for (int j = 0; j < attr_tensor.dims_size(); ++j) {
+      shape.push_back(attr_tensor.dims(j));
+    }
+    tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+    const std::string &tensor_buf = attr_tensor.raw_data();
+    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+    memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+    tensor_vec.push_back(tensor_info);
+  }
+  auto new_value_node = NewValueNode(MakeValue(tensor_vec));
+  anfnode_build_map_[value_node_name] = new_value_node;
+  return true;
+}
+
 bool MSANFModelParser::ObtainValueNodeInTypeForm(const std::string &value_node_name,
                                                  const mind_ir::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
@@ -644,6 +665,11 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
         new_value_node = NewValueNode(res);
         new_value_node->set_abstract(res->ToAbstract());
         anfnode_build_map_[value_node_name] = new_value_node;
+        break;
+      }
+      if ((value_pos = ref_attr_name.find("Tuple[value")) != std::string::npos && attr_proto.tensors_size() > 1) {
+        MS_LOG(INFO) << "Build TupleTensor ValueNode for primitive.";
+        ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto);
         break;
       }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
