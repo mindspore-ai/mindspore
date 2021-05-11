@@ -40,10 +40,11 @@ if args.device_target == "Ascend":
 
 if __name__ == '__main__':
     if args.model == 'deeplab_v3_s16':
-        network = net_factory.nets_map['deeplab_v3_s16']('eval', args.num_classes, 16, True)
+        network = net_factory.nets_map['deeplab_v3_s16'](args.num_classes, 16)
     else:
-        network = net_factory.nets_map['deeplab_v3_s8']('eval', args.num_classes, 8, True)
+        network = net_factory.nets_map['deeplab_v3_s8'](args.num_classes, 8)
     network = BuildEvalNetwork(network)
+    network.set_trace(False)
     param_dict = load_checkpoint(args.ckpt_file)
 
     # load the parameter into net
