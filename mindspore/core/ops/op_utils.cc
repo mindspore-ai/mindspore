@@ -25,14 +25,11 @@
 
 namespace mindspore {
 namespace ops {
-abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
-  MS_LOG(INFO) << "Do infer shape for op " << op_name;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
+                                       const std::string &op_name) {
   if (x_shape == y_shape) {
-    return std::make_shared<abstract::Shape>(x_shape);
+    return x_shape;
   }
-
   auto x_length = x_shape.size();
   auto y_length = y_shape.size();
   auto length = x_length < y_length ? x_length : y_length;
@@ -53,7 +50,29 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
       MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input can not broadcast";
     }
   }
-  return std::make_shared<abstract::Shape>(broadcast_shape);
+  return broadcast_shape;
+}
+abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
+  MS_LOG(INFO) << "Do infer shape for op " << op_name;
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 2, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack());
+  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack());
+  auto x_shape = x_shape_map[kShape];
+  auto y_shape = y_shape_map[kShape];
+  auto x_min_shape = x_shape_map[kMinShape];
+  auto x_max_shape = x_shape_map[kMaxShape];
+  auto y_min_shape = y_shape_map[kMinShape];
+  auto y_max_shape = y_shape_map[kMaxShape];
+  if (x_shape == y_shape) {
+    return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+  }
+  auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
+  auto min_broadcast_shape = CalBroadCastShape(x_min_shape, y_min_shape, op_name);
+  auto max_broadcast_shape = CalBroadCastShape(x_max_shape, y_max_shape, op_name);
+  return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
 }
 }  // namespace ops
 }  // namespace mindspore
