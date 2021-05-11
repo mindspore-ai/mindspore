@@ -738,7 +738,7 @@ void PostProcessForNewSubGraphCNode(const AnfNodePtr &node, const std::shared_pt
     return;
   }
 
-  std::vector<AnfNodePtr>::iterator delete_begin = latter_to_delete.begin();
+  auto delete_begin = latter_to_delete.begin();
   if (latter_to_delete.size() == sons.size()) {
     // Left one Depend node relation and delete others!
     ++delete_begin;

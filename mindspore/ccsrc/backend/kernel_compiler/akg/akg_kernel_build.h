@@ -33,7 +33,7 @@ using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
 class AkgKernelBuilder {
  public:
   AkgKernelBuilder() = default;
-  ~AkgKernelBuilder() = default;
+  virtual ~AkgKernelBuilder() = default;
 
   virtual KernelBuildClient *GetClient() = 0;
   virtual KernelPackPtr AkgSearchCache(const std::string &kernel_name, const std::string &processor) = 0;
