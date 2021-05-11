@@ -709,5 +709,58 @@ std::string BoolVectorToString(const std::vector<bool> &bool_vec) {
   return str;
 }
 
+TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor) {
+  if (tensor == nullptr || tensor->element() == nullptr) {
+    MS_LOG(ERROR) << "abstract_tensor or abstract_tensor->element() is nullptr";
+    return kTypeUnknown;
+  }
+  auto type_ptr = tensor->element()->GetTypeTrack();
+  return type_ptr->type_id();
+}
+
+TypeId GetParameterDtype(const ParameterPtr &param_node) {
+  auto abstract_base = param_node->abstract();
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  return type_ptr->type_id();
+}
+
+STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
+  // update graph inputs dtype
+  size_t idx = 0;
+  for (auto &input : func_graph->get_inputs()) {
+    TypeId type = GetParameterDtype(input->cast<ParameterPtr>());
+    TensorDataType::GetInstance()->UpdateGraphInputDType(idx, type);
+    idx++;
+  }
+  // update graph outputs dtype
+  auto graph_return = func_graph->get_return();
+  idx = 0;
+  for (auto &input : graph_return->inputs()) {
+    if (input->isa<CNode>()) {
+      if (utils::isa<abstract::AbstractTuple>(input->abstract())) {
+        auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(input->abstract());
+        if (tuple == nullptr) {
+          MS_LOG(ERROR) << "tuple is nullptr";
+          return RET_ERROR;
+        }
+        for (const auto &tuple_item : tuple->elements()) {
+          TypeId type = GetAbstractTensorDtype(tuple_item->cast<abstract::AbstractTensorPtr>());
+          TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, type);
+          idx++;
+        }
+      } else if (utils::isa<abstract::AbstractTensor>(input->abstract())) {
+        TypeId type = GetAbstractTensorDtype(input->abstract()->cast<abstract::AbstractTensorPtr>());
+        TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, type);
+        idx++;
+      } else {
+        TensorDataType::GetInstance()->UpdateGraphOutputDType(idx, kTypeUnknown);
+        idx++;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

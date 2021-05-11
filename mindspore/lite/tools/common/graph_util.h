@@ -32,6 +32,8 @@
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/graph_util.h"
+#include "ir/anf.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace lite {
@@ -103,6 +105,12 @@ std::string GetModelName(const std::string &modelFile);
 std::vector<int> GetTransposePerm(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &cnode);
 
 std::string BoolVectorToString(const std::vector<bool> &bool_vec);
+
+TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor);
+
+TypeId GetParameterDtype(const ParameterPtr &param_node);
+
+STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph);
 
 template <typename T>
 bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
