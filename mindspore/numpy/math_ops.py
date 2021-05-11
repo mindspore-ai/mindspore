@@ -41,8 +41,8 @@ from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
     _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
     _raise_unimplemented_error, _abs, _in
-from .utils import _expand, _broadcast_to, _broadcast_to_shape, _get_size, \
-    _check_input_tensor, _to_tensor, _isnan, _convert_bool_to_int, _to_tensor_origin_dtype
+from .utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
+    _to_tensor, _isnan, _to_tensor_origin_dtype
 
 
 ZERO_TENSOR = asarray_const(0)
@@ -869,7 +869,7 @@ def std(x, axis=None, ddof=0, keepdims=False):
     otherwise over the specified axis.
 
     Note:
-        Numpy arguments `dtype` and `out` are not supported.
+        Numpy arguments `dtype`, `out` and `where` are not supported.
 
     Args:
         x (Tensor): A Tensor to be calculated.
@@ -894,34 +894,8 @@ def std(x, axis=None, ddof=0, keepdims=False):
         >>> print(output)
         1.118034
     """
-    if _is_shape_empty(x.shape):
-        return full((), nan, F.dtype(x))
-
-    if not isinstance(ddof, int):
-        _raise_type_error("integer argument expected, but got ", ddof)
-    if not isinstance(keepdims, int):
-        _raise_type_error("integer argument expected, but got ", keepdims)
-    if axis is None:
-        axis = ()
-    else:
-        _check_axis_type(axis, True, True, False)
-        axis = _canonicalize_axis(axis, x.ndim)
-
-    x_mean = _mean_keepdims(x, axis)
-    x_sub = F.tensor_sub(x, x_mean)
-    x_pow = F.tensor_pow(x_sub, 2)
-    if keepdims:
-        x_sum = _reduce_sum_keepdims(x_pow, axis)
-    else:
-        x_sum = _reduce_sum_default(x_pow, axis)
-
-    if isinstance(axis, int):
-        nums = x.shape[axis]
-    else:
-        nums = _get_size(x, axis)
-
-    x_std = F.tensor_pow(F.tensor_div(x_sum, nums - ddof), 0.5)
-    return x_std
+    x = _to_tensor(x)
+    return x.std(axis, ddof, keepdims)
 
 
 def var(x, axis=None, ddof=0, keepdims=False):
@@ -934,7 +908,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
     otherwise over the specified axis.
 
     Note:
-        Numpy arguments `dtype` and `out` are not supported.
+        Numpy arguments `dtype`, `out` and `where` are not supported.
 
     Args:
         x (Tensor): A Tensor to be calculated.
@@ -957,11 +931,8 @@ def var(x, axis=None, ddof=0, keepdims=False):
         >>> print(output)
         1.25
     """
-    if _is_shape_empty(x.shape):
-        return full((), nan, F.dtype(x))
-
-    x_std = std(x, axis, ddof, keepdims)
-    return F.tensor_pow(x_std, 2)
+    x = _to_tensor(x)
+    return x.var(axis, ddof, keepdims)
 
 
 def ptp(x, axis=None, keepdims=False):
@@ -996,21 +967,7 @@ def ptp(x, axis=None, keepdims=False):
         [2. 0. 5. 2.]
     """
     _check_input_tensor(x)
-    if not isinstance(keepdims, bool):
-        _raise_type_error('keepdims should be boolean')
-    if axis is None:
-        axis = ()
-    else:
-        _check_axis_type(axis, True, True, False)
-        axis = _check_axis_valid(axis, x.ndim)
-
-    if keepdims:
-        x_min = _reduce_min_keepdims(x, axis)
-        x_max = _reduce_max_keepdims(x, axis)
-    else:
-        x_min = _reduce_min_default(x, axis)
-        x_max = _reduce_max_default(x, axis)
-    return F.tensor_sub(x_max, x_min)
+    return x.ptp(axis, keepdims)
 
 
 def average(x, axis=None, weights=None, returned=False):
@@ -1445,8 +1402,7 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [-1.  3.]
     """
-    return _reduce(a, P.ReduceMax(keepdims), cmp_fn=F.maximum, axis=axis, keepdims=keepdims,
-                   initial=initial, where=where)
+    return a.max(axis, keepdims, initial, where)
 
 
 def amin(a, axis=None, keepdims=False, initial=None, where=True):
@@ -1501,8 +1457,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         >>> print(output)
         [10.  1.]
     """
-    return _reduce(a, P.ReduceMin(keepdims), cmp_fn=F.minimum, axis=axis, keepdims=keepdims,
-                   initial=initial, where=where)
+    return a.min(axis, keepdims, initial, where)
 
 
 def hypot(x1, x2, dtype=None):
@@ -2278,6 +2233,8 @@ def _handle_inputs(cov_input, rowvar):
         _raise_value_error("input array has dimension more than 2.")
     cov_input = cov_input.astype("float32")
     cov_input = _expand(cov_input, 2)
+    if not isinstance(rowvar, bool):
+        _raise_type_error("input rowvar should be boolean.")
     if not rowvar and cov_input.shape[0] != 1:
         cov_input = cov_input.T
     return cov_input
@@ -2467,6 +2424,7 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     if initial is not None:
         initial = full(shape, initial, dtype)
         a = cmp_fn(a, initial)
+
     if isinstance(where, Tensor):
         if initial is None:
             return _raise_value_error('initial value must be provided for where masks')
@@ -3133,20 +3091,7 @@ def cumsum(a, axis=None, dtype=None):
          [3. 3. 3.]]
     """
     _check_input_tensor(a)
-    original_dtype = F.dtype(a)
-    # If original tensor is int, and has precision less then int32, convert to int32
-    if _check_same_type(original_dtype, mstype.bool_) or \
-       _check_same_type(original_dtype, mstype.int8) or \
-       _check_same_type(original_dtype, mstype.int16):
-        original_dtype = mstype.int32
-    a = a.astype(mstype.float32)
-    if axis is None:
-        a = a.ravel()
-        axis = 0
-    _check_axis_in_range(axis, a.ndim)
-    if dtype is not None and not _check_same_type(original_dtype, dtype):
-        return _cumsum_default(a, axis).astype(dtype, copy=False)
-    return _cumsum_default(a, axis).astype(original_dtype, copy=False)
+    return a.cumsum(axis, dtype)
 
 
 def nancumsum(a, axis=None, dtype=None):
@@ -3196,7 +3141,7 @@ def nancumsum(a, axis=None, dtype=None):
         [3. 3.]]
     """
     a = F.select(_isnan(a), zeros(F.shape(a), F.dtype(a)), a)
-    return cumsum(a, axis=axis, dtype=dtype)
+    return a.cumsum(axis, dtype)
 
 
 def cbrt(x, dtype=None):
@@ -4079,28 +4024,8 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
         >>> print(np.sum(x, axis=1))
         [10. 35.]
     """
-    if not isinstance(keepdims, int):
-        _raise_type_error("integer argument expected, but got ", keepdims)
-    if initial is not None and not isinstance(initial, (int, float, bool)):
-        _raise_type_error("initial argument should be a scalar.")
-    if axis is None:
-        axis = ()
-    else:
-        _check_axis_type(axis, True, True, False)
-        axis = _canonicalize_axis(axis, a.ndim)
-    a = _convert_bool_to_int(_to_tensor(a))
-    if _is_shape_empty(a.shape):
-        a = F.fill(a.dtype, (1,), 0)
-
-    if keepdims:
-        res = _reduce_sum_keepdims(a, axis)
-    else:
-        res = _reduce_sum_default(a, axis)
-    if initial is not None:
-        res += initial
-    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
-        res = F.cast(res, dtype)
-    return res
+    a = _to_tensor(a)
+    return a.sum(axis, dtype, keepdims, initial)
 
 
 @constexpr
@@ -4327,6 +4252,7 @@ def searchsorted(a, v, side='left', sorter=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import numpy as np
         >>> print(np.searchsorted([1,2,3,4,5], 3))
         2
         >>> print(np.searchsorted([1,2,3,4,5], 3, side='right'))
@@ -4726,7 +4652,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     if density:
         count = F.cast(count, mstype.float32)
         count = count/diff(bin_edges)/F.reduce_sum(count)
-    return count, bin_edges
+    return count.astype(mstype.int32), bin_edges
 
 
 @constexpr
@@ -4865,7 +4791,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
             shape = _expanded_shape(ndim, dedges[i].size, i)
             count /= _to_tensor(dedges[i]).reshape(shape)
         count /= s
-    return count, bin_edges
+    return count.astype(mstype.int32), bin_edges
 
 
 def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
@@ -4929,7 +4855,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         5.33333349e+00,  6.00000000e+00]))
     """
     count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
-    return count, bin_edges[0], bin_edges[1]
+    return count.astype(mstype.int32), bin_edges[0], bin_edges[1]
 
 
 def matrix_power(a, n):

@@ -1535,6 +1535,29 @@ def test_apply_along_axis():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_tensor_resize():
+    x = rand_int(3, 5)
+    mnp_x = to_tensor(x)
+
+    x.resize(2, 4, refcheck=False)
+    mnp_x = mnp_x.resize(2, 4)
+    match_array(mnp_x.asnumpy(), x)
+
+    x.resize((3, 1), refcheck=False)
+    mnp_x = mnp_x.resize((3, 1))
+    match_array(mnp_x.asnumpy(), x)
+
+    x.resize(7, 4, refcheck=False)
+    mnp_x = mnp_x.resize(7, 4)
+    match_array(mnp_x.asnumpy(), x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_piecewise():
     x = rand_int(2, 4)
     mnp_x = to_tensor(x)
@@ -1616,3 +1639,27 @@ def test_apply_over_axes():
         for expected, actual in zip(onp_apply_over_axes(x),
                                     mnp_apply_over_axes(to_tensor(x))):
             match_array(actual.asnumpy(), expected, error=5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_choose():
+    x = rand_int(2, 1, 4).astype(onp.int32)
+    mnp_x = to_tensor(x)
+    y = rand_int(3, 2, 5, 4).astype(onp.int32)
+    match_res(mnp_x.choose, x.choose, y, mode='wrap')
+    match_res(mnp_x.choose, x.choose, y, mode='clip')
+
+    x = rand_int(5, 3, 1, 7).astype(onp.int32)
+    mnp_x = to_tensor(x)
+    y1 = rand_int(7).astype(onp.int32)
+    y2 = rand_int(1, 3, 1).astype(onp.int32)
+    y3 = rand_int(5, 1, 1, 7).astype(onp.int32)
+    onp_arrays = (y1, y2, y3)
+    mnp_arrays = tuple(map(to_tensor, (y1, y2, y3)))
+    match_all_arrays(mnp_x.choose(mnp_arrays, mode='wrap'), x.choose(onp_arrays, mode='wrap'))
+    match_all_arrays(mnp_x.choose(mnp_arrays, mode='clip'), x.choose(onp_arrays, mode='clip'))

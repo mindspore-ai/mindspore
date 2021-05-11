@@ -19,7 +19,8 @@ import inspect
 import math
 from enum import Enum
 from functools import reduce, wraps
-from itertools import repeat
+from itertools import repeat, zip_longest
+from collections import deque
 from collections.abc import Iterable
 import numpy as np
 from mindspore import log as logger
@@ -683,13 +684,13 @@ class Validator:
     def check_swapaxes_axis(axes, ndim):
         """Check all the axes argument for tensor.swapaxes"""
         if isinstance(axes, int):
-            check_axis_in_range(axes, ndim)
+            Validator.check_axis_in_range(axes, ndim)
             return axes % ndim
         if isinstance(axes, (tuple, list)):
             for axis in axes:
                 if not isinstance(axis, int):
                     raise TypeError(f"axis argument should be integer, but got {type(axis)}.")
-                check_axis_in_range(axis, ndim)
+                Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             return axes
         raise TypeError(f"axes should be integer, list or tuple for check, but got {type(axes)}.")
@@ -742,6 +743,95 @@ class Validator:
             raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
         return axis % ndim
 
+    @staticmethod
+    def check_axis_valid(axes, ndim):
+        """
+        Checks axes are valid given ndim, and returns axes that can be passed
+        to the built-in operator (non-negative, int or tuple)
+        """
+        if axes is None:
+            axes = tuple(range(ndim))
+            return axes
+        if isinstance(axes, (tuple, list)):
+            for axis in axes:
+                Validator.check_axis_in_range(axis, ndim)
+            axes = tuple(map(lambda x: x % ndim, axes))
+            if any(axes.count(el) > 1 for el in axes):
+                raise ValueError('duplicate value in "axis"')
+            return axes
+        Validator.check_axis_in_range(axes, ndim)
+        return (axes % ndim,)
+
+    @staticmethod
+    def max_(*args):
+        return max(*args)
+
+    @staticmethod
+    def min_(*args):
+        return min(*args)
+
+    @staticmethod
+    def expanded_shape(ndim, axis_size, axis):
+        """
+        Returns a shape with size = 1 for all dimensions
+        except at axis.
+        """
+        return tuple(axis_size if i == axis else 1 for i in range(ndim))
+
+    @staticmethod
+    def tuple_slice(tup, start, end):
+        """get sliced tuple from start and end."""
+        return tup[start:end]
+
+    @staticmethod
+    def infer_out_shape(*shapes):
+        """
+        Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
+        """
+        shape_out = deque()
+        reversed_shapes = map(reversed, shapes)
+        for items in zip_longest(*reversed_shapes, fillvalue=1):
+            max_size = 0 if 0 in items else max(items)
+            if any(item not in (1, max_size) for item in items):
+                raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+            shape_out.appendleft(max_size)
+        return tuple(shape_out)
+
+    @staticmethod
+    def get_log2_size(size):
+        return math.ceil(math.log2(size))
+
+    @staticmethod
+    def check_axis_type(axis, type_int=True, type_tuple=True, type_list=True):
+        """Check axis argument type."""
+        if type_int and isinstance(axis, int):
+            return True
+        if (type_tuple and isinstance(axis, tuple)) or (type_list and isinstance(axis, list)):
+            for ax in axis:
+                if not isinstance(ax, int):
+                    raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axis}.")
+            return True
+
+        type_str = ""
+        if type_int: type_str += "int, "
+        if type_tuple: type_str += "tuple, "
+        if type_list: type_str += "list, "
+        raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
+
+    @staticmethod
+    def check_and_canonicalize_axes(axes, ndim):
+        """Check whether the types and values of input axes are valid."""
+        axes = axes if isinstance(axes, tuple) else (axes,)
+        new_axes = ()
+        for ax in axes:
+            if not isinstance(ax, int):
+                raise TypeError((f"Each axis should be integer, but got {type(ax)} in {axes}."))
+            if not -ndim <= ax < ndim:
+                raise ValueError(f'axis {ax} is out of bounds for array of dimension {ndim}')
+            ax = ax if ax >= 0 else ax + ndim
+            new_axes += (ax,)
+        return new_axes
+
 
 def check_input_format(input_param):
     """Judge input format."""
@@ -768,13 +858,6 @@ def _expand_tuple(n_dimensions):
         return m
 
     return convert
-
-
-def check_axis_in_range(axis, ndim):
-    """Checks axes are with the bounds of ndim"""
-    if -ndim <= axis < ndim:
-        return True
-    raise ValueError(f'axis {axis} is out of bounds for tensor of dimension {ndim}')
 
 
 def _check_data_type_valid(data, valid_type):
