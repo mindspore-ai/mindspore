@@ -71,6 +71,7 @@ def print_testcase(nptype):
     net_2(x, y)
     net_3(x)
 
+
 class PrintNetString(nn.Cell):
     def __init__(self):
         super(PrintNetString, self).__init__()
@@ -83,6 +84,7 @@ class PrintNetString(nn.Cell):
         self.op("The first Tensor is", x, y, "is the second Tensor")
         return x
 
+
 def print_testcase_string(nptype):
     x = np.ones(18).astype(nptype)
     y = np.arange(9).reshape(3, 3).astype(nptype)
@@ -92,6 +94,29 @@ def print_testcase_string(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = PrintNetString()
     net(x, y)
+
+
+class PrintTypes(nn.Cell):
+    def __init__(self):
+        super(PrintTypes, self).__init__()
+        self.op = P.Print()
+
+    def construct(self, x, y, z):
+        self.op("This is a scalar:", 34, "This is int:", x, "This is float64:", y, "This is int64:", z)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_print_multiple_types():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int32))
+    y = Tensor(np.array([[1], [3], [4], [6], [3]]).astype(np.float64))
+    z = Tensor(np.arange(9).reshape(3, 3).astype(np.int64))
+    net = PrintTypes()
+    net(x, y, z)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
