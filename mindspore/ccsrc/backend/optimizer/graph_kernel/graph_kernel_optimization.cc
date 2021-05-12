@@ -47,6 +47,7 @@ namespace mindspore {
 namespace opt {
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<PassManager>("graphkernel_stage1_preprocess");
+  pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
   pm->AddPass(std::make_shared<SplitAssign>());
 
@@ -57,6 +58,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Spread the MakeTuple input of UpdateState
   pm->AddPass(std::make_shared<SpreadUpdateState>());
+  pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   return pm;
 }
 
