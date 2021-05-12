@@ -278,12 +278,16 @@ def compute_KL_threshold(data, bitwidth):
         Tensor with Shape 1. Threshold to calculate the data.
     """
     bitwidth = bitwidth.num_bits
-
     data_min = 0
     data_max = np.abs(data).max()
     if data_max < 1e-5:
         return 1e-5
     hist, bin_edges = np.histogram(np.abs(data), bins='sqrt', range=(data_min, data_max), density=True)
+    # For the sake of high efficiency, we limit the maximum number of bins to 1024 in `sqrt` mode, If it exceeds the
+    # largest size, turn to use the default bins config.
+    largest_bin_size = 1024
+    if hist.shape[0] > largest_bin_size:
+        hist, bin_edges = np.histogram(np.abs(data), range=(data_min, data_max), density=True)
     hist = hist / np.sum(hist)
     cumsum = np.cumsum(hist)
     bit_pow_range = pow(2, int(bitwidth) - 1)
@@ -353,6 +357,8 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     Returns:
         None
     """
+    if quant_new_params is not None and not isinstance(quant_new_params, list):
+        raise TypeError("quant_new_params must be list or None.")
     iterable_dict = {
         'weight': iter(list(filter(lambda item: item[0].endswith('weight'), params_dict.items()))),
         'bias': iter(list(filter(lambda item: item[0].endswith('bias'), params_dict.items()))),
