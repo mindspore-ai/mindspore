@@ -210,11 +210,7 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     base_path = args.base_path
     data_path = base_path + ""
-    # mkdir_path(data_path)
-    # if not os.path.exists(base_path + "dac.tar.gz"):
-        # os.system(
-            # "wget -P {} -c https://s3-eu-west-1.amazonaws.com/kaggle-display-advertising-challenge-dataset/dac.tar.gz --no-check-certificate".format(
-                # base_path))
+
     os.system("tar -zxvf {}dac.tar.gz".format(data_path))
     print("********tar end***********")
     data_stats = DataStatsDict()
