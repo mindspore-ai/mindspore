@@ -101,41 +101,93 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
       python hccl_tools.py --device_num "[0,8)"
       ```
 
-```network
-# The parameter of training_shape define image shape for network, default is "".
-# It means use 10 kinds of shape as input shape, or it can be set some kind of shape.
-# run training example(1p) by python command.
-python train.py \
-    --data_dir=./dataset/coco2014 \
-    --pretrained_backbone=darknet53_backbone.ckpt \
-    --is_distributed=0 \
-    --lr=0.001 \
-    --loss_scale=1024 \
-    --weight_decay=0.016 \
-    --T_max=320 \
-    --max_epoch=320 \
-    --warmup_epochs=4 \
-    --training_shape=416 \
-    --lr_scheduler=cosine_annealing > log.txt 2>&1 &
+- Train on local
 
-# standalone training example(1p) by shell script
-bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
+  ```network
+  # The parameter of training_shape define image shape for network, default is "".
+  # It means use 10 kinds of shape as input shape, or it can be set some kind of shape.
+  # run training example(1p) by python command.
+  python train.py \
+      --data_dir=./dataset/coco2014 \
+      --pretrained_backbone=darknet53_backbone.ckpt \
+      --is_distributed=0 \
+      --lr=0.001 \
+      --loss_scale=1024 \
+      --weight_decay=0.016 \
+      --T_max=320 \
+      --max_epoch=320 \
+      --warmup_epochs=4 \
+      --training_shape=416 \
+      --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
-# For Ascend device, distributed training example(8p) by shell script
-bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
+  # standalone training example(1p) by shell script
+  bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
 
-# For GPU device, distributed training example(8p) by shell script
-bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
+  # For Ascend device, distributed training example(8p) by shell script
+  bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
 
-# run evaluation by python command
-python eval.py \
-    --data_dir=./dataset/coco2014 \
-    --pretrained=yolov3.ckpt \
-    --testing_shape=416 > log.txt 2>&1 &
+  # For GPU device, distributed training example(8p) by shell script
+  bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 
-# run evaluation by shell script
-bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
-```
+  # run evaluation by python command
+  python eval.py \
+      --data_dir=./dataset/coco2014 \
+      --pretrained=yolov3.ckpt \
+      --testing_shape=416 > log.txt 2>&1 &
+
+  # run evaluation by shell script
+  bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
+  ```
+
+- Train on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+  ```python
+  # Train 8p with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco2014/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_pretrain/'" on base_config.yaml file.
+  #          Set "pretrained_backbone='/cache/checkpoint_path/0-148_92000.ckpt'" on base_config.yaml file.
+  #          Set "weight_decay=0.016" on base_config.yaml file.
+  #          Set "warmup_epochs=4" on base_config.yaml file.
+  #          Set "lr_scheduler='cosine_annealing'" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco2014/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_pretrain/" on the website UI interface.
+  #          Add "pretrained_backbone=/cache/checkpoint_path/0-148_92000.ckpt" on the website UI interface.
+  #          Add "weight_decay=0.016" on the website UI interface.
+  #          Add "warmup_epochs=4" on the website UI interface.
+  #          Add "lr_scheduler=cosine_annealing" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your pretrained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov3_darknet53" on the website UI interface.
+  # (6) Set the startup file to "train.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  #
+  # Eval with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco2014/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on base_config.yaml file.
+  #          Set "pretrained='/cache/checkpoint_path/0-320_102400.ckpt'" on base_config.yaml file.
+  #          Set "testing_shape=416" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco2014/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_trained_ckpt/" on the website UI interface.
+  #          Add "pretrained=/cache/checkpoint_path/0-320_102400.ckpt" on the website UI interface.
+  #          Add "testing_shape=416" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your trained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov3_darknet53" on the website UI interface.
+  # (6) Set the startup file to "eval.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  ```
 
 ## [Script Description](#contents)
 

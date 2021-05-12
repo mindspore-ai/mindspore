@@ -56,7 +56,9 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp -r ../src ./train
+cp -r ../model_utils ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log

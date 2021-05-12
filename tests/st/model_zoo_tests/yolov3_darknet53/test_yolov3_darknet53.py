@@ -226,11 +226,11 @@ def test_yolov3_darknet_8p():
     cur_model_path = os.path.join(cur_path, model_name)
     train_file = os.path.join(cur_model_path, "train.py")
     old_list = ["--lr_scheduler=cosine_annealing"]
-    new_list = ["--lr_scheduler=cosine_annealing --training_shape=416"]
+    new_list = ["--lr_scheduler=cosine_annealing --training_shape=416 --log_interval=10"]
     utils.exec_sed_command(old_list, new_list,
                            os.path.join(cur_model_path, "scripts/run_distribute_train.sh"))
-    old_list = ["default=100", "max_epoch=args.max_epoch"]
-    new_list = ["default=10", "max_epoch=1"]
+    old_list = ["max_epoch=config.max_epoch"]
+    new_list = ["max_epoch=1"]
     utils.exec_sed_command(old_list, new_list, train_file)
     old_list = ["sampler=distributed_sampler"]
     new_list = ["sampler=distributed_sampler, num_samples=100*batch_size"]

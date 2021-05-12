@@ -50,7 +50,9 @@ export DEVICE_NUM=8
 rm -rf ./train_parallel
 mkdir ./train_parallel
 cp ../*.py ./train_parallel
+cp ../*.yaml ./train_parallel
 cp -r ../src ./train_parallel
+cp -r ../model_utils ./train_parallel
 cd ./train_parallel || exit
 env > env.log
 mpirun --allow-run-as-root -n ${DEVICE_NUM} --output-filename log_output --merge-stderr-to-stdout \
