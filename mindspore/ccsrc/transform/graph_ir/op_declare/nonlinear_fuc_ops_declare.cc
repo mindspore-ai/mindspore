@@ -47,6 +47,12 @@ ATTR_MAP(PReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PReluGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(da)}};
 REG_ADPT_DESC(PReluGrad, kNamePreluGrad, ADPT_DESC(PReluGrad))
 
+// Selu
+INPUT_MAP(Selu) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Selu) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Selu) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Selu, kNameSelu, ADPT_DESC(Selu))
+
 // Sigmoid
 INPUT_MAP(Sigmoid) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Sigmoid) = EMPTY_ATTR_MAP;
@@ -70,6 +76,12 @@ INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 REG_ADPT_DESC(Relu6Grad, kNameReLU6Grad, ADPT_DESC(Relu6Grad))
+
+// Softsign
+INPUT_MAP(Softsign) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Softsign) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Softsign) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Softsign, kNameSoftsign, ADPT_DESC(Softsign))
 
 // Softplus
 INPUT_MAP(Softplus) = {{1, INPUT_DESC(x)}};

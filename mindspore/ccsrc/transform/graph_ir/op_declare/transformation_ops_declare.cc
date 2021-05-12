@@ -67,6 +67,14 @@ ATTR_MAP(SpaceToBatchD) = {
 OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatchD, kNameSpaceToBatch, ADPT_DESC(SpaceToBatchD))
 
+// SpaceToBatchNDD
+INPUT_MAP(SpaceToBatchNDD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(SpaceToBatchNDD) = {
+  {"block_shape", ATTR_DESC(block_shape, AnyTraits<std::vector<int64_t>>())},
+  {"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SpaceToBatchNDD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SpaceToBatchNDD, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchNDD))
+
 // BatchToSpaceD
 INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BatchToSpaceD) = {

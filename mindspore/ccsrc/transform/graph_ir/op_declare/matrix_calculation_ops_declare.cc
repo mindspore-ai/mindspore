@@ -41,6 +41,48 @@ ATTR_MAP(ScatterMax) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>()
 OUTPUT_MAP(ScatterMax) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterMax, kNameScatterMax, ADPT_DESC(ScatterMax))
 
+// ScatterMin
+INPUT_MAP(ScatterMin) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterMin) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterMin) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterMin, kNameScatterMin, ADPT_DESC(ScatterMin))
+
+// ScatterAdd
+INPUT_MAP(ScatterAdd) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterAdd) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterAdd) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterAdd, kNameScatterAdd, ADPT_DESC(ScatterAdd))
+
+// ScatterSub
+INPUT_MAP(ScatterSub) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterSub) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterSub) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterSub, kNameScatterSub, ADPT_DESC(ScatterSub))
+
+// ScatterMul
+INPUT_MAP(ScatterMul) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterMul) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterMul) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterMul, kNameScatterMul, ADPT_DESC(ScatterMul))
+
+// ScatterDiv
+INPUT_MAP(ScatterDiv) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterDiv) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterDiv) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterDiv, kNameScatterDiv, ADPT_DESC(ScatterDiv))
+
+// ScatterNdAdd
+INPUT_MAP(ScatterNdAdd) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterNdAdd) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterNdAdd) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterNdAdd, kNameScatterNdAdd, ADPT_DESC(ScatterNdAdd))
+
+// ScatterNdSub
+INPUT_MAP(ScatterNdSub) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterNdSub) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ScatterNdSub) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(ScatterNdSub, kNameScatterNdSub, ADPT_DESC(ScatterNdSub))
+
 // MatMul
 INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},

@@ -94,6 +94,24 @@ ATTR_MAP(Div) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Div) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Div, kNameDiv, ADPT_DESC(Div))
 
+// TruncateDiv
+INPUT_MAP(TruncateDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(TruncateDiv) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TruncateDiv) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(TruncateDiv, kNameTruncateDiv, ADPT_DESC(TruncateDiv))
+
+// TruncateMod
+INPUT_MAP(TruncateMod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(TruncateMod) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TruncateMod) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(TruncateMod, kNameTruncateMod, ADPT_DESC(TruncateMod))
+
+// Xlogy
+INPUT_MAP(Xlogy) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Xlogy) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Xlogy) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Xlogy, kNameXlogy, ADPT_DESC(Xlogy))
+
 // DivNoNan
 INPUT_MAP(DivNoNan) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(DivNoNan) = EMPTY_ATTR_MAP;
@@ -255,6 +273,12 @@ ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))
 
+// Rint
+INPUT_MAP(Rint) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Rint) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Rint) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Rint, kNameRint, ADPT_DESC(Rint))
+
 // BesselI0e
 INPUT_MAP(BesselI0e) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BesselI0e) = EMPTY_ATTR_MAP;
@@ -382,6 +406,12 @@ INPUT_MAP(Square) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Square) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Square) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Square, kNameSquare, ADPT_DESC(Square))
+
+// SquaredDifference
+INPUT_MAP(SquaredDifference) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(SquaredDifference) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SquaredDifference) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SquaredDifference, kNameSquaredDifference, ADPT_DESC(SquaredDifference))
 
 // SquareSumAll
 INPUT_MAP(SquareSumAll) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
