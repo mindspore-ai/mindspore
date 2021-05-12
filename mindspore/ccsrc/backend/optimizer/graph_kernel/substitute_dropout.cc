@@ -34,7 +34,7 @@ namespace prim {
 inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
 }  // namespace prim
 namespace opt {
-unsigned int DropoutExpander::seed_ = time(NULL);
+int64_t DropoutExpander::seed_ = time(nullptr);
 
 AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -52,8 +52,8 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   uniform_real_input[1]->set_abstract(tensor->ToAbstract());
   uniform_real_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
   auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
-  SetNodeAttrSafely("seed", MakeValue(SizeToLong(seed_++)), uniform_real_node);
-  AnfAlgo::SetNodeAttr("seed2", MakeValue(SizeToLong(seed_++)), uniform_real_node);
+  SetNodeAttrSafely("seed", MakeValue(seed_++), uniform_real_node);
+  AnfAlgo::SetNodeAttr("seed2", MakeValue(seed_++), uniform_real_node);
   uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_i64));
   // Set kernel_info for uniform_real node
   auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
