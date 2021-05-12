@@ -734,8 +734,8 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph
       MS_EXCEPTION_IF_NULL(device_address);
       tensor->set_device_address(device_address);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
-                                            LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                            tensor->data_c())) {
+                                            LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
+                                            tensor->device_info().host_format_)) {
         MS_LOG(INFO) << "SyncHostToDevice failed.";
         return false;
       }

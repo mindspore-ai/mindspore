@@ -42,7 +42,8 @@ class AscendDeviceAddress : public DeviceAddress {
   bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
   bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
-  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
+                        const std::string &format = "DefaultFormat") const override;
   void ClearDeviceMemory() override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
   bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,

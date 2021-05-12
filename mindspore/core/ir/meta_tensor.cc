@@ -84,8 +84,8 @@ TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   return type_ptr;
 }
 
-void MetaTensor::SetDeviceInfo(const std::string &format, const TypePtr &data_type) {
-  DeviceInfo info(format, data_type);
+void MetaTensor::SetDeviceInfo(const std::string &format, const TypePtr &data_type, const std::string &host_format) {
+  DeviceInfo info(format, data_type, host_format);
   set_device_info(info);
 }
 

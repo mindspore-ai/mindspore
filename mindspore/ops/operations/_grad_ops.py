@@ -885,7 +885,7 @@ class AvgPool3DGrad(Primitive):
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pads=0, ceil_mode=False,
                  count_include_pad=True, divisor_override=0, data_format="NCDHW"):
-        self.init_prim_io_names(inputs=['origin_input_shape', 'gradS'], outputs=['output'])
+        self.init_prim_io_names(inputs=['origin_input_shape', 'grads'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
         self.add_prim_attr('kernel_size', self.kernel_size)
         self.strides = _check_3d_int_or_tuple('strides', strides, self.name)

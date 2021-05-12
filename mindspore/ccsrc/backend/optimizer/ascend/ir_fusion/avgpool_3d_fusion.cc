@@ -143,6 +143,9 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   }
   // create value node
   tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
+  TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
+  tensor::DeviceInfo device_info{kOpFormat_FRACTAL_Z_3D, tensor_type, kOpFormat_FRACTAL_Z_3D};
+  assist_tensor->set_device_info(device_info);
   auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
   int64_t cnt = c1 * kd * kh * kw;
   for (int64_t i = 0; i < cnt; ++i) {

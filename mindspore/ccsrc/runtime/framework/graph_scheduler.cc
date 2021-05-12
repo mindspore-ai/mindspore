@@ -103,7 +103,7 @@ void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &nod
 
     // Copy data from host tensor to device.
     if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), LongToSize(tensor->data().nbytes()),
-                                         tensor->data_type(), tensor->data_c())) {
+                                         tensor->data_type(), tensor->data_c(), tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " << node->fullname_with_scope();
     }
   }
@@ -179,8 +179,8 @@ void PrepareDataForWeightNode(const AnfNodePtr &node, const TensorPtr &tensor, c
     MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, node name: " << node->fullname_with_scope();
   }
   if (!host_tensor_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0),
-                                             LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                             tensor->data_c())) {
+                                             LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
+                                             tensor->device_info().host_format_)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " << node->fullname_with_scope();
   }
 

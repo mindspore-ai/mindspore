@@ -77,7 +77,8 @@ bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
   return SyncDeviceToHost(size, host_ptr);
 }
 
-bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr) const {
+bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
+                                        const std::string &format) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);

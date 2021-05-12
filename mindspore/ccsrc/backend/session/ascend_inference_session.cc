@@ -47,8 +47,8 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
     if (!AnfAlgo::IsParameterWeight(pk_node)) {
       tensor = inputs[no_weight_input++];
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
-                                            LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                            tensor->data_c())) {
+                                            LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
+                                            tensor->device_info().host_format_)) {
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
     }
@@ -76,8 +76,8 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);
       MS_EXCEPTION_IF_NULL(tensor);
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
-                                            LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                            tensor->data_c())) {
+                                            LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
+                                            tensor->device_info().host_format_)) {
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
     }

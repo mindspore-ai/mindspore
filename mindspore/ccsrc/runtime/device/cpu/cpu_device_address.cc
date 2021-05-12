@@ -74,8 +74,8 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t si
   return true;
 }
 
-bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t size, TypeId type,
-                                        const void *host_ptr) const {
+bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t size, TypeId type, const void *host_ptr,
+                                        const std::string &format) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
