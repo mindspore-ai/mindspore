@@ -229,13 +229,16 @@ class SSIM(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as ops
         >>> net = nn.SSIM()
-        >>> np.random.seed(0)
-        >>> img1 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
-        >>> img2 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
+        >>> img1 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
+        >>> img2 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
         >>> output = net(img1, img2)
         >>> print(output)
-        [-0.15189075]
+        [1.]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
         super(SSIM, self).__init__()
@@ -320,13 +323,16 @@ class MSSSIM(Cell):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as ops
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
-        >>> np.random.seed(0)
-        >>> img1 = Tensor(np.random.random((1, 3, 128, 128)))
-        >>> img2 = Tensor(np.random.random((1, 3, 128, 128)))
+        >>> img1 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
+        >>> img2 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
         >>> output = net(img1, img2)
         >>> print(output)
-        [0.20607519]
+        [1.]
     """
     def __init__(self, max_val=1.0, power_factors=(0.0448, 0.2856, 0.3001, 0.2363, 0.1333), filter_size=11,
                  filter_sigma=1.5, k1=0.01, k2=0.03):

@@ -294,13 +294,19 @@ class BatchNorm1d(_BatchNorm):
         ValueError: If `momentum` is not in range [0, 1].
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as ops
         >>> net = nn.BatchNorm1d(num_features=4)
-        >>> np.random.seed(0)
-        >>> input = Tensor(np.random.randint(0, 255, [2, 4]), mindspore.float32)
+        >>> grad = Tensor(np.array([[0.7, 0.3, 0.7, 0.6],
+        ...                         [0.1, 0.1, 0.8, 0.8]]).astype(np.float32))
+        >>> input = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
+        ...                          [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
         >>> output = net(input)
         >>> print(output)
-        [[171.99915   46.999763  116.99941  191.99904 ]
-         [ 66.999664 250.99875   194.99902  102.99948 ]]
+        [[ 0.6999965   0.4999975  0.4999975  0.59999704 ]
+         [ 0.4999975   0.399998   0.59999704 0.89999545 ]]
     """
 
     def __init__(self,
@@ -395,17 +401,19 @@ class BatchNorm2d(_BatchNorm):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
         >>> net = nn.BatchNorm2d(num_features=3)
-        >>> np.random.seed(0)
-        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mindspore.float32)
+        >>> input = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
         >>> output = net(input)
         >>> print(output)
-        [[[[171.99915   46.999763 ]
-           [116.99941  191.99904  ]]
-          [[ 66.999664 250.99875  ]
-           [194.99902  102.99948  ]]
-          [[  8.999955 210.99895  ]
-           [ 20.999895 241.9988   ]]]]
+        [[[[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]]]
     """
 
     def __init__(self,
@@ -497,9 +505,11 @@ class BatchNorm3d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
         >>> net = nn.BatchNorm3d(num_features=3)
-        >>> np.random.seed(0)
-        >>> input = Tensor(np.random.randint(0, 255, [16, 3, 10, 32, 32]), mindspore.float32)
+        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
         >>> output = net(input)
         >>> print(output.shape)
         (16, 3, 10, 32, 32)
@@ -609,17 +619,16 @@ class GlobalBatchNorm(_BatchNorm):
         >>> init()
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
-        >>> np.random.seed(0)
         >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=2)
-        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mstype.float32)
+        >>> input = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
         >>> output = global_bn_op(input)
         >>> print(output)
-        [[[[171.99915    46.999763]
-           [116.99941   191.99904 ]]
-          [[ 66.999664  250.99875 ]
-           [194.99902   102.99948 ]]
-          [[  8.999955  210.99895 ]
-           [ 20.9999895 241.9988  ]]]]
+        [[[[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]]]
     """
 
     @deprecated("1.2", "SyncBatchNorm", True)
@@ -728,17 +737,16 @@ class SyncBatchNorm(_BatchNorm):
         >>> init()
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
-        >>> np.random.seed(0)
         >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
-        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mstype.float32)
+        >>> input = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
         >>> output = sync_bn_op(input)
         >>> print(output)
-        [[[[171.99915    46.999763]
-           [116.99941   191.99904 ]]
-          [[ 66.999664  250.99875 ]
-           [194.99902   102.99948 ]]
-          [[  8.999955  210.99895 ]
-           [ 20.9999895 241.9988  ]]]]
+        [[[[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]
+          [[ 0.999995 0.999995 ]
+           [ 0.999995 0.999995 ]]]]
     """
 
     def __init__(self,
@@ -926,9 +934,11 @@ class InstanceNorm2d(Cell):
             class inheriting from `Initializer` not exists.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
         >>> net = nn.InstanceNorm2d(3)
-        >>> np.random.seed(0)
-        >>> input = Tensor(np.random.randint(0, 255, [2, 3, 2, 2]), mindspore.float32)
+        >>> input = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
         >>> output = net(input)
         >>> print(output.shape)
         (2, 3, 2, 2)
