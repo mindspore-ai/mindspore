@@ -74,21 +74,17 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
       memcpy_flag_ = true;
     }
 
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemsetAsync(output, static_cast<T>(0.0), output_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemSet failed in TensorScatterUpdateGpuFwdKernel::Launch.");
-
     const size_t update_size = update_size_ / sizeof(T);
     const size_t output_size = output_size_ / sizeof(T);
-
-    TensorScatterUpdate(input, indices, update, output, block_size_, update_size, output_size, indices_dim_0_,
-                        indices_dim_1_, indices_stride_, work_shape_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_, cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
+
+    TensorScatterUpdate(input, indices, update, output, block_size_, update_size, output_size, indices_dim_0_,
+                        indices_dim_1_, indices_stride_, work_shape_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
     return true;
   }
 
