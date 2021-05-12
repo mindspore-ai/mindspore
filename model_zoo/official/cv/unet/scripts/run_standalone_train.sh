@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,31 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+get_real_path() {
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+if [ $# != 1 ] && [ $# != 2 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_train.sh [DATASET]"
-    echo "for example: bash run_standalone_train.sh /path/to/data/"
+    echo "bash scripts/run_standalone_train.sh [DATASET] [DEVICE_ID](option, default is 0)"
+    echo "for example: bash run_standalone_train.sh /path/to/data/ 0"
     echo "=============================================================================================================="
+    exit 1
+fi
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
+export DEVICE_ID=0
+if [ $# != 1 ]
+then
+  export DEVICE_ID=$2
 fi
 
-export DEVICE_ID=0
-python train.py --data_url=$1 > train.log 2>&1 &
+DATASET=$(get_real_path $1)
+echo "========== start run training ==========="
+echo "please get log at train.log"
+python ${PROJECT_DIR}/../train.py --data_url=$DATASET > train.log 2>&1 &

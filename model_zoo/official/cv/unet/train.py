@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
-from src.data_loader import create_dataset, create_cell_nuclei_dataset
+from src.data_loader import create_dataset, create_multi_class_dataset
 from src.loss import CrossEntropyWithLogits, MultiCrossEntropyWithLogits
 from src.utils import StepLossTimeMonitor, UnetEval, TempLoss, apply_eval, filter_checkpoint_parameter_by_list, dice_coeff
 from src.config import cfg_unet
@@ -79,16 +79,18 @@ def train_net(args_opt,
         criterion = MultiCrossEntropyWithLogits()
     else:
         criterion = CrossEntropyWithLogits()
-    if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
-        repeat = cfg['repeat']
+    if 'dataset' in cfg and cfg['dataset'] != "ISBI":
+        repeat = cfg['repeat'] if 'repeat' in cfg else 1
+        split = cfg['split'] if 'split' in cfg else 0.8
         dataset_sink_mode = True
         per_print_times = 0
-        train_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], repeat, batch_size,
-                                                   is_train=True, augment=True, split=0.8, rank=rank,
-                                                   group_size=group_size)
-        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False,
-                                                   eval_resize=cfg["eval_resize"], split=0.8,
-                                                   python_multiprocessing=False)
+        train_dataset = create_multi_class_dataset(data_dir, cfg['img_size'], repeat, batch_size,
+                                                   num_classes=cfg['num_classes'], is_train=True, augment=True,
+                                                   split=split, rank=rank, group_size=group_size, shuffle=True)
+        valid_dataset = create_multi_class_dataset(data_dir, cfg['img_size'], 1, 1,
+                                                   num_classes=cfg['num_classes'], is_train=False,
+                                                   eval_resize=cfg["eval_resize"], split=split,
+                                                   python_multiprocessing=False, shuffle=False)
     else:
         repeat = cfg['repeat']
         dataset_sink_mode = False

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,31 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+get_real_path() {
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+if [ $# != 2 ] && [ $# != 3 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]"
-    echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/"
+    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [DEVICE_ID](option, default is 0)"
+    echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/ 0"
     echo "=============================================================================================================="
+    exit 1
 fi
-
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export DEVICE_ID=0
-python eval.py --data_url=$1 --ckpt_path=$2 > eval.log 2>&1 &
+if [ $# != 2 ]
+then
+  export DEVICE_ID=$3
+fi
+DATASET=$(get_real_path $1)
+CHECKPOINT=$(get_real_path $2)
+echo "========== start run evaluation ==========="
+echo "please get log at eval.log"
+python ${PROJECT_DIR}/../eval.py --data_url=$DATASET --ckpt_path=$CHECKPOINT > eval.log 2>&1 &
