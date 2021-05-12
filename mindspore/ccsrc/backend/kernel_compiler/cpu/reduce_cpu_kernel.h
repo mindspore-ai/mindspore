@@ -38,7 +38,7 @@ class ReduceCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
-  ReduceType reduce_type_;
+  ReduceType reduce_type_{ReduceType::ReduceAll};
   std::function<void(const T *, size_t, T *)> reduce_func_;
 };
 
