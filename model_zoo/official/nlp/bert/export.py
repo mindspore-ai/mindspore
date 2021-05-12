@@ -29,7 +29,7 @@ parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--use_crf", type=str, default="false", help="Use cfg, default is false.")
 parser.add_argument("--downstream_task", type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
                     help="at present，support NER only")
-parser.add_argument("--batch_size", type=int, default=16, help="batch size")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark.")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Bert ckpt file.")
 parser.add_argument("--file_name", type=str, default="Bert", help="bert output air name.")

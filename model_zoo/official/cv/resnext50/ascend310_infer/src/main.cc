@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
   size_t size = all_files.size();
 
   std::shared_ptr<TensorTransform> decode(new Decode());
-  std::shared_ptr<TensorTransform> resize(new Resize({256}));
-  std::shared_ptr<TensorTransform> centercrop(new CenterCrop({224}));
+  std::shared_ptr<TensorTransform> resize(new Resize({256, 256}));
+  std::shared_ptr<TensorTransform> centercrop(new CenterCrop({224, 224}));
   std::shared_ptr<TensorTransform> normalize(new Normalize({123.675, 116.28, 103.53},
                                                            {58.395, 57.12, 57.375}));
   std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
