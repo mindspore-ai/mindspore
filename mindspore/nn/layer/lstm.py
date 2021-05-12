@@ -80,7 +80,7 @@ class LSTM(Cell):
     Details can be found in paper `LONG SHORT-TERM MEMORY
     <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ and
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
-    <https://static.googleusercontent.com/media/research.google.com/zh-CN/pubs/archive/43905.pdf>`_.
+    <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
 
     Args:
         input_size (int): Number of features of input.
@@ -312,7 +312,7 @@ class LSTMCell(Cell):
     Details can be found in paper `LONG SHORT-TERM MEMORY
     <https://www.bioinf.jku.at/publications/older/2604.pdf>`_ and
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
-    <https://static.googleusercontent.com/media/research.google.com/zh-CN/pubs/archive/43905.pdf>`_.
+    <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
 
     LSTMCell is a single-layer RNN, you can achieve multi-layer RNN by stacking LSTMCell.
 
