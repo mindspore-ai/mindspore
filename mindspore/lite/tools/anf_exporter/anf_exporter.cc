@@ -38,6 +38,7 @@
 #include "src/ops/ops_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/converter_context.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -50,7 +51,7 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
     if (node == nullptr) {
       return vecs;
     }
-    if (node->isa<CNode>()) {
+    if (node->isa<mindspore::CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       auto &inputs = cnode->inputs();
       // Check if free variables used.
@@ -72,7 +73,7 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   std::list<CNodePtr> cnodes;
   auto nodes = TopoSort(fg->get_return(), succ_include_fv, BelongSameGraph);
   for (const auto &node : nodes) {
-    auto cnode = dyn_cast<CNode>(node);
+    auto cnode = dyn_cast<mindspore::CNode>(node);
     if (cnode) {
       cnodes.push_back(cnode);
     }
@@ -160,7 +161,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     }
     auto activate_index = dst_node->inputIndex[i];
     auto tensor_input = meta_graph->allTensors[activate_index].get();
-    if (tensor_input->quantParams.empty()) {
+    if (!quant::TensorQuantParamsInited(*tensor_input)) {
+      tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {
         auto input_quant_param_ptr = std::make_unique<schema::QuantParamT>(input_quant_param);
         MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
@@ -243,7 +245,7 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgrap
     if (input_node == nullptr) {
       MS_LOG(ERROR) << "output node is nullptr";
       return RET_NULL_PTR;
-    } else if (input_node->isa<CNode>()) {
+    } else if (input_node->isa<mindspore::CNode>()) {
       auto ret = ConvertInputCNode(input_node, return_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "obtain outputs failed";
@@ -280,13 +282,13 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
   int ret = RET_OK;
   auto cnodes = GetOrderedCNodes(func_graph);
   for (const auto &cnode : cnodes) {
-    auto prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
+    auto prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(0));
     std::unique_ptr<schema::PrimitiveT> primT;
     if (prim == nullptr) {
       auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
       if (fg != nullptr) {
         auto partial_cnode = CreatePartialCnode(fg, cnode);
-        prim = GetValueNode<std::shared_ptr<Primitive>>(partial_cnode->input(0));
+        prim = GetValueNode<std::shared_ptr<mindspore::Primitive>>(partial_cnode->input(0));
         primT = GetPrimitiveT(partial_cnode->input(0));
         MS_ASSERT(primT != nullptr);
         auto pos = fg_subgraph_map_.find(fg);
@@ -567,7 +569,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
   bool is_graph_input = false;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    if (input_node->isa<CNode>()) {
+    if (input_node->isa<mindspore::CNode>()) {
       auto ret = ConvertInputCNode(input_node, fb_node);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "ConvertInputCNode failed";

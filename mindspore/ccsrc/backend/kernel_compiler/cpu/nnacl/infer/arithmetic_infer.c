@@ -20,6 +20,13 @@
 void SetOutputDtypeFormat(const TensorC *input0, const TensorC *input1, TensorC *output) {
   output->format_ = input0->format_;
   output->data_type_ = input0->data_type_;
+  // e.g. input0's shape is 1 and input1's shape is 1 15 15 1
+  // only regard larger shape size input as the right format input currently
+  // legacy problem: if input0 infer failed before, its shape is [-1], and input1's shape is [1,2] which need to
+  // be broadcasted. In this case our program will use input1's format, that's wrong and need to be solved later.
+  if (input0->shape_size_ < input1->shape_size_) {
+    output->format_ = input1->format_;
+  }
   // when input0 is const, it is quanted before insert quant trans op, so use input1 data type instead
   if (((input0->data_ != NULL) && (input1->data_type_ != kTypeUnknown)) ||
       ((input0->data_type_ == kNumberTypeInt8) && (input1->data_type_ == kNumberTypeFloat32))) {
