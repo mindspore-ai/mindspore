@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ resnext export mindir.
 """
 import argparse
 import numpy as np
+from mindspore.common import dtype as mstype
 from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
 from src.config import config
 from src.image_classification import get_network
@@ -38,10 +39,15 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
-    net = get_network(num_classes=config.num_classes, platform=args.device_target)
+    network = get_network(num_classes=config.num_classes, platform=args.device_target)
 
     param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(net, param_dict)
+    load_param_into_net(network, param_dict)
+    if args.device_target == "Ascend":
+        network.to_float(mstype.float16)
+    else:
+        auto_mixed_precision(network)
+    network.set_train(False)
     input_shp = [args.batch_size, 3, args.height, args.width]
     input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp).astype(np.float32))
-    export(net, input_array, file_name=args.file_name, file_format=args.file_format)
+    export(network, input_array, file_name=args.file_name, file_format=args.file_format)

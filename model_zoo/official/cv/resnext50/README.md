@@ -13,6 +13,7 @@
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
     - [Model Export](#model-export)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training Performance](#evaluation-performance)
@@ -212,7 +213,29 @@ acc=93.88%(TOP5)
 python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+The `ckpt_file` parameter is required.
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"].
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export.py. Currently, only batchsize 1 is supported.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result in acc.log file.
+
+```log
+Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
+```
 
 # [Model description](#contents)
 
