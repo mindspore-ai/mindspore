@@ -1698,7 +1698,6 @@ void ForwardExecutor::ClearRes() {
   prim_abs_list_.clear();
   node_abs_map_.clear();
   cast_struct_map_.clear();
-  op_mask_map_.clear();
 }
 
 ForwardExecutorPtr GradExecutor::forward() const {
