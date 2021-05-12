@@ -70,7 +70,7 @@ void PowerBroadCastFp16(const float16_t *input, const float16_t *exponent, float
   }
   int i = 0;
 #ifdef ENABLE_NEON
-  int len_c8 = UP_ROUND(len, C8NUM);
+  int len_c8 = DOWN_ROUND(len, C8NUM);
   float16x8_t scale_8 = vmovq_n_f16(scale);
   float16x8_t shift_8 = vmovq_n_f16(shift);
   for (; i < len_c8; i += C8NUM) {
@@ -88,7 +88,7 @@ void PowerSingleFp16(const float16_t *input, const float16_t *exponent, float16_
   int i = 0;
   PowerScalarFunFp16 PowerScalarFunFp16_ = NULL;
 #ifdef ENABLE_NEON
-  int len_c8 = UP_ROUND(len, C8NUM);
+  int len_c8 = DOWN_ROUND(len, C8NUM);
   float16x8_t scale_8 = vmovq_n_f16(scale);
   float16x8_t shift_8 = vmovq_n_f16(shift);
   for (; i < len_c8; i += C8NUM) {

@@ -158,9 +158,9 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
             if (ow_block < ow_block_num[oc_block - 1]) {  // ow is not enough and process one ow
               ow_block = 1;
             }
-            kernel[oc_block - 1][ow_block > 1](dst_w + ow * sw_param->block_channel_, src_w, weight, bias, kernel_h,
-                                               kernel_w, act_type, ow_block, oc_block, oc_algin, ic_algin, in_kw_step,
-                                               in_kh_step, in_sw_step, 0);
+            kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
+              dst_w + ow * sw_param->block_channel_, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block,
+              oc_block, oc_algin, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0);
             src_w += ow_block * in_sw_step;
           }
           // ow in left
@@ -177,11 +177,11 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
 void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_sw_step *= 4;
-  in_kw_step *= 4;
-  oc_algin *= 4;
-  kw_remainder *= 4;
+  in_kh_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -315,10 +315,10 @@ void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  oc_algin *= 4;
-  kw_remainder *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -397,13 +397,13 @@ void SWConv1x32Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  in_sw_step *= 4;
-  kw_remainder *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= 4;
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -545,10 +545,10 @@ void SWConv4x24Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  kw_remainder *= 4;
-  oc_algin *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -621,13 +621,13 @@ void SWConv1x24Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  in_sw_step *= 4;
-  kw_remainder *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= 4;
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -772,10 +772,10 @@ void SWConv6x16Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  kw_remainder *= 4;
-  oc_algin *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -842,15 +842,15 @@ void SWConv1x16Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_sw_step *= 4;
-  in_kw_step *= 4;
-  kw_remainder *= 4;
+  in_kh_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
   size_t src_3_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_algin;
   float *dst_5 = dst + 5 * oc_algin;
   float *dst_9 = dst + 9 * oc_algin;
-  oc_algin *= 4;
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %0\n"
     "je 0f\n"
@@ -1001,12 +1001,12 @@ void SWConv12x8Kernel(float *dst, const float *src, const float *weight, const f
 void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_sw_step *= 4;
-  in_kw_step *= 4;
+  in_kh_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
   size_t src_step = 3 * in_sw_step;
   float *dst_3 = dst + 3 * oc_algin;
-  oc_algin *= 4;
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
@@ -1091,10 +1091,10 @@ void SWConv4x8Kernel(float *dst, const float *src, const float *weight, const fl
 void SWConv1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                      size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                      size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  in_kh_step *= 4;
-  in_kw_step *= 4;
-  kw_remainder *= 4;
-  oc_algin *= 4;
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  oc_algin *= sizeof(float);
   asm volatile(
     "cmpq $0, %2\n"
     "je 0f\n"
