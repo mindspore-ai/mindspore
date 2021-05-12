@@ -403,6 +403,8 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
             tensor_positions += (i,)
         elif i in sequence_positions:
             tensor_index = const_utils.sequence_to_index(index, dim_size)
+            if tensor_index is False:
+                const_utils.raise_index_error('Tensor with size 0 is not supported')
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
             tensor_positions += (i,)
