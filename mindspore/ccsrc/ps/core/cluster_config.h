@@ -31,23 +31,16 @@ namespace core {
  * Configuration information read through environment variables and configuration files, generally immutable
  */
 struct ClusterConfig {
-  ClusterConfig()
-      : initial_worker_num(0),
-        initial_server_num(0),
+  explicit ClusterConfig(const uint32_t &worker_num, const uint32_t &server_num, std::string host, const uint16_t &port)
+      : initial_worker_num(worker_num),
+        initial_server_num(server_num),
         heartbeat_interval(3),
-        scheduler_host(""),
-        scheduler_port(0),
+        scheduler_host(host),
+        scheduler_port(port),
         heartbeat_timeout(30),
         cluster_available_timeout(300),
         connect_interval(100),
         scheduler_timeout(30) {}
-
-  void Init(const uint32_t &worker_num, const uint32_t &server_num, std::string host, const uint16_t &port) {
-    initial_worker_num = worker_num;
-    initial_server_num = server_num;
-    scheduler_host = host;
-    scheduler_port = port;
-  }
 
   // Configure through environment variables:MS_WORKER_NUM
   uint32_t initial_worker_num;

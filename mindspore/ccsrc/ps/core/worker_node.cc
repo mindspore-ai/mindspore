@@ -32,11 +32,6 @@ bool WorkerNode::Start(const uint32_t &timeout) {
   }
   MS_LOG(INFO) << "The node is ready to fetch servers!";
 
-  // If the cluster is ready to use, then Get the address of all the servers
-  if (!is_timeout_.load()) {
-    FetchServers(client_to_scheduler_);
-    MS_LOG(INFO) << "Worker node get all the servers address successful!";
-  }
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "The Worker node has successfully started.";
   return true;
@@ -44,10 +39,9 @@ bool WorkerNode::Start(const uint32_t &timeout) {
 
 void WorkerNode::Initialize() {
   is_already_stopped_ = false;
-  node_info_.node_id_ = CommUtil::GenerateUUID();
-  node_info_.node_role_ = NodeRole::WORKER;
-  MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << ", the node id is:" << node_info_.node_id_;
+  InitServerHandler();
+  CreateTcpServer();
+  InitNode(NodeRole::WORKER);
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node init client timeout!";
@@ -55,11 +49,30 @@ void WorkerNode::Initialize() {
   MS_LOG(INFO) << "Worker node init client successful!";
 }
 
+void WorkerNode::CreateTcpServer() {
+  std::string interface;
+  std::string server_ip;
+  CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+  server_ = std::make_shared<TcpServer>(server_ip, 0);
+  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                  const Protos &protos, const void *data, size_t size) {
+    if (server_handler_.count(meta->cmd()) == 0) {
+      MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+    }
+    const auto &handler_ptr = server_handler_[meta->cmd()];
+    (this->*handler_ptr)(conn, meta, protos, data, size);
+  });
+  server_->Init();
+  server_thread_ = std::make_unique<std::thread>([&]() {
+    MS_LOG(INFO) << "The worker node start a tcp server!";
+    server_->Start();
+  });
+}
+
 bool WorkerNode::Stop() {
   if (!is_already_stopped_.load()) {
     MS_LOG(INFO) << "Stop worker node!";
     is_ready_ = true;
-    is_timeout_ = true;
     is_finish_ = true;
     client_to_scheduler_->Stop();
     if (!connected_nodes_.empty()) {
@@ -67,6 +80,8 @@ bool WorkerNode::Stop() {
         connected_node.second->Stop();
       }
     }
+    server_->Stop();
+    server_thread_->join();
     is_already_stopped_ = true;
   }
   return true;

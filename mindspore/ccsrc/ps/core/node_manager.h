@@ -34,6 +34,7 @@
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
+#include "ps/core/cluster_metadata.h"
 
 namespace mindspore {
 namespace ps {
@@ -41,52 +42,75 @@ namespace core {
 class NodeManager {
  public:
   NodeManager()
-      : is_cluster_ready_(false),
-        is_cluster_finish_(false),
-        is_cluster_timeout_(false),
-        is_node_timeout_(false),
-        total_node_num_(0),
+      : initial_total_node_num_(0),
+        total_node_num_(-1),
         current_node_num_(-1),
         next_worker_rank_id_(-1),
-        next_server_rank_id_(-1) {}
+        next_server_rank_id_(-1),
+        meta_data_(nullptr),
+        node_state_(NodeState::NODE_STARTING),
+        cluster_state_(ClusterState::ClUSTER_STARTING) {}
   virtual ~NodeManager() = default;
 
-  enum ClusterState { STARTING, STARTED, FAILED, STOPPING, STOPPED };
-
-  void InitNodeNum();
+  // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
+  void InitNode();
   int NextRankId(const RegisterMessage &register_message);
+
   void UpdateHeartbeat(const std::string &node_id);
-  void UpdateNodeFinishState(const std::string &node_id);
-  bool CheckNodesFinishState();
+  bool CheckNodesScaluOutState();
+  void UpdateNodeScaleInState(const std::string &node_id);
+  bool CheckNodesScaleInState();
+
   std::vector<ServersMeta> FetchServersMeta();
-  void UpdateClusterState();
+  void UpdateCluster();
   void CheckClusterTimeout();
   void AddFinishNode(const std::string &finish_message);
-  std::unordered_map<std::string, NodeInfo> nodes_info();
-  bool is_cluster_ready();
-  bool is_cluster_finish();
-  bool is_cluster_timeout();
-  bool is_node_timeout();
-  void set_cluster_timeout(bool is_cluster_timeout);
+
+  // When workers and servers registered to scheduler, the scheduler will collect the number of registered
+  // nodes and Determine whether the registered number of worker and server is equal to total_node_num_.
+  bool CheckRegisterNum();
+  // When workers and servers send a finish message to the scheduler, the scheduler will collect the number of
+  // finish nodes and Determine whether the finished nodes are equal to total_node_num_.
+  bool CheckFinishNum();
+
+  std::unordered_map<std::string, NodeInfo> &nodes_info();
+
+  void set_total_node_num(const int32_t &node_num);
+  const int32_t &total_node_num();
+
+  void UpdateNodeState(const NodeState &state);
+  void UpdateClusterState(const ClusterState &state);
+  NodeState GetNodeState();
+  ClusterState GetClusterState();
 
  private:
-  std::atomic<bool> is_cluster_ready_;
-  std::atomic<bool> is_cluster_finish_;
-  std::atomic<bool> is_cluster_timeout_;
-  std::atomic<bool> is_node_timeout_;
-  uint32_t total_node_num_;
+  std::mutex node_mutex_;
+  std::mutex cluster_mutex_;
+
+  uint32_t initial_total_node_num_;
+  int32_t total_node_num_;
   int32_t current_node_num_;
+
   std::atomic<int> next_worker_rank_id_;
   std::atomic<int> next_server_rank_id_;
+
   // worker nodes and server nodes
   std::unordered_map<std::string, NodeInfo> nodes_info_;
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
+
   std::unordered_map<std::string, timeval> heartbeats_;
   std::unordered_set<std::string> heartbeats_finish_nodes_;
+  std::unordered_set<std::string> heartbeats_scale_out_nodes_;
+  std::unordered_set<std::string> heartbeats_scale_in_nodes_;
   // timeout nodes
   std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
   std::unordered_set<std::string> finish_nodes_id_;
+
+  std::unique_ptr<ClusterMetadata> meta_data_;
+
+  NodeState node_state_;
+  ClusterState cluster_state_;
 };
 }  // namespace core
 }  // namespace ps

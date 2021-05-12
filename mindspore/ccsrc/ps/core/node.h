@@ -47,13 +47,20 @@ class Node {
   Node()
       : is_ready_(false),
         is_finish_(false),
-        is_timeout_(false),
+        is_node_ready_scale_out_(false),
+        is_node_ready_scale_in_(false),
+        is_cluster_ready_scale_out_(false),
+        is_cluster_ready_scale_in_(false),
+        update_local_servers_(false),
         is_already_stopped_(true),
         is_already_finished_(false),
-        next_request_id_(0) {}
+        next_request_id_(0),
+        current_node_state_(NodeState::NODE_STARTING),
+        current_cluster_state_(ClusterState::ClUSTER_STARTING) {}
   virtual ~Node() = default;
 
   using OnNodeEventMessage = std::function<void(const NodeEvent &event)>;
+
   using MessageCallback = std::function<void()>;
 
   virtual bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) = 0;
@@ -64,13 +71,37 @@ class Node {
   uint32_t rank_id() const;
   NodeRole role() const;
 
+  bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
+
  protected:
   bool WaitForStart(const uint32_t &timeout);
+
+  // Send data synchronously
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
+                       const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
+                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
+  // Send data asynchronously
+  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+                            const Protos &protos, const void *data, size_t size);
+
+  uint64_t AddMessageTrack(const uint32_t &expected_response);
+  bool CheckMessageTrack(const uint64_t &request_id);
+  void NotifyMessageArrival(std::shared_ptr<MessageMeta> meta);
 
   NodeInfo node_info_;
   std::atomic<bool> is_ready_;
   std::atomic<bool> is_finish_;
-  std::atomic<bool> is_timeout_;
+
+  std::atomic<bool> is_node_ready_scale_out_;
+  std::atomic<bool> is_node_ready_scale_in_;
+
+  std::atomic<bool> is_cluster_ready_scale_out_;
+  std::atomic<bool> is_cluster_ready_scale_in_;
+
+  // Determine whether to update the ip and port of the locally cached servers.
+  std::atomic<bool> update_local_servers_;
+
   std::atomic<bool> is_already_stopped_;
   std::atomic<bool> is_already_finished_;
   std::atomic_uint64_t next_request_id_;
@@ -80,6 +111,14 @@ class Node {
   std::mutex wait_finish_mutex_;
   std::condition_variable wait_finish_cond_;
   std::mutex finish_mutex_;
+
+  // the key is: request_id, the value is: <expected responses, actual responses>
+  std::unordered_map<uint64_t, std::pair<uint32_t, uint32_t>> message_tracker_;
+  std::mutex message_tracker_mutex_;
+  std::condition_variable message_tracker_cond_;
+
+  NodeState current_node_state_;
+  ClusterState current_cluster_state_;
 };
 }  // namespace core
 }  // namespace ps

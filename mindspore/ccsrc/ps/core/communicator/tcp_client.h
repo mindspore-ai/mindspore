@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_CLIENT_H_
 #define MINDSPORE_CCSRC_PS_CORE_COMMUNICATOR_TCP_CLIENT_H_
 
-#include "ps/core/communicator/tcp_message_handler.h"
-
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <event2/thread.h>
@@ -33,13 +31,13 @@
 #include <atomic>
 #include <condition_variable>
 
-#include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
 #include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"
+#include "ps/core/communicator/tcp_message_handler.h"
 
 namespace mindspore {
 namespace ps {

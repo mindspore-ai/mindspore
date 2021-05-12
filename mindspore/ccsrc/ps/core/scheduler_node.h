@@ -27,20 +27,31 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
 #include "ps/core/node_manager.h"
 #include "ps/core/node.h"
+#include "ps/core/communicator/request_process_result_code.h"
+#include "ps/core/communicator/http_message_handler.h"
+#include "ps/constants.h"
+#include "ps/core/cluster_metadata.h"
+#include "ps/core/communicator/http_server.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
 class SchedulerNode : public Node {
  public:
-  SchedulerNode() : server_(nullptr), scheduler_thread_(nullptr), update_state_thread_(nullptr) {}
+  SchedulerNode()
+      : server_(nullptr),
+        scheduler_thread_(nullptr),
+        update_state_thread_(nullptr),
+        restful_thread_(nullptr),
+        http_server_(nullptr),
+        client_thread_(nullptr),
+        is_client_started_(false) {}
   ~SchedulerNode() override;
 
   typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
@@ -54,15 +65,22 @@ class SchedulerNode : public Node {
   void Initialize();
   void InitCommandHandler();
   void CreateTcpServer();
+  void StartUpdateClusterStateTimer();
+  const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
+
   void ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                         std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
   void ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void StartUpdateClusterStateTimer();
   void ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                      std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessFetchServers(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                           std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                            std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+
+  // After scheduler collects all registered message, it actively sends metadata to workers and servers.
+  void SendMetadata(const std::shared_ptr<TcpClient> &client);
+  // // After scheduler collects all finish message, it actively sends finish message to workers and servers.
+  void SendFinish(const std::shared_ptr<TcpClient> &client);
 
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
@@ -70,6 +88,14 @@ class SchedulerNode : public Node {
   std::unordered_map<NodeCommand, ResponseHandler> handlers_;
 
   NodeManager node_manager_;
+
+  std::unique_ptr<std::thread> restful_thread_;
+  std::shared_ptr<HttpServer> http_server_;
+
+  std::unordered_map<std::string, std::shared_ptr<TcpClient>> connected_nodes_;
+
+  std::unique_ptr<std::thread> client_thread_;
+  std::atomic<bool> is_client_started_;
 };
 }  // namespace core
 }  // namespace ps

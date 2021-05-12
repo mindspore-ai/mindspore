@@ -176,7 +176,8 @@ class PSContext {
         client_epoch_num_(25),
         client_batch_size_(32),
         client_learning_rate_(0.001),
-        secure_aggregation_(false) {}
+        secure_aggregation_(false),
+        cluster_config_(nullptr) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -234,9 +235,8 @@ class PSContext {
   bool secure_aggregation_;
 
   // The cluster config read through environment variables, the value does not change.
-  core::ClusterConfig cluster_config_;
+  std::unique_ptr<core::ClusterConfig> cluster_config_;
 };
 }  // namespace ps
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_PS_CONTEXT_H_
