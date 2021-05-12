@@ -76,6 +76,7 @@ class AnfExporter {
 
  private:
   std::map<std::pair<AnfNodePtr, int>, int> node_id_map_;
+  // Key is a pair of node and its output id. Value is the mapped tensor id of meta_graph.
   std::vector<schema::CNodeT *> graph_input_nodes_;
   // The first item is FuncGraph which has been exported, the second item is the subgraph index in meta_graph
   std::map<FuncGraphPtr, int> fg_subgraph_map_;

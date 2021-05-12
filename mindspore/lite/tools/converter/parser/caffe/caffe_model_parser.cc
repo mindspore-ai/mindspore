@@ -84,12 +84,6 @@ int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std:
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
-
-  status = UpdateFuncGraphInputsAndOutputsDtype(res_graph_);
-  if (RET_OK != status) {
-    MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
-    return status;
-  }
   return RET_OK;
 }
 

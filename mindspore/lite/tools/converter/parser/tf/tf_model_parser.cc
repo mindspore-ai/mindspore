@@ -548,12 +548,6 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return status;
   }
-
-  status = UpdateFuncGraphInputsAndOutputsDtype(res_graph_);
-  if (RET_OK != status) {
-    MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
-    return status;
-  }
   return RET_OK;
 }
 

@@ -29,31 +29,30 @@
 namespace mindspore {
 namespace lite {
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
-  if (flag.fmkIn == "MINDIR") {
+  FuncGraphPtr func_graph = nullptr;
+  if (flag.fmk == converter::FmkType::FmkType_MS) {
     kernel::PopulateTrainParameters();
-    auto func_graph = LoadMindIR(flag.modelFile);
+    func_graph = LoadMindIR(flag.modelFile);
     if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "get funcgraph failed.";
+      MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
       return nullptr;
     }
     func_graph->set_attr("graph_name", MakeValue("main_graph"));
     func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
-
-    auto status = UpdateFuncGraphInputsAndOutputsDtype(func_graph);
-    if (RET_OK != status) {
-      MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
-      return nullptr;
-    }
-    return func_graph;
   } else {
     model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmkIn);
-    if (model_parser_ != nullptr) {
-      return model_parser_->Parse(flag.modelFile, flag.weightFile);
-    } else {
+    if (model_parser_ == nullptr) {
       MS_LOG(ERROR) << "get funcGraph failed for fmk:" << flag.fmkIn;
       return nullptr;
     }
+    func_graph = model_parser_->Parse(flag.modelFile, flag.weightFile);
   }
+
+  if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
+    return nullptr;
+  }
+  return func_graph;
 }
 
 schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
