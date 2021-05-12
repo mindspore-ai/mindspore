@@ -109,7 +109,7 @@ class Conv2d(_Conv):
     2D convolution layer.
 
     Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size, :math:`C_{in}` is channel number, and :math:`H_{in}, W_{in})` are height and width.
+    where :math:`N` is batch size, :math:`C_{in}` is channel number, and :math:`H_{in}, W_{in}` are height and width.
     For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
 
     .. math::
