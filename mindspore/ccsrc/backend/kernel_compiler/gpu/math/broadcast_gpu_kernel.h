@@ -133,6 +133,11 @@ class BroadcastOpGpuKernel : public GpuKernel {
       {"Greater", BROADCAST_TYPE_GREATER},
       {"Less", BROADCAST_TYPE_LESS},
       {"Equal", BROADCAST_TYPE_EQUAL},
+      {"GreaterEqual", BROADCAST_TYPE_GREATER_EQUAL},
+      {"LessEqual", BROADCAST_TYPE_LESS_EQUAL},
+      {"NotEqual", BROADCAST_TYPE_NOT_EQUAL},
+      {"LogicalAnd", BROADCAST_TYPE_LOGICAL_AND},
+      {"LogicalOr", BROADCAST_TYPE_LOGICAL_OR},
     };
 
     auto iter = kBroadcastCmpTypeMap.find(kernel_name);
