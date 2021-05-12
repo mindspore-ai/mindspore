@@ -53,12 +53,14 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
   my_conf->set_worker_connector_size(3);
   my_conf->set_op_connector_size(4);
   my_conf->set_seed(5);
+  my_conf->set_enable_shared_mem(false);
 
 
   ASSERT_EQ(my_conf->num_parallel_workers(), 2);
   ASSERT_EQ(my_conf->worker_connector_size(), 3);
   ASSERT_EQ(my_conf->op_connector_size(), 4);
   ASSERT_EQ(my_conf->seed(), 5);
+  ASSERT_EQ(my_conf->enable_shared_mem(), false);
 
   std::string file = datasets_root_path_ + "/declient.cfg";
   ASSERT_TRUE(my_conf->LoadFile(file));

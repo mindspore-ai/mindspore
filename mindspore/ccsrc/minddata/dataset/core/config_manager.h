@@ -222,6 +222,14 @@ class ConfigManager {
   // @return The experimental config used by AutoNumWorker, each 1 refers to a different setup configuration
   void set_auto_worker_config_(uint8_t cfg) { auto_worker_config_ = cfg; }
 
+  // setter function
+  // @param enable - To enable multiprocessing to use shared memory
+  void set_enable_shared_mem(bool enable) { enable_shared_mem_ = enable; }
+
+  // getter function
+  // @return - Flag to indicate whether shared memory for multi-processing is enabled
+  bool enable_shared_mem() { return enable_shared_mem_; }
+
  private:
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
@@ -244,6 +252,7 @@ class ConfigManager {
   int32_t num_cpu_threads_;
   int32_t auto_num_workers_num_shards_;
   uint8_t auto_worker_config_;
+  bool enable_shared_mem_;
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);

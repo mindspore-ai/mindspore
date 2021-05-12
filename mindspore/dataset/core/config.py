@@ -26,7 +26,7 @@ from mindspore import log as logger
 __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
            'get_num_parallel_workers', 'set_numa_enable', 'get_numa_enable', 'set_monitor_sampling_interval',
            'get_monitor_sampling_interval', 'load', 'get_callback_timeout', 'set_auto_num_workers',
-           'get_auto_num_workers', '_init_device_info']
+           'get_auto_num_workers', '_init_device_info', 'set_enable_shared_mem', 'get_enable_shared_mem']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
@@ -374,3 +374,29 @@ def _stop_dataset_profiler():
         _config.stop_dataset_profiler(True)
         logger.warning("Profiling: waiting for dataset part profiling stop.")
         time.sleep(1)
+
+def get_enable_shared_mem():
+    """
+    Get the default state of shared mem enabled variable.
+
+
+    Returns:
+        bool, the state of shared mem enabled variable (default: True).
+    """
+    return _config.get_enable_shared_mem()
+
+def set_enable_shared_mem(enable):
+    """
+    Set the default state of shared memory flag. If shared_mem_enable is True, will use shared memory queues
+    to pass data to processes that are created for operators that set multiprocessing=True.
+
+    Args:
+        enable (bool): Whether to use shared memory in operators with "multiprocessing=True"
+
+    Raises:
+        TypeError: If enable is not a boolean data type.
+
+    Examples:
+        >>> ds.config.set_enable_shared_mem(True)
+    """
+    _config.set_enable_shared_mem(enable)
