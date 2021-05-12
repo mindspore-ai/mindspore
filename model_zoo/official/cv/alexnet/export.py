@@ -17,21 +17,13 @@
 python export.py
 """
 
-import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
+from src.model_utils.config import config
+from src.alexnet import AlexNet
 
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
-from src.alexnet import AlexNet
 
-
-if os.path.exists(config.data_path_local):
-    ckpt_path = config.ckpt_path_local
-else:
-    ckpt_path = os.path.join(config.data_path, 'checkpoint_alexnet-30_1562.ckpt')
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":
@@ -40,7 +32,7 @@ if config.device_target == "Ascend":
 if __name__ == '__main__':
     net = AlexNet(num_classes=config.num_classes)
 
-    param_dict = load_checkpoint(ckpt_path)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
     input_arr = Tensor(np.zeros([config.batch_size, 3, config.image_height, config.image_width]), ms.float32)

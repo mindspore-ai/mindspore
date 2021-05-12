@@ -19,17 +19,14 @@ python train.py --data_path /YourDataPath
 """
 
 import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
-
-# from src.config import alexnet_cifar10_config, alexnet_imagenet_config
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 from src.dataset import create_dataset_cifar10, create_dataset_imagenet
 from src.generator_lr import get_lr_cifar10, get_lr_imagenet
 from src.alexnet import AlexNet
 from src.get_param_groups import get_param_groups
+
 import mindspore.nn as nn
 from mindspore.communication.management import init, get_rank
 from mindspore import dataset as de
@@ -44,14 +41,9 @@ from mindspore.common import set_seed
 set_seed(1)
 de.config.set_seed(1)
 
-if os.path.exists(config.data_path_local):
-    config.data_path = config.data_path_local
-    config.checkpoint_path = os.path.join(config.checkpoint_path, str(get_rank_id()))
-else:
-    config.checkpoint_path = os.path.join(config.output_path, config.checkpoint_path, str(get_rank_id()))
-
 def modelarts_pre_process():
     pass
+    # config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_alexnet():
@@ -135,9 +127,9 @@ def train_alexnet():
         raise ValueError("Unsupported platform.")
 
     if device_num > 1:
-        ckpt_save_dir = os.path.join(config.checkpoint_path + "_" + str(get_rank()))
+        ckpt_save_dir = os.path.join(config.ckpt_path + "_" + str(get_rank()))
     else:
-        ckpt_save_dir = config.checkpoint_path
+        ckpt_save_dir = config.ckpt_path
 
     time_cb = TimeMonitor(data_size=step_per_epoch)
     config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,

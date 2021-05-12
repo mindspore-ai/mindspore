@@ -11,9 +11,8 @@ checkpoint_file: './checkpoint/checkpoint_alexnet-30_1562.ckpt'
 device_target: Ascend
 enable_profiling: False
 
-data_path_local: '/data/hcm/data/ImageNet_Original/'
-ckpt_path_local: '/data/hcm/data/ckpt_alexnet/checkpoint_alexnet-30_1562.ckpt'
-
+ckpt_path: "/cache/data"
+ckpt_file: "/cache/data/checkpoint_alexnet-30_1562.ckpt"
 # ==============================================================================
 # Training options
 num_classes: 1000
