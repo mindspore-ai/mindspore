@@ -41,9 +41,6 @@ void AiCoreDynamicKernel::UpdateArgs() {}
 void AiCoreDynamicKernel::Initialize() {}
 void AiCoreDynamicKernel::PostExecute() {}
 
-bool HcclExecutorManager::Initialize() { return true; }
-bool HcclExecutorManager::Finalize() { return true; }
-
 void OpTilingCalculater::Init() {}
 void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const optiling::OpCompileInfo &op_compile_info,
                      const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,

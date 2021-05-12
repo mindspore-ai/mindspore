@@ -248,6 +248,13 @@ if(NOT ENABLE_GE)
                 DESTINATION ${INSTALL_LIB_DIR}
                 COMPONENT mindspore
             )
+
+            install(
+              TARGETS hccl_plugin
+              DESTINATION ${INSTALL_LIB_DIR}
+              COMPONENT mindspore
+            )
+
             install(
                 FILES
                     ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so

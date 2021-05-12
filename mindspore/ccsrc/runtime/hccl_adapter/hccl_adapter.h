@@ -20,8 +20,15 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
 #include "mindspore/core/ir/anf.h"
 #include "hccl/hccl_types.h"
+#include "runtime/hccl_adapter/plugin/hccl_plugin.h"
+
+namespace ge {
+class OpsKernelInfoStore;
+class OpsKernelBuilder;
+}  // namespace ge
 
 namespace mindspore::hccl {
 struct HcclTaskInfo {
@@ -30,11 +37,76 @@ struct HcclTaskInfo {
   int64_t stream_num;
 };
 
-bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
-bool FinalizeHccl();
-bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists);
-int64_t CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype);
-void *GetHcclOpsKernelInfoStore();
-std::string GetHcclType(const AnfNodePtr &node);
+class HcclAdapter {
+ public:
+  static HcclAdapter &GetInstance();
+
+  // common
+  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
+  bool FinalizeHccl();
+
+  HcclResult HcclCreateGroup(const std::string &group, uint32_t rank_num, uint32_t *rank_ids) const;
+  HcclResult HcclDestroyGroup(const std::string &group) const;
+  HcclResult HcclGetRankId(const std::string &group, uint32_t *rank_id) const;
+  HcclResult HcclGetRankSize(const std::string &group, uint32_t *rank_size) const;
+
+  // for ge node
+  bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTaskInfo> *task_info_lists) const;
+  int64_t CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const;
+  void *GetHcclOpsKernelInfoStore() const;
+  static std::string GetHcclType(const AnfNodePtr &node);
+
+  // for single op
+  HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream) const;
+  HcclResult HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
+                           aclrtStream stream) const;
+
+  // for enqueue op
+  HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, HExecCallBack callback) const;
+
+ private:
+  HcclAdapter() = default;
+  ~HcclAdapter() = default;
+  void InitPlugin();
+  void FinalizePlugin();
+
+  bool InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
+  bool FinalizeKernelInfoStore();
+
+  bool InitHcclComm(std::string_view rank_id, std::string_view rank_file);
+  bool FinalizeHcclComm();
+
+  bool InitHcclExec();
+  bool FinalizeHcclExec();
+
+  void *plugin_handle_ = nullptr;
+
+  InitHcomGraphAdapterFunObj init_hcom_graph_adapter_ = nullptr;
+  FinalizeHcomGraphAdapterFunObj finalize_hcom_graph_adapter_ = nullptr;
+  GetHcclKernelInfoStoreFunObj get_hccl_kernel_info_store_ = nullptr;
+  GetAllKernelBuilderFunObj get_all_kernel_builder_ = nullptr;
+
+  InitHcclCommFunObj init_hccl_comm_ = nullptr;
+  FinalizeHcclCommFunObj finalize_hccl_comm_ = nullptr;
+  LaunchHcclBroadcastFunObj launch_hccl_broadcast_ = nullptr;
+  LaunchHcclAllReduceFunObj launch_hccl_all_reduce_ = nullptr;
+
+  HcclCreateGroupFunObj hccl_create_group_ = nullptr;
+  HcclDestroyGroupFunObj hccl_destroy_group_ = nullptr;
+  HcclGetRankIdFunObj hccl_get_rank_id_ = nullptr;
+  HcclGetRankSizeFunObj hccl_get_rank_size_ = nullptr;
+
+  HcclExecInitializeFunObj hccl_exec_initialize_ = nullptr;
+  HcclExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
+  HcclExecEnqueueOpFunObj hccl_exec_enqueue_op_ = nullptr;
+
+  HcclComm hccl_comm_ = nullptr;
+
+  std::shared_ptr<::ge::OpsKernelInfoStore> ops_kernel_info_store_ = nullptr;
+  std::shared_ptr<::ge::OpsKernelBuilder> ops_kernel_builder_ = nullptr;
+
+  bool init_flag_ = false;
+  std::mutex init_mutex_;
+};
 }  // namespace mindspore::hccl
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_HCCL_ADAPTER_H

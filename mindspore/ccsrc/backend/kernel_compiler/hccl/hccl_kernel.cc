@@ -188,7 +188,8 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const {
     return workspace_size_list_;
   }
 
-  workspace_size_list_.emplace_back(hccl::CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
+  workspace_size_list_.emplace_back(
+    hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node_.lock(), hccl_data_type_list_[0]));
   return workspace_size_list_;
 }
 
@@ -218,7 +219,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   std::vector<uint8_t> private_def;
   HcclDataType data_type = hccl_data_type_list_[0];
   std::vector<hccl::HcclTaskInfo> task_info;
-  bool ret = hccl::GenTask(anf_node, data_type, &task_info);
+  bool ret = hccl::HcclAdapter::GetInstance().GenTask(anf_node, data_type, &task_info);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Gen Task for " << anf_node->DebugString() << " failed.";
   }
@@ -245,10 +246,11 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
       workspace_addr = workspace.at(0)->addr;
     }
 
-    results.emplace_back(std::make_shared<HcclTaskInfo>(
-      kernel_name_, stream_id, hccl::GetHcclType(anf_node), input_data_addr, output_data_addr, workspace_addr,
-      task.workspace_size, task.stream_num, private_def, hccl::GetHcclOpsKernelInfoStore(), hccl_count_, root_id_,
-      op_type_, data_type, group_, NeedDump()));
+    results.emplace_back(
+      std::make_shared<HcclTaskInfo>(kernel_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
+                                     output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
+                                     private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
+                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump()));
   }
 
   return results;

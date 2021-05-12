@@ -18,7 +18,7 @@
 #include "utils/convert_utils.h"
 
 #ifndef NO_DLIB
-#include "hccl/hcom.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 #endif
 
 #if defined(ENABLE_GPU)
@@ -67,26 +67,27 @@ bool CommManager::CreateGroupSync(const string &group, const vector<unsigned int
   HCCL_GROUP_CHECK_EMPTY(group);
   HCCL_GROUP_CHECK_IS_WORLD(group);
   HCCL_RUN_CHECK(string("create communicate group"), group,
-                 HcomCreateGroup(group.c_str(), UlongToUint(rank_size), vector<unsigned int>(rank_id_list).data()));
+                 hccl::HcclAdapter::GetInstance().HcclCreateGroup(group, UlongToUint(rank_size),
+                                                                  vector<unsigned int>(rank_id_list).data()));
   return true;
 }
 
 bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
   HCCL_GROUP_CHECK_EMPTY(group);
-  HCCL_RUN_CHECK(string("get rank_id"), group, HcomGetRankId(group.c_str(), rank_id));
+  HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
   return true;
 }
 
 bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) const {
   HCCL_GROUP_CHECK_EMPTY(group);
-  HCCL_RUN_CHECK(string("get rank size"), group, HcomGetRankSize(group.c_str(), rank_size));
+  HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
   return true;
 }
 
 bool CommManager::DestroyGroup(const string &group) const {
   HCCL_GROUP_CHECK_EMPTY(group);
   HCCL_GROUP_CHECK_IS_WORLD(group);
-  HCCL_RUN_CHECK(string("destroy communicate group"), group, HcomDestroyGroup(group.c_str()));
+  HCCL_RUN_CHECK(string("destroy communicate group"), group, hccl::HcclAdapter::GetInstance().HcclDestroyGroup(group));
   return true;
 }
 #elif defined(ENABLE_GPU)

@@ -23,6 +23,7 @@
 #include "utils/log_adapter.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 namespace {
 // Find so in RPATH or LD_LIBRARY_PATH (/usr/local/Ascend/fwkacllib/lib64/)
@@ -90,23 +91,12 @@ void HcclDynamicKernel::StaticShapeExecute() {
 
 void HcclDynamicKernel::Execute() {
   MS_LOG(INFO) << "Start Execute";
-
-  auto EnqueueHcomOperation =
-    (HcclResult(*)(ge::HcomOpertion, std::function<void(HcclResult status)>))HcclExecutorManager::GetInstance()
-      .GetHcomOpertion();
-  if (EnqueueHcomOperation == nullptr) {
-    MS_LOG(ERROR) << "Failed to get EnqueueHcomOperation function";
-    HcclExecutorManager::GetInstance().CloseHandle();
-    MS_LOG(EXCEPTION) << "Hccl dynamic kernel execute failed";
-    return;
-  }
-
-  ge::HcomOpertion op_info;
+  ::HcomOperation op_info;
   op_info.hcclType = hccl_type_;
   op_info.inputPtr = input_ptr_;
   op_info.outputPtr = output_ptr_;
-  op_info.dataType = data_type_;
-  op_info.opType = op_type_;
+  op_info.dataType = static_cast<HcclDataType>(data_type_);
+  op_info.opType = static_cast<HcclReduceOp>(op_type_);
   op_info.root = root_;
   op_info.count = count_;
 
@@ -119,7 +109,7 @@ void HcclDynamicKernel::Execute() {
     MS_LOG(INFO) << "hccl callback success.";
   };
 
-  auto hccl_ret = EnqueueHcomOperation(op_info, callback);
+  auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
   if (hccl_ret != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed";
   }
@@ -130,70 +120,6 @@ void HcclDynamicKernel::Execute() {
 }
 
 void HcclDynamicKernel::PostExecute() {}
-
-bool HcclExecutorManager::Initialize() {
-  if (initialized_) {
-    return true;
-  }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    return true;
-  }
-  initialized_ = true;
-  MS_LOG(INFO) << "Start Initialize Hccl DynamicKernel";
-  handle_ = dlopen(kHcomGraphAdaptorPath, RTLD_NOW | RTLD_GLOBAL);
-  if (handle_ == nullptr) {
-    MS_LOG(ERROR) << "dlopen failed, path:" << kHcomGraphAdaptorPath;
-    return false;
-  }
-
-  auto HcomExecutorInitialize = (HcclResult(*)())dlsym(handle_, "HcomExecInitialize");
-  if (HcomExecutorInitialize == nullptr) {
-    MS_LOG(ERROR) << "dlsym HcomExecutorInitialize failed";
-    return false;
-  }
-
-  HcclResult hccl_ret = HcomExecutorInitialize();
-  if (hccl_ret == HCCL_E_PTR) {
-    MS_LOG(WARNING) << "Hccl comm is null, hcom executor initialize is not required";
-  } else if (hccl_ret == HCCL_SUCCESS) {
-    MS_LOG(INFO) << "Hcom DynamicKernel Initialize success";
-  } else {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Initialize failed";
-    return false;
-  }
-  return true;
-}
-
-bool HcclExecutorManager::Finalize() {
-  if (!initialized_) {
-    return true;
-  }
-  auto HcomExecutorFinalize = (HcclResult(*)())dlsym(handle_, "HcomExecFinalize");
-  if (HcomExecutorFinalize == nullptr) {
-    MS_LOG(ERROR) << "Fail to dlsym HcomExecutorFinalize";
-    return false;
-  }
-  HcclResult hccl_ret = HcomExecutorFinalize();
-  if (hccl_ret != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "Hcom DynamicKernel Finalize failed";
-    return false;
-  }
-  if (dlclose(handle_) != 0) {
-    MS_LOG(ERROR) << "Failed to close hcom handle";
-    return false;
-  }
-  MS_LOG(INFO) << "Hccl DynamicKernel Finalize success";
-  return true;
-}
-
-void *HcclExecutorManager::GetHcomOpertion() { return dlsym(handle_, "HcomExecEnqueueOperation"); }
-void HcclExecutorManager::CloseHandle() {
-  if (dlclose(handle_) != 0) {
-    MS_LOG(WARNING) << "Failed to close hcom handle";
-  }
-}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
