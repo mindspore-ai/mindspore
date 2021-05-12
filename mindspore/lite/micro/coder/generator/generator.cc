@@ -26,8 +26,7 @@
 #include "coder/generator/component/const_blocks/load_input.h"
 #include "coder/generator/component/const_blocks/msession.h"
 #include "coder/generator/component/const_blocks/mtensor.h"
-#include "coder/generator/component/const_blocks/mstring.h"
-#include "coder/generator/component/const_blocks/model.h"
+#include "coder/generator/component/const_blocks/mmodel.h"
 #include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/benchmark.h"
 #include "coder/generator/component/const_blocks/license.h"
@@ -93,8 +92,7 @@ int Generator::CodeStaticContent() {
     {net_src_file_path_ + "session.h", session_header},
     {net_src_file_path_ + "tensor.h", tensor_header},
     {net_src_file_path_ + "tensor.cc", tensor_source},
-    {net_src_file_path_ + "string.cc", string_source},
-    {net_src_file_path_ + "model.h", model_header}};
+    {net_src_file_path_ + "mmodel.h", model_header}};
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "thread_pool.h", thread_header));
   }
@@ -117,7 +115,7 @@ int Generator::CodeSessionImplement() {
   MS_LOG(INFO) << "write " << cfile;
   ofs << g_hwLicense;
   ofs << "#include \"session.h\"\n";
-  ofs << "#include \"model.h\"\n";
+  ofs << "#include \"mmodel.h\"\n";
   ofs << "#include \"net.h\"\n";
   ofs << "#include <new>\n\n";
   CodeSessionCompileGraph(ofs, ctx_, config_);
