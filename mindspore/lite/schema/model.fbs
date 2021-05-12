@@ -102,6 +102,10 @@ table MetaGraph {
     nodes: [CNode];
     allTensors: [Tensor]; // weight + input + output
     subGraph : [SubGraph];
+    obfuscate: bool = false;
+    encrypt: bool = false;
+    obfMetaData: [ubyte];
+    decryptTable: [ubyte];
 }
 
 root_type MetaGraph;

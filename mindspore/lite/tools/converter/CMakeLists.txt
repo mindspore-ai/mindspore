@@ -217,3 +217,8 @@ target_link_libraries(converter_lite PRIVATE
 if(NOT WIN32)
     target_link_libraries(converter_lite PRIVATE dl)
 endif()
+
+if(ENABLE_MODEL_OBF)
+    target_link_libraries(converter_lite PRIVATE
+            ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()

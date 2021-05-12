@@ -43,6 +43,15 @@ struct MS_API Model {
   NodePtrVector all_nodes_;
   char *buf;
   SubGraphPtrVector sub_graphs_;
+#ifdef ENABLE_MODEL_OBF
+  using NodeStatVector = Vector<uint32_t>;
+  using PrimTypeVector = Vector<uint32_t>;
+  using PrimVector = Vector<unsigned char *>;
+  PrimTypeVector all_prims_type_;
+  NodeStatVector all_nodes_stat_;
+  bool model_obfuscated_ = false;
+  PrimVector deobf_prims_;
+#endif
 
   /// \brief Static method to create a Model pointer.
   static Model *Import(const char *model_buf, size_t size);

@@ -115,6 +115,12 @@ void LiteModel::Free() {
     node_buf = nullptr;
   }
   node_bufs_.resize(0);
+#ifdef ENABLE_MODEL_OBF
+  for (auto &prim : deobf_prims_) {
+    free(prim);
+  }
+  deobf_prims_.resize(0);
+#endif
 }
 
 void LiteModel::Destroy() {
@@ -297,13 +303,37 @@ int LiteModel::GenerateModelByVersion(const void *meta_graph) {
   MS_ASSERT(meta_graph != nullptr);
   auto schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   int status = RET_ERROR;
+#ifdef ENABLE_MODEL_OBF
+  DeObfuscator *model_deobf = nullptr;
+#endif
   if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
+#ifdef ENABLE_MODEL_OBF
+    if (IsMetaGraphObfuscated<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph))) {
+      model_deobf =
+        GetModelDeObfuscator<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph), this);
+      this->model_obfuscated_ = true;
+      if (model_deobf == nullptr) {
+        return RET_ERROR;
+      }
+    }
+#endif
     status = GenerateModel<schema::MetaGraph, schema::CNode>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph));
   }
 #ifdef ENABLE_V0
   if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
     status = GenerateModel<schema::v0::MetaGraph, schema::v0::CNode>(
       *reinterpret_cast<const schema::v0::MetaGraph *>(meta_graph));
+  }
+#endif
+#ifdef ENABLE_MODEL_OBF
+  if (this->model_obfuscated_) {
+    MS_ASSERT(model_deobf != nullptr);
+    status = DeObfuscateModel(this, model_deobf);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "deobfuscate model wrong.";
+      std::cerr << "deobfuscate model wrong." << std::endl;
+    }
+    delete (model_deobf);
   }
 #endif
   return status;
