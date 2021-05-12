@@ -378,14 +378,16 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-        >>> np.random.seed(0)
-        >>> logits = Tensor(np.random.randint(0, 9, [1, 10]), mindspore.float32)
-        >>> labels_np = np.ones([1,]).astype(np.int32)
+        >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
+        >>> labels_np = np.array([1]).astype(np.int32)
         >>> labels = Tensor(labels_np)
         >>> output = loss(logits, labels)
         >>> print(output)
-        [7.868383]
+        [67.]
     """
     def __init__(self,
                  sparse=False,
