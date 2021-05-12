@@ -36,9 +36,9 @@ from src.loss_factory import get_loss
 from src.lrsche_factory import warmup_step_list, list_to_gen
 from src.callback_factory import ProgressMonitor
 
-from utils.moxing_adapter import moxing_wrapper
-from utils.config import config
-from utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.config import config
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 mindspore.common.seed.set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,

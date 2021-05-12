@@ -53,7 +53,8 @@ then
     fi
     dataset_type=$3
 fi
-config_path="./${dataset_type}_config.yaml"
+
+config_path="${BASEPATH}/../${dataset_type}_config.yaml"
 echo "config path is : ${config_path}"
 
 

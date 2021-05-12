@@ -18,7 +18,8 @@
 import os
 import functools
 from mindspore import context
-from utils.config import config
+from mindspore.profiler import Profiler
+from model_utils.config import config
 
 _global_sync_count = 0
 
@@ -101,8 +102,13 @@ def moxing_wrapper(pre_process=None, post_process=None):
                 if pre_process:
                     pre_process()
 
-            # Run the main function
+            if config.enable_profiling:
+                profiler = Profiler()
+
             run_func(*args, **kwargs)
+
+            if config.enable_profiling:
+                profiler.analyse()
 
             # Upload data to train_url
             if config.enable_modelarts:

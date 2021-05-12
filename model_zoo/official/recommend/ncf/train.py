@@ -25,9 +25,9 @@ from mindspore.common import set_seed
 from src.dataset import create_dataset
 from src.ncf import NCFModel, NetWithLossClass, TrainStepWrap
 
-from utils.moxing_adapter import moxing_wrapper
-from utils.config import config
-from utils.device_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.config import config
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
 set_seed(1)
 

@@ -25,9 +25,9 @@ from src.dataset import create_dataset
 from src.metrics import NCFMetric
 from src.ncf import NCFModel, NetWithLossClass, TrainStepWrap, PredictWithSigmoid
 
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id
 
 logging.set_verbosity(logging.INFO)
 

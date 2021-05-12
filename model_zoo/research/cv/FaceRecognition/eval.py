@@ -29,9 +29,9 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.backbone.resnet import get_backbone
 from src.my_logging import get_logger
 
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 

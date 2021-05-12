@@ -18,7 +18,7 @@ import numpy as np
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 import src.constants as rconst
-from utils.config import config
+from model_utils.config import config
 from ncf import NCFModel, PredictWithSigmoid
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
