@@ -55,12 +55,15 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp -r ../src ./eval
+cp -r ../model_utils ./eval
 cd ./eval || exit
 env > env.log
 echo "start inferring for device $DEVICE_ID"
 python eval.py \
     --data_dir=$DATASET_PATH \
-    --pretrained=$CHECKPOINT_PATH \
-    --testing_shape=608 > log.txt 2>&1 &
+    --is_distributed=0 \
+    --per_batch_size=1 \
+    --pretrained=$CHECKPOINT_PATH > log.txt 2>&1 &
 cd ..

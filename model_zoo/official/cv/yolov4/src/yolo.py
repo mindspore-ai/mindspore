@@ -25,9 +25,9 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 from src.cspdarknet53 import CspDarkNet53, ResidualBlock
-from src.config import ConfigYOLOV4CspDarkNet53
 from src.loss import XYLoss, WHLoss, ConfidenceLoss, ClassLoss
 
+from model_utils.config import config as default_config
 
 def _conv_bn_leakyrelu(in_channel,
                        out_channel,
@@ -210,7 +210,7 @@ class DetectionBlock(nn.Cell):
 
      Args:
          scale: Character.
-         config: ConfigYOLOV4CspDarkNet53, Configuration instance.
+         config: Configuration.
          is_training: Bool, Whether train or not, default True.
 
      Returns:
@@ -220,7 +220,7 @@ class DetectionBlock(nn.Cell):
          DetectionBlock(scale='l',stride=32)
      """
 
-    def __init__(self, scale, config=ConfigYOLOV4CspDarkNet53()):
+    def __init__(self, scale, config=default_config):
         super(DetectionBlock, self).__init__()
         self.config = config
         if scale == 's':
@@ -330,7 +330,7 @@ class YoloLossBlock(nn.Cell):
     """
     Loss block cell of YOLOV4 network.
     """
-    def __init__(self, scale, config=ConfigYOLOV4CspDarkNet53()):
+    def __init__(self, scale, config=default_config):
         super(YoloLossBlock, self).__init__()
         self.config = config
         if scale == 's':
@@ -431,7 +431,8 @@ class YOLOV4CspDarkNet53(nn.Cell):
 
     def __init__(self):
         super(YOLOV4CspDarkNet53, self).__init__()
-        self.config = ConfigYOLOV4CspDarkNet53()
+        self.config = default_config
+        self.test_img_shape = Tensor(tuple(self.config.test_img_shape), ms.float32)
 
         # YOLOv4 network
         self.feature_map = YOLOv4(backbone=CspDarkNet53(ResidualBlock, detect=True),
@@ -443,7 +444,9 @@ class YOLOV4CspDarkNet53(nn.Cell):
         self.detect_2 = DetectionBlock('m')
         self.detect_3 = DetectionBlock('s')
 
-    def construct(self, x, input_shape):
+    def construct(self, x, input_shape=None):
+        if input_shape is None:
+            input_shape = self.test_img_shape
         big_object_output, medium_object_output, small_object_output = self.feature_map(x)
         output_big = self.detect_1(big_object_output, input_shape)
         output_me = self.detect_2(medium_object_output, input_shape)
@@ -457,7 +460,7 @@ class YoloWithLossCell(nn.Cell):
     def __init__(self, network):
         super(YoloWithLossCell, self).__init__()
         self.yolo_network = network
-        self.config = ConfigYOLOV4CspDarkNet53()
+        self.config = default_config
         self.loss_big = YoloLossBlock('l', self.config)
         self.loss_me = YoloLossBlock('m', self.config)
         self.loss_small = YoloLossBlock('s', self.config)

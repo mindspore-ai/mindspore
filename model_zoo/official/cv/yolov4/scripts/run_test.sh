@@ -55,12 +55,17 @@ then
 fi
 mkdir ./test
 cp ../*.py ./test
+cp ../*.yaml ./test
 cp -r ../src ./test
+cp -r ../model_utils ./test
 cd ./test || exit
 env > env.log
 echo "start inferring for device $DEVICE_ID"
 python test.py \
     --data_dir=$DATASET_PATH \
-    --pretrained=$CHECKPOINT_PATH \
-    --testing_shape=608 > log.txt 2>&1 &
+    --is_distributed=0 \
+    --per_batch_size=1 \
+    --test_nms_thresh=0.45 \
+    --test_ignore_threshold=0.001 \
+    --pretrained=$CHECKPOINT_PATH > log.txt 2>&1 &
 cd ..

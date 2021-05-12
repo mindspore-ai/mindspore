@@ -23,7 +23,7 @@ class Redirct:
 class DetectionEngine:
     """Detection engine."""
     def __init__(self, args_detection):
-        self.ignore_threshold = args_detection.ignore_threshold
+        self.eval_ignore_threshold = args_detection.eval_ignore_threshold
         self.labels = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat',
                        'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat',
                        'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack',
@@ -147,10 +147,8 @@ class DetectionEngine:
 
     def get_eval_result(self):
         """Get eval result."""
-        up_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        self.file_path = os.path.join(up_path, self.file_path)
         if not self.results:
-            args.logger.info("[WARNING] result is {}")
+            logger.warning("[WARNING] result is None.")
             return 0.0, 0.0
         coco_gt = COCO(self.ann_file)
         coco_dt = coco_gt.loadRes(self.file_path)
@@ -208,7 +206,7 @@ class DetectionEngine:
                     flag[i, c] = True
                 confidence = cls_emb[flag] * conf
                 for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left, w, h, confidence, cls_argmax):
-                    if confi < self.ignore_threshold:
+                    if confi < self.eval_ignore_threshold:
                         continue
                     if img_id not in self.results:
                         self.results[img_id] = defaultdict(list)
@@ -291,20 +289,18 @@ class EvalCallBack(Callback):
         self.args.logger.info("End training, the best {0} is: {1}, "
                               "the best {0} epoch is {2}".format(self.metrics_name, self.best_res, self.best_epoch))
 
-
 def apply_eval(eval_param_dict):
     network = eval_param_dict["net"]
     network.set_train(False)
     ds = eval_param_dict["dataset"]
     data_size = eval_param_dict["data_size"]
-    input_shape = eval_param_dict["input_shape"]
     args = eval_param_dict["args"]
     detection = DetectionEngine(args)
     for index, data in enumerate(ds.create_dict_iterator(num_epochs=1)):
         image = data["image"]
         image_shape_ = data["image_shape"]
         image_id_ = data["img_id"]
-        prediction = network(image, input_shape)
+        prediction = network(image)
         output_big, output_me, output_small = prediction
         output_big = output_big.asnumpy()
         output_me = output_me.asnumpy()
