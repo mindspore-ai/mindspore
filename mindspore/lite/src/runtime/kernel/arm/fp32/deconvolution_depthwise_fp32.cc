@@ -175,8 +175,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   }
 
   if (need_align_) {
-    PackNHWC4ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
-                        conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+    PackNHWCXToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
+                        conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_, C4NUM);
   }
   FreePackedInputOutput();
   return ret;

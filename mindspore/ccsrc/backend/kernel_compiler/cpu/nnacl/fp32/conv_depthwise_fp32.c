@@ -118,21 +118,24 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
 
 void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
   InitSlidingParam(sliding, conv_param, block);
-  AppendSlidingParamConv(sliding, conv_param, block);
+  // SW is not algin in input_channel and weight must be algin to N8 in avx
+  AppendSlidingParamConv(sliding, conv_param, 0, block);
 }
 
-void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
-  int in_channel = conv_param->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int ic4_channel = ic4 * C4NUM;
-  sliding->ic4_channel_ = ic4_channel;
-  sliding->in_step_ = conv_param->input_h_ * conv_param->input_w_ * ic4_channel;  // for batch loop
-  sliding->in_h_step_ = conv_param->input_w_ * ic4_channel;
-  sliding->in_sh_step_ = conv_param->input_w_ * ic4_channel * conv_param->stride_h_;    // stride H
-  sliding->in_sw_step_ = ic4_channel * conv_param->stride_w_;                           // stride W
-  sliding->in_kh_step_ = conv_param->input_w_ * ic4_channel * conv_param->dilation_h_;  // kernel H
-  sliding->in_kw_step_ = ic4_channel * conv_param->dilation_w_;                         // kernel W
-  sliding->kernel_step_ = conv_param->kernel_w_ * conv_param->kernel_h_ * ic4_channel * block;
+void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int in_block,
+                            int weight_block) {
+  if (in_block == 0) {  // is not align
+    sliding->ic_align_ = conv_param->input_channel_;
+  } else {
+    sliding->ic_align_ = UP_DIV(conv_param->input_channel_, in_block) * in_block;
+  }
+  sliding->in_step_ = conv_param->input_h_ * conv_param->input_w_ * sliding->ic_align_;  // for batch loop
+  sliding->in_h_step_ = conv_param->input_w_ * sliding->ic_align_;
+  sliding->in_sh_step_ = conv_param->input_w_ * sliding->ic_align_ * conv_param->stride_h_;    // stride H
+  sliding->in_sw_step_ = sliding->ic_align_ * conv_param->stride_w_;                           // stride W
+  sliding->in_kh_step_ = conv_param->input_w_ * sliding->ic_align_ * conv_param->dilation_h_;  // kernel H
+  sliding->in_kw_step_ = sliding->ic_align_ * conv_param->dilation_w_;                         // kernel W
+  sliding->kernel_step_ = conv_param->kernel_w_ * conv_param->kernel_h_ * sliding->ic_align_ * weight_block;
 }
 
 void InitSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
