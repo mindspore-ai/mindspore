@@ -19,27 +19,20 @@ python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
 import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.dataset import create_dataset
+from src.lenet import LeNet5
 
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
-from src.dataset import create_dataset
-from src.lenet import LeNet5
 
-if os.path.exists(config.data_path_local):
-    config.data_path = config.data_path_local
-    ckpt_path = config.ckpt_path_local
-else:
-    ckpt_path = os.path.join(config.data_path, 'checkpoint_lenet-10_1875.ckpt')
 
 def modelarts_process():
-    pass
+    config.ckpt_path = config.ckpt_file
 
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_lenet():
@@ -53,7 +46,7 @@ def eval_lenet():
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
     print("============== Starting Testing ==============")
-    param_dict = load_checkpoint(ckpt_path)
+    param_dict = load_checkpoint(config.ckpt_path)
     load_param_into_net(network, param_dict)
     ds_eval = create_dataset(os.path.join(config.data_path, "test"),
                              config.batch_size,

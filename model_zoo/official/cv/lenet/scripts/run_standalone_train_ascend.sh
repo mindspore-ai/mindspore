@@ -17,7 +17,6 @@
 # an simple tutorial as follows, more parameters can be setting
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
-# DATA_PATH=$1
-# CKPT_PATH=$2
-# --data_path=$DATA_PATH --device_target="Ascend" --ckpt_path=$CKPT_PATH 
-python -s ${self_path}/../train.py > log.txt 2>&1 &
+DATA_PATH=$1
+CKPT_PATH=$2
+python -s ${self_path}/../train.py --data_path=$DATA_PATH --device_target="Ascend" --ckpt_path=$CKPT_PATH > log.txt 2>&1 &
