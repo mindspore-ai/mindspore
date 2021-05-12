@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -165,38 +165,33 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
 
     return train_ds, valid_ds
 
-class CellNucleiDataset:
+class MultiClassDataset:
     """
-    Cell nuclei dataset preprocess class.
+    Read image and mask from original images, and split all data into train_dataset and val_dataset by `split`.
+    Get image path and mask path from a tree of directories,
+    images within one folder is an image, the image file named `"image.png"`, the mask file named `"mask.png"`.
     """
-    def __init__(self, data_dir, repeat, is_train=False, split=0.8):
+    def __init__(self, data_dir, repeat, is_train=False, split=0.8, shuffle=False):
         self.data_dir = data_dir
-        self.img_ids = sorted(next(os.walk(self.data_dir))[1])
-        self.train_ids = self.img_ids[:int(len(self.img_ids) * split)] * repeat
-        np.random.shuffle(self.train_ids)
-        self.val_ids = self.img_ids[int(len(self.img_ids) * split):]
         self.is_train = is_train
-        self._preprocess_dataset()
-
-    def _preprocess_dataset(self):
-        for img_id in self.img_ids:
-            path = os.path.join(self.data_dir, img_id)
-            if (not os.path.exists(os.path.join(path, "image.png"))) or \
-                (not os.path.exists(os.path.join(path, "mask.png"))):
-                img = cv2.imread(os.path.join(path, "images", img_id + ".png"))
-                if len(img.shape) == 2:
-                    img = np.expand_dims(img, axis=-1)
-                    img = np.concatenate([img, img, img], axis=-1)
-                mask = []
-                for mask_file in next(os.walk(os.path.join(path, "masks")))[2]:
-                    mask_ = cv2.imread(os.path.join(path, "masks", mask_file), cv2.IMREAD_GRAYSCALE)
-                    mask.append(mask_)
-                mask = np.max(mask, axis=0)
-                cv2.imwrite(os.path.join(path, "image.png"), img)
-                cv2.imwrite(os.path.join(path, "mask.png"), mask)
+        self.split = (split != 1.0)
+        if self.split:
+            self.img_ids = sorted(next(os.walk(self.data_dir))[1])
+            self.train_ids = self.img_ids[:int(len(self.img_ids) * split)] * repeat
+            self.val_ids = self.img_ids[int(len(self.img_ids) * split):]
+        else:
+            self.train_ids = sorted(next(os.walk(os.path.join(self.data_dir, "train")))[1])
+            self.val_ids = sorted(next(os.walk(os.path.join(self.data_dir, "val")))[1])
+        if shuffle:
+            np.random.shuffle(self.train_ids)
 
     def _read_img_mask(self, img_id):
-        path = os.path.join(self.data_dir, img_id)
+        if self.split:
+            path = os.path.join(self.data_dir, img_id)
+        elif self.is_train:
+            path = os.path.join(self.data_dir, "train", img_id)
+        else:
+            path = os.path.join(self.data_dir, "val", img_id)
         img = cv2.imread(os.path.join(path, "image.png"))
         mask = cv2.imread(os.path.join(path, "mask.png"), cv2.IMREAD_GRAYSCALE)
         return img, mask
@@ -216,9 +211,9 @@ class CellNucleiDataset:
             return len(self.train_ids)
         return len(self.val_ids)
 
-def preprocess_img_mask(img, mask, img_size, augment=False, eval_resize=False):
+def preprocess_img_mask(img, mask, num_classes, img_size, augment=False, eval_resize=False):
     """
-    Preprocess for cell nuclei dataset.
+    Preprocess for multi-class dataset.
     Random crop and flip images and masks when augment is True.
     """
     if augment:
@@ -240,24 +235,28 @@ def preprocess_img_mask(img, mask, img_size, augment=False, eval_resize=False):
             mask = cv2.resize(mask, img_size)
     img = (img.astype(np.float32) - 127.5) / 127.5
     img = img.transpose(2, 0, 1)
-    mask = mask.astype(np.float32) / 255
-    mask = (mask > 0.5).astype(np.int)
-    mask = (np.arange(2) == mask[..., None]).astype(int)
+    if num_classes == 2:
+        mask = mask.astype(np.float32) / mask.max()
+        mask = (mask > 0.5).astype(np.int)
+    else:
+        mask = mask.astype(np.int)
+    mask = (np.arange(num_classes) == mask[..., None]).astype(int)
     mask = mask.transpose(2, 0, 1).astype(np.float32)
     return img, mask
 
-def create_cell_nuclei_dataset(data_dir, img_size, repeat, batch_size, is_train=False, augment=False, eval_resize=False,
-                               split=0.8, rank=0, group_size=1, python_multiprocessing=True, num_parallel_workers=8):
+def create_multi_class_dataset(data_dir, img_size, repeat, batch_size, num_classes=2, is_train=False, augment=False,
+                               eval_resize=False, split=0.8, rank=0, group_size=1, python_multiprocessing=True,
+                               num_parallel_workers=8, shuffle=True):
     """
-    Get generator dataset for cell nuclei dataset.
+    Get generator dataset for multi-class dataset.
     """
-    cell_dataset = CellNucleiDataset(data_dir, repeat, is_train, split)
-    sampler = ds.DistributedSampler(group_size, rank, shuffle=is_train)
-    dataset = ds.GeneratorDataset(cell_dataset, cell_dataset.column_names, sampler=sampler)
-    compose_map_func = (lambda image, mask: preprocess_img_mask(image, mask, tuple(img_size), augment and is_train,
-                                                                eval_resize))
-    dataset = dataset.map(operations=compose_map_func, input_columns=cell_dataset.column_names,
-                          output_columns=cell_dataset.column_names, column_order=cell_dataset.column_names,
+    mc_dataset = MultiClassDataset(data_dir, repeat, is_train, split, shuffle)
+    sampler = ds.DistributedSampler(group_size, rank, shuffle=shuffle)
+    dataset = ds.GeneratorDataset(mc_dataset, mc_dataset.column_names, sampler=sampler)
+    compose_map_func = (lambda image, mask: preprocess_img_mask(image, mask, num_classes, tuple(img_size),
+                                                                augment and is_train, eval_resize))
+    dataset = dataset.map(operations=compose_map_func, input_columns=mc_dataset.column_names,
+                          output_columns=mc_dataset.column_names, column_order=mc_dataset.column_names,
                           python_multiprocessing=python_multiprocessing,
                           num_parallel_workers=num_parallel_workers)
     dataset = dataset.batch(batch_size, drop_remainder=is_train)
