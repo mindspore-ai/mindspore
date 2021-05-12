@@ -83,7 +83,8 @@ void ServerNode::Initialize() {
   InitServerHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
-  InitNode(NodeRole::SERVER);
+  InitNodeInfo(NodeRole::SERVER);
+  InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node init client timeout!";

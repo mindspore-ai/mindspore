@@ -68,20 +68,28 @@ class NodeManager {
 
   // When workers and servers registered to scheduler, the scheduler will collect the number of registered
   // nodes and Determine whether the registered number of worker and server is equal to total_node_num_.
-  bool CheckRegisterNum();
+  bool IsAllNodesRegistered();
   // When workers and servers send a finish message to the scheduler, the scheduler will collect the number of
   // finish nodes and Determine whether the finished nodes are equal to total_node_num_.
-  bool CheckFinishNum();
+  bool IsAllNodesFinished();
 
   std::unordered_map<std::string, NodeInfo> &nodes_info();
 
   void set_total_node_num(const int32_t &node_num);
   const int32_t &total_node_num();
+  void set_worker_num(const int32_t &worker_num);
+  void set_server_num(const int32_t &server_num);
+  int32_t worker_num();
+  int32_t server_num();
 
   void UpdateNodeState(const NodeState &state);
   void UpdateClusterState(const ClusterState &state);
   NodeState GetNodeState();
   ClusterState GetClusterState();
+
+  // When the scheduler receives the scale out or scale in message, the metadata needs to be reset, because all nodes
+  // will re-register.
+  void ResetMetadata();
 
  private:
   std::mutex node_mutex_;
@@ -107,6 +115,7 @@ class NodeManager {
   std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
   std::unordered_set<std::string> finish_nodes_id_;
 
+  // Cluster metadata information can be dynamically changed
   std::unique_ptr<ClusterMetadata> meta_data_;
 
   NodeState node_state_;

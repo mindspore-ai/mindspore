@@ -38,7 +38,9 @@ class AbstractNode : public Node {
         client_to_scheduler_thread_(nullptr),
         client_to_scheduler_(nullptr),
         server_(nullptr),
-        server_thread_(nullptr) {}
+        server_thread_(nullptr),
+        worker_num_(-1),
+        server_num_(-1) {}
   ~AbstractNode() override = default;
 
   typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
@@ -52,6 +54,10 @@ class AbstractNode : public Node {
                  const uint32_t &timeout = kCommTimeoutInSeconds);
 
   void set_event_callback(const OnNodeEventMessage &event);
+  // When the business layer finish scale out, it should call this function
+  void set_ready_for_scale_out();
+  // When the business layer finish scale in, it should call this function
+  void set_ready_for_scale_in();
 
   bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -68,6 +74,9 @@ class AbstractNode : public Node {
                                                        VectorPtr *output);
   bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
+  int32_t worker_num() const;
+  int32_t server_num() const;
+
  protected:
   void Register(const std::shared_ptr<TcpClient> &client);
   bool Heartbeat(const std::shared_ptr<TcpClient> &client);
@@ -81,6 +90,12 @@ class AbstractNode : public Node {
                            const void *data, size_t size);
   void ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
                      const void *data, size_t size);
+
+  void ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
+                       const void *data, size_t size);
+
+  void ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
+                      const void *data, size_t size);
 
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
   void UpdateSchedulerTime();
@@ -98,7 +113,11 @@ class AbstractNode : public Node {
   uint64_t NextActualRankRequestId(const uint32_t &rank_id);
   void InitCommandHandler();
   void InitServerHandler();
-  void InitNode(const NodeRole &role);
+
+  // when initializing the node, should initializing the node info.
+  void InitNodeInfo(const NodeRole &role);
+  // Initialize worker num and server num by cluster config.
+  void InitNodeNum();
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
@@ -136,11 +155,12 @@ class AbstractNode : public Node {
   std::unordered_map<NodeCommand, ResponseHandler> handlers_;
   std::unordered_map<NodeCommand, ServerHandler> server_handler_;
 
-  std::unordered_map<ClusterEvent, bool> is_event_send_;
-  std::mutex is_event_send_mutex_;
-
+  // Workers and servers launch the server to process command: FINISH,SCALE_OUT,SCALE_IN,SEND_METADATA
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> server_thread_;
+
+  int32_t worker_num_;
+  int32_t server_num_;
 };
 }  // namespace core
 }  // namespace ps

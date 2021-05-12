@@ -35,6 +35,7 @@ constexpr char kEnvPServerNum[] = "MS_SERVER_NUM";
 constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";
 constexpr char kEnvSchedulerPort[] = "MS_SCHED_PORT";
+constexpr char kEnvSchedulerManagePort[] = "MS_SCHED_MANAGE_PORT";
 
 constexpr char kCommTypeOfIBVerbs[] = "ibverbs";
 constexpr char kRoleOfPServer[] = "server";

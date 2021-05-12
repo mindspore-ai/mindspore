@@ -47,11 +47,6 @@ class Node {
   Node()
       : is_ready_(false),
         is_finish_(false),
-        is_node_ready_scale_out_(false),
-        is_node_ready_scale_in_(false),
-        is_cluster_ready_scale_out_(false),
-        is_cluster_ready_scale_in_(false),
-        update_local_servers_(false),
         is_already_stopped_(true),
         is_already_finished_(false),
         next_request_id_(0),
@@ -93,15 +88,6 @@ class Node {
   std::atomic<bool> is_ready_;
   std::atomic<bool> is_finish_;
 
-  std::atomic<bool> is_node_ready_scale_out_;
-  std::atomic<bool> is_node_ready_scale_in_;
-
-  std::atomic<bool> is_cluster_ready_scale_out_;
-  std::atomic<bool> is_cluster_ready_scale_in_;
-
-  // Determine whether to update the ip and port of the locally cached servers.
-  std::atomic<bool> update_local_servers_;
-
   std::atomic<bool> is_already_stopped_;
   std::atomic<bool> is_already_finished_;
   std::atomic_uint64_t next_request_id_;
@@ -117,6 +103,7 @@ class Node {
   std::mutex message_tracker_mutex_;
   std::condition_variable message_tracker_cond_;
 
+  // Worker and server receive the node state and cluster state from the scheduler.
   NodeState current_node_state_;
   ClusterState current_cluster_state_;
 };

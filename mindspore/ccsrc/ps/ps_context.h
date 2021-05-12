@@ -145,6 +145,9 @@ class PSContext {
 
   core::ClusterConfig &cluster_config();
 
+  void set_scheduler_manage_port(uint16_t sched_port);
+  uint16_t scheduler_manage_port() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -172,7 +175,8 @@ class PSContext {
         client_batch_size_(32),
         client_learning_rate_(0.001),
         secure_aggregation_(false),
-        cluster_config_(nullptr) {}
+        cluster_config_(nullptr),
+        scheduler_manage_port_(0) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -231,6 +235,9 @@ class PSContext {
 
   // The cluster config read through environment variables, the value does not change.
   std::unique_ptr<core::ClusterConfig> cluster_config_;
+
+  // The port used by scheduler to receive http requests for scale out or scale in.
+  uint16_t scheduler_manage_port_;
 };
 }  // namespace ps
 }  // namespace mindspore

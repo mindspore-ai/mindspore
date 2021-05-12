@@ -89,6 +89,7 @@ class SchedulerNode : public Node {
 
   NodeManager node_manager_;
 
+  // In this thread will start a http server.
   std::unique_ptr<std::thread> restful_thread_;
   std::shared_ptr<HttpServer> http_server_;
 

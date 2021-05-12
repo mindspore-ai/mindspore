@@ -41,7 +41,8 @@ void WorkerNode::Initialize() {
   is_already_stopped_ = false;
   InitServerHandler();
   CreateTcpServer();
-  InitNode(NodeRole::WORKER);
+  InitNodeInfo(NodeRole::WORKER);
+  InitNodeNum();
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node init client timeout!";
