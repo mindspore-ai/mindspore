@@ -14,7 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-bash cache_util.sh
+CURPATH="$(dirname "$0")"
+. ${CURPATH}/cache_util.sh
 
 if [ $# != 4 ] && [ $# != 5 ] && [ $# != 6 ]
 then

@@ -28,6 +28,9 @@ def train_parse_args():
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
     train_parser.add_argument('--filter_head', type=ast.literal_eval, default=False,\
                               help='Filter head weight parameters when load checkpoint, default is False.')
+    train_parser.add_argument('--enable_cache', type=ast.literal_eval, default=False, \
+                              help='Caching the dataset in memory to speedup dataset processing, default is False.')
+    train_parser.add_argument('--cache_session_id', type=str, default="", help='The session id for cache service.')
     train_args = train_parser.parse_args()
     train_args.is_training = True
     if train_args.platform == "CPU":

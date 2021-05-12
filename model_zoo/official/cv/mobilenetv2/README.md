@@ -12,7 +12,7 @@
         - [Evaluation Process](#eval-process)
         - [Model Export](#model-export)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
+    - [Performance](#performance)
         - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
@@ -63,22 +63,24 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```python
 ├── MobileNetV2
-  ├── README.md              # descriptions about MobileNetV2
+  ├── README.md                  # descriptions about MobileNetV2
   ├── scripts
-  │   ├──run_train.sh        # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
-  │   ├──run_eval.sh         # shell script for evaluation with CPU, GPU or Ascend
+  │   ├──run_train.sh            # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
+  │   ├──run_eval.sh             # shell script for evaluation with CPU, GPU or Ascend
+  │   ├──cache_util.sh           # a collection of helper functions to manage cache
+  │   ├──run_train_nfs_cache.sh  # shell script for train with NFS dataset and leverage caching service for better performance
   ├── src
-  │   ├──args.py             # parse args
-  │   ├──config.py           # parameter configuration
-  │   ├──dataset.py          # creating dataset
-  │   ├──lr_generator.py     # learning rate config
-  │   ├──mobilenetV2.py      # MobileNetV2 architecture
-  │   ├──models.py           # contain define_net and Loss, Monitor
-  │   ├──utils.py            # utils to load ckpt_file for fine tune or incremental learn
-  ├── train.py               # training script
-  ├── eval.py                # evaluation script
-  ├── export.py              # export mindir script
-  ├── mindspore_hub_conf.py  #  mindspore hub interface
+  │   ├──args.py                 # parse args
+  │   ├──config.py               # parameter configuration
+  │   ├──dataset.py              # creating dataset
+  │   ├──lr_generator.py         # learning rate config
+  │   ├──mobilenetV2.py          # MobileNetV2 architecture
+  │   ├──models.py               # contain define_net and Loss, Monitor
+  │   ├──utils.py                # utils to load ckpt_file for fine tune or incremental learn
+  ├── train.py                   # training script
+  ├── eval.py                    # evaluation script
+  ├── export.py                  # export mindir script
+  ├── mindspore_hub_conf.py      #  mindspore hub interface
 ```
 
 ## [Training process](#contents)
@@ -207,6 +209,22 @@ Inference result will be stored in the example path, you can find result like th
 ```shell
 result: {'acc': 0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
+
+## [Training with dataset on NFS](#contents)
+
+You can use script `run_train_nfs_cache.sh` for running training with a dataset located on Network File System (NFS). By default, a standalone cache server will be started to cache all images in tensor format in memory to improve performance.
+
+Please refer to [Training Process](#training-process) for the usage of this shell script.
+
+```shell
+# training with NFS dataset example
+Ascend: sh run_train_nfs_cache.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+GPU: sh run_train_nfs_cache.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
+CPU: sh run_train_nfs_cache.sh CPU [TRAIN_DATASET_PATH]
+```
+
+> With cache enabled, a standalone cache server will be started in the background to cache the dataset in memory. However, Please make sure the dataset fits in memory (around 120GB of memory is required for caching ImageNet train dataset).
+> Users can choose to shutdown the cache server after training or leave it alone for future usage.
 
 ## [Model Export](#contents)
 
