@@ -441,12 +441,19 @@ int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
+  MS_ASSERT(kernel != nullptr);
   int ret = RET_ERROR;
-  if (KernelRegistry::GetInstance()->kernel_creators().size() != 0 &&
-      VersionManager::GetInstance()->GetSchemaVersion() != SCHEMA_V0) {
-    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", ""};
+  auto &&providers = KernelRegistry::GetInstance()->AllProviders();
+  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
+    return ret;
+  }
+  for (auto &&provider : providers) {
+    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", provider};
     ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
                                                    node->primitive_);
+    if (ret == RET_OK && *kernel != nullptr) {
+      return ret;
+    }
   }
   return ret;
 }

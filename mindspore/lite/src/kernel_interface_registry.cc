@@ -97,11 +97,6 @@ kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::
                                                                      const schema::Primitive *primitive) {
   MS_ASSERT(primitive != nullptr);
   int op_type = primitive->value_type();
-  if (op_type < PrimitiveType_MIN || op_type > kMaxKernelNum) {
-    MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << kMaxKernelNum;
-    return nullptr;
-  }
-
   std::unique_lock<std::mutex> lock(mutex_);
   if (op_type == schema::PrimitiveType_Custom) {
     auto &&type = GetCustomType(primitive);
@@ -117,6 +112,7 @@ kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::
     if (creator_iter != provider_iter->second.end()) {
       kernel = creator_iter->second();
       custom_kernels_[provider][type] = kernel;
+      return kernel;
     }
     return nullptr;
   }
@@ -158,6 +154,17 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
 
   kernel_creators_[provider][op_type] = creator;
   return RET_OK;
+}
+
+std::set<std::string> KernelInterfaceRegistry::AllProviders() {
+  std::set<std::string> providers;
+  for (auto &&item : kernel_creators_) {
+    providers.insert(item.first);
+  }
+  for (auto &&item : custom_creators_) {
+    providers.insert(item.first);
+  }
+  return providers;
 }
 
 KernelInterfaceRegistry::~KernelInterfaceRegistry() {

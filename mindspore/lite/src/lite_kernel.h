@@ -77,7 +77,7 @@ class LiteKernel {
 
   virtual ~LiteKernel() {
     if (kernel_ != nullptr) {
-      free(kernel_);
+      delete kernel_;
       kernel_ = nullptr;
     }
   }

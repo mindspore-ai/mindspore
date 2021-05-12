@@ -32,8 +32,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   std::copy(inputs.begin(), inputs.end(), std::back_inserter(in_tensors));
   std::vector<tensor::MSTensor *> out_tensors;
   std::copy(outputs.begin(), outputs.end(), std::back_inserter(out_tensors));
-  for (auto &&item : KernelInterfaceRegistry::Instance()->kernel_creators()) {
-    auto provider = item.first;
+  for (auto &&provider : KernelInterfaceRegistry::Instance()->AllProviders()) {
     auto kernel_interface = KernelInterfaceRegistry::Instance()->GetKernelInterface(
       provider, static_cast<const schema::Primitive *>(primitive));
     if (kernel_interface == nullptr) {
