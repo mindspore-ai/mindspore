@@ -12,68 +12,100 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Create train or eval dataset."""
+"""
+Data operations, will be used in train.py and eval.py
+"""
 import os
+
 import mindspore.common.dtype as mstype
-import mindspore.dataset as de
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
-from src.config import config
+import mindspore.dataset.vision.c_transforms as C
 
 
-device_id = int(os.getenv('DEVICE_ID', '0'))
-device_num = int(os.getenv('RANK_SIZE', '1'))
-
-
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, shard_id=0):
+def create_dataset_imagenet(dataset_path, do_train, cfg, repeat_num=1):
     """
-    Create a train or eval dataset.
+    create a train or eval dataset
 
     Args:
-        dataset_path (str): The path of dataset.
-        do_train (bool): Whether dataset is used for train or eval.
-        repeat_num (int): The repeat times of dataset. Default: 1.
-        batch_size (int): The batch size of dataset. Default: 32.
+        dataset_path(string): the path of dataset.
+        do_train(bool): whether dataset is used for train or eval.
+        cfg (dict): the config for creating dataset.
+        repeat_num(int): the repeat times of dataset. Default: 1.
 
     Returns:
-        Dataset.
+        dataset
     """
-
-    do_shuffle = bool(do_train)
-
-    if device_num == 1 or not do_train:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=do_shuffle)
+    if cfg.group_size == 1:
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=do_train)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums,
-                                   shuffle=do_shuffle, num_shards=device_num, shard_id=shard_id)
-
-    image_length = 299
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=do_train,
+                                         num_shards=cfg.group_size, shard_id=cfg.rank)
+    # define map operations
+    size = 299
     if do_train:
         trans = [
-            C.RandomCropDecodeResize(image_length, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomCropDecodeResize(size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
             C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-            ]
+        ]
     else:
         trans = [
             C.Decode(),
-            C.Resize(image_length),
-            C.CenterCrop(image_length)
-            ]
+            C.Resize(size),
+            C.CenterCrop(size)
+        ]
     trans += [
         C.Rescale(1.0 / 255.0, 0.0),
         C.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         C.HWC2CHW()
     ]
+    type_cast_op = C2.TypeCast(mstype.int32)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
+    # apply batch operations
+    data_set = data_set.batch(cfg.batch_size, drop_remainder=True)
+    # apply dataset repeat operation
+    data_set = data_set.repeat(repeat_num)
+    return data_set
+
+
+def create_dataset_cifar10(dataset_path, do_train, cfg, repeat_num=1):
+    """
+    create a train or eval dataset
+
+    Args:
+        dataset_path(string): the path of dataset.
+        do_train(bool): whether dataset is used for train or eval.
+        cfg (dict): the config for creating dataset.
+        repeat_num(int): the repeat times of dataset. Default: 1.
+
+    Returns:
+        dataset
+    """
+    dataset_path = os.path.join(dataset_path, "cifar-10-batches-bin" if do_train else "cifar-10-verify-bin")
+    if cfg.group_size == 1:
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=do_train)
+    else:
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=do_train,
+                                     num_shards=cfg.group_size, shard_id=cfg.rank)
+
+    # define map operations
+    trans = []
+    if do_train:
+        trans.append(C.RandomCrop((32, 32), (4, 4, 4, 4)))
+        trans.append(C.RandomHorizontalFlip(prob=0.5))
+
+    trans.append(C.Resize((299, 299)))
+    trans.append(C.Rescale(1.0 / 255.0, 0.0))
+    trans.append(C.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]))
+    trans.append(C.HWC2CHW())
 
     type_cast_op = C2.TypeCast(mstype.int32)
-
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=config.work_nums)
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=config.work_nums)
-
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
-
+    data_set = data_set.batch(cfg.batch_size, drop_remainder=do_train)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
-    return ds
+    data_set = data_set.repeat(repeat_num)
+    return data_set
