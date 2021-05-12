@@ -3756,9 +3756,9 @@ class Asin(PrimitiveWithInfer):
 class NMSWithMask(PrimitiveWithInfer):
     r"""
     When object detection problem is performed in the computer vision field, object detection algorithm generates
-    a plurality of bounding boxes. Selects some bounding boxes in descending order of score. Use the box with the
-    highest score calculate the overlap between other boxes and the current box, and delete the box based on a
-    certain threshold(IOU). The IOU is as follows,
+    a plurality of bounding boxes. Selects some bounding boxes in descending order of score(Descending order is not
+    supported in Ascend platform currently). Use the box with the highest score calculate the overlap between other
+    boxes and the current box, and delete the box based on a certain threshold(IOU). The IOU is as follows,
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
