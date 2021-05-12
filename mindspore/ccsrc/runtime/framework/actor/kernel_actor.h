@@ -97,6 +97,9 @@ class KernelActor : public MemoryInterfaceActor {
   std::vector<DeviceTensor *> input_device_tensors_;
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
+
+  // The output result arrows of graph output.
+  std::vector<OpArrowPtr> output_result_arrows_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;
