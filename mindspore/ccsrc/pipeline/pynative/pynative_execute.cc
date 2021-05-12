@@ -1950,7 +1950,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
     custom_bprop_cell_count_ += 1;
   }
-  if (top_cell_ != nullptr) {
+  if (top_cell_ != nullptr && cell_stack_.empty()) {
     // non-first step
     if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
       // top cell
@@ -1961,7 +1961,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
         set_top_cell(pre_top_cell);
         return;
       }
-    } else if (cell_stack_.empty() && top_cell()->IsSubCell(cell_id) && !top_cell()->is_dynamic()) {
+    } else if (top_cell()->IsSubCell(cell_id) && !top_cell()->is_dynamic()) {
       // non-top cell
       MS_LOG(DEBUG) << "no need to run NewGraphInner again";
       return;
