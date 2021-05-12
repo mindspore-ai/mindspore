@@ -510,7 +510,7 @@ def cumsum(x, axis=None, dtype=None):
     original_dtype = x.dtype
     # If original tensor is int, and has precision less then int32, convert
     # to int32
-    if x.dtype in (mstype.int8, mstype.int16, mstype.uint8, mstype.int16):
+    if x.dtype in (mstype.bool_, mstype.int8, mstype.int16, mstype.uint8, mstype.int16):
         x = x.astype(mstype.int32)
     if axis is None:
         x = x.ravel()

@@ -908,7 +908,10 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
         const_utils.raise_value_error('zero-size tensors are not supported.')
 
     if initial is not None:
-        initial = F.fill(dtype, shape, initial)
+        if isinstance(initial, Tensor):
+            initial = F.tile(initial, shape).astype(dtype)
+        else:
+            initial = F.fill(dtype, shape, initial)
         a = cmp_fn(a, initial)
 
     if isinstance(where, Tensor):

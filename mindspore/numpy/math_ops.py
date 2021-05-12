@@ -4175,7 +4175,7 @@ def argmax(a, axis=None):
         5
         >>> print(np.argmax(a, axis=0))
         [1 1 1]
-        >>> print(np.argmax(a, axis=0))
+        >>> print(np.argmax(a, axis=1))
         [2 2]
     """
     a = _to_tensor(a)
@@ -4211,7 +4211,7 @@ def argmin(a, axis=None):
         0
         >>> print(np.argmin(a, axis=0))
         [0 0 0]
-        >>> print(np.argmin(a, axis=0))
+        >>> print(np.argmin(a, axis=1))
         [0 0]
     """
     a = _to_tensor(a)
@@ -4652,7 +4652,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     if density:
         count = F.cast(count, mstype.float32)
         count = count/diff(bin_edges)/F.reduce_sum(count)
-    return count.astype(mstype.int32), bin_edges
+    return count, bin_edges
 
 
 @constexpr
@@ -4791,7 +4791,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
             shape = _expanded_shape(ndim, dedges[i].size, i)
             count /= _to_tensor(dedges[i]).reshape(shape)
         count /= s
-    return count.astype(mstype.int32), bin_edges
+    return count, bin_edges
 
 
 def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylint: disable=redefined-builtin
@@ -4855,7 +4855,7 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
         5.33333349e+00,  6.00000000e+00]))
     """
     count, bin_edges = histogramdd((x, y), bins=bins, range=range, weights=weights, density=density)
-    return count.astype(mstype.int32), bin_edges[0], bin_edges[1]
+    return count, bin_edges[0], bin_edges[1]
 
 
 def matrix_power(a, n):
