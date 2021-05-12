@@ -25,6 +25,8 @@ namespace device {
 namespace ascend {
 // The minimum unit size (256MB) of memory block used for dynamic extend.
 static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE = 256 << 20;
+// The minimum unit size (8MB) of memory block used for dynamic extend in graph mode.
+static const size_t ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH = 8 << 20;
 
 void AscendMemoryPool::Init(uint8_t *device_mem_base, uint64_t device_mem_size, uint64_t dynamic_mem_offset) {
   static bool initialized = false;
@@ -64,8 +66,9 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
       alloc_mem_size = alloc_mem_size * 2;
     }
   } else {
+    alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
     while (alloc_mem_size < size) {
-      alloc_mem_size = alloc_mem_size + ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE;
+      alloc_mem_size = alloc_mem_size + ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE_FOR_GRAPH;
     }
   }
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
