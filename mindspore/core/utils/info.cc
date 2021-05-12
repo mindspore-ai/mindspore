@@ -165,7 +165,7 @@ std::string GraphDebugInfo::debug_name() {
 
 LocationPtr GraphDebugInfo::location() {
   // function may have decorator which is included in its location
-  if (deco_loc_ != nullptr) {
+  if (deco_loc_ != nullptr && DebugInfo::location() != nullptr) {
     LocationPtr loc = std::make_shared<Location>(*DebugInfo::location());
     loc->set_line(loc->line() + (deco_loc_->line_end() - deco_loc_->line() + 1));
     return loc;

@@ -1167,6 +1167,7 @@ void ClearResAtexit() {
   }
 #endif
   ad::g_k_prims.clear();
+  ad::ClearKPynativeCellStaticRes();
   PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();

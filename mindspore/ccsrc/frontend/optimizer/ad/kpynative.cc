@@ -37,12 +37,30 @@
 namespace mindspore {
 namespace ad {
 extern KPrim g_k_prims;
+using CacheKey = std::pair<std::string, size_t>;
+
+static ValuePtr add_ops;
+static ValuePtr ones_like_ops;
+static ValuePtr zeros_like_ops;
+static std::shared_ptr<const opt::irpass::OptimizeIRPassLib> irpass;
+static std::map<CacheKey, FuncGraphPtr> bprop_func_graph_cache;
+static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                          abstract::AbstractBasePtrListEqual>
+  zeros_like_funcgraph_cache;
+static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                          abstract::AbstractBasePtrListEqual>
+  add_backward_funcgraph_cache;
+static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                          abstract::AbstractBasePtrListEqual>
+  ones_like_funcgraph_cache;
 
 namespace {
 FuncGraphPtr ZerosLikePrimOptPass(const pipeline::ResourcePtr &res) {
-  static const opt::irpass::OptimizeIRPassLib irpass;
+  if (irpass == nullptr) {
+    irpass = std::make_shared<opt::irpass::OptimizeIRPassLib>();
+  }
   opt::OptPassConfig eliminate_zeros_like_prim_pass = opt::OptPassConfig({
-    irpass.zero_like_fill_zero_,
+    irpass->zero_like_fill_zero_,
   });
 
   opt::OptPassGroupMap map({{"eliminate_zeros_like_prim_", eliminate_zeros_like_prim_pass}});
@@ -56,10 +74,9 @@ FuncGraphPtr ZerosLikePrimOptPass(const pipeline::ResourcePtr &res) {
 }
 
 FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
-  static ValuePtr zeros_like_ops = prim::GetPythonOps("zeros_like");
-  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
-                            abstract::AbstractBasePtrListEqual>
-    zeros_like_funcgraph_cache;
+  if (zeros_like_ops == nullptr) {
+    zeros_like_ops = prim::GetPythonOps("zeros_like");
+  }
   auto iter = zeros_like_funcgraph_cache.find(args_spec);
   if (iter != zeros_like_funcgraph_cache.end()) {
     MS_LOG(DEBUG) << "Cache hit for zeros_like: " << mindspore::ToString(args_spec);
@@ -81,10 +98,9 @@ FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
 }
 
 FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
-  static ValuePtr add_ops = prim::GetPythonOps("hyper_add");
-  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
-                            abstract::AbstractBasePtrListEqual>
-    add_backward_funcgraph_cache;
+  if (add_ops == nullptr) {
+    add_ops = prim::GetPythonOps("hyper_add");
+  }
   auto iter = add_backward_funcgraph_cache.find(args_spec);
   if (iter != add_backward_funcgraph_cache.end()) {
     MS_LOG(DEBUG) << "Cache hit for hyper_add: " << mindspore::ToString(args_spec);
@@ -122,10 +138,9 @@ AnfNodePtr BuildZerosLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
 }
 
 FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
-  static ValuePtr ones_like_ops = prim::GetPythonOps("ones_like");
-  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
-                            abstract::AbstractBasePtrListEqual>
-    ones_like_funcgraph_cache;
+  if (ones_like_ops == nullptr) {
+    ones_like_ops = prim::GetPythonOps("ones_like");
+  }
   auto iter = ones_like_funcgraph_cache.find(args_spec);
   if (iter != ones_like_funcgraph_cache.end()) {
     MS_LOG(DEBUG) << "Cache hit for ones_like: " << mindspore::ToString(args_spec);
@@ -880,8 +895,6 @@ FuncGraphPtr KPynativeCellImpl::BuildBPropCutFuncGraph(const PrimitivePtr &prim,
 }
 
 FuncGraphPtr KPynativeCellImpl::BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode) {
-  using CacheKey = std::pair<std::string, size_t>;
-  static std::map<CacheKey, FuncGraphPtr> bprop_func_graph_cache;
   auto inputs_num = cnode->size() - 1;
   CacheKey key{prim->name(), inputs_num};
   auto bprop_func_graph_iter = bprop_func_graph_cache.find(key);
@@ -1087,6 +1100,17 @@ void KPynativeCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, bo
     tr.Replace(weights[i], parameters[weight_offset + i]);
   }
   tr.Commit();
+}
+
+void ClearKPynativeCellStaticRes() {
+  irpass = nullptr;
+  add_ops = nullptr;
+  ones_like_ops = nullptr;
+  zeros_like_ops = nullptr;
+  bprop_func_graph_cache.clear();
+  zeros_like_funcgraph_cache.clear();
+  add_backward_funcgraph_cache.clear();
+  ones_like_funcgraph_cache.clear();
 }
 }  // namespace ad
 }  // namespace mindspore

@@ -522,6 +522,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
   FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
   auto context_ptr = MsContext::GetInstance();
   std::string backend = MsContext::GetInstance()->backend_policy();
