@@ -534,9 +534,9 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
   // () or [] is not supported yet.
   if (cnode->size() <= 1) {
     MS_LOG(DEBUG) << "MakeTuple/MakeList CNode is empty Tuple/List, CNode: " << cnode->DebugString();
-    static auto empty_tuple = MakeValue(std::vector<ValuePtr>{});
-    static auto dummy_adjoint =
-      std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, empty_tuple, FuncGraphPtr(nullptr));
+    auto empty_tuple = MakeValue(std::vector<ValuePtr>{});
+    auto dummy_adjoint =
+      std::make_shared<PynativeAdjoint>(FuncGraphPtr(nullptr), ValuePtrList{}, empty_tuple, FuncGraphPtr(nullptr));
     anfnode_to_adjoin_[cnode] = dummy_adjoint;
     cnode->set_stop_gradient(true);
     return dummy_adjoint;

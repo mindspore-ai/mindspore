@@ -287,6 +287,8 @@ void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *
         auto tensor = element->cast<tensor::TensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         tensors->emplace_back(tensor);
+      } else if (element->isa<ValueTuple>()) {
+        TensorValueToTensor(element, tensors);
       }
     }
   } else if (value->isa<tensor::Tensor>()) {

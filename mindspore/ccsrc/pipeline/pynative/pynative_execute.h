@@ -257,7 +257,7 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
-  void SetMakeTupleAsOutputNode(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out);
+  void CreateMakeTupleNodeForMultiOut(const std::string &cell_id, const FuncGraphPtr &curr_g, const py::object &out);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:

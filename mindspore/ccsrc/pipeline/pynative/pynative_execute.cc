@@ -2050,24 +2050,24 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
   }
 }
 
-void GradExecutor::SetMakeTupleAsOutputNode(const std::string &cell_id, const FuncGraphPtr &curr_g,
-                                            const py::object &out) {
+void GradExecutor::CreateMakeTupleNodeForMultiOut(const std::string &cell_id, const FuncGraphPtr &curr_g,
+                                                  const py::object &out) {
   MS_EXCEPTION_IF_NULL(curr_g);
   if (!(py::isinstance<py::tuple>(out) || py::isinstance<py::list>(out))) {
     MS_LOG(EXCEPTION) << "The out of top cell should be tuple or list when set maketuple as output node";
   }
-  auto tuple = out.cast<py::tuple>();
-  auto tuple_size = static_cast<int64_t>(tuple.size());
+  auto out_tuple = out.cast<py::tuple>();
+  auto out_tuple_size = static_cast<int64_t>(out_tuple.size());
 
   // get input node and value
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
   ValuePtrList input_args;
-  std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  for (int64_t i = 0; i < tuple_size; i++) {
-    inputs.emplace_back(GetInput(tuple[i], false));
-    input_args.emplace_back(parse::data_converter::PyDataToValue(tuple[i]));
+  for (int64_t i = 0; i < out_tuple_size; i++) {
+    inputs.emplace_back(GetInput(out_tuple[i], false));
+    input_args.emplace_back(parse::data_converter::PyDataToValue(out_tuple[i]));
   }
   auto cnode = curr_g_->NewCNode(inputs);
+  MS_LOG(DEBUG) << "Tuple output node info " << cnode->DebugString();
   // record node info in graph map
   auto out_id = GetId(out);
   SetTupleArgsToGraphInfoMap(curr_g_, out, cnode);
@@ -2079,7 +2079,6 @@ void GradExecutor::SetMakeTupleAsOutputNode(const std::string &cell_id, const Fu
   // run ad for maketuple node
   ValuePtr out_value = parse::data_converter::PyDataToValue(out);
   ad::GradPynativeOp(top_cell()->k_pynative_cell_ptr(), cnode, input_args, out_value);
-  MS_LOG(DEBUG) << "Tuple output node info " << cnode->DebugString();
 }
 
 void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args) {
@@ -2098,7 +2097,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
   MS_EXCEPTION_IF_NULL(graph_info);
   if (graph_info->node_map.find(out_id) == graph_info->node_map.end()) {
     if (py::isinstance<py::tuple>(out) || py::isinstance<py::list>(out)) {
-      SetMakeTupleAsOutputNode(cell_id, curr_g_, out);
+      CreateMakeTupleNodeForMultiOut(cell_id, curr_g_, out);
     } else {
       MS_LOG(DEBUG) << "Set ValueNode as output for graph, out id: " << out_id;
       MakeValueNode(out, out_id);
@@ -2124,11 +2123,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     set_fg_fn();
     DumpIR("fg.ir", curr_g_);
   }
-  // Checkout whether need to compile graph when top cell has ran finished
-  if (cell_id == top_cell()->cell_id()) {
-    CheckNeedCompileGraph();
-  }
-  // Reset grad flag and checkout whether need to compile graph when top cell has ran finished
+  // Reset grad flag and update output node of top cell
   if (cell_stack_.empty() && cell_id == top_cell()->cell_id()) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
     set_grad_flag(false);
@@ -2138,6 +2133,10 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
     MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
     k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node);
+  }
+  // Checkout whether need to compile graph when top cell has ran finished
+  if (cell_id == top_cell()->cell_id()) {
+    CheckNeedCompileGraph();
   }
 }
 
