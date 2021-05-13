@@ -187,6 +187,7 @@ void Debugger::SetOpOverflowBinPath(uint32_t graph_id) {
     graph_id, DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_id, device_id_)));
   // new overflow dump files will have a timestamp greater than last_overflow_bin_
   auto overflow_bin_path = overflow_bin_path_.find(graph_id)->second;
+  MS_LOG(INFO) << "overflow_bin_path = " << overflow_bin_path;
   DIR *d;
   d = opendir(overflow_bin_path.c_str());
   if (d != nullptr) {
@@ -417,6 +418,12 @@ void Debugger::PostDebugOp() {
 }
 
 void Debugger::SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint32_t>, std::string> &mapping) {
+  MS_LOG(INFO) << "SetStreamTaskToOpnameMap start";
+  for (auto const &item : mapping) {
+    MS_LOG(INFO) << "stream = " << item.first.first << ", task =  " << item.first.second
+                 << ", op_name =  " << item.second << std::endl;
+  }
+  MS_LOG(INFO) << "SetStreamTaskToOpnameMap end";
   stream_task_to_opname_ = mapping;
 }
 
@@ -832,6 +839,9 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   std::vector<int32_t> error_codes;
 #ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
+  for (auto const &item : overflow_ops) {
+    MS_LOG(DEBUG) << "overflow_ops item = " << item << std::endl;
+  }
 #endif
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   if (watchnode.empty()) {
@@ -1067,12 +1077,13 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
             MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
             continue;
           }
-          infile.seekg(313, std::ios::beg);
+          MS_LOG(INFO) << "Open overflow bin file " << file_name;
+          infile.seekg(321, std::ios::beg);
           std::vector<char> buffer;
           buffer.resize(BUF_SIZ);
           infile.read(buffer.data(), BUF_SIZ);
-          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + 8, buffer.end()));
-          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + 16, buffer.end()));
+          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + 16, buffer.end()));
+          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + 24, buffer.end()));
           MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
           auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
           if (op != debugger_->stream_task_to_opname_.end()) {
