@@ -187,7 +187,7 @@ int NetRunner::TrainLoop() {
     if (save_checkpoint_ != 0 && (i + 1) % save_checkpoint_ == 0) {
       auto cpkt_fn =
         ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained_" + std::to_string(i + 1) + ".ms";
-      mindspore::lite::Model::Export(head_model_, cpkt_fn.c_str());
+      session_->Export(cpkt_fn);
     }
 
     std::cout << i + 1 << ": Loss is " << loss << " [min=" << min_loss << "]" << std::endl;
@@ -213,12 +213,12 @@ int NetRunner::Main() {
   float acc = CalculateAccuracy(ds_.val_data(), session_);
   std::cout << "accuracy on validation data = " << acc << std::endl;
 
-  if (cycles_ > 0 && head_model_ != nullptr) {
+  if (cycles_ > 0) {
     auto trained_fn = ms_head_file_.substr(0, ms_head_file_.find_last_of('.')) + "_trained.ms";
-    mindspore::lite::Model::Export(head_model_, trained_fn.c_str());
+    session_->Export(trained_fn);
   }
   if (!save_inference_.empty()) {
-    int status = session_->ExportInference(save_inference_);
+    int status = session_->Export(save_inference_, mindspore::lite::MT_INFERENCE);
     if (status != mindspore::lite::RET_OK) {
       std::cout << "Failed to save inference file";
       return mindspore::lite::RET_ERROR;

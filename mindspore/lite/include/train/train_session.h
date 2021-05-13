@@ -20,6 +20,7 @@
 #include <tuple>
 #include "include/lite_session.h"
 #include "include/errorcode.h"
+#include "include/train/train_cfg.h"
 
 namespace mindspore {
 namespace session {
@@ -32,26 +33,14 @@ class TrainSession : public session::LiteSession {
 
   /// \brief Static method to create a TrainSession object
   ///
-  /// \param[in] model A buffer that was read from a MS model file
+  /// \param[in] filename name of flatbuffer that holds the flatbuffer
   /// \param[in] context Defines the context of the session to be created
   /// \param[in] train_mode training mode to initialize Session with
+  /// \param[in] cfg training configuration, set to null for default configuration
   ///
   /// \return Pointer of MindSpore Lite TrainSession
-  static TrainSession *CreateSession(mindspore::lite::Model *model, lite::Context *context, bool train_mode = false);
-
-  /// \brief Static method to create a transfer lernning support TrainSession object
-  ///
-  /// \param[in] model_buf_backbone A buffer that was read from a backbone MS model file
-  /// \param[in] size_backbone Length of the backbone net buffer
-  /// \param[in] model_buf_head A buffer that was read from a head MS model file
-  /// \param[in] size_head Length of the head net buffer
-  /// \param[in] context Defines the context of the session to be created
-  /// \param[in] train_mode training mode to initialize Session with
-  ///
-  /// \return Pointer of MindSpore Lite TrainSession
-  static TrainSession *CreateTransferSession(const char *model_buf_backbone, size_t size_backbone,
-                                             const char *model_buf_head, size_t size_head, lite::Context *context,
-                                             bool train_mode = false);
+  static TrainSession *CreateSession(const std::string &filename, const lite::Context *context, bool train_mode = false,
+                                     const lite::TrainCfg *cfg = nullptr);
 
   /// \brief Static method to create a TrainSession object
   ///
@@ -62,7 +51,8 @@ class TrainSession : public session::LiteSession {
   ///
   /// \return Pointer of MindSpore Lite TrainSession
   static TrainSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
-                                             lite::Context *context, bool train_mode = false);
+                                             const lite::Context *context, bool train_mode = false,
+                                             const lite::TrainCfg *cfg = nullptr);
 
   /// \brief Set model to train mode
   /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
@@ -108,25 +98,21 @@ class TrainSession : public session::LiteSession {
   /// \return a vector of output tensors (MindSpore Lite MSTensor).
   virtual std::vector<tensor::MSTensor *> GetPredictions() const = 0;
 
-  /// \brief Set part of the name that identify a loss kernel
-  /// \param[in] loss_name Identifucation name for loss kernels
+  /// \brief Save model
+  /// \param[in] file_name pretrained model file name prefix. '.ms' extenension is added if does not exist
+  /// \param[in] model_type indication whether to save full model or only the inference part
+  /// \param[in] quant_type indication whether to quantize exported model
+  /// \param[in] format of exported file (currently only FT_FLATBUFFER is supported)
   /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
-  virtual int SetLossName(std::string loss_name) {
-    loss_name_ = loss_name;
-    return mindspore::lite::RET_OK;
+  virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
+                     lite::QuantType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFER) {
+    return mindspore::lite::RET_ERROR;
   }
-  /// \brief Save model for inference (LiteSession)
-  /// \param[in] fb_name pretrained model file name prefix. '.ms' is added as extension.
-  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
-  virtual int ExportInference(std::string fb_name) { return mindspore::lite::RET_ERROR; }
 
  protected:
   bool train_mode_ = false;
-  std::string get_loss_name() const { return loss_name_; }
-
- private:
-  std::string loss_name_ = "_loss_fn";
 };
+
 }  // namespace session
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_SESSION_H_

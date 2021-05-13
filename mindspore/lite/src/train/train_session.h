@@ -54,12 +54,13 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int CompileGraph(lite::Model *model) override;
   virtual int CompileTrainGraph(lite::Model *model);
 
+  virtual int Init(const Context *context, const TrainCfg *train_cfg);
+
   int Train() override;
   int Eval() override;
   int SetLearningRate(float learning_rate) override;
   float GetLearningRate() override;
   int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) override;
-  int SetLossName(std::string loss_name) override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
   std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
@@ -88,7 +89,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     }
     return outputs;
   }
-  int ExportInference(std::string file_name) override;
+  int Export(const std::string &fb_name, ModelType model_type, QuantType quant_type, FormatType) override;
 
  protected:
   void AllocWorkSpace();
@@ -107,6 +108,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   virtual void CompileEvalOutputs();
 
   Model *model_ = nullptr;
+  TrainCfg train_cfg_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
   std::vector<std::string> orig_output_tensor_names_;

@@ -317,33 +317,35 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = flags_->num_threads_;
 
-  MS_LOG(INFO) << "start reading model file" << filename.c_str();
-  std::cout << "start reading model file " << filename.c_str() << std::endl;
-  auto *model = mindspore::lite::Model::Import(filename.c_str());
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "create model for train session failed";
-    return RET_ERROR;
+  TrainCfg train_cfg;
+  if (flags_->loss_name_ != "") {
+    train_cfg.loss_name_ = flags_->loss_name_;
   }
 
   session::LiteSession *session = nullptr;
   session::TrainSession *t_session = nullptr;
   if (train_session) {
-    t_session = session::TrainSession::CreateSession(model, &context);
+    MS_LOG(INFO) << "CreateSession from model file" << filename.c_str();
+    std::cout << "CreateSession from model file " << filename.c_str() << std::endl;
+    t_session = session::TrainSession::CreateSession(filename, &context, true, &train_cfg);
     if (t_session == nullptr) {
       MS_LOG(ERROR) << "RunNetTrain CreateSession failed while running " << model_name.c_str();
       std::cout << "RunNetTrain CreateSession failed while running " << model_name.c_str() << std::endl;
-      delete model;
       return RET_ERROR;
     }
 
-    if (flags_->loss_name_ != "") {
-      t_session->SetLossName(flags_->loss_name_);
-    }
     if (epochs > 0) {
       t_session->Train();
     }
     session = t_session;
   } else {
+    MS_LOG(INFO) << "start reading model file" << filename.c_str();
+    std::cout << "start reading model file " << filename.c_str() << std::endl;
+    auto *model = mindspore::lite::Model::Import(filename.c_str());
+    if (model == nullptr) {
+      MS_LOG(ERROR) << "create model for train session failed";
+      return RET_ERROR;
+    }
     session = session::LiteSession::CreateSession(&context);
     if (session == nullptr) {
       MS_LOG(ERROR) << "ExportedFile CreateSession failed while running " << model_name.c_str();
@@ -378,7 +380,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;
     }
-    SaveModels(t_session, model);  // save file if flags are on
+    SaveModels(t_session);  // save file if flags are on
   }
   if (!flags_->data_file_.empty()) {
     if (t_session != nullptr) {
@@ -406,10 +408,10 @@ int NetTrain::RunNetTrain() {
   return RET_OK;
 }
 
-int NetTrain::SaveModels(session::TrainSession *session, mindspore::lite::Model *model) {
+int NetTrain::SaveModels(session::TrainSession *session) {
   if (!flags_->export_file_.empty()) {
-    auto ret = Model::Export(model, flags_->export_file_.c_str());
-    if (ret != RET_OK) {
+    auto status = session->Export(flags_->export_file_);
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "SaveToFile error";
       std::cout << "Run SaveToFile error";
       return RET_ERROR;
@@ -417,7 +419,7 @@ int NetTrain::SaveModels(session::TrainSession *session, mindspore::lite::Model 
   }
   if (!flags_->inference_file_.empty()) {
     auto tick = GetTimeUs();
-    auto status = session->ExportInference(flags_->inference_file_);
+    auto status = session->Export(flags_->inference_file_, lite::MT_INFERENCE);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Save model error: " << status;
       std::cout << "Save model error: " << status << std::endl;

@@ -23,6 +23,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/lite_kernel.h"
 #include "src/lite_model.h"
+#include "include/train/train_cfg.h"
 
 namespace mindspore {
 #ifndef _STUB
@@ -40,7 +41,7 @@ class TrainExport {
   virtual ~TrainExport();
   int ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
                 const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names,
-                const Model *model);
+                const Model *model, QuantType quant_type);
   int ExportInit(const std::string model_name, std::string version);
   int SaveToFile();
   void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
@@ -69,6 +70,7 @@ class TrainExport {
   bool NeedQuantization(const mindspore::lite::Tensor *tensor);
   virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
   mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);
+  QuantType quant_type_;
 };
 };  // namespace lite
 }  // namespace mindspore

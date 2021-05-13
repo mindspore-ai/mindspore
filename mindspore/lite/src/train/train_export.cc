@@ -255,11 +255,12 @@ int TrainExport::AddTransformNode() {
 
 int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
                            const std::vector<mindspore::lite::Tensor *> &tensors,
-                           const std::vector<std::string> &output_names, const Model *model) {
+                           const std::vector<std::string> &output_names, const Model *model, QuantType quant_type) {
   std::vector<size_t> map_index;
   std::set<size_t> out_set;
   int offset = meta_graph_->allTensors.size();
   int tensor_idx = offset;
+  quant_type_ = quant_type;
 
   if (meta_graph_ == nullptr) {
     int status = ExportInit(model->name_, model->version_);

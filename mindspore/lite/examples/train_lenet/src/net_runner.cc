@@ -100,12 +100,7 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
-  model_ = mindspore::lite::Model::Import(ms_file_.c_str());
-  if (model_ == nullptr) {
-    std::cout << "import model failed" << std::endl;
-    return;
-  }
-  session_ = mindspore::session::TrainSession::CreateSession(model_, &context, true);
+  session_ = mindspore::session::TrainSession::CreateSession(ms_file_, &context, true);
 
   MS_ASSERT(nullptr != session_);
   loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_);
@@ -172,7 +167,7 @@ int NetRunner::TrainLoop() {
 
   mindspore::lite::LossMonitor lm(100);
   mindspore::lite::ClassificationTrainAccuracyMonitor am(1);
-  mindspore::lite::CkptSaver cs(1000, std::string("lenet"), model_);
+  mindspore::lite::CkptSaver cs(1000, std::string("lenet"));
   Rescaler rescale(255.0);
 
   loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched});
@@ -190,7 +185,7 @@ int NetRunner::Main() {
 
   if (epochs_ > 0) {
     auto trained_fn = ms_file_.substr(0, ms_file_.find_last_of('.')) + "_trained.ms";
-    Model::Export(model_, trained_fn.c_str());
+    session_->Export(trained_fn);
   }
   return 0;
 }
