@@ -47,9 +47,10 @@ class LoopCountActor : public OpActor<DeviceTensor> {
   // The dependent input controls number.
   size_t input_controls_num_;
 
-  // The output controls contain the data source actors and the no input kernel actors.
+  // The output controls contain the data source actors and the no input kernel actors and output actor.
   std::vector<AID> data_source_aids_;
   std::vector<AID> no_input_kernel_aids_;
+  AID output_aid_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;

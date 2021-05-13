@@ -255,17 +255,7 @@ ActorInfo MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   }
 
   // Construct the graph compiler info.
-  std::vector<KernelGraphPtr> graphs;
-  std::vector<DeviceContext *> device_contexts;
-  std::string name = "kernel_graph";
-  for (const auto &graph_id_to_context : graph_to_device_context_) {
-    graphs.emplace_back(runtime::GraphCompiler::GetInstance().Fetch(graph_id_to_context.first));
-    device_contexts.emplace_back(graph_id_to_context.second);
-    name.append("_").append(std::to_string(graph_id_to_context.first));
-  }
-  std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
-  auto graph_compiler_info = std::make_unique<GraphCompilerInfo>(graphs, device_contexts, input_tensors, control_nodes_,
-                                                                 root_graph->parameters(), name);
+  auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
 
   // Transform graph to actor DAG, and schedule the actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*(graph_compiler_info.get()));
@@ -355,15 +345,47 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
 
   // Run actor DAG.
   mindspore::ScopedLongRunning long_running;
-  VectorRef outputs;
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
-  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors, &outputs);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
 
+  // Fetch outputs.
+  MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
+  auto &output_tensors = actor_set->output_actor_->outputs();
+  VectorRef outputs;
+  (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
+                       [](tensor::TensorPtr &tensor) { return std::move(tensor); });
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
   return outputs;
+}
+
+std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {
+  MS_EXCEPTION_IF_NULL(root_graph);
+
+  std::vector<KernelGraphPtr> graphs;
+  std::vector<DeviceContext *> device_contexts;
+  std::string name = "kernel_graph";
+  for (const auto &graph_id_to_context : graph_to_device_context_) {
+    graphs.emplace_back(runtime::GraphCompiler::GetInstance().Fetch(graph_id_to_context.first));
+    device_contexts.emplace_back(graph_id_to_context.second);
+    name.append("_").append(std::to_string(graph_id_to_context.first));
+  }
+
+  runtime::KernelMapPosition outputs_order;
+  size_t position = 0;
+  const auto &outputs = AnfAlgo::GetAllOutput(root_graph->output(), {prim::kPrimTupleGetItem});
+  for (const auto &output : outputs) {
+    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, true);
+    MS_EXCEPTION_IF_NULL(output_with_index.first);
+    outputs_order.emplace(output_with_index, position++);
+  }
+
+  std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
+  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, input_tensors, control_nodes_,
+                                             root_graph->parameters(), outputs_order, name);
 }
 }  // namespace compile
 }  // namespace mindspore

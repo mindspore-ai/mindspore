@@ -118,6 +118,9 @@ class MindRTBackend : public Backend {
   // The result of graph compiler is stored in graph_to_device_context_ and control_nodes_.
   void CompileGraph(const FuncGraphPtr &func_graph);
 
+  // Construct the GraphCompilerInfo by the compilation results of graph.
+  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
+
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.
