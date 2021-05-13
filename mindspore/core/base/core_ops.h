@@ -48,6 +48,7 @@ constexpr auto kScalarUsub = "ScalarUsub";
 constexpr auto kSub = "Sub";
 constexpr auto kMul = "Mul";
 constexpr auto kRealDiv = "RealDiv";
+constexpr auto kAdd = "Add";
 
 // Arrays
 constexpr auto kStack = "Stack";
@@ -369,7 +370,7 @@ inline const PrimitivePtr kPrimTensorListSetItem = std::make_shared<Primitive>("
 // Maths
 inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
 inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
-inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>("Add");
+inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>(kAdd);
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
 inline const PrimitivePtr kPrimMatrixDiag = std::make_shared<Primitive>("MatrixDiag");
 inline const PrimitivePtr kPrimBatchMatMul = std::make_shared<Primitive>("BatchMatMul");
