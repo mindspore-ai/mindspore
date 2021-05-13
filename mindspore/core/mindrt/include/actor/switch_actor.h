@@ -28,7 +28,7 @@ namespace mindspore {
 template <typename T>
 class SwitchActorBase : public OpActor<T> {
  public:
-  explicit SwitchActorBase(std::string op_name) : ActorBase(op_name) {}
+  explicit SwitchActorBase(std::string op_name) : OpActor<T>(op_name) {}
   virtual ~SwitchActorBase() = default;
 
   // The actor run when receive the input data.

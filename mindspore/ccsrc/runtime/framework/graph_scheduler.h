@@ -29,6 +29,7 @@
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/switch_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/kernel_graph.h"
 
@@ -87,6 +88,7 @@ struct ActorSet {
   std::vector<KernelActorPtr> kernel_actors_;
   // No input kernel actors need be triggered specifically.
   std::vector<KernelActorPtr> no_input_kernel_actors_;
+  std::vector<SwitchActorPtr> switch_actors_;
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
   ActorInfo name_;

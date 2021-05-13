@@ -20,18 +20,6 @@
 namespace mindspore {
 namespace runtime {
 namespace {
-// Judge whether the device tensor of the node is persistent or not.
-bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>()) {
-    return true;
-  }
-  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
-    return true;
-  }
-  return false;
-}
-
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
