@@ -879,6 +879,30 @@ class AvgPoolGrad(_PoolGrad):
         return x1_dtype
 
 
+class AvgPool3DGrad(Primitive):
+    """Gradients of the avg pool3d operation."""
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pads=0, ceil_mode=False,
+                 count_include_pad=True, divisor_override=0, data_format="NCDHW"):
+        self.init_prim_io_names(inputs=['origin_input_shape', 'gradS'], outputs=['output'])
+        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.add_prim_attr('kernel_size', self.kernel_size)
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name)
+        self.add_prim_attr('strides', self.strides)
+        validator.check_value_type('pads', pads, (int, tuple), self.name)
+        if isinstance(pads, int):
+            pads = (pads,) * 6
+        validator.check_equal_int(len(pads), 6, 'pad size', self.name)
+        for item in pads:
+            validator.check_non_negative_int(item, 'pad item', self.name)
+        self.add_prim_attr('pad_list', pads)
+        self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
+        self.count_include_pad = validator.check_value_type('count_include_pad', count_include_pad, bool, self.name)
+        self.divisor_override = validator.check_value_type('divisor_override', divisor_override, int, self.name)
+        self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
+
+
 class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 

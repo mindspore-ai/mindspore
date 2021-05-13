@@ -315,6 +315,27 @@ def get_bprop_avg_pool_grad(self):
     return bprop
 
 
+@bprop_getters.register(P.AvgPool3D)
+def get_bprop_avg_pool_3d_grad(self):
+    """Grad definition for `AvgPool3D` operation."""
+    pad_list = self.get_attr_dict()['pad_list']
+    count_include_pad = self.get_attr_dict()['count_include_pad']
+    avgpool3d_grad = G.AvgPool3DGrad(kernel_size=self.kernel_size,
+                                     strides=self.strides,
+                                     pads=pad_list,
+                                     ceil_mode=self.ceil_mode,
+                                     count_include_pad=count_include_pad,
+                                     divisor_override=self.divisor_override,
+                                     data_format=self.data_format)
+
+    def bprop(x, out, dout):
+        x_shape = F.shape(x)
+        dx = avgpool3d_grad(x_shape, dout)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.DropoutGenMask)
 def get_bprop_dropout_gen_mask(self):
     """Grad definition for `DropoutGenMask` operation."""

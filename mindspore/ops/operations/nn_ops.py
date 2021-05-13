@@ -7638,6 +7638,110 @@ class LRN(PrimitiveWithInfer):
         return x_shape
 
 
+class AvgPool3D(Primitive):
+    r"""
+    3D Average pooling operation.
+
+    Applies a 3D average pooling over an input Tensor which can be regarded as a composition of 3D input planes.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, AvgPool3D outputs
+    regional average in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents depth, height and width are both kernel_size, or a tuple
+            of three int numbers that represent depth, height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same", "valid", "pad", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+
+            - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
+              be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
+                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+                    pad[3], pad[4] and pad[5] correspondingly.
+        ceil_mode (bool): If True, ceil instead of floor to compute the output shape. Default: False.
+        count_include_pad (bool): If True, averaging calculation will include the zero-padding. Default: True.
+        divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
+            otherwise kernel_size will be used. Default: 0.
+        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{out}, H_{in}, W_{in})`.
+          Currently support float16 and float32 data type.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input`.
+
+    Raises:
+        TypeError: If `kernel_size`, `strides` or `pad` is neither an int not a tuple.
+        TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+        TypeError: If `pad_mode` or `data_format` is not a string.
+        TypeError: If `divisor_override` is not an int.
+        ValueError: If numbers in `kernel_size` or `strides` are not positive.
+        ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
+        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If element of `pad` is less than 0.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
+        >>> avg_pool3d = ops.AvgPool3D(kernel_size=2, strides=1, pad_mode="valid")
+        >>> output = avg_pool3d(input)
+        >>> print(output)
+        [[[[[233.5 248.625]]]
+          [[[233.5 238.125]]]]]
+    """
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False,
+                 count_include_pad=True, divisor_override=0, data_format="NCDHW"):
+        """Initialize AvgPool3D"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
+        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.add_prim_attr('kernel_size', self.kernel_size)
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name)
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        self.add_prim_attr('strides', self.strides)
+        if isinstance(pad, int):
+            pad = (pad,) * 6
+        validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        self.pad_list = pad
+        self.add_prim_attr('pad_list', self.pad_list)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'PAD'], 'pad_mode', self.name)
+        self.add_prim_attr('pad_mode', self.pad_mode)
+
+        if self.pad_mode != 'PAD' and pad != (0, 0, 0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+        if self.pad_mode == 'PAD':
+            for item in pad:
+                validator.check_non_negative_int(item, 'pad item', self.name)
+        self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
+        self.count_include_pad = validator.check_value_type('count_include_pad', count_include_pad, bool, self.name)
+        self.divisor_override = validator.check_non_negative_int(divisor_override, 'divisor_override', self.name)
+        self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
+
+
 class Conv3D(PrimitiveWithInfer):
     r"""
     3D convolution layer.

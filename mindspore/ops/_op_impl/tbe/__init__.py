@@ -223,6 +223,8 @@ from .scatter_nd_update import _scatter_nd_update_tbe
 from .avg_pool import _avg_pool_tbe
 from .avg_pool_grad import _avg_pool_grad_tbe
 from .avg_pool_grad_vm import _avg_pool_grad_vm_tbe
+from .avg_pool_3d import _avg_pool_3d_tbe
+from .avg_pool_3d_grad import _avg_pool_3d_grad_tbe
 from .ones_like import _ones_like_tbe
 from .ones_like_ds import _ones_like_ds_tbe
 from .batch_to_space import _batch_to_space_tbe
