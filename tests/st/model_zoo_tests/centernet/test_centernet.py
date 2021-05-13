@@ -28,8 +28,8 @@ def test_center_net():
     model_name = "centernet"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
-    old_list = ['new_repeat_count, dataset']
-    new_list = ['5, dataset']
+    old_list = ['new_repeat_count, dataset', 'args_opt.data_sink_steps']
+    new_list = ['5, dataset', '20']
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     old_list = ["device_ips = {}", "device_ip.strip()",
                 "rank_size = 0", "this_server = server",
@@ -47,16 +47,16 @@ def test_center_net():
         .format(dataset_path, utils.rank_table_path)
     os.system(exec_network_shell)
     cmd = "ps -ef |grep train.py | grep coco | grep -v grep"
-    ret = utils.process_check(100, cmd)
+    ret = utils.process_check(120, cmd)
     assert ret
     log_file = os.path.join(cur_model_path, "LOG{}/training_log.txt")
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i))
-        assert per_step_time < 385
+        assert per_step_time < 435
     loss_list = []
     for i in range(8):
         loss_cmd = "grep -nr \"outputs are\" {} | awk '{{print $14}}' | awk -F\")\" '{{print $1}}'"\
             .format(log_file.format(i))
         loss = utils.get_loss_data_list(log_file.format(i), cmd=loss_cmd)
         loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 35.0
+    assert sum(loss_list) / len(loss_list) < 58.8

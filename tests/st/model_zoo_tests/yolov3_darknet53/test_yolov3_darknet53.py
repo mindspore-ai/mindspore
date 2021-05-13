@@ -245,6 +245,6 @@ def test_yolov3_darknet_8p():
     pattern1 = r", *([\d\.]+) imgs/sec"
     pattern2 = r"loss:*([\d\.]+),"
     fps_list = utils.parse_log_file(pattern1, train_log_file)[1:]
-    assert sum(fps_list) / len(fps_list) > 480
+    assert sum(fps_list) / len(fps_list) > 370
     loss_list = utils.parse_log_file(pattern2, train_log_file)
     assert loss_list[-1] < 280

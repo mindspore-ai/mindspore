@@ -29,24 +29,24 @@ def test_BGCF_amazon_beauty():
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
 
-    old_list = ["--datapath=../data_mr"]
-    new_list = ["--datapath={}".format(os.path.join(utils.data_root, "amazon_beauty/mindrecord_train"))]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "scripts/run_train_ascend.sh"))
     old_list = ["default=600,"]
     new_list = ["default=50,"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config.py"))
-    old_list = ["context.set_context(device_id=int(parser.device))"]
-    new_list = ["context.set_context()"]
+    old_list = ["context.set_context(device_id=int(parser.device))",
+                "save_checkpoint("]
+    new_list = ["context.set_context()",
+                "pass \\# save_checkpoint("]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
-    exec_network_shell = "cd {}/scripts; bash run_train_ascend.sh".format(model_name)
+
+    data_path = os.path.join(utils.data_root, "amazon_beauty/mindrecord_train")
+    exec_network_shell = "cd {}; python train.py --datapath={} &> log"\
+        .format(model_name, data_path)
+    print("train process is running...")
     ret = os.system(exec_network_shell)
     assert ret == 0
+    print("train process finished.")
 
-    cmd = "ps -ef|grep python |grep train.py|grep amazon_beauty|grep -v grep"
-    ret = utils.process_check(300, cmd)
-    assert ret
-
-    log_file = os.path.join(cur_model_path, "scripts/train/log")
+    log_file = os.path.join(cur_model_path, "log")
     pattern1 = r"loss ([\d\.\+]+)\,"
     loss_list = utils.parse_log_file(pattern1, log_file)
     loss_list = loss_list[-5:]
