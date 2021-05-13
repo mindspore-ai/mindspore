@@ -34,7 +34,7 @@ uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
   return kernel_runtime->device_id();
 }
 
-std::string GenerateDumpPath(uint32_t graph_id, const uint32_t *device_id) {
+std::string GenerateDumpPath(const uint32_t *device_id) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string net_name = dump_json_parser.net_name();
   std::string iterator = std::to_string(dump_json_parser.cur_dump_iter());
@@ -42,9 +42,12 @@ std::string GenerateDumpPath(uint32_t graph_id, const uint32_t *device_id) {
   if (dump_path.back() != '/') {
     dump_path += "/";
   }
-  uint32_t physical_device = device_id == nullptr ? 0 : ConvertPhysicalDeviceId(*device_id);
-  dump_path += ("rank_" + std::to_string(physical_device) + "/" + net_name + "/graph_" + std::to_string(graph_id) +
-                "/iteration_" + iterator);
+  if (device_id == nullptr) {
+    dump_path += (net_name + "/iteration_" + iterator);
+  } else {
+    auto physical_device = ConvertPhysicalDeviceId(*device_id);
+    dump_path += (net_name + "/device_" + std::to_string(physical_device) + "/iteration_" + iterator);
+  }
   return dump_path;
 }
 

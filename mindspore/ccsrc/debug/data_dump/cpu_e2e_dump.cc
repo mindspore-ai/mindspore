@@ -29,7 +29,7 @@ void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
 
   MS_LOG(DEBUG) << "E2e dump CNode data start: " << kernel_name << ", current iteration is "
                 << dump_json_parser.cur_dump_iter();
-  std::string dump_path = GenerateDumpPath(graph_id);
+  std::string dump_path = GenerateDumpPath();
   if (dump_json_parser.InputNeedDump()) {
     DumpCNodeInputs(node, dump_path);
   }
@@ -134,7 +134,7 @@ void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph, uint3
   MS_LOG(INFO) << "Start e2e dump parameters and Const values";
   std::map<std::string, size_t> const_map;
   GetConstantId(graph, &const_map);
-  const std::string &dump_path = GenerateDumpPath(graph_id);
+  const std::string &dump_path = GenerateDumpPath();
 
   // dump parameters
   const auto &parameters = graph->inputs();

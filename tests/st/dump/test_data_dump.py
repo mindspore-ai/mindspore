@@ -82,14 +82,16 @@ def run_e2e_dump_bin():
     change_current_dump_json('e2e_dump_bin.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_bin.json'
     device_id = context.get_context("device_id")
-    dump_file_path = dump_path + '/rank_{}/Net/graph_0/iteration_1/'.format(device_id)
+    dump_file_path = dump_path
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
     add(Tensor(x), Tensor(y))
     if context.get_context("device_target") == "Ascend":
+        dump_file_path += '/Net/device_{}/iteration_1/'.format(device_id)
         output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.bin"
     else:
+        dump_file_path += '/Net/iteration_1/'
         output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.bin"
     output_path = dump_file_path + output_name
     real_path = os.path.realpath(output_path)
@@ -107,14 +109,16 @@ def run_e2e_dump_npy():
     change_current_dump_json('e2e_dump_npy.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_npy.json'
     device_id = context.get_context("device_id")
-    dump_file_path = dump_path + '/rank_{}/Net/graph_0/iteration_1/'.format(device_id)
+    dump_file_path = dump_path
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
     add(Tensor(x), Tensor(y))
     if context.get_context("device_target") == "Ascend":
+        dump_file_path += '/Net/device_{}/iteration_1/'.format(device_id)
         output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.npy"
     else:
+        dump_file_path += '/Net/iteration_1/'
         output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.npy"
     output_path = dump_file_path + output_name
     real_path = os.path.realpath(output_path)

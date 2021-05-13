@@ -235,7 +235,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
   }
   MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
   MS_LOG(INFO) << "Current graph id is " << graph_id;
-  std::string dump_path = GenerateDumpPath(graph_id, &device_id);
+  std::string dump_path = GenerateDumpPath(&device_id);
 
   DumpInput(graph, dump_path, debugger);
   DumpOutput(graph, dump_path, debugger);
