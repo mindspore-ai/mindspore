@@ -14,21 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 3 ]
+if [ $# -lt 1 ]
 then
-  echo "Usage: sh run_distributed_train_gpu.sh [DEVICE_NUM] [VISIBLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
-       [PRE_TRAINED](optional)"
+  echo "Usage: sh run_standalone_train_gpu.sh [TRAIN_LABEL_FILE] [PRETRAINED_BACKBONE](optional)"
   exit 1
 fi
-
-if [ $1 -lt 1 ] && [ $1 -gt 8 ]
-then
-  echo "error: DEVICE_NUM=$1 is not in (1-8)"
-  exit 1
-fi
-
-export DEVICE_NUM=$1
-export RANK_SIZE=$1
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
@@ -40,20 +30,14 @@ fi
 mkdir ../train
 cd ../train || exit
 
-export CUDA_VISIBLE_DEVICES="$2"
-
-if [ $4 ] #pretrained ckpt
+if [ $2 ] # pretrained ckpt
 then
-  if [ $1 -gt 1 ]
-  then
-    mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
-                                                  --data_dir=$3 \
-                                                  --is_distributed=1 \
-                                                  --device_target='GPU'
-  else
-    python3 ${BASEPATH}/../train.py \
-            --data_dir=$3 \
-            --is_distributed=0 \
-            --device_target='GPU'
-  fi
+  python ${BASEPATH}/../train.py \
+            --train_label_file=$1 \
+            --device_target='GPU' \
+            --pretrained=$2 > train.log  2>&1 &
+else
+  python ${BASEPATH}/../train.py \
+            --train_label_file=$1 \
+            --device_target='GPU' > train.log  2>&1 &
 fi

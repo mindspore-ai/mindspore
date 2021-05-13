@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ from src.dataset import faceqa_dataset
 from src.log import get_logger, AverageMeter
 
 warnings.filterwarnings('ignore')
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 mindspore.common.seed.set_seed(1)
 
 def main(args):
@@ -181,7 +179,14 @@ if __name__ == "__main__":
     parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
     parser.add_argument('--train_label_file', type=str, default='', help='image label list file, e.g. /home/label.txt')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
+    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
+                        help='device target')
 
     arg = parser.parse_args()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
+    if arg.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
 
     main(arg)

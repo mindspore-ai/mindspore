@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,11 +23,28 @@ from mindspore import Tensor
 eps = 1e-24
 
 
+class log_softmax(nn.Cell):
+    ''' replacement of P.LogSoftmax() that supports x.shape=3. '''
+    def __init__(self):
+        super(log_softmax, self).__init__()
+        self.lsm = P.LogSoftmax()
+        self.concat = P.Concat(1)
+        self.reshape = P.Reshape()
+
+    def construct(self, x):
+        dim1 = x.shape[1]
+        result = []
+        for i in range(dim1):
+            lsm = self.lsm(x[:, i, :])
+            lsm = self.reshape(lsm, (F.shape(lsm)[0], 1, F.shape(lsm)[1]))
+            result = lsm if i == 0 else self.concat((result, lsm))
+        return result
+
+
 class CEWithIgnoreIndex3D(_Loss):
     '''CEWithIgnoreIndex3D'''
     def __init__(self):
         super(CEWithIgnoreIndex3D, self).__init__()
-
         self.exp = P.Exp()
         self.sum = P.ReduceSum()
         self.reshape = P.Reshape()
@@ -41,6 +58,7 @@ class CEWithIgnoreIndex3D(_Loss):
         self.relu = P.ReLU()
         self.maximum = P.Maximum()
         self.resum = P.ReduceSum(keep_dims=False)
+        self.logsoftmax = log_softmax()
 
     def construct(self, logit, label):
         '''construct'''
@@ -50,10 +68,7 @@ class CEWithIgnoreIndex3D(_Loss):
         mask = self.relu(mask) / (mask)
         logit = logit * mask
 
-        exp = self.exp(logit)
-        exp_sum = self.sum(exp, -1)
-        exp_sum = self.reshape(exp_sum, (F.shape(exp_sum)[0], F.shape(exp_sum)[1], 1))
-        softmax_result = self.log(exp / exp_sum + self.eps_const)
+        softmax_result = self.logsoftmax(logit)
         one_hot_label = self.onehot(
             self.cast(label, mstype.int32), F.shape(logit)[2], self.on_value, self.off_value)
         loss = (softmax_result * self.cast(one_hot_label, mstype.float32) * self.cast(F.scalar_to_array(-1),
@@ -62,7 +77,6 @@ class CEWithIgnoreIndex3D(_Loss):
         loss = self.sum(loss, -1)
         loss = self.sum(loss, -1)
         loss = self.sum(loss, 0)
-        loss = loss
 
         return loss
 

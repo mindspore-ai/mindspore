@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Convert ckpt to air."""
+"""Convert ckpt to air/mindir."""
 import os
 import argparse
 import numpy as np
@@ -22,9 +22,6 @@ from mindspore import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
 from src.face_qa import FaceQABackbone
-
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
 
 def main(args):
@@ -48,17 +45,25 @@ def main(args):
     input_data = np.random.uniform(low=0, high=1.0, size=(args.batch_size, 3, 96, 96)).astype(np.float32)
     tensor_input_data = Tensor(input_data)
 
-    export(network, tensor_input_data, file_name=ckpt_path.replace('.ckpt', '_' + str(args.batch_size) + 'b.air'),
-           file_format='AIR')
+    export(network, tensor_input_data, file_name=args.file_name, file_format=args.file_format)
     print('-----------------------export model success-----------------------')
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Convert ckpt to air')
+    parser = argparse.ArgumentParser(description='Convert ckpt to air/mindir')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
     parser.add_argument('--batch_size', type=int, default=8, help='batch size')
+    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
+                        help='device target')
+    parser.add_argument('--file_name', type=str, default='FaceQualityAssessment', help='output file name')
+    parser.add_argument('--file_format', type=str, choices=['AIR', 'ONNX', 'MINDIR'], default='AIR', help='file format')
 
     arg = parser.parse_args()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
+    if arg.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
 
     main(arg)
