@@ -1,0 +1,60 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+# Url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# Path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: "CPU"
+enable_profiling: False
+
+# ==============================================================================
+# Training options
+
+# distributed parameter
+is_distributed: 0
+local_rank: 0
+world_size: 1
+
+# test weight
+weight: 'your_test_model'
+test_dir: '/cache/data/face_recognition_dataset/'
+need_modelarts_dataset_unzip: True
+
+# model define
+backbone: "r100"
+use_se: 0
+emb_size: 256
+act_type: "relu"
+fp16: 1
+pre_bn: 0
+inference: 1
+use_drop: 0
+
+# test and dis batch size
+test_batch_size: 128
+dis_batch_size: 512
+
+# log
+log_interval: 100
+ckpt_path: "outputs/models"
+
+# test and dis image list
+test_img_predix: ""
+test_img_list: ""
+dis_img_predix: ""
+dis_img_list: ""
+
+---
+
+# Help description for each configuration
+enable_modelarts: "Whether training on modelarts, default: False"
+data_url: "Url for modelarts"
+train_url: "Url for modelarts"
+data_path: "The location of the input data."
+output_path: "The location of the output file."
+device_target: 'Target device type'
+enable_profiling: 'Whether enable profiling while training, default: False'

@@ -41,7 +41,7 @@ from model_utils.config import config
 from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 mindspore.common.seed.set_seed(1)
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False,
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
                     device_id=get_device_id(), reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
 
 class DistributedHelper(Cell):
