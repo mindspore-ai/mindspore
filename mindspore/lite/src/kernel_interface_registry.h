@@ -20,6 +20,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <set>
 #include "src/kernel_interface.h"
 #include "include/model.h"
 
@@ -33,9 +34,9 @@ class KernelInterfaceRegistry {
   }
   bool CheckReg(const lite::Model::Node *node);
   kernel::KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
-  const std::map<std::string, kernel::KernelInterfaceCreator *> &kernel_creators() { return kernel_creators_; }
   int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
+  std::set<std::string> AllProviders();
   virtual ~KernelInterfaceRegistry();
 
  private:

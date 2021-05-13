@@ -40,12 +40,10 @@ class KernelRegistry {
   static KernelRegistry *GetInstance();
   static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
-  virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelKey &desc);
+  virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelKey &desc, const schema::Primitive *prim);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   int GetFuncIndex(const kernel::KernelKey &desc);
-  const std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> &kernel_creators() {
-    return kernel_creators_;
-  }
+  std::set<std::string> AllProviders();
   int RegCustomKernel(const std::string &arch, const std::string &vendor, TypeId data_type, const std::string &type,
                       kernel::CreateKernel creator);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
@@ -65,7 +63,9 @@ class KernelRegistry {
   static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
   kernel::KernelCreator *creator_arrays_ = nullptr;
   std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> kernel_creators_;
-  std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> custom_kernel_creators_;
+  // keys:provider, arch, type
+  std::map<std::string, std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>>>
+    custom_kernel_creators_;
 
  private:
   std::mutex lock_;
