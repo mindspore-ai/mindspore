@@ -45,7 +45,7 @@ class AtomicCleanInsertter : public Pass {
  private:
   bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
   void CorrectAbstract(const AnfNodePtr &composite_node) const;
-  CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
+  CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type) const;
   void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const AnfNodePtr &broadcast_to_node, const AnfNodePtr &update_state_node,
@@ -55,7 +55,7 @@ class AtomicCleanInsertter : public Pass {
                                                                const FuncGraphManagerPtr &mng,
                                                                bool correct_index) const;
   bool IsExistStructuralObstacle(const KernelGraphPtr &main_graph, const AnfNodePtr &node,
-                                 const FuncGraphManagerPtr &mng);
+                                 const FuncGraphManagerPtr &mng) const;
 
   size_t reduce_real_output_index_{0};
   size_t real_output_num_{0};

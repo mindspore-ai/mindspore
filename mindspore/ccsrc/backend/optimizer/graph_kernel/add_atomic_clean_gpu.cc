@@ -52,7 +52,7 @@ bool SuitableForAtomicAdd(const AnfNodePtr &node) {
       axis_vec.push_back(i);
     }
   } else {
-    std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {
+    (void)std::transform(axis_vec.begin(), axis_vec.end(), axis_vec.begin(), [&src_shape_vec](int64_t axis) -> int64_t {
       return axis < 0 ? axis + SizeToLong(src_shape_vec.size()) : axis;
     });
   }
@@ -315,7 +315,7 @@ CNodePtr AtomicCleanInsertter::InsertUpdateState(const KernelGraphPtr &main_grap
   return update_state_cnode;
 }
 
-CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type) {
+CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type) const {
   std::set<TypeId> data_support = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
 
   if (!std::any_of(data_support.cbegin(), data_support.cend(), [&dst_type](TypeId type) { return dst_type == type; })) {
@@ -468,7 +468,7 @@ void AtomicCleanInsertter::InsertAtomicClean(const KernelGraphPtr &main_graph, c
 }
 
 bool AtomicCleanInsertter::IsExistStructuralObstacle(const KernelGraphPtr &main_graph, const AnfNodePtr &node,
-                                                     const FuncGraphManagerPtr &mng) {
+                                                     const FuncGraphManagerPtr &mng) const {
   auto reduce_users = FindOriginCNodeUsers(main_graph, node, mng, false);
   // If reduce user is MakeTuple and not last node, there is no cheap method to set right running order between reduce
   // node and user node. If reduce is Depend or ControlDepend node, the origin node may be wrong!
