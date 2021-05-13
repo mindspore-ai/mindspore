@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Cycle GAN train."""
+
+"""General-purpose training script for image-to-image translation.
+You need to specify the dataset ('--dataroot'), experiment name ('--name'), and model ('--model').
+Example:
+    Train a resnet model:
+        python train.py --dataroot ./data/horse2zebra --model ResNet
+"""
 
 import mindspore.nn as nn
-from mindspore.common import set_seed
+from src.utils.args import get_args
+from src.utils.reporter import Reporter
+from src.utils.tools import get_lr, ImagePool, load_ckpt
+from src.dataset.cyclegan_dataset import create_dataset
+from src.models.losses import DiscriminatorLoss, GeneratorLoss
+from src.models.cycle_gan import get_generator, get_discriminator, Generator, TrainOneStepG, TrainOneStepD
 
-from src.models import get_generator, get_discriminator, Generator, TrainOneStepG, TrainOneStepD, \
-                       DiscriminatorLoss, GeneratorLoss
-from src.utils import get_lr, get_args, Reporter, ImagePool, load_ckpt
-from src.dataset import create_dataset
-
-set_seed(1)
 
 def train():
     """Train function."""
@@ -35,7 +40,8 @@ def train():
     G_B = get_generator(args)
     D_A = get_discriminator(args)
     D_B = get_discriminator(args)
-    load_ckpt(args, G_A, G_B, D_A, D_B)
+    if args.load_ckpt:
+        load_ckpt(args, G_A, G_B, D_A, D_B)
     imgae_pool_A = ImagePool(args.pool_size)
     imgae_pool_B = ImagePool(args.pool_size)
     generator = Generator(G_A, G_B, args.lambda_idt > 0)
