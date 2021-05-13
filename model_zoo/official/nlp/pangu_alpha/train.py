@@ -77,10 +77,12 @@ def run_train(args_opt):
     The main training process.
     """
     device_id = int(os.getenv('DEVICE_ID'))
+    # Set execution mode
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         device_id=device_id)
     context.set_context(variable_memory_max_size="30GB")
+    # Set parallel context
     if args_opt.distribute == "true":
         D.init()
         device_num = D.get_group_size()
@@ -102,6 +104,8 @@ def run_train(args_opt):
     else:
         rank = 0
         device_num = 1
+
+    # Set model property
     model_parallel_num = args_opt.tensor_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
     batch_size = args_opt.per_batch_size * device_num
@@ -124,18 +128,23 @@ def run_train(args_opt):
         eod_reset=bool(args_opt.eod_reset),
         word_emb_dp=True)
     print("===config is: ", config, flush=True)
+
+    # Define network
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
     pangu_alpha_with_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
     pangu_alpha_with_loss = VirtualDatasetOneInputCell(pangu_alpha_with_loss)
 
     print("=====args_opt is: ", args_opt, flush=True)
+
+    # Warm-up and cosine decay learning rate
     lr = LearningRate(learning_rate=args_opt.start_lr,
                       end_learning_rate=args_opt.end_lr,
                       warmup_steps=args_opt.warmup_step,
                       decay_steps=200000,
                       lr_scale=1)
 
+    # Set weight decay coefficient, zero for bias and layernorm, 1e-1 for rest
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and "bias" not in x.name.lower()
     params = pangu_alpha.trainable_params()
     decay_params = list(filter(decay_filter, params))
@@ -153,8 +162,10 @@ def run_train(args_opt):
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     else:
         optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
+    # Initial scaling sens
     loss_scale_value = math.pow(2, 32)
     epoch_num = args_opt.epoch_size
+    # Dataset loading mindrecord files
     ds = create_dataset(config.batch_size, data_path=args_opt.data_url,
                         data_start_index=0, eod_reset=config.eod_reset,
                         eod_id=args_opt.eod_id, device_num=device_num, rank=rank, epoch=epoch_num)

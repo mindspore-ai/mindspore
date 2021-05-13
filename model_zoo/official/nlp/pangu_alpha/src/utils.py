@@ -70,7 +70,9 @@ class GlobalNorm(nn.Cell):
                 self.values.append(Tensor([self.group_size*1.0], mstype.float32))
         self.values = tuple(self.values)
     def construct(self, grads):
+        # Square sum of gradients for current rank
         square_sum_dp = self.hyper_map(get_square_sum, grads, self.values)
+        # Global square sum of gradients
         global_norms = F.sqrt(P.AllReduce()(F.addn(square_sum_dp)))
         return global_norms
 
