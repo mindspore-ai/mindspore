@@ -300,6 +300,7 @@ if(ENABLE_D)
                 ${ASCEND_DRIVER_BACK_PATH})
     find_library(PROFILING msprofiler_fwkacl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL ascendcl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(PLATFORM platform ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPTILING optiling ${ASCEND_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
 
     add_library(ms_profile SHARED
@@ -308,7 +309,8 @@ if(ENABLE_D)
     target_link_options(ms_profile PRIVATE -Wl,-init,common_log_init)
     target_link_libraries(ms_profile -Wl,--start-group -Wl,--whole-archive ${PROFILING} -Wl,--no-whole-archive
                           mindspore::protobuf -Wl,--end-group)
-    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} -Wl,--no-as-needed ${OPTILING} ${ACL})
+    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} -Wl,--no-as-needed ${OPTILING}
+      ${PLATFORM} ${ACL})
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
