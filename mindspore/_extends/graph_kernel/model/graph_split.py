@@ -198,6 +198,23 @@ class GraphSplitByPattern:
     def set_default_mode(self, area):
         area.mode = self.get_default_mode(area.ops[0])
 
+    def limit_area_size(self, dominant, fuse_areas):
+        """Remove some areas if the size is too large"""
+        limit_size = 200  # an experience number
+        area_sizes = map(lambda area: len(area.ops), fuse_areas)
+        dom_size = len(dominant.ops)
+        if dom_size + reduce(lambda x, y: x+y, area_sizes) <= limit_size:
+            return fuse_areas
+        # fuse the smaller area in priority
+        fuse_areas.sort(key=lambda area: len(area.ops))
+        new_fuse_areas = []
+        for area in fuse_areas:
+            if dom_size + len(area.ops) > limit_size:
+                break
+            dom_size += len(area.ops)
+            new_fuse_areas.append(area)
+        return new_fuse_areas
+
     def fuse(self, selector):
         """Fuse areas"""
         changed = False
@@ -206,6 +223,9 @@ class GraphSplitByPattern:
                 result = selector(dominant)
                 if result is not None and result[0]:
                     fuse_areas, is_forward = result
+                    fuse_areas = self.limit_area_size(dominant, fuse_areas)
+                    if not fuse_areas:
+                        continue
                     if is_forward:
                         for area in fuse_areas:
                             dominant.fuse(area)
