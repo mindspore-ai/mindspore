@@ -43,7 +43,7 @@ void ReducePrecision(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i
   builder.SetOutputsFormat({kOpFormat_DEFAULT});
   builder.SetInputsDeviceType({src_type});
   builder.SetOutputsDeviceType({cast_type});
-  builder.SetKernelType(AKG_KERNEL);
+  builder.SetKernelType(UNKNOWN_KERNEL_TYPE);
   builder.SetProcessor(kernel::Processor::CUDA);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
 }
