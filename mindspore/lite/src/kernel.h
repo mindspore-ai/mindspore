@@ -45,6 +45,7 @@ class Kernel {
   virtual schema::PrimitiveType type() { return type_; }
 
   virtual void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) { this->inputs_ = in_tensors; }
+  virtual void set_input(mindspore::tensor::MSTensor *in_tensor, int index) { this->inputs_[index] = in_tensor; }
 
   virtual void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) {
     this->outputs_ = out_tensors;

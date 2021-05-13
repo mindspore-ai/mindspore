@@ -15,13 +15,113 @@
  */
 
 #include "src/sub_graph_split.h"
-#include <vector>
+#include <stdlib.h>
 #include <utility>
+#include <algorithm>
+#include <iterator>
+#include <vector>
 #include "src/tensor.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
+#include "src/ops/populate/populate_register.h"
+#include "nnacl/fp32/winograd_utils.h"
+#include "nnacl/fp32/conv_depthwise_fp32.h"
 
 namespace mindspore::lite {
+
+size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
+  size_t cost = output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * weight_shape[1] *
+                weight_shape[2] * weight_shape[3];
+  return cost;
+}
+
+size_t WinogradConvMul() {
+  /* winograd conv */
+  return 0;
+}
+
+size_t CommConvdwMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
+  size_t cost =
+    output_shape[0] * output_shape[1] * output_shape[2] * output_shape[3] * weight_shape[1] * weight_shape[2];
+  return cost;
+}
+
+size_t WinogradConvDwMul() {
+  /* winograd convdw */
+  return 0;
+}
+
+void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
+                         std::vector<bool> *cor_group) {
+  if (i == n) {
+    if (abs(except_value - current_sum) < *min_value) {
+      for (int i = 0; i < n; i++) {
+        cor_group[i] = tmp_group[i];
+      }
+    }
+    *min_value = MSMIN(*min_value, abs(except_value - current_sum));
+    return;
+  }
+
+  {
+    tmp_group->at(i) = true;
+    dfs(i + 1, n, current_sum + sub_graphs_[i].cost_.cost(), except_value, min_value, tmp_group, cor_group);
+  }
+
+  {
+    tmp_group->at(i) = false;
+    dfs(i + 1, n, current_sum, except_value, min_value, tmp_group, cor_group);
+  }
+  return;
+}
+
+SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(Model::Node *node) {
+  CostModel cost;
+  std::vector<uint32_t> inputs = node->input_indices_;
+  std::vector<uint32_t> outputs = node->output_indices_;
+
+  std::vector<int> weight_shape = src_tensors_->at(inputs[1])->shape();
+  std::vector<int> output_shape = src_tensors_->at(outputs[0])->shape();
+
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameters_->at(outputs[0]));
+
+  if (param->group_ == 1) {
+    if (param->kernel_h_ == 1 && param->kernel_w_ == 1) {
+      size_t conv1x1_mul_cost = CommConvMul(weight_shape, output_shape);
+      cost.mul_cost_ += conv1x1_mul_cost;
+    } else {
+      int out_unit;
+      if (CheckIfUseWinograd(&out_unit, param)) {
+        size_t winograd_conv_cost = WinogradConvMul();
+        cost.mul_cost_ += winograd_conv_cost;
+      } else {
+        size_t comm_conv_mul_cost = CommConvMul(weight_shape, output_shape);
+        cost.mul_cost_ += comm_conv_mul_cost;
+      }
+    }
+  } else if (param->group_ == param->input_channel_ && param->group_ == param->output_channel_) {
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+    if (CheckConvDw1DWinograd(param, context_->thread_num_)) {
+      /* ConvolutionDepthwise3x3CPUKernel */
+      size_t winograd_convdw_cost = WinogradConvDwMul();
+      cost.mul_cost_ += winograd_convdw_cost;
+    } else {
+      /* ConvolutionDepthwiseIndirectCPUKernel */
+      /* ConvolutionDepthwiseSWCPUKernel */
+      /* ConvolutionDepthwiseCPUKernel */
+      size_t comm_convdw_cost = CommConvdwMul(weight_shape, output_shape);
+      cost.mul_cost_ += comm_convdw_cost;
+    }
+#else
+    size_t comm_convdw_cost = CommConvdwMul(weight_shape, output_shape);
+    cost.mul_cost_ += comm_convdw_cost;
+#endif
+  } else {
+    /* group conv */
+  }
+  return cost;
+}
+
 const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph_index) {
   flatbuffers::FlatBufferBuilder fbb(1024);
   auto val_offset = schema::CreatePartialFusion(fbb, subgraph_index);
@@ -49,6 +149,9 @@ void SearchSubGraph::ConvertSubGraphToModel() {
       continue;
     }
 
+#ifdef SUBGRAPH_SPLIT
+    DeviceType device_type = subgraph.device_;
+#endif
     int new_sub_index = model_->sub_graphs_.size();
     int partial_index = model_->all_nodes_.size();
 
@@ -74,6 +177,9 @@ void SearchSubGraph::ConvertSubGraphToModel() {
       new_sub_graph->node_indices_.push_back(node_index);
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
+#ifdef SUBGRAPH_SPLIT
+      model_->all_nodes_[node_index]->device_type_ = device_type;
+#endif
     }
 
     for (uint32_t head_index : subgraph.heads_) {
@@ -224,19 +330,54 @@ void SearchSubGraph::InitSearchTensor() {
 }
 
 void SearchSubGraph::InitSubgraphDevice() {
+  std::vector<bool> tmp_group;
+  std::vector<bool> cor_group;
+
+  tmp_group.resize(sub_graphs_.size());
+  cor_group.resize(sub_graphs_.size());
+
+  int except_value = total_cost_ * 0.5; /* major device responsible for 50% calculation */
+  int min_value = INT32_MAX;
+
+  dfs(0, sub_graphs_.size(), 0, except_value, &min_value, &tmp_group, &cor_group);
+
+  /* make bigger half using major_dt_*/
+  int true_value = 0;
   for (size_t i = 0; i < sub_graphs_.size(); i++) {
-    sub_graphs_[i].device_ = (i % 2 == 0) ? DT_CPU : DT_GPU;
+    if (cor_group.at(i)) {
+      true_value += sub_graphs_[i].cost_.cost();
+    }
+  }
+
+  if (true_value < except_value) {
+    (void)std::transform(cor_group.begin(), cor_group.end(), cor_group.begin(), [](bool value) { return !value; });
+  }
+
+  for (size_t i = 0; i < sub_graphs_.size(); i++) {
+    if (cor_group.at(i)) {
+      sub_graphs_[i].device_ = major_dt_;
+    } else {
+      sub_graphs_[i].device_ = minor_dt_;
+    }
   }
 }
 
-void SearchSubGraph::InitMainGraphDevice() { return; }
+void SearchSubGraph::InitMainGraphDevice() {
+#ifdef SUBGRAPH_SPLIT
+  Model::SubGraph *main_graph = model_->sub_graphs_.front();
+  for (uint32_t node_index : main_graph->node_indices_) {
+    Model::Node *node = model_->all_nodes_[node_index];
+    node->device_type_ = major_dt_;
+  }
+#endif
+}
 
 void SearchSubGraph::SubgraphFusion() {
   while (sub_graphs_.size() > 2) {
     size_t sub1_index = 0;
     size_t sub2_index = 0;
     bool is_found = false;
-    for (; sub1_index < sub_graphs_.size(); sub1_index++) {
+    for (sub1_index = 0; sub1_index < sub_graphs_.size(); sub1_index++) {
       for (size_t tmp2 = sub1_index + 1; tmp2 < sub_graphs_.size(); tmp2++) {
         if (sub_graphs_[sub1_index].device_ == sub_graphs_[tmp2].device_) {
           sub2_index = tmp2;
@@ -244,50 +385,56 @@ void SearchSubGraph::SubgraphFusion() {
           break;
         }
       }
-      if (!is_found) {
+      if (is_found) {
         break;
       }
     }
-    MS_ASSERT(sub2_index > sub1_index);
+    MS_ASSERT(sub2_index > sub1_index); /* erase sub2 then sub1 */
 
-    Subgraph new_npu_sub;
-    Subgraph &npu_sub1 = sub_graphs_[sub1_index];
-    Subgraph &npu_sub2 = sub_graphs_[sub2_index];
-    new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub1.nodes_.begin(), npu_sub1.nodes_.end());
-    new_npu_sub.nodes_.insert(new_npu_sub.nodes_.end(), npu_sub2.nodes_.begin(), npu_sub2.nodes_.end());
-    new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub1.heads_.begin(), npu_sub1.heads_.end());
-    new_npu_sub.heads_.insert(new_npu_sub.heads_.end(), npu_sub2.heads_.begin(), npu_sub2.heads_.end());
-    new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub1.ends_.begin(), npu_sub1.ends_.end());
-    new_npu_sub.ends_.insert(new_npu_sub.ends_.end(), npu_sub2.ends_.begin(), npu_sub2.ends_.end());
+    Subgraph new_sub;
+    new_sub.device_ = sub_graphs_[sub1_index].device_;
+
+    Subgraph &sub1 = sub_graphs_[sub1_index];
+    Subgraph &sub2 = sub_graphs_[sub2_index];
+    new_sub.nodes_.insert(new_sub.nodes_.end(), sub1.nodes_.begin(), sub1.nodes_.end());
+    new_sub.nodes_.insert(new_sub.nodes_.end(), sub2.nodes_.begin(), sub2.nodes_.end());
+    new_sub.heads_.insert(new_sub.heads_.end(), sub1.heads_.begin(), sub1.heads_.end());
+    new_sub.heads_.insert(new_sub.heads_.end(), sub2.heads_.begin(), sub2.heads_.end());
+    new_sub.ends_.insert(new_sub.ends_.end(), sub1.ends_.begin(), sub1.ends_.end());
+    new_sub.ends_.insert(new_sub.ends_.end(), sub2.ends_.begin(), sub2.ends_.end());
     sub_graphs_.erase(sub_graphs_.begin() + sub2_index);
     sub_graphs_.erase(sub_graphs_.begin() + sub1_index);
-    sub_graphs_.insert(sub_graphs_.end(), std::move(new_npu_sub));
+    sub_graphs_.insert(sub_graphs_.end(), std::move(new_sub));
   }
 
   return;
 }
-bool SearchSubGraph::ModelValid() {
-  if (context_->IsNpuEnabled()) {
-    return false;
+
+void SearchSubGraph::CalculateCostModel() {
+  for (Subgraph &subgraph : sub_graphs_) {
+    std::vector<uint32_t> nodes = subgraph.nodes_;
+    for (uint32_t node_index : nodes) {
+      Model::Node *node = model_->all_nodes_[node_index];
+      if (GetPrimitiveType(node->primitive_) == schema::PrimitiveType_Conv2DFusion) {
+        CostModel conv_cost = CalculateConv2DFusion(node);
+        subgraph.cost_ = subgraph.cost_ + conv_cost;
+        total_cost_ += conv_cost.cost();
+        continue;
+      }
+    }
   }
-  if (context_->IsGpuEnabled()) {
-    return false;
-  }
-  return false;
 }
 
 void SearchSubGraph::SubGraphSplitByOutput() {
-  if (!ModelValid()) {
-    return;
-  }
-
   InitSearchTensor();
 
   InitSearchSubGraph();
 
-  SubgraphFusion();
+  CalculateCostModel();
 
   InitSubgraphDevice();
+
+  SubgraphFusion();
 
   ConvertSubGraphToModel();
 

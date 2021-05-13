@@ -773,6 +773,12 @@ int LiteSession::InitGPURuntime() {
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
     }
+
+    /* check chip support shared memory */
+    auto enable_arm_import_memory = opencl_runtime->isExtensionEnable(EXT_ARM_IMPORT_MEMORY_HOST);
+    if (!enable_arm_import_memory) {
+      MS_LOG(WARNING) << "GPU do not support shared memory!";
+    }
   }
 #elif GPU_VULKAN
   if (this->context_->IsGpuEnabled()) {

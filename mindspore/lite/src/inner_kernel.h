@@ -155,6 +155,8 @@ class InnerKernel : public Kernel {
 
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
 
+  void set_in_tensor(lite::Tensor *in_tensor, int index) { this->in_tensors_[index] = in_tensor; }
+
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
   const std::vector<lite::Tensor *> &in_tensors() const { return in_tensors_; }

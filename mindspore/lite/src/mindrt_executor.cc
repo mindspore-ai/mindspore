@@ -45,7 +45,7 @@ void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &
                                        const std::vector<Tensor *> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
     for (size_t j = 0; j < kernels.size(); ++j) {
-      if (!kernels[i]->out_kernels().empty()) {
+      if (!kernels[j]->out_kernels().empty()) {
         continue;
       }
       auto out_tensor_size = kernels[j]->out_tensors().size();
