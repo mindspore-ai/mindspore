@@ -273,13 +273,13 @@ class CNodeDecoder {
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode_.get());
   }
 
-  void CreateAbstract() {
+  void CreateAbstract() const {
     auto shape = AbstractShapeCreator::GetFakeAbstractShape(output_shapes_[0], output_formats_[0]);
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(output_types_[0]), shape);
     cnode_->set_abstract(abstract);
   }
 
-  PrimitivePtr CreatePrimitiveWithAttrs(const std::string &op_name) {
+  PrimitivePtr CreatePrimitiveWithAttrs(const std::string &op_name) const {
     auto primitive = std::make_shared<Primitive>(op_name);
     for (const auto &attr : cnode_attrs_) {
       primitive->AddAttr(attr.first, attr.second);

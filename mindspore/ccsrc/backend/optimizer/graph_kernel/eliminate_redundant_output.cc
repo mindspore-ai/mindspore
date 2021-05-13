@@ -223,7 +223,7 @@ void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_
   SetIndex(getitem, index);
 }
 
-AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) {
+AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) const {
   auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto old_maketuple = func_graph->output()->cast<CNodePtr>();
