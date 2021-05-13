@@ -3832,7 +3832,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
@@ -6268,7 +6268,7 @@ class ApplyGradientDescent(PrimitiveWithInfer):
         TypeError: If `alpha` is neither a Number nor a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend``  ``GPU``
 
     Examples:
         >>> import numpy as np
