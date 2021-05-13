@@ -34,7 +34,7 @@ from src.dataset import create_dataset
 from src.pangu_alpha import PanguAlpha, PanguAlphaWithLoss, CrossEntropyLoss
 from src.pangu_alpha_wrapcell import PanguAlphaTrainOneStepWithLossScaleCell, VirtualDatasetOneInputCell
 from src.pangu_alpha_config import PANGUALPHAConfig, set_parse
-from src.utils import LearningRate, get_args
+from src.utils import LearningRate, get_args, FP32StateAdamWeightDecay
 
 
 class LossCallBack(Callback):
@@ -95,7 +95,7 @@ def run_train(args_opt):
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
             gradients_mean=False,
             device_num=device_num,
-            full_batch=True,
+            full_batch=False,
             enable_parallel_optimizer=True)
         auto_parallel_context().set_loss_repeated_mean(True)
         set_algo_parameters(elementwise_op_strategy_follow=True)
@@ -126,6 +126,7 @@ def run_train(args_opt):
         stage_num=args_opt.stage_num,
         micro_size=args_opt.micro_size,
         eod_reset=bool(args_opt.eod_reset),
+        param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16,
         word_emb_dp=True)
     print("===config is: ", config, flush=True)
 
@@ -161,7 +162,7 @@ def run_train(args_opt):
     if args_opt.optimizer == "lamb":
         optimizer = nn.Lamb(group_params, learning_rate=lr)
     else:
-        optimizer = nn.AdamWeightDecay(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
+        optimizer = FP32StateAdamWeightDecay(group_params, learning_rate=lr, eps=1e-8, beta1=0.9, beta2=0.95)
     # Initial scaling sens
     loss_scale_value = math.pow(2, 32)
     epoch_num = args_opt.epoch_size
