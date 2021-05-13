@@ -10,11 +10,15 @@
     - [Script and Sample Code](#script-and-sample-code)
         - [Training Process](#training-process)
         - [Evaluation Process](#eval-process)
-        - [Model Export](#model-export)
+        - [Inference Process](#inference-process)
+            - [Export MindIR](#export-mindir)
+            - [Infer on Ascend310](#infer-on-ascend310)
+            - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -64,12 +68,15 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ```python
 ├── MobileNetV2
   ├── README.md                  # descriptions about MobileNetV2
+  ├── ascend310_infer            # application for 310 inference
   ├── scripts
+  │   ├──run_infer_310.sh        # shell script for 310 infer
   │   ├──run_train.sh            # shell script for train, fine_tune or incremental  learn with CPU, GPU or Ascend
   │   ├──run_eval.sh             # shell script for evaluation with CPU, GPU or Ascend
   │   ├──cache_util.sh           # a collection of helper functions to manage cache
   │   ├──run_train_nfs_cache.sh  # shell script for train with NFS dataset and leverage caching service for better performance
   ├── src
+  │   ├──aipp.cfg                # aipp config
   │   ├──args.py                 # parse args
   │   ├──config.py               # parameter configuration
   │   ├──dataset.py              # creating dataset
@@ -81,6 +88,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── eval.py                    # evaluation script
   ├── export.py                  # export mindir script
   ├── mindspore_hub_conf.py      #  mindspore hub interface
+  ├── postprocess.py             # postprocess script
 ```
 
 ## [Training process](#contents)
@@ -226,13 +234,37 @@ CPU: sh run_train_nfs_cache.sh CPU [TRAIN_DATASET_PATH]
 > With cache enabled, a standalone cache server will be started in the background to cache the dataset in memory. However, Please make sure the dataset fits in memory (around 120GB of memory is required for caching ImageNet train dataset).
 > Users can choose to shutdown the cache server after training or leave it alone for future usage.
 
-## [Model Export](#contents)
+## [Inference process](#contents)
+
+### Export MindIR
 
 ```shell
 python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must bu exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_Size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive.The size of the picture that MobilenetV2 performs inference is [224, 224], the DVPP hardware limits the width of divisible by 16, and the height is divisible by 2. The network conforms to the standard, and the network can pre-process the image through DVPP.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'Accuracy': 0.71654
+```
 
 # [Model description](#contents)
 
@@ -257,6 +289,20 @@ python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EX
 | Params (M)                 | 3.3 M                                                      | 3.3 M                     |
 | Checkpoint for Fine tuning | 27.3 M                                                     | 27.3 M                    |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2)|
+
+### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | MobilenetV2                 |
+| Resource            | Ascend 310; CentOS 3.10     |
+| Uploaded Date       | 11/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | Accuracy=0.71654            |
+| Model for inference | 27.3M(.ckpt file)           |
 
 # [Description of Random Situation](#contents)
 
