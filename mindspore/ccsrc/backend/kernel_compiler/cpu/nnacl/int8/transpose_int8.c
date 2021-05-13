@@ -16,7 +16,7 @@
 
 #include "nnacl/int8/transpose_int8.h"
 void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strides, int *out_strides, const int *perm,
-                       const int *output_shape, int h_start, int h_end) {
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -32,7 +32,7 @@ void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strid
 }
 
 void TransposeDim3Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -55,7 +55,7 @@ void TransposeDim3Int8(const int8_t *in_data, int8_t *out_data, const int *strid
 }
 
 void TransposeDim4Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -87,7 +87,7 @@ void TransposeDim4Int8(const int8_t *in_data, int8_t *out_data, const int *strid
 }
 
 void TransposeDim5Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -125,31 +125,55 @@ void TransposeDim5Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   }
 }
 
-void TransposeCommInt8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end, int dims, int *size,
-                       int *position) {
-  *(size + dims - 1) = 1;
-  for (int i = dims - 1; i > 0; --i) {
-    *(size + i - 1) = *(size + i) * output_shape[i];
-  }
+void TransposeDim6Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
+                       const int *perm, const int *output_shape) {
+  const int stride0 = strides[perm[0]];
+  const int stride1 = strides[perm[1]];
+  const int stride2 = strides[perm[2]];
+  const int stride3 = strides[perm[3]];
+  const int stride4 = strides[perm[4]];
+  const int stride5 = strides[perm[5]];
 
-  for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {
-    int pos = idx;
-    int output_idx = 0;
-    int input_idx = 0;
-    for (int i = 0; i < dims; ++i) {
-      *(position + i) = pos / *(size + i);
-      int out_stride = i < dims - 1 ? out_strides[i] : 1;
-      output_idx += (*(position + i) * out_stride);
-      input_idx += (*(position + i) * strides[perm[i]]);
-      pos -= *(position + i) * (*(size + i));
+  const int out_stride0 = out_strides[0];
+  const int out_stride1 = out_strides[1];
+  const int out_stride2 = out_strides[2];
+  const int out_stride3 = out_strides[3];
+  const int out_stride4 = out_strides[4];
+  const int output0 = output_shape[0];
+  const int output1 = output_shape[1];
+  const int output2 = output_shape[2];
+  const int output3 = output_shape[3];
+  const int output4 = output_shape[4];
+  const int output5 = output_shape[5];
+
+  for (int i = 0; i < output0; ++i) {
+    int out_stride0_i = i * out_stride0;
+    int stride0_i = i * stride0;
+    for (int j = 0; j < output1; ++j) {
+      int out_stride1_j = j * out_stride1;
+      int stride1_j = j * stride1;
+      for (int k = 0; k < output2; ++k) {
+        int out_stride2_k = k * out_stride2;
+        int stride2_k = k * stride2;
+        for (int m = 0; m < output3; ++m) {
+          int out_stride3_m = m * out_stride3;
+          int stride3_m = m * stride3;
+          for (int n = 0; n < output4; ++n) {
+            int out_stride4_n = n * out_stride4;
+            int stride4_n = n * stride4;
+            for (int p = 0; p < output5; ++p) {
+              out_data[out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + out_stride4_n + p] =
+                in_data[stride0_i + stride1_j + stride2_k + stride3_m + stride4_n + p * stride5];
+            }
+          }
+        }
+      }
     }
-    out_data[output_idx] = in_data[input_idx];
   }
 }
 
 int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
-                    TransposeParameter *transpose_param, int h_start, int h_end, int *dim_size, int *position) {
+                    TransposeParameter *transpose_param) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -179,22 +203,52 @@ int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_s
 
   switch (num_axes) {
     case 2:
-      TransposeDim2Int8(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+      TransposeDim2Int8(in_data, out_data, strides, out_strides, perm, output_shape);
       break;
     case 3:
-      TransposeDim3Int8(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+      TransposeDim3Int8(in_data, out_data, strides, out_strides, perm, output_shape);
       break;
     case 4:
-      TransposeDim4Int8(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+      TransposeDim4Int8(in_data, out_data, strides, out_strides, perm, output_shape);
       break;
     case 5:
-      TransposeDim5Int8(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+      TransposeDim5Int8(in_data, out_data, strides, out_strides, perm, output_shape);
+      break;
+    case 6:
+      TransposeDim6Int8(in_data, out_data, strides, out_strides, perm, output_shape);
       break;
     default:
-      TransposeCommInt8(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end, num_axes, dim_size,
-                        position);
-      break;
+      return NNACL_ERR;
   }
 
   return NNACL_OK;
+}
+
+void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape, const int *size, int *position,
+                       TransposeParameter *transpose_param, int task_id, int thread_num) {
+  int *perm = transpose_param->perm_;
+  int *strides = transpose_param->strides_;
+  int *out_strides = transpose_param->out_strides_;
+  int num_axes = transpose_param->num_axes_;
+  size_t data_size = (*size) * output_shape[0];
+  size_t offset_size = UP_DIV(data_size, thread_num);
+  size_t task_offset = offset_size * task_id;
+  int count = data_size - task_offset;
+  if (count <= 0) {
+    return;
+  }
+  count = MSMIN(offset_size, count);
+  for (size_t idx = task_offset; idx < task_offset + count; ++idx) {
+    int pos = idx;
+    int output_idx = 0;
+    int input_idx = 0;
+    for (int i = 0; i < num_axes; ++i) {
+      *(position + i) = pos / *(size + i);
+      int out_stride = i < num_axes - 1 ? out_strides[i] : 1;
+      output_idx += (*(position + i) * out_stride);
+      input_idx += (*(position + i) * strides[perm[i]]);
+      pos -= *(position + i) * (*(size + i));
+    }
+    out_data[output_idx] = in_data[input_idx];
+  }
 }
