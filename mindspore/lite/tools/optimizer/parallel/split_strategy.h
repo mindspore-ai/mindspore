@@ -38,6 +38,22 @@ const std::vector<std::string> kSplitDevTypes = {"CPU", "GPU"};
 
 using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
 
+constexpr auto kDeviceTypeNone = -1;
+// strategy format is NHWC-KHWC
+constexpr int32_t kAxisN = 0;
+constexpr int32_t kAxisCIn = 3;
+constexpr int32_t kAxisCOut = 0;
+constexpr int32_t kAxisH = 1;
+constexpr int32_t kAxisW = 2;
+
+constexpr auto kIndexH = 0;
+constexpr auto kIndexW = 1;
+
+constexpr auto kPadUp = 0;
+constexpr auto kPadDown = 1;
+constexpr auto kPadLeft = 2;
+constexpr auto kPadRight = 3;
+
 enum SplitMode {
   NoSplit = 0,
   SplitN = 1,

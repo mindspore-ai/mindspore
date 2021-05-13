@@ -65,12 +65,15 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fisson/fisson_util.cc
         ../optimizer/fisson/iter_node_outputs.cc
         ../optimizer/fisson/node_out_shapes.cc
+        ../optimizer/fisson/multi_conv_split_pass.cc
+        ../optimizer/parallel/multi_node_split.cc
+        ../optimizer/parallel/multi_conv_info.cc
+        ../optimizer/parallel/parallel_pass.cc
         ../optimizer/parallel/conv2d_info.cc
         ../optimizer/parallel/operator_info.cc
-        ../optimizer/parallel/parallel_pass.cc
-        ../optimizer/parallel/split_strategy.cc
         ../optimizer/parallel/operator_info_register.cc
         ../optimizer/parallel/spliter.cc
+        ../optimizer/parallel/split_strategy.cc
         ../optimizer/graph/conv1d_inout_adjust_pass.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc

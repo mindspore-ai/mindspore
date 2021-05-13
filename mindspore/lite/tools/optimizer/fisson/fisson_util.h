@@ -20,47 +20,49 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <memory>
 #include "schema/inner/model_generated.h"
 #include "mindspore/ccsrc/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/converter_flags.h"
 #include "mindspore/lite/include/context.h"
 #include "mindspore/lite/include/lite_types.h"
+#include "ops/fusion/conv2d_fusion.h"
 
 namespace mindspore {
 using mindspore::schema::PrimitiveType;
 namespace opt {
 
 struct SplitInfo {
-  int32_t axis;
-  int32_t out_num;
-  std::vector<int32_t> size_splits;
-  std::vector<int32_t> extend_top;
-  std::vector<int32_t> extend_bottom;
+  int64_t axis;
+  size_t out_num;
+  std::vector<int64_t> size_splits;
+  std::vector<int64_t> extend_top;
+  std::vector<int64_t> extend_bottom;
   std::vector<mindspore::lite::DeviceType> dev_types;
-  int32_t in_num_conv;
-  int32_t fmk_type;
-  std::vector<int32_t> weight_channel;
+  int64_t in_num_conv;
+  int64_t fmk_type;
+  std::vector<int64_t> weight_channel;
   PrimitiveType primitive_type;
 };
 
 typedef enum { CUT_N, CUT_H, CUT_W, CUT_C_IN, CUT_C_OUT, CUT_NONE } CuttingStragedy;
 
+bool IsConv2D(const AnfNodePtr &node);
+
+std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2DFusion> &ori_attr);
+
+bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &conv_nodes, SplitInfo *split_info);
+
 void GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                  std::vector<AnfNodePtr> *outputs);
 
-AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const CNodePtr &conv_cnode,
-                                 const std::vector<AnfNodePtr> &conv_outputs, const SplitInfo &split_info,
+AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
+                                 const std::vector<AnfNodePtr> &conv_outputs, SplitInfo *split_info,
                                  const std::string &node_name);
-void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const CNodePtr &conv_cnode,
-                                     std::vector<AnfNodePtr> *split_outputs, const SplitInfo &split_info,
+void CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
+                                     std::vector<AnfNodePtr> *split_outputs, SplitInfo *split_info,
                                      const std::string &node_name);
-
-void GetCNodeShapeInfo(const FuncGraphPtr &func_graph, int32_t fmk_type);
-
-AnfNodePtr CreateOutputsOfAddN(const FuncGraphPtr &func_graph, const CNodePtr &conv_cnode,
-                               const std::vector<AnfNodePtr> &conv_outputs, const SplitInfo &split_info,
-                               const std::string &node_name);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_FISSON_UTIL_H_

@@ -71,6 +71,7 @@
 #include "tools/optimizer/fisson/node_out_shapes.h"
 #include "tools/optimizer/parallel/parallel_pass.h"
 #include "tools/converter/registry/pass_registry.h"
+#include "tools/optimizer/fisson/multi_conv_split_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -128,13 +129,12 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
 
 int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_LOG(DEBUG) << "Run ParallelPass start";
-  if (config->trainModel || static_cast<opt::SplitMode>(config->parallelMode) == opt::NoSplit) {
+  if (config->trainModel || !config->parallelMode) {
     return RET_OK;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   // 1. deal with split strategy
-  std::unordered_map<std::string, opt::SplitStrategy> split_strategys =
-    ParserSplitStrategy(static_cast<opt::SplitMode>(config->parallelMode));
+  std::unordered_map<std::string, opt::SplitStrategy> split_strategys = ParserSplitStrategy(opt::SplitH);
   if (split_strategys.empty()) {
     MS_LOG(ERROR) << "parse split_strategy error.";
     return RET_OK;
@@ -144,7 +144,10 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
   parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 3. multi_conv parallel pass
-  parallel_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
+  auto strategy = split_strategys.begin()->second;
+  parallel_pm->AddPass(
+    std::make_shared<opt::MultiConvSplitPass>(strategy, schema::PrimitiveType_Conv2DFusion, config->fmk, 3));
+  parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 4. single conv parallel pass
   parallel_pm->AddPass(std::make_shared<opt::ParallelPass>(split_strategys, config->fmk));
   optimizer->AddPassManager(parallel_pm);
