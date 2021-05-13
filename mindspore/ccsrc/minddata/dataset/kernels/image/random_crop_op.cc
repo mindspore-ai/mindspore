@@ -33,7 +33,7 @@ const uint8_t RandomCropOp::kDefFillG = 0;
 const uint8_t RandomCropOp::kDefFillB = 0;
 
 RandomCropOp::RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_top, int32_t pad_bottom,
-                           int32_t pad_left, int32_t pad_right, BorderType border_types, bool pad_if_needed,
+                           int32_t pad_left, int32_t pad_right, bool pad_if_needed, BorderType padding_mode,
                            uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : crop_height_(crop_height),
       crop_width_(crop_width),
@@ -42,7 +42,7 @@ RandomCropOp::RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_
       pad_left_(pad_left),
       pad_right_(pad_right),
       pad_if_needed_(pad_if_needed),
-      border_type_(border_types),
+      border_type_(padding_mode),
       fill_r_(fill_r),
       fill_g_(fill_g),
       fill_b_(fill_b) {

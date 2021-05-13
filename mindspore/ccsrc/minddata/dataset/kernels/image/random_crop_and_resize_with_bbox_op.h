@@ -28,9 +28,9 @@ class RandomCropAndResizeWithBBoxOp : public RandomCropAndResizeOp {
   RandomCropAndResizeWithBBoxOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
                                 float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb,
                                 float aspect_ub = kDefAspectUb, InterpolationMode interpolation = kDefInterpolation,
-                                int32_t max_iter = kDefMaxIter)
+                                int32_t max_attempts = kDefMaxIter)
       : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation,
-                              max_iter) {}
+                              max_attempts) {}
 
   ~RandomCropAndResizeWithBBoxOp() override = default;
 

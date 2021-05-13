@@ -21,9 +21,9 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestToFloat16Op : public UT::CVOP::CVOpCommon {
  public:
@@ -39,8 +39,8 @@ TEST_F(MindDataTestToFloat16Op, TestOp) {
   float x_center = -1;
   float y_center = -1;
   bool expand = false;
-  std::unique_ptr<RandomRotationOp> op(new RandomRotationOp(
-    s_degree, e_degree, x_center, y_center, InterpolationMode::kLinear, expand));
+  std::unique_ptr<RandomRotationOp> op(
+    new RandomRotationOp(s_degree, e_degree, InterpolationMode::kLinear, expand, x_center, y_center));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

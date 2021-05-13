@@ -31,8 +31,7 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 
 // RandomVerticalFlipOperation
-RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability)
-    : TensorOperation(true), probability_(probability) {}
+RandomVerticalFlipOperation::RandomVerticalFlipOperation(float prob) : TensorOperation(true), probability_(prob) {}
 
 RandomVerticalFlipOperation::~RandomVerticalFlipOperation() = default;
 

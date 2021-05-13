@@ -23,13 +23,13 @@
 
 namespace mindspore {
 namespace dataset {
-DistributedSamplerRT::DistributedSamplerRT(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+DistributedSamplerRT::DistributedSamplerRT(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
                                            uint32_t seed, int64_t offset, bool even_dist)
     : SamplerRT(num_samples, std::numeric_limits<int64_t>::max()),
       cnt_(0),
       seed_(seed == std::numeric_limits<uint32_t>::max() ? GetSeed() : seed),
-      device_id_(dev_id),
-      num_devices_(num_dev),
+      device_id_(shard_id),
+      num_devices_(num_shards),
       shuffle_(shuffle),
       even_dist_(even_dist),
       offset_(offset),

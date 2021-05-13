@@ -32,7 +32,7 @@ class RandomVerticalFlipOp : public TensorOp {
   // Default values, also used by python_bindings.cc
   static const float kDefProbability;
 
-  explicit RandomVerticalFlipOp(float probability = kDefProbability) : distribution_(probability) {
+  explicit RandomVerticalFlipOp(float prob = kDefProbability) : distribution_(prob) {
     rnd_.seed(GetSeed());
     is_deterministic_ = false;
   }

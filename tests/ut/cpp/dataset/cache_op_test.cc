@@ -273,7 +273,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
 
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   rc = CacheOp::Builder()
          .SetNumWorkers(5)
          .SetClient(myClient)
@@ -391,18 +391,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   // CacheOp
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   CacheClient::Builder builder;
   builder.SetSessionId(env_session).SetCacheMemSz(4).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
   rc = builder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
   std::shared_ptr<CacheOp> myCacheOp;
-  rc = CacheOp::Builder()
-         .SetNumWorkers(4)
-         .SetClient(myClient)
-         .SetSampler(std::move(seq_sampler))
-         .Build(&myCacheOp);
+  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetSampler(std::move(seq_sampler)).Build(&myCacheOp);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
@@ -466,7 +462,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = GetSessionFromEnv(&env_session);
   ASSERT_TRUE(rc.IsOk());
 
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
 
   CacheClient::Builder ccbuilder;
   ccbuilder.SetSessionId(env_session).SetCacheMemSz(0).SetSpill(true);

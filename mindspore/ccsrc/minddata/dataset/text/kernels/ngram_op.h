@@ -32,12 +32,12 @@ class NgramOp : public TensorOp {
  public:
   // Constructor of Ngram model
   // @param const std::vector<int32_t> &ngrams
-  // @param int32_tl_len - padding length on the left
-  // @param int32_t r_len - padding length on the right
+  // @param int32_t l_len - padding length on the left
   // @param const std::string &l_pad - padding token on the left
+  // @param int32_t r_len - padding length on the right
   // @param const std::string &r_pad - padding token on the right
   // @param const std::string &separator - use to join strings
-  NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, int32_t r_len, const std::string &l_pad,
+  NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, const std::string &l_pad, int32_t r_len,
           const std::string &r_pad, const std::string &separator);
 
   // perform ngram model on each tensor

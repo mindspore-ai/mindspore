@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace dataset {
 
-NgramOp::NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, int32_t r_len, const std::string &l_pad,
+NgramOp::NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, const std::string &l_pad, int32_t r_len,
                  const std::string &r_pad, const std::string &separator)
     : ngrams_(ngrams),
       l_len_(l_len),

@@ -31,7 +31,7 @@ class DecodeOp : public TensorOp {
   // Default values, also used by python_bindings.cc
   static const bool kDefRgbFormat;
 
-  explicit DecodeOp(bool is_rgb_format = true);
+  explicit DecodeOp(bool rgb = true);
 
   ~DecodeOp() = default;
 

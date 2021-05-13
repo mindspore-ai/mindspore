@@ -257,7 +257,7 @@ std::shared_ptr<TensorOp> NgramOperation::Build() {
   int32_t r_len = right_pad_.second;
   std::string l_pad = left_pad_.first;
   std::string r_pad = right_pad_.first;
-  std::shared_ptr<NgramOp> tensor_op = std::make_shared<NgramOp>(ngrams_, l_len, r_len, l_pad, r_pad, separator_);
+  std::shared_ptr<NgramOp> tensor_op = std::make_shared<NgramOp>(ngrams_, l_len, l_pad, r_len, r_pad, separator_);
   return tensor_op;
 }
 

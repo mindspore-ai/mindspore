@@ -35,7 +35,7 @@ ConcatOp::Builder::Builder() {
 // The builder "build" method creates the final object.
 Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<DistributedSamplerRT>(0, 1, 0, false);
+    builder_sampler_ = std::make_shared<DistributedSamplerRT>(1, 0, false, 0);
   }
   *ptr = std::make_shared<ConcatOp>(builder_sampler_, children_flag_and_nums_, children_start_end_index_);
   return Status::OK();

@@ -19,9 +19,9 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomCropOp : public UT::CVOP::CVOpCommon {
  protected:
@@ -35,7 +35,7 @@ TEST_F(MindDataTestRandomCropOp, TestOp1) {
   // Crop params
   unsigned int crop_height = 128;
   unsigned int crop_width = 128;
-  std::unique_ptr<RandomCropOp> op(new RandomCropOp(crop_height, crop_width, 0, 0, 0, 0, BorderType::kConstant, false));
+  std::unique_ptr<RandomCropOp> op(new RandomCropOp(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   size_t actual = 0;
@@ -52,7 +52,7 @@ TEST_F(MindDataTestRandomCropOp, TestOp2) {
   unsigned int crop_height = 1280;
   unsigned int crop_width = 1280;
   std::unique_ptr<RandomCropOp> op(
-    new RandomCropOp(crop_height, crop_width, 513, 513, 513, 513, BorderType::kConstant, false));
+    new RandomCropOp(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   EXPECT_EQ(true, s.IsOk());

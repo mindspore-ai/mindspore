@@ -51,7 +51,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, true);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, true);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -80,7 +80,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = replacement
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, false);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, false);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -115,7 +115,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleReplacement) {
   std::vector<double> weights(total_samples, std::rand() % 100);
 
   // create sampler with replacement = replacement
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, true, samples_per_tensor);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, true, samples_per_tensor);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -150,7 +150,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = replacement
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, false, samples_per_tensor);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, false, samples_per_tensor);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -190,7 +190,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, true);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, true);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -234,7 +234,7 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
   std::vector<uint64_t> freq(total_samples, 0);
 
   // create sampler with replacement = true
-  WeightedRandomSamplerRT m_sampler(num_samples, weights, false);
+  WeightedRandomSamplerRT m_sampler(weights, num_samples, false);
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 

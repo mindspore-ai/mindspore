@@ -59,7 +59,7 @@ Status RandomApplyOp::Compute(const TensorRow &input, TensorRow *output) {
   }
   return Status::OK();
 }
-RandomApplyOp::RandomApplyOp(double prob, const std::vector<std::shared_ptr<TensorOp>> &ops)
+RandomApplyOp::RandomApplyOp(const std::vector<std::shared_ptr<TensorOp>> &ops, double prob)
     : prob_(prob), gen_(GetSeed()), rand_double_(0, 1) {
   compose_ = std::make_unique<ComposeOp>(ops);
   is_deterministic_ = false;

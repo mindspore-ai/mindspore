@@ -40,7 +40,7 @@ SubsetRandomSamplerObj::~SubsetRandomSamplerObj() = default;
 
 Status SubsetRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  *sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
+  *sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(indices_, num_samples_);
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;
   return s;

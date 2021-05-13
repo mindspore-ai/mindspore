@@ -37,7 +37,7 @@ constexpr char kRandomRotationOperation[] = "RandomRotation";
 
 class RandomRotationOperation : public TensorOperation {
  public:
-  RandomRotationOperation(std::vector<float> degrees, InterpolationMode interpolation_mode, bool expand,
+  RandomRotationOperation(std::vector<float> degrees, InterpolationMode resample, bool expand,
                           std::vector<float> center, std::vector<uint8_t> fill_value);
 
   ~RandomRotationOperation();

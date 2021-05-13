@@ -32,9 +32,9 @@
 namespace mindspore {
 namespace dataset {
 
-ToNumberOp::ToNumberOp(const DataType &cast_to_type) : cast_to_type_(cast_to_type) {}
+ToNumberOp::ToNumberOp(const DataType &data_type) : cast_to_type_(data_type) {}
 
-ToNumberOp::ToNumberOp(const std::string &cast_to_type) : cast_to_type_(DataType(cast_to_type)) {}
+ToNumberOp::ToNumberOp(const std::string &data_type) : cast_to_type_(DataType(data_type)) {}
 
 Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "ToNumber: input should be string datatype.");

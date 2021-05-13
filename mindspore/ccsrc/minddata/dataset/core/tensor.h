@@ -217,6 +217,8 @@ class Tensor {
 
   bool operator!=(const Tensor &rhs) const { return !((*this) == rhs); }
 
+  Status to_json(nlohmann::json *out_json);
+
   /// Get item located at `index`, caller needs to provide the type.
   /// \tparam T
   /// \param[in] index vector<dsize_t>
@@ -660,6 +662,10 @@ class Tensor {
   /// A function that prints info about the tensor
   /// \param[out] out output stream
   void Print(std::ostream &out) const;
+
+  /// A function that prints info about the tensor
+  /// \param[out] out output stream
+  void Print_data(std::ostream &out) const;
 
   /// A function that print the value as specified by its index
   /// \param[in] index vector representing the index

@@ -20,12 +20,12 @@
 
 namespace mindspore {
 namespace dataset {
-PKSamplerRT::PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle, int64_t samples_per_tensor)
+PKSamplerRT::PKSamplerRT(int64_t num_val, bool shuffle, int64_t num_samples, int64_t samples_per_tensor)
     : SamplerRT(num_samples, samples_per_tensor),
       shuffle_(shuffle),
       seed_(GetSeed()),
       next_id_(0),
-      samples_per_class_(val) {}
+      samples_per_class_(num_val) {}
 
 Status PKSamplerRT::InitSampler() {
   if (is_initialized) {

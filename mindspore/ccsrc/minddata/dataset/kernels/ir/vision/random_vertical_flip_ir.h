@@ -37,7 +37,7 @@ constexpr char kRandomVerticalFlipOperation[] = "RandomVerticalFlip";
 
 class RandomVerticalFlipOperation : public TensorOperation {
  public:
-  explicit RandomVerticalFlipOperation(float probability);
+  explicit RandomVerticalFlipOperation(float prob);
 
   ~RandomVerticalFlipOperation();
 

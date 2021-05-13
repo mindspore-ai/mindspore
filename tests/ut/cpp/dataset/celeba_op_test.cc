@@ -138,7 +138,7 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
 TEST_F(MindDataTestCelebaDataset, TestSubsetRandomSamplerCeleba) {
   std::vector<int64_t> indices({1});
   int64_t num_samples = 0;
-  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(num_samples, indices);
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(indices, num_samples);
   uint32_t expect_labels[1][40] = {{0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
                                     0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}};
   std::string dir = datasets_root_path_ + "/testCelebAData/";

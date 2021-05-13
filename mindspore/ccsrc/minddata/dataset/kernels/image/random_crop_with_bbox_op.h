@@ -29,10 +29,10 @@ class RandomCropWithBBoxOp : public RandomCropOp {
   //  Constructor for RandomCropWithBBoxOp, with default value and passing to base class constructor
   RandomCropWithBBoxOp(int32_t crop_height, int32_t crop_width, int32_t pad_top = kDefPadTop,
                        int32_t pad_bottom = kDefPadBottom, int32_t pad_left = kDefPadLeft,
-                       int32_t pad_right = kDefPadRight, BorderType border_types = kDefBorderType,
-                       bool pad_if_needed = kDefPadIfNeeded, uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG,
+                       int32_t pad_right = kDefPadRight, bool pad_if_needed = kDefPadIfNeeded,
+                       BorderType padding_mode = kDefBorderType, uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG,
                        uint8_t fill_b = kDefFillB)
-      : RandomCropOp(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right, border_types, pad_if_needed,
+      : RandomCropOp(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right, pad_if_needed, padding_mode,
                      fill_r, fill_g, fill_b) {}
 
   ~RandomCropWithBBoxOp() override = default;

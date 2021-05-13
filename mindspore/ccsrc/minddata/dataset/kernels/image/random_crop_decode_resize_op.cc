@@ -23,9 +23,9 @@ namespace mindspore {
 namespace dataset {
 RandomCropDecodeResizeOp::RandomCropDecodeResizeOp(int32_t target_height, int32_t target_width, float scale_lb,
                                                    float scale_ub, float aspect_lb, float aspect_ub,
-                                                   InterpolationMode interpolation, int32_t max_iter)
+                                                   InterpolationMode interpolation, int32_t max_attempts)
     : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation,
-                            max_iter) {}
+                            max_attempts) {}
 
 Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (input == nullptr) {

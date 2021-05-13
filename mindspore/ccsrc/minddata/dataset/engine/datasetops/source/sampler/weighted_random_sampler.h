@@ -29,12 +29,12 @@ namespace dataset {
 class WeightedRandomSamplerRT : public SamplerRT {
  public:
   // Constructor.
-  // @param num_samples Number of samples to be drawn.
   // @param weights A lift of sample weights.
+  // @param num_samples Number of samples to be drawn.
   // @param replacement Determine if samples are drawn with/without replacement.
   // @param samples_per_tensor The number of ids we draw on each call to GetNextSample().
   // When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
-  WeightedRandomSamplerRT(int64_t num_samples, const std::vector<double> &weights, bool replacement,
+  WeightedRandomSamplerRT(const std::vector<double> &weights, int64_t num_samples, bool replacement,
                           int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.

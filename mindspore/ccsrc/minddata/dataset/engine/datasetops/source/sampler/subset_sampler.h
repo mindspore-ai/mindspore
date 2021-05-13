@@ -28,11 +28,11 @@ namespace dataset {
 class SubsetSamplerRT : public SamplerRT {
  public:
   /// Constructor.
-  /// \param num_samples The number of elements to sample. 0 for the full amount.
   /// \param indices List of indices.
+  /// \param num_samples The number of elements to sample. 0 for the full amount.
   /// \param samples_per_tensor The number of ids we draw on each call to GetNextSample().
   /// When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
-  SubsetSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices,
+  SubsetSamplerRT(const std::vector<int64_t> &indices, int64_t num_samples,
                   std::int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   /// Destructor.

@@ -131,9 +131,7 @@ Status FillOperation::ValidateParams() {
 std::shared_ptr<TensorOp> FillOperation::Build() { return std::make_shared<FillOp>(fill_value_); }
 
 Status FillOperation::to_json(nlohmann::json *out_json) {
-  nlohmann::json args;
-  args["fill_value"] = fill_value_->ToString();
-  *out_json = args;
+  RETURN_IF_NOT_OK(fill_value_->to_json(out_json));
   return Status::OK();
 }
 
@@ -218,7 +216,7 @@ std::shared_ptr<TensorOp> RandomApplyOperation::Build() {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
   (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(tensor_ops),
                        [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
-  return std::make_shared<RandomApplyOp>(prob_, tensor_ops);
+  return std::make_shared<RandomApplyOp>(tensor_ops, prob_);
 }
 
 // RandomChoiceOperation

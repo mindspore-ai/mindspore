@@ -26,7 +26,7 @@ namespace mindspore {
 namespace dataset {
 const bool DecodeOp::kDefRgbFormat = true;
 
-DecodeOp::DecodeOp(bool is_rgb_format) : is_rgb_format_(is_rgb_format) {
+DecodeOp::DecodeOp(bool rgb) : is_rgb_format_(rgb) {
   if (is_rgb_format_) {  // RGB colour mode
     MS_LOG(DEBUG) << "Decode colour mode is RGB.";
   } else {

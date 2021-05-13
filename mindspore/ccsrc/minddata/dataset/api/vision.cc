@@ -612,13 +612,9 @@ std::shared_ptr<TensorOperation> RandomResizedCropWithBBox::Parse() {
 
 // RandomRotation Transform Operation.
 struct RandomRotation::Data {
-  Data(const std::vector<float> &degrees, InterpolationMode interpolation_mode, bool expand,
-       const std::vector<float> &center, const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees),
-        interpolation_mode_(interpolation_mode),
-        expand_(expand),
-        center_(center),
-        fill_value_(fill_value) {}
+  Data(const std::vector<float> &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
+       const std::vector<uint8_t> &fill_value)
+      : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
   std::vector<float> degrees_;
   InterpolationMode interpolation_mode_;
   std::vector<float> center_;
@@ -626,9 +622,9 @@ struct RandomRotation::Data {
   std::vector<uint8_t> fill_value_;
 };
 
-RandomRotation::RandomRotation(std::vector<float> degrees, InterpolationMode interpolation_mode, bool expand,
+RandomRotation::RandomRotation(std::vector<float> degrees, InterpolationMode resample, bool expand,
                                std::vector<float> center, std::vector<uint8_t> fill_value)
-    : data_(std::make_shared<Data>(degrees, interpolation_mode, expand, center, fill_value)) {}
+    : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
 
 std::shared_ptr<TensorOperation> RandomRotation::Parse() {
   return std::make_shared<RandomRotationOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_,

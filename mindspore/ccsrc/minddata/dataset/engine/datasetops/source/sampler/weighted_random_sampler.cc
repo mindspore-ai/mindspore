@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 //  Constructor.
-WeightedRandomSamplerRT::WeightedRandomSamplerRT(int64_t num_samples, const std::vector<double> &weights,
+WeightedRandomSamplerRT::WeightedRandomSamplerRT(const std::vector<double> &weights, int64_t num_samples,
                                                  bool replacement, int64_t samples_per_tensor)
     : SamplerRT(num_samples, samples_per_tensor), weights_(weights), replacement_(replacement), sample_id_(0) {}
 

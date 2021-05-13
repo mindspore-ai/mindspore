@@ -44,7 +44,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
   std::unique_ptr<RandomCropWithBBoxOp> op(
-    new RandomCropWithBBoxOp(crop_height, crop_width, 0, 0, 0, 0, BorderType::kConstant, false));
+    new RandomCropWithBBoxOp(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant));
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
     size_t actual = 0;
@@ -79,7 +79,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   GlobalContext::config_manager()->set_seed(327362);
 
   std::unique_ptr<RandomCropWithBBoxOp> op(
-    new RandomCropWithBBoxOp(crop_height, crop_width, 513, 513, 513, 513, BorderType::kConstant, false));
+    new RandomCropWithBBoxOp(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant));
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
@@ -107,7 +107,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
 
   std::unique_ptr<RandomCropWithBBoxOp> op(new RandomCropWithBBoxOp(crop_height, crop_width, crop_height * 3 + 1,
                                                                     crop_height * 3 + 1, crop_width * 3 + 1,
-                                                                    crop_width * 3 + 1, BorderType::kConstant, false));
+                                                                    crop_width * 3 + 1, false, BorderType::kConstant));
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);

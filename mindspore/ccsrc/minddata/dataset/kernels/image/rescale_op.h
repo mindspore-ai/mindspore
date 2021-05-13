@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class RescaleOp : public TensorOp {
  public:
-  RescaleOp(float rescale_ratio, float shift_ratio) : rescale_(rescale_ratio), shift_(shift_ratio) {}
+  RescaleOp(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 
   ~RescaleOp() override = default;
 

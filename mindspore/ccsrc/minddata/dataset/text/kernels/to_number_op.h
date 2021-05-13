@@ -32,12 +32,12 @@ namespace dataset {
 class ToNumberOp : public TensorOp {
  public:
   // Constructor of ToNumberOp
-  // @param const DataType &cast_to_type - the type to convert string inputs to.
-  explicit ToNumberOp(const DataType &cast_to_type);
+  // @param const DataType &data_type - the type to convert string inputs to.
+  explicit ToNumberOp(const DataType &data_type);
 
   // Constructor of ToNumberOp
-  // @param const std::string &cast_to_type - the type in string form to convert string inputs to.
-  explicit ToNumberOp(const std::string &cast_to_type);
+  // @param const std::string &data_type - the type in string form to convert string inputs to.
+  explicit ToNumberOp(const std::string &data_type);
 
   ~ToNumberOp() override = default;
 

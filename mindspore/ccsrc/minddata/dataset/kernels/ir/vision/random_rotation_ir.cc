@@ -30,12 +30,11 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 
 // Function to create RandomRotationOperation.
-RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, InterpolationMode interpolation_mode,
-                                                 bool expand, std::vector<float> center,
-                                                 std::vector<uint8_t> fill_value)
+RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, InterpolationMode resample, bool expand,
+                                                 std::vector<float> center, std::vector<uint8_t> fill_value)
     : TensorOperation(true),
       degrees_(degrees),
-      interpolation_mode_(interpolation_mode),
+      interpolation_mode_(resample),
       expand_(expand),
       center_(center),
       fill_value_(fill_value) {}
@@ -98,7 +97,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   }
 
   std::shared_ptr<RandomRotationOp> tensor_op = std::make_shared<RandomRotationOp>(
-    start_degree, end_degree, center_[0], center_[1], interpolation_mode_, expand_, fill_r, fill_g, fill_b);
+    start_degree, end_degree, interpolation_mode_, expand_, center_[0], center_[1], fill_r, fill_g, fill_b);
   return tensor_op;
 }
 
