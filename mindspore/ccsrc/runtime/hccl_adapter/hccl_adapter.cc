@@ -330,8 +330,8 @@ bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_f
   } catch (std::invalid_argument &) {
     MS_LOG(EXCEPTION) << "Invalid rank id env:" << rank_id;
   }
-  if (rank_id_i < 0 || rank_id_i > 7) {
-    MS_LOG(ERROR) << "rank_id needs to be between 0-7";
+  if (rank_id_i < 0) {
+    MS_LOG(ERROR) << "rank_id cannot be negative";
     return false;
   }
   MS_EXCEPTION_IF_NULL(init_hccl_comm_);

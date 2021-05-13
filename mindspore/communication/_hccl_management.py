@@ -15,10 +15,11 @@
 # ============================================================================
 """HCCL management API"""
 import ctypes
+import os
 
 MAX_GROUP_NAME_LEN = 127
 MAX_RANK_NUM = 4096
-HCCL_LIB = 'libhccl.so'
+HCCL_LIB = 'libhccl_plugin.so'
 HCCL_LIB_CTYPES = ""
 
 
@@ -67,7 +68,9 @@ def check_rank_id(rank_id):
 
 def load_lib():
     try:
-        hccl_lib = ctypes.CDLL(HCCL_LIB)
+        base_dir = os.path.dirname(os.path.realpath(__file__))
+        lib_path = os.path.join(base_dir, "../lib", HCCL_LIB)
+        hccl_lib = ctypes.CDLL(lib_path)
     except Exception:
         raise RuntimeError('Get hccl lib error.')
     global HCCL_LIB_CTYPES
