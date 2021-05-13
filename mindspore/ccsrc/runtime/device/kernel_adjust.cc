@@ -129,13 +129,284 @@ bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> 
   return false;
 }
 
+void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                          const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                          std::vector<CNodePtr> *exec_order) {
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  CNodePtr independent_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kIndependentStreamSwitch);
+  MS_EXCEPTION_IF_NULL(independent_switch_app);
+  uint32_t independent_switch_stream_id = resource_manager.ApplyNewStream();
+  AnfAlgo::SetStreamId(independent_switch_stream_id, independent_switch_app.get());
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), independent_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kIndependentStreamSwitch), independent_switch_app);
+  (*exec_order).push_back(independent_switch_app);
+  MS_LOG(INFO) << "Independent op loop insert Stream Switch " << independent_switch_app->fullname_with_scope();
+}
+
+void KernelAdjust::InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                              const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                              std::vector<CNodePtr> *exec_order, uint32_t *fpbp_stream_id,
+                                              uint32_t *fpbp_switch_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(fpbp_stream_id);
+  MS_EXCEPTION_IF_NULL(fpbp_switch_stream_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *fpbp_switch_stream_id = resource_manager.ApplyNewStream();
+  *fpbp_stream_id = resource_manager.ApplyNewStream();
+  CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kFpBpStreamSwitch);
+  MS_EXCEPTION_IF_NULL(fpbp_switch_app);
+  AnfAlgo::SetStreamId(*fpbp_switch_stream_id, fpbp_switch_app.get());
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
+  // update fpbp loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*fpbp_stream_id), fpbp_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kFpBpStreamSwitch), fpbp_switch_app);
+  (*exec_order).push_back(fpbp_switch_app);
+  MS_LOG(INFO) << "FpBp loop insert Stream Switch " << fpbp_switch_app->fullname_with_scope();
+}
+
+void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                  const std::vector<CNodePtr> &orders, size_t order_index,
+                                  std::vector<CNodePtr> *memcpy_list, std::vector<CNodePtr> *other_list) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(memcpy_list);
+  MS_EXCEPTION_IF_NULL(other_list);
+  CNodePtr cur_cnode = nullptr;
+  for (size_t idx = order_index + 1; idx < orders.size(); idx++) {
+    cur_cnode = orders[idx];
+    if (AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
+      auto pre_node = orders[idx - 1];
+      auto pre_kernel_name = AnfAlgo::GetCNodeName(pre_node);
+      if (pre_kernel_name == kAtomicAddrCleanOpName) {
+        (*other_list).pop_back();
+        (*memcpy_list).push_back(pre_node);
+      }
+      (*memcpy_list).emplace_back(cur_cnode);
+    } else {
+      (*other_list).emplace_back(cur_cnode);
+    }
+  }
+}
+
+void KernelAdjust::InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order, uint32_t eos_done_event_id,
+                                     uint32_t fpbp_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr eos_done_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_done_event_id);
+  AnfAlgo::SetStreamId(fpbp_stream_id, eos_done_recv.get());
+  (*exec_order).push_back(eos_done_recv);
+  MS_LOG(INFO) << "FpBp loop insert EoS done Recv " << eos_done_recv->fullname_with_scope();
+}
+
+void KernelAdjust::InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                 std::vector<CNodePtr> *exec_order,
+                                                 const std::vector<uint32_t> &getnext_active_streams,
+                                                 uint32_t getnext_switch_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(getnext_active_app);
+  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(getnext_active_streams),
+                       getnext_active_app);
+  (*exec_order).push_back(getnext_active_app);
+  MS_LOG(INFO) << "FpBp loop insert GetNext loop Stream Active " << getnext_active_app->fullname_with_scope();
+}
+
+void KernelAdjust::InsertFpBpStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                       std::vector<CNodePtr> *exec_order, uint32_t fpbp_start_event_id,
+                                       uint32_t fpbp_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr fpbp_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, fpbp_start_event_id);
+  AnfAlgo::SetStreamId(fpbp_stream_id, fpbp_start_recv.get());
+  (*exec_order).push_back(fpbp_start_recv);
+  MS_LOG(INFO) << "FpBp loop insert FpBp start Recv " << fpbp_start_recv->fullname_with_scope();
+}
+
+void KernelAdjust::InsertNextLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                           std::vector<CNodePtr> *exec_order,
+                                           const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                           uint32_t fpbp_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, false);
+  MS_EXCEPTION_IF_NULL(assign_add_one);
+  AnfAlgo::SetStreamId(fpbp_stream_id, assign_add_one.get());
+  (*exec_order).push_back(assign_add_one);
+  MS_LOG(INFO) << "FpBp loop insert next loop AssignAdd " << assign_add_one->fullname_with_scope();
+}
+
+void KernelAdjust::InsertCurrentLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                              std::vector<CNodePtr> *exec_order,
+                                              const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr cur_assign_add = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, true);
+  MS_EXCEPTION_IF_NULL(cur_assign_add);
+  AnfAlgo::SetNodeAttr(kAttrFpBpEnd, MakeValue<bool>(true), cur_assign_add);
+  (*exec_order).push_back(cur_assign_add);
+  MS_LOG(INFO) << "FpBp loop insert current loop AssignAdd " << cur_assign_add->fullname_with_scope();
+}
+void KernelAdjust::InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                    std::vector<CNodePtr> *exec_order,
+                                                    const std::vector<uint32_t> &fpbp_active_streams) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(fpbp_active_app);
+  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(fpbp_active_streams), fpbp_active_app);
+  (*exec_order).push_back(fpbp_active_app);
+  MS_LOG(INFO) << "FpBp loop insert FpBp loop and Eos loop Stream Active " << fpbp_active_app->fullname_with_scope();
+}
+
+void KernelAdjust::InsertSwitchLoopInput(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                         const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  std::vector<AnfNodePtr> *mute_inputs = kernel_graph_ptr->MutableInputs();
+  MS_EXCEPTION_IF_NULL(mute_inputs);
+  mute_inputs->push_back(switch_loop_input.at(kCurLoopCountParamName));
+  mute_inputs->push_back(switch_loop_input.at(kNextLoopCountParamName));
+  mute_inputs->push_back(switch_loop_input.at(kEpochParamName));
+  mute_inputs->push_back(switch_loop_input.at(kIterLoopParamName));
+  mute_inputs->push_back(switch_loop_input.at(kOneParamName));
+  for (const auto &input : kernel_graph_ptr->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<Parameter>()) {
+      ParameterPtr param_ptr = input->cast<ParameterPtr>();
+      if (param_ptr == nullptr) {
+        MS_EXCEPTION(NotSupportError) << "Cast to parameter point failed !";
+      }
+    }
+  }
+}
+
+void KernelAdjust::InsertGetNextLoopStreamSwitch(
+  const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
+  uint32_t *getnext_switch_stream_id, uint32_t *getnext_stream_id,
+  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(getnext_switch_stream_id);
+  MS_EXCEPTION_IF_NULL(getnext_stream_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *getnext_switch_stream_id = resource_manager.ApplyNewStream();
+  *getnext_stream_id = resource_manager.ApplyNewStream();
+  CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kGetNextStreamSwitch);
+  MS_EXCEPTION_IF_NULL(getnext_switch_app);
+  AnfAlgo::SetStreamId(*getnext_switch_stream_id, getnext_switch_app.get());
+  // update getnext loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), getnext_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*getnext_stream_id), getnext_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kGetNextStreamSwitch), getnext_switch_app);
+  (*exec_order).push_back(getnext_switch_app);
+  MS_LOG(INFO) << "GetNext loop insert Stream Switch " << getnext_switch_app->fullname_with_scope();
+}
+void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
+                                            size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id) {
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(order_index);
+  for (; *order_index < orders.size(); (*order_index)++) {
+    auto node = orders[*order_index];
+    (*exec_order).push_back(node);
+    AnfAlgo::SetStreamId(getnext_stream_id, (*exec_order)[(*exec_order).size() - 1].get());
+    if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
+      getnext_cnode = node;
+      break;
+    }
+  }
+}
+
+void KernelAdjust::InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                  std::vector<CNodePtr> *exec_order, uint32_t *fpbp_start_event_id,
+                                                  uint32_t getnext_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(fpbp_start_event_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *fpbp_start_event_id = resource_manager.ApplyNewEvent();
+  CNodePtr fpbp_start_send = CreateSendApplyKernel(kernel_graph_ptr, *fpbp_start_event_id);
+  AnfAlgo::SetStreamId(getnext_stream_id, fpbp_start_send.get());
+  (*exec_order).push_back(fpbp_start_send);
+  MS_LOG(INFO) << "GetNext loop insert FpBp start Send " << fpbp_start_send->fullname_with_scope();
+}
+void KernelAdjust::InsertGetNextLoopEosStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                 std::vector<CNodePtr> *exec_order, uint32_t *eos_start_event_id,
+                                                 uint32_t getnext_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(eos_start_event_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *eos_start_event_id = resource_manager.ApplyNewEvent();
+  CNodePtr eos_start_send = CreateSendApplyKernel(kernel_graph_ptr, *eos_start_event_id);
+  AnfAlgo::SetStreamId(getnext_stream_id, eos_start_send.get());
+  (*exec_order).push_back(eos_start_send);
+  MS_LOG(INFO) << "GetNext loop insert EoS start Send " << eos_start_send->fullname_with_scope();
+}
+void KernelAdjust::InsertEosStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                         const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                         std::vector<CNodePtr> *exec_order, uint32_t *eos_switch_stream_id,
+                                         uint32_t *eos_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(eos_switch_stream_id);
+  MS_EXCEPTION_IF_NULL(eos_stream_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *eos_switch_stream_id = resource_manager.ApplyNewStream();
+  *eos_stream_id = resource_manager.ApplyNewStream();
+  CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kEosStreamSwitch);
+  MS_EXCEPTION_IF_NULL(eos_switch_app);
+  AnfAlgo::SetStreamId(*eos_switch_stream_id, eos_switch_app.get());
+  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), eos_switch_app);
+  // update eos loop stream switch true_branch_stream attr
+  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*eos_stream_id), eos_switch_app);
+  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kEosStreamSwitch), eos_switch_app);
+  (*exec_order).push_back(eos_switch_app);
+  MS_LOG(INFO) << "EoS loop insert Stream Switch " << eos_switch_app->fullname_with_scope();
+}
+void KernelAdjust::InsertGetNextLoopEosStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                 std::vector<CNodePtr> *exec_order, uint32_t eos_start_event_id,
+                                                 uint32_t eos_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  CNodePtr eos_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_start_event_id);
+  AnfAlgo::SetStreamId(eos_stream_id, eos_start_recv.get());
+  (*exec_order).push_back(eos_start_recv);
+  MS_LOG(INFO) << "EoS loop insert EoS Recv " << eos_start_recv->fullname_with_scope();
+}
+void KernelAdjust::InsertEosOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                               std::vector<CNodePtr> *exec_order, const CNodePtr &getnext_cnode,
+                               uint32_t eos_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(getnext_cnode);
+  CNodePtr end_of_sequence_op = CreateEndOfSequenceOP(kernel_graph_ptr, getnext_cnode);
+  MS_EXCEPTION_IF_NULL(end_of_sequence_op);
+  AnfAlgo::SetStreamId(eos_stream_id, end_of_sequence_op.get());
+  (*exec_order).push_back(end_of_sequence_op);
+  MS_LOG(INFO) << "EoS loop insert Eos Op " << end_of_sequence_op->fullname_with_scope();
+}
+
+void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order, uint32_t *eos_done_event_id,
+                                     uint32_t eos_stream_id) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
+  MS_EXCEPTION_IF_NULL(eos_done_event_id);
+  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  *eos_done_event_id = resource_manager.ApplyNewEvent();
+  CNodePtr eos_done_send = CreateSendApplyKernel(kernel_graph_ptr, *eos_done_event_id);
+  AnfAlgo::SetStreamId(eos_stream_id, eos_done_send.get());
+  (*exec_order).push_back(eos_done_send);
+  MS_LOG(INFO) << "EoS loop insert EoS done Send " << eos_done_send->fullname_with_scope();
+}
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
   resource_manager.ResetResource();
   if (!NeedInsertSwitch()) {
     return;
   }
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   if (kernel_graph_ptr->is_dynamic_shape()) {
     MS_LOG(INFO) << "KernelGraph:" << kernel_graph_ptr->graph_id() << " is dynamic shape, skip InsertSwitchLoop";
     return;
@@ -149,23 +420,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   }
   std::map<std::string, mindspore::ParameterPtr> switch_loop_input;
   CreateSwitchOpParameters(kernel_graph_ptr, &switch_loop_input);
-
-  std::vector<AnfNodePtr> *mute_inputs = kernel_graph_ptr->MutableInputs();
-  MS_EXCEPTION_IF_NULL(mute_inputs);
-  mute_inputs->push_back(switch_loop_input[kCurLoopCountParamName]);
-  mute_inputs->push_back(switch_loop_input[kNextLoopCountParamName]);
-  mute_inputs->push_back(switch_loop_input[kEpochParamName]);
-  mute_inputs->push_back(switch_loop_input[kIterLoopParamName]);
-  mute_inputs->push_back(switch_loop_input[kOneParamName]);
-  for (const auto &input : kernel_graph_ptr->inputs()) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<Parameter>()) {
-      ParameterPtr param_ptr = input->cast<ParameterPtr>();
-      if (param_ptr == nullptr) {
-        MS_EXCEPTION(NotSupportError) << "Cast to parameter point failed !";
-      }
-    }
-  }
+  InsertSwitchLoopInput(kernel_graph_ptr, switch_loop_input);
 
   const std::vector<CNodePtr> &orders = kernel_graph_ptr->execution_order();
   if (orders.empty()) {
@@ -173,201 +428,73 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   }
 
   std::vector<CNodePtr> exec_order;
-  std::vector<uint32_t> getnext_active_streams;
-  std::vector<uint32_t> fpbp_active_streams;
   CNodePtr getnext_cnode;
   uint32_t getnext_switch_stream_id = UINT32_MAX;
   uint32_t fpbp_start_event_id = UINT32_MAX;
   uint32_t eos_start_event_id = UINT32_MAX;
-  uint32_t eos_done_event_id = UINT32_MAX;
-  size_t i = 0;
+  uint32_t getnext_stream_id = UINT32_MAX;
+  size_t order_index = 0;
 
-  // getnext loop process
   if (exist_getnext) {
-    // getnext loop stream switch op
-    getnext_switch_stream_id = resource_manager.ApplyNewStream();
-    uint32_t getnext_stream_id = resource_manager.ApplyNewStream();
-    CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kGetNextStreamSwitch);
-    MS_EXCEPTION_IF_NULL(getnext_switch_app);
-    AnfAlgo::SetStreamId(getnext_switch_stream_id, getnext_switch_app.get());
-    // update getnext loop stream switch true_branch_stream attr
-    AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), getnext_switch_app);
-    AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(getnext_stream_id), getnext_switch_app);
-    AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kGetNextStreamSwitch), getnext_switch_app);
-    exec_order.push_back(getnext_switch_app);
-    MS_LOG(INFO) << "GetNext loop insert Stream Switch " << getnext_switch_app->fullname_with_scope();
-
-    // getnext op
-    for (; i < orders.size(); i++) {
-      auto node = orders[i];
-      exec_order.push_back(node);
-      AnfAlgo::SetStreamId(getnext_stream_id, exec_order[exec_order.size() - 1].get());
-      if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
-        getnext_cnode = node;
-        break;
-      }
-    }
-
-    // getnext loop fpbp start send
-    fpbp_start_event_id = resource_manager.ApplyNewEvent();
-    CNodePtr fpbp_start_send = CreateSendApplyKernel(kernel_graph_ptr, fpbp_start_event_id);
-    AnfAlgo::SetStreamId(getnext_stream_id, fpbp_start_send.get());
-    exec_order.push_back(fpbp_start_send);
-    MS_LOG(INFO) << "GetNext loop insert FpBp start Send " << fpbp_start_send->fullname_with_scope();
-
+    InsertGetNextLoopStreamSwitch(kernel_graph_ptr, &exec_order, &getnext_switch_stream_id, &getnext_stream_id,
+                                  switch_loop_input);
+    SetBeforeGetNextStreamID(&exec_order, orders, &order_index, getnext_cnode, getnext_stream_id);
+    InsertGetNextLoopFpBpStartSend(kernel_graph_ptr, &exec_order, &fpbp_start_event_id, getnext_stream_id);
     if (eos_mode) {
-      // getnext loop eos start send
-      eos_start_event_id = resource_manager.ApplyNewEvent();
-      CNodePtr eos_start_send = CreateSendApplyKernel(kernel_graph_ptr, eos_start_event_id);
-      AnfAlgo::SetStreamId(getnext_stream_id, eos_start_send.get());
-      exec_order.push_back(eos_start_send);
-      MS_LOG(INFO) << "GetNext loop insert EoS start Send " << eos_start_send->fullname_with_scope();
+      InsertGetNextLoopEosStartSend(kernel_graph_ptr, &exec_order, &eos_start_event_id, getnext_stream_id);
     }
   }
 
-  // End Of Sequence loop process
+  uint32_t eos_switch_stream_id = UINT32_MAX;
+  uint32_t eos_stream_id = UINT32_MAX;
+  uint32_t eos_done_event_id = UINT32_MAX;
+  std::vector<uint32_t> fpbp_active_streams;
   if (eos_mode) {
-    // eos loop stream switch
-    uint32_t eos_switch_stream_id = resource_manager.ApplyNewStream();
-    uint32_t eos_stream_id = resource_manager.ApplyNewStream();
-    CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kEosStreamSwitch);
-    MS_EXCEPTION_IF_NULL(eos_switch_app);
-    AnfAlgo::SetStreamId(eos_switch_stream_id, eos_switch_app.get());
-    AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), eos_switch_app);
-    // update eos loop stream switch true_branch_stream attr
-    AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(eos_stream_id), eos_switch_app);
-    AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kEosStreamSwitch), eos_switch_app);
-    exec_order.push_back(eos_switch_app);
-    MS_LOG(INFO) << "EoS loop insert Stream Switch " << eos_switch_app->fullname_with_scope();
-
-    // eos loop eos start recv
-    CNodePtr eos_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_start_event_id);
-    AnfAlgo::SetStreamId(eos_stream_id, eos_start_recv.get());
-    exec_order.push_back(eos_start_recv);
-    MS_LOG(INFO) << "EoS loop insert EoS Recv " << eos_start_recv->fullname_with_scope();
-
-    // EndOfSequence op
-    CNodePtr end_of_sequence_op = CreateEndOfSequenceOP(kernel_graph_ptr, getnext_cnode);
-    MS_EXCEPTION_IF_NULL(end_of_sequence_op);
-    AnfAlgo::SetStreamId(eos_stream_id, end_of_sequence_op.get());
-    exec_order.push_back(end_of_sequence_op);
-    MS_LOG(INFO) << "EoS loop insert Eos Op " << end_of_sequence_op->fullname_with_scope();
-
-    // eos loop eos done send
-    eos_done_event_id = resource_manager.ApplyNewEvent();
-    CNodePtr eos_done_send = CreateSendApplyKernel(kernel_graph_ptr, eos_done_event_id);
-    AnfAlgo::SetStreamId(eos_stream_id, eos_done_send.get());
-    exec_order.push_back(eos_done_send);
-    MS_LOG(INFO) << "EoS loop insert EoS done Send " << eos_done_send->fullname_with_scope();
-
-    // eos loop stream active
+    InsertEosStreamSwitch(kernel_graph_ptr, switch_loop_input, &exec_order, &eos_switch_stream_id, &eos_stream_id);
+    InsertGetNextLoopEosStartRecv(kernel_graph_ptr, &exec_order, eos_start_event_id, eos_stream_id);
+    InsertEosOp(kernel_graph_ptr, &exec_order, getnext_cnode, eos_stream_id);
+    InsertEosDoneSend(kernel_graph_ptr, &exec_order, &eos_done_event_id, eos_stream_id);
     fpbp_active_streams.push_back(eos_switch_stream_id);
   }
 
   bool exist_independent = ExistIndependent(kernel_graph_ptr);
   if (exist_independent) {
-    // Independet parallel
-    CNodePtr independent_switch_app =
-      CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kIndependentStreamSwitch);
-    MS_EXCEPTION_IF_NULL(independent_switch_app);
-    uint32_t independent_switch_stream_id = resource_manager.ApplyNewStream();
-    AnfAlgo::SetStreamId(independent_switch_stream_id, independent_switch_app.get());
-    AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), independent_switch_app);
-    AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kIndependentStreamSwitch), independent_switch_app);
-    exec_order.push_back(independent_switch_app);
-    MS_LOG(INFO) << "Independent op loop insert Stream Switch " << independent_switch_app->fullname_with_scope();
+    InsertIndepentParallel(kernel_graph_ptr, switch_loop_input, &exec_order);
   }
 
-  // fpbp loop process
-  // fpbp loop stream switch
-  uint32_t fpbp_switch_stream_id = resource_manager.ApplyNewStream();
-  uint32_t fpbp_stream_id = resource_manager.ApplyNewStream();
-  CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kFpBpStreamSwitch);
-  MS_EXCEPTION_IF_NULL(fpbp_switch_app);
-  AnfAlgo::SetStreamId(fpbp_switch_stream_id, fpbp_switch_app.get());
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
-  // update fpbp loop stream switch true_branch_stream attr
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(fpbp_stream_id), fpbp_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kFpBpStreamSwitch), fpbp_switch_app);
-  exec_order.push_back(fpbp_switch_app);
-  MS_LOG(INFO) << "FpBp loop insert Stream Switch " << fpbp_switch_app->fullname_with_scope();
+  uint32_t fpbp_stream_id = UINT32_MAX;
+  uint32_t fpbp_switch_stream_id = UINT32_MAX;
+  InsertFpBpLoopStreamSwitch(kernel_graph_ptr, switch_loop_input, &exec_order, &fpbp_stream_id, &fpbp_switch_stream_id);
 
   if (exist_getnext) {
-    // fpbp loop fpbp start recv
-    CNodePtr fpbp_start_recv = CreateRecvApplyKernel(kernel_graph_ptr, fpbp_start_event_id);
-    AnfAlgo::SetStreamId(fpbp_stream_id, fpbp_start_recv.get());
-    exec_order.push_back(fpbp_start_recv);
-    MS_LOG(INFO) << "FpBp loop insert FpBp start Recv " << fpbp_start_recv->fullname_with_scope();
+    InsertFpBpStartRecv(kernel_graph_ptr, &exec_order, fpbp_start_event_id, fpbp_stream_id);
   }
+  InsertNextLoopAssignAdd(kernel_graph_ptr, &exec_order, switch_loop_input, fpbp_stream_id);
 
-  // next loop AssignAdd
-  CNodePtr assign_add_one = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, false);
-  MS_EXCEPTION_IF_NULL(assign_add_one);
-  AnfAlgo::SetStreamId(fpbp_stream_id, assign_add_one.get());
-  exec_order.push_back(assign_add_one);
-  MS_LOG(INFO) << "FpBp loop insert next loop AssignAdd " << assign_add_one->fullname_with_scope();
-
-  // fpbp getnext output memcpy
   std::vector<CNodePtr> memcpy_list;
   std::vector<CNodePtr> other_list;
   if (exist_getnext) {
-    CNodePtr cur_cnode = nullptr;
-    for (size_t idx = i + 1; idx < orders.size(); idx++) {
-      cur_cnode = orders[idx];
-      if (AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
-        auto pre_node = orders[idx - 1];
-        auto pre_kernel_name = AnfAlgo::GetCNodeName(pre_node);
-        if (pre_kernel_name == kAtomicAddrCleanOpName) {
-          other_list.pop_back();
-          memcpy_list.push_back(pre_node);
-        }
-        memcpy_list.emplace_back(cur_cnode);
-      } else {
-        other_list.emplace_back(cur_cnode);
-      }
-    }
+    CopyMemcpyList(kernel_graph_ptr, orders, order_index, &memcpy_list, &other_list);
     (void)std::copy(memcpy_list.begin(), memcpy_list.end(), std::back_inserter(exec_order));
   } else {
     other_list = orders;
   }
 
-  // fpbp loop eos done recv
   if (eos_mode) {
-    CNodePtr eos_done_recv = CreateRecvApplyKernel(kernel_graph_ptr, eos_done_event_id);
-    AnfAlgo::SetStreamId(fpbp_stream_id, eos_done_recv.get());
-    exec_order.push_back(eos_done_recv);
-    MS_LOG(INFO) << "FpBp loop insert EoS done Recv " << eos_done_recv->fullname_with_scope();
+    InsertEosDoneRecv(kernel_graph_ptr, &exec_order, eos_done_event_id, fpbp_stream_id);
   }
-
-  // stream active to activate getnext loop
+  std::vector<uint32_t> getnext_active_streams;
   if (exist_getnext) {
-    CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
-    MS_EXCEPTION_IF_NULL(getnext_active_app);
+    // small loop active
     getnext_active_streams.push_back(getnext_switch_stream_id);
-    AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(getnext_active_streams),
-                         getnext_active_app);
-    exec_order.push_back(getnext_active_app);
-    MS_LOG(INFO) << "FpBp loop insert GetNext loop Stream Active " << getnext_active_app->fullname_with_scope();
+    InsertGetNextLoopStreamActive(kernel_graph_ptr, &exec_order, getnext_active_streams, getnext_switch_stream_id);
   }
 
-  // fpbp loop other ops
   (void)std::copy(other_list.begin(), other_list.end(), std::back_inserter(exec_order));
-
-  // current assign add op
-  CNodePtr cur_assign_add = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, true);
-  MS_EXCEPTION_IF_NULL(cur_assign_add);
-  AnfAlgo::SetNodeAttr(kAttrFpBpEnd, MakeValue<bool>(true), cur_assign_add);
-  exec_order.push_back(cur_assign_add);
-  MS_LOG(INFO) << "FpBp loop insert current loop AssignAdd " << cur_assign_add->fullname_with_scope();
-
-  // stream active to activate fpbp loop and eos loop
-  CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(fpbp_active_app);
+  InsertCurrentLoopAssignAdd(kernel_graph_ptr, &exec_order, switch_loop_input);
+  // big loop active
   fpbp_active_streams.push_back(fpbp_switch_stream_id);
-  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(fpbp_active_streams), fpbp_active_app);
-  exec_order.push_back(fpbp_active_app);
-  MS_LOG(INFO) << "FpBp loop insert FpBp loop and Eos loop Stream Active " << fpbp_active_app->fullname_with_scope();
-
+  InsertFpBpAndEosLoopStreamActive(kernel_graph_ptr, &exec_order, fpbp_active_streams);
   kernel_graph_ptr->set_execution_order(exec_order);
 }
 
