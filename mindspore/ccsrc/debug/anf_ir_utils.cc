@@ -73,7 +73,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr 
       if (!check_integrity_) {
         break;
       }
-      MS_LOG(EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "." << fg->debug_info()->get_id() << "'";
+      MS_LOG(EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "'";
     }
     auto param_map = exported[fg];
     if (param_map.find(param) != param_map.end()) {
@@ -83,7 +83,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr 
   }
   if (throw_excp) {
     MS_LOG(EXCEPTION) << "Can not find index for param '" << param->DumpText() << "' for func graph '"
-                      << func_graph->DumpText() << "." << func_graph->debug_info()->get_id() << "'";
+                      << func_graph->DumpText() << "'";
   }
   return -1;
 }
@@ -457,7 +457,7 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
     }
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
     std::string func_graph_id = fg->debug_info()->get_id();
-    comment << " fg_" << func_graph_id << "=" << fg->ToString() << "." << func_graph_id;
+    comment << " fg_" << func_graph_id << "=" << fg->ToString();
   }
   if (has_comment) {
     ofs << comment.str();
@@ -552,8 +552,7 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   if (*(func_graph->switch_layer_input())) {
     ofs << "switch_layer_input: " << *(func_graph->switch_layer_input()) << "\n";
   }
-  ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "."
-      << func_graph->debug_info()->get_id() << "\n";
+  ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "\n";
   if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
     ofs << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
         << label_manage::Label(func_graph->debug_info()) << "\n";

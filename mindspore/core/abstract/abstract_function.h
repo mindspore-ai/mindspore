@@ -133,7 +133,7 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
   // so different tracking_id will produce different FuncGraphAbstractClosure,
   // different FuncGraphEvaluator.
   // Espcecially useful for recursive func graph call, so it will not mess up
-  // the graph_context_ in FuncGraphEvaluator.
+  // the `context_` in FuncGraphEvaluator.
   // Notes: Be careful to use nullptr for this variable.
   // store it as weak_ptr to break reference cycle.
   AnfNodeWeakPtr tracking_id_;

@@ -52,7 +52,7 @@ class AnalysisContext {
   AnalysisContextPtr NewFuncGraphContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
 
   // Return a context restricted to a graph's dependencies.
-  AnalysisContextPtr Filter(const FuncGraphPtr &graph);
+  AnalysisContextPtr FindParentContext(const FuncGraphPtr &graph);
   bool operator==(const AnalysisContext &other) const;
   std::size_t hash();
   static AnalysisContextPtr DummyContext();

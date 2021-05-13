@@ -89,7 +89,7 @@ class AnfNodeConfig : public Config {
     }
     context_ = nullptr;
     if (context != nullptr) {
-      context_ = context->Filter(fg);
+      context_ = context->FindParentContext(fg);
     }
   }
 
@@ -116,8 +116,8 @@ class AnfNodeConfig : public Config {
 
   std::string ToString() const override {
     std::ostringstream buffer;
-    buffer << "Node: " << node_->DebugString() << "-uid(" << node_->UniqueId()
-           << "), Context: " << context_->ToString();
+    buffer << "Node: " << node_ << "/" << node_->DebugString() << "-uid(" << node_->UniqueId()
+           << "), Context: " << context_ << "/" << context_->ToString();
     return buffer.str();
   }
 
@@ -190,6 +190,9 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
         prim_constructors_(prim_evaluator_map),
         func_graph_manager_(func_graph_manager) {
     function_call_depth_ = 0;
+    function_call_max_depth_ = 0;
+    stack_frame_depth_ = 0;
+    stack_frame_max_depth_ = 0;
     forward_count_ = 0;
   }
   ~AnalysisEngine() = default;
@@ -197,10 +200,16 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
+  void SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) {
+    MS_EXCEPTION_IF_NULL(conf);
+    MS_EXCEPTION_IF_NULL(result);
+    analysis_cache_.set_value(conf, result);
+  }
   EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
+  AbstractFunctionPtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context);
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
@@ -231,18 +240,43 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisCache analysis_cache_;
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
-  void ResetFunctionCallDepth() { function_call_depth_ = 0; }
-
-  void IncreaseFunctionCallDepth() { function_call_depth_++; }
-
+  void ResetFunctionCallDepth() {
+    function_call_depth_ = 0;
+    function_call_max_depth_ = 0;
+  }
+  void IncreaseFunctionCallDepth() {
+    function_call_depth_++;
+    if (function_call_max_depth_ < function_call_depth_) {
+      function_call_max_depth_ = function_call_depth_;
+    }
+  }
   void DecreaseFunctionCallDepth() {
     if (function_call_depth_ == 0) {
       MS_LOG(EXCEPTION) << "Current function call depth is already 0, can not decrease it.";
     }
     function_call_depth_--;
   }
+  size_t function_call_depth() { return function_call_depth_; }
+  size_t function_call_max_depth() { return function_call_max_depth_; }
 
-  uint64_t function_call_depth() { return function_call_depth_; }
+  void ResetStackFrameDepth() {
+    stack_frame_depth_ = 0;
+    stack_frame_max_depth_ = 0;
+  }
+  void IncreaseStackFrameDepth() {
+    stack_frame_depth_++;
+    if (stack_frame_max_depth_ < stack_frame_depth_) {
+      stack_frame_max_depth_ = stack_frame_depth_;
+    }
+  }
+  void DecreaseStackFrameDepth() {
+    if (stack_frame_depth_ == 0) {
+      MS_LOG(EXCEPTION) << "Current stack frame depth is already 0, can not decrease it.";
+    }
+    stack_frame_depth_--;
+  }
+  size_t stack_frame_depth() { return stack_frame_depth_; }
+  size_t stack_frame_max_depth() { return stack_frame_max_depth_; }
 
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
 
@@ -282,7 +316,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;
-  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> constructors_;
+  std::unordered_map<AbstractFunctionPtr, EvaluatorPtr, AbstractFunctionHasher, AbstractFunctionEqual> evaluators_;
   std::unordered_map<std::pair<AbstractFunctionPtr, AbstractBasePtrList>, EvaluatorPtr, PartialAppHasher>
     constructors_app_;
   AnfNodeConfigMap anfnode_config_map_;
@@ -299,10 +333,15 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                   const ConfigPtrList &args_conf_list);
   EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
                                           const ConfigPtrList &args_conf_list);
-  // record current depth of function call statck
-  uint64_t function_call_depth_;
+  // Record current depth of function call stack, including `stack_frame_depth_`.
+  size_t function_call_depth_;
+  size_t function_call_max_depth_;
 
-  uint64_t forward_count_;
+  // Record current depth of stack frames call.
+  size_t stack_frame_depth_;
+  size_t stack_frame_max_depth_;
+
+  size_t forward_count_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;
