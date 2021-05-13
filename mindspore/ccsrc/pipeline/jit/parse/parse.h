@@ -246,6 +246,7 @@ class Parser {
   }
   // return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
+  int64_t GetForTransToWhileLoop();
 
   // shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -267,6 +268,7 @@ class Parser {
   std::map<std::string, pExprFunc> expr_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
+  string max_for_loop_count_str_;
 };
 
 // AST node type define code to ast
