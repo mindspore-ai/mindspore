@@ -32,7 +32,7 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr) const {
+bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
@@ -52,34 +52,48 @@ bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
   return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, ptr_, size);
 }
 
-bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr) const {
+bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
   if (!need_sync) {
     return true;
   }
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
-  MS_EXCEPTION_IF_NULL(stream);
+
   if (size != size_) {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
 
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
+    MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
+    return false;
+  }
+  return GPUDeviceManager::GetInstance().SyncStream(stream);
+}
+
+bool GPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr) const {
+  return SyncDeviceToHost(size, host_ptr);
+}
+
+bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
   if (execution_mode != kPynativeMode) {
-    if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
-      MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
-      return false;
-    }
-    return GPUDeviceManager::GetInstance().SyncStream(stream);
-  } else {
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kGPUDevice, device_id);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    return runtime_instance->MemcpyAsync(ptr_, host_ptr, size, 0);
+    return SyncHostToDevice(size, host_ptr);
   }
+
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  bool need_sync = (size != 0) && (size_ != 0) && (size <= size_);
+  if (!need_sync) {
+    return true;
+  }
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kGPUDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  return runtime_instance->MemcpyAsync(ptr_, host_ptr, size, 0);
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {
