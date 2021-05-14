@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
       AddAnalyzedTensorToCache(recheck, wp.id, tensor_name);
       if (is_hit || error_code) {
         std::vector<int>::iterator iter;
-        // if the execution order is repeated,inserts the new one before the others with same execution order.
+        // if the execution order is repeated, inserts the new one before the others with same execution order.
         iter = std::lower_bound(exec_order.begin(), exec_order.end(), tensor->GetExecutionOrder());
         int position = iter - exec_order.begin();
         exec_order.insert(iter, tensor->GetExecutionOrder());

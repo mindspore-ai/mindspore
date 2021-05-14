@@ -329,6 +329,13 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
           graph_ptr_ = dbg_graph_ptr;
           SendMultiGraphsAndSuspend(graph_proto_list_);
           graph_proto_list_.clear();
+        } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
+          // stop only when receive the first sub run graph for each step
+          // if we have stopped for the last kernel before, no need to stop again
+          if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
+            CommandLoop();
+          }
+          debug_services_->ResetLoadedTensors();
         }
       }
     }
@@ -339,9 +346,11 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
     }
     CheckGraphPtr(graph_ptr);
   }
+  // resets for the new graph
+  suspended_at_last_kernel_ = 0;
 }
 
-void Debugger::PostExecute(const KernelGraphPtr &graph_ptr) {
+void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   if (pipeline::ExecutorPy::GetDebugTerminate()) {
@@ -354,17 +363,16 @@ void Debugger::PostExecute(const KernelGraphPtr &graph_ptr) {
         num_step_++;
       }
       SendWatchpoints(CheckWatchpoints());
-      if (graph_ptr != nullptr && device_target_ == kGPUDevice) {
-        auto graph_id = graph_ptr->graph_id();
-        if (graph_id == rungraph_id_list_.front()) {
-          CommandLoop();
-        }
-      } else {
+      // no need to suspend at each graph for GPU, suspension happens in preExecute
+      if (device_target_ != kGPUDevice) {
         CommandLoop();
       }
     }
     // Only keep parameters in the current map
-    debug_services_->ResetLoadedTensors();
+    // GPU ResetLoadedTensors happens in preExecute
+    if (device_target_ != kGPUDevice) {
+      debug_services_->ResetLoadedTensors();
+    }
   }
 }
 
@@ -398,9 +406,12 @@ void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
         hit_empty_flag = false;
       }
     }
-    if (hit_empty_flag && run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_) && !last_kernel) {
+    if (hit_empty_flag && run_level_ == "node" && (node_name_ == "" || node_name_ == cur_name_)) {
       // if kernel is not watchpoint and is next_to or continue_to node, suspend
-      // No need to suspend if this is the last node in graph since PostExecute suspends at the end of graph
+      // sets a bool to be checked in preExecute to avoid double stopping at last kernel in the last graph
+      if (last_kernel) {
+        suspended_at_last_kernel_ = 1;
+      }
       CommandLoop();
     }
     return;
