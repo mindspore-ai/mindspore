@@ -24,6 +24,7 @@
 #include "abstract/utils.h"
 #include "debug/trace.h"
 #include "utils/ms_context.h"
+#include "pipeline/jit/static_analysis/stack_frame.h"
 
 namespace mindspore {
 namespace abstract {
@@ -66,62 +67,145 @@ AnalysisContextPtr BaseFuncGraphEvaluator::MakeContext(const AnalysisEnginePtr &
   return context;
 }
 
-EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) {
-  FuncGraphPtr fg = GetFuncGraph(engine, args_spec_list);
-  MS_EXCEPTION_IF_NULL(fg);
-  std::size_t nargs = fg->parameters().size();
-  if (args_spec_list.size() != nargs) {
-    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
-                            << fg->parameters().size() << ", but the number of provided arguments is "
-                            << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
-  }
-  MS_EXCEPTION_IF_NULL(parent_context_);
-  MS_EXCEPTION_IF_NULL(engine);
-  graph_context_ = parent_context_->NewFuncGraphContext(fg, args_spec_list);
-  const auto &parameters = fg->parameters();
-  for (size_t i = 0; i < nargs; i++) {
-    const auto &arg = args_spec_list[i];
-    const auto &node = parameters[i];
-    AnfNodeConfigPtr conf = engine->MakeConfig(node, graph_context_);
-    engine->analysis_cache().set_value(conf, std::make_shared<EvalResult>(arg, nullptr));
-  }
-  const AnfNodePtr &func_node = fg->get_return();
+void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
+                                             const StackFramePtr &new_stack_frame) {
+  // Enter new func graph.
+  auto &current_node = current_stack_frame->CurrentNode();
+  auto current_context = current_stack_frame->current_context();
+  AnfNodeConfigPtr call_conf = engine->MakeConfig(current_node, current_context);
+  auto evaluator = new_stack_frame->evaluator();
+  MS_EXCEPTION_IF_NULL(evaluator);
+  trace::TraceGraphEvalEnter(evaluator, call_conf);
 
-  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg.get() << "/" << fg->ToString()
-                << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString()
-                << ", current function call depth: " << engine->function_call_depth();
-  AbstractBasePtr ret_base = nullptr;
+  // Increase & Check the func graph call depth.
+  engine->IncreaseFunctionCallDepth();
+  engine->IncreaseStackFrameDepth();
+  if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
+    MS_LOG(EXCEPTION) << "Exceed function call depth limit "
+                      << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
+                      << ", (function call depth: " << engine->function_call_depth()
+                      << ", simulate call depth: " << engine->stack_frame_depth()
+                      << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
+  }
+  MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
+                << "), enter, function call depth: " << engine->function_call_depth() << " - "
+                << engine->stack_frame_depth();
+}
+
+void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &engine,
+                                             const StackFramePtr &current_stack_frame) {
+  // Leave current func graph.
+  auto evaluator = current_stack_frame->evaluator();
+  MS_EXCEPTION_IF_NULL(evaluator);
+  trace::TraceGraphEvalLeave(evaluator);
+
+  // Decrease the func graph call depth.
+  engine->DecreaseFunctionCallDepth();
+  engine->DecreaseStackFrameDepth();
+  MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
+                << "), leave, function call depth: " << engine->function_call_depth() << " - "
+                << engine->stack_frame_depth();
+}
+
+// Start running stack frames in a Evaluator.
+AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg) {
+  EvalResultPtr eval_result = nullptr;
+  AbstractBasePtr res_base = nullptr;
+  std::stack<StackFramePtr> stack_frames;
+  auto current_stack_frame = std::make_shared<StackFrame>(shared_from_base<Evaluator>(), fg, context_, parent_context_);
+  MS_LOG(DEBUG) << "[" << this << "/StackFrame] Start at func graph, " << current_stack_frame;
+  stack_frames.push(current_stack_frame);
+  while (1) {
+    current_stack_frame = stack_frames.top();
+    if (current_stack_frame->Done()) {
+      MS_EXCEPTION_IF_NULL(res_base);
+      MS_LOG(DEBUG) << "[" << this << "/StackFrame] Leave from func graph, " << current_stack_frame;
+      stack_frames.pop();
+      if (stack_frames.empty()) {
+        MS_LOG(DEBUG) << "[" << this << "/StackFrame] Finish at func graph, " << current_stack_frame
+                      << ", res_base: " << res_base->ToString();
+        break;
+      }
+      // Save func graph eval result for specialize.
+      auto evaluator = current_stack_frame->evaluator();
+      MS_EXCEPTION_IF_NULL(evaluator);
+      (*evaluator->evaluator_cache_map())[current_stack_frame->args_abs_list()] = eval_result;
+
+      // Leave current func graph.
+      LeaveStackFrame(engine, current_stack_frame);
+      // Switch the stack frame.
+      current_stack_frame = stack_frames.top();
+      MS_LOG(DEBUG) << "[" << this << "/StackFrame] Back to func graph, " << current_stack_frame;
+      current_stack_frame->Back(engine, eval_result);
+      continue;
+    }
+
+    auto new_stack_frame = current_stack_frame->Jump(engine);
+    if (new_stack_frame != nullptr) {
+      // Enter new func graph.
+      EnterStackFrame(engine, current_stack_frame, new_stack_frame);
+      // Update current stack frame.
+      stack_frames.push(new_stack_frame);
+      current_stack_frame = new_stack_frame;
+      MS_LOG(DEBUG) << "[" << this << "/StackFrame] Jump to new func graph, " << new_stack_frame;
+    }
+
+    eval_result = current_stack_frame->Step(engine);
+    MS_EXCEPTION_IF_NULL(eval_result);
+    res_base = eval_result->abstract();
+  }
+  return res_base;
+}
+
+EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(engine);
   engine->IncreaseFunctionCallDepth();
   if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit "
                       << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
-                      << ", please call 'context.set_context(max_call_depth=value)' to adjust this value.";
+                      << ", (function call depth: " << engine->function_call_depth()
+                      << ", simulate call depth: " << engine->stack_frame_depth()
+                      << "), please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
-  const auto &all_nodes = TopoSort(func_node, SuccIncoming, [&fg](const AnfNodePtr &node) -> IncludeType {
-    if (node->func_graph() != fg || node->isa<ValueNode>()) {
-      return EXCLUDE;
-    }
-    return FOLLOW;
-  });
-  for (const auto &node : all_nodes) {
-    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
-    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg.get() << "/" << fg->ToString()
-                  << ", node_conf: " << node_conf->ToString();
-    auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
-    ret_base = node_eval_result->abstract();
-    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg.get() << "/" << fg->ToString()
-                  << ", node_conf: " << node_conf->ToString() << ", abstract: " << ret_base->ToString();
+  MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
+                << "), enter, function call depth: " << engine->function_call_depth() << " - "
+                << engine->stack_frame_depth();
+
+  // Initialize evaluator starter with args_abs_list.
+  FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
+  MS_EXCEPTION_IF_NULL(fg);
+  std::size_t nargs = fg->parameters().size();
+  if (args_abs_list.size() != nargs) {
+    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
+                            << fg->parameters().size() << ", but the number of provided arguments is "
+                            << args_abs_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
-  engine->DecreaseFunctionCallDepth();
-
-  MS_EXCEPTION_IF_NULL(ret_base);
-  MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " eval end, evaluated abstract: " << ret_base->ToString()
-                << ", is stub: " << fg->stub();
-
+  MS_EXCEPTION_IF_NULL(parent_context_);
+  context_ = parent_context_->NewFuncGraphContext(fg, args_abs_list);
+  const auto &parameters = fg->parameters();
+  for (size_t i = 0; i < nargs; i++) {
+    const auto &arg = args_abs_list[i];
+    const auto &node = parameters[i];
+    AnfNodeConfigPtr conf = engine->MakeConfig(node, context_);
+    engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
+  }
+  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
+                << ", context: " << context_->ToString() << ", return node: " << fg->get_return()->DebugString()
+                << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
+                << ", current function call depth: " << engine->function_call_depth();
+  auto res_base = LaunchStackFrame(engine, fg);
+  MS_EXCEPTION_IF_NULL(res_base);
+  MS_LOG(DEBUG) << "Analysis FuncGraph end, " << fg << "/" << fg->ToString()
+                << ", evaluated abstract: " << res_base->ToString() << ", is stub: " << fg->stub();
   if (fg->stub()) {
-    ret_base = std::make_shared<AbstractUndetermined>();
+    res_base = std::make_shared<AbstractUndetermined>();
   }
-  return std::make_shared<EvalResult>(ret_base, nullptr);
+
+  engine->DecreaseFunctionCallDepth();
+  MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
+                << "), leave, function call depth: " << engine->function_call_depth() << " - "
+                << engine->stack_frame_depth();
+  return std::make_shared<EvalResult>(res_base, nullptr);
 }
 
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
@@ -158,7 +242,7 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
     if (parent_context_) {
       MS_LOG(DEBUG) << "Undeterminate FuncGraphEvaluator " << ToString()
                     << ", context: " << parent_context_->ToString();
-      auto last_context = parent_context_->Filter(func_graph_);
+      auto last_context = parent_context_->FindParentContext(func_graph_);
       if (last_context && last_context->func_graph() == func_graph_) {
         MS_LOG(DEBUG) << "Find last eval context: " << last_context->ToString();
         MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);

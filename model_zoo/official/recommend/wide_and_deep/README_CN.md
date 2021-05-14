@@ -36,7 +36,7 @@ Wide&Deep模型是推荐和点击预测领域的经典模型。  [Wide&Deep推�
 
 Wide&Deep模型训练了宽线性模型和深度学习神经网络，结合了推荐系统的记忆和泛化的优点。
 
-目前我们支持列式分区的主机设备模式和参数服务器模式。
+目前我们支持embedding多维度切分并行的主机设备模式和参数服务器模式，且已和诺亚实验室合作实现了超大规模推荐网络的缓存方案（[ScaleFreeCTR](https://arxiv.org/abs/2104.08542)）。
 
 # 数据集
 
@@ -176,6 +176,7 @@ optional arguments:
   --host_device_mix                   Enable host device mode or not.(Default:0)
   --dataset_type                      The data type of the training files, chosen from tfrecord/mindrecord/hd5.(Default:tfrecord)
   --parameter_server                  Open parameter server of not.(Default:0)
+  --vocab_cache_size                  Enable cache mode.(Default:0)
 ```
 
 ### 预处理脚本参数
@@ -258,6 +259,14 @@ python src/preprocess_data.py --data_path=./syn_data/  --dense_dim=13 --slot_dim
 
 ```bash
 python train_and_eval.py
+```
+
+### 单机训练缓存模式
+
+运行如下命令训练和评估模型：
+
+```bash
+python train_and_eval.py  --vocab_size=200000  --vocab_cache_size=160000
 ```
 
 ### 分布式训练

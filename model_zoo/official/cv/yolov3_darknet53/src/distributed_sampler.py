@@ -29,7 +29,7 @@ class DistributedSampler:
             rank = 0
         self.dataset_size = dataset_size
         self.num_replicas = num_replicas
-        self.rank = rank
+        self.rank = rank if num_replicas > 1 else 0
         self.epoch = 0
         self.num_samples = int(math.ceil(dataset_size * 1.0 / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas

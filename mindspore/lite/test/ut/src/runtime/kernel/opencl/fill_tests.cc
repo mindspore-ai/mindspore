@@ -59,9 +59,16 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
     return;
   }
 
-  auto *fill_kernel =
+  auto *inner_kernel =
     new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  if (inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
+    delete param;
+    return;
+  }
+  auto *fill_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (fill_kernel == nullptr) {
+    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
     return;
@@ -69,11 +76,19 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   fill_kernel->Init();
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{fill_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph({&in_tensor1}, outputs, kernels, kernels, kernels);
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, {&in_tensor1}, outputs, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
+    delete param;
+    delete fill_kernel;
+    return;
+  }
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
     delete param;
     delete fill_kernel;
+    delete sub_inner_kernel;
     return;
   }
   // to allocate memory for inputs
@@ -83,7 +98,7 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
 
   std::cout << "==================output data================" << std::endl;
-  sub_graph->Run();
+  sub_graph->Execute();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
   ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
@@ -115,9 +130,16 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
     return;
   }
 
-  auto *fill_kernel =
+  auto *inner_kernel =
     new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  if (inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
+    delete param;
+    return;
+  }
+  auto *fill_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (fill_kernel == nullptr) {
+    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
     return;
@@ -125,11 +147,19 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   fill_kernel->Init();
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{fill_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph({&in_tensor1}, outputs, kernels, kernels, kernels);
+  auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, {&in_tensor1}, outputs, nullptr);
+  if (sub_inner_kernel == nullptr) {
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph Inner Kernel failed ";
+    delete param;
+    delete fill_kernel;
+    return;
+  }
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(kernels, kernels, kernels, sub_inner_kernel);
   if (sub_graph == nullptr) {
     MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
     delete param;
     delete fill_kernel;
+    delete sub_inner_kernel;
     return;
   }
   // to allocate memory for inputs
@@ -139,7 +169,7 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
 
   std::cout << "==================output data================" << std::endl;
-  sub_graph->Run();
+  sub_graph->Execute();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
   ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;

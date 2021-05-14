@@ -55,6 +55,17 @@ KernelRegistry *KernelRegistry::GetInstance() {
   return &instance;
 }
 
+std::set<std::string> KernelRegistry::AllProviders() {
+  std::set<std::string> providers;
+  for (auto &&item : kernel_creators_) {
+    providers.insert(item.first);
+  }
+  for (auto &&item : custom_kernel_creators_) {
+    providers.insert(item.first);
+  }
+  return providers;
+}
+
 int KernelRegistry::GetFuncIndex(const kernel::KernelKey &desc) {
   if (desc.data_type >= kNumberTypeEnd) {
     return -1;
@@ -73,23 +84,22 @@ int KernelRegistry::RegCustomKernel(const std::string &arch, const std::string &
     return RET_ERROR;
   }
   std::unique_lock<std::mutex> lock(lock_);
-  auto iter = custom_kernel_creators_.find(provider);
-  if (iter == custom_kernel_creators_.end()) {
-    custom_kernel_creators_[provider][arch] =
+  if (custom_kernel_creators_[provider][arch][type] == nullptr) {
+    custom_kernel_creators_[provider][arch][type] =
       reinterpret_cast<CreateKernel *>(malloc(data_type_length_ * sizeof(CreateKernel)));
-    if (custom_kernel_creators_[provider][arch] == nullptr) {
+    if (custom_kernel_creators_[provider][arch][type] == nullptr) {
       MS_LOG(ERROR) << "malloc custom kernel creator fail!provider: " << provider << ", arch: " << arch;
       return RET_ERROR;
     }
-    memset(custom_kernel_creators_[provider][arch], 0, data_type_length_ * sizeof(CreateKernel));
+    memset(custom_kernel_creators_[provider][arch][type], 0, data_type_length_ * sizeof(CreateKernel));
   }
 
   int data_type_index = data_type - kNumberTypeBegin - 1;
-  if (data_type_index < 0) {
+  if (data_type_index < 0 || data_type_index >= data_type_length_) {
     MS_LOG(ERROR) << "invalid data_type: " << data_type << "!provider: " << provider;
     return RET_ERROR;
   }
-  custom_kernel_creators_[provider][arch][data_type_index] = creator;
+  custom_kernel_creators_[provider][arch][type][data_type_index] = creator;
   return RET_OK;
 }
 
@@ -133,7 +143,7 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.provider == kBuiltin) {
     int index = GetCreatorFuncIndex(desc);
     if (index >= array_size_ || index < 0) {
-      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type " << desc.data_type << ",op type "
                     << desc.type;
       return nullptr;
     }
@@ -143,13 +153,31 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   return nullptr;
 }
 
-kernel::CreateKernel KernelRegistry::GetDelegateCreator(const kernel::KernelKey &desc) {
+kernel::CreateKernel KernelRegistry::GetProviderCreator(const kernel::KernelKey &desc,
+                                                        const schema::Primitive *primitive) {
   kernel::CreateKernel creator = nullptr;
+  std::unique_lock<std::mutex> lock(lock_);
+  if (desc.type == schema::PrimitiveType_Custom) {
+    int data_type_index = static_cast<int>(desc.data_type) - kNumberTypeBegin - 1;
+    if (data_type_index < 0) {
+      return nullptr;
+    }
+    auto param = primitive->value_as_Custom();
+    MS_ASSERT(param != nullptr);
+    auto custom_type = param->type()->str();
+    auto archs = custom_kernel_creators_[desc.provider];
+    auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
+      return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
+    });
+    if (archs_iter != archs.end()) {
+      return archs_iter->second[custom_type][data_type_index];
+    }
+    return nullptr;
+  }
   auto index = GetFuncIndex(desc);
   if (index >= kKernelMaxNum || index < 0) {
     return nullptr;
   }
-  std::unique_lock<std::mutex> lock(lock_);
   for (auto &&item : kernel_creators_) {
     for (auto &&arch_item : item.second) {
       creator = arch_item.second[index];
@@ -210,10 +238,12 @@ KernelRegistry::~KernelRegistry() {
       creator.second = nullptr;
     }
   }
-  for (auto &&item : custom_kernel_creators_) {
-    for (auto &&creator : item.second) {
-      free(creator.second);
-      creator.second = nullptr;
+  for (auto &&provider : custom_kernel_creators_) {
+    for (auto &&arch : provider.second) {
+      for (auto &&creator : arch.second) {
+        free(creator.second);
+        creator.second = nullptr;
+      }
     }
   }
 }
@@ -231,15 +261,22 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
   if (key.provider == kBuiltin) {
     auto creator = GetCreator(key);
     if (creator != nullptr) {
-      *kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-      if (*kernel != nullptr) {
-        (*kernel)->set_desc(key);
-        return RET_OK;
+      auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+      if (inner_kernel != nullptr) {
+        inner_kernel->set_registry_data_type(key.data_type);
+        auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+        if (lite_kernel != nullptr) {
+          lite_kernel->set_desc(key);
+          *kernel = lite_kernel;
+          return RET_OK;
+        } else {
+          delete inner_kernel;
+        }
       }
       return RET_ERROR;
     }
   } else {
-    auto creator = GetDelegateCreator(key);
+    auto creator = GetProviderCreator(key, static_cast<const schema::Primitive *>(primitive));
     if (creator == nullptr) {
       return RET_NOT_SUPPORT;
     }
@@ -247,9 +284,16 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     Tensor2MSTensor(std::move(in_tensors), &tensors_in);
     std::vector<tensor::MSTensor *> tensors_out;
     Tensor2MSTensor(std::move(out_tensors), &tensors_out);
-    *kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
-    if (*kernel != nullptr) {
-      return RET_OK;
+    auto base_kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
+    if (base_kernel != nullptr) {
+      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
+      if (lite_kernel != nullptr) {
+        lite_kernel->set_desc(key);
+        *kernel = lite_kernel;
+        return RET_OK;
+      } else {
+        delete base_kernel;
+      }
     }
     return RET_ERROR;
   }

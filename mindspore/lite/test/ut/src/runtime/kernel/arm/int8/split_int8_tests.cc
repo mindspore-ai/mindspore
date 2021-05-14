@@ -85,8 +85,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output1_tensor_shape = output1_tensor->shape();
   auto output2_tensor_shape = output2_tensor->shape();
@@ -174,8 +173,7 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output1_tensor_shape = output1_tensor->shape();
   auto output2_tensor_shape = output2_tensor->shape();
@@ -271,8 +269,7 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Split};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
+  auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output1_tensor_shape = output1_tensor->shape();
   auto output2_tensor_shape = output2_tensor->shape();

@@ -34,7 +34,7 @@ Wide&Deep model is a classical model in Recommendation and Click Prediction area
 
 Wide&Deep model jointly trained wide linear models and deep neural network, which combined the benefits of memorization and generalization for recommender systems.
 
-Currently we support host-device mode with column partition and  parameter server mode.
+Currently we support host-device mode with multi-dimensional partition parallel for embedding table and parameter server mode, and we implement the cache mode for huge embedding table which cooperated with Noah's Ark Lab([ScaleFreeCTR](https://arxiv.org/abs/2104.08542)).
 
 # [Dataset](#contents)
 
@@ -174,6 +174,7 @@ optional arguments:
   --host_device_mix                   Enable host device mode or not.(Default:0)
   --dataset_type                      The data type of the training files, chosen from tfrecord/mindrecord/hd5.(Default:tfrecord)
   --parameter_server                  Open parameter server of not.(Default:0)
+  --vocab_cache_size                  Enable cache mode.(Default:0)
 ```
 
 ### [Preprocess Script Parameters](#contents)
@@ -256,6 +257,14 @@ To train and evaluate the model, command as follows:
 
 ```python
 python train_and_eval.py
+```
+
+### [SingleDevice For Cache Mode](#contents)
+
+To train and evaluate the model, command as follows:
+
+```python
+python train_and_eval.py  --vocab_size=200000  --vocab_cache_size=160000
 ```
 
 ### [Distribute Training](#contents)

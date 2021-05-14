@@ -185,7 +185,7 @@ int ScaleOpenCLKernel::Prepare() {
   std::string program_name = "Scale";
   std::string source = GetActDefines() + scale_source;
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   if (error_code != RET_OK) {

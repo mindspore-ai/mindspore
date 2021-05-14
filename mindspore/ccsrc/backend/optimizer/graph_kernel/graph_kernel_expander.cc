@@ -63,6 +63,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kLambApplyWeightAssign,
     prim::kSoftmaxGradExt,
     prim::kSquareSumV1,
+    prim::kFusedMulAdd,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimFusedAdam,
@@ -119,8 +120,7 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
     return nullptr;
   }
   // decode json to func_graph.
-  std::vector<AnfNodePtr> ori_inputs(node->inputs().begin() + 1, node->inputs().end());
-  return JsonDescToAnf(kernel_desc_str, ori_inputs);
+  return JsonDescToAnf(kernel_desc_str);
 }
 
 void DefaultExpander::EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs) {

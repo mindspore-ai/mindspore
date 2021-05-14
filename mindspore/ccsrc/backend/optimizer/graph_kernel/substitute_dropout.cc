@@ -34,84 +34,49 @@ namespace prim {
 inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
 }  // namespace prim
 namespace opt {
-unsigned int DropoutExpander::seed_ = time(NULL);
-
-void SetNewKernelInfo(const CNodePtr &kernel_node) {
-  std::vector<std::string> inputs_format;
-  std::vector<TypeId> inputs_type;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index));
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index));
-  }
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, output_index));
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
-  }
-  std::string origin_data_format = kOpFormat_DEFAULT;
-  auto cnode_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  cnode_info_builder->SetOriginDataFormat(origin_data_format);
-  cnode_info_builder->SetInputsFormat(inputs_format);
-  cnode_info_builder->SetInputsDeviceType(inputs_type);
-  cnode_info_builder->SetOutputsFormat(outputs_format);
-  cnode_info_builder->SetOutputsDeviceType(outputs_type);
-  cnode_info_builder->SetKernelType(KernelType::UNKNOWN_KERNEL_TYPE);
-  cnode_info_builder->SetProcessor(kernel::Processor::CUDA);
-  auto cnode_selected_info = cnode_info_builder->Build();
-  AnfAlgo::SetSelectKernelBuildInfo(cnode_selected_info, kernel_node.get());
-}
+int64_t DropoutExpander::seed_ = time(nullptr);
 
 AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
-  AbstractBasePtr old_abstract = cnode->abstract()->Clone();
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
 
-  // The primitive should use a clone, otherwise the attr seed will be overridden.
-  AnfNodePtrList uniform_input = {NewValueNode(prim::kPrimCudnnUniformReal->Clone())};
+  // Create a uniform_real kernel to generate random value.
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
                                                  static_cast<void *>(&shape[0]), kNumberTypeInt64);
-  uniform_input.push_back(NewValueNode(tensor));
-  uniform_input[1]->set_abstract(tensor->ToAbstract());
-  uniform_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
-  std::string origin_data_format = kOpFormat_DEFAULT;
-  std::vector<std::string> outputs_format = {origin_data_format};
-  std::vector<TypeId> outputs_type = {kNumberTypeInt32};
-  auto tensor_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  tensor_info_builder->SetOriginDataFormat(origin_data_format);
-  tensor_info_builder->SetOutputsFormat(outputs_format);
-  tensor_info_builder->SetOutputsDeviceType(outputs_type);
-  tensor_info_builder->SetKernelType(KernelType::UNKNOWN_KERNEL_TYPE);
-  tensor_info_builder->SetProcessor(kernel::Processor::CUDA);
-  auto tensor_selected_info = tensor_info_builder->Build();
-  AnfAlgo::SetSelectKernelBuildInfo(tensor_selected_info, uniform_input[1].get());
+  AnfNodePtrList uniform_real_input = {NewValueNode(prim::kPrimCudnnUniformReal), NewValueNode(tensor)};
+  uniform_real_input[1]->set_abstract(tensor->ToAbstract());
+  uniform_real_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
+  auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
+  SetNodeAttrSafely("seed", MakeValue(seed_++), uniform_real_node);
+  AnfAlgo::SetNodeAttr("seed2", MakeValue(seed_++), uniform_real_node);
+  uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_i64));
+  // Set kernel_info for uniform_real node
+  auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  uniform_real_kernel_info_builder->SetInputsFormat({kOpFormat_DEFAULT});
+  uniform_real_kernel_info_builder->SetInputsDeviceType({kNumberTypeInt32});
+  uniform_real_kernel_info_builder->SetOutputsFormat({kOpFormat_DEFAULT});
+  uniform_real_kernel_info_builder->SetOutputsDeviceType({kNumberTypeFloat32});
+  uniform_real_kernel_info_builder->SetKernelType(KernelType::UNKNOWN_KERNEL_TYPE);
+  uniform_real_kernel_info_builder->SetProcessor(kernel::Processor::CUDA);
+  AnfAlgo::SetSelectKernelBuildInfo(uniform_real_kernel_info_builder->Build(), uniform_real_node.get());
 
-  // create new uniform_real_node
-  auto uniform_real_node = func_graph->NewCNode(uniform_input);
-  SetNodeAttrSafely("seed", MakeValue(SizeToLong(seed_++)), uniform_real_node);
-  SetNodeAttrSafely("seed2", MakeValue(SizeToLong(seed_++)), uniform_real_node);
-  auto uniform_abstract = std::make_shared<abstract::AbstractTensor>(std::make_shared<Float>(32), shape_i64);
-  uniform_real_node->set_abstract(uniform_abstract);
-  uniform_real_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  SetNewKernelInfo(uniform_real_node);
-
-  // create new_node, has two input, first is cnode->input[1], second is unifom_real_node
-  AnfNodePtrList new_node_inputs = {NewValueNode(prim::kPrimGkDropout)};
-  new_node_inputs.push_back(cnode->input(1));
-  new_node_inputs.push_back(uniform_real_node);
-  auto new_node = func_graph->NewCNode(new_node_inputs);
-  SetNodeAttrSafely("keep_prob", MakeValue(AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_node);
-  new_node->set_abstract(old_abstract);
-  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  SetNewKernelInfo(new_node);
-  return new_node;
+  // Create a GKDropout node with uniform_real as its second input.
+  AnfNodePtrList gkdropout_inputs = {NewValueNode(prim::kPrimGkDropout), cnode->input(1), uniform_real_node};
+  auto new_dropout_node = func_graph->NewCNode(gkdropout_inputs);
+  SetNodeAttrSafely("keep_prob", MakeValue(AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_dropout_node);
+  // the output info is unchanged.
+  new_dropout_node->set_abstract(node->abstract());
+  auto old_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  auto dropout_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(old_kernel_info);
+  dropout_kernel_info_builder->SetInputsFormat({old_kernel_info->GetInputFormat(0), kOpFormat_DEFAULT});
+  dropout_kernel_info_builder->SetInputsDeviceType({old_kernel_info->GetInputDeviceType(0), kNumberTypeFloat32});
+  AnfAlgo::SetSelectKernelBuildInfo(dropout_kernel_info_builder->Build(), new_dropout_node.get());
+  return new_dropout_node;
 }
 
 AnfNodePtr DropoutExpander::Run(const AnfNodePtr &node) {

@@ -73,13 +73,18 @@ Status ValidateVectorColorAttribute(const std::string &op_name, const std::strin
 
 Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float> &mean,
                              const std::vector<float> &std) {
-  if (mean.size() != 3) {
-    std::string err_msg = op_name + ": mean expecting size 3, got size: " + std::to_string(mean.size());
+  if (mean.size() == 0) {
+    std::string err_msg = op_name + ": mean expecting non-empty vector";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (std.size() != 3) {
-    std::string err_msg = op_name + ": std expecting size 3, got size: " + std::to_string(std.size());
+  if (std.size() == 0) {
+    std::string err_msg = op_name + ": std expecting non-empty vector";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (mean.size() != std.size()) {
+    std::string err_msg = op_name + ": mean and std vectors are expected to be of the same size";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

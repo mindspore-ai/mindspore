@@ -72,22 +72,22 @@ bool EvolutionCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(param_data);
   MS_EXCEPTION_IF_NULL(output);
-  sim_ = mindquantum::PQCSimulator(1, n_qubits_);
+  auto sim = mindquantum::PQCSimulator(1, n_qubits_);
   mindquantum::ParameterResolver pr;
   for (size_t i = 0; i < param_names_.size(); i++) {
     pr.SetData(param_names_.at(i), param_data[i]);
   }
-  sim_.Evolution(circ_, pr);
+  sim.Evolution(circ_, pr);
   if (hams_.size() == 1) {
-    sim_.ApplyHamiltonian(hams_[0]);
+    sim.ApplyHamiltonian(hams_[0]);
   }
-  if (state_len_ != sim_.vec_.size()) {
+  if (state_len_ != (1UL << n_qubits_)) {
     MS_LOG(EXCEPTION) << "simulation error number of quantum qubit!";
   }
-  size_t poi = 0;
-  for (auto &v : sim_.vec_) {
-    output[poi++] = v.real();
-    output[poi++] = v.imag();
+  auto size = state_len_ * 2;
+#pragma omp parallel for schedule(static)
+  for (size_t i = 0; i < size; i++) {
+    output[i] = sim.vec_[i];
   }
   return true;
 }

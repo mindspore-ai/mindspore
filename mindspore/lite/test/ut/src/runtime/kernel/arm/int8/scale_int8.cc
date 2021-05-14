@@ -46,7 +46,7 @@ class TestScaleInt8 : public mindspore::CommonTest {
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_ScaleFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
-  kernel::LiteKernel *kernel_ = nullptr;
+  kernel::InnerKernel *kernel_ = nullptr;
   const QuantArg quant_in_ = {0.005f, 5};
   const QuantArg quant_scale_ = {0.1f, 1};
   const QuantArg quant_bias_ = {0.002f, 2};

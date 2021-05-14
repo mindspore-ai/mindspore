@@ -150,7 +150,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   RectifyFormat(cnode, inputs, fmk_type_);
-  auto status = KernelInferShape(inputs, &outputs, parameter);
+  auto status = KernelInferShape(inputs, outputs, parameter);
   if (status == lite::RET_OK) {
     anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
   }

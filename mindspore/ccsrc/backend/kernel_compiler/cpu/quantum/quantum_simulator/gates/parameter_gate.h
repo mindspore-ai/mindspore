@@ -26,6 +26,7 @@ class ParameterGate : public BasicGate {
  public:
   ParameterGate();
   ParameterGate(const std::string &, const Indexes &, const Indexes &, const ParameterResolver &);
+  virtual ~ParameterGate() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

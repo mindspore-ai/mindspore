@@ -592,6 +592,10 @@ class SideEffectFinder {
     if (func_graph != nullptr) {
       return TraceTupleEffectInfo(func_graph->output(), tuple_indexes);
     }
+    // Tuple returned from a Switch call.
+    if (cnode->size() == 1 && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
+      return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *tuple_indexes);
+    }
     // Tuple is returned from J().
     //   %1 = J(primal)
     //   tuple = %1(args)
@@ -602,6 +606,18 @@ class SideEffectFinder {
     // Rare case.
     MS_LOG(WARNING) << "Tuple untraceable from: " << cnode->DebugString(2);
     return {EffectInfo::kDetected, false, false, false};
+  }
+
+  // Trace effect info from a Switch node that output is a tuple.
+  EffectInfo TraceTupleFromSwitch(const CNodePtr &switch_cnode, const std::stack<int64_t> &tuple_indexes) {
+    auto branches = GetSwitchBranches(switch_cnode);
+    EffectInfo info = {EffectInfo::kDetected, false, false, false};
+    for (auto &branch : branches) {
+      auto tuple_indexes_copy = tuple_indexes;
+      EffectInfo branch_info = TraceTupleEffectInfo(branch->output(), &tuple_indexes_copy);
+      info.Merge(branch_info);
+    }
+    return info;
   }
 
   // Setup all branches according the effect info.
@@ -861,7 +877,7 @@ class SideEffectFinder {
   const SccPtr &GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString() << "." << func_graph->debug_info()->get_id();
+      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString();
     }
     return found->second;
   }

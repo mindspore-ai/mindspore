@@ -53,36 +53,50 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 
 bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr> *opt_list,
                 std::vector<std::vector<int64_t>> *string_pos_vec,
-                std::vector<std::vector<std::string>> *string_value_vec) {
+                std::vector<std::vector<std::string>> *string_value_vec,
+                std::vector<std::vector<std::pair<int64_t, int64_t>>> *not_tensor_pos_vec) {
   for (auto &node : node_list) {
-    // {prim::kPrimPrint} only print with string will be reduced
+    // {prim::kPrimPrint} reduction only applies on print with string, tensor(scalar or tuple)
     std::vector<int64_t> string_pos;
     std::vector<std::string> string_value;
+    std::vector<std::pair<int64_t, int64_t>> value_type;
     if (IsPrimitiveCNode(node, prim::kPrimPrint)) {
       size_t input_num = AnfAlgo::GetInputTensorNum(node);
       for (size_t i = 0; i < input_num; i++) {
         auto current_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
-        // not a string
+        // not tensor(tuple, scalar, string)
         if (current_node->cast<ValueNodePtr>() == nullptr) {
           continue;
         }
-        auto value_node = current_node->cast<ValueNodePtr>()->value();
-        // not a string
-        if (value_node->type() == nullptr) {
+        auto value_node = current_node->cast<ValueNodePtr>();
+        auto shape_node = dyn_cast<abstract::Shape>(value_node->abstract()->GetShapeTrack());
+        if (shape_node != nullptr) {
+          // a scalar or tuple
+          auto shape_size = shape_node->shape().size();
+          if (shape_size != 0) {
+            value_type.push_back(std::make_pair(i, 1));
+          } else {
+            value_type.push_back(std::make_pair(i, 0));
+          }
+        }
+        auto node_value = value_node->value();
+        if (node_value->type() == nullptr) {
+          // not a string
           continue;
         }
-        if (value_node->type()->generic_type_id() == kObjectTypeString) {
-          auto current_string_value = GetValue<std::string>(value_node);
+        if (node_value->type()->generic_type_id() == kObjectTypeString) {
+          auto current_string_value = GetValue<std::string>(node_value);
           string_pos.push_back(i);
           string_value.push_back(std::string(current_string_value));
         } else {
           MS_LOG(EXCEPTION) << "Current value node is not string or tensor";
         }
       }
-      if (string_pos.size() != 0) {
+      if (string_pos.size() != 0 || value_type.size() != 0) {
         opt_list->push_back(node);
         string_pos_vec->push_back(string_pos);
         string_value_vec->push_back(string_value);
+        not_tensor_pos_vec->push_back(value_type);
       }
     }
   }
@@ -100,7 +114,9 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
   std::vector<AnfNodePtr> opt_list;
   std::vector<std::vector<int64_t>> string_pos_vec;
   std::vector<std::vector<std::string>> string_value_vec;
-  if (!GetOptList(node_list, &opt_list, &string_pos_vec, &string_value_vec)) {
+  // first is pos, second is type: 0 is Scalar, 1 is ValueTuple
+  std::vector<std::vector<std::pair<int64_t, int64_t>>> not_tensor_pos_vec;
+  if (!GetOptList(node_list, &opt_list, &string_pos_vec, &string_value_vec, &not_tensor_pos_vec)) {
     return false;
   }
   for (size_t idx = 0; idx < opt_list.size(); idx++) {
@@ -131,11 +147,21 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(monad_node);
     inputs.push_back(monad_node);
     auto string_value = string_value_vec[idx];
+    auto value_type_vec = not_tensor_pos_vec[idx];
+    // split value type and pos
+    std::vector<int64_t> value_type_pos;
+    std::vector<int64_t> value_type;
+    (void)std::transform(value_type_vec.begin(), value_type_vec.end(), std::back_inserter(value_type_pos),
+                         [](const std::pair<int64_t, int64_t> &value) { return value.first; });
+    (void)std::transform(value_type_vec.begin(), value_type_vec.end(), std::back_inserter(value_type),
+                         [](const std::pair<int64_t, int64_t> &value) { return value.second; });
     // create new cnode
     auto print_fused = graph->NewCNode(inputs);
     // hand over the attrs to new print
     AnfAlgo::SetNodeAttr("string_pos", MakeValue<std::vector<int64_t>>(string_pos), print_fused);
     AnfAlgo::SetNodeAttr("string_value", MakeValue<std::vector<std::string>>(string_value), print_fused);
+    AnfAlgo::SetNodeAttr("value_type", MakeValue<std::vector<int64_t>>(value_type), print_fused);
+    AnfAlgo::SetNodeAttr("value_type_pos", MakeValue<std::vector<int64_t>>(value_type_pos), print_fused);
     // set output type and shape
     std::vector<TypeId> types;
     std::vector<std::vector<size_t>> shapes;

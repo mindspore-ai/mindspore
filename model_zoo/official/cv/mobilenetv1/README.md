@@ -143,8 +143,8 @@ You can start training using python or shell scripts.If the train method is trai
 ```shell
 # eval example
   python:
-      Ascend: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt [CHECKPOINT_PATH]
-      CPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --pretrain_ckpt [CHECKPOINT_PATH] --device_target CPU
+      Ascend: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH]
+      CPU: python eval.py --dataset [cifar10|imagenet2012] --dataset_path [VAL_DATASET_PATH] --checkpoint_path [CHECKPOINT_PATH] --device_target CPU
 
   shell:
       Ascend: sh run_eval.sh [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]

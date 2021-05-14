@@ -78,7 +78,7 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
   auto channelIn = weightBlob.has_shape() ? weightBlob.shape().dim(1) * group : weightBlob.channels() * group;
   prim->set_in_channel(channelIn);
 
-  if (group != 1 || group != channel_out) {
+  if (group != 1 && group == channel_out) {
     prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
 

@@ -476,6 +476,32 @@ def test_generator_17():
         np.testing.assert_array_equal(item["col1"], golden)
         i = i + 1
 
+def test_generator_18():
+    """
+    Test multiprocessing flag (same as test 13 with python_multiprocessing=True flag)
+    """
+    logger.info("Test map column order when input_columns is None.")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"], python_multiprocessing=True)
+    data1 = data1.map(operations=(lambda x: (x * 5)), output_columns=["out0"], num_parallel_workers=2,
+                      python_multiprocessing=True)
+
+    # Expected column order is |out0|col1|
+    i = 0
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 2
+        golden = np.array([i * 5])
+        np.testing.assert_array_equal(item[0], golden)
+        golden = np.array([[i, i + 1], [i + 2, i + 3]])
+        np.testing.assert_array_equal(item[1], golden)
+        i = i + 1
+
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+        # len should be 2 because col0 is dropped (not included in column_order)
+        assert len(item) == 2
+        golden = np.array([i * 5])
+        np.testing.assert_array_equal(item["out0"], golden)
 
 def test_generator_error_1():
     def generator_np():
@@ -777,6 +803,7 @@ if __name__ == "__main__":
     test_generator_15()
     test_generator_16()
     test_generator_17()
+    test_generator_18()
     test_generator_error_1()
     test_generator_error_2()
     test_generator_error_3()

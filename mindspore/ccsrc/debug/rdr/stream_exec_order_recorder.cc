@@ -30,7 +30,7 @@ std::string Vector2String(const std::vector<uint32_t> &v) {
   return str;
 }
 
-json ExecNode::ExecNode2Json() {
+json ExecNode::ExecNode2Json() const {
   json exec_node;
   exec_node[kAttrIndex] = index_;
   exec_node[kAttrNodeName] = node_name_;

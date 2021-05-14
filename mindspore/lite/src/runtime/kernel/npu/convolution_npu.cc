@@ -107,9 +107,9 @@ ConvolutionNPUKernel::~ConvolutionNPUKernel() {
   }
 }
 
-kernel::LiteKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                         const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                         const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                          const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                          const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);

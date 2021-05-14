@@ -28,7 +28,13 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x = input_args[0]->GetShapeTrack();
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 1, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
@@ -47,8 +53,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+                                                    InferShape(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameReLU6, ReLU6);
+REGISTER_PRIMITIVE_EVAL_IMPL(ReLU6, prim::kPrimRelu6, ReLU6Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

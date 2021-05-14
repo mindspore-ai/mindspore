@@ -19,7 +19,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
 

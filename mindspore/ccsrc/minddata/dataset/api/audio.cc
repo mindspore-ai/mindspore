@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/audio.h"
+#include "minddata/dataset/include/dataset/audio.h"
 
 #include "minddata/dataset/audio/ir/kernels/audio_ir.h"
 

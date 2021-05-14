@@ -32,10 +32,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   std::copy(inputs.begin(), inputs.end(), std::back_inserter(in_tensors));
   std::vector<tensor::MSTensor *> out_tensors;
   std::copy(outputs.begin(), outputs.end(), std::back_inserter(out_tensors));
-  int op_type = GetPrimitiveType(primitive);
-  for (auto &&item : KernelInterfaceRegistry::Instance()->kernel_interfaces()) {
-    auto provider = item.first;
-    auto kernel_interface = KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, op_type);
+  for (auto &&provider : KernelInterfaceRegistry::Instance()->AllProviders()) {
+    auto kernel_interface = KernelInterfaceRegistry::Instance()->GetKernelInterface(
+      provider, static_cast<const schema::Primitive *>(primitive));
     if (kernel_interface == nullptr) {
       continue;
     }
@@ -51,7 +50,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   return RET_ERROR;
 }
 
-int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
@@ -84,7 +83,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
     }
     if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
-      auto *tensor_list = reinterpret_cast<TensorList *>(outputs->at(i));
+      auto *tensor_list = reinterpret_cast<TensorList *>(outputs.at(i));
       tensor_list->set_shape({static_cast<int>(tensor_list_c->element_num_)});
       auto tensor_shape = std::vector<std::vector<int>>(
         tensor_list_c->element_num_,
@@ -93,10 +92,10 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
       tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
       TensorListC2TensorList(tensor_list_c, tensor_list);
     } else {
-      TensorC2Tensor(out_tensors.at(i), outputs->at(i));
+      TensorC2Tensor(out_tensors.at(i), outputs.at(i));
     }
     if (ret == NNACL_INFER_INVALID) {
-      outputs->at(i)->set_shape({-1});
+      outputs.at(i)->set_shape({-1});
     }
   }
 

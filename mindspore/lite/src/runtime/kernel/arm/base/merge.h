@@ -29,7 +29,7 @@ class MergeCPUKernel : public CarryDataKernel {
   MergeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : CarryDataKernel(parameter, inputs, outputs, ctx) {}
-  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
+  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors);
   ~MergeCPUKernel() override = default;
   int FreeInWorkTensor() const override;
   int Init() override;

@@ -105,7 +105,7 @@ int FullConnectionOpenCLKernel::Prepare() {
   std::string source = fullconnection_source;
   std::string program_name = "FullConnection";
   ocl_runtime_->LoadSource(program_name, GetActDefines() + source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   auto ret = InitWeights();

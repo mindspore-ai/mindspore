@@ -229,13 +229,13 @@ int DeConvolutionFp16CPUKernel::Run() {
   return error_code;
 }
 
-kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                               const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
-  kernel::LiteKernel *kernel = nullptr;
+  kernel::InnerKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   if (conv_param->group_ == 1) {
     if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&

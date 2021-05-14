@@ -106,7 +106,32 @@ void TcpClient::Init() {
   sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
   sin.sin_port = htons(server_port_);
 
-  buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  if (!PSContext::instance()->enable_ssl()) {
+    buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  } else {
+    SSL *ssl = SSL_new(SSLWrapper::GetInstance().GetSSLCtx(false));
+    if (!SSL_CTX_use_certificate_chain_file(SSLWrapper::GetInstance().GetSSLCtx(false), kCertificateChain)) {
+      MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
+    }
+
+    if (!SSL_CTX_use_PrivateKey_file(SSLWrapper::GetInstance().GetSSLCtx(false), kPrivateKey, SSL_FILETYPE_PEM)) {
+      MS_LOG(EXCEPTION) << "SSL use private key file failed!";
+    }
+
+    if (!SSL_CTX_check_private_key(SSLWrapper::GetInstance().GetSSLCtx(false))) {
+      MS_LOG(EXCEPTION) << "SSL check private key file failed!";
+    }
+
+    if (!SSL_CTX_load_verify_locations(SSLWrapper::GetInstance().GetSSLCtx(false), kCAcrt, nullptr)) {
+      MS_LOG(EXCEPTION) << "SSL load ca location failed!";
+    }
+
+    SSL_CTX_set_options(SSLWrapper::GetInstance().GetSSLCtx(false), SSL_OP_NO_SSLv2);
+
+    buffer_event_ = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING,
+                                                   BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
+  }
+
   MS_EXCEPTION_IF_NULL(buffer_event_);
 
   bufferevent_setcb(buffer_event_, ReadCallback, nullptr, EventCallback, this);

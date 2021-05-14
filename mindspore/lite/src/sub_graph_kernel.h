@@ -56,10 +56,9 @@ struct DataStore {
 
 class SubGraphKernel : public LiteKernel {
  public:
-  SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                 std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                 std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
-      : LiteKernel(nullptr, inputs, outputs, ctx),
+  SubGraphKernel(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                 std::vector<LiteKernel *> nodes, Kernel *kernel)
+      : LiteKernel(kernel),
         nodes_(std::move(nodes)),
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {
@@ -92,14 +91,11 @@ class SubGraphKernel : public LiteKernel {
   // called while compiling graph. Call node->Prepare() by default.
   int Prepare() override;
   // called before Run
-  int PreProcess() override { return mindspore::lite::RET_OK; }
+  int Execute() override { return Execute(nullptr, nullptr); }
 
-  int Run() override { return Run(nullptr, nullptr); }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override;
   // called after Run
-  int PostProcess() override { return mindspore::lite::RET_OK; }
-
   int ReSize() override;
 
   void InitOutTensorInitRefCount() override;
@@ -123,10 +119,9 @@ class SubGraphKernel : public LiteKernel {
 
 class CpuSubGraph : public SubGraphKernel {
  public:
-  CpuSubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-              std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-              std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
-      : SubGraphKernel(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
+  CpuSubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+              std::vector<LiteKernel *> nodes, Kernel *kernel)
+      : SubGraphKernel(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kCPU;
   }
@@ -134,53 +129,70 @@ class CpuSubGraph : public SubGraphKernel {
   ~CpuSubGraph() override { delete this->executor_; }
   int Prepare() override;
   int Init() override { return SubGraphKernel::Init(); }
-  int PreProcess() override { return SubGraphKernel::PreProcess(); }
-  int Run() override { return Run(nullptr, nullptr); }
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override;
-  int PostProcess() override { return SubGraphKernel::PostProcess(); }
+  int Execute() override { return Execute(nullptr, nullptr); }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
 
 class CpuFp32SubGraph : public CpuSubGraph {
  public:
-  CpuFp32SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                  std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                  std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
-      : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
+  CpuFp32SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                  std::vector<LiteKernel *> nodes, Kernel *kernel)
+      : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP32SubGraph;
     static std::atomic_int index = 0;
-    this->name_ = "CpuFP32SubGraph" + std::to_string(index++);
+    this->set_name("CpuFP32SubGraph" + std::to_string(index++));
   }
 
   ~CpuFp32SubGraph() override = default;
   int Init() override { return CpuSubGraph::Init(); }
-  int PreProcess() override { return CpuSubGraph::PreProcess(); }
-  int Run() override { return CpuSubGraph::Run(); }
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override {
-    return CpuSubGraph::Run(before, after);
+  int Execute() override { return CpuSubGraph::Execute(); }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override {
+    return CpuSubGraph::Execute(before, after);
   };
-  int PostProcess() override { return CpuSubGraph::PostProcess(); }
 };
 
 #ifdef ENABLE_FP16
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
-  CpuFp16SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                  std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
-                  std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
-      : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
+  CpuFp16SubGraph(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                  std::vector<LiteKernel *> nodes, Kernel *kernel)
+      : CpuSubGraph(std::move(in_kernels), std::move(out_kernels), std::move(nodes), kernel) {
     subgraph_type_ = kCpuFP16SubGraph;
     static std::atomic_int index = 0;
-    this->name_ = "CpuFP16SubGraph" + std::to_string(index++);
+    this->set_name("CpuFP16SubGraph" + std::to_string(index++));
   }
 
   ~CpuFp16SubGraph() override = default;
   int Init() override { return CpuSubGraph::Init(); }
-  int PreProcess() override;
-  int Run() override { return CpuSubGraph::Run(); }
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override {
+  int PreProcess();
+  int Execute() override {
+    auto ret = PreProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      return ret;
+    }
+    ret = CpuSubGraph::Execute();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
+      return ret;
+    }
+
+    ret = PostProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      return ret;
+    }
+    return lite::RET_OK;
+  }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override {
+    auto ret = PreProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      return ret;
+    }
 #ifdef Debug
     for (const auto *node : nodes_) {
-      if (node->Type() == schema::PrimitiveType_PartialFusion) {
+      if (node->type() == schema::PrimitiveType_PartialFusion) {
         continue;
       }
       for (const auto *in_tensor : node->in_tensors()) {
@@ -191,9 +203,20 @@ class CpuFp16SubGraph : public CpuSubGraph {
       }
     }
 #endif
-    return CpuSubGraph::Run(before, after);
+    ret = CpuSubGraph::Execute(before, after);
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << this->name();
+      return ret;
+    }
+
+    ret = PostProcess();
+    if (lite::RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel PreProcess failed, name: " << this->name();
+      return ret;
+    }
+    return lite::RET_OK;
   };
-  int PostProcess() override;
+  int PostProcess();
 
  private:
   void FreeOriginInputData();

@@ -66,7 +66,7 @@ std::optional<std::string> GetRdrPathFromEnv() {
 }
 
 bool EnvConfigParser::CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key,
-                                          const std::string &key) {
+                                          const std::string &key) const {
   if (!content.is_string()) {
     MS_LOG(WARNING) << "Json Parse Failed. The '" << key << "' in '" << setting_key << "' should be string."
                     << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
@@ -76,7 +76,7 @@ bool EnvConfigParser::CheckJsonStringType(const nlohmann::json &content, const s
 }
 
 std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> EnvConfigParser::CheckJsonKeyExist(
-  const nlohmann::json &content, const std::string &setting_key, const std::string &key) {
+  const nlohmann::json &content, const std::string &setting_key, const std::string &key) const {
   auto iter = content.find(key);
   if (iter == content.end()) {
     MS_LOG(WARNING) << "Check json failed, '" << key << "' not found in '" << setting_key << "'."
@@ -86,7 +86,7 @@ std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> EnvConfigParser
   return iter;
 }
 
-std::string EnvConfigParser::GetIfstreamString(const std::ifstream &ifstream) {
+std::string EnvConfigParser::GetIfstreamString(const std::ifstream &ifstream) const {
   std::stringstream buffer;
   buffer << ifstream.rdbuf();
   return buffer.str();

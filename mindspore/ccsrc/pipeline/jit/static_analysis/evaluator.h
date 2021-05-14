@@ -23,6 +23,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <stack>
 
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/ms_context.h"
@@ -135,7 +136,7 @@ class SymbolicPrimEvaluator : public PrimEvaluator {
   virtual EvalResultPtr EvalPrim(const ConfigPtrList &args_conf_list) = 0;
 };
 
-// Evaluator will be stored in AnalysisEngine.constructors_
+// Evaluator will be stored in AnalysisEngine.evaluators_
 using EvaluatorPtrList = std::vector<EvaluatorPtr>;
 
 class DummyEvaluator : public Evaluator {
@@ -179,6 +180,11 @@ class TrackedEvaluator : public Evaluator {
   EvaluatorPtr sub_evaluator_;
 };
 
+using FuncGraphCacheMap =
+  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+class StackFrame;
+using StackFramePtr = std::shared_ptr<StackFrame>;
+
 class BaseFuncGraphEvaluator : public Evaluator {
  public:
   explicit BaseFuncGraphEvaluator(const AnalysisContextPtr &context)
@@ -192,19 +198,26 @@ class BaseFuncGraphEvaluator : public Evaluator {
   virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
 
   AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list);
-  AnalysisContextPtr graph_context() const { return graph_context_; }
+  AnalysisContextPtr context() const { return context_; }
+  void set_context(const AnalysisContextPtr &context) { context_ = context; }
 
  protected:
   AnalysisContextPtr parent_context_;
 
  private:
-  AnalysisContextPtr graph_context_;
+  // Add functions for stack frame routine.
+  AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
+  void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
+                       const StackFramePtr &new_stack_frame);
+  void LeaveStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame);
+
+  AnalysisContextPtr context_;
 };
 
 class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
  public:
   FuncGraphEvaluator(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context)
-      : BaseFuncGraphEvaluator(context->Filter(func_graph)), func_graph_(func_graph) {}
+      : BaseFuncGraphEvaluator(context->FindParentContext(func_graph)), func_graph_(func_graph) {}
 
   ~FuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(FuncGraphEvaluator, BaseFuncGraphEvaluator);
@@ -219,8 +232,7 @@ class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
 
  private:
   FuncGraphPtr func_graph_;
-  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>
-    func_graph_cache_;
+  FuncGraphCacheMap func_graph_cache_;
   std::vector<AbstractBasePtrList> trace_;
 };
 using FuncGraphEvaluatorPtr = std::shared_ptr<FuncGraphEvaluator>;
@@ -243,8 +255,7 @@ class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
 
  private:
   MetaFuncGraphPtr meta_func_graph_;
-  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>
-    func_graph_cache_;
+  FuncGraphCacheMap func_graph_cache_;
   ScopePtr scope_;
 };
 

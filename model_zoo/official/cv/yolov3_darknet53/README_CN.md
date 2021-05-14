@@ -104,49 +104,91 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
       python hccl_tools.py --device_num "[0,8)"
       ```
 
-```python
-# training_shape参数定义网络图像形状，默认为""。
-# 意思是使用10种形状作为输入形状，或者可以设置某种形状。
-# 通过python命令执行训练示例(1卡)。
-python train.py \
-    --data_dir=./dataset/coco2014 \
-    --pretrained_backbone=darknet53_backbone.ckpt \
-    --is_distributed=0 \
-    --lr=0.1 \
-    --T_max=320 \
-    --max_epoch=320 \
-    --warmup_epochs=4 \
-    --training_shape=416 \
-    --lr_scheduler=cosine_annealing > log.txt 2>&1 &
-```
+- 在本地进行训练
 
-```shell script
-# shell脚本单机训练示例(1卡)
-bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
-```
+  ```constet
+  # training_shape参数定义网络图像形状，默认为""。
+  # 意思是使用10种形状作为输入形状，或者可以设置某种形状。
+  # 通过python命令执行训练示例(1卡)。
+  python train.py \
+      --data_dir=./dataset/coco2014 \
+      --pretrained_backbone=darknet53_backbone.ckpt \
+      --is_distributed=0 \
+      --lr=0.1 \
+      --T_max=320 \
+      --max_epoch=320 \
+      --warmup_epochs=4 \
+      --training_shape=416 \
+      --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
-```shell script
-# 对于Ascend设备，使用shell脚本分布式训练示例(8卡)
-bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
-```
+  # shell脚本单机训练示例(1卡)
+  bash run_standalone_train.sh dataset/coco2014 darknet53_backbone.ckpt
 
-```shell script
-# 对于GPU设备，使用shell脚本分布式训练示例(8卡)
-bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
-```
+  # 对于Ascend设备，使用shell脚本分布式训练示例(8卡)
+  bash run_distribute_train.sh dataset/coco2014 darknet53_backbone.ckpt rank_table_8p.json
 
-```python
-# 使用python命令评估
-python eval.py \
-    --data_dir=./dataset/coco2014 \
-    --pretrained=yolov3.ckpt \
-    --testing_shape=416 > log.txt 2>&1 &
-```
+  # 对于GPU设备，使用shell脚本分布式训练示例(8卡)
+  bash run_distribute_train_gpu.sh dataset/coco2014 darknet53_backbone.ckpt
 
-```shell script
-# 通过shell脚本运行评估
-bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
-```
+  # 使用python命令评估
+  python eval.py \
+      --data_dir=./dataset/coco2014 \
+      --pretrained=yolov3.ckpt \
+      --testing_shape=416 > log.txt 2>&1 &
+
+  # 通过shell脚本运行评估
+  bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
+  ```
+
+- 在 [ModelArts](https://support.huaweicloud.com/modelarts/) 上训练
+
+  ```python
+  # 在modelarts上进行8卡训练（Ascend）
+  # (1) 执行a或者b
+  #       a. 在 base_config.yaml 文件中配置 "enable_modelarts=True"
+  #          在 base_config.yaml 文件中配置 "data_dir='/cache/data/coco2014/'"
+  #          在 base_config.yaml 文件中配置 "checkpoint_url='s3://dir_to_your_pretrain/'"
+  #          在 base_config.yaml 文件中配置 "pretrained_backbone='/cache/checkpoint_path/0-148_92000.ckpt'"
+  #          在 base_config.yaml 文件中配置 "weight_decay=0.016"
+  #          在 base_config.yaml 文件中配置 "warmup_epochs=4"
+  #          在 base_config.yaml 文件中配置 "lr_scheduler='cosine_annealing'"
+  #          在 base_config.yaml 文件中配置 其他参数
+  #       b. 在网页上设置 "enable_modelarts=True"
+  #          在网页上设置 "data_dir=/cache/data/coco2014/"
+  #          在网页上设置 "checkpoint_url=s3://dir_to_your_pretrain/"
+  #          在网页上设置 "pretrained_backbone=/cache/checkpoint_path/0-148_92000.ckpt"
+  #          在网页上设置 "weight_decay=0.016"
+  #          在网页上设置 "warmup_epochs=4"
+  #          在网页上设置 "lr_scheduler=cosine_annealing"
+  #          在网页上设置 其他参数
+  # (2) 上传你的预训练模型到 S3 桶上
+  # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+  # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+  # (5) 在网页上设置启动文件为 "train.py"
+  # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+  # (7) 创建训练作业
+  #
+  # 在modelarts上进行验证（Ascend）
+  # (1) 执行a或者b
+  #       a. 在 base_config.yaml 文件中配置 "enable_modelarts=True"
+  #          在 base_config.yaml 文件中配置 "data_dir='/cache/data/coco2014/'"
+  #          在 base_config.yaml 文件中配置 "checkpoint_url='s3://dir_to_your_trained_ckpt/'"
+  #          在 base_config.yaml 文件中配置 "pretrained='/cache/checkpoint_path/0-320_102400.ckpt'"
+  #          在 base_config.yaml 文件中配置 "testing_shape=416"
+  #          在 base_config.yaml 文件中配置 其他参数
+  #       b. 在网页上设置 "enable_modelarts=True"
+  #          在网页上设置 "data_dir=/cache/data/coco2014/"
+  #          在网页上设置 "checkpoint_url=s3://dir_to_your_trained_ckpt/"
+  #          在网页上设置 "pretrained=/cache/checkpoint_path/0-320_102400.ckpt"
+  #          在网页上设置 "testing_shape=416"
+  #          在网页上设置 其他参数
+  # (2) 上传你的预训练模型到 S3 桶上
+  # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+  # (4) 在网页上设置你的代码路径为 "/path/deeplabv3"
+  # (5) 在网页上设置启动文件为 "train.py"
+  # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+  # (7) 创建训练作业
+  ```
 
 # 脚本说明
 

@@ -47,8 +47,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       return;
     }
 
-    CpuBindMode cpu_bind_mode = kernel_->context()->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-    BindThreads(static_cast<const lite::InnerContext *>(kernel_->context())->thread_pool_, true, cpu_bind_mode);
+    CpuBindMode cpu_bind_mode = kernel_->Context()->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
+    BindThreads(static_cast<const lite::InnerContext *>(kernel_->Context())->thread_pool_, true, cpu_bind_mode);
 
     int ret = CheckInputData();
     if (ret != RET_OK) {
@@ -78,7 +78,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     inputs_data_.clear();
     AsyncOutput(context);
 
-    BindThreads(static_cast<const lite::InnerContext *>(kernel_->context())->thread_pool_, false, cpu_bind_mode);
+    BindThreads(static_cast<const lite::InnerContext *>(kernel_->Context())->thread_pool_, false, cpu_bind_mode);
     SetOutputData(context);
 
     for (auto &input_data : inputs_data_) {
@@ -101,22 +101,11 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
   virtual int CompileArrow();
   int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
-    int ret = kernel_->PreProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel_->name();
-      return ret;
-    }
-    ret = kernel_->Run(before, after);
+    auto ret = kernel_->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
       return ret;
     }
-    ret = kernel_->PostProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel_->name();
-      return ret;
-    }
-
     return ret;
   }
 

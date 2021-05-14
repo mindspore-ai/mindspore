@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <utility>
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
@@ -29,6 +28,8 @@
 #include "ops/tensor_list_stack.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,8 +44,7 @@ static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_FLOAT, mindspore::kNumberTypeFloat32},
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
-int OnnxModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                                      const QuantType &quant_type) {
+int OnnxModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
@@ -717,7 +717,7 @@ ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
   return const_node;
 }
 
-ValueNodePtr CreateValueNode(const PrimitiveType &op_type) {
+ValueNodePtr CreateValueNode(const schema::PrimitiveType &op_type) {
   auto node_type = schema::EnumNamePrimitiveType(op_type);
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (op_primc_fns.find(node_type) == op_primc_fns.end()) {
@@ -1172,5 +1172,7 @@ TypeId OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type
 }
 
 int OnnxModelParser::PostAdjust() { return 0; }
+
+REG_MODEL_PARSER(ONNX, LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

@@ -28,14 +28,14 @@ from ..nn.layer.basic import triu as nn_triu
 from .._c_expression import Tensor as Tensor_
 
 from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
-    _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar, \
+    _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar, \
     _expand, _to_tensor, _slice_along_axis, _callable
-from .utils_const import _raise_value_error, _empty, _check_axis_valid, _max, _min, \
+from .utils_const import _raise_value_error, _empty, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
     _raise_type_error, _expanded_shape, _check_is_float, _iota, _type_convert, \
     _canonicalize_axis, _list_comprehensions, _ceil, _tuple_slice, _raise_unimplemented_error, \
     _tuple_setitem
-from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
+from .array_ops import ravel, concatenate, broadcast_arrays, reshape, broadcast_to, flip, \
     apply_along_axis, where
 from .dtypes import nan, pi
 
@@ -83,7 +83,10 @@ def array(obj, dtype=None, copy=True, ndmin=0):
         [1 2 3]
     """
     res = asarray(obj, dtype)
+
     if ndmin > res.ndim:
+        if res.size == 0:
+            _raise_value_error("Empty tensor cannot be expanded beyond the current dimension.")
         res = _expand(res, ndmin)
 
     if copy:
@@ -251,18 +254,8 @@ def copy_(a):
         [[1. 1.]
          [1. 1.]]
     """
-    if not isinstance(a, Tensor):
-        a = asarray_const(a)
-    # The current implementation registers a new memory location for copied tensor by
-    # doing some reduandent operations.
-    origin_dtype = a.dtype
-    if origin_dtype == mstype.bool_:
-        return F.logical_not(F.logical_not(a))
-    if origin_dtype != mstype.float64:
-        a = a.astype("float32")
-    a = a / ones_like(a)
-    a = a.astype(origin_dtype)
-    return a
+    a = asarray(a)
+    return a.copy()
 
 
 def ones(shape, dtype=mstype.float32):
@@ -1131,51 +1124,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
         [[0 6]
         [1 7]]
     """
-    ndim = F.rank(a)
-    if ndim < 2:
-        return _raise_value_error('diagonal requires an array of at least two dimensions')
-    dtype = F.dtype(a)
-
-    if _is_shape_empty(F.shape(a)):
-        return _empty(dtype, (0,))
-
-    cast_type = dtype
-    if not _check_is_float(dtype):
-        # reduce_sum only supports float types
-        cast_type = mstype.float32
-        a = F.cast(a, cast_type)
-
-    axes = _check_axis_valid((axis1, axis2), ndim)
-    perm = ()
-    for i in range(ndim):
-        if i not in axes:
-            perm += (i,)
-    perm += axes
-    a = transpose(a, perm)
-
-    shape = F.shape(a)
-    n, m = shape[-2:]
-    e = eye(n, m, offset, cast_type)
-    e = _broadcast_to_shape(e, F.shape(a))
-
-    prod = F.tensor_mul(a, e)
-    res = F.reduce_sum(prod, -1)
-
-    begin = ()
-    for i in range(ndim-2):
-        begin += (0,)
-    last_dim_begin = _max(0, -offset)
-    begin += (last_dim_begin,)
-    size = F.shape(res)[:-1]
-    last_dim_end = _min(
-        shape[-2], _max(0, shape[-1] - offset)) - last_dim_begin
-    if last_dim_end <= 0:
-        return _empty(dtype, size + (0,))
-    size += (last_dim_end,)
-    res = F.tensor_slice(res, begin, size)
-    if not _check_same_type(cast_type, dtype):
-        res = F.cast(res, dtype)
-    return res
+    return a.diagonal(offset=offset, axis1=axis1, axis2=axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
@@ -1231,22 +1180,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         >>> print(output)
         (2, 3)
     """
-    d = diagonal(a, offset, axis1=axis1, axis2=axis2)
-    shape = F.shape(d)
-    if dtype is None:
-        dtype = F.dtype(d)
-    if shape[-1] == 0:
-        return _empty(dtype, shape[:-1])
-
-    cast_type = dtype
-    if not _check_is_float(dtype):
-        # reduce sum only supports float types
-        cast_type = mstype.float32
-        d = F.cast(d, cast_type)
-    res = F.reduce_sum(d, -1)
-    if not _check_same_type(cast_type, dtype):
-        res = F.cast(res, dtype)
-    return res
+    return a.trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
 
 
 def _index(i, size, Cartesian=True):

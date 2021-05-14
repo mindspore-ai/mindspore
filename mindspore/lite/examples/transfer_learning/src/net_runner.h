@@ -38,7 +38,7 @@ class NetRunner {
   int InitDB();
   int TrainLoop();
   std::vector<int> FillInputData(const std::vector<DataLabelTuple> &dataset, int serially = -1) const;
-  float CalculateAccuracy(const std::vector<DataLabelTuple> &dataset) const;
+  float CalculateAccuracy(const std::vector<DataLabelTuple> &dataset, mindspore::session::LiteSession *session) const;
   float GetLoss() const;
   mindspore::tensor::MSTensor *SearchOutputsForSize(size_t size) const;
 
@@ -50,6 +50,7 @@ class NetRunner {
   std::string ms_backbone_file_ = "";
   std::string ms_head_file_ = "";
   std::string data_dir_ = "";
+  std::string save_inference_ = "";
   size_t data_size_ = 0;
   size_t batch_size_ = 0;
   unsigned int cycles_ = 100;

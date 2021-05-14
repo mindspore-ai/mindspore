@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -27,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class NormalizeOp : public TensorOp {
  public:
-  NormalizeOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b);
+  NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std);
 
   ~NormalizeOp() override = default;
 
@@ -38,8 +39,8 @@ class NormalizeOp : public TensorOp {
   std::string Name() const override { return kNormalizeOp; }
 
  private:
-  std::shared_ptr<Tensor> mean_;
-  std::shared_ptr<Tensor> std_;
+  std::vector<float> mean_;
+  std::vector<float> std_;
 };
 }  // namespace dataset
 }  // namespace mindspore

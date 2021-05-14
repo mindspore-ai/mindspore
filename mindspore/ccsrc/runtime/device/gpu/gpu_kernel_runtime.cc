@@ -18,6 +18,7 @@
 #include <map>
 #include "runtime/device/gpu/gpu_device_address.h"
 #include "runtime/device/gpu/cuda_driver.h"
+#include "runtime/device/gpu/gpu_event.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
@@ -416,6 +417,12 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
   return ret;
 }
 
+std::shared_ptr<DeviceEvent> GPUKernelRuntime::CreateDeviceEvent() {
+  auto gpu_event = std::make_shared<GpuEvent>();
+  MS_EXCEPTION_IF_NULL(gpu_event);
+  return gpu_event;
+}
+
 bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph) {
   auto graph_id = graph->graph_id();
   if (!is_first_step_map_[graph_id] || graph->is_dynamic_shape()) {
@@ -787,8 +794,8 @@ void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, c
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   float cost_time = 0;
-  DeviceEvent start = nullptr;
-  DeviceEvent end = nullptr;
+  CudaDeviceStream start = nullptr;
+  CudaDeviceStream end = nullptr;
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create event.");
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create event.");
 
@@ -1218,13 +1225,11 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   if (now_addr == nullptr) {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
     now_addr = device_address;
-    addr_state_[now_addr] = true;
   } else {
     auto addr_state_iter = addr_state_.find(now_addr);
     if (addr_state_iter != addr_state_.end() && addr_state_iter->second == false) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
       now_addr = device_address;
-      addr_state_[now_addr] = true;
     }
   }
 

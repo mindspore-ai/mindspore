@@ -30,5 +30,7 @@ then
     fi
     dataset_type=$1
 fi
+config_path="./${dataset_type}_config.yaml"
+echo "config path is : ${config_path}"
 
-python ${BASEPATH}/../eval.py --dataset_name=$dataset_type > ./eval.log 2>&1 &
+python ${BASEPATH}/../eval.py --config_path=$config_path --dataset_name=$dataset_type > ./eval.log 2>&1 &

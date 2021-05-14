@@ -19,7 +19,6 @@ from ..common import dtype as mstype
 from ..common import Tensor
 from ..ops import operations as P
 from ..ops import functional as F
-from ..ops import composite as C
 from ..ops.primitive import constexpr
 from ..nn import Cell
 
@@ -1885,30 +1884,7 @@ def take(a, indices, axis=None, mode='clip'):
         [5 7]]
     """
     _check_input_tensor(a, indices)
-    if mode not in ('raise', 'wrap', 'clip'):
-        _raise_value_error('raise should be one of "raise", "wrap", or "clip"')
-    if axis is None:
-        a = ravel(a)
-        axis = 0
-    ndim = F.rank(a)
-    axis = _check_axis_in_range(axis, ndim)
-
-    shape_a = F.shape(a)
-    shape_indices = F.shape(indices)
-    size_indices = indices.size
-    indices = _check_indices(shape_a[axis], indices, mode)
-
-    # reshapes indices to shape (Ni..., Nj..., Nk)
-    shape_ni = _tuple_slice(shape_a, None, axis)
-    shape_nk = _tuple_slice(shape_a, axis + 1, None)
-    shape_out = shape_ni + shape_indices + shape_nk
-    shape_indices = _expanded_shape(ndim, size_indices, axis)
-    indices = F.reshape(indices, shape_indices)
-    shape_indices = shape_ni + (indices.size,) + shape_nk
-    indices = _broadcast_to_shape(indices, shape_indices)
-
-    res = F.gather_d(a, axis, indices)
-    return F.reshape(res, shape_out)
+    return a.take(indices, axis=axis, mode=mode)
 
 
 def repeat(a, repeats, axis=None):
@@ -1952,30 +1928,8 @@ def repeat(a, repeats, axis=None):
         [3 4]
         [3 4]]
     """
-    _check_input_tensor(a)
-    if not isinstance(repeats, (tuple, list)):
-        repeats = (repeats,)
-    _check_element_int(repeats)
-    if axis is None:
-        a = ravel(a)
-        axis = 0
-    ndim = F.rank(a)
-    axis = _check_axis_in_range(axis, ndim)
-    if len(repeats) == 1:
-        repeats = repeats[0]
-        if repeats == 0:
-            return _empty(F.dtype(a), (0,))
-        return C.repeat_elements(a, repeats, axis)
-    shape = F.shape(a)
-    dims = shape[axis]
-    if len(repeats) != dims:
-        _raise_value_error('operands could not be broadcast together')
-    subs = split(a, dims, axis)
-    repeated_subs = []
-    for sub, rep in zip(subs, repeats):
-        if rep != 0:
-            repeated_subs.append(C.repeat_elements(sub, rep, axis))
-    return concatenate(repeated_subs, axis)
+    a = _to_tensor(a)
+    return a.repeat(repeats, axis)
 
 
 def rot90(a, k=1, axes=(0, 1)):
@@ -2072,11 +2026,11 @@ def select(condlist, choicelist, default=0):
         `choicelist` where the `m-th` element of the corresponding array in `condlist`
         is `True`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         ValueError: if ``len(condlist) != len(choicelist)``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2186,11 +2140,11 @@ def choose(a, choices, mode='clip'):
     Returns:
         Tensor, the merged result.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         ValueError: if ``len(condlist) != len(choicelist)``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np

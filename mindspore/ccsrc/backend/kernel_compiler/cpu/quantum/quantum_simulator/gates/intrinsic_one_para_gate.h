@@ -32,6 +32,7 @@ class IntrinsicOneParaGate : public ParameterGate {
   CalcType LinearCombination(const ParameterResolver &, const ParameterResolver &);
   Matrix GetMatrix(const ParameterResolver &) override;
   Matrix GetDiffMatrix(const ParameterResolver &) override;
+  virtual ~IntrinsicOneParaGate() {}
 };
 }  // namespace mindquantum
 }  // namespace mindspore

@@ -44,6 +44,7 @@ OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
   auto block_shape = batch_to_space_prim->blockShape();
   if (block_shape == nullptr) {
     MS_LOG(ERROR) << "block_shape is nullptr";
+    free(batch_space_param);
     return nullptr;
   }
   if (block_shape->size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
@@ -55,6 +56,7 @@ OpParameter *PopulateBatchToSpaceParameter(const void *prim) {
   auto crops = batch_to_space_prim->crops();
   if (crops == nullptr) {
     MS_LOG(ERROR) << "crops is nullptr";
+    free(batch_space_param);
     return nullptr;
   }
   if (crops->size() != COMM_SHAPE_SIZE) {

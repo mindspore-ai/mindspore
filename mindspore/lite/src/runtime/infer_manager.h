@@ -25,7 +25,7 @@
 #include "nnacl/infer/infer.h"
 
 namespace mindspore::lite {
-int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter);
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive);

@@ -16,6 +16,7 @@
 
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -173,6 +174,18 @@ void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::v
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
+  // No output.
+  if ((output_op_arrows_.size() == 0) && (output_op_controls_.size() == 0) && (output_result_arrows_.size() == 0)) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
+  // Send graph output result.
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
+          result_arrow->to_input_index_, context);
+  }
+
   // Send output data.
   for (auto &op_arrow : output_op_arrows_) {
     MS_EXCEPTION_IF_NULL(op_arrow);

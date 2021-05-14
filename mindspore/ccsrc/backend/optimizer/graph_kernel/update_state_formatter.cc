@@ -106,7 +106,9 @@ bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
 bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
   auto todos = GetUpdateStateList(func_graph);
   bool changed = false;
-  for (auto node : todos) {
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  for (const auto &node : todos) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() <= kUpdateStateRealInput + 1) continue;
@@ -120,15 +122,11 @@ bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
     mt_node->set_kernel_info(std::make_shared<device::KernelInfo>());
 
     AnfNodePtrList inputs = {cnode->input(0), cnode->input(1), mt_node};
-    cnode->set_inputs(inputs);
+    auto new_node = func_graph->NewCNode(inputs);
+    new_node->set_abstract(node->abstract());
+    new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+    mng->Replace(node, new_node);
     changed = true;
-  }
-
-  if (changed) {
-    auto mng = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(mng);
-    mng->RemoveRoots();
-    mng->KeepRoots({func_graph});
   }
   return changed;
 }

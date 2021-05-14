@@ -25,9 +25,8 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 from src.darknet import DarkNet, ResidualBlock
-from src.config import ConfigYOLOV3DarkNet53
 from src.loss import XYLoss, WHLoss, ConfidenceLoss, ClassLoss
-
+from model_utils.config import config as default_config
 
 def _conv_bn_relu(in_channel,
                   out_channel,
@@ -164,17 +163,17 @@ class DetectionBlock(nn.Cell):
 
      Args:
          scale: Character.
-         config: ConfigYOLOV3DarkNet53, Configuration instance.
+         config: Configuration.
          is_training: Bool, Whether train or not, default True.
 
      Returns:
          Tuple, tuple of output tensor,(f1,f2,f3).
 
      Examples:
-         DetectionBlock(scale='l',stride=32)
+         DetectionBlock(scale='l',stride=32,config=config)
      """
 
-    def __init__(self, scale, config=ConfigYOLOV3DarkNet53(), is_training=True):
+    def __init__(self, scale, config=None, is_training=True):
         super(DetectionBlock, self).__init__()
         self.config = config
         if scale == 's':
@@ -275,7 +274,7 @@ class YoloLossBlock(nn.Cell):
     """
     Loss block cell of YOLOV3 network.
     """
-    def __init__(self, scale, config=ConfigYOLOV3DarkNet53()):
+    def __init__(self, scale, config=None):
         super(YoloLossBlock, self).__init__()
         self.config = config
         if scale == 's':
@@ -362,9 +361,9 @@ class YOLOV3DarkNet53(nn.Cell):
         YOLOV3DarkNet53(True)
     """
 
-    def __init__(self, is_training):
+    def __init__(self, is_training, config=default_config):
         super(YOLOV3DarkNet53, self).__init__()
-        self.config = ConfigYOLOV3DarkNet53()
+        self.config = config
         self.tenser_to_array = P.TupleToArray()
 
         # YOLOv3 network
@@ -376,9 +375,9 @@ class YOLOV3DarkNet53(nn.Cell):
                                   out_channel=self.config.out_channel)
 
         # prediction on the default anchor boxes
-        self.detect_1 = DetectionBlock('l', is_training=is_training)
-        self.detect_2 = DetectionBlock('m', is_training=is_training)
-        self.detect_3 = DetectionBlock('s', is_training=is_training)
+        self.detect_1 = DetectionBlock('l', is_training=is_training, config=self.config)
+        self.detect_2 = DetectionBlock('m', is_training=is_training, config=self.config)
+        self.detect_3 = DetectionBlock('s', is_training=is_training, config=self.config)
 
     def construct(self, x):
         input_shape = F.shape(x)[2:4]
@@ -393,10 +392,10 @@ class YOLOV3DarkNet53(nn.Cell):
 
 class YoloWithLossCell(nn.Cell):
     """YOLOV3 loss."""
-    def __init__(self, network):
+    def __init__(self, network, config=default_config):
         super(YoloWithLossCell, self).__init__()
         self.yolo_network = network
-        self.config = ConfigYOLOV3DarkNet53()
+        self.config = config
         self.tenser_to_array = P.TupleToArray()
         self.loss_big = YoloLossBlock('l', self.config)
         self.loss_me = YoloLossBlock('m', self.config)

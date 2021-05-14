@@ -62,8 +62,14 @@ class DataSourceActor : public MemoryInterfaceActor {
   // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
   virtual void FillDataBuffer() = 0;
 
+  // Send output result of graph output to output actor.
+  virtual void SendResult(OpContext<DeviceTensor> *context) = 0;
+
   // Send output to downstream actors to trigger computing after fetching data finished.
   void SendOutput(OpContext<DeviceTensor> *context);
+
+  // The output result arrows of graph output.
+  std::vector<OpArrowPtr> output_result_arrows_;
 
   // To trigger kernel actors running by op arrows.
   std::vector<OpArrowPtr> output_op_arrows_;
@@ -91,6 +97,7 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
  protected:
   void FillDataBuffer() override;
+  void SendResult(OpContext<DeviceTensor> *context) override;
 
  private:
   friend class GraphScheduler;
@@ -111,6 +118,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
 
  protected:
   void FillDataBuffer() override;
+  void SendResult(OpContext<DeviceTensor> *context) override;
 
  private:
   friend class GraphScheduler;
@@ -118,6 +126,8 @@ class HostQueueDataSourceActor : public DataSourceActor {
   HostTensorQueuePtr host_queue_;
   // Input data nodes fetch data from host queue.
   std::vector<AnfNodePtr> data_nodes_;
+  // The location of the data node in the data source actor.
+  std::unordered_map<AnfNodePtr, size_t> data_node_position_map_;
 };
 
 using DataSourceActorPtr = std::shared_ptr<DataSourceActor>;

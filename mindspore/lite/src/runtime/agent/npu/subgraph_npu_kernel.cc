@@ -88,9 +88,9 @@ std::shared_ptr<domi::ModelBufferData> SubGraphNpuKernel::BuildIRModel() {
   return om_model_buff;
 }
 
-int SubGraphNpuKernel::Run() {
+int SubGraphNpuKernel::Execute() {
   return reinterpret_cast<lite::NPUExecutor *>(this->executor_)
-    ->Run(in_tensors_, out_tensor_sorted_, in_nodes_, nodes_);
+    ->Run(in_tensors(), out_tensor_sorted_, in_nodes_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
@@ -120,7 +120,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
             return RET_ERROR;
           }
           // input come from npu
-          auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel)->GetNPUOp();
+          auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel->kernel())->GetNPUOp();
           if (npu_op == nullptr) {
             MS_LOG(ERROR) << in_kernel->type_str() << "NPU Operator is nullptr.";
             return RET_ERROR;
@@ -138,7 +138,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
 
       // weight tensor
       if (is_weight_tensor) {
-        if (npu_specific_weight_nodes.find(node->Type()) == npu_specific_weight_nodes.end()) {
+        if (npu_specific_weight_nodes.find(node->type()) == npu_specific_weight_nodes.end()) {
           auto name = node->name() + "_" + std::to_string(count++);
           auto weight_const = new (std::nothrow) hiai::op::Const(node->name() + "_" + std::to_string(count++));
           if (weight_const == nullptr) {
@@ -153,8 +153,8 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
       }
     }
     // set input to NPU
-    int ret = reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op,
-                                                                index2_multi_out_index);
+    int ret = reinterpret_cast<NPUKernel *>(node->kernel())
+                ->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op, index2_multi_out_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << node->name() << " set npu inputs failed.";
       return RET_ERROR;
@@ -170,7 +170,7 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
   std::vector<ge::Operator> ops;
   ops.reserve(nodes.size());
   for (int i = 0; i < nodes.size(); i++) {
-    ops.push_back(*reinterpret_cast<NPUKernel *>(nodes[i])->GetNPUOp());
+    ops.push_back(*reinterpret_cast<NPUKernel *>(nodes[i]->kernel())->GetNPUOp());
   }
   return ops;
 }
@@ -178,11 +178,12 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
 int SubGraphNpuKernel::BuildNPUOutputOp() {
   subgraph_output_op_.clear();
   subgraph_output_op_ = GetNPUNodes(out_nodes_);
-  out_tensor_sorted_.resize(out_tensors_.size());
+  out_tensor_sorted_.resize(out_tensors().size());
   int i = 0;
+  auto out_tensors = this->out_tensors();
   for (auto node : out_nodes_) {
     for (auto tensor : node->out_tensors()) {
-      if (std::find(out_tensors_.begin(), out_tensors_.end(), tensor) != out_tensors_.end())
+      if (std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end())
         this->out_tensor_sorted_[i++] = tensor;
     }
   }
@@ -193,11 +194,11 @@ int SubGraphNpuKernel::BuildNPUOutputOp() {
   return RET_OK;
 }
 
-std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + ".om"; }
+std::string SubGraphNpuKernel::GetOMModelName() { return this->name() + ".om"; }
 
 int SubGraphNpuKernel::Init() {
   if (!is_compiled_) {
-    name_ = "kNpuSubGraph" + std::to_string(npu_manager_->index());
+    this->set_name("kNpuSubGraph" + std::to_string(npu_manager_->index()));
     auto model_buffer_data = BuildIRModel();
     if (model_buffer_data == nullptr) {
       MS_LOG(ERROR) << "Build IR model failed.";
@@ -206,7 +207,7 @@ int SubGraphNpuKernel::Init() {
 
     MS_ASSERT(npu_manager_ != nullptr);
 
-    int frequency = static_cast<const lite::InnerContext *>(context_)->GetNpuInfo().frequency_;
+    int frequency = static_cast<const lite::InnerContext *>(this->Context())->GetNpuInfo().frequency_;
     if (frequency != hiai::AiModelDescription_Frequency_LOW && frequency != hiai::AiModelDescription_Frequency_MEDIUM &&
         frequency != hiai::AiModelDescription_Frequency_HIGH &&
         frequency != hiai::AiModelDescription_Frequency_EXTREME) {
@@ -226,7 +227,7 @@ int SubGraphNpuKernel::Init() {
 }
 
 int SubGraphNpuKernel::Prepare() {
-  if (executor_->Prepare(nodes_, in_tensors_, out_tensors_) != RET_OK) {
+  if (executor_->Prepare(nodes_, in_tensors(), out_tensors()) != RET_OK) {
     MS_LOG(ERROR) << "NPU executor prepare failed.";
     return RET_ERROR;
   }

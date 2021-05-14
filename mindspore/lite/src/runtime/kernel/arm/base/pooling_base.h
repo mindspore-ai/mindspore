@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_POOLING_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "include/errorcode.h"
 
@@ -26,11 +26,11 @@ using mindspore::lite::InnerContext;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
-class PoolingBaseCPUKernel : public LiteKernel {
+class PoolingBaseCPUKernel : public InnerKernel {
  public:
   PoolingBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     pooling_param_ = reinterpret_cast<PoolingParameter *>(op_parameter_);
   }
   ~PoolingBaseCPUKernel() = default;

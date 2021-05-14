@@ -144,9 +144,9 @@ int AdamCPUKernel::OptimizerStep() {
   return ret;
 }
 
-kernel::LiteKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                              const lite::Context *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Adam);
   auto *kernel =
     new (std::nothrow) AdamCPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));

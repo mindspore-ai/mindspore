@@ -186,7 +186,6 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
       });
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
     inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);
@@ -226,7 +225,6 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       });
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
     inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);
@@ -259,7 +257,6 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
     }
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
-    call_node->AddAttr(kAttrIgnoreSideEffect, MakeValue(true));
     inputs.push_back(call_node);
   }
   return func_graph->NewCNodeInOrder(inputs);

@@ -32,7 +32,7 @@ void GPUMemCopyManager::Init() {
 void GPUMemCopyManager::AddMemSwapOutTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {
   MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(host_addr.addr);
-  DeviceEvent event = nullptr;
+  CudaDeviceStream event = nullptr;
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&event, cudaEventDisableTiming), "Failed to create CUDA event.");
   DeviceMemPtr device_ptr = const_cast<DeviceMemPtr>(device_address->GetPtr());
   MS_EXCEPTION_IF_NULL(device_ptr);
@@ -51,8 +51,8 @@ void GPUMemCopyManager::AddMemSwapInTask(const DeviceAddressPtr &device_address,
                                          bool profiling, float *cost_time) {
   MS_EXCEPTION_IF_NULL(device_address);
   MS_EXCEPTION_IF_NULL(host_addr.addr);
-  DeviceEvent start = nullptr;
-  DeviceEvent end = nullptr;
+  CudaDeviceStream start = nullptr;
+  CudaDeviceStream end = nullptr;
   if (profiling) {
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create CUDA event.");
     CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create CUDA event.");

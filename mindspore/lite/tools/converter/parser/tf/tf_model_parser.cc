@@ -28,6 +28,7 @@
 #include "ir/anf.h"
 #include "abstract/utils.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore {
 namespace lite {
@@ -472,8 +473,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
   return RET_OK;
 }
 
-int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile,
-                                    const QuantType &quantType) {
+int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile) {
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
@@ -548,14 +548,13 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return status;
   }
-
   return RET_OK;
 }
 
 STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
                                             std::unordered_map<std::string, AnfNodePtr> *anf_sub_node_map,
-                                            const tensorflow::FunctionDef &tf_sub_fuction, CNodePtr cnode,
-                                            FuncGraphPtr sub_func_graph) {
+                                            const tensorflow::FunctionDef &tf_sub_fuction, const CNodePtr &cnode,
+                                            const FuncGraphPtr &sub_func_graph) {
   std::vector<ParameterPtr> sub_graph_inputs;
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
@@ -593,7 +592,7 @@ STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorfl
 STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
                                              const std::unordered_map<std::string, AnfNodePtr> &anf_sub_node_map,
                                              const tensorflow::FunctionDef &tf_sub_fuction,
-                                             FuncGraphPtr sub_func_graph) {
+                                             const FuncGraphPtr &sub_func_graph) {
   auto &tf_sub_signature = tf_sub_fuction.signature();
   auto &sub_graph_name = tf_sub_signature.name();
 
@@ -944,7 +943,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   return status;
 }
 
-STATUS TFModelParser::ProcessControlFlowOp(CNodePtr anf_node, const string op_type,
+STATUS TFModelParser::ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type,
                                            const tensorflow::NodeDef &node_def) {
   if (op_type == "StatelessWhile" || op_type == "While") {
     MS_LOG(INFO) << "find while node:" << node_def.name();
@@ -1072,5 +1071,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
 }
 
 int TFModelParser::PostAdjust() { return 0; }
+
+REG_MODEL_PARSER(TF, LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore

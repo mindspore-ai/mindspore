@@ -182,6 +182,7 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
   const bool simplify_var_name_{true};
   std::vector<float> scalar_weights_;
   std::vector<void *> buffer_weights_;
+  const std::vector<LiteKernel *> *in_kernels_;
 };
 
 }  // namespace mindspore::kernel

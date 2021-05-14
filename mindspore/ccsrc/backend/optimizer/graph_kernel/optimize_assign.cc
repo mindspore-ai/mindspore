@@ -152,7 +152,7 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
     if (replaceable_nodes.empty()) continue;
     changed = true;
     for (const auto &iter : replaceable_nodes) {
-      UpdateUsersOfGraphKernel(func_graph, cnode, iter.second, iter.first);
+      UpdateUsersOfGraphKernel(func_graph, cnode, iter.second, static_cast<int64_t>(iter.first));
     }
   }
   return changed;

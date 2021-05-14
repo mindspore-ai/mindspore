@@ -19,6 +19,7 @@
 #include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/include/dataset/vision.h"
+#include "minddata/dataset/include/dataset/text.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -205,4 +206,43 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   ASSERT_EQ(image.Shape()[0], 3);
   ASSERT_EQ(image.Shape()[1], 224);
   ASSERT_EQ(image.Shape()[2], 224);
+}
+
+TEST_F(MindDataTestExecute, TestUniformAugment) {
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+  std::vector<mindspore::MSTensor> image2;
+
+  // Transform params
+  std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({16, 16}));
+  std::shared_ptr<TensorTransform> vertical = std::make_shared<vision::RandomVerticalFlip>();
+  std::shared_ptr<TensorTransform> horizontal = std::make_shared<vision::RandomHorizontalFlip>();
+
+  std::shared_ptr<TensorTransform> uniform_op(new vision::UniformAugment({resize_op, vertical, horizontal}, 3));
+
+  auto transform1 = Execute({decode});
+  Status rc = transform1(image, &image);
+  ASSERT_TRUE(rc.IsOk());
+
+  auto transform2 = Execute({uniform_op});
+  rc = transform2({image}, &image2);
+  ASSERT_TRUE(rc.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestBasicTokenizer) {
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateScalar<std::string>("Welcome to China.", &de_tensor);
+  auto txt = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  std::vector<mindspore::MSTensor> txt_result;
+
+  // Transform params
+  std::shared_ptr<TensorTransform> tokenizer =
+    std::make_shared<text::BasicTokenizer>(false, false, NormalizeForm::kNone, false, true);
+
+  // BasicTokenizer has 3 outputs so we need a vector to receive its result
+  auto transform1 = Execute({tokenizer});
+  Status rc = transform1({txt}, &txt_result);
+  ASSERT_EQ(txt_result.size(), 3);
+  ASSERT_TRUE(rc.IsOk());
 }

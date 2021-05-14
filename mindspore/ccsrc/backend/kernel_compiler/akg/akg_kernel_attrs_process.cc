@@ -203,6 +203,7 @@ const std::unordered_map<std::string, std::function<void(const AnfNodePtr &anf_n
   {kBN2AddReluOpName, SetAkgAttrsForBN2AddRelu},
   {kBN2ReLUOpName, SetAkgAttrsForBN2Relu},
   {kMatMulOpName, SetAkgAttrsForMatMul},
+  {kBatchMatMulOpName, SetAkgAttrsForMatMul},
 };
 }  // namespace
 

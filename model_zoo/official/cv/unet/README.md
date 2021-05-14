@@ -53,7 +53,58 @@ Dataset used: [ISBI Challenge](http://brainiac2.mit.edu/isbi_challenge/home)
 - Data format：binary files(TIF file)
     - Note：Data will be processed in src/data_loader.py
 
-We also support cell nuclei dataset which is used in [Unet++ original paper](https://arxiv.org/abs/1912.05074). If you want to use the dataset, please add `'dataset': 'Cell_nuclei'` in `src/config.py`.
+We also support Multi-Class dataset which get image path and mask path from a tree of directories.
+Images within one folder is an image, the image file named `"image.png"`, the mask file named `"mask.png"`.
+The directory structure is as follows:
+
+```path
+.
+└─dataset
+  └─0001
+    ├─image.png
+    └─mask.png
+  └─0002
+    ├─image.png
+    └─mask.png
+    ...
+  └─xxxx
+    ├─image.png
+    └─mask.png
+```
+
+When you set `split` in (0, 1) in config, all images will be split to train dataset and val dataset by split value, and the `split` default is 0.8.
+If set `split`=1.0, you should split train dataset and val dataset by directories, the directory structure is as follows:
+
+```path
+.
+└─dataset
+  └─train
+    └─0001
+      ├─image.png
+      └─mask.png
+      ...
+    └─xxxx
+      ├─image.png
+      └─mask.png
+  └─val
+    └─0001
+      ├─image.png
+      └─mask.png
+      ...
+    └─xxxx
+      ├─image.png
+      └─mask.png
+```
+
+We support script to convert COCO and a Cell_Nuclei dataset used in used in [Unet++ original paper](https://arxiv.org/abs/1912.05074) to mulyi-class dataset format.
+
+1. Change `cfg_unet` in `src/config.py`, you can refer to `cfg_unet_nested_cell` and `cfg_unet_simple_coco` in `src/config.py` for detail.
+
+2. run script to convert to mulyi-class dataset format:
+
+```shell
+python preprocess_dataset.py -d /data/save_data_path
+```
 
 ## [Environment Requirements](#contents)
 
@@ -145,6 +196,7 @@ Then you can run everything just like on ascend.
         ├── mindspore_hub_conf.py           // hub config file
         ├── postprocess.py                  // unet 310 infer postprocess.
         ├── preprocess.py                   // unet 310 infer preprocess dataset
+        ├── preprocess_dataset.py           // the script to adapt MultiClass dataset
         ├── requirements.txt                // Requirements of third party package.
 ```
 

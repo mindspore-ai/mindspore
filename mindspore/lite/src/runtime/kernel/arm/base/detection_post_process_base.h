@@ -18,18 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/context.h"
 #include "nnacl/fp32/detection_post_process_fp32.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class DetectionPostProcessBaseCPUKernel : public LiteKernel {
+class DetectionPostProcessBaseCPUKernel : public InnerKernel {
  public:
   DetectionPostProcessBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {
     params_ = reinterpret_cast<DetectionPostProcessParameter *>(parameter);
   }
   virtual ~DetectionPostProcessBaseCPUKernel();
@@ -37,6 +37,7 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  virtual void FreeAllocatedBuffer();
 
   int thread_num_ = 1;
   int num_boxes_ = 0;
@@ -48,9 +49,6 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
  protected:
   virtual int GetInputData() = 0;
   int ParamInit();
-
- private:
-  void FreeAllocatedBuffer();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_BASE_H_

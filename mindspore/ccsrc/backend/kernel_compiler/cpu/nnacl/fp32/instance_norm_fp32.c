@@ -38,7 +38,7 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
 
       int index = 0;
 #ifdef ENABLE_NEON
-      for (; index < param->inner_size_ - C4NUM; index += C4NUM) {
+      for (; index <= param->inner_size_ - C4NUM; index += C4NUM) {
         float32x4_t srcv = vld1q_f32(src + index);
         float32x4_t squarev = vmulq_f32(srcv, srcv);
 #ifdef ENABLE_ARM64

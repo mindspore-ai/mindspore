@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESHAPE_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/context.h"
 #include "nnacl/reshape_parameter.h"
 #include "src/runtime/runtime_api.h"
@@ -26,11 +26,11 @@
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class ReshapeInt8CPUKernel : public LiteKernel {
+class ReshapeInt8CPUKernel : public InnerKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
   }
   ~ReshapeInt8CPUKernel() = default;

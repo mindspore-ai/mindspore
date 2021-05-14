@@ -18,15 +18,12 @@ eval alexnet according to model file:
 python eval.py --data_path /YourDataPath --ckpt_path Your.ckpt
 """
 
-import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id, get_device_num
-
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
 from src.dataset import create_dataset_cifar10, create_dataset_imagenet
 from src.alexnet import AlexNet
+
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -35,14 +32,8 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.communication.management import init
 
 
-if os.path.exists(config.data_path_local):
-    config.data_path = config.data_path_local
-    load_path = config.ckpt_path_local
-else:
-    load_path = os.path.join(config.data_path, 'checkpoint_alexnet-30_1562.ckpt')
-
 def modelarts_process():
-    pass
+    config.ckpt_path = config.ckpt_file
 
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_alexnet():
@@ -64,8 +55,8 @@ def eval_alexnet():
         opt = nn.Momentum(network.trainable_params(), config.learning_rate, config.momentum)
         ds_eval = create_dataset_cifar10(config.data_path, config.batch_size, status="test", \
             target=config.device_target)
-        param_dict = load_checkpoint(load_path)
-        print("load checkpoint from [{}].".format(load_path))
+        param_dict = load_checkpoint(config.ckpt_path)
+        print("load checkpoint from [{}].".format(config.ckpt_path))
         load_param_into_net(network, param_dict)
         network.set_train(False)
         model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})
@@ -74,8 +65,8 @@ def eval_alexnet():
         network = AlexNet(config.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ds_eval = create_dataset_imagenet(config.data_path, config.batch_size, training=False)
-        param_dict = load_checkpoint(load_path)
-        print("load checkpoint from [{}].".format(load_path))
+        param_dict = load_checkpoint(config.ckpt_path)
+        print("load checkpoint from [{}].".format(config.ckpt_path))
         load_param_into_net(network, param_dict)
         network.set_train(False)
         model = Model(network, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})

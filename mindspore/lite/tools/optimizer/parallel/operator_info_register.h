@@ -28,6 +28,23 @@ namespace opt {
 using OperatorInfoCreatorFunc =
   std::function<std::unique_ptr<opt::OperatorInfo>(const std::string &name, const SplitStrategy &strategy)>;
 
+class SplitOpKey {
+ public:
+  SplitOpKey() = delete;
+
+  SplitOpKey(int op_type, TypeId data_type) : op_type_(op_type), data_type_(data_type) {}
+
+  bool operator<(const SplitOpKey &key) const;
+
+  std::string ToString() const;
+
+  ~SplitOpKey() = default;
+
+ private:
+  int op_type_{schema::PrimitiveType_NONE};
+  TypeId data_type_{kTypeUnknown};
+};
+
 class OperatorInfoFactory {
  public:
   static OperatorInfoFactory *GeInstance();
@@ -36,10 +53,10 @@ class OperatorInfoFactory {
 
   OperatorInfoFactory &operator=(const OperatorInfoFactory &) = delete;
 
-  int RegisterOperatorInfo(const std::string &name, const SplitStrategy &strategy,
+  int RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id,
                            const OperatorInfoCreatorFunc &creator_func);
 
-  OperatorInfoCreatorFunc FindOperatorInfo(const std::string &name, const SplitStrategy &strategy);
+  OperatorInfoCreatorFunc FindOperatorInfo(const SplitOpKey &split_op_key);
 
  private:
   OperatorInfoFactory() = default;
@@ -47,21 +64,22 @@ class OperatorInfoFactory {
   virtual ~OperatorInfoFactory() = default;
 
  private:
-  std::map<std::string, OperatorInfoCreatorFunc> operator_info_map_;
+  // key: op_type -->data_type-->name
+  std::map<SplitOpKey, OperatorInfoCreatorFunc> operator_info_map_;
 };
 
 class OperatorInfoRegister {
  public:
   OperatorInfoRegister() = delete;
 
-  OperatorInfoRegister(const std::string &name, const SplitStrategy &strategy,
+  OperatorInfoRegister(schema::PrimitiveType operator_type, TypeId type_id,
                        const OperatorInfoCreatorFunc &creator_func);
 
   ~OperatorInfoRegister() = default;
 };
 
-#define OPERATOR_INFO_REGISTER(name, strategy, creator_func) \
-  static OperatorInfoRegister g_##name##Creator(name, strategy, creator_func);
+#define OPERATOR_INFO_REGISTER(operator_type, type_id, creator_func) \
+  static OperatorInfoRegister g_name##operator_type##type_id##Creator(operator_type, type_id, creator_func);
 }  // namespace opt
 }  // namespace mindspore
 

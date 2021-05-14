@@ -49,10 +49,10 @@ class Somas {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
 
-  std::string SomasInfo(bool calc_hash = false);
-  std::string SomasMemory();
-  void DumpSomasInfoIR(const string filename);
-  void DumpSomasMemoryIR(const string filename);
+  std::string SomasInfo(bool calc_hash = false) const;
+  std::string SomasMemory() const;
+  void DumpSomasInfoIR(const string filename) const;
+  void DumpSomasMemoryIR(const string filename) const;
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
   std::vector<DynamicBitSet> reuse_matrix_;
@@ -124,8 +124,8 @@ class Somas {
 
   bool Assign(const session::KernelGraph *graph);
 
-  std::string Offline();
-  void DumpOfflineIR(const string filename);
+  std::string Offline() const;
+  void DumpOfflineIR(const string filename) const;
   std::string GetSplitName(const string &scope_name) const;
   size_t CalcLowerBound() const;
   void GenGraphStatisticInfo();

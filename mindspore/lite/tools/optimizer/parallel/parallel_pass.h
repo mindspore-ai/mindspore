@@ -19,11 +19,10 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-
 #include "ir/anf.h"
-#include "tools/optimizer/parallel/dynamic_creator.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/ccsrc/backend/optimizer/common/node_pass.h"
+#include "backend/optimizer/common/node_pass.h"
+#include "tools/optimizer/parallel/split_strategy.h"
 
 #ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
@@ -32,8 +31,8 @@ namespace mindspore {
 namespace opt {
 class ParallelPass : public opt::NodePass {
  public:
-  explicit ParallelPass(const std::unordered_map<std::string, SplitStrategy> strategys, const int32_t FmkType)
-      : NodePass("parallel_pass"), split_strategys_(strategys), FmkType_(FmkType) {}
+  explicit ParallelPass(const std::unordered_map<std::string, SplitStrategy> &strategys, const int32_t fmk_type)
+      : NodePass("parallel_pass"), split_strategys_(strategys), fmk_type_(fmk_type) {}
   ~ParallelPass() override = default;
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 
@@ -46,7 +45,7 @@ class ParallelPass : public opt::NodePass {
 
   std::string type_name_;
   std::unordered_map<std::string, SplitStrategy> split_strategys_;
-  int32_t FmkType_;
+  int32_t fmk_type_;
 };
 
 }  // namespace opt

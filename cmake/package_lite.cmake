@@ -12,6 +12,7 @@ if(SUPPORT_TRAIN)
     set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/train/lib)
     set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/train/include/dataset)
     set(TURBO_DIR ${RUNTIME_PKG_NAME}/train/third_party/libjpeg-turbo)
+    set(SECUREC_DIR ${RUNTIME_PKG_NAME}/train/third_party/securec)
     set(MINDSPORE_LITE_LIB_NAME libmindspore-lite-train)
     set(BENCHMARK_NAME benchmark_train)
     set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
@@ -21,6 +22,7 @@ else()
     set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/inference/lib)
     set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/include/dataset)
     set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/third_party/libjpeg-turbo)
+    set(SECUREC_DIR ${RUNTIME_PKG_NAME}/inference/third_party/securec)
     set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
     set(BENCHMARK_NAME benchmark)
     set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
@@ -40,21 +42,33 @@ if(BUILD_MINDDATA STREQUAL "full")
 
     if(PLATFORM_ARM64)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
+                DESTINATION ${SECUREC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     elseif(PLATFORM_ARM32)
         file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
+                DESTINATION ${SECUREC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     else()
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
+                ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite_static.a DESTINATION
                 ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib
                 RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0 DESTINATION ${TURBO_DIR}/lib
                 RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a
+                DESTINATION ${SECUREC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()
 
@@ -217,6 +231,8 @@ elseif(WIN32)
         install(FILES ${LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.dll
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/registry/libmslite_converter_plugin_reg.dll
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/../bin/libglog.dll DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -285,6 +301,8 @@ else()
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin_reg.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
                 DESTINATION ${CONVERTER_ROOT_DIR}/third_party/glog/lib RENAME libglog.so.0

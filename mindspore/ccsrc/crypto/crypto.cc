@@ -326,7 +326,8 @@ Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *
       delete[] decrypt_data;
       MS_EXCEPTION(ValueError) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
     }
-    memcpy_s(decrypt_data + *decrypt_len, file_size - *decrypt_len, decrypt_block_buf, decrypt_block_len);
+    auto destMax = Min(file_size - *decrypt_len, SECUREC_MEM_MAX_LEN);
+    memcpy_s(decrypt_data + *decrypt_len, destMax, decrypt_block_buf, decrypt_block_len);
     *decrypt_len += decrypt_block_len;
   }
   fid.close();

@@ -15,7 +15,7 @@
 
 import math
 import numpy as np
-from src.config import config
+from src.model_utils.config import config
 
 def correct_nifti_head(img):
     """
@@ -131,11 +131,11 @@ def one_hot(labels):
     labels = np.reshape(labels, (N, -1))
     labels = labels.astype(np.int32)
     N, K = labels.shape
-    one_hot_encoding = np.zeros((N, config['num_classes'], K), dtype=np.float32)
+    one_hot_encoding = np.zeros((N, config.num_classes, K), dtype=np.float32)
     for i in range(N):
         for j in range(K):
             one_hot_encoding[i, labels[i][j], j] = 1
-    labels = np.reshape(one_hot_encoding, (N, config['num_classes'], D, H, W))
+    labels = np.reshape(one_hot_encoding, (N, config.num_classes, D, H, W))
     return labels
 
 def CalculateDice(y_pred, label):

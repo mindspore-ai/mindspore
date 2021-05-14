@@ -60,16 +60,16 @@ void TaskEmitActionForMindRT(const ResourcePtr &res) {
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
-  // The output of graph compiler is graph id.
+  // The output of graph compiler is actor.
   res->results()[kOutput] = mindrt_bc_ptr->CompileGraphs(res->func_graph());
 }
 
 void ExecuteActionForMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  if (!res->results()[kOutput].is<GraphId>()) {
+  if (!res->results()[kOutput].is<compile::ActorInfo>()) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
-  auto graph_id = res->results()[kOutput].cast<GraphId>();
+  const auto &actor_info = res->results()[kOutput].cast<compile::ActorInfo>();
 
   // Get the mindRT backend.
   std::shared_ptr<compile::Backend> bc_ptr = res->results()[kBackend].cast<std::shared_ptr<compile::Backend>>();
@@ -78,9 +78,9 @@ void ExecuteActionForMindRT(const ResourcePtr &res) {
 
   // Construct the graph run function ptr.
   compile::VmEvalFuncPtr run =
-    std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, graph_id](const VectorRef &args) -> BaseRef {
+    std::make_shared<compile::VmEvalFunc>([mindrt_bc_ptr, actor_info](const VectorRef &args) -> BaseRef {
       MS_LOG(INFO) << "Execute args size " << args.size();
-      auto outs = mindrt_bc_ptr->RunGraph(graph_id, args);
+      auto outs = mindrt_bc_ptr->RunGraph(actor_info, args);
       MS_LOG(DEBUG) << "out size " << outs.size();
       return outs[0];
     });
@@ -115,6 +115,8 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraph
     }
   }
   auto ret = engine->Run(func_graph, args_spec);
+  MS_LOG(INFO) << "function call max depth: " << engine->function_call_max_depth()
+               << ", simulate call max depth: " << engine->stack_frame_max_depth();
   MS_LOG(DEBUG) << "AbstractAnalyze end";
   return ret;
 }

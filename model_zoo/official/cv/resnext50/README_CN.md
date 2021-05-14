@@ -18,6 +18,9 @@
             - [样例](#样例-1)
             - [结果](#结果)
     - [模型导出](#模型导出)
+    - [推理过程](#推理过程)
+        - [用法](#用法-2)
+        - [结果](#结果-2)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -216,7 +219,30 @@ acc=93.88%(TOP5)
 python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"].
+`ckpt_file` 参数为必填项。
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]。
+
+## [推理过程](#contents)
+
+### 用法
+
+在执行推理之前，需要通过export.py导出mindir文件。
+目前仅可处理batch_Size为1。
+
+```shell
+#Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` 可选，默认值为 0。
+
+### 结果
+
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+```log
+Total data:50000, top1 accuracy:0.78462, top5 accuracy:0.94182
+```
 
 # 模型描述
 

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,12 +35,13 @@ class NpyDataset():
         return data.astype(np.float32), label.astype(np.int32)
 
 
-def audio_dataset(data_dir, data_type, h, w, batch_size):
+def audio_dataset(data_dir, data_type, h, w, batch_size, device_num=1, rank=0):
     if 'testing' in data_dir:
         shuffle = False
     else:
         shuffle = True
     dataset = NpyDataset(data_dir, data_type, h, w)
-    de_dataset = de.GeneratorDataset(dataset, ["feats", "labels"], shuffle=shuffle)
-    de_dataset = de_dataset.batch(batch_size, drop_remainder=False)
+    de_dataset = de.GeneratorDataset(dataset, ["feats", "labels"], shuffle=shuffle,
+                                     num_shards=device_num, shard_id=rank)
+    de_dataset = de_dataset.batch(batch_size, drop_remainder=True)
     return de_dataset

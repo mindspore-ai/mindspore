@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H
 
 #include <string>
+#include <vector>
 #include "tools/common/flag_parser.h"
 #include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"
@@ -57,6 +58,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitTrainModel();
 
+  int InitConfigFile();
+
   int Init(int argc, const char **argv);
 
  public:
@@ -77,13 +80,19 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int quantWeightSize;
   std::string bitNumIn;
   int bitNum;
-  int parallelMode = 0;
+  bool parallelMode = false;
   std::string configFile;
   std::string quantWeightChannelStr;
   int quantWeightChannel;
   std::string trainModelIn;
   bool trainModel = false;
+  std::vector<std::string> pluginsPath;
+  bool disableFusion = false;
 };
+
+std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
+
+std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 }  // namespace converter
 }  // namespace lite
 }  // namespace mindspore

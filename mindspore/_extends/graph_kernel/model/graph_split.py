@@ -488,7 +488,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     stitch_tensors = [tensor for tensor in dom_outs if tensor in a_ins]
                     if _same_stitch_axis(stitch_tensors, a_final_outs):
                         for tensor in stitch_tensors:
-                            if _tensor_size(tensor) >= 1024 * 1024 * 12:
+                            if _tensor_size(tensor) >= 1024 * 1024:
                                 return True
             return False
 
@@ -543,7 +543,7 @@ class GraphSplitAscend(GraphSplitByPattern):
     REDUCE_FUSE_DEPTH = 10
 
     def get_default_mode(self, op):
-        if op.prim == "MatMul":
+        if op.prim == "MatMul" or op.prim == "BatchMatMul":
             return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" else self.Area.MODE_BASIC
         if op.prim in ("Tile", "BroadcastTo", "ExpandDims"):
             return self.Area.MODE_COMPOSITE
@@ -646,7 +646,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             return fused, True
 
         def _matmul_depth(dom):
-            if dom.dom_op().prim != "MatMul":
+            if dom.dom_op().prim != "MatMul" and dom.dom_op().prim != "BatchMatMul":
                 return None
             fused = []
             for a, _ in dom.out_relations.items():

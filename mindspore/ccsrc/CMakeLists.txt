@@ -2,6 +2,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/include)
 
 if(ENABLE_CPU)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/backend/kernel_compiler/cpu)
@@ -184,7 +185,6 @@ if(ENABLE_DUMP_PROTO)
         "utils/checkpoint.proto"
         "utils/print.proto"
         "utils/node_strategy.proto"
-        "utils/mind_ir.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 
@@ -293,8 +293,6 @@ if(ENABLE_D)
     endif()
 
     MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
-    find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(CCE_LIB cce ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
                 ${ASCEND_DRIVER_BACK_PATH})
@@ -302,14 +300,8 @@ if(ENABLE_D)
                 ${ASCEND_DRIVER_BACK_PATH})
     find_library(PROFILING msprofiler_fwkacl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(ACL ascendcl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(REGISTER register ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(PLATFORM platform ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPTILING optiling ${ASCEND_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
-    # hccl_adpter
-    find_library(HCCL_ADPTER hcom_graph_adaptor ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(HCCL_RA ra ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(HCCL_BUILDER hcom_opskernel_builder ${ASCEND_RUNTIME_PATH}/plugin/opskernel
-                ${ASCEND_TOOLKIT_RUNTIME_PATH}/plugin/opskernel)
 
     add_library(ms_profile SHARED
                 ${CMAKE_CURRENT_SOURCE_DIR}/runtime/device/ascend/profiling/profiling_callback_register.cc)
@@ -317,9 +309,8 @@ if(ENABLE_D)
     target_link_options(ms_profile PRIVATE -Wl,-init,common_log_init)
     target_link_libraries(ms_profile -Wl,--start-group -Wl,--whole-archive ${PROFILING} -Wl,--no-whole-archive
                           mindspore::protobuf -Wl,--end-group)
-    target_link_libraries(mindspore ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${HCCL} ${DATATRANSFER}
-                          ${HCCL_ADPTER} ${REGISTER} -Wl,--no-as-needed ${OPTILING} ${HCCL_BUILDER}
-                          ${HCCL_RA} ${PLATFORM} ${ACL})
+    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} -Wl,--no-as-needed ${OPTILING}
+      ${PLATFORM} ${ACL})
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
@@ -353,10 +344,6 @@ if(ENABLE_D)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64/plugin/opskernel)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64/plugin/opskernel)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64/plugin/opskernel)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/add-ons)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH

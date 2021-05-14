@@ -109,6 +109,16 @@ Hamiltonians HamiltoniansTransfor(const PaulisCoeffsType &paulis_coeffs, const P
   }
   return hams;
 }
+
+Projectors ProjectorsTransfor(const NamesType &proj_strs) {
+  Projectors projs;
+  for (Index n = 0; n < proj_strs.size(); n++) {
+    Projector proj = Projector(proj_strs[n]);
+    proj.HandleMask();
+    projs.push_back(proj);
+  }
+  return projs;
+}
 }  // namespace transformer
 }  // namespace mindquantum
 }  // namespace mindspore

@@ -34,16 +34,20 @@ class Conv2DInfo : public OperatorInfo {
   ~Conv2DInfo() override = default;
 
  protected:
-  lite::STATUS CheckStrategy(const SplitStrategy &strategy) override;
-  lite::STATUS GetAttrs() override;
-  lite::STATUS InferReplaceOp() override;
-  lite::STATUS InferParallelCNodes() override;
-  lite::STATUS ConstructOutputCNodes(std::shared_ptr<ops::Conv2DFusion> conv_prim);
-  AnfNodePtr CreateOutputsOfSplit(CNodePtr orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
+  int CheckStrategy(const SplitStrategy &strategy) override;
+  int GetAttrs() override;
+  int InferReplaceOp() override;
+  int InferParallelCNodes() override;
+  int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
+                            const std::vector<AnfNodePtr> &feature_split_outputs,
+                            const std::vector<AnfNodePtr> &kernel_split_outputs,
+                            const std::vector<AnfNodePtr> &bias_split_outputs);
+  AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
                                   size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
-                                  bool trans_format);
+                                  bool trans_format) override;
+  int CheckConv2DPrimitiveType();
 
-  SplitMode splitMode_ = NoSplit;
+  SplitMode split_mode_ = NoSplit;
   bool format_NCHW_ = false;
   std::vector<int32_t> splits_;
 };
@@ -54,8 +58,11 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
   ~DepthwiseConv2DInfo() override = default;
 
  protected:
-  lite::STATUS InferReplaceOp() override;
-  lite::STATUS InferParallelCNodes() override;
+  int InferReplaceOp() override;
+  int InferParallelCNodes() override;
+  AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
+                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
+                                  bool trans_format) override;
 };
 
 }  // namespace opt

@@ -6,13 +6,12 @@ checkpoint_url: ""
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
-checkpoint_path: './checkpoint/'
-checkpoint_file: './checkpoint/checkpoint_lenet-10_1875.ckpt'
 device_target: Ascend
 enable_profiling: False
 
-data_path_local: '/data/hcm/data/MNIST_Data/'
-ckpt_path_local: '/data/hcm/data/ckpt_lenet/checkpoint_lenet-10_1875.ckpt'
+ckpt_path: '/cache/data/'
+ckpt_file: '/cache/data/checkpoint_lenet-10_1875.ckpt'
+
 # ==============================================================================
 # Training options
 num_classes: 10

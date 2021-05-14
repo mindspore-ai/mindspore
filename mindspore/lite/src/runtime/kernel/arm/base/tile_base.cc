@@ -91,8 +91,8 @@ int SimpleTile(void *cdata, int task_id) {
 void TileCPUKernel::FillOneDimTileParam() {
   // check if tile exact one dim
   int large_one_multiple_count = 0;
-  int multiple;
-  int mul_index;
+  int multiple = 0;
+  int mul_index = 0;
   for (auto i = 0; i < tile_parameter_->in_dim_; ++i) {
     if (tile_parameter_->multiples_[i] > 1) {
       large_one_multiple_count++;

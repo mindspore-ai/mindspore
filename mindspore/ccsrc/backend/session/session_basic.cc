@@ -756,11 +756,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     } else if (anf->isa<Parameter>()) {
       auto new_parameter = CreateNewParameterFromParameter(anf, graph);
       cnode_inputs->push_back(new_parameter);
-      if (GetGraphIdByNode(anf) == kInvalidGraphId) {
-        graph->FrontBackendlMapAdd(anf, new_parameter);
-      } else {
-        (*other_graph_cnode)[anf] = new_parameter;
-      }
+      graph->FrontBackendlMapAdd(anf, new_parameter);
       continue;
     } else {
       // the input node is a cnode from other graph
@@ -1892,7 +1888,7 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
   if (internal_output) {
     auto users = ExtendNodeUsers(front_func_graph_manager, front_node);
     for (auto &user : users) {
-      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial)) {
+      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimPartial) && kernel_target != kGPUDevice) {
         auto partial_target = AddPartialParametersMap(front_func_graph_manager, user);
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;

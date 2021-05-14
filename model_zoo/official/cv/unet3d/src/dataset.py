@@ -18,7 +18,7 @@ import glob
 import numpy as np
 import mindspore.dataset as ds
 from mindspore.dataset.transforms.py_transforms import Compose
-from src.config import config as cfg
+from src.model_utils.config import config
 from src.transform import Dataset, ExpandChannel, LoadData, Orientation, ScaleIntensityRange, RandomCropSamples, OneHot
 
 class ConvertLabel:
@@ -34,16 +34,16 @@ class ConvertLabel:
         Apply the transform to `img`, assuming `img` is channel-first and
         slicing doesn't apply to the channel dim.
         """
-        data[data > cfg['upper_limit']] = 0
-        data = data - (cfg['lower_limit'] - 1)
-        data = np.clip(data, 0, cfg['lower_limit'])
+        data[data > config.upper_limit] = 0
+        data = data - (config.lower_limit - 1)
+        data = np.clip(data, 0, config.lower_limit)
         return data
 
     def __call__(self, image, label):
         label = self.operation(label)
         return image, label
 
-def create_dataset(data_path, seg_path, config, rank_size=1, rank_id=0, is_training=True):
+def create_dataset(data_path, seg_path, rank_size=1, rank_id=0, is_training=True):
     seg_files = sorted(glob.glob(os.path.join(seg_path, "*.nii.gz")))
     train_files = [os.path.join(data_path, os.path.basename(seg)) for seg in seg_files]
     train_ds = Dataset(data=train_files, seg=seg_files)

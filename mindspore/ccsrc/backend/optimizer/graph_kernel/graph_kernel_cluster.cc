@@ -65,6 +65,7 @@ std::vector<PrimitivePtr> GetClusterableOpList() {
 #if ENABLE_D
     prim::kPrimMatMul,
     prim::KPrimTransData,
+    prim::kPrimBatchMatMul,
 #elif ENABLE_GPU
     prim::kPrimReduceMax,
     prim::kPrimReduceMin,
@@ -88,11 +89,11 @@ size_t CountGraphKernelInnerNodes(const AnfNodePtr &node) {
 }  // namespace
 
 bool IsClusterableOp(const AnfNodePtr &node) {
-  if (IsKeepBasicNode(node)) {
-    return false;
-  }
   if (AnfAlgo::IsGraphKernel(node)) {
     return true;
+  }
+  if (IsKeepBasicNode(node)) {
+    return false;
   }
   auto op_list = GetClusterableOpList();
   bool node_in_oplist = std::any_of(op_list.begin(), op_list.end(),

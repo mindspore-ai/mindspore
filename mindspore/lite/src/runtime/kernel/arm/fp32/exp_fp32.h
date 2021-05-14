@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_EXP_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32/exp_fp32.h"
 
 namespace mindspore::kernel {
-class ExpCPUKernel : public LiteKernel {
+class ExpCPUKernel : public InnerKernel {
  public:
   explicit ExpCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~ExpCPUKernel() override{};
 
   int Init() override;

@@ -18,18 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_ARITHMETIC_SELF_GRAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {
 
-class ArithmeticSelfGradCPUKernel : public LiteKernel {
+class ArithmeticSelfGradCPUKernel : public InnerKernel {
   typedef int (*ArithmeticSelfGradOperation)(const float *, const float *, float *, const int);
 
  public:
   ArithmeticSelfGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~ArithmeticSelfGradCPUKernel() override {}
   int Init() override;
   int ReSize() override;

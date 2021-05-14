@@ -56,7 +56,7 @@ def test_BGCF_amazon_beauty():
     pattern1 = r"cost:([\d\.\+]+)"
     epoch_time_list = utils.parse_log_file(pattern1, log_file)[1:]
     print("per epoch time:", sum(epoch_time_list) / len(epoch_time_list))
-    assert sum(epoch_time_list) / len(epoch_time_list) < 1.9
+    assert sum(epoch_time_list) / len(epoch_time_list) < 2.2
 
 
 def test_bgcf_export_mindir():

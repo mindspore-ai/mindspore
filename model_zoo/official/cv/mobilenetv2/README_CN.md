@@ -69,21 +69,23 @@ MobileNetV2总体网络架构如下：
 
 ```python
 ├── MobileNetV2
-  ├── README.md     # MobileNetV2相关描述
+  ├── README.md                   # MobileNetV2相关描述
   ├── scripts
-  │   ├──run_train.sh   # 使用CPU、GPU或Ascend进行训练、微调或增量学习的shell脚本
-  │   ├──run_eval.sh    # 使用CPU、GPU或Ascend进行评估的shell脚本
+  │   ├──run_train.sh            # 使用CPU、GPU或Ascend进行训练、微调或增量学习的shell脚本
+  │   ├──run_eval.sh             # 使用CPU、GPU或Ascend进行评估的shell脚本
+  │   ├──cache_util.sh           # 包含一些使用cache的帮助函数
+  │   ├──run_train_nfs_cache.sh  # 使用NFS的数据集进行训练并利用缓存服务进行加速的shell脚本
   ├── src
-  │   ├──args.py        # 参数解析
-  │   ├──config.py      # 参数配置
-  │   ├──dataset.py     # 创建数据集
-  │   ├──launch.py      # 启动python脚本
-  │   ├──lr_generator.py     # 配置学习率
-  │   ├──mobilenetV2.py      # MobileNetV2架构
-  │   ├──models.py      # 加载define_net、Loss、及Monitor
-  │   ├──utils.py       # 加载ckpt_file进行微调或增量学习
-  ├── train.py      # 训练脚本
-  ├── eval.py       # 评估脚本
+  │   ├──args.py                 # 参数解析
+  │   ├──config.py               # 参数配置
+  │   ├──dataset.py              # 创建数据集
+  │   ├──launch.py               # 启动python脚本
+  │   ├──lr_generator.py         # 配置学习率
+  │   ├──mobilenetV2.py          # MobileNetV2架构
+  │   ├──models.py               # 加载define_net、Loss、及Monitor
+  │   ├──utils.py                # 加载ckpt_file进行微调或增量学习
+  ├── train.py                    # 训练脚本
+  ├── eval.py                     # 评估脚本
   ├── mindspore_hub_conf.py       #  MindSpore Hub接口
 ```
 
@@ -213,6 +215,22 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 ```shell
 result:{'acc':0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
+
+## NFS数据集的训练过程
+
+当数据集位于网络文件系统（NFS）上时，可以使用shell脚本`run_train_nfs_cache.sh`来进行训练。在默认情况下我们将启动一个独立的缓存服务器将训练数据集的图片以tensor的形式保存在内存中以带来性能的提升。
+
+请参考[训练过程](#训练过程)一节来了解该脚本的使用方法。
+
+```shell
+# 使用NFS上的数据集进行训练示例
+Ascend: sh run_train_nfs_cache.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]
+GPU: sh run_train_nfs_cache.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH]
+CPU: sh run_train_nfs_cache.sh CPU [TRAIN_DATASET_PATH]
+```
+
+> 缓存服务开启后，我们将在后台启动一个独立的缓存服务器以将数据集缓存在内存中。用户在使用缓存前需确保内存大小足够缓存数据集中的图片（缓存ImageNet的训练集约需要120GB的内存空间）。
+> 在训练结束后，可以选择关闭缓存服务器或不关闭它以继续为未来的训练提供缓存服务。
 
 ## 模型导出
 

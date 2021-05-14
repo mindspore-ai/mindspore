@@ -49,7 +49,8 @@ ConfigManager::ConfigManager()
       auto_num_workers_(kDftAutoNumWorkers),
       num_cpu_threads_(std::thread::hardware_concurrency()),
       auto_num_workers_num_shards_(1),
-      auto_worker_config_(0) {
+      auto_worker_config_(0),
+      enable_shared_mem_(false) {
   num_cpu_threads_ = num_cpu_threads_ > 0 ? num_cpu_threads_ : std::numeric_limits<uint16_t>::max();
   num_parallel_workers_ = num_parallel_workers_ < num_cpu_threads_ ? num_parallel_workers_ : num_cpu_threads_;
   auto env_cache_host = std::getenv("MS_CACHE_HOST");

@@ -23,11 +23,11 @@
 
 // this file is going to be removed when move create actor before schedule.
 namespace mindspore::kernel {
-class PartialFusionKernel : public LiteKernel {
+class PartialFusionKernel : public InnerKernel {
  public:
   PartialFusionKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~PartialFusionKernel() override = default;
   int Init() override;
   int ReSize() override;

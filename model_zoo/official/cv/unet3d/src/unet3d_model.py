@@ -17,9 +17,10 @@ import mindspore.nn as nn
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from src.unet3d_parts import Down, Up
+from src.model_utils.config import config
 
 class UNet3d(nn.Cell):
-    def __init__(self, config=None):
+    def __init__(self):
         super(UNet3d, self).__init__()
         self.n_channels = config.in_channels
         self.n_classes = config.num_classes

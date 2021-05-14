@@ -39,6 +39,7 @@ OpParameter *PopulateUnsqueezeParameter(const void *prim) {
   auto flatAxis = unsqueeze_prim->axis();
   if (flatAxis == nullptr) {
     MS_LOG(ERROR) << "flatAxis is nullptr";
+    free(unsqueeze_param);
     return nullptr;
   }
   unsqueeze_param->num_dim_ = flatAxis->size();

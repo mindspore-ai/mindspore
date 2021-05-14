@@ -46,11 +46,12 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/loader_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
@@ -66,6 +67,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/register_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_interface.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_interface_registry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/inner_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
@@ -149,12 +151,14 @@ endif()
 add_subdirectory(ops)
 add_subdirectory(runtime/kernel/arm)
 
-add_library(mindspore-lite SHARED ${LITE_SRC})
-add_dependencies(mindspore-lite fbs_src)
+add_library(lite_src_mid OBJECT ${LITE_SRC})
+add_dependencies(lite_src_mid fbs_src)
+set_target_properties(lite_src_mid PROPERTIES POSITION_INDEPENDENT_CODE 1)
+
+add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
-add_library(mindspore-lite_static STATIC ${LITE_SRC})
-add_dependencies(mindspore-lite_static fbs_src)
+add_library(mindspore-lite_static STATIC $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite")
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
@@ -168,17 +172,18 @@ endif()
 if(SUPPORT_GPU STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
     target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid
-                          -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+                          -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid
                           -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
 elseif(SUPPORT_GPU STREQUAL cuda)
         add_subdirectory(runtime/kernel/cuda)
         target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid
-                              -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+                              -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
         target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid
                               -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
 else()
-    target_link_libraries(mindspore-lite cpu_kernel_mid -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive
+                          cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive
                           cpu_ops_mid)
 endif()
@@ -249,14 +254,13 @@ if(DEFINED ARCHS)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
             )
     add_library(mindspore_lite STATIC
-            ${LITE_SRC}
             ${MINDSPORE_LITE_PUB_HDRS}
             ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
             )
     add_dependencies(mindspore_lite fbs_src)
     set_target_properties(mindspore_lite PROPERTIES OUTPUT_NAME "mindspore_lite")
     set_target_properties(mindspore_lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-    target_link_libraries(mindspore_lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore_lite lite_src_mid cpu_kernel_mid nnacl_mid cpu_ops_mid)
     target_link_libraries(mindspore_lite log)
 
     if(ENABLE_MINDRT)

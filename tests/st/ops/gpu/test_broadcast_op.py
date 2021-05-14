@@ -87,6 +87,10 @@ def test_nobroadcast():
     output_np = np.mod(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+    output_ms = P.Atan2()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.arctan2(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -144,6 +148,10 @@ def test_nobroadcast_fp16():
 
     output_ms = P.FloorMod()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.mod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Atan2()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.arctan2(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
@@ -213,6 +221,10 @@ def test_broadcast():
     output_np = np.mod(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+    output_ms = P.Atan2()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.arctan2(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -280,6 +292,10 @@ def test_broadcast_diff_dims():
     output_np = np.mod(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+    output_ms = P.Atan2()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.arctan2(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -337,6 +353,10 @@ def test_broadcast_fp16():
 
     output_ms = P.FloorMod()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.mod(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Atan2()(Tensor(x1_np), Tensor(x2_np))
+    output_np = np.arctan2(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 

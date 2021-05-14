@@ -278,6 +278,40 @@ struct SquaredDifferenceFunc {
   }
 };
 
+template <typename T>
+struct Atan2Func {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return atan2f(lhs, rhs); }
+};
+
+template <>
+struct Atan2Func<double> {
+  __device__ __host__ __forceinline__ double operator()(const double &lhs, const double &rhs) {
+    return atan2(lhs, rhs);
+  }
+};
+
+template <>
+struct Atan2Func<half> {
+  __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    float l = __half2float(lhs);
+    float r = __half2float(rhs);
+    float res = atan2f(l, r);
+    return __float2half_rn(res);
+  }
+};
+
+template <>
+struct Atan2Func<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 l = __half22float2(lhs);
+    float2 r = __half22float2(rhs);
+    float2 res;
+    res.x = atan2f(l.x, r.x);
+    res.y = atan2f(l.y, r.y);
+    return __float22half2_rn(res);
+  }
+};
+
 // Element-wise Comparison
 template <typename T, typename Func>
 __global__ void ElewiseCmpKernel(const int nums, const T *x0, const T *x1, bool *y) {
@@ -354,6 +388,8 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, ModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_FLOORMOD:
       return ElewiseArithKernel<T, FloorModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_ATAN2:
+      return ElewiseArithKernel<T, Atan2Func<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -592,6 +628,11 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_FLOORMOD:
       return BroadcastArithKernel<T, FloorModFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_ATAN2:
+      return BroadcastArithKernel<T, Atan2Func<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);

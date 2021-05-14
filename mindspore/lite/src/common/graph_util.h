@@ -31,13 +31,14 @@ namespace mindspore {
 namespace lite {
 using NODE_ID = std::string;
 
+// only support op_type from current schema
+bool IsPackedOp(int op_type);
+
 std::vector<size_t> GetGraphInputNodes(const lite::Model *model);
 
 std::vector<size_t> GetGraphOutputNodes(const lite::Model *model);
 
 std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, size_t tensor_idx);
-
-bool IsPackedOp(int op_type);
 }  // namespace lite
 }  // namespace mindspore
 

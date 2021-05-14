@@ -31,7 +31,7 @@ class ApplyMomentumWeightDecayScaleFusion : public PatternProcessPass {
     variable_ = std::make_shared<Var>();
     accumulation_ = std::make_shared<Var>();
     learning_rate_ = std::make_shared<Var>();
-    gradient_ = std::make_shared<Var>();
+    cast_gradient_ = std::make_shared<CondVar>(IsCast);
     momentum_ = std::make_shared<Var>();
     monad_state_ = std::make_shared<Var>();
   }
@@ -41,6 +41,7 @@ class ApplyMomentumWeightDecayScaleFusion : public PatternProcessPass {
 
  private:
   static bool IsScalar(const BaseRef &n);
+  static bool IsCast(const BaseRef &n);
 
   VarPtr monad_;
   VarPtr weight_decay_;
@@ -48,7 +49,7 @@ class ApplyMomentumWeightDecayScaleFusion : public PatternProcessPass {
   VarPtr variable_;
   VarPtr accumulation_;
   VarPtr learning_rate_;
-  VarPtr gradient_;
+  VarPtr cast_gradient_;
   VarPtr momentum_;
   VarPtr monad_state_;
 };

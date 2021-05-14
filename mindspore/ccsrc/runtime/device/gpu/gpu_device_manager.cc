@@ -43,7 +43,7 @@ void GPUDeviceManager::InitDevice() {
 }
 
 void GPUDeviceManager::ReleaseDevice() {
-  for (DeviceStream stream : gpu_streams_) {
+  for (CudaDeviceStream stream : gpu_streams_) {
     if (stream != nullptr) {
       CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
     }
@@ -61,13 +61,13 @@ void GPUDeviceManager::ReleaseDevice() {
   dev_alive_ = false;
 }
 
-bool GPUDeviceManager::CreateStream(DeviceStream *stream) {
+bool GPUDeviceManager::CreateStream(CudaDeviceStream *stream) {
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(stream), "Failed to create CUDA stream");
   gpu_streams_.emplace_back(*stream);
   return true;
 }
 
-const DeviceStream &GPUDeviceManager::default_stream() const { return default_stream_; }
+const CudaDeviceStream &GPUDeviceManager::default_stream() const { return default_stream_; }
 
 int GPUDeviceManager::device_count() const { return CudaDriver::device_count(); }
 
@@ -91,7 +91,7 @@ const cudnnHandle_t &GPUDeviceManager::GetCudnnHandle() const { return cudnn_han
 
 const cublasHandle_t &GPUDeviceManager::GetCublasHandle() const { return cublas_handle_; }
 const cusolverDnHandle_t &GPUDeviceManager::GetCusolverDnHandle() const { return cusolver_dn_handle_; }
-bool GPUDeviceManager::SyncStream(const DeviceStream &stream) const {
+bool GPUDeviceManager::SyncStream(const CudaDeviceStream &stream) const {
   return dev_alive_ ? CudaDriver::SyncStream(stream) : false;
 }
 
@@ -104,17 +104,17 @@ bool GPUDeviceManager::CopyHostMemToDevice(const DeviceMemPtr &dst, const void *
 }
 
 bool GPUDeviceManager::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                                DeviceStream stream) const {
+                                                CudaDeviceStream stream) const {
   return CudaDriver::CopyDeviceMemToHostAsync(dst, src, size, stream);
 }
 
 bool GPUDeviceManager::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size,
-                                                DeviceStream stream) const {
+                                                CudaDeviceStream stream) const {
   return CudaDriver::CopyHostMemToDeviceAsync(dst, src, size, stream);
 }
 
 bool GPUDeviceManager::CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
-                                                  DeviceStream stream) const {
+                                                  CudaDeviceStream stream) const {
   return CudaDriver::CopyDeviceMemToDeviceAsync(dst, src, size, stream);
 }
 }  // namespace gpu

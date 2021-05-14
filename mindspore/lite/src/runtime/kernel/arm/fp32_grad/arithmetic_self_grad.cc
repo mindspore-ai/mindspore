@@ -41,7 +41,7 @@ int ArithmeticSelfGradRun(void *cdata, int thread_id) {
 }  // namespace
 
 int ArithmeticSelfGradCPUKernel::Init() {
-  auto type = Type();
+  auto type = this->type();
   switch (type) {
     case PrimitiveType_LogGrad:
       self_grad_operation_ = ElementDiv;
@@ -91,10 +91,10 @@ int ArithmeticSelfGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                           const std::vector<lite::Tensor *> &outputs,
-                                                           OpParameter *param, const lite::Context *ctx,
-                                                           const kernel::KernelKey &desc) {
+kernel::InnerKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                            const std::vector<lite::Tensor *> &outputs,
+                                                            OpParameter *param, const lite::Context *ctx,
+                                                            const kernel::KernelKey &desc) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;

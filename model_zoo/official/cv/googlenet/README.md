@@ -120,6 +120,53 @@ After installing MindSpore via the official website, you can start training and 
 
 We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the scripts so that select different datasets. For more details, please refer the specify script.
 
+- ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    - Train imagenet 8p on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/imagenet_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on imagenet_config.yaml file.
+      #          Set "dataset_name='imagenet'" on imagenet_config.yaml file.
+      #          Set "train_data_path='/cache/data/ImageNet/train/'" on imagenet_config.yaml file.
+      #          Set other parameters on imagenet_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "dataset_name=imagenet" on the website UI interface.
+      #          Add "train_data_path=/cache/data/ImageNet/train/" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (4) Set the code directory to "/path/googlenet" on the website UI interface.
+      # (5) Set the startup file to "train.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
+
+    - Eval imagenet on ModelArts
+
+      ```python
+      # (1) Add "config_path='/path_to_code/imagenet_config.yaml'" on the website UI interface.
+      # (2) Perform a or b.
+      #       a. Set "enable_modelarts=True" on imagenet_config.yaml file.
+      #          Set "dataset_name='imagenet'" on imagenet_config.yaml file.
+      #          Set "val_data_path='/cache/data/ImageNet/val/'" on imagenet_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_trained_ckpt/'" on imagenet_config.yaml file.
+      #          Set "checkpoint_path='/cache/checkpoint_path/model.ckpt'" on imagenet_config.yaml file.
+      #          Set other parameters on imagenet_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "dataset_name=imagenet" on the website UI interface.
+      #          Add "val_data_path=/cache/data/ImageNet/val/" on the website UI interface.
+      #          Add "checkpoint_url='s3://dir_to_trained_ckpt/'" on the website UI interface.
+      #          Add "checkpoint_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+      #          Add other parameters on the website UI interface.
+      # (3) Upload or copy your pretrained model to S3 bucket.
+      # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (5) Set the code directory to "/path/googlenet" on the website UI interface.
+      # (6) Set the startup file to "eval.py" on the website UI interface.
+      # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (8) Create your job.
+      ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)

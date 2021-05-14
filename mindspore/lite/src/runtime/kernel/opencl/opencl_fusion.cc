@@ -61,7 +61,7 @@ inline bool PredIs(const LiteKernel *node, PrimitiveType type, std::vector<LiteK
   if (node->in_kernels().size() == 1) {
     LiteKernel *pred = node->in_kernels().front();
     MS_ASSERT(pred);
-    if (AIsInB(pred, nodes) && pred->Type() == type && pred->out_kernels().size() == 1) {
+    if (AIsInB(pred, nodes) && pred->type() == type && pred->out_kernels().size() == 1) {
       MS_ASSERT(pred->out_kernels().front() == node);
       return true;
     }
@@ -71,10 +71,10 @@ inline bool PredIs(const LiteKernel *node, PrimitiveType type, std::vector<LiteK
 
 inline std::string GetTypeName(const LiteKernel *node) {
   MS_ASSERT(node);
-  if (node->Type() == PrimitiveType_FusionEltwise) {
+  if (node->type() == PrimitiveType_FusionEltwise) {
     return "FusionEltwise";
   } else {
-    return schema::EnumNamePrimitiveType(node->Type());
+    return schema::EnumNamePrimitiveType(node->type());
   }
 }
 
@@ -150,7 +150,7 @@ void Merge(LiteKernel *a, LiteKernel *b, bool remove_a) {
     for (int i = 0; i < b_in_tensors.size(); ++i) {
       if (b_in_tensors[i] == a->out_tensors().front()) {
         // reshape: 2nd input tensor is removed
-        if (a->Type() == schema::PrimitiveType_Reshape) {
+        if (a->type() == schema::PrimitiveType_Reshape) {
           b_in_tensors[i] = a->in_tensors().front();
           b->set_in_tensors(b_in_tensors);
         } else {
@@ -197,7 +197,7 @@ inline void MergeRemoveA(LiteKernel *a, LiteKernel *b, std::set<LiteKernel *> *r
   MS_ASSERT(removed_set);
   Merge(a, b, true);
   removed_set->insert(a);
-  if (do_check_specs && reinterpret_cast<OpenCLKernel *>(b)->CheckSpecs() != RET_OK) {
+  if (do_check_specs && reinterpret_cast<OpenCLKernel *>(b->kernel())->CheckSpecs() != RET_OK) {
     MS_LOG(ERROR) << "fusion kernel CheckSpecs() error: kernel name is " << b->name();
   }
 }
@@ -208,7 +208,7 @@ inline void MergeRemoveB(LiteKernel *a, LiteKernel *b, std::set<LiteKernel *> *r
   MS_ASSERT(removed_set);
   Merge(a, b, false);
   removed_set->insert(b);
-  if (reinterpret_cast<OpenCLKernel *>(a)->CheckSpecs() != RET_OK) {
+  if (reinterpret_cast<OpenCLKernel *>(a->kernel())->CheckSpecs() != RET_OK) {
     MS_LOG(ERROR) << "fusion kernel CheckSpecs() error: kernel name is " << a->name();
   }
 }
@@ -221,8 +221,8 @@ template <typename ParamType>
 void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(node);
   MS_ASSERT(removed_set);
-  if (node->Type() == schema::PrimitiveType_Conv2DFusion) {
-    if (reinterpret_cast<Conv2DOpenCLKernel *>(node)->use_winograd_) {
+  if (node->type() == schema::PrimitiveType_Conv2DFusion) {
+    if (reinterpret_cast<Conv2DOpenCLKernel *>(node->kernel())->use_winograd_) {
       return;
     }
   }
@@ -237,14 +237,14 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
   if (pad->in_tensors().front()->shape().size() != 4) {
     return;
   }
-  auto *pad_param = reinterpret_cast<PadParameter *>(reinterpret_cast<OpenCLKernel *>(pad)->GetParameter());
+  auto *pad_param = reinterpret_cast<PadParameter *>(reinterpret_cast<OpenCLKernel *>(pad->kernel())->GetParameter());
   MS_ASSERT(pad_param);
   if (pad_param->pad_mode_ != schema::PaddingMode::PaddingMode_CONSTANT ||
       std::fabs(pad_param->constant_value_) > 1e-5) {
     return;
   }
 
-  auto *conv_param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
+  auto *conv_param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter());
   MS_ASSERT(conv_param);
   auto paddings = reinterpret_cast<int32_t *>(pad->in_tensors().at(1)->data_c());
   conv_param->pad_u_ += paddings[2];
@@ -270,7 +270,7 @@ void TryMergeConvReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_se
   if (!conv->InferShapeDone()) {
     return;
   }
-  auto *param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(conv)->GetParameter());
+  auto *param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(conv->kernel())->GetParameter());
   MS_ASSERT(param);
   if (param->group_ != 1) {
     return;
@@ -333,8 +333,9 @@ void TryMergeArithmeticAct(LiteKernel *act, std::set<LiteKernel *> *removed_set)
     return;
   }
   auto *arithmetic_param =
-    reinterpret_cast<ArithmeticParameter *>(reinterpret_cast<OpenCLKernel *>(arithmetic)->GetParameter());
-  auto *act_param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act)->GetParameter());
+    reinterpret_cast<ArithmeticParameter *>(reinterpret_cast<OpenCLKernel *>(arithmetic->kernel())->GetParameter());
+  auto *act_param =
+    reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act->kernel())->GetParameter());
   MS_ASSERT(arithmetic_param);
   MS_ASSERT(act_param);
 
@@ -352,17 +353,18 @@ template <typename ParamType>
 void TryMergeXxxActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
   MS_ASSERT(act);
   MS_ASSERT(removed_set);
-  auto *act_param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act)->GetParameter());
+  auto *act_param =
+    reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act->kernel())->GetParameter());
   LiteKernel *node = act->in_kernels().front();
   MS_ASSERT(node);
   if (!node->InferShapeDone()) {
     return;
   }
-  auto *param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
+  auto *param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter());
   MS_ASSERT(param);
 
   // if xxx is conv, group must be 1
-  if (node->Type() == schema::PrimitiveType_Conv2DFusion) {
+  if (node->type() == schema::PrimitiveType_Conv2DFusion) {
     auto *conv_param = reinterpret_cast<ConvParameter *>(param);
     if (conv_param->group_ != 1) {
       return;
@@ -401,7 +403,7 @@ void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set, s
   if (!conv->InferShapeDone()) {
     return;
   }
-  if (reinterpret_cast<Conv2DOpenCLKernel *>(conv)->use_winograd_) {
+  if (reinterpret_cast<Conv2DOpenCLKernel *>(conv->kernel())->use_winograd_) {
     return;
   }
 
@@ -418,12 +420,12 @@ void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set, s
     return;
   }
 
-  auto *param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(conv)->GetParameter());
+  auto *param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(conv->kernel())->GetParameter());
   MS_ASSERT(param);
   // group must be 1 & have not act function
   if (param->group_ == 1 && param->act_type_ == ActType_No) {
     param->act_type_ = static_cast<ActType>(ActivationType_LEAKY_RELU);
-    reinterpret_cast<Conv2DOpenCLKernel *>(conv)->alpha_ = *reinterpret_cast<float *>(prelu_weight->data_c());
+    reinterpret_cast<Conv2DOpenCLKernel *>(conv->kernel())->alpha_ = *reinterpret_cast<float *>(prelu_weight->data_c());
     MergeRemoveB(conv, prelu, removed_set);
     MS_LOG(DEBUG) << "Merge Conv2D(NO_ACTIVATION) and PReLU(weight is scalar) success";
   }
@@ -433,7 +435,7 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   MS_ASSERT(conv_kernel);
   MS_ASSERT(scale_kernel);
   auto *scale_param =
-    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel)->GetParameter());
+    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel->kernel())->GetParameter());
   MS_ASSERT(scale_param);
   MS_ASSERT(conv_kernel->in_tensors().size() >= 2);
   auto *filter = conv_kernel->in_tensors().at(1);
@@ -502,8 +504,10 @@ void TryMergeDeconvScale(LiteKernel *scale, std::set<LiteKernel *> *removed_set,
   }
 
   // check act_type_
-  auto *deconv_param = reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(deconv)->GetParameter());
-  auto *scale_param = reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale)->GetParameter());
+  auto *deconv_param =
+    reinterpret_cast<ConvParameter *>(reinterpret_cast<OpenCLKernel *>(deconv->kernel())->GetParameter());
+  auto *scale_param =
+    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale->kernel())->GetParameter());
   MS_ASSERT(deconv_param);
   MS_ASSERT(scale_param);
   if (deconv_param->act_type_ == ActType_No) {
@@ -540,15 +544,27 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
   MS_ASSERT(old);
   MS_ASSERT(nodes);
   MS_ASSERT(removed_set);
-  auto *eltwise = new (std::nothrow)
+  auto *inner_kernel = new (std::nothrow)
     FusionEltwiseOpenCLKernel(reinterpret_cast<OpParameter *>(param), old->in_tensors(), old->out_tensors(), nullptr);
-  if (eltwise == nullptr) {
+  if (inner_kernel == nullptr) {
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
   }
+  inner_kernel->set_registry_data_type(old->desc().data_type);
+
+  auto *eltwise = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+  if (eltwise == nullptr) {
+    delete inner_kernel;
+    MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
+    return;
+  }
+
   eltwise->set_name("FusionEltwise: " + param->name_);
   eltwise->set_in_kernels(old->in_kernels());
   eltwise->set_out_kernels(old->out_kernels());
+  eltwise->set_desc(old->desc());
+
+  inner_kernel->in_kernels_ = &eltwise->in_kernels();
 
   for (auto *pred : old->in_kernels()) {
     MS_ASSERT(pred);
@@ -565,7 +581,7 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
       tmp.begin(), tmp.end(), [&](LiteKernel *x) { return x == old; }, eltwise);
     succ->set_in_kernels(tmp);
   }
-  std::replace(nodes->begin(), nodes->end(), old, reinterpret_cast<LiteKernel *>(eltwise));
+  std::replace(nodes->begin(), nodes->end(), old, eltwise);
   removed_set->insert(old);
 }
 
@@ -623,7 +639,7 @@ void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std
   if (!node->InferShapeDone()) {
     return;
   }
-  switch (node->Type()) {
+  switch (node->type()) {
     case schema::PrimitiveType_Conv2DFusion:
     case schema::PrimitiveType_Conv2dTransposeFusion: {
       TryMergePadXxx<ConvParameter>(node, removed_set, nodes);
@@ -673,11 +689,12 @@ void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std
 
 int OpenCLSubGraph::FusionPass() {
   MS_LOG(DEBUG) << "start Fusion";
-
+  auto sub_in_tensors = this->in_tensors();
   std::vector<LiteKernel *> input_nodes;
   for (auto *node : nodes_) {
-    if (std::any_of(node->in_tensors().begin(), node->in_tensors().end(),
-                    [&](lite::Tensor *tensor) { return AIsInB(tensor, &in_tensors_); })) {
+    auto in_tensors = node->in_tensors();
+    if (std::any_of(in_tensors.begin(), in_tensors.end(),
+                    [&](lite::Tensor *tensor) { return AIsInB(tensor, &sub_in_tensors); })) {
       input_nodes.push_back(node);
     }
   }

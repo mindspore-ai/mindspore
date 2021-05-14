@@ -18,17 +18,17 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_ELU_GRAD_FP32_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32/elu_fp32.h"
 
 namespace mindspore {
 namespace kernel {
 
-class EluGradCPUKernel : public LiteKernel {
+class EluGradCPUKernel : public InnerKernel {
  public:
   EluGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~EluGradCPUKernel() = default;
 
   int Init() override;

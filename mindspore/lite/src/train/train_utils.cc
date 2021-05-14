@@ -33,6 +33,15 @@ size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor
   return where.size();
 }
 
+size_t TSFindTensorByName(const std::vector<lite::Tensor *> &where, const std::string &searchParameter) {
+  for (size_t i = 0; i < where.size(); i++) {
+    if (where[i]->tensor_name() == searchParameter) {
+      return i;
+    }
+  }
+  return where.size();
+}
+
 kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> &where, const std::string &searchParameter) {
   auto it = std::find_if(where.begin(), where.end(),
                          [&searchParameter](const kernel::LiteKernel *k) { return (k->name() == searchParameter); });

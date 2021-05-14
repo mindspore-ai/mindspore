@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ELU_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/fp32/elu_fp32.h"
 
 namespace mindspore::kernel {
-class EluCPUKernel : public LiteKernel {
+class EluCPUKernel : public InnerKernel {
  public:
   EluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     elu_parameter_ = reinterpret_cast<EluParameter *>(op_parameter_);
   }
   ~EluCPUKernel() = default;

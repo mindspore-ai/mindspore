@@ -32,11 +32,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 class SubGraphNpuKernel : public SubGraphKernel {
  public:
-  SubGraphNpuKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                    const std::vector<kernel::LiteKernel *> &inKernels,
+  SubGraphNpuKernel(const std::vector<kernel::LiteKernel *> &inKernels,
                     const std::vector<kernel::LiteKernel *> &outKernels, const std::vector<kernel::LiteKernel *> &nodes,
-                    const lite::InnerContext *ctx = nullptr, lite::NPUManager *npu_manager = nullptr)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx), npu_manager_(npu_manager) {
+                    Kernel *kernel, lite::NPUManager *npu_manager = nullptr)
+      : SubGraphKernel(inKernels, outKernels, nodes, kernel), npu_manager_(npu_manager) {
     subgraph_type_ = kNpuSubGraph;
     desc_.arch = kernel::KERNEL_ARCH::kNPU;
   }
@@ -47,13 +46,9 @@ class SubGraphNpuKernel : public SubGraphKernel {
 
   int Prepare() override;
 
-  int PreProcess() override { return RET_OK; }
+  int Execute() override;
 
-  int Run() override;
-
-  int Run(const KernelCallBack &before, const KernelCallBack &after) override { return this->Run(); }
-
-  int PostProcess() override { return RET_OK; }
+  int Execute(const KernelCallBack &before, const KernelCallBack &after) override { return this->Execute(); }
 
   int ReSize() override {
     MS_LOG(ERROR) << "NPU does not support the resize function temporarily.";

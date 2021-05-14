@@ -59,7 +59,7 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
     return RET_OK;
   }
   for (auto &node : subgraph_kernel->nodes()) {
-    if (node->Type() != schema::PrimitiveType_Call) {
+    if (node->type() != schema::PrimitiveType_Call) {
       continue;
     }
     call_node_ = node;
@@ -290,7 +290,7 @@ int LiteSwitchOpActor::CompileFalseBranchArrow() {
 
 int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel) {
   for (auto &node : subgraph_kernel->nodes()) {
-    if (node->Type() != schema::PrimitiveType_Call) {
+    if (node->type() != schema::PrimitiveType_Call) {
       continue;
     }
     call_node_ = node;

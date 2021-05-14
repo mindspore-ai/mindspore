@@ -21,21 +21,21 @@ class SigmoidCrossEntropyWithLogits(Expander):
     """SigmoidCrossEntropyWithLogits expander"""
 
     def _expand(self, graph_builder):
-        logits, label = self.inputs
-        # Calculate sigmoid_cross_entropy_with_logits(logits, label)
+        logits, labels = self.inputs
+        # Calculate sigmoid_cross_entropy_with_logits(logits, labels)
         # formula of sigmoid_cross_entropy_with_logits is:
-        #     -(label * log(sigmoid(logits)) + (1 - label) * log(1 - sigmoid(logits)))
+        #     -(labels * log(sigmoid(logits)) + (1 - labels) * log(1 - sigmoid(logits)))
+        # To ensure stability and avoid overflow, the formula equal to :
+        #     max(logits, 0) - logits * labels + log(1 + exp(-abs(logits)))
         const_one = graph_builder.value(logits.dtype, 1.0)
-        neg_x = graph_builder.emit('Neg', [logits])
-        exp_neg_x = graph_builder.emit('Exp', [neg_x])
-        add_exp = graph_builder.emit('Add', [const_one, exp_neg_x])
-        p = graph_builder.emit('RealDiv', [const_one, add_exp])
-        one_sub_p = graph_builder.emit('Sub', [const_one, p])
-        one_sub_label = graph_builder.emit('Sub', [const_one, label])
-        log_p = graph_builder.emit('Log', [p])
-        log_one_sub_p = graph_builder.emit('Log', [one_sub_p])
-        res_tmp_1 = graph_builder.emit('Mul', [one_sub_label, log_one_sub_p])
-        res_tmp_2 = graph_builder.emit('Mul', [label, log_p])
-        res_tmp = graph_builder.emit('Add', [res_tmp_1, res_tmp_2])
-        res = graph_builder.emit('Neg', [res_tmp])
+        const_zero = graph_builder.value(logits.dtype, 0.0)
+        max_logits = graph_builder.emit('Maximum', [logits, const_zero])
+        logits_mul_labels = graph_builder.emit('Mul', [logits, labels])
+        abs_logits = graph_builder.emit('Abs', [logits])
+        neg_abs_logits = graph_builder.emit('Neg', [abs_logits])
+        exp_neg_abs_logits = graph_builder.emit('Exp', [neg_abs_logits])
+        one_add_exp_neg_abs_logits = graph_builder.emit('Add', [const_one, exp_neg_abs_logits])
+        log_one_add_exp_neg_abs_logits = graph_builder.emit('Log', [one_add_exp_neg_abs_logits])
+        res_tmp = graph_builder.emit('Sub', [max_logits, logits_mul_labels])
+        res = graph_builder.emit('Add', [res_tmp, log_one_add_exp_neg_abs_logits])
         return res

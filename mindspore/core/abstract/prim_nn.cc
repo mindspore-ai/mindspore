@@ -409,13 +409,6 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   return ret;
 }
 
-AbstractBasePtr InferImplRelu(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  return args_spec_list[0]->Broaden();
-}
-
 AbstractBasePtr InferImplHSigmoid(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.

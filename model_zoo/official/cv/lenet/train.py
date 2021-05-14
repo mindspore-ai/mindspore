@@ -19,14 +19,11 @@ python train.py --data_path /YourDataPath
 """
 
 import os
-# import sys
-# sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_rank_id
-
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 from src.dataset import create_dataset
 from src.lenet import LeNet5
+
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
@@ -35,12 +32,6 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.common import set_seed
 
 set_seed(1)
-
-if os.path.exists(config.data_path_local):
-    config.data_path = config.data_path_local
-    config.checkpoint_path = os.path.join(config.checkpoint_path, str(get_rank_id()))
-else:
-    config.checkpoint_path = os.path.join(config.output_path, config.checkpoint_path, str(get_rank_id()))
 
 def modelarts_pre_process():
     pass
@@ -59,7 +50,7 @@ def train_lenet():
     time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                  keep_checkpoint_max=config.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", directory=config.checkpoint_path, config=config_ck)
+    ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", directory=config.ckpt_path, config=config_ck)
 
     if config.device_target != "Ascend":
         model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})

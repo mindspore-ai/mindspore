@@ -17,6 +17,7 @@
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "mindrt/include/async/async.h"
 #include "common/trans.h"
 #include "utils/log_adapter.h"
@@ -60,18 +61,26 @@ void DataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
+  // No output.
+  if ((output_op_arrows_.size() == 0) && (output_result_arrows_.size() == 0)) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
 
+  // Send graph output result.
+  SendResult(context);
+
   // Send output data.
-  auto output_device_tensors = buffers_.front();
-  for (auto &op_arrow : output_op_arrows_) {
+  const auto &output_device_tensors = buffers_.front();
+  for (const auto &op_arrow : output_op_arrows_) {
     MS_EXCEPTION_IF_NULL(op_arrow);
     if (IntToSize(op_arrow->from_output_index_) >= output_device_tensors.size()) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
     }
-    auto device_address = output_device_tensors[op_arrow->from_output_index_];
+    auto &device_address = output_device_tensors[op_arrow->from_output_index_];
     auto data = std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, device_address, op_arrow->to_input_index_);
     Async(op_arrow->to_op_id_, &KernelActor::RunOpData, data, context);
   }
@@ -122,6 +131,14 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   buffers_.pop();
 }
 
+void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_, result_arrow->from_output_index_,
+          result_arrow->to_input_index_, context);
+  }
+}
+
 void HostQueueDataSourceActor::FillDataBuffer() {
   // Construct device tensors.
   std::vector<DeviceTensor *> device_tensors;
@@ -169,6 +186,17 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
   FreeMemory(context);
   SendOutput(context);
   buffers_.pop();
+}
+
+void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    if (IntToSize(result_arrow->from_output_index_) >= data_nodes_.size()) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
+    }
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_nodes_[result_arrow->from_output_index_], 0,
+          result_arrow->to_input_index_, context);
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

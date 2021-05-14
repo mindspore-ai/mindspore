@@ -30,7 +30,7 @@ class Executor {
 
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
                       const std::vector<Tensor *> &outputs) {
-    ctx_ = static_cast<const lite::InnerContext *>(kernels[0]->context());
+    ctx_ = static_cast<const lite::InnerContext *>(kernels[0]->Context());
     return RET_OK;
   }
 

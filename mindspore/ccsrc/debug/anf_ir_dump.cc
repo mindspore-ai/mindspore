@@ -114,7 +114,7 @@ void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer) 
     return;
   }
 
-  buffer << "#IR entry      : @" << graph->ToString() << "." << graph->debug_info()->get_id() << std::endl;
+  buffer << "#IR entry      : @" << graph->ToString() << std::endl;
   buffer << "#attrs         :" << std::endl;
   for (const auto &attr : graph->attrs()) {
     buffer << attr.first << " : ";
@@ -216,7 +216,7 @@ void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
   if (IsValueNode<FuncGraph>(op)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(op);
     if (fg != nullptr) {
-      gsub->buffer << "call @" << fg->ToString() << "." << fg->debug_info()->get_id();
+      gsub->buffer << "call @" << fg->ToString();
     }
   } else if (op->isa<CNode>()) {
     if (gsub->local_var_map.find(op) != gsub->local_var_map.end()) {
@@ -224,7 +224,7 @@ void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
     } else {
       auto node = op->cast<CNodePtr>();
       auto fg = node->func_graph();
-      gsub->buffer << "$(" << fg->ToString() << "." << fg->debug_info()->get_id() << ":" << node->ToString() << ")";
+      gsub->buffer << "$(" << fg->ToString() << ":" << node->ToString() << ")";
     }
   } else if (op->isa<ValueNode>()) {
     gsub->buffer << GetValueNode(op)->ToString();
@@ -262,14 +262,14 @@ void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_ma
         } else {
           auto node = in->cast<CNodePtr>();
           auto fg = node->func_graph();
-          gsub->buffer << "$(" << fg->ToString() << "." << fg->debug_info()->get_id() << ":" << node->ToString() << ")";
+          gsub->buffer << "$(" << fg->ToString() << ":" << node->ToString() << ")";
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
         // non Primitive valuenode
         gsub->buffer << GetValueNode(in)->ToString();
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
-        gsub->buffer << "@" << fg->ToString() << "." << fg->debug_info()->get_id();
+        gsub->buffer << "@" << fg->ToString();
       } else {
         gsub->buffer << in->ToString();
       }
@@ -501,8 +501,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
       }
       fout << std::endl;
     }
-    fout << "subgraph @" << sg.first->ToString() << ".";
-    fout << sg.first->debug_info()->get_id() << "(";
+    fout << "subgraph @" << sg.first->ToString() << "(";
     if (sg.first != graph) {
       std::vector<AnfNodePtr> parameters = sg.first->parameters();
       if (parameters.size() == 1) {

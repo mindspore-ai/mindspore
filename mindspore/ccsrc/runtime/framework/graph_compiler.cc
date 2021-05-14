@@ -256,10 +256,6 @@ GraphId GraphCompiler::CompileGraph(session::OpRunInfo *op_run_info, const Graph
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
-  // Transform graph to actor DAG, contains build and link.
-  GraphScheduler::GetInstance().Transform({graph}, {device_context_}, input_tensors, nullptr,
-                                          GraphExecutionStrategy::kStep);
-  run_op_graphs_[graph_info] = graph;
   return graph->graph_id();
 }
 

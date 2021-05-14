@@ -15,7 +15,6 @@
 """YoloV3 train."""
 import os
 import time
-import argparse
 import datetime
 
 from mindspore.context import ParallelMode
@@ -36,8 +35,11 @@ from src.util import AverageMeter, get_param_groups
 from src.lr_scheduler import get_lr
 from src.yolo_dataset import create_yolo_dataset
 from src.initializer import default_recurisive_init, load_yolov3_params
-from src.config import ConfigYOLOV3DarkNet53
 from src.util import keep_loss_fp32
+
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 set_seed(1)
 
@@ -51,79 +53,6 @@ class BuildTrainNetwork(nn.Cell):
         output = self.network(input_data)
         loss = self.criterion(output, label)
         return loss
-
-
-def parse_args():
-    """Parse train arguments."""
-    parser = argparse.ArgumentParser('mindspore coco training')
-
-    # device related
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented. (Default: Ascend)')
-
-    # dataset related
-    parser.add_argument('--data_dir', type=str, help='Train dataset directory.')
-    parser.add_argument('--per_batch_size', default=32, type=int, help='Batch size for Training. Default: 32.')
-
-    # network related
-    parser.add_argument('--pretrained_backbone', default='', type=str,
-                        help='The ckpt file of DarkNet53. Default: "".')
-    parser.add_argument('--resume_yolov3', default='', type=str,
-                        help='The ckpt file of YOLOv3, which used to fine tune. Default: ""')
-
-    # optimizer and lr related
-    parser.add_argument('--lr_scheduler', default='exponential', type=str,
-                        help='Learning rate scheduler, options: exponential, cosine_annealing. Default: exponential')
-    parser.add_argument('--lr', default=0.001, type=float, help='Learning rate. Default: 0.001')
-    parser.add_argument('--lr_epochs', type=str, default='220,250',
-                        help='Epoch of changing of lr changing, split with ",". Default: 220,250')
-    parser.add_argument('--lr_gamma', type=float, default=0.1,
-                        help='Decrease lr by a factor of exponential lr_scheduler. Default: 0.1')
-    parser.add_argument('--eta_min', type=float, default=0., help='Eta_min in cosine_annealing scheduler. Default: 0')
-    parser.add_argument('--T_max', type=int, default=320, help='T-max in cosine_annealing scheduler. Default: 320')
-    parser.add_argument('--max_epoch', type=int, default=320, help='Max epoch num to train the model. Default: 320')
-    parser.add_argument('--warmup_epochs', default=0, type=float, help='Warmup epochs. Default: 0')
-    parser.add_argument('--weight_decay', type=float, default=0.0005, help='Weight decay factor. Default: 0.0005')
-    parser.add_argument('--momentum', type=float, default=0.9, help='Momentum. Default: 0.9')
-
-    # loss related
-    parser.add_argument('--loss_scale', type=int, default=1024, help='Static loss scale. Default: 1024')
-    parser.add_argument('--label_smooth', type=int, default=0, help='Whether to use label smooth in CE. Default:0')
-    parser.add_argument('--label_smooth_factor', type=float, default=0.1,
-                        help='Smooth strength of original one-hot. Default: 0.1')
-
-    # logging related
-    parser.add_argument('--log_interval', type=int, default=100, help='Logging interval steps. Default: 100')
-    parser.add_argument('--ckpt_path', type=str, default='outputs/', help='Checkpoint save location. Default: outputs/')
-    parser.add_argument('--ckpt_interval', type=int, default=None, help='Save checkpoint interval. Default: None')
-
-    parser.add_argument('--is_save_on_master', type=int, default=1,
-                        help='Save ckpt on master or all rank, 1 for master, 0 for all ranks. Default: 1')
-
-    # distributed related
-    parser.add_argument('--is_distributed', type=int, default=1,
-                        help='Distribute train or not, 1 for yes, 0 for no. Default: 1')
-    parser.add_argument('--rank', type=int, default=0, help='Local rank of distributed. Default: 0')
-    parser.add_argument('--group_size', type=int, default=1, help='World size of device. Default: 1')
-
-    # profiler init
-    parser.add_argument('--need_profiler', type=int, default=0,
-                        help='Whether use profiler. 0 for no, 1 for yes. Default: 0')
-
-    # reset default config
-    parser.add_argument('--training_shape', type=str, default="", help='Fix training shape. Default: ""')
-    parser.add_argument('--resize_rate', type=int, default=None,
-                        help='Resize rate for multi-scale training. Default: None')
-
-    args, _ = parser.parse_known_args()
-    if args.lr_scheduler == 'cosine_annealing' and args.max_epoch > args.T_max:
-        args.T_max = args.max_epoch
-
-    args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
-    args.data_root = os.path.join(args.data_dir, 'train2014')
-    args.annFile = os.path.join(args.data_dir, 'annotations/instances_train2014.json')
-
-    return args
 
 
 def conver_training_shape(args):
@@ -151,6 +80,7 @@ def network_init(args):
             init("nccl")
         args.rank = get_rank()
         args.group_size = get_group_size()
+
     # select for master rank save ckpt or all rank save, compatible for model parallel
     args.rank_save_ckpt_flag = 0
     if args.is_save_on_master:
@@ -175,47 +105,105 @@ def parallel_init(args):
         degree = get_group_size()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
-def train():
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.ckpt_path = os.path.join(config.output_path, config.ckpt_path)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
     """Train function."""
-    args = parse_args()
-    profiler = network_init(args)
+    if config.lr_scheduler == 'cosine_annealing' and config.max_epoch > config.T_max:
+        config.T_max = config.max_epoch
+    config.lr_epochs = list(map(int, config.lr_epochs.split(',')))
+    config.data_root = os.path.join(config.data_dir, 'train2014')
+    config.annFile = os.path.join(config.data_dir, 'annotations/instances_train2014.json')
+
+    profiler = network_init(config)
 
     loss_meter = AverageMeter('loss')
-    parallel_init(args)
+    parallel_init(config)
 
     network = YOLOV3DarkNet53(is_training=True)
     # default is kaiming-normal
     default_recurisive_init(network)
-    load_yolov3_params(args, network)
+    load_yolov3_params(config, network)
 
     network = YoloWithLossCell(network)
-    args.logger.info('finish get network')
+    config.logger.info('finish get network')
 
-    config = ConfigYOLOV3DarkNet53()
-    config.label_smooth = args.label_smooth
-    config.label_smooth_factor = args.label_smooth_factor
+    config.label_smooth = config.label_smooth
+    config.label_smooth_factor = config.label_smooth_factor
 
-    if args.training_shape:
-        config.multi_scale = [conver_training_shape(args)]
-    if args.resize_rate:
-        config.resize_rate = args.resize_rate
+    if config.training_shape:
+        config.multi_scale = [conver_training_shape(config)]
 
-    ds, data_size = create_yolo_dataset(image_dir=args.data_root, anno_path=args.annFile, is_training=True,
-                                        batch_size=args.per_batch_size, max_epoch=args.max_epoch,
-                                        device_num=args.group_size, rank=args.rank, config=config)
-    args.logger.info('Finish loading dataset')
+    ds, data_size = create_yolo_dataset(image_dir=config.data_root, anno_path=config.annFile, is_training=True,
+                                        batch_size=config.per_batch_size, max_epoch=config.max_epoch,
+                                        device_num=config.group_size, rank=config.rank, config=config)
+    config.logger.info('Finish loading dataset')
 
-    args.steps_per_epoch = int(data_size / args.per_batch_size / args.group_size)
+    config.steps_per_epoch = int(data_size / config.per_batch_size / config.group_size)
 
-    if not args.ckpt_interval:
-        args.ckpt_interval = args.steps_per_epoch
+    if config.ckpt_interval <= 0:
+        config.ckpt_interval = config.steps_per_epoch
 
-    lr = get_lr(args)
+    lr = get_lr(config)
     opt = Momentum(params=get_param_groups(network),
                    learning_rate=Tensor(lr),
-                   momentum=args.momentum,
-                   weight_decay=args.weight_decay,
-                   loss_scale=args.loss_scale)
+                   momentum=config.momentum,
+                   weight_decay=config.weight_decay,
+                   loss_scale=config.loss_scale)
     is_gpu = context.get_context("device_target") == "GPU"
     if is_gpu:
         loss_scale_value = 1.0
@@ -224,18 +212,18 @@ def train():
                                           level="O2", keep_batchnorm_fp32=False)
         keep_loss_fp32(network)
     else:
-        network = TrainingWrapper(network, opt, sens=args.loss_scale)
+        network = TrainingWrapper(network, opt, sens=config.loss_scale)
         network.set_train()
 
-    if args.rank_save_ckpt_flag:
+    if config.rank_save_ckpt_flag:
         # checkpoint save
-        ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
-        ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
+        ckpt_max_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
-        save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
+        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(config.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
-                                  prefix='{}'.format(args.rank))
+                                  prefix='{}'.format(config.rank))
         cb_params = _InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = ckpt_max_num
@@ -250,7 +238,7 @@ def train():
     for i, data in enumerate(data_loader):
         images = data["image"]
         input_shape = images.shape[2:4]
-        args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
+        config.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
 
         images = Tensor.from_numpy(images)
 
@@ -265,34 +253,34 @@ def train():
                        batch_gt_box2)
         loss_meter.update(loss.asnumpy())
 
-        if args.rank_save_ckpt_flag:
+        if config.rank_save_ckpt_flag:
             # ckpt progress
             cb_params.cur_step_num = i + 1  # current step number
             cb_params.batch_num = i + 2
             ckpt_cb.step_end(run_context)
 
-        if i % args.log_interval == 0:
+        if i % config.log_interval == 0:
             time_used = time.time() - t_end
-            epoch = int(i / args.steps_per_epoch)
-            per_step_time = time_used/args.log_interval
-            fps = args.per_batch_size * (i - old_progress) * args.group_size / time_used
-            if args.rank == 0:
-                args.logger.info(
+            epoch = int(i / config.steps_per_epoch)
+            per_step_time = time_used/config.log_interval
+            fps = config.per_batch_size * (i - old_progress) * config.group_size / time_used
+            if config.rank == 0:
+                config.logger.info(
                     'epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{},'
                     ' per_step_time:{}'.format(epoch, i, loss_meter, fps, lr[i], per_step_time))
             t_end = time.time()
             loss_meter.reset()
             old_progress = i
 
-        if (i + 1) % args.steps_per_epoch == 0 and args.rank_save_ckpt_flag:
+        if (i + 1) % config.steps_per_epoch == 0 and config.rank_save_ckpt_flag:
             cb_params.cur_epoch_num += 1
 
-        if args.need_profiler:
+        if config.need_profiler:
             if i == 10:
                 profiler.analyse()
                 break
-    args.logger.info('==========end training===============')
+    config.logger.info('==========end training===============')
 
 
 if __name__ == "__main__":
-    train()
+    run_train()

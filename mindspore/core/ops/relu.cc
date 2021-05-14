@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "ops/relu.h"
+#include <string>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <vector>
+
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameReLU, ReLU);
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 1, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
+}
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  CheckAndConvertUtils::CheckInteger("ReLU infer", input_args.size(), kGreaterEqual, 1, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto x_type_map = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type_map);
+  auto x_type = x_type_map->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(x_type);
+  std::set<TypePtr> valid_x_type = {kTensorType};
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
+}
+AbstractBasePtr ReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) {
+  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
+                                                    InferShape(primitive, input_args));
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ReLU, prim::kPrimRelu, ReLUInfer, nullptr, true);
+
 }  // namespace ops
 }  // namespace mindspore

@@ -37,14 +37,15 @@ then
     fi
     dataset_type=$2
 fi
-
+config_path="./${dataset_type}_config.yaml"
+echo "config path is : ${config_path}"
 
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-RANK_TABLE_FILE=$(realpath $1)
-export RANK_TABLE_FILE
-echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
+PATH1=$(realpath $1)
+export RANK_TABLE_FILE=$PATH1
+echo "RANK_TABLE_FILE=${PATH1}"
 
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))
@@ -55,10 +56,12 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp -r ./src ./train_parallel$i
+    cp -r ./model_utils ./train_parallel$i
+    cp -r ./*.yaml ./train_parallel$i
     cp ./train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --device_id=$i --dataset_name=$dataset_type> log 2>&1 &
+    python train.py --config_path=$config_path --dataset_name=$dataset_type> log 2>&1 &
     cd ..
 done

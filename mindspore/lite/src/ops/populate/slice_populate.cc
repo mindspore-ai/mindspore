@@ -37,13 +37,16 @@ OpParameter *PopulateSliceParameter(const void *prim) {
 
   param->op_parameter_.type_ = primitive->value_type();
   auto axes = value->axes();
-  if (axes == nullptr) {
-    MS_LOG(ERROR) << "axes is nullptr";
-    free(param);
-    return nullptr;
-  }
-  for (size_t i = 0; i < axes->size(); ++i) {
-    param->axis_[i] = axes->Get(i);
+  // if begin is not const input, then axis can not be decided in converter
+  if (axes != nullptr) {
+    for (size_t i = 0; i < axes->size(); ++i) {
+      param->axis_[i] = axes->Get(i);
+    }
+  } else {
+    // use default axes
+    for (int32_t i = 0; i < DIMENSION_8D; i++) {
+      param->axis_[i] = i;
+    }
   }
   return reinterpret_cast<OpParameter *>(param);
 }

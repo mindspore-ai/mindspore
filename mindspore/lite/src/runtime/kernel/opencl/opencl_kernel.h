@@ -22,7 +22,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/errorcode.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/weight_decoder.h"
@@ -168,11 +168,11 @@ struct BaseTuningParameter {
     return ostrm;
   }
 };
-class OpenCLKernel : public LiteKernel {
+class OpenCLKernel : public InnerKernel {
  public:
   OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
   }
   ~OpenCLKernel() override = default;
@@ -180,7 +180,6 @@ class OpenCLKernel : public LiteKernel {
 
   int Prepare() override { return RET_OK; }
   int PreProcess() override;
-  int PostProcess() override;
   int ReSize() override;
   int Run() override { return RET_ERROR; }
 
@@ -209,7 +208,7 @@ class OpenCLKernel : public LiteKernel {
   static std::set<size_t> GenerateLocalByGlobal(size_t global_i);
 
   virtual std::string Key() {
-    std::string key = type_str();
+    std::string key = schema::EnumNamePrimitiveType(type());
     key += "_global";
     for (auto i : global_size_) {
       key += "_" + std::to_string(i);
@@ -234,9 +233,9 @@ class OpenCLKernel : public LiteKernel {
   static inline std::map<std::string, BaseTuningParameter> tuned_param_cache_;
 };
 template <class T>
-kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                        const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::Context *ctx, const kernel::KernelKey &desc) {
+kernel::InnerKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                         const lite::Context *ctx, const kernel::KernelKey &desc) {
   auto *kernel = new (std::nothrow)
     T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {

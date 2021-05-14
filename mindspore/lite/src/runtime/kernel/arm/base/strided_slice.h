@@ -19,14 +19,14 @@
 
 #include <vector>
 #include "nnacl/fp32/strided_slice_fp32.h"
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 
 namespace mindspore::kernel {
-class StridedSliceCPUKernel : public LiteKernel {
+class StridedSliceCPUKernel : public InnerKernel {
  public:
   StridedSliceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<StridedSliceParameter *>(parameter);
   }
   ~StridedSliceCPUKernel() override = default;

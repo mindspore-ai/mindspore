@@ -831,6 +831,7 @@ class MatMul(PrimitiveWithCheck):
         if np.all(np.array(x1) != -1) and np.all(np.array(x2) != -1):
             if x1_col != x2_row:
                 raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
+                                 f' dimensions must be equal,'
                                  + f' got {x1_col} and {x2_row}, with x1 shape {x1}(transpose_a={self.transpose_a})'
                                  + f', x2 shape {x2}(transpose_b={self.transpose_b}).')
         # set attribute
@@ -2421,7 +2422,7 @@ class Mod(_MathBinaryOp):
         ValueError: When `input_x` and `input_y` are not the same dtype.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
@@ -2482,7 +2483,8 @@ class Floor(PrimitiveWithInfer):
 
 class FloorMod(_MathBinaryOp):
     """
-    Computes the remainder of division element-wise.
+    Computes the remainder of division element-wise. It's a flooring divide.
+    E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -3747,9 +3749,9 @@ class Asin(PrimitiveWithInfer):
 class NMSWithMask(PrimitiveWithInfer):
     r"""
     When object detection problem is performed in the computer vision field, object detection algorithm generates
-    a plurality of bounding boxes. Selects some bounding boxes in descending order of score. Use the box with the
-    highest score calculate the overlap between other boxes and the current box, and delete the box based on a
-    certain threshold(IOU). The IOU is as follows,
+    a plurality of bounding boxes. Selects some bounding boxes in descending order of score(Descending order is not
+    supported in Ascend platform currently). Use the box with the highest score calculate the overlap between other
+    boxes and the current box, and delete the box based on a certain threshold(IOU). The IOU is as follows,
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
@@ -3883,7 +3885,7 @@ class Sign(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
@@ -4084,7 +4086,7 @@ class Atan2(_MathBinaryOp):
         TypeError: If `input_x` or `input_y` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1]), mindspore.float32)

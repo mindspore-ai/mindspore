@@ -26,6 +26,8 @@
 #include "tools/converter/ops/ops_def.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/converter_context.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite {
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
@@ -35,12 +37,28 @@ bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
 }
 
+void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int i, std::vector<int32_t> *shape) {
+  if (layer.type() == "InnerProduct") {
+    if (i == 0) {
+      if (shape->size() == 4) {
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+      }
+    } else if (i == 1) {
+      if (shape->size() == 4) {
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+        shape->erase(shape->begin());
+      }
+    }
+  }
+}
+
 CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file,
-                                       const QuantType &quant_type) {
+int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -344,6 +362,8 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
     std::vector<int32_t> shape;
     ConvertShape(layer.blobs(i), &shape);
 
+    FcSqueezeWeightBias(layer, i, &shape);
+
     // cal Weight num
     auto parameter = res_graph_->add_parameter();
     auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
@@ -468,4 +488,6 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
 }
 
 int CaffeModelParser::PostAdjust() { return RET_OK; }
+
+REG_MODEL_PARSER(CAFFE, LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

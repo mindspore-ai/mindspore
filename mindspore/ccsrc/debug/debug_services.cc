@@ -629,6 +629,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       d = opendir(specific_dump_dir.c_str());
       if (d != nullptr) {
         struct dirent *dir = nullptr;
+        bool found_file = false;
         while ((dir = readdir(d)) != NULL) {
           if (dir->d_type == DT_REG) {
             std::string file_name = dir->d_name;
@@ -659,7 +660,12 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
             infile.close();
             AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], data_size,
                             type_name, shape, buffer, result_list);
+            found_file = true;
           }
+        }
+        if (!found_file) {
+          AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], 0, type_name, shape,
+                          buffer, result_list);
         }
       } else {
         MS_LOG(INFO) << "directory does not exist!";

@@ -17,6 +17,7 @@
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -36,9 +37,13 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
     current_count_++;
     MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
                  << ", current count: " << current_count_;
+
+    // Send loop count to output actor.
+    Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
+
     if (current_count_ == loop_count_) {
       current_count_ = 0;
-      SET_OPCONTEXT_SUCCESS_RET((*context));
+      return;
     }
 
     // Send output control.

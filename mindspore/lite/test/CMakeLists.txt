@@ -145,6 +145,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/kernel_interface_registry.cc
         ${LITE_DIR}/src/kernel_registry.cc
         ${LITE_DIR}/src/register_kernel.cc
+        ${LITE_DIR}/src/inner_kernel.cc
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_kernel_util.cc
         ${LITE_DIR}/src/lite_session.cc
@@ -159,7 +160,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/utils.cc
-        ${LITE_DIR}/src/common/loader_util.cc
+        ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/tools/common/flag_parser.cc
@@ -286,12 +287,15 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fisson/fisson_util.cc
             ${LITE_DIR}/tools/optimizer/fisson/iter_node_outputs.cc
             ${LITE_DIR}/tools/optimizer/fisson/node_out_shapes.cc
+            ${LITE_DIR}/tools/optimizer/fisson/multi_conv_split_pass.cc
+            ${LITE_DIR}/tools/optimizer/parallel/multi_node_split.cc
+            ${LITE_DIR}/tools/optimizer/parallel/multi_conv_info.cc
             ${LITE_DIR}/tools/optimizer/parallel/parallel_pass.cc
             ${LITE_DIR}/tools/optimizer/parallel/operator_info.cc
-            ${LITE_DIR}/tools/optimizer/parallel/dynamic_creator.cc
-            ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
             ${LITE_DIR}/tools/optimizer/parallel/operator_info_register.cc
+            ${LITE_DIR}/tools/optimizer/parallel/conv2d_info.cc
             ${LITE_DIR}/tools/optimizer/parallel/spliter.cc
+            ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
             ${LITE_DIR}/tools/common/graph_util.cc
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc
@@ -340,7 +344,7 @@ set(TEST_SRC
         ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
-        ${TEST_DIR}/ut/src/loader_util_test.cc
+        ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
         )
 
@@ -428,6 +432,7 @@ if(ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_exporter_mid
+            mslite_converter_plugin_reg
             tflite_parser_mid
             caffe_parser_mid
             onnx_parser_mid

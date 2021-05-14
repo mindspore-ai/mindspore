@@ -61,7 +61,7 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     del_end = true;
   }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
-    if (a_shape[a_shape_size - 3 - i] != b_shape[b_shape_size - 3 - i]) {
+    if (a_shape[i] != b_shape[i]) {
       return NNACL_INPUT_TENSOR_ERROR;
     }
   }

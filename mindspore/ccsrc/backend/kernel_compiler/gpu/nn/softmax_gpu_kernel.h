@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class SoftmaxGpuKernel : public GpuKernel {
         input_size_(0),
         output_size_(0),
         workspace_size_(0),
-        axis_(0),
+        need_transpose_(false),
         shape_size_(0),
         batch_size_(0),
         channel_size_(0),
@@ -62,7 +62,7 @@ class SoftmaxGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
 
-    if (axis_ == 1) {
+    if (need_transpose_ == false) {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                   cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, input_descriptor_,
                                                       input_addr, &beta, output_descriptor_, output_addr),
@@ -180,19 +180,29 @@ class SoftmaxGpuKernel : public GpuKernel {
     if (input_shape.size() == 2) {
       InitSizeByAxis2D(input_shape, axis);
     } else {
-      InitSizeByAxisLastDim(input_shape, axis);
+      int axis_pos = axis;
+      if (axis_pos < 0) {
+        axis_pos += input_shape.size();
+      }
+
+      if (axis_pos == SizeToInt(input_shape.size() - 1)) {
+        InitSizeByAxisLastDim(input_shape, axis_pos);
+      } else {
+        InitSizeByAxisND(input_shape, axis_pos);
+      }
     }
   }
 
   void InitSizeByAxis2D(const std::vector<size_t> &input_shape, const int &axis) {
-    axis_ = axis;
-    if (axis_ < 0) {
-      axis_ += SizeToInt(shape_size_);
+    int axis_pos = axis;
+    if (axis_pos < 0) {
+      axis_pos += SizeToInt(shape_size_);
     }
-    if (axis_ == 1) {
+    if (axis_pos == 1) {
       batch_size_ = input_shape[0];
       channel_size_ = input_shape[1];
-    } else if (axis_ == 0) {
+      need_transpose_ = false;
+    } else if (axis_pos == 0) {
       batch_size_ = input_shape[1];
       channel_size_ = input_shape[0];
       input_shape_.push_back(input_shape[0]);
@@ -201,6 +211,7 @@ class SoftmaxGpuKernel : public GpuKernel {
       transpose_shape_.push_back(input_shape[0]);
       transpose_axis_.push_back(1);
       transpose_axis_.push_back(0);
+      need_transpose_ = true;
     } else {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but axis(" << axis << ") is invalid.";
     }
@@ -226,7 +237,7 @@ class SoftmaxGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size() - 1; i++) {
       n *= input_shape[i];
     }
-    axis_ = 1;
+
     batch_size_ = n;
     channel_size_ = input_shape[axis_pos];
     height_ = 1;
@@ -235,6 +246,42 @@ class SoftmaxGpuKernel : public GpuKernel {
     output_size_ = input_size_;
     input_shape_.push_back(batch_size_);
     input_shape_.push_back(channel_size_);
+    need_transpose_ = false;
+  }
+
+  void InitSizeByAxisND(const std::vector<size_t> &input_shape, const int &axis) {
+    size_t axis_pos = axis;
+    if (axis_pos < 0) {
+      axis_pos += input_shape.size();
+    }
+
+    // n keep tracks of squeezed size
+    size_t n = 1;
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      input_shape_.push_back(input_shape[i]);
+      if (i == axis_pos) {
+        size_t lastIndex = input_shape.size() - 1;
+        transpose_shape_.push_back(input_shape[lastIndex]);
+        transpose_axis_.push_back(lastIndex);
+      } else if (i == (input_shape.size() - 1)) {
+        transpose_shape_.push_back(input_shape[axis_pos]);
+        transpose_axis_.push_back(axis_pos);
+        n *= input_shape[i];
+      } else {
+        transpose_shape_.push_back(input_shape[i]);
+        transpose_axis_.push_back(i);
+        n *= input_shape[i];
+      }
+    }
+
+    batch_size_ = n;
+    channel_size_ = input_shape[axis_pos];
+    height_ = 1;
+    width_ = 1;
+    input_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
+    output_size_ = input_size_;
+    workspace_size_ = shape_size_ * sizeof(size_t);
+    need_transpose_ = true;
   }
 
   cudnnHandle_t cudnn_handle_;
@@ -254,7 +301,7 @@ class SoftmaxGpuKernel : public GpuKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> transpose_shape_;
   std::vector<size_t> transpose_axis_;
-  int axis_;
+  bool need_transpose_;
   size_t shape_size_;
 
   size_t batch_size_;

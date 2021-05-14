@@ -53,6 +53,7 @@ using mindspore::dataset::Execute;
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
+DEFINE_string(network, "resnet18", "networktype");
 DEFINE_int32(device_id, 0, "device id");
 
 int main(int argc, char **argv) {
@@ -83,19 +84,26 @@ int main(int argc, char **argv) {
 
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
-  // Define transform
-  std::vector<int32_t> crop_paras = {224};
-  std::vector<int32_t> resize_paras = {256};
-  std::vector<float> mean = {0.485 * 255, 0.456 * 255, 0.406 * 255};
-  std::vector<float> std = {0.229 * 255, 0.224 * 255, 0.225 * 255};
 
   std::shared_ptr<TensorTransform> decode(new Decode());
-  std::shared_ptr<TensorTransform> resize(new Resize(resize_paras));
-  std::shared_ptr<TensorTransform> centercrop(new CenterCrop(crop_paras));
-  std::shared_ptr<TensorTransform> normalize(new Normalize(mean, std));
+  std::shared_ptr<TensorTransform> resize(new Resize({256}));
+  std::shared_ptr<TensorTransform> centercrop(new CenterCrop({224}));
+  std::shared_ptr<TensorTransform> normalize(new Normalize({123.675, 116.28, 103.53},
+                                                           {58.395, 57.12, 57.375}));
   std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
 
-  std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop, normalize, hwc2chw};
+  std::shared_ptr<TensorTransform> sr_resize(new Resize({292}));
+  std::shared_ptr<TensorTransform> sr_centercrop(new CenterCrop({256}));
+  std::shared_ptr<TensorTransform> sr_normalize(new Normalize({123.68, 116.78, 103.94},
+                                                              {1.0, 1.0, 1.0}));
+
+  std::vector<std::shared_ptr<TensorTransform>> trans_list;
+
+  if (FLAGS_network == "se-resnet50") {
+    trans_list = {decode, sr_resize, sr_centercrop, sr_normalize, hwc2chw};
+  } else {
+    trans_list = {decode, resize, centercrop, normalize, hwc2chw};
+  }
   mindspore::dataset::Execute SingleOp(trans_list);
 
   for (size_t i = 0; i < size; ++i) {

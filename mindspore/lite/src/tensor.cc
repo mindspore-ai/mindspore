@@ -327,6 +327,13 @@ void Tensor::FreeData() {
   }
 }
 
+void *Tensor::ReallocData() {
+  if (this->data_ != nullptr) {
+    FreeData();
+  }
+  return this->MutableData();
+}
+
 void *Tensor::MutableData() {
   if (this->root_tensor_ != nullptr) {
     if (this->root_tensor_ != this && this->root_tensor_->data_ == nullptr) {

@@ -48,12 +48,13 @@ if __name__ == '__main__':
 
     print(f"train args: {args_opt}\ncfg: {config}")
 
-    #set context and device init
+    # set context and device init
     context_device_init(config)
 
     # define network
     backbone_net, head_net, net = define_net(config, args_opt.is_training)
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config,
+                             enable_cache=args_opt.enable_cache, cache_session_id=args_opt.cache_session_id)
     step_size = dataset.get_dataset_size()
     if args_opt.pretrain_ckpt:
         if args_opt.freeze_layer == "backbone":

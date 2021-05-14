@@ -38,9 +38,7 @@ Status NormalizeOperation::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<TensorOp> NormalizeOperation::Build() {
-  return std::make_shared<NormalizeOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2]);
-}
+std::shared_ptr<TensorOp> NormalizeOperation::Build() { return std::make_shared<NormalizeOp>(mean_, std_); }
 
 Status NormalizeOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;

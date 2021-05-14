@@ -49,12 +49,12 @@ int SubGraphKernel::Prepare() {
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
   oss << "===============================================" << std::endl << "Subgraph type : " << this->subgraph_type_;
-  oss << std::endl << this->in_tensors_.size() << "Subgraph inputTensors:";
-  for (auto tensor : in_tensors_) {
+  oss << std::endl << this->in_tensors().size() << "Subgraph inputTensors:";
+  for (auto tensor : in_tensors()) {
     oss << " " << tensor;
   }
-  oss << std::endl << this->out_tensors_.size() << "Subgraph outputTensors:";
-  for (auto tensor : out_tensors_) {
+  oss << std::endl << this->out_tensors().size() << "Subgraph outputTensors:";
+  for (auto tensor : out_tensors()) {
     oss << " " << tensor;
   }
   oss << std::endl << "Subgraph input nodes :" << std::endl;
@@ -72,18 +72,19 @@ std::string SubGraphKernel::ToString() const {
   return oss.str();
 }
 
-int SubGraphKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {
+int SubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &after) {
   if (this->executor_ == nullptr) {
     MS_LOG(ERROR) << "executor is nullptr";
     return RET_ERROR;
   }
-  auto ret =
-    executor_->Run(this->in_tensors_, this->out_tensors_, this->nodes_, this->context_->allocator.get(), before, after);
+  auto ret = executor_->Run(this->in_tensors(), this->out_tensors(), this->nodes_, this->Context()->allocator.get(),
+                            before, after);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run sub graph failed: " << ret;
     return ret;
   }
-  return RET_OK;
+
+  return lite::RET_OK;
 }
 
 int SubGraphKernel::ReSize() {
@@ -107,14 +108,14 @@ int SubGraphKernel::ReSize() {
       output->FreeData();
     }
 
-    auto ret = lite::KernelInferShape(inputs, &outputs, parameter);
+    auto ret = lite::KernelInferShape(inputs, outputs, parameter);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()))
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
                    << "flag set to false.";
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()));
       return RET_INFER_ERR;
     }
     if (ret == RET_OK) {
@@ -147,16 +148,16 @@ int CpuSubGraph::Prepare() {
   for (auto node : nodes_) {
     for (auto tensor : node->out_tensors()) {
       MS_ASSERT(tensor != nullptr);
-      tensor->set_allocator(this->context_->allocator.get());
+      tensor->set_allocator(this->Context()->allocator.get());
     }
   }
   return RET_OK;
 }
 
-int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != this->context_->allocator.get());
-  if (nodes_.front()->Type() != schema::PrimitiveType_Merge) {
-    auto ret = CheckTensorsInvalid(in_tensors_);
+int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &after) {
+  MS_ASSERT(nullptr != this->Context()->allocator.get());
+  if (nodes_.front()->type() != schema::PrimitiveType_Merge) {
+    auto ret = CheckTensorsInvalid(in_tensors());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "CheckInputs failed";
       return ret;
@@ -165,7 +166,7 @@ int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) 
 
 #ifdef SUPPORT_GPU
   // In heterogeneous scenarios of CPU and GPU, call MutableData to MapBuffer(synchronize data).
-  if (static_cast<const lite::InnerContext *>(context_)->IsGpuEnabled()) {
+  if (this->Context()->IsGpuEnabled()) {
     for (auto tensor : this->in_tensors()) {
       tensor->MutableData();
     }
@@ -174,19 +175,9 @@ int CpuSubGraph::Run(const KernelCallBack &before, const KernelCallBack &after) 
 
   for (auto *kernel : nodes_) {
     MS_ASSERT(nullptr != kernel);
-    auto ret = kernel->PreProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->Run(before, after);
+    auto ret = kernel->Execute(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
-      return ret;
-    }
-    ret = kernel->PostProcess();
-    if (RET_OK != ret) {
-      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
       return ret;
     }
   }
@@ -209,8 +200,8 @@ void CpuFp16SubGraph::FreeOriginInputData() {
       }
     }
     // free data_store
-    if (this->context_->allocator != nullptr) {
-      this->context_->allocator->Free(data_store);
+    if (this->Context()->allocator != nullptr) {
+      this->Context()->allocator->Free(data_store);
     } else {
       free(data_store);
     }
@@ -238,7 +229,7 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
   MS_ASSERT(tensor->data_c() != nullptr);
   Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
   auto *data_store =
-    DataStore::CreateDataStore(float32_data, own_data, tensor->allocator(), this->context_->allocator.get());
+    DataStore::CreateDataStore(float32_data, own_data, tensor->allocator(), this->Context()->allocator.get());
   if (data_store == nullptr) {
     MS_LOG(ERROR) << "Create DataStore failed";
     return RET_ERROR;
@@ -258,8 +249,8 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
   auto ret = tensor->MallocData();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "malloc data failed";
-    if (this->context_ != nullptr && this->context_->allocator != nullptr) {
-      this->context_->allocator->Free(float16_data);
+    if (this->Context() != nullptr && this->Context()->allocator != nullptr) {
+      this->Context()->allocator->Free(float16_data);
     } else {
       free(float16_data);
     }
@@ -278,7 +269,7 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
 int CpuFp16SubGraph::PreProcess() {
 #ifdef ENABLE_FP16
   int ret;
-  for (auto tensor : this->in_tensors_) {
+  for (auto tensor : this->in_tensors()) {
     MS_ASSERT(tensor != nullptr);
     auto real_tensor = tensor;
     if (tensor->root_tensor() != nullptr) {
@@ -316,7 +307,7 @@ int CpuFp16SubGraph::PreProcess() {
   }
   for (auto kernel : this->nodes_) {
     for (auto tensor : kernel->out_tensors()) {
-      if (kernel->Type() == schema::PrimitiveType_Cast) {
+      if (kernel->type() == schema::PrimitiveType_Cast) {
         continue;
       }
       if (tensor->data_type() == kNumberTypeFloat32) {
@@ -338,7 +329,7 @@ int CpuFp16SubGraph::PreProcess() {
 int CpuFp16SubGraph::PostProcess() {
 #ifdef ENABLE_FP16
   int ret;
-  for (auto tensor : this->out_tensors_) {
+  for (auto tensor : this->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
     if (tensor->data_type() == kNumberTypeFloat16) {
       ret = Float16TensorToFloat32Tensor(tensor);
@@ -362,8 +353,9 @@ int CpuFp16SubGraph::PostProcess() {
   }
 
   int tensor_count = 0;
-  for (size_t i = 0; i < this->in_tensors_.size(); i++) {
-    auto tensor = in_tensors_.at(i);
+  auto in_tensors = this->in_tensors();
+  for (size_t i = 0; i < in_tensors.size(); i++) {
+    auto tensor = in_tensors.at(i);
     MS_ASSERT(tensor != nullptr);
     auto real_tensor = tensor;
     if (tensor->root_tensor() != nullptr) {

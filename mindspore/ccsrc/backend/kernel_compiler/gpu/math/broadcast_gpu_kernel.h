@@ -147,7 +147,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
       {"RealDiv", BROADCAST_TYPE_REALDIV},   {"Mul", BROADCAST_TYPE_MUL},           {"Sub", BROADCAST_TYPE_SUB},
       {"Add", BROADCAST_TYPE_ADD},           {"FloorDiv", BROADCAST_TYPE_FLOORDIV}, {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
       {"Div", BROADCAST_TYPE_DIV},           {"DivNoNan", BROADCAST_TYPE_DIVNONAN}, {"Mod", BROADCAST_TYPE_MOD},
-      {"FloorMod", BROADCAST_TYPE_FLOORMOD},
+      {"FloorMod", BROADCAST_TYPE_FLOORMOD}, {"Atan2", BROADCAST_TYPE_ATAN2},
     };
 
     iter = kBroadcastArithmetricTypeMap.find(kernel_name);

@@ -51,7 +51,6 @@
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
-#include "backend/kernel_compiler/hccl/hccl_context.h"
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
 using mindspore::dataset::TdtHandle;
@@ -260,7 +259,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
   }
 
-  (void)DestroySingleOpHccl();
   (void)DestroyHccl();
   (void)ResetDevice(device_id);
   (void)ProfilingManager::GetInstance().StopProfiling();
@@ -340,11 +338,7 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
     GenKernelEvents(graph);
     return true;
   }
-  // Do HcomExecutorInitialize
-  if (graph->is_dynamic_shape() && !HcclExecutorManager::GetInstance().Initialize()) {
-    MS_LOG(ERROR) << "Init Hccl Executor Failed";
-    return false;
-  }
+
   if (!GenTask(graph)) {
     return false;
   }
@@ -352,58 +346,6 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
     return false;
   }
   return true;
-}
-
-void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
-  if (kernels.empty()) {
-    return;
-  }
-  auto kernel_events =
-    std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>();
-  auto &kernel_pre_run_events = kernel_events.first;
-  auto &kernel_post_run_events = kernel_events.second;
-  kernel_pre_run_events.resize(kernels.size());
-  kernel_post_run_events.resize(kernels.size());
-  for (size_t i = 0; i < kernels.size(); ++i) {
-    auto &kernel = kernels[i];
-    if (!AnfAlgo::IsCommunicationOp(kernel)) {
-      continue;
-    }
-    auto pre_event = std::make_shared<AscendEvent>();
-    auto post_event = std::make_shared<AscendEvent>();
-    pre_event->set_wait_stream(communication_stream_);
-    pre_event->set_record_stream(stream_);
-    post_event->set_wait_stream(stream_);
-    post_event->set_record_stream(communication_stream_);
-    kernel_pre_run_events[i].emplace_back([pre_event]() {
-      pre_event->RecordEvent();
-      pre_event->WaitEvent();
-    });
-    kernel_post_run_events[i].emplace_back([post_event]() { post_event->RecordEvent(); });
-    bool found_nearest_child = false;
-    for (size_t j = i + 1; j < kernels.size(); ++j) {
-      auto &child = kernels[j];
-      MS_EXCEPTION_IF_NULL(child);
-      auto input_size = child->inputs().size() - 1;
-      for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
-        if (kernel_index.first == kernel) {
-          found_nearest_child = true;
-          break;
-        }
-      }
-      if (found_nearest_child) {
-        kernel_pre_run_events[j].emplace_back([post_event]() { post_event->WaitEvent(); });
-        break;
-      }
-    }
-    if (!found_nearest_child) {
-      kernel_post_run_events[i].emplace_back([post_event]() { post_event->WaitEvent(); });
-    }
-  }
-  graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
 }
 
 bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
@@ -889,23 +831,11 @@ bool AscendKernelRuntime::HcclInit() {
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
-  bool ret = hccl::InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str, full_path);
+  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str,
+                                                       full_path);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
-    return false;
-  }
-  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode || !task_sink) {
-    MS_LOG(INFO) << "Hccl comm init.";
-    return kernel::HcclContext::GetInstance().InitHccl();
-  }
-  return true;
-}
-
-bool AscendKernelRuntime::DestroySingleOpHccl() {
-  if (!kernel::HcclContext::GetInstance().Finalize()) {
-    MS_LOG(ERROR) << "Hccl finalize failed";
     return false;
   }
   return true;
@@ -921,11 +851,7 @@ bool AscendKernelRuntime::DestroyHccl() {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
-  // Dynamic Shape Hccl Finalize
-  if (!HcclExecutorManager::GetInstance().Finalize()) {
-    MS_LOG(ERROR) << "Dynamic Shape Hccl Finalize Failed";
-  }
-  bool res = hccl::FinalizeHccl();
+  bool res = hccl::HcclAdapter::GetInstance().FinalizeHccl();
   if (!res) {
     MS_LOG(ERROR) << "Hccl destroy failed";
     return false;
@@ -969,6 +895,12 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
   if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
     MS_LOG(EXCEPTION) << "Too many profiling data";
   }
+}
+
+std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {
+  auto ascend_event = std::make_shared<AscendEvent>();
+  MS_EXCEPTION_IF_NULL(ascend_event);
+  return ascend_event;
 }
 
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {

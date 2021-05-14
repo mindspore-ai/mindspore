@@ -111,13 +111,10 @@ int main(int argc, char **argv) {
       std::cout << "preprocess " << all_files[i] << " failed." << std::endl;
       return 1;
     }
-    std::vector<float> input_shape = {608, 608};
 
     inputs.clear();
     inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
         img.Data().get(), img.DataSize());
-    inputs.emplace_back(model_inputs[1].Name(), model_inputs[1].DataType(), model_inputs[1].Shape(),
-        input_shape.data(), input_shape.size() * sizeof(float));
 
     gettimeofday(&start, NULL);
     ret = model.Predict(inputs, &outputs);

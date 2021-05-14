@@ -153,6 +153,9 @@ def test_rint():
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_round():
     net = RoundNet()
 

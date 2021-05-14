@@ -14,15 +14,32 @@
 # limitations under the License.
 # ============================================================================
 # an simple tutorial as follows, more parameters can be setting
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_standalone_train_ascend.sh [cifar10|imagenet] [DATA_PATH] [DEVICE_ID]"
+    echo "Usage: sh run_standalone_train_ascend.sh [cifar10|imagenet] [DATA_PATH] [DEVICE_ID] [CKPT_PATH]"
 exit 1
 fi
 
 export DATASET_NAME=$1
 export DATA_PATH=$2
 export DEVICE_ID=$3
+export CKPT_PATH=$4
 
-python train.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH \
-               --device_id=$DEVICE_ID --device_target="Ascend" > log 2>&1 &
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+
+if [ $# -ge 1 ]; then
+  if [ $1 == 'imagenet' ]; then
+    CONFIG_FILE="${BASE_PATH}/../config_imagenet.yaml"
+  elif [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
+python ../train.py --config_path=$CONFIG_FILE --dataset_name=$DATASET_NAME --data_path=$DATA_PATH \
+--ckpt_path=$CKPT_PATH --device_id=$DEVICE_ID --device_target="Ascend" > log 2>&1 &
+               

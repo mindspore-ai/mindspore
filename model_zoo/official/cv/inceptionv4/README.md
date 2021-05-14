@@ -71,6 +71,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├─scripts
     ├─run_distribute_train_gpu.sh       # launch distributed training with gpu platform(8p)
     ├─run_eval_gpu.sh                   # launch evaluating with gpu platform
+    ├─run_eval_cpu.sh                   # launch evaluating with cpu platform
+    ├─run_standalone_train_cpu.sh       # launch standalone training with cpu platform(1p)
     ├─run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
     ├─run_infer_310.sh                  # shell script for 310 inference
@@ -138,6 +140,13 @@ sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
 sh scripts/run_distribute_train_gpu.sh DATA_PATH
 ```
 
+- CPU:
+
+```bash
+# standalone training example with shell
+sh scripts/run_standalone_train_cpu.sh DATA_PATH
+```
+
 ### Launch
 
 ```bash
@@ -151,6 +160,9 @@ sh scripts/run_distribute_train_gpu.sh DATA_PATH
       GPU:
       # distribute training example(8p)
       sh scripts/run_distribute_train_gpu.sh DATA_PATH
+      CPU:
+      # standalone training example with shell
+      sh scripts/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### Result

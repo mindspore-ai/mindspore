@@ -14,6 +14,7 @@
 # ============================================================================
 """ test scatter update """
 import numpy as np
+import pytest
 import mindspore.nn as nn
 from mindspore import Tensor, Model, Parameter
 from mindspore.ops import operations as P
@@ -50,6 +51,19 @@ def test_distribute_predict():
     output = model.predict(inputs)
     context.reset_auto_parallel_context()
     return predict_map, output
+
+
+def test_scatter_update_wrong_strategy():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=True)
+    inputs = Tensor(np.ones([32, 64, 128]).astype(np.float32))
+    strategy1 = ((1, 2, 4), (1, 1), (1, 1, 4, 2))
+    strategy2 = ((1, 2, 4), (1, 2, 4))
+    net = Net(strategy1, strategy2)
+    model = Model(net)
+    with pytest.raises(RuntimeError):
+        model.predict(inputs)
+    context.reset_auto_parallel_context()
 
 
 def test_distribute_predict_auto_parallel():

@@ -127,6 +127,53 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 
 默认使用CIFAR-10数据集。您也可以将`$dataset_type`传入脚本，以便选择其他数据集。如需查看更多详情，请参考指定脚本。
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    - 在 ModelArts 上使用8卡训练 ImageNet 数据集
+
+      ```python
+      # (1) 在网页上设置 "config_path='/path_to_code/imagenet_config.yaml'"
+      # (2) 执行a或者b
+      #       a. 在 imagenet_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 imagenet_config.yaml 文件中设置 "dataset_name='imagenet'"
+      #          在 imagenet_config.yaml 文件中设置 "train_data_path='/cache/data/ImageNet/train/'"
+      #          在 imagenet_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "dataset_name=imagenet"
+      #          在网页上设置 "train_data_path=/cache/data/ImageNet/train/"
+      #          在网页上设置 其他参数
+      # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+      # (4) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (5) 在网页上设置启动文件为 "train.py"
+      # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (7) 创建训练作业
+      ```
+
+    - 在 ModelArts 上使用单卡验证 ImageNet 数据集
+
+      ```python
+      # (1) 在网页上设置 "config_path='/path_to_code/imagenet_config.yaml'"
+      # (2) 执行a或者b
+      #       a. 在 imagenet_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 imagenet_config.yaml 文件中设置 "dataset_name='imagenet'"
+      #          在 imagenet_config.yaml 文件中设置 "val_data_path='/cache/data/ImageNet/val/'"
+      #          在 imagenet_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_trained_ckpt/'"
+      #          在 imagenet_config.yaml 文件中设置 "checkpoint_path='/cache/checkpoint_path/model.ckpt'"
+      #          在 imagenet_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "dataset_name=imagenet"
+      #          在网页上设置 "val_data_path=/cache/data/ImageNet/val/"
+      #          在网页上设置 "checkpoint_url='s3://dir_to_trained_ckpt/'"
+      #          在网页上设置 "checkpoint_path='/cache/checkpoint_path/model.ckpt'"
+      #          在网页上设置 其他参数
+      # (3) 上传你的预训练模型到 S3 桶上
+      # (4) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+      # (5) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (6) 在网页上设置启动文件为 "eval.py"
+      # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (8) 创建训练作业
+      ```
+
 # 脚本说明
 
 ## 脚本及样例代码

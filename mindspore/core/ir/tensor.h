@@ -307,20 +307,17 @@ class Tensor : public MetaTensor {
   }
 
   void SetNeedWait(bool need_wait) {
-    auto event = event_;
-    if (event != nullptr) {
-      event->set_need_wait(need_wait);
+    if (event_ != nullptr) {
+      event_->set_need_wait(need_wait);
     } else if (need_wait) {
-      event = std::make_shared<WaitEvent>();
-      event->set_need_wait(need_wait);
-      event_ = event;
+      event_ = std::make_shared<WaitEvent>();
+      event_->set_need_wait(need_wait);
     }
   }
 
   bool NeedWait() const {
-    auto event = event_;
-    if (event != nullptr) {
-      return event->need_wait();
+    if (event_ != nullptr) {
+      return event_->need_wait();
     }
     return false;
   }
@@ -328,8 +325,8 @@ class Tensor : public MetaTensor {
   void Wait() const {
     if (event_ != nullptr) {
       event_->Wait();
-      event_ = nullptr;
     }
+    event_ = nullptr;
   }
 
   void SetDeviceEvent(const std::shared_ptr<DeviceEvent> &device_event) { device_event_ = device_event; }

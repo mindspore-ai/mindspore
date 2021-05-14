@@ -121,8 +121,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimReluGrad, {InferImplReluGrad, nullptr, true}},
     {prim::kPrimConv2D, {InferImplConv2D, nullptr, true}},
     {prim::kPrimBiasAdd, {InferImplBiasAdd, nullptr, true}},
-    {prim::kPrimRelu, {InferImplRelu, nullptr, true}},
-    {prim::kPrimRelu6, {InferImplRelu, nullptr, true}},
     {prim::kPrimZerosLike, {InferImplZerosLike, nullptr, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, nullptr, true}},
     {prim::kPrimLayerNorm, {InferImplLayerNorm, nullptr, true}},
@@ -176,10 +174,10 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
-    {prim::kPrimMul, {InferImplMul, nullptr, true}},
+    {prim::kPrimMul, {InferImplMul, nullptr, false}},
     {prim::kPrimAdd, {InferImplAdd, nullptr, true}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
-    {prim::kPrimSub, {InferImplSub, nullptr, true}},
+    {prim::kPrimSub, {InferImplSub, nullptr, false}},
     {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
     {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},

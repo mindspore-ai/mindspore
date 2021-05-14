@@ -114,7 +114,7 @@ int GatherOpenCLKernel::Prepare() {
 #else
   std::string program_name = "gather";
   ocl_runtime_->LoadSource(program_name, gather_source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
   if (in_tensors_.at(1)->IsConst()) {
@@ -149,7 +149,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
     }
   } else {
     MS_LOG(ERROR) << "Gather Only supported The DataType Of Intensor1 is Int32  "
-                  << " But Your Type is :" << data_type;
+                  << " But Your type is :" << data_type;
     return RET_ERROR;
   }
   allocator->UnmapBuffer(indices_data_);

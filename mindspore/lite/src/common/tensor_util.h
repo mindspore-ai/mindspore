@@ -32,12 +32,12 @@ void Tensor2TensorC(Tensor *src, TensorC *dst);
 void TensorC2Tensor(TensorC *src, Tensor *dst);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst);
 int TensorListC2TensorList(TensorListC *src, TensorList *dst);
-int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                   std::vector<TensorC *> *out_tensor_c);
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *in_tensor_c);
+                      const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *in_tensor_c);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                       std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *out_tensor_c);
+                       const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c);
 
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
 void Tensor2MSTensor(const std::vector<Tensor *> &&tensors, std::vector<tensor::MSTensor *> *out_tensors);

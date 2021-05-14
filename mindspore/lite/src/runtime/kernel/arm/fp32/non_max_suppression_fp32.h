@@ -18,17 +18,17 @@
 
 #include <vector>
 #include <algorithm>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/non_max_suppression_parameter.h"
 
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-class NonMaxSuppressionCPUKernel : public LiteKernel {
+class NonMaxSuppressionCPUKernel : public InnerKernel {
  public:
   NonMaxSuppressionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
 
   ~NonMaxSuppressionCPUKernel() override = default;
 
@@ -39,6 +39,7 @@ class NonMaxSuppressionCPUKernel : public LiteKernel {
 
  private:
   int GetParams();
+  int Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num, float *scores_data, float *box_data);
 
  private:
   int center_point_box_;

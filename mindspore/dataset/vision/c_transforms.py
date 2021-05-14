@@ -374,10 +374,6 @@ class Normalize(ImageTensorOperation):
 
     @check_normalize_c
     def __init__(self, mean, std):
-        if len(mean) == 1:
-            mean = [mean[0]] * 3
-        if len(std) == 1:
-            std = [std[0]] * 3
         self.mean = mean
         self.std = std
 
@@ -723,9 +719,9 @@ class RandomCropDecodeResize(ImageTensorOperation):
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range [min, max) of respective size of the
+        scale (list, tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -918,9 +914,9 @@ class RandomResizedCrop(ImageTensorOperation):
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range [min, max) of respective size of the original
+        scale (list, tuple, optional): Range [min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range [min, max) of aspect ratio to be cropped
+        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -972,9 +968,9 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range (min, max) of respective size of the original
+        scale (list, tuple, optional): Range (min, max) of respective size of the original
             size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped
+        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be cropped
             (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
@@ -1394,9 +1390,9 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
-        scale (tuple, optional): Range [min, max) of respective size of the
+        scale (list, tuple, optional): Range [min, max) of respective size of the
             original size to be cropped (default=(0.08, 1.0)).
-        ratio (tuple, optional): Range [min, max) of aspect ratio to be
+        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
             cropped (default=(3. / 4., 4. / 3.)).
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
             If exceeded, fall back to use center_crop instead.

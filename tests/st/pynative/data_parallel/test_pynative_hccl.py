@@ -16,12 +16,11 @@
 """test bert thor performance with 8p on mlperf dataset"""
 
 import os
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
-import mindspore.dataset as dataset
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.communication.management as D
@@ -31,7 +30,6 @@ from mindspore.context import ParallelMode
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 
 np.random.seed(1)
-dataset.config.set_seed(1)
 os.environ['GLOG_v'] = str(2)
 
 class AllReduceNet(nn.Cell):
@@ -42,7 +40,7 @@ class AllReduceNet(nn.Cell):
     def construct(self, x):
         return self.all_reduce(x)
 
-def train_allreduce_8p(device_id, device_num):
+def train_allreduce_8p(q, device_id, device_num):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", device_id=device_id)
@@ -58,7 +56,7 @@ def train_allreduce_8p(device_id, device_num):
     input_x = np.ones([32, 255, 255, 3]).astype(np.float32)
     except_output = input_x * 8
     output = net(Tensor(input_x, mstype.float32))
-    assert np.allclose(output.asnumpy(), except_output)
+    q.put(np.allclose(output.asnumpy(), except_output))
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -67,9 +65,10 @@ def train_allreduce_8p(device_id, device_num):
 def test_pynative_hccl_8p():
     device_num = 8
     process = []
+    q = Queue()
     for i in range(device_num):
         device_id = i
-        process.append(Process(target=train_allreduce_8p, args=(device_id, device_num)))
+        process.append(Process(target=train_allreduce_8p, args=(q, device_id, device_num)))
 
     for i in range(device_num):
         process[i].start()
@@ -78,6 +77,10 @@ def test_pynative_hccl_8p():
 
     for i in range(device_num):
         process[i].join()
+
+    # check result
+    for i in range(device_num):
+        assert q.get()
 
     for i in range(device_num):
         os.system("rm -rf " + str(i))

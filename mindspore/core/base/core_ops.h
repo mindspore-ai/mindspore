@@ -45,12 +45,16 @@ constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
+constexpr auto kSub = "Sub";
+constexpr auto kMul = "Mul";
 
 // Arrays
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kGeLU = "GeLU";
+constexpr auto kReLU = "ReLU";
+constexpr auto kReLU6 = "ReLU6";
 constexpr auto kGeLUGrad = "GeLUGrad";
 constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
@@ -284,9 +288,9 @@ inline const PrimitivePtr kPrimGeLU = std::make_shared<Primitive>(kGeLU);
 inline const PrimitivePtr kPrimGeLUGrad = std::make_shared<Primitive>(kGeLUGrad);
 inline const PrimitivePtr kPrimFastGeLU = std::make_shared<Primitive>(kFastGeLU);
 inline const PrimitivePtr kPrimFastGeLUGrad = std::make_shared<Primitive>(kFastGeLUGrad);
-inline const PrimitivePtr kPrimRelu = std::make_shared<Primitive>("ReLU");
+inline const PrimitivePtr kPrimRelu = std::make_shared<Primitive>(kReLU);
 inline const PrimitivePtr kPrimElu = std::make_shared<Primitive>("Elu");
-inline const PrimitivePtr kPrimRelu6 = std::make_shared<Primitive>("ReLU6");
+inline const PrimitivePtr kPrimRelu6 = std::make_shared<Primitive>(kReLU6);
 inline const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>("ReLUV2");
 inline const PrimitivePtr kPrimPRelu = std::make_shared<Primitive>("PReLU");
 inline const PrimitivePtr kPrimSoftplus = std::make_shared<Primitive>("Softplus");
@@ -316,6 +320,7 @@ inline const PrimitivePtr kLambApplyOptimizerAssign = std::make_shared<Primitive
 inline const PrimitivePtr kLambApplyWeightAssign = std::make_shared<Primitive>("LambApplyWeightAssign");
 inline const PrimitivePtr kSoftmaxGradExt = std::make_shared<Primitive>("SoftmaxGradExt");
 inline const PrimitivePtr kSquareSumV1 = std::make_shared<Primitive>("SquareSumV1");
+inline const PrimitivePtr kFusedMulAdd = std::make_shared<Primitive>("FusedMulAdd");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
@@ -379,8 +384,8 @@ inline const PrimitivePtr kPrimCentralization = std::make_shared<Primitive>("Cen
 inline const PrimitivePtr kPrimNeg = std::make_shared<Primitive>("Neg");
 inline const PrimitivePtr kPrimSin = std::make_shared<Primitive>("Sin");
 inline const PrimitivePtr kPrimCos = std::make_shared<Primitive>("Cos");
-inline const PrimitivePtr kPrimSub = std::make_shared<Primitive>("Sub");
-inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
+inline const PrimitivePtr kPrimSub = std::make_shared<Primitive>(kSub);
+inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>(kMul);
 inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
 inline const PrimitivePtr kPrimMod = std::make_shared<Primitive>("Mod");
 inline const PrimitivePtr kPrimFloor = std::make_shared<Primitive>("Floor");

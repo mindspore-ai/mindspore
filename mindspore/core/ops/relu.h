@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CORE_OPS_RELU_H_
 #define MINDSPORE_CORE_OPS_RELU_H_
+#include <map>
+#include <vector>
+#include <string>
+#include <memory>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLU = "ReLU";
+constexpr auto kNameReLU = prim::kReLU;
 class ReLU : public PrimitiveC {
  public:
   ReLU() : PrimitiveC(kNameReLU) { InitIOName({"x"}, {"output"}); }
@@ -30,6 +34,7 @@ class ReLU : public PrimitiveC {
   MS_DECLARE_PARENT(ReLU, PrimitiveC);
   void Init() {}
 };
+using PrimReLUPtr = std::shared_ptr<ReLU>;
 }  // namespace ops
 }  // namespace mindspore
 

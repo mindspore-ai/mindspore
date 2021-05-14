@@ -165,7 +165,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
   }
-  auto ret = KernelInferShape(inputs, outputs, parameter);
+  auto ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK) {
     free(parameter);
     MS_LOG(ERROR) << "infershape failed.";
@@ -173,13 +173,13 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   }
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(parameter->type_)};
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  if (creator != nullptr) {
-    auto lite_kernel = creator(inputs, *outputs, parameter, context, desc);
-    return lite_kernel;
+  kernel::LiteKernel *lite_kernel;
+  ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, desc, parameter, &lite_kernel);
+  if (ret != lite::RET_OK) {
+    free(parameter);
+    return nullptr;
   }
-  free(parameter);
-  return nullptr;
+  return lite_kernel;
 }
 
 lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_node, const AnfNodePtr &input_node,
@@ -310,7 +310,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
         return nullptr;
       }
     }
-    auto status = lite_kernel->Run();
+    auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
     if (status != lite::RET_OK) {
       FreeTensors(&input_tensors, &output_tensors);
       delete (lite_kernel);

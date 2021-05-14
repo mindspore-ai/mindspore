@@ -150,7 +150,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   parameter->quant_type_ = node->quant_type_;
 
   op_parameters_[node->output_indices_.at(0)] = parameter;
-  auto ret = KernelInferShape(inputs, &outputs, parameter);
+  auto ret = KernelInferShape(inputs, outputs, parameter);
   if (ret == RET_OK) {
     for (auto &output : outputs) {
       if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
@@ -281,24 +281,26 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
     return RET_OK;
   }
   for (auto *tensor : tensors) {
-    // only cast const tensor
-    // tensorlist not support fp16 now
-    if (!tensor->IsConst() || tensor->data_type() == kObjectTypeTensorType) {
+    // only copy non-copied const tensor
+    if (!tensor->IsConst() || tensor->own_data()) {
       continue;
     }
-    if (tensor->own_data()) {
-      continue;
+    if (tensor->data_type() == kObjectTypeTensorType) {
+      // tensorlist's data is nullptr since ConvertTensors
+      // we never set or malloc data of tensorlist but malloc tensors in tensorlist
+      MS_ASSERT(tensor->data_c() == nullptr);
+    } else {
+      auto copy_tensor = Tensor::CopyTensor(*tensor, true);
+      if (copy_tensor == nullptr) {
+        MS_LOG(ERROR) << "Copy tensor failed";
+        return RET_ERROR;
+      }
+      tensor->FreeData();
+      tensor->set_data(copy_tensor->data_c());
+      tensor->set_own_data(true);
+      copy_tensor->set_data(nullptr);
+      delete (copy_tensor);
     }
-    auto copy_tensor = Tensor::CopyTensor(*tensor, true);
-    if (copy_tensor == nullptr) {
-      MS_LOG(ERROR) << "Copy tensor failed";
-      return RET_ERROR;
-    }
-    tensor->FreeData();
-    tensor->set_data(copy_tensor->data_c());
-    tensor->set_own_data(true);
-    copy_tensor->set_data(nullptr);
-    delete (copy_tensor);
   }
   return RET_OK;
 }
@@ -439,12 +441,19 @@ int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
+  MS_ASSERT(kernel != nullptr);
   int ret = RET_ERROR;
-  if (KernelRegistry::GetInstance()->kernel_creators().size() != 0 &&
-      VersionManager::GetInstance()->GetSchemaVersion() != SCHEMA_V0) {
-    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", ""};
+  auto &&providers = KernelRegistry::GetInstance()->AllProviders();
+  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
+    return ret;
+  }
+  for (auto &&provider : providers) {
+    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", provider};
     ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
                                                    node->primitive_);
+    if (ret == RET_OK && *kernel != nullptr) {
+      return ret;
+    }
   }
   return ret;
 }
@@ -669,7 +678,7 @@ std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
   for (kernel::LiteKernel *head_kernel : head_kernels) {
     MS_ASSERT(head_kernel != nullptr);
     MS_ASSERT(sinked_kernel_map != nullptr);
-    if (head_kernel->Type() == schema::PrimitiveType_Switch || head_kernel->Type() == schema::PrimitiveType_Merge) {
+    if (head_kernel->type() == schema::PrimitiveType_Switch || head_kernel->type() == schema::PrimitiveType_Merge) {
       (*sinked_kernel_map)[head_kernel] = true;
       sub_kernels.emplace_back(head_kernel);
       return sub_kernels;
@@ -685,7 +694,7 @@ std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
       auto post_kernels = cur_kernel->out_kernels();
       for (auto post_kernel : post_kernels) {
         if (post_kernel->subgraph_type() != kernel::kNotSubGraph ||
-            post_kernel->Type() == schema::PrimitiveType_Merge || post_kernel->Type() == schema::PrimitiveType_Switch) {
+            post_kernel->type() == schema::PrimitiveType_Merge || post_kernel->type() == schema::PrimitiveType_Switch) {
           continue;
         }
         if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
@@ -718,7 +727,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
         return false;
       }
       // when merge is removed, this if is removed automatically
-      if (kernel->Type() == schema::PrimitiveType_Merge) {
+      if (kernel->type() == schema::PrimitiveType_Merge) {
         return MergeOpIsReady(kernel, (*is_kernel_finish));
       } else {
         return std::all_of(kernel_inputs.begin(), kernel_inputs.end(),
@@ -780,9 +789,10 @@ bool Scheduler::MergeOpIsReady(const kernel::LiteKernel *kernel,
     }
   }
   auto kernel_in_tensors_num = kernel->in_tensors().size();
-  return std::all_of(kernel->in_tensors().begin(), kernel->in_tensors().begin() + kernel_in_tensors_num / 2,
+  auto &in_tensors = kernel->in_tensors();
+  return std::all_of(in_tensors.begin(), in_tensors.begin() + kernel_in_tensors_num / 2,
                      [&](lite::Tensor *in_tensor) { return merge_in_tensors_map[in_tensor]; }) ||
-         std::all_of(kernel->in_tensors().begin() + kernel_in_tensors_num / 2, kernel->in_tensors().end(),
+         std::all_of(in_tensors.begin() + kernel_in_tensors_num / 2, in_tensors.end(),
                      [&](lite::Tensor *in_tensor) { return merge_in_tensors_map[in_tensor]; });
 }
 
@@ -805,49 +815,66 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   } else {
     output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
   }
+  auto innerkernel = new (std::nothrow) kernel::InnerKernel(nullptr, input_tensors, output_tensors, context_);
+  if (innerkernel == nullptr) {
+    return nullptr;
+  }
   std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
   if (type == kernel::kGpuSubGraph) {
 #if GPU_OPENCL
-    auto sub_kernel = new (std::nothrow)
-      kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, innerkernel);
     if (sub_kernel == nullptr) {
       MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
+      delete innerkernel;
       return nullptr;
     }
     return sub_kernel;
 #elif GPU_VULKAN
+    delete innerkernel;
     return nullptr;
 #else
+    delete innerkernel;
     return nullptr;
 #endif
   }
   if (type == kernel::kNpuSubGraph) {
 #if SUPPORT_NPU
-    auto sub_kernel = new (std::nothrow) kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels,
-                                                                   output_kernels, kernels, context_, npu_manager_);
+    auto sub_kernel =
+      new (std::nothrow) kernel::SubGraphNpuKernel(input_kernels, output_kernels, kernels, innerkernel, npu_manager_);
     if (sub_kernel == nullptr) {
       MS_LOG(ERROR) << "NPU subgraph new failed.";
+      delete innerkernel;
       return nullptr;
     }
     return sub_kernel;
 #else
+    delete innerkernel;
     return nullptr;
 #endif
   }
   if (type == kernel::kCpuFP16SubGraph) {
 #ifdef ENABLE_FP16
-    auto sub_kernel = new (std::nothrow)
-      kernel::CpuFp16SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow) kernel::CpuFp16SubGraph(input_kernels, output_kernels, kernels, innerkernel);
+    if (sub_kernel == nullptr) {
+      MS_LOG(ERROR) << "FP16 subgraph new failed.";
+      delete innerkernel;
+      return nullptr;
+    }
     return sub_kernel;
 #else
+    delete innerkernel;
     MS_LOG(ERROR) << "FP16 subgraph is not supported!";
     return nullptr;
 #endif
   }
   if (type == kernel::kCpuFP32SubGraph) {
-    auto sub_kernel = new (std::nothrow)
-      kernel::CpuFp32SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow) kernel::CpuFp32SubGraph(input_kernels, output_kernels, kernels, innerkernel);
+    if (sub_kernel == nullptr) {
+      MS_LOG(ERROR) << "FP32 subgraph new failed.";
+      delete innerkernel;
+      return nullptr;
+    }
     return sub_kernel;
   }
   return nullptr;

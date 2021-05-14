@@ -22,12 +22,12 @@
 #include "external/hccl/hccl.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "backend/kernel_compiler/hccl/hcom_util.h"
-#include "backend/kernel_compiler/hccl/hccl_context.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
 #include "runtime/device/ascend/ascend_launch_mul.h"
 #include "runtime/device/ascend/ascend_launch_atomic_clean.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 #include "utils/profile.h"
 
 #define CHECK_ASCEND_RT_WITH_EXCEPTION(expression, message)    \
@@ -147,8 +147,8 @@ void AscendBucket::LaunchAllReduce() {
   auto hccl_count = total_size_ / type_size;
 
   HcclReduceOp op_type = HcclReduceOp::HCCL_REDUCE_SUM;
-  auto hccl_result = HcclAllReduce(ar_input_addr_, ar_output_addr_, hccl_count, iter->second, op_type,
-                                   kernel::HcclContext::GetInstance().hccl_comm(), stream_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(ar_input_addr_, ar_output_addr_, hccl_count,
+                                                                    iter->second, op_type, stream_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "HcclAllReduce faled, ret:" << hccl_result;
   }

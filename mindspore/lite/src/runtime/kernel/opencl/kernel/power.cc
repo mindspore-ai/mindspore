@@ -118,7 +118,7 @@ int PowerOpenCLKernel::Prepare() {
   scale_ = param->scale_;
   shift_ = param->shift_;
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetGlobalLocal();

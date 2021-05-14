@@ -69,7 +69,7 @@ int L2NormInt8CPUKernel::Run() {
 }
 
 int L2NormInt8CPUKernel::DoExecute(int task_id) {
-  lite::Tensor *input_tensor = in_tensors().front();
+  auto input_tensor = static_cast<lite::Tensor *>(in_tensors().front());
   int outer_size = input_tensor->ElementsNum() / input_tensor->shape().back();
   int stride = UP_DIV(outer_size, context_->thread_num_);
   int begin = task_id * stride;

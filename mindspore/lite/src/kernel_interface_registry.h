@@ -20,6 +20,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <set>
 #include "src/kernel_interface.h"
 #include "include/model.h"
 
@@ -32,20 +33,24 @@ class KernelInterfaceRegistry {
     return &instance;
   }
   bool CheckReg(const lite::Model::Node *node);
-  kernel::KernelInterface *GetKernelInterface(const std::string &provider, int op_type);
-  const std::map<std::string, kernel::KernelInterfaceCreator *> &kernel_interfaces() { return kernel_interfaces_; }
+  kernel::KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
   int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
+  std::set<std::string> AllProviders();
   virtual ~KernelInterfaceRegistry();
 
  private:
   KernelInterfaceRegistry() = default;
+  kernel::KernelInterface *GetCacheInterface(const std::string &provider, int op_type);
+  kernel::KernelInterface *GetCustomCacheInterface(const std::string &provider, const std::string &type);
 
   std::mutex mutex_;
   // key: provider
-  std::map<std::string, kernel::KernelInterfaceCreator *> kernel_interfaces_;
+  std::map<std::string, kernel::KernelInterfaceCreator *> kernel_creators_;
+  std::map<std::string, std::map<int, kernel::KernelInterface *>> kernel_interfaces_;
   // key: provider        key: custom type
-  std::map<std::string, std::map<std::string, kernel::KernelInterfaceCreator>> custom_interfaces_;
+  std::map<std::string, std::map<std::string, kernel::KernelInterfaceCreator>> custom_creators_;
+  std::map<std::string, std::map<std::string, kernel::KernelInterface *>> custom_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_HASHTABLE_LOOKUP_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "include/context.h"
 
 namespace mindspore::kernel {
-class HashtableLookupCPUKernel : public LiteKernel {
+class HashtableLookupCPUKernel : public InnerKernel {
  public:
   HashtableLookupCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~HashtableLookupCPUKernel() {}
 
   int Init() override;

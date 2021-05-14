@@ -426,7 +426,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       fbb.Clear();
       return false;
     }
-    status = KernelInferShape(input_tensors, &output_tensors, parameter);
+    status = KernelInferShape(input_tensors, output_tensors, parameter);
     if (status == RET_OK) {
       status = SetCNodeAbstract(output_tensors, cnode);
       if (status != RET_OK) {

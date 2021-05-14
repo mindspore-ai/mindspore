@@ -88,7 +88,7 @@ class OpInfoExtractor {
     }
   }
 
-  bool ExcludeAttr(const std::string &name) {
+  bool ExcludeAttr(const std::string &name) const {
     const std::set<std::string> black_list = {"IsFeatureMapInputList", "IsFeatureMapOutput", kAttrOutputNames,
                                               kAttrInputNames};
     return black_list.count(name) != 0;
@@ -143,31 +143,31 @@ int AkgKernelJsonGenerator::GetOpCntInc() {
   return cnt;
 }
 
-inline TypeId AkgKernelJsonGenerator::GetInputDataType(const AnfNodePtr &anf_node, size_t real_index) {
+TypeId AkgKernelJsonGenerator::GetInputDataType(const AnfNodePtr &anf_node, size_t real_index) const {
   return dump_option_.is_before_select_kernel ? AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_index)
                                               : AnfAlgo::GetInputDeviceDataType(anf_node, real_index);
 }
 
-inline std::vector<size_t> AkgKernelJsonGenerator::GetInputShape(const AnfNodePtr &anf_node, size_t real_index) {
+std::vector<size_t> AkgKernelJsonGenerator::GetInputShape(const AnfNodePtr &anf_node, size_t real_index) const {
   return dump_option_.is_before_select_kernel ? AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_index)
                                               : AnfAlgo::GetInputDeviceShape(anf_node, real_index);
 }
 
-inline std::string AkgKernelJsonGenerator::GetInputFormat(const AnfNodePtr &anf_node, size_t real_index) {
+std::string AkgKernelJsonGenerator::GetInputFormat(const AnfNodePtr &anf_node, size_t real_index) const {
   return dump_option_.is_before_select_kernel ? kOpFormat_DEFAULT : AnfAlgo::GetInputFormat(anf_node, real_index);
 }
 
-inline TypeId AkgKernelJsonGenerator::GetOutputDataType(const AnfNodePtr &anf_node, size_t index) {
+TypeId AkgKernelJsonGenerator::GetOutputDataType(const AnfNodePtr &anf_node, size_t index) const {
   return dump_option_.is_before_select_kernel ? AnfAlgo::GetOutputInferDataType(anf_node, index)
                                               : AnfAlgo::GetOutputDeviceDataType(anf_node, index);
 }
 
-inline std::vector<size_t> AkgKernelJsonGenerator::GetOutputShape(const AnfNodePtr &anf_node, size_t index) {
+std::vector<size_t> AkgKernelJsonGenerator::GetOutputShape(const AnfNodePtr &anf_node, size_t index) const {
   return dump_option_.is_before_select_kernel ? AnfAlgo::GetOutputInferShape(anf_node, index)
                                               : AnfAlgo::GetOutputDeviceShape(anf_node, index);
 }
 
-inline std::string AkgKernelJsonGenerator::GetOutputFormat(const AnfNodePtr &anf_node, size_t index) {
+std::string AkgKernelJsonGenerator::GetOutputFormat(const AnfNodePtr &anf_node, size_t index) const {
   return dump_option_.is_before_select_kernel ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(anf_node, index);
 }
 
@@ -378,7 +378,7 @@ size_t AkgKernelJsonGenerator::GetOutputTensorIdxInc() {
 }
 
 std::string AkgKernelJsonGenerator::GetTensorName(const nlohmann::json &node_json, const std::string &tag,
-                                                  const std::pair<size_t, size_t> &position) {
+                                                  const std::pair<size_t, size_t> &position) const {
   if (node_json.count(tag) == 0) {
     MS_LOG(ERROR) << "Node [" << node_json.dump() << "] has no key [" << tag << "].";
     return "";
@@ -409,7 +409,7 @@ std::string AkgKernelJsonGenerator::GetTensorName(const nlohmann::json &node_jso
 }
 
 void AkgKernelJsonGenerator::SetTensorName(const std::string &tag, const std::string &new_name,
-                                           const std::pair<size_t, size_t> &position, nlohmann::json *node_json) {
+                                           const std::pair<size_t, size_t> &position, nlohmann::json *node_json) const {
   MS_EXCEPTION_IF_NULL(node_json);
   if (node_json->count(tag) == 0) {
     MS_LOG(ERROR) << "Node [" << node_json->dump() << "] has no key [" << tag << "].";
@@ -450,7 +450,7 @@ void AkgKernelJsonGenerator::SaveNodeAddress(const AnfNodePtr &anf_node, nlohman
   }
 }
 
-OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) {
+OpInfoPtr AkgKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) const {
   if (dump_option_.extract_opinfo_from_anfnode) {
     return OpInfoExtractor().Run(anf_node);
   } else {
@@ -498,7 +498,7 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
 }
 
 bool AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
-                                       std::vector<size_t> *output_size) {
+                                       std::vector<size_t> *output_size) const {
   if (input_size == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "input size or output size is nullptr";
     return false;

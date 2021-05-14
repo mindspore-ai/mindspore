@@ -149,7 +149,7 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   std::string source = argminmax_source;
   std::string program_name = "argminmax";
   ocl_runtime_->LoadSource(program_name, source);
-  auto build_options_ext = CreateBuildOptionsExtByDType(desc_.data_type);
+  auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 #endif
 
@@ -157,7 +157,7 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   param->dims_size_ = in_tensors_[0]->shape().size();
   param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
   param->axis_ = GetBroadcastGpuAxis(param->dims_size_, param->axis_);
-  param->get_max_ = (Type() == PrimitiveType_ArgMaxFusion);
+  param->get_max_ = (type() == PrimitiveType_ArgMaxFusion);
   param->keep_dims_ =
     param->keep_dims_ || param->topk_ > 1 || in_tensors_[0]->shape().size() == out_tensors_[0]->shape().size();
 

@@ -71,6 +71,7 @@ class KernelGraph : public FuncGraph {
     parent_graph_ = graph.parent_graph_;
     start_label_ = graph.start_label_;
     end_goto_ = graph.end_goto_;
+    internal_parameters_to_front_map_ = graph.internal_parameters_to_front_map_;
     front_to_internal_outputs_map_ = graph.front_to_internal_outputs_map_;
     internal_outputs_to_front_map_ = graph.internal_outputs_to_front_map_;
     internal_outputs_tensor_map_ = graph.internal_outputs_tensor_map_;
@@ -199,6 +200,7 @@ class KernelGraph : public FuncGraph {
                          bool unique_target = false);
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
                              int dst_output_idx = -1);
+  AnfNodePtr GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
   bool IsInternalOutput(const AnfNodePtr &node, int output_idx = -1) const;
   bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const;
@@ -353,6 +355,7 @@ class KernelGraph : public FuncGraph {
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
+  std::unordered_map<AnfNodePtr, AnfNodePtr> internal_parameters_to_front_map_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;

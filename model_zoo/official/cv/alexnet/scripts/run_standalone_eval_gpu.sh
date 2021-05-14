@@ -25,5 +25,21 @@ export DATA_PATH=$2
 export CKPT_PATH=$3
 export DEVICE_ID=$4
 
-python eval.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH --ckpt_path=$CKPT_PATH \
-               --device_id=$DEVICE_ID --device_target="GPU" > eval_log 2>&1 &
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+
+if [ $# -ge 1 ]; then
+  if [ $1 == 'imagenet' ]; then
+    CONFIG_FILE="${BASE_PATH}/../config_imagenet.yaml"
+  elif [ $1 == 'cifar10' ]; then
+    CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+  else
+    echo "Unrecognized parameter"
+    exit 1
+  fi
+else
+  CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+fi
+
+python ../eval.py --config_path=$CONFIG_FILE --dataset_name=$DATASET_NAME \
+    --data_path=$DATA_PATH --ckpt_path=$CKPT_PATH \
+    --device_id=$DEVICE_ID --device_target="GPU" > eval_log 2>&1 &

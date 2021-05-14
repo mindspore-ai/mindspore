@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/normalize_op.h"
 
 #include <random>
+#include <vector>
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -26,14 +27,10 @@
 
 namespace mindspore {
 namespace dataset {
-NormalizeOp::NormalizeOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b) {
-  Status s = Tensor::CreateFromVector<float>({mean_r, mean_g, mean_b}, &mean_);
-  if (s.IsError()) {
-    MS_LOG(ERROR) << "Normalize: invalid mean value.";
-  }
-  s = Tensor::CreateFromVector<float>({std_r, std_g, std_b}, &std_);
-  if (s.IsError()) {
-    MS_LOG(ERROR) << "Normalize: invalid std value.";
+NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std) : mean_(mean), std_(std) {
+  // pre-calculate normalized mean to be used later in each Compute
+  for (int8_t i = 0; i < mean.size(); i++) {
+    mean_[i] = mean_[i] / std_[i];
   }
 }
 
@@ -44,7 +41,15 @@ Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
 }
 
 void NormalizeOp::Print(std::ostream &out) const {
-  out << "NormalizeOp, mean: " << *(mean_.get()) << std::endl << "std: " << *(std_.get()) << std::endl;
+  out << "NormalizeOp, mean: ";
+  for (const auto &m : mean_) {
+    out << m << ", ";
+  }
+  out << "}" << std::endl << "std: ";
+  for (const auto &s : std_) {
+    out << s << ", ";
+  }
+  out << "}" << std::endl;
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -17,15 +17,15 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/inner_kernel.h"
 #include "nnacl/slice_parameter.h"
 
 namespace mindspore::kernel {
-class SliceCPUKernel : public LiteKernel {
+class SliceCPUKernel : public InnerKernel {
  public:
   SliceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {
+      : InnerKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<SliceParameter *>(op_parameter_);
   }
   ~SliceCPUKernel() = default;

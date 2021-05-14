@@ -406,7 +406,6 @@ class ForwardExecutor {
                                     PynativeStatusCode *status);
   AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
-  bool FindOpMask(py::object obj, std::vector<int64_t> *op_masks, const std::string &id);
   void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
                    abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
@@ -435,8 +434,6 @@ class ForwardExecutor {
   std::unordered_map<std::string, TensorIdWithTensor> cell_tensor_id_with_tensor_;
   // Used to cache cast struct
   std::unordered_map<std::string, OpExecInfoPtr> cast_struct_map_;
-  // Used to cache op_mask
-  std::unordered_map<std::string, int64_t> op_mask_map_;
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {

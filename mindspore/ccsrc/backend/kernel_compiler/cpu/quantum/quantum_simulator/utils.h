@@ -52,6 +52,8 @@ const char kGateRequiresGrad[] = "gate_requires_grad";
 const char kHamsPauliCoeff[] = "hams_pauli_coeff";
 const char kHamsPauliWord[] = "hams_pauli_word";
 const char kHamsPauliQubit[] = "hams_pauli_qubit";
+const char kIsProjector[] = "is_projector";
+const char kProjectors[] = "projectors";
 }  // namespace mindquantum
 }  // namespace mindspore
 #endif  // MINDQUANTUM_ENGINE_UTILS_H_

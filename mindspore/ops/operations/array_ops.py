@@ -4087,7 +4087,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
@@ -4154,7 +4154,7 @@ class DepthToSpace(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 12, 1, 1), mindspore.float32)

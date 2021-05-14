@@ -14,8 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-    echo "Usage: sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
+    NET_TYPE can choose from [resnet18, se-resnet50]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -28,15 +29,23 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-data_path=$(get_real_path $2)
+if [ $2 == 'resnet18' ] || [ $2 == 'se-resnet50' ]; then
+  network=$2
+else
+  echo "NET_TYPE can choose from [resnet18, se-resnet50]"
+  exit 1
+fi
+
+data_path=$(get_real_path $3)
 
 device_id=0
-if [ $# == 3 ]; then    
-    device_id=$3
+if [ $# == 4 ]; then
+    device_id=$4
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
+echo "network: "$network
 echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
@@ -59,7 +68,7 @@ function compile_app()
     if [ -f "Makefile" ]; then
         make clean
     fi
-    sh build.sh &> build.log    
+    bash build.sh &> build.log
 }
 
 function infer()
@@ -73,7 +82,7 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=$data_path --device_id=$device_id  &> infer.log
+    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=$data_path --network=$network --device_id=$device_id  &> infer.log
 }
 
 function cal_acc()
