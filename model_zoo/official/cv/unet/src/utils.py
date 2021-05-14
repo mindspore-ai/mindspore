@@ -21,6 +21,7 @@ from mindspore import nn
 from mindspore.ops import operations as ops
 from mindspore.train.callback import Callback
 from mindspore.common.tensor import Tensor
+from src.model_utils.config import config
 
 class UnetEval(nn.Cell):
     """
@@ -63,10 +64,9 @@ def apply_eval(eval_param_dict):
 
 class dice_coeff(nn.Metric):
     """Unet Metric, return dice coefficient and IOU."""
-    def __init__(self, cfg_unet, print_res=True):
+    def __init__(self, print_res=True):
         super(dice_coeff, self).__init__()
         self.clear()
-        self.cfg_unet = cfg_unet
         self.print_res = print_res
 
     def clear(self):
@@ -84,20 +84,20 @@ class dice_coeff(nn.Metric):
         if b != 1:
             raise ValueError('Batch size should be 1 when in evaluation.')
         y = y.reshape((h, w, c))
-        if self.cfg_unet["eval_activate"].lower() == "softmax":
+        if config.eval_activate.lower() == "softmax":
             y_softmax = np.squeeze(self._convert_data(inputs[0][0]), axis=0)
-            if self.cfg_unet["eval_resize"]:
+            if config.eval_resize:
                 y_pred = []
-                for i in range(self.cfg_unet["num_classes"]):
+                for i in range(config.num_classes):
                     y_pred.append(cv2.resize(np.uint8(y_softmax[:, :, i] * 255), (w, h)) / 255)
                 y_pred = np.stack(y_pred, axis=-1)
             else:
                 y_pred = y_softmax
-        elif self.cfg_unet["eval_activate"].lower() == "argmax":
+        elif config.eval_activate.lower() == "argmax":
             y_argmax = np.squeeze(self._convert_data(inputs[0][1]), axis=0)
             y_pred = []
-            for i in range(self.cfg_unet["num_classes"]):
-                if self.cfg_unet["eval_resize"]:
+            for i in range(config.num_classes):
+                if config.eval_resize:
                     y_pred.append(cv2.resize(np.uint8(y_argmax == i), (w, h), interpolation=cv2.INTER_NEAREST))
                 else:
                     y_pred.append(np.float32(y_argmax == i))

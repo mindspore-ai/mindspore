@@ -164,6 +164,38 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 然后在容器里的操作就和Ascend平台上是一样的。
 
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2)设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/unet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a. 设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/unet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
+
 ## 脚本说明
 
 ### 脚本及样例代码
@@ -194,6 +226,16 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
                 ├──__init__.py
                 ├──unet_model.py            // Unet++ 网络结构
                 ├──unet_parts.py            // Unet++ 子网
+                        ├── model_utils
+                │   ├── config.py          // 参数配置
+                │   ├── device_adapter.py  // 设备配置
+                │   ├── local_adapter.py   // 本地设备配置
+                │   ├── moxing_adapter.py  // modelarts设备配置
+        ├── unet_medical_config.yaml        // 配置文件
+        ├── unet_nested_cell_config.yaml    // 配置文件
+        ├── unet_nested_config.yaml         // 配置文件
+        ├── unet_simple_config.yaml         // 配置文件
+        ├── unet_simple_coco_config.yaml    // 配置文件
         ├── train.py                        // 训练脚本
         ├── eval.py                         // 推理脚本
         ├── export.py                       // 导出脚本

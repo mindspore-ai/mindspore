@@ -13,15 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-"""Device adapter for ModelArts"""
+"""Local adapter"""
 
-from utils.config import config
+import os
 
-if config.enable_modelarts:
-    from utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
-else:
-    from utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
-__all__ = [
-    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
-]
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

@@ -16,35 +16,21 @@
 ##############postprocess#################
 """
 import os
-import argparse
 import numpy as np
 from mindspore.nn.metrics import Accuracy
-from src.config import cfg_mr, cfg_subj, cfg_sst2
-
-
-parser = argparse.ArgumentParser(description='postprocess')
-parser.add_argument('--label_dir', type=str, default="", help='label data dir')
-parser.add_argument('--result_dir', type=str, default="", help="infer result dir")
-parser.add_argument('--dataset', type=str, default="MR", choices=['MR', 'SUBJ', 'SST2'])
-args = parser.parse_args()
+from src.model_utils.config import config
 
 if __name__ == '__main__':
-    if args.dataset == 'MR':
-        cfg = cfg_mr
-    elif args.dataset == 'SUBJ':
-        cfg = cfg_subj
-    elif args.dataset == 'SST2':
-        cfg = cfg_sst2
 
-    file_prefix = 'textcnn_bs' + str(cfg.batch_size) + '_'
+    file_prefix = 'textcnn_bs' + str(config.batch_size) + '_'
 
     metric = Accuracy()
     metric.clear()
-    label_list = np.load(args.label_dir, allow_pickle=True)
+    label_list = np.load(config.label_dir, allow_pickle=True)
 
     for idx, label in enumerate(label_list):
-        pred = np.fromfile(os.path.join(args.result_dir, file_prefix + str(idx) + '_0.bin'), np.float32)
-        pred = pred.reshape(cfg.batch_size, int(pred.shape[0]/cfg.batch_size))
+        pred = np.fromfile(os.path.join(config.result_dir, file_prefix + str(idx) + '_0.bin'), np.float32)
+        pred = pred.reshape(config.batch_size, int(pred.shape[0]/config.batch_size))
         metric.update(pred, label)
     accuracy = metric.eval()
     print("accuracy: ", accuracy)

@@ -100,26 +100,26 @@ If you want to run in modelarts, please check the official documentation of [mod
 
 ```bash
 ├── model_zoo
-    ├── README.md                            // descriptions about all the models
+    ├── README.md                          // descriptions about all the models
     ├── textcnn
-        ├── README.md                        // descriptions about textcnn
+        ├── README.md                      // descriptions about textcnn
         ├──scripts
-        │   ├── run_train.sh                 // shell script for distributed on Ascend
-        │   ├── run_eval.sh                  // shell script for evaluation on Ascend
+        │   ├── run_train.sh              // shell script for distributed on Ascend
+        │   ├── run_eval.sh               // shell script for evaluation on Ascend
         ├── src
-        │   ├── dataset.py                     // Processing dataset
-        │   ├── textcnn.py                     // textcnn architecture
-        ├── utils
-        │   ├──device_adapter.py      // device adapter
-        │   ├──local_adapter.py         // local adapter
-        │   ├──moxing_adapter.py   // moxing adapter
-        │   ├── config.py                       // parameter analysis
+        │   ├── dataset.py                // Processing dataset
+        │   ├── textcnn.py                // textcnn architecture
+               ├── utils
+               │   ├──device_adapter.py   // device adapter
+               │   ├──local_adapter.py    // local adapter
+               │   ├──moxing_adapter.py   // moxing adapter
+               │   ├──config.py           // parameter analysis
         ├── mr_config.yaml                 // parameter configuration
-        ├── sst2_config.yaml              // parameter configuration
-        ├── subj_config.yaml             // parameter configuration
-        ├── train.py                                // training script
-        ├── eval.py                                 //  evaluation script
-        ├── export.py                            //  export checkpoint to other format file
+        ├── sst2_config.yaml               // parameter configuration
+        ├── subj_config.yaml               // parameter configuration
+        ├── train.py                       // training script
+        ├── eval.py                        //  evaluation script
+        ├── export.py                      //  export checkpoint to other format file
 ```
 
 ## [Script Parameters](#contents)

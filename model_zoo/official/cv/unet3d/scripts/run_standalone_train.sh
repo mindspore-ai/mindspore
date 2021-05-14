@@ -16,7 +16,7 @@
 
 if [ $# -ne 1 ]
 then
-    echo "Usage: sh run_distribute_train_ascend.sh [IMAGE_PATH] [SEG_PATH]"
+    echo "Usage: sh run_distribute_train_ascend.sh [DATA_PATH]"
 exit 1
 fi
 

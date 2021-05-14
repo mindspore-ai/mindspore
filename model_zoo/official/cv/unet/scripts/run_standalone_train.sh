@@ -22,23 +22,24 @@ get_real_path() {
   fi
 }
 
-if [ $# != 1 ] && [ $# != 2 ]
+if [ $# != 2 ] && [ $# != 3 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_train.sh [DATASET] [DEVICE_ID](option, default is 0)"
-    echo "for example: bash run_standalone_train.sh /path/to/data/ 0"
+    echo "bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH] [DEVICE_ID](option, default is 0)"
+    echo "for example: bash run_standalone_train.sh /path/to/data/ /path/to/config/ 0"
     echo "=============================================================================================================="
     exit 1
 fi
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export DEVICE_ID=0
-if [ $# != 1 ]
+if [ $# != 2 ]
 then
-  export DEVICE_ID=$2
+  export DEVICE_ID=$3
 fi
 
 DATASET=$(get_real_path $1)
+CONFIG_PATH=$(get_real_path $2)
 echo "========== start run training ==========="
 echo "please get log at train.log"
-python ${PROJECT_DIR}/../train.py --data_url=$DATASET > train.log 2>&1 &
+python ${PROJECT_DIR}/../train.py --data_path=$DATASET --config_path=$CONFIG_PATH --output './output'> train.log 2>&1 &

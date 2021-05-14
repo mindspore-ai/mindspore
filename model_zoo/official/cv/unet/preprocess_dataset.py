@@ -17,10 +17,9 @@ Preprocess dataset.
 Images within one folder is an image, the image file named `"image.png"`, the mask file named `"mask.png"`.
 """
 import os
-import argparse
 import cv2
 import numpy as np
-from model_zoo.official.cv.unet.src.config import cfg_unet
+from model_zoo.official.cv.unet.src.model_utils.config import config
 
 def annToMask(ann, height, width):
     """Convert annotation to RLE and then to binary mask."""
@@ -107,32 +106,27 @@ def preprocess_coco_dataset(param_dict):
         cv2.imwrite(os.path.join(save_dir, img_name, "image.png"), img)
         cv2.imwrite(os.path.join(save_dir, img_name, "mask.png"), mask)
 
-def preprocess_dataset(cfg, data_dir):
+def preprocess_dataset(data_dir):
     """Select preprocess function."""
-    if cfg['dataset'].lower() == "cell_nuclei":
+    if config.dataset.lower() == "cell_nuclei":
         preprocess_cell_nuclei_dataset({"data_dir": data_dir})
-    elif cfg['dataset'].lower() == "coco":
-        if 'split' in cfg and cfg['split'] == 1.0:
+    elif config.dataset.lower() == "coco":
+        if config.split == 1.0:
             train_data_path = os.path.join(data_dir, "train")
             val_data_path = os.path.join(data_dir, "val")
-            train_param_dict = {"anno_json": cfg["anno_json"], "coco_classes": cfg["coco_classes"],
-                                "coco_dir": cfg["coco_dir"], "save_dir": train_data_path}
+            train_param_dict = {"anno_json": config.anno_json, "coco_classes": config.coco_classes,
+                                "coco_dir": config.coco_dir, "save_dir": train_data_path}
             preprocess_coco_dataset(train_param_dict)
-            val_param_dict = {"anno_json": cfg["val_anno_json"], "coco_classes": cfg["coco_classes"],
-                              "coco_dir": cfg["val_coco_dir"], "save_dir": val_data_path}
+            val_param_dict = {"anno_json": config.val_anno_json, "coco_classes": config.coco_classes,
+                              "coco_dir": config.val_coco_dir, "save_dir": val_data_path}
             preprocess_coco_dataset(val_param_dict)
         else:
-            param_dict = {"anno_json": cfg["anno_json"], "coco_classes": cfg["coco_classes"],
-                          "coco_dir": cfg["coco_dir"], "save_dir": data_dir}
+            param_dict = {"anno_json": config.anno_json, "coco_classes": config.coco_classes,
+                          "coco_dir": config.coco_dir, "save_dir": data_dir}
             preprocess_coco_dataset(param_dict)
     else:
-        raise ValueError("Not support dataset mode {}".format(cfg['dataset']))
+        raise ValueError("Not support dataset mode {}".format(config.dataset))
     print("========== end preprocess dataset ==========")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train the UNet on images and target masks',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_url', dest='data_url', type=str, default='data/',
-                        help='save data directory')
-    args = parser.parse_args()
-    preprocess_dataset(cfg_unet, args.data_url)
+    preprocess_dataset(config.data_path)

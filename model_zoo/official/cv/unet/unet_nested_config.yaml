@@ -13,27 +13,43 @@ enable_profiling: False
 
 # ==============================================================================
 # Training options
-dataset: 'SST2'
-pre_trained: False
+model_name: 'unet_nested'
+run_eval: False
+run_distribute: False
+crop: None
+image_size : [576, 576]
+lr: 0.0001
+epochs: 400
+repeat: 400
+distribute_epochs: 1600
+batch_size: 16
+cross_valid_ind: 1
 num_classes: 2
-batch_size: 64
-epoch_size: 4
-weight_decay: 3e-5
-keep_checkpoint_max: 1
+num_channels: 1
+weight_decay: 0.0005
+loss_scale: 1024.0
+FixedLossScaleManager: 1024.0
+use_ds: True
+use_bn: True
+use_deconv: True
+resume: False
+resume_ckpt: './'
+transfer_training: False
+filter_weight: ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']
+
+#Eval options
+keep_checkpoint_max: 10
+eval_activate: 'Softmax'
+eval_resize: False
 checkpoint_path: './checkpoint/'
-checkpoint_file_path: 'train_textcnn-4_149.ckpt'
-word_len: 51
-vec_length: 40
-base_lr: 5e-3
-label_dir: ""
-result_dir: ""
-result_path: './preprocess_Result/'
+checkpoint_file_path: 'ckpt_unet_nested_adam-4-75.ckpt'
+rst_path: './result_Files/'
 
 # Export options
-device_id: 0
-ckpt_file: ""
-file_name: ""
-file_format: ""
+width: 572
+height: 572
+file_name: unet
+file_format: AIR
 
 ---
 # Help description for each configuration
@@ -46,15 +62,10 @@ output_path: 'Training output path for local'
 load_path: 'The location of checkpoint for obs'
 device_target: 'Target device type, available: [Ascend, GPU, CPU]'
 enable_profiling: 'Whether enable profiling while training, default: False'
-dataset: "Dataset to be trained and evaluated, choice: ['MR, SUBJ, SST2']"
-train_epochs: "The number of epochs used to train."
-pre_trained: 'If need load pre_trained checkpoint, default: False'
 num_classes: 'Class for dataset'
 batch_size: "Batch size for training and evaluation"
-epoch_size: "Total training epochs."
 weight_decay: "Weight decay."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"
-num_factors: "The Embedding size of MF model."
 checkpoint_path: "The location of the checkpoint file."
-eval_file_name: "Eval output file."
 checkpoint_file_path: "The location of the checkpoint file."
+
