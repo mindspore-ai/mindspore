@@ -250,7 +250,7 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return out;
 }
 
-AbstractFunctionPtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context) {
+AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
   if (inputs.empty()) {
@@ -268,21 +268,21 @@ AbstractFunctionPtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cno
     MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
-  AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
-  if (func == nullptr) {
-    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString() << ", func_conf: " << func_conf->ToString()
-                      << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
-  }
-  return func;
+  return maybe_func;
 }
 
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
-  AbstractFunctionPtr func = GetCNodeOperatorAbstract(cnode, conf->context());
-  if (func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+  AbstractBasePtr maybe_func = GetCNodeOperatorAbstract(cnode, conf->context());
+  if (maybe_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     MS_LOG(DEBUG) << "EvalCNode eval Undetermined";
-    return std::make_shared<EvalResult>(func->Clone(), std::make_shared<AttrValueMap>());
+    return std::make_shared<EvalResult>(maybe_func->Clone(), std::make_shared<AttrValueMap>());
+  }
+  AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
+  if (func == nullptr) {
+    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString()
+                      << ", NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
 
   ConfigPtrList args_conf_list;

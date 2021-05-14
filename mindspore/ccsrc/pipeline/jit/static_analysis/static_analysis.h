@@ -209,7 +209,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
-  AbstractFunctionPtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context);
+  AbstractBasePtr GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context);
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
   EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).

@@ -84,8 +84,8 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
     return nullptr;
   }
   auto cnode = current_node->cast<CNodePtr>();
-  auto func = engine->GetCNodeOperatorAbstract(cnode, current_context_);
-  auto graph_func = dyn_cast<FuncGraphAbstractClosure>(func);  // Not handle MetaFuncGraphAbstractClosure by now.
+  auto maybe_func = engine->GetCNodeOperatorAbstract(cnode, current_context_);
+  auto graph_func = dyn_cast<FuncGraphAbstractClosure>(maybe_func);  // Not handle MetaFuncGraphAbstractClosure by now.
   if (graph_func == nullptr) {
     return nullptr;  // Not call FuncGraph.
   }
