@@ -1,4 +1,3 @@
-"""metrics"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""metrics"""
 import math
 import numpy as np
 
 def quantize(img, rgb_range):
-    """metrics"""
+    """quantize image range to 0-255"""
     pixel_range = 255 / rgb_range
     img = np.multiply(img, pixel_range)
     img = np.clip(img, 0, 255)
@@ -27,7 +26,7 @@ def quantize(img, rgb_range):
 
 
 def calc_psnr(sr, hr, scale, rgb_range):
-    """metrics"""
+    """calculate psnr"""
     hr = np.float32(hr)
     sr = np.float32(sr)
     diff = (sr - hr) / rgb_range
@@ -48,7 +47,7 @@ def calc_psnr(sr, hr, scale, rgb_range):
 
 
 def rgb2ycbcr(img, y_only=True):
-    """metrics"""
+    """from rgb space to ycbcr space"""
     img.astype(np.float32)
     if y_only:
         rlt = np.dot(img, [65.481, 128.553, 24.966]) / 255.0 + 16.0
