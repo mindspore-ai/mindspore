@@ -145,6 +145,10 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       auto buf = static_cast<double *>(data);
       return NewData<T>(buf, size);
     }
+    case kNumberTypeComplex64: {
+      auto buf = static_cast<double *>(data);
+      return NewData<T>(buf, size);
+    }
     default:
       break;
   }
@@ -446,6 +450,8 @@ TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const A
     case kNumberTypeFloat32:
       return std::make_shared<TensorDataImpl<float>>(shape, args...);
     case kNumberTypeFloat64:
+      return std::make_shared<TensorDataImpl<double>>(shape, args...);
+    case kNumberTypeComplex64:
       return std::make_shared<TensorDataImpl<double>>(shape, args...);
     case kObjectTypeString:
       return std::make_shared<TensorDataImpl<uint8_t>>(shape, args...);

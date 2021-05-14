@@ -150,21 +150,15 @@ class Float : public Number {
   }
 };
 
-// Complex
-class Complex : public Number {
+// Complex64
+class Complex64 : public Number {
  public:
-  Complex() : Number(kNumberTypeComplex64, 0) {}
-  explicit Complex(const int nbits);
-  ~Complex() override {}
-  MS_DECLARE_PARENT(Complex, Number)
+  Complex64() : Number(kNumberTypeComplex64, 64, false) {}
+  ~Complex64() override {}
+  MS_DECLARE_PARENT(Complex64, Number)
 
   TypeId generic_type_id() const override { return kNumberTypeComplex64; }
-  TypePtr DeepCopy() const override {
-    if (nbits() == 0) {
-      return std::make_shared<Complex>();
-    }
-    return std::make_shared<Complex>(nbits());
-  }
+  TypePtr DeepCopy() const override { return std::make_shared<Complex64>(); }
   std::string ToString() const override { return GetTypeName("Complex64"); }
   std::string ToReprString() const override { return nbits() == 0 ? "complex64_" : GetTypeName("complex64"); }
   std::string DumpText() const override {
