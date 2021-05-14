@@ -30,9 +30,9 @@ from src.data import dataset as data_generator
 from src.loss import loss
 from src.nets import net_factory
 from src.utils import learning_rates
-from utils.config import config
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id, get_device_num, get_rank_id
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 set_seed(1)
 

@@ -16,8 +16,9 @@
 import argparse
 import numpy as np
 
+import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-from eval import BuildEvalNetwork
 from src.nets import net_factory
 
 parser = argparse.ArgumentParser(description='checkpoint export')
@@ -39,6 +40,21 @@ args = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
+
+class BuildEvalNetwork(nn.Cell):
+    def __init__(self, net, input_format="NCHW"):
+        super(BuildEvalNetwork, self).__init__()
+        self.network = net
+        self.softmax = nn.Softmax(axis=1)
+        self.transpose = ops.Transpose()
+        self.format = input_format
+
+    def construct(self, x):
+        if self.format == "NHWC":
+            x = self.transpose(x, (0, 3, 1, 2))
+        output = self.network(x)
+        output = self.softmax(output)
+        return output
 
 if __name__ == '__main__':
     if args.model == 'deeplab_v3_s16':

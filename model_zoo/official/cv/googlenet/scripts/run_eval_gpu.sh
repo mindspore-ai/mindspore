@@ -39,8 +39,6 @@ then
     fi
     dataset_type=$2
 fi
-config_path="./${dataset_type}_config.yaml"
-echo "config path is : ${config_path}"
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
@@ -52,5 +50,8 @@ then
 fi
 mkdir ../eval
 cd ../eval || exit
+
+config_path="${BASEPATH}/../${dataset_type}_config.yaml"
+echo "config path is : ${config_path}"
 
 python3 ${BASEPATH}/../eval.py --config_path=$config_path --checkpoint_path=$1 --dataset_name=$dataset_type > ./eval.log 2>&1 &

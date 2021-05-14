@@ -37,8 +37,6 @@ then
     fi
     dataset_type=$2
 fi
-config_path="./${dataset_type}_config.yaml"
-echo "config path is : ${config_path}"
 
 ulimit -u unlimited
 export DEVICE_NUM=8
@@ -46,6 +44,10 @@ export RANK_SIZE=8
 PATH1=$(realpath $1)
 export RANK_TABLE_FILE=$PATH1
 echo "RANK_TABLE_FILE=${PATH1}"
+
+EXECUTE_PATH=$(pwd)
+config_path="${EXECUTE_PATH}/${dataset_type}_config.yaml"
+echo "config path is : ${config_path}"
 
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))

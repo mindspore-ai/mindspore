@@ -15,12 +15,12 @@
 
 """Device adapter for ModelArts"""
 
-from utils.config import config
+from model_utils.config import config
 
 if config.enable_modelarts:
-    from utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+    from model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 else:
-    from utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+    from model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
 __all__ = [
     "get_device_id", "get_device_num", "get_rank_id", "get_job_id"

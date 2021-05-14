@@ -21,7 +21,6 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from src.config import cifar_cfg, imagenet_cfg
 from src.googlenet import GoogleNet
 
 from model_utils.config import config
@@ -32,18 +31,11 @@ if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
 if __name__ == '__main__':
-    if config.dataset_name == 'cifar10':
-        cfg = cifar_cfg
-    elif config.dataset_name == 'imagenet':
-        cfg = imagenet_cfg
-    else:
-        raise ValueError("dataset is not support.")
+    net = GoogleNet(num_classes=config.num_classes)
 
-    net = GoogleNet(num_classes=cfg.num_classes)
-
-    assert cfg.checkpoint_path is not None, "cfg.checkpoint_path is None."
+    assert config.checkpoint_path is not None, "config.checkpoint_path is None."
     param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.ones([config.batch_size, 3, cfg.image_height, cfg.image_width]), ms.float32)
+    input_arr = Tensor(np.ones([config.batch_size, 3, config.image_height, config.image_width]), ms.float32)
     export(net, input_arr, file_name=config.file_name, file_format=config.file_format)
