@@ -357,6 +357,7 @@ class Model:
                                                                        dataset=valid_dataset,
                                                                        dataset_sink_mode=True)
             self._eval_network = eval_network
+            self._eval_network.add_flags_recursive(thor=False)
             for inputs in valid_dataset_helper:
                 self._eval_network.compile(*inputs)
                 break
@@ -557,7 +558,7 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned, and the data and label are passed to the network and loss
                                      function respectively.
-            callbacks (list): List of callback object. Callbacks which should be excuted while training. Default: None.
+            callbacks (list): List of callback object. Callbacks which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
@@ -668,7 +669,7 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            callbacks (list): List of callback object. Callbacks which should be excuted
+            callbacks (list): List of callback object. Callbacks which should be executed
                               while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
 
