@@ -563,6 +563,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   }
   builder->SetKernelType(new_kernel_type);
   builder->SetProcessor(new_processor);
+  kernel_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
 }
 }  // namespace ascend

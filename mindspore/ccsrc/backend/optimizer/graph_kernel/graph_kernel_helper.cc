@@ -606,6 +606,7 @@ void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
 #if ENABLE_D
   device::ascend::SetKernelInfo(cnode, kernel_type);
 #elif ENABLE_GPU
+  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   device::gpu::SetKernelInfo(cnode, kernel_type);
 #endif
 }
