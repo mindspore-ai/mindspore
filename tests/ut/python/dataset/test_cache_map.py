@@ -56,7 +56,7 @@ def test_cache_map_basic1():
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
-        session_id = 1
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
@@ -1970,7 +1970,7 @@ def test_cache_map_mindrecord1():
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
-        session_id = 1
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
@@ -2006,7 +2006,7 @@ def test_cache_map_mindrecord2():
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
-        session_id = 1
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
@@ -2027,6 +2027,45 @@ def test_cache_map_mindrecord2():
     assert epoch_count == num_epoch
 
     logger.info("test_cache_map_mindrecord2 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_mindrecord3():
+    """
+    Test cache sharing between the following two pipelines with mindrecord leaf:
+
+       Cache                                    Cache
+         |                                      |
+     Map(decode)                            Map(decode)
+         |                                      |
+      MindRecord(num_parallel_workers=5)    MindRecord(num_parallel_workers=6)
+    """
+
+    logger.info("Test cache map mindrecord3")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 5 records
+    columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
+    decode_op = c_vision.Decode()
+
+    ds1 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list=columns_list, num_parallel_workers=5, shuffle=True)
+    ds1 = ds1.map(input_columns=["img_data"], operations=decode_op, cache=some_cache)
+
+    ds2 = ds.MindDataset(MIND_RECORD_DATA_DIR, columns_list=columns_list, num_parallel_workers=6, shuffle=True)
+    ds2 = ds2.map(input_columns=["img_data"], operations=decode_op, cache=some_cache)
+
+    iter1 = ds1.create_dict_iterator(num_epochs=1, output_numpy=True)
+    iter2 = ds2.create_dict_iterator(num_epochs=1, output_numpy=True)
+
+    assert sum([1 for _ in iter1]) == 5
+    assert sum([1 for _ in iter2]) == 5
+
+    logger.info("test_cache_map_mindrecord3 Ended.\n")
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")

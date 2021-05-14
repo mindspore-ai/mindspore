@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ shutdown_cache_server()
   result=$(cache_admin --stop 2>&1)
   rc=$?
   echo "${result}"
-  if [ "${rc}" -ne 0 ] && [[ ! ${result} =~ "Server on port 50052 is not up or has been shutdown already" ]]; then
+  if [ "${rc}" -ne 0 ] && [[ ! ${result} =~ "Server on port 50052 is not reachable or has been shutdown already" ]]; then
     echo "cache_admin command failure!" "${result}"
     exit 1
   fi

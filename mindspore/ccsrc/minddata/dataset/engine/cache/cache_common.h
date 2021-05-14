@@ -73,7 +73,11 @@ inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
 /// \param port
 /// \return unix socket url
 inline std::string PortToUnixSocketPath(int port) {
-  return kDefaultCommonPath + std::string("/cache_server_p") + std::to_string(port);
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+  return kDefaultCommonPath + Services::GetUserName() + std::string("/cache_server_p") + std::to_string(port);
+#else
+  return kDefaultCommonPath;
+#endif
 }
 
 /// \brief Round up to the next 4k

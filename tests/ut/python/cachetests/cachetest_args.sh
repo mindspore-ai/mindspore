@@ -55,8 +55,8 @@ cmd="${CACHE_ADMIN} --start --spilldir /path_that_does_not_exist"
 CacheAdminCmd "${cmd}" 1
 HandleRcExit $? 0 0
 
-# stop cache server first to test start
-StopServer
+# clean up cache server first to test start
+ServerCleanup
 # start cache server
 StartServer
 HandleRcExit $? 1 1

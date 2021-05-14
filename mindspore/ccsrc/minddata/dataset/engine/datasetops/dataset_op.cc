@@ -374,6 +374,7 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   std::string ss_str = ss.str();
 
   // Filter out the Num workers field when generating the check sum
+  ss_str = std::regex_replace(ss_str, std::regex("Number of ShardReader workers.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("Num workers.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex("\\[workers.*?\\]"), "");
   ss_str = std::regex_replace(ss_str, std::regex("Connector queue size.*\n"), "");

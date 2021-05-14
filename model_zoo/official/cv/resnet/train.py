@@ -266,3 +266,6 @@ if __name__ == '__main__':
     dataset_sink_mode = (not args_opt.parameter_server) and target != "CPU"
     model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
                 sink_size=dataset.get_dataset_size(), dataset_sink_mode=dataset_sink_mode)
+
+    if args_opt.run_eval and args_opt.enable_cache:
+        print("Remember to shut down the cache server via \"cache_admin --stop\"")

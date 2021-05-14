@@ -129,6 +129,11 @@ def check_uint32(value, arg_name=""):
     check_value(value, [UINT32_MIN, UINT32_MAX])
 
 
+def check_pos_uint32(value, arg_name=""):
+    type_check(value, (int,), arg_name)
+    check_value(value, [POS_INT_MIN, UINT32_MAX])
+
+
 def check_pos_int32(value, arg_name=""):
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, INT32_MAX], arg_name)

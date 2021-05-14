@@ -92,6 +92,7 @@ run_ascend()
             &> log$i.log &
         cd ..
     done
+    echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""
 }
 
 run_gpu()
@@ -149,6 +150,7 @@ run_gpu()
         --enable_cache=True \
         --cache_session_id=$CACHE_SESSION_ID \
         &> ../train.log &  # dataset train folder
+    echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""
 }
 
 run_cpu()
@@ -198,6 +200,7 @@ run_cpu()
         --enable_cache=True \
         --cache_session_id=$CACHE_SESSION_ID \
         &> ../train.log &  # dataset train folder
+    echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""
 }
 
 if [ $1 = "Ascend" ] ; then

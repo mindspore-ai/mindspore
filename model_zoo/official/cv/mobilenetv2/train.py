@@ -131,3 +131,6 @@ if __name__ == '__main__':
             if (epoch + 1) % config.save_checkpoint_epochs == 0:
                 save_checkpoint(net, os.path.join(save_ckpt_path, f"mobilenetv2_{epoch+1}.ckpt"))
         print("total cost {:5.4f} s".format(time.time() - start))
+
+    if args_opt.enable_cache:
+        print("Remember to shut down the cache server via \"cache_admin --stop\"")
