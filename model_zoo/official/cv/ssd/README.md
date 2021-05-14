@@ -312,6 +312,12 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
     bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
+- Standalone training
+
+```shell
+    bash run_standalone_train.sh [DEVICE_ID] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+```
+
 We need five or seven parameters for this scripts.
 
 - `DEVICE_NUM`: the device number for distributed train.
