@@ -379,6 +379,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
