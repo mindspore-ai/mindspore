@@ -149,7 +149,7 @@ class CompositePoissonNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -204,7 +204,7 @@ class StandardNormalNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -260,7 +260,7 @@ class GammaNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -289,7 +289,7 @@ class PoissonNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -317,7 +317,7 @@ class UniformIntNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -346,7 +346,7 @@ class UniformRealNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -423,7 +423,7 @@ class RandomCategoricalNet(nn.Cell):
         return s1, s2, s3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

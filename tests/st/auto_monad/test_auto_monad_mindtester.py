@@ -123,7 +123,7 @@ class ControlGraphSupportNotEqual(Cell):
         return out, out2, out3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -143,7 +143,7 @@ def test_ctrl_if_while_graph_support_not_equal_true():
     allclose_nparray(out3, out_me[2].asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -186,7 +186,7 @@ class ControlBprop(Cell):
         return x*2, y*3, z, input_data*5.1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -237,7 +237,7 @@ class InlineBpropTwoInput1(Cell):
         return grads[0]*2, grads[1]*2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -315,7 +315,7 @@ class SideEffectMemoryCellAddnNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -347,7 +347,7 @@ class SideEffectIOCellAddnNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -379,7 +379,7 @@ class SideEffectReturnParameterNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -462,7 +462,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -540,7 +540,7 @@ class SideEffectTwoAddnSwitchNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -582,7 +582,7 @@ class SideEffectGradIfNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -639,7 +639,7 @@ def test_highgrad_one_input_sec_grad():
     assert (dxdx.asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
