@@ -1066,7 +1066,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   for (size_t index = 0; index < cnode->inputs().size(); ++index) {
     PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(prim);
-    if ((prim->name() == DEPEND || prim->name() == LOAD) && index != 1) {
+    if ((prim->name() == DEPEND || prim->name() == LOAD || IsInAllGatherNodeList(cnode)) && index != 1) {
       continue;
     }
     if (!FindParameter(cnode->input(index), func_graph).first) {
@@ -1813,7 +1813,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         MS_LOG(WARNING) << "The parameter " << param_name << " has not tensor layout, skip it";
         continue;
       }
-      cloned_parameter->set_user_data<TensorLayout>(cloned_from_parameter->user_data<TensorLayout>());
+      auto tensor_layout = cloned_from_parameter->user_data<TensorLayout>();
       MS_EXCEPTION_IF_NULL(cloned_parameter_node->abstract());
       MS_EXCEPTION_IF_NULL(cloned_from_node->abstract());
       auto cloned_abstract = cloned_parameter_node->abstract()->Clone();
@@ -1823,9 +1823,16 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
         MS_EXCEPTION_IF_NULL(parallel_shape);
         cloned_abstract->set_shape(parallel_shape);
+        // in opt shard, accu_grad's shape is different from the original param's shape
+        if (ParallelContext::GetInstance()->enable_parallel_optimizer()) {
+          TensorLayout new_layout = *tensor_layout;
+          new_layout.set_opt_shard_group("");
+          tensor_layout = std::make_shared<TensorLayout>(new_layout);
+        }
       } else {
         cloned_abstract->set_shape(cloned_from_node->abstract()->GetShapeTrack());
       }
+      cloned_parameter->set_user_data<TensorLayout>(tensor_layout);
       cloned_parameter_node->set_abstract(cloned_abstract);
       MS_LOG(INFO) << "The parameter: " << cloned_parameter->name()
                    << " is cloned, the be cloned parameter is: " << cloned_from_parameter->name()
