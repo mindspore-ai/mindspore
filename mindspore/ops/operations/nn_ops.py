@@ -6955,7 +6955,7 @@ class Dropout3D(PrimitiveWithInfer):
                     or if the dim of input is not 5-D.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> dropout = ops.Dropout3D(keep_prob=0.5)
