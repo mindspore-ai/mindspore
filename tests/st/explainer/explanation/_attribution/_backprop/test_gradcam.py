@@ -58,7 +58,7 @@ class TestGradCAM:
         self.net = SimpleAvgLinear()
         self.data = ms.Tensor(np.random.random(size=(1, 1, 4, 4)), ms.float32)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard
@@ -83,7 +83,7 @@ class TestGradCAM:
                 res = aggregation(gap_grad * activation)
                 assert np.allclose(res.asnumpy(), attribution.asnumpy(), atol=1e-5, rtol=1e-3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard

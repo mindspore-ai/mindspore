@@ -39,7 +39,7 @@ class GammaMean(nn.Cell):
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_probability_gamma_mean_cdoncentration_rate_rand_2_ndarray():

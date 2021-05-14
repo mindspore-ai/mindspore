@@ -436,7 +436,7 @@ def test_pynative_hook_outermost_cell_not_change_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_not_change_grad()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -451,7 +451,7 @@ def test_pynative_hook_all_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_all_cell_record_grad()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -481,7 +481,7 @@ def test_pynative_hook_mul2_change_input_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_mul2_change_input_grad()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

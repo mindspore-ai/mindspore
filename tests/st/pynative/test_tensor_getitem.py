@@ -48,7 +48,7 @@ class NetWorkSlicePositive(Cell):
         return ret0, ret1, ret2, ret3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -213,7 +213,7 @@ class TensorGetItemByMixedTensorsBasicCase(Cell):
         return ret0, ret1, ret2, ret3, ret4, ret5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -247,7 +247,7 @@ class TensorItemByNone(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -272,7 +272,7 @@ class TensorItemByItem(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -308,7 +308,7 @@ def test_item_by_int():
         net(input_3d_ms, index_np_4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -439,7 +439,7 @@ class TensorSetItemByMixedTensors_2(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -466,7 +466,7 @@ class TensorGetItemByMixedTensorsIndexError(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -493,7 +493,7 @@ class TensorSetItemByOneTensorWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -522,7 +522,7 @@ class TensorSetItemByOneTensorWithTensor(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -553,7 +553,7 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -582,7 +582,7 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -617,7 +617,7 @@ class TensorSetItemByTensorsWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -685,7 +685,7 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -714,7 +714,7 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 # GPU op has bug, and has not been fixed.
@@ -747,7 +747,7 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 # GPU op has bug, and has not been fixed.
@@ -785,7 +785,7 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -877,7 +877,7 @@ class TensorAssignWithSlice(Cell):
         return z
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -927,7 +927,7 @@ def test_tensor_assign_slice_value_2():
     assert np.all(z == out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1121,7 +1121,7 @@ def test_tensor_assign_bool_index_0():
     assert np.all(out.asnumpy() == res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1142,7 +1142,7 @@ def test_tensor_assign_bool_index_1():
     assert np.all(out.asnumpy() == res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1207,7 +1207,7 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
     assert "begin should be in [-6, 6), but got stride: 1, begin: -7." in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

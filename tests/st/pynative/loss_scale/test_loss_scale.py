@@ -145,7 +145,7 @@ class MSELoss(nn.Cell):
         diff = data - label
         return self.reduce_mean(self.square(diff), get_axis(diff))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -168,7 +168,7 @@ def test_loss_scale_fp16_lr_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -211,7 +211,7 @@ def test_loss_scale_fp16_model_train_overflow():
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics=None, loss_scale_manager=scale_manager)
     model.train(2, dataset, dataset_sink_mode=False)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

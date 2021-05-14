@@ -236,7 +236,7 @@ class TensorItemSetWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -287,7 +287,7 @@ def test_setitem_dim_expand():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -341,7 +341,7 @@ def test_itemset_by_number_with_number():
         net(input_3d_ms, index_np_4, value_np_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

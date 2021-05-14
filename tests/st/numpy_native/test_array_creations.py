@@ -974,7 +974,7 @@ def test_empty_like_exception():
         mnp.empty_like([[1, 2, 3], [4, 5]])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

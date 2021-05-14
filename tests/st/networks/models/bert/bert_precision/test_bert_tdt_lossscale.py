@@ -245,7 +245,7 @@ def test_bert_precision(enable_graph_kernel=False):
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

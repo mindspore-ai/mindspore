@@ -73,7 +73,7 @@ def test_parser_tensor_assign_slice_002():
 
     assert np.allclose(out_me.asnumpy(), input_np_x, rtol=0.01, atol=0.01)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
