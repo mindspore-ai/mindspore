@@ -20,8 +20,7 @@ namespace mindspore {
 namespace crypto {
 int64_t Min(int64_t a, int64_t b) { return a < b ? a : b; }
 
-Byte *intToByte(const int32_t &n) {
-  Byte *byte = new Byte[4];
+void *intToByte(Byte *byte, const int32_t &n) {
   memset(byte, 0, sizeof(Byte) * 4);
   byte[0] = (Byte)(0xFF & n);
   byte[1] = (Byte)((0xFF00 & n) >> 8);
@@ -150,8 +149,8 @@ EVP_CIPHER_CTX *GetEVP_CIPHER_CTX(const std::string &work_mode, const Byte *key,
   return ctx;
 }
 
-bool _BlockEncrypt(Byte *encrypt_data, int64_t *encrypt_data_len, Byte *plain_data, const int64_t plain_len, Byte *key,
-                   const int32_t key_len, const std::string &enc_mode) {
+bool _BlockEncrypt(Byte *encrypt_data, const int64_t encrypt_data_buf_len, int64_t *encrypt_data_len, Byte *plain_data,
+                   const int64_t plain_len, Byte *key, const int32_t key_len, const std::string &enc_mode) {
   int32_t cipher_len = 0;
 
   int32_t iv_len = AES_BLOCK_SIZE;
@@ -192,22 +191,27 @@ bool _BlockEncrypt(Byte *encrypt_data, int64_t *encrypt_data_len, Byte *plain_da
   int64_t cur = 0;
   *encrypt_data_len = sizeof(int32_t) * 2 + iv_len + cipher_len;
 
-  memcpy(encrypt_data + cur, intToByte(*encrypt_data_len), 4);
+  Byte *byte_buf = new Byte[4];
+  intToByte(byte_buf, *encrypt_data_len);
+  memcpy_s(encrypt_data + cur, encrypt_data_buf_len - cur, byte_buf, 4);
   cur += 4;
-  memcpy(encrypt_data + cur, intToByte(iv_len), 4);
+  intToByte(byte_buf, iv_len);
+  memcpy_s(encrypt_data + cur, encrypt_data_buf_len - cur, byte_buf, 4);
   cur += 4;
-  memcpy(encrypt_data + cur, iv_cpy, iv_len);
+  memcpy_s(encrypt_data + cur, encrypt_data_buf_len - cur, iv_cpy, iv_len);
   cur += iv_len;
-  memcpy(encrypt_data + cur, intToByte(cipher_len), 4);
+  intToByte(byte_buf, cipher_len);
+  memcpy_s(encrypt_data + cur, encrypt_data_buf_len - cur, byte_buf, 4);
   cur += 4;
-  memcpy(encrypt_data + cur, cipher_data, cipher_len);
+  memcpy_s(encrypt_data + cur, encrypt_data_buf_len - cur, cipher_data, cipher_len);
   *encrypt_data_len += 4;
 
+  delete[] byte_buf;
   delete[] cipher_data;
   return true;
 }
 
-bool _BlockDecrypt(Byte **plain_data, int32_t *plain_len, Byte *encrypt_data, const int64_t encrypt_len, Byte *key,
+bool _BlockDecrypt(Byte *plain_data, int32_t *plain_len, Byte *encrypt_data, const int64_t encrypt_len, Byte *key,
                    const int32_t key_len, const std::string &dec_mode) {
   std::string alg_mode;
   std::string work_mode;
@@ -224,11 +228,6 @@ bool _BlockDecrypt(Byte **plain_data, int32_t *plain_len, Byte *encrypt_data, co
   if (!ParseEncryptData(encrypt_data, encrypt_len, &iv, &iv_len, &cipher_data, &cipher_len)) {
     return false;
   }
-  *plain_data = new Byte[cipher_len + 16];
-  if (*plain_data == NULL) {
-    MS_LOG(ERROR) << "Unable to allocate memory for decrypt_string.";
-    return false;
-  }
 
   int ret = 0;
   int mlen = 0;
@@ -238,13 +237,13 @@ bool _BlockDecrypt(Byte **plain_data, int32_t *plain_len, Byte *encrypt_data, co
     MS_LOG(ERROR) << "Failed to get EVP_CIPHER_CTX.";
     return false;
   }
-  ret = EVP_DecryptUpdate(ctx, *plain_data, plain_len, cipher_data, cipher_len);
+  ret = EVP_DecryptUpdate(ctx, plain_data, plain_len, cipher_data, cipher_len);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptUpdate failed";
     return false;
   }
   if (work_mode == "CBC") {
-    ret = EVP_DecryptFinal_ex(ctx, *plain_data + *plain_len, &mlen);
+    ret = EVP_DecryptFinal_ex(ctx, plain_data + *plain_len, &mlen);
     if (ret != 1) {
       MS_LOG(ERROR) << "EVP_DecryptFinal_ex failed";
       return false;
@@ -262,27 +261,33 @@ Byte *Encrypt(int64_t *encrypt_len, Byte *plain_data, const int64_t plain_len, B
   int64_t cur_pos = 0;
   int64_t block_enc_len = 0;
   int64_t encrypt_buf_len = plain_len + (plain_len / MAX_BLOCK_SIZE + 1) * 100;
+  int64_t block_enc_buf_len = MAX_BLOCK_SIZE + 100;
+  Byte *byte_buf = new Byte[4];
   Byte *encrypt_data = new Byte[encrypt_buf_len];
   Byte *block_buf = new Byte[MAX_BLOCK_SIZE];
-  Byte *block_enc_buf = new Byte[MAX_BLOCK_SIZE + 100];
+  Byte *block_enc_buf = new Byte[block_enc_buf_len];
 
   *encrypt_len = 0;
   while (cur_pos < plain_len) {
     int64_t cur_block_size = Min(MAX_BLOCK_SIZE, plain_len - cur_pos);
     memcpy_s(block_buf, MAX_BLOCK_SIZE, plain_data + cur_pos, cur_block_size);
 
-    if (!_BlockEncrypt(block_enc_buf, &block_enc_len, block_buf, cur_block_size, key, key_len, enc_mode)) {
+    if (!_BlockEncrypt(block_enc_buf, block_enc_buf_len, &block_enc_len, block_buf, cur_block_size, key, key_len,
+                       enc_mode)) {
+      delete[] byte_buf;
       delete[] block_buf;
       delete[] block_enc_buf;
       delete[] encrypt_data;
       MS_EXCEPTION(ValueError) << "Failed to encrypt data, please check if enc_key or enc_mode is valid.";
     }
-    memcpy_s(encrypt_data + *encrypt_len, encrypt_buf_len - *encrypt_len, intToByte(MAGIC_NUM), sizeof(int32_t));
+    intToByte(byte_buf, MAGIC_NUM);
+    memcpy_s(encrypt_data + *encrypt_len, encrypt_buf_len - *encrypt_len, byte_buf, sizeof(int32_t));
     *encrypt_len += sizeof(int32_t);
     memcpy_s(encrypt_data + *encrypt_len, encrypt_buf_len - *encrypt_len, block_enc_buf, block_enc_len);
     *encrypt_len += block_enc_len;
     cur_pos += cur_block_size;
   }
+  delete[] byte_buf;
   delete[] block_buf;
   delete[] block_enc_buf;
   return encrypt_data;
@@ -290,10 +295,9 @@ Byte *Encrypt(int64_t *encrypt_len, Byte *plain_data, const int64_t plain_len, B
 
 Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *key, const int32_t key_len,
               const std::string &dec_mode) {
-  Byte *decrypt_data = nullptr;
   char *block_buf = new char[MAX_BLOCK_SIZE * 2];
   char *int_buf = new char[4];
-  Byte *decrypt_block_buf = nullptr;
+  Byte *decrypt_block_buf = new Byte[MAX_BLOCK_SIZE * 2];
   int32_t decrypt_block_len;
 
   std::ifstream fid(encrypt_data_path, std::ios::in | std::ios::binary);
@@ -305,13 +309,17 @@ Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *
   int64_t file_size = fid.tellg();
   fid.clear();
   fid.seekg(0);
-  decrypt_data = new Byte[file_size];
+  Byte *decrypt_data = new Byte[file_size];
 
   *decrypt_len = 0;
   while (fid.tellg() < file_size) {
     fid.read(int_buf, sizeof(int32_t));
     int cipher_flag = ByteToint(reinterpret_cast<Byte *>(int_buf));
     if (cipher_flag != MAGIC_NUM) {
+      delete[] block_buf;
+      delete[] int_buf;
+      delete[] decrypt_block_buf;
+      delete[] decrypt_data;
       MS_EXCEPTION(ValueError) << "File \"" << encrypt_data_path
                                << "\"is not an encrypted file and cannot be decrypted";
     }
@@ -319,10 +327,11 @@ Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *
 
     int32_t block_size = ByteToint(reinterpret_cast<Byte *>(int_buf));
     fid.read(block_buf, sizeof(char) * block_size);
-    if (!(_BlockDecrypt(&decrypt_block_buf, &decrypt_block_len, reinterpret_cast<Byte *>(block_buf), block_size, key,
+    if (!(_BlockDecrypt(decrypt_block_buf, &decrypt_block_len, reinterpret_cast<Byte *>(block_buf), block_size, key,
                         key_len, dec_mode))) {
       delete[] block_buf;
       delete[] int_buf;
+      delete[] decrypt_block_buf;
       delete[] decrypt_data;
       MS_EXCEPTION(ValueError) << "Failed to decrypt data, please check if dec_key or dec_mode is valid";
     }
@@ -333,6 +342,7 @@ Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *
   fid.close();
   delete[] block_buf;
   delete[] int_buf;
+  delete[] decrypt_block_buf;
   return decrypt_data;
 }
 #endif

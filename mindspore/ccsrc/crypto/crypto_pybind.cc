@@ -22,7 +22,9 @@ py::bytes PyEncrypt(char *plain_data, const int64_t plain_len, char *key, const 
   char *encrypt_data;
   encrypt_data = reinterpret_cast<char *>(Encrypt(&encrypt_len, reinterpret_cast<Byte *>(plain_data), plain_len,
                                                   reinterpret_cast<Byte *>(key), key_len, enc_mode));
-  return py::bytes(encrypt_data, encrypt_len);
+  auto py_encrypt_data = py::bytes(encrypt_data, encrypt_len);
+  delete[] encrypt_data;
+  return py_encrypt_data;
 }
 
 py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const int32_t key_len, std::string dec_mode) {
@@ -30,7 +32,9 @@ py::bytes PyDecrypt(std::string encrypt_data_path, char *key, const int32_t key_
   char *decrypt_data;
   decrypt_data = reinterpret_cast<char *>(
     Decrypt(&decrypt_len, encrypt_data_path, reinterpret_cast<Byte *>(key), key_len, dec_mode));
-  return py::bytes(decrypt_data, decrypt_len);
+  auto py_decrypt_data = py::bytes(decrypt_data, decrypt_len);
+  delete[] decrypt_data;
+  return py_decrypt_data;
 }
 bool PyIsCipherFile(std::string file_path) { return IsCipherFile(file_path); }
 }  // namespace crypto
