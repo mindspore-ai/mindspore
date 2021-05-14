@@ -335,6 +335,13 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
     graph_input_type.push_back(input_type);
     auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
     fg->parameters()[i]->set_abstract(input_abs);
+    fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder para_info_builder;
+    para_info_builder.SetOutputsFormat({input_format});
+    para_info_builder.SetOutputsDeviceType({input_type});
+    para_info_builder.SetKernelType(KernelType::AKG_KERNEL);
+    para_info_builder.SetProcessor(kernel::GetProcessorFromContext());
+    AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), fg->parameters()[i].get());
   }
   auto new_outputs = outputs;
   if (outputs.size() == 1 && AnfAlgo::IsGraphKernel(outputs[0])) {
