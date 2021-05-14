@@ -71,14 +71,6 @@ class TfBidirectionGruFusion : public PatternProcessPass {
   VarPtr bw_init_state_;
 };
 inline bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
-
-inline bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim);
-  }
-  return false;
-}
 }  // namespace opt
 }  // namespace mindspore
 

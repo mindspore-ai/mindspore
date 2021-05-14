@@ -176,6 +176,7 @@ if(ENABLE_CONVERTER)
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
             ${LITE_DIR}/tools/converter/ops/while.cc
+            ${LITE_DIR}/tools/converter/ops/attention.cc
             ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
@@ -205,6 +206,9 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/matmul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/mul_add_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/tf_multi_head_attention_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/glu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/onnx_gelu_fusion.cc

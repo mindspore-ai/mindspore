@@ -35,6 +35,8 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
+#include "tools/optimizer/fusion/tf_multi_head_attention_fusion.h"
+#include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
@@ -94,6 +96,9 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
     fusion_pm->AddPass(std::make_shared<opt::TfGeLUFusion>());
     fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfMultiHeadAttentionFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();

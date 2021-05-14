@@ -72,7 +72,8 @@ enum ActivationType : int64_t {
   SIGN = 17,
   SWISH = 18,
   GELU = 19,
-  UNKNOWN = 20
+  GLU = 20,
+  UNKNOWN = 21
 };
 enum ReduceMode : int64_t {
   Reduce_Mean = 0,
