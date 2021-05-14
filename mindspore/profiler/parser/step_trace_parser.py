@@ -189,11 +189,19 @@ class BaseStepTraceParser:
         Returns:
             Generator, return the step trace one by one.
         """
+        start_time = event_info.get('end', '-')
+        event_info['start'] = start_time
+        event_info['reduce'] = {}
+
         for pos in range(0, len(content), 20):
             next_event = self._get_trace_struct(content[pos:pos + self._event_size])
             self._construct_event_info(next_event, event_info)
             if event_info.get('end'):
                 yield event_info
+                start_time = event_info.get('end', '-')
+                event_info.clear()
+                event_info['start'] = start_time
+                event_info['reduce'] = {}
 
     def _get_trace_struct(self, bin_info):
         """Translate event info to StepTraceStruct."""
@@ -213,10 +221,6 @@ class BaseStepTraceParser:
         def _on_step_event():
             """Handle step event."""
             self._validate_tag_id(tag_id)
-            start_time = event_info.get('end', '-')
-            event_info.clear()
-            event_info['start'] = start_time
-            event_info['reduce'] = {}
 
         def _on_reduce_event(reduce_tag_id):
             """Handle reduce event."""
