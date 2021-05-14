@@ -40,6 +40,8 @@ def parse_args():
     parser.add_argument('--flip', action='store_true', help='perform left-right flip')
     parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
     parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
+    parser.add_argument("--input_format", type=str, choices=["NCHW", "NHWC"], default="NCHW",
+                        help="NCHW or NHWC")
 
     # model
     parser.add_argument('--model', type=str, default='deeplab_v3_s16', help='select model')
