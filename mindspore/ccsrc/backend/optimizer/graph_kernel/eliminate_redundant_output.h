@@ -42,7 +42,7 @@ class EliminateHangingOutput : public Pass {
  private:
   // update the GetItem(node, i) to GetItem(node, i - offset)
   void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) const;
-  AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
+  AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) const;
 };
 
 // Remove the output without user or with virtual user (like UpdateState)
