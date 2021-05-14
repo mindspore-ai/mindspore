@@ -64,9 +64,9 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/register_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_interface.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_interface_registry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/registry/kernel_interface.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/registry/kernel_interface_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_util.cc

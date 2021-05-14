@@ -16,7 +16,8 @@
 
 #ifndef MINDSPORE_LITE_SRC_INNER_CONTEXT_H
 #define MINDSPORE_LITE_SRC_INNER_CONTEXT_H
-
+#include <set>
+#include <string>
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
 #include "src/runtime/allocator.h"
@@ -47,6 +48,10 @@ struct InnerContext : public Context {
   bool IsGpuEnabled() const;
 
   bool IsNpuEnabled() const;
+
+  bool IsProviderEnabled() const;
+
+  std::set<std::string> GetProviders() const;
 
   CpuDeviceInfo GetCpuInfo() const;
 

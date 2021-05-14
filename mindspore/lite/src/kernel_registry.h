@@ -23,7 +23,7 @@
 #include <vector>
 #include <set>
 #include "src/lite_kernel.h"
-#include "src/register_kernel.h"
+#include "src/registry/register_kernel.h"
 #include "schema/model_generated.h"
 
 using mindspore::kernel::kKernelArch_MAX;
@@ -43,7 +43,6 @@ class KernelRegistry {
   virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelKey &desc, const schema::Primitive *prim);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   int GetFuncIndex(const kernel::KernelKey &desc);
-  std::set<std::string> AllProviders();
   int RegCustomKernel(const std::string &arch, const std::string &vendor, TypeId data_type, const std::string &type,
                       kernel::CreateKernel creator);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);

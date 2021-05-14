@@ -15,24 +15,26 @@
  */
 #include "src/runtime/infer_manager.h"
 #include <algorithm>
+#include <set>
+#include <string>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
 #include "src/tensorlist.h"
-#include "src/kernel_interface_registry.h"
+#include "src/registry/kernel_interface_registry.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {
 namespace lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive) {
+                     const void *primitive, std::set<std::string> &&providers) {
   std::vector<tensor::MSTensor *> in_tensors;
   std::copy(inputs.begin(), inputs.end(), std::back_inserter(in_tensors));
   std::vector<tensor::MSTensor *> out_tensors;
   std::copy(outputs.begin(), outputs.end(), std::back_inserter(out_tensors));
-  for (auto &&provider : KernelInterfaceRegistry::Instance()->AllProviders()) {
+  for (auto &&provider : providers) {
     auto kernel_interface = KernelInterfaceRegistry::Instance()->GetKernelInterface(
       provider, static_cast<const schema::Primitive *>(primitive));
     if (kernel_interface == nullptr) {

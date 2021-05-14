@@ -48,7 +48,7 @@
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
-#include "src/kernel_interface_registry.h"
+#include "src/registry/kernel_interface_registry.h"
 
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -131,8 +131,8 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  if (KernelInterfaceRegistry::Instance()->CheckReg(node)) {
-    return KernelInferShape(inputs, outputs, node->primitive_);
+  if (KernelInterfaceRegistry::Instance()->CheckReg(node, context_->GetProviders())) {
+    return KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
   }
 
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
@@ -442,20 +442,26 @@ int Scheduler::FindNpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
   MS_ASSERT(kernel != nullptr);
-  int ret = RET_ERROR;
-  auto &&providers = KernelRegistry::GetInstance()->AllProviders();
+  int ret = RET_NOT_SUPPORT;
+  if (!context_->IsProviderEnabled()) {
+    return ret;
+  }
   if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
     return ret;
   }
-  for (auto &&provider : providers) {
-    kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), "", provider};
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
-                                                   node->primitive_);
-    if (ret == RET_OK && *kernel != nullptr) {
-      return ret;
+  for (auto &&device : context_->device_list_) {
+    if (!device.provider_.empty()) {
+      kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), device.provider_device_,
+                             device.provider_};
+      ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
+                                                     node->primitive_);
+      if (ret == RET_OK && *kernel != nullptr) {
+        return ret;
+      }
     }
   }
-  return ret;
+
+  return RET_NOT_SUPPORT;
 }
 
 kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,

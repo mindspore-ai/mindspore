@@ -21,7 +21,7 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include "src/kernel_interface.h"
+#include "src/registry/kernel_interface.h"
 #include "include/model.h"
 
 namespace mindspore {
@@ -32,11 +32,10 @@ class KernelInterfaceRegistry {
     static KernelInterfaceRegistry instance;
     return &instance;
   }
-  bool CheckReg(const lite::Model::Node *node);
+  bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
   kernel::KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
   int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
-  std::set<std::string> AllProviders();
   virtual ~KernelInterfaceRegistry();
 
  private:

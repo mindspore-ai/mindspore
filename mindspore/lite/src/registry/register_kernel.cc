@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/kernel_interface.h"
-#include "src/kernel_interface_registry.h"
+#include "src/registry/register_kernel.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore {
 namespace kernel {
-RegisterKernelInterface *RegisterKernelInterface::Instance() {
-  static RegisterKernelInterface instance;
+RegisterKernel *RegisterKernel::GetInstance() {
+  static RegisterKernel instance;
   return &instance;
 }
 
-int RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
-  return lite::KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
+int RegisterKernel::RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+                                    const std::string &type, CreateKernel creator) {
+  return lite::KernelRegistry::GetInstance()->RegCustomKernel(arch, provider, data_type, type, creator);
 }
 
-int RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
-                                       KernelInterfaceCreator creator) {
-  return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
+int RegisterKernel::RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int op_type,
+                              CreateKernel creator) {
+  return lite::KernelRegistry::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
 }
 }  // namespace kernel
 }  // namespace mindspore

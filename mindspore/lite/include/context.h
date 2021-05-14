@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_LITE_INCLUDE_CONTEXT_H_
 #define MINDSPORE_LITE_INCLUDE_CONTEXT_H_
-
+#include <string>
 #include "include/ms_tensor.h"
 #include "include/lite_utils.h"
 #include "include/lite_types.h"
@@ -57,6 +57,8 @@ union DeviceInfo {
 struct DeviceContext {
   DeviceType device_type_ = DT_CPU;
   DeviceInfo device_info_;
+  std::string provider_{};
+  std::string provider_device_{};
 };
 
 /// \brief Context defined for holding environment variables during runtime.
