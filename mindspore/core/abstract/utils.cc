@@ -50,41 +50,7 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   return kAnyType;
 }
 
-ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
-  MS_EXCEPTION_IF_NULL(shape1);
-  MS_EXCEPTION_IF_NULL(shape2);
-  if (*shape1 == *shape2) {
-    return shape1;
-  }
-  // lengths of two shapes are not same, join failed
-  if (shape1->shape().size() != shape2->shape().size()) {
-    // special case: shape(1), shape() -> shape(1)
-    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().size() == 0) {
-      return shape1;
-    }
-    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().size() == 0) {
-      return shape2;
-    }
-    MS_EXCEPTION(ValueError) << "Unsupported shape join. shape1 = " << shape1->ToString()
-                             << ", shape2 = " << shape2->ToString();
-  }
-  ShapeVector dims;
-  bool has_dynamic_shape = false;
-  dims.resize(shape1->shape().size());
-  for (std::size_t i = 0; i < shape1->shape().size(); i++) {
-    if (shape1->shape()[i] == shape2->shape()[i]) {
-      dims[i] = shape1->shape()[i];
-      if (shape1->shape()[i] == Shape::SHP_ANY) {
-        has_dynamic_shape = true;
-      }
-    } else {
-      dims[i] = Shape::SHP_ANY;
-      has_dynamic_shape = true;
-    }
-  }
-  if (!has_dynamic_shape) {
-    return std::make_shared<Shape>(dims);
-  }
+ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, const ShapeVector &dims) {
   // calculate dynamic shape
   ShapeVector min_dims(dims.size());
   ShapeVector max_dims(dims.size());
@@ -131,6 +97,44 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   return std::make_shared<Shape>(dims, min_dims, max_dims);
 }
 
+ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
+  MS_EXCEPTION_IF_NULL(shape1);
+  MS_EXCEPTION_IF_NULL(shape2);
+  if (*shape1 == *shape2) {
+    return shape1;
+  }
+  // lengths of two shapes are not same, join failed
+  if (shape1->shape().size() != shape2->shape().size()) {
+    // special case: shape(1), shape() -> shape(1)
+    if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().size() == 0) {
+      return shape1;
+    }
+    if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().size() == 0) {
+      return shape2;
+    }
+    MS_EXCEPTION(ValueError) << "Unsupported shape join. shape1 = " << shape1->ToString()
+                             << ", shape2 = " << shape2->ToString();
+  }
+  ShapeVector dims;
+  bool has_dynamic_shape = false;
+  dims.resize(shape1->shape().size());
+  for (std::size_t i = 0; i < shape1->shape().size(); i++) {
+    if (shape1->shape()[i] == shape2->shape()[i]) {
+      dims[i] = shape1->shape()[i];
+      if (shape1->shape()[i] == Shape::SHP_ANY) {
+        has_dynamic_shape = true;
+      }
+    } else {
+      dims[i] = Shape::SHP_ANY;
+      has_dynamic_shape = true;
+    }
+  }
+  if (!has_dynamic_shape) {
+    return std::make_shared<Shape>(dims);
+  }
+  return CalculateDynamicShape(shape1, shape2, dims);
+}
+
 AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.size() < 1) {
     MS_LOG(EXCEPTION) << "AbstractJoin requires at least 1 params, while the input size is " << args_spec_list.size()
@@ -154,6 +158,7 @@ AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, const Abstrac
   bool changes = false;
   for (std::size_t i = 0; i < spec1.size(); i++) {
     auto joined_elem = spec1[i]->Join(spec2[i]);
+    MS_EXCEPTION_IF_NULL(joined_elem);
     if (joined_elem != spec1[i]) {
       changes = true;
     }
@@ -189,7 +194,7 @@ TypePtr TypeJoin(const TypePtrList &args_type_list) {
 }  // namespace
 
 bool CheckType(const TypePtr &expected_type, const TypePtr &x) {
-  // As x and predicate both are mindspore type staticly, here we only to judge whether
+  // As x and predicate both are mindspore type statically, here we only to judge whether
   // x is predicate or is a subclass of predicate.
   return IsIdentidityOrSubclass(x, expected_type);
 }

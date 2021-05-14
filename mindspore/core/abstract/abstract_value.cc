@@ -106,8 +106,9 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(value_self);
   TypePtr res_type = TypeJoin(GetTypeTrack(), other->GetTypeTrack());
   if (res_type == kAnyType) {
-    MS_EXCEPTION(TypeError) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
-                            << ", type2 = " << other->GetTypeTrack()->ToString();
+    MS_LOG(ERROR) << "Type join failed, type1 = " << GetTypeTrack()->ToString()
+                  << ", type2 = " << other->GetTypeTrack()->ToString();
+    return nullptr;
   }
   ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
   if (res_value == value_self) {
@@ -460,6 +461,9 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   if (other->BuildType()->type_id() == kObjectTypeUndeterminedType) {
     auto other_tensor = dyn_cast<AbstractUndetermined>(other);
     auto element = element_->Join(other_tensor->element());
+    if (element == nullptr) {
+      return nullptr;
+    }
     auto shape = ShapeJoin(this->shape(), other_tensor->shape());
     auto ret = std::make_shared<AbstractUndetermined>(element, shape);
     return ret;
@@ -472,6 +476,9 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
     return shared_from_base<AbstractBase>();
   }
   auto element = element_->Join(other_tensor->element_);
+  if (element == nullptr) {
+    return nullptr;
+  }
   auto shape = ShapeJoin(this->shape(), other_tensor->shape());
   return std::make_shared<AbstractTensor>(element, shape);
 }
@@ -881,6 +888,7 @@ AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   }
   auto ref_key = ref_key_->Join(other_ref->ref_key_);
   auto ref = AbstractTensor::Join(other_ref->ref())->cast<AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(ref);
   return std::make_shared<AbstractRef>(ref_key, ref);
 }
 

@@ -49,7 +49,9 @@ bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
 
 AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBasePtr &arg2) {
   if (dyn_cast<AbstractScalar>(arg1) && dyn_cast<AbstractScalar>(arg2)) {
-    return arg1->Join(arg2);
+    auto abstract = arg1->Join(arg2);
+    MS_EXCEPTION_IF_NULL(abstract);
+    return abstract;
   }
   return nullptr;
 }
@@ -661,6 +663,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
                                                         const AnfNodeConfigPtr &out_conf,
                                                         const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList out_specs;
+  EvaluatorPtr last_eval = nullptr;
+  AbstractBasePtr last_abstract = nullptr;
   multi_poss_[evaluators[0]] = evaluators[1];
   multi_poss_[evaluators[1]] = evaluators[0];
   AbstractBasePtrList args_spec_list;
@@ -680,8 +684,21 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       eval_trace_.push_back(current_inf);
       MS_EXCEPTION_IF_NULL(eval);
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
-      MS_EXCEPTION_IF_NULL(eval_result->abstract());
-      out_specs.push_back(eval_result->abstract());
+      auto eval_abstract = eval_result->abstract();
+      MS_EXCEPTION_IF_NULL(eval_abstract);
+
+      if (last_abstract != nullptr && eval_abstract->Join(last_abstract) == nullptr) {
+        auto node = out_conf->node();
+        MS_LOG(EXCEPTION) << "Abstracts cannot be joined! Please check the data type of node : " << node->DebugString()
+                          << ".\nThe current evaluator is " << eval->ToString() << " with abstract "
+                          << eval_abstract->ToString() << ", and the previous evaluator is " << last_eval->ToString()
+                          << " with abstract " << last_abstract->ToString() << trace::DumpSourceLines(node);
+      } else {
+        last_abstract = eval_abstract;
+        last_eval = eval;
+      }
+
+      out_specs.push_back(eval_abstract);
       eval_trace_.pop_back();
       if (eval_trace_.empty()) {
         multi_poss_.clear();
