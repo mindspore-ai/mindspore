@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/optimizer/graph/functionalize_cond.h"
+#include "tools/converter/parser/tf/functionalize_cond.h"
 #include <algorithm>
 #include <memory>
 #include <deque>

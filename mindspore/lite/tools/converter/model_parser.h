@@ -34,24 +34,7 @@ class ModelParser {
 
   virtual ~ModelParser() = default;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) {
-    auto ret = ParseToFuncGraph(model_file, weight_file);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Parse to func graph failed : " << ret;
-      return nullptr;
-    }
-    ret = PostAdjust();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Adjust func graph failed : " << ret;
-      return nullptr;
-    }
-    return this->res_graph_;
-  }
-
- protected:
-  virtual int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) = 0;
-
-  virtual int PostAdjust() = 0;
+  virtual FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) { return this->res_graph_; }
 
  protected:
   FuncGraphPtr res_graph_ = nullptr;

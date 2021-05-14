@@ -16,6 +16,7 @@
 #include "tools/converter/parser/caffe/caffe_model_parser.h"
 #include <vector>
 #include <map>
+#include <set>
 #include <memory>
 #include <algorithm>
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
@@ -28,6 +29,7 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -60,33 +62,39 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-int CaffeModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
+FuncGraphPtr CaffeModelParser::Parse(const std::string &model_file, const std::string &weight_file) {
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   res_graph_ = std::make_shared<FuncGraph>();
   status = ConvertGraphInputs();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
 
   status = ConvertLayers();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
 
   status = ConvertGraphOutputs();
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
-  return RET_OK;
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  if (PostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForAnf failed.";
+    return nullptr;
+  }
+  return res_graph_;
 }
 
 STATUS CaffeModelParser::ConvertLayers() {
@@ -488,8 +496,5 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-
-int CaffeModelParser::PostAdjust() { return RET_OK; }
-
 REG_MODEL_PARSER(CAFFE, LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

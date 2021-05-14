@@ -30,7 +30,9 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
-
+#include "tools/converter/parser/onnx/onnx_inputs_adjust_pass.h"
+#include "tools/converter/parser/onnx/onnx_pad_adjust_pass.h"
+#include "tools/converter/parser/parser_utils.h"
 namespace mindspore {
 namespace lite {
 static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
@@ -44,21 +46,21 @@ static const std::unordered_map<int, mindspore::TypeId> TYPE_MAP = {
   {onnx::TensorProto_DataType_FLOAT, mindspore::kNumberTypeFloat32},
   {onnx::TensorProto_DataType_BOOL, mindspore::kNumberTypeBool}};
 
-int OnnxModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
+FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::string &weight_file) {
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
   auto status = InitOriginModel(model_file);
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "init origin model failed.";
-    return status;
+    return nullptr;
   }
 
   status = ConvertOnnxGraph(onnx_root_graph_, res_graph_, &anf_nodes_map_, {}, "root_node");
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "convert onnx graph failed.";
-    return status;
+    return nullptr;
   }
   static auto root_func_manager = Manage(res_graph_);
   for (auto &subgraph : all_subgraphs_) {
@@ -67,7 +69,17 @@ int OnnxModelParser::ParseToFuncGraph(const std::string &model_file, const std::
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
-  return RET_OK;
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  if (PostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForAnf failed.";
+    return nullptr;
+  }
+  if (OnnxModelPostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "OnnxModelPostAdjust failed.";
+    return nullptr;
+  }
+  return res_graph_;
 }
 
 STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
@@ -1171,7 +1183,23 @@ TypeId OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type
   return iter->second;
 }
 
-int OnnxModelParser::PostAdjust() { return 0; }
+int OnnxModelParser::OnnxModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+  for (auto func_graph : all_func_graphs) {
+    auto onnx_adjust = std::make_shared<OnnxInputAdjust>();
+    if (!onnx_adjust->Run(func_graph)) {
+      MS_LOG(ERROR) << "onnx adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    auto onnx_pad_adjust = std::make_shared<OnnxPadAdjust>();
+    if (!onnx_pad_adjust->Run(func_graph)) {
+      MS_LOG(ERROR) << "onnx pad adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 
 REG_MODEL_PARSER(ONNX, LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite

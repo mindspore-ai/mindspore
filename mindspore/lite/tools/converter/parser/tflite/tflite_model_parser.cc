@@ -16,6 +16,7 @@
 #include "tools/converter/parser/tflite/tflite_model_parser.h"
 #include <string>
 #include <vector>
+#include <set>
 #include <memory>
 #include <algorithm>
 #include <utility>
@@ -27,6 +28,8 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore::lite {
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::string &model_path) {
@@ -44,19 +47,19 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
-int TfliteModelParser::ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) {
+FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::string &weight_file) {
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {
     MS_LOG(ERROR) << "read tflite model failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
-    return RET_GRAPH_FILE_ERR;
+    return nullptr;
   }
 
   if (tflite_model_->subgraphs.size() != 1) {
     MS_LOG(ERROR) << "read tflite model subgraphs failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
-    return RET_GRAPH_FILE_ERR;
+    return nullptr;
   }
   res_graph_ = std::make_shared<FuncGraph>();
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TFLITE)));
@@ -65,24 +68,36 @@ int TfliteModelParser::ParseToFuncGraph(const std::string &model_file, const std
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph inputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
 
   status = ConvertOps();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert ops failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
 
   status = ConvertGraphOutputs();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph outputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
-  return RET_OK;
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(res_graph_, &all_func_graphs);
+
+  if (PostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForAnf failed.";
+    return nullptr;
+  }
+  if (TfliteModelPostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForOnnxModel failed.";
+    return nullptr;
+  }
+
+  return res_graph_;
 }
 
 std::string GetTensorName(size_t index, const tflite::BuiltinOperator &op_type, const std::string &op_name) {
@@ -483,7 +498,16 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
   return RET_OK;
 }
 
-int TfliteModelParser::PostAdjust() { return 0; }
+int TfliteModelParser::TfliteModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+  for (auto func_graph : all_func_graphs) {
+    auto tflite_inputs_adjust = std::make_shared<TfliteInputsAdjust>();
+    if (!tflite_inputs_adjust->Run(func_graph)) {
+      MS_LOG(ERROR) << "adjust input failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 
 REG_MODEL_PARSER(TFLITE, LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

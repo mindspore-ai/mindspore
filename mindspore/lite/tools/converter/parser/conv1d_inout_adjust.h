@@ -22,19 +22,20 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "tools/converter/converter_flags.h"
 
-namespace mindspore::opt {
-class Conv1DInOutAdjustPass : public Pass {
+namespace mindspore::lite {
+class Conv1DInOutAdjust {
  public:
-  Conv1DInOutAdjustPass() : Pass("conv1d_inout_adjust_pass") {}
-  ~Conv1DInOutAdjustPass() override = default;
+  Conv1DInOutAdjust() {}
+  ~Conv1DInOutAdjust() = default;
 
-  bool Run(const FuncGraphPtr &func_graph) override;
+  bool Run(const FuncGraphPtr &func_graph);
 
  private:
   CNodePtr NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                               const std::vector<int64_t> &axis);
   CNodePtr NewSqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                             const std::vector<int64_t> &axis);
+  lite::STATUS ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format);
 };
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CONV1D_INOUT_ADJUST_PASS_H_

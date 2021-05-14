@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
+#include "tools/converter/parser/onnx/onnx_inputs_adjust_pass.h"
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <functional>
 #include <memory>
-#include "ops/fusion/conv2d_fusion.h"
 #include "ops/resize.h"
 #include "include/errorcode.h"
 
-namespace mindspore::opt {
-STATUS OnnxInputAdjustOpPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
-                                             const std::string &attr_name) {
+namespace mindspore::lite {
+STATUS OnnxInputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+                                       const std::string &attr_name) {
   MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
+  if (!opt::CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
@@ -46,7 +46,8 @@ STATUS OnnxInputAdjustOpPass::AddAttrToInput(const FuncGraphPtr &func_graph, con
   }
   if (value_ptr != nullptr) {
     auto value_data = GetValue<std::vector<int32_t>>(value_ptr);
-    auto param_node = BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+    auto param_node =
+      opt::BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
     inputs.push_back(param_node);
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);
@@ -62,8 +63,7 @@ STATUS OnnxInputAdjustOpPass::AddAttrToInput(const FuncGraphPtr &func_graph, con
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph,
-                                                        const ParameterPtr &param_node) {
+STATUS OnnxInputAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(param_node != nullptr);
   if (param_node->abstract() == nullptr) {
@@ -96,7 +96,7 @@ STATUS OnnxInputAdjustOpPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func
       MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = BuildParameterNode(func_graph, param_node, tensor_info);
+    auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
     manager->Replace(param_node, param_node_new);
   } else {
     // set graph input
@@ -105,7 +105,7 @@ STATUS OnnxInputAdjustOpPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
+STATUS OnnxInputAdjust::AdjustResize(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto node = cnode->input(0);
   MS_ASSERT(node != nullptr);
@@ -131,7 +131,7 @@ STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS OnnxInputAdjust::ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
   if (cnode->inputs().empty() || cnode->input(0) == nullptr) {
@@ -163,7 +163,7 @@ STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "valueptr is not tensor::Tensorptr.";
     return lite::RET_ERROR;
   }
-  auto param_node = BuildParameterNode(func_graph, cnode, tensor_info_ptr);
+  auto param_node = opt::BuildParameterNode(func_graph, cnode, tensor_info_ptr);
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "convert constant to param node failed.";
     return lite::RET_ERROR;
@@ -174,7 +174,7 @@ STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, co
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS OnnxInputAdjust::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
   if (cnode->inputs().size() != 3) {
@@ -230,9 +230,9 @@ STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr 
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS OnnxInputAdjust::AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
+  if (!opt::CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
@@ -270,7 +270,7 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
       for (int i = 0; i < size; ++i) {
         axes.push_back(i);
       }
-      auto new_param_node = BuildIntVecParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axises");
+      auto new_param_node = opt::BuildIntVecParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axises");
       if (new_param_node == nullptr) {
         MS_LOG(ERROR) << "new a parameter node failed.";
       }
@@ -281,7 +281,7 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
       for (int i = 0; i < size; ++i) {
         steps.push_back(1);
       }
-      auto new_param_node = BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
+      auto new_param_node = opt::BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
       if (new_param_node == nullptr) {
         MS_LOG(ERROR) << "new a parameter node failed.";
       }
@@ -296,7 +296,7 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
   return lite::RET_OK;
 }
 
-bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
+bool OnnxInputAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
@@ -319,13 +319,13 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "node is not cnode.";
       continue;
     }
-    if (CheckPrimitiveType(node, prim::kPrimConstant)) {
+    if (opt::CheckPrimitiveType(node, prim::kPrimConstant)) {
       status = ReplaceConstant(func_graph, cnode);
-    } else if (CheckPrimitiveType(node, prim::kPrimTranspose)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
-    } else if (CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
       status = AdjustStridedSlice(func_graph, cnode);
-    } else if (CheckPrimitiveType(node, prim::kPrimResize)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
       status = AdjustResize(cnode);
     } else {
       continue;
@@ -337,4 +337,4 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite

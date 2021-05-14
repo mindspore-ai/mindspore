@@ -23,11 +23,11 @@
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType;
-namespace mindspore::opt {
-class OnnxInputAdjustOpPass : public Pass {
+namespace mindspore::lite {
+class OnnxInputAdjust {
  public:
-  OnnxInputAdjustOpPass() : Pass("onnx_input_adjust") {}
-  ~OnnxInputAdjustOpPass() override = default;
+  OnnxInputAdjust() {}
+  ~OnnxInputAdjust() = default;
   static STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
   static STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   static STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
@@ -35,7 +35,7 @@ class OnnxInputAdjustOpPass : public Pass {
                                const std::string &attr_name);
   static STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS AdjustResize(const CNodePtr &cnode);
-  bool Run(const FuncGraphPtr &func_graph) override;
+  bool Run(const FuncGraphPtr &func_graph);
 };
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_INPUTS_ADJUST_PASS_H_

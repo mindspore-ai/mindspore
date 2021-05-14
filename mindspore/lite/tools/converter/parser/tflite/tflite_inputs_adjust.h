@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_TFLITE_INPUTS_ADJUST_PASS_H
-#define LITE_TFLITE_INPUTS_ADJUST_PASS_H
+#ifndef LITE_TFLITE_INPUTS_ADJUST_H
+#define LITE_TFLITE_INPUTS_ADJUST_H
 
 #include <string>
-#include "tools/converter/converter_flags.h"
-#include "backend/optimizer/common/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-namespace mindspore::opt {
-class TfliteInputsAdjustPass : public Pass {
+namespace mindspore::lite {
+class TfliteInputsAdjust {
  public:
-  TfliteInputsAdjustPass() : Pass("tflite_inputs_adjust_pass") {}
-  ~TfliteInputsAdjustPass() override = default;
+  TfliteInputsAdjust() {}
+  ~TfliteInputsAdjust() = default;
 
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &graph);
 
   STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
   STATUS AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 };
-}  // namespace mindspore::opt
-#endif  // LITE_TFLITE_INPUTS_ADJUST_PASS_H
+}  // namespace mindspore::lite
+#endif  // LITE_TFLITE_INPUTS_ADJUST_H

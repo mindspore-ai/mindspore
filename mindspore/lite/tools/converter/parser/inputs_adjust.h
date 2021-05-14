@@ -20,19 +20,18 @@
 #include <vector>
 #include <string>
 #include "tools/optimizer/common/gllo_utils.h"
-#include "backend/optimizer/common/pass.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::STATUS;
-namespace mindspore::opt {
-class InputAdjustPass : public Pass {
+namespace mindspore::lite {
+class InputAdjust {
  public:
-  InputAdjustPass() : Pass("input_adjust") {}
-  ~InputAdjustPass() override = default;
+  InputAdjust() {}
+  ~InputAdjust() = default;
 
-  static STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
-                               const std::string &attr_name, int flag);
-  bool Run(const FuncGraphPtr &func_graph) override;
+  STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+                        const std::string &attr_name, int flag);
+  bool Run(const FuncGraphPtr &func_graph);
 };
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INPUTS_ADJUST_PASS_H_

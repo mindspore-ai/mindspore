@@ -17,6 +17,7 @@
 #include "tools/converter/converter.h"
 #include <memory>
 #include <vector>
+#include <set>
 #include "tools/converter/converter_flags.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/storage.h"
@@ -25,9 +26,39 @@
 #include "src/train/train_populate_parameter.h"
 #include "tools/converter/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "tools/optimizer/fusion/squeeze_fusion.h"
+#include "tools/optimizer/graph/conv1d_weight_expanding_pass.h"
+#include "tools/optimizer/graph/primitive_adjust_pass.h"
+#include "tools/optimizer/graph/mindir_adjust_pass.h"
 
 namespace mindspore {
 namespace lite {
+STATUS Converter::AdjustForMindir(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(func_graph, &all_func_graphs);
+  // adjust for mindir
+  for (auto fg : all_func_graphs) {
+    auto primitive_adjust_pass = std::make_shared<opt::PrimitiveAdjustPass>();
+    primitive_adjust_pass->SetFmkType(flag.fmk);
+    if (!primitive_adjust_pass->Run(fg)) {
+      MS_LOG(ERROR) << "primitive adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
+    mindir_adjust_pass->SetFmkType(flag.fmk);
+    mindir_adjust_pass->SetQuantType(flag.quantType);
+    mindir_adjust_pass->SetTrainFlag(flag.trainModel);
+    if (!mindir_adjust_pass->Run(fg)) {
+      MS_LOG(ERROR) << "mindir adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   FuncGraphPtr func_graph = nullptr;
   if (flag.fmk == converter::FmkType::FmkType_MS) {
@@ -39,6 +70,10 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     }
     func_graph->set_attr("graph_name", MakeValue("main_graph"));
     func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+    if (AdjustForMindir(func_graph, flag) != RET_OK) {
+      MS_LOG(ERROR) << "AdjustForMindir failed.";
+      return nullptr;
+    }
   } else {
     model_parser_ = ModelParserRegistry::GetInstance()->GetModelParser(flag.fmkIn);
     if (model_parser_ == nullptr) {
@@ -47,7 +82,6 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     }
     func_graph = model_parser_->Parse(flag.modelFile, flag.weightFile);
   }
-
   if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {
     MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";
     return nullptr;

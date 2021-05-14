@@ -21,18 +21,18 @@
 #include "backend/optimizer/common/pass.h"
 #include "backend/optimizer/common/optimizer.h"
 
-namespace mindspore::opt {
-class OnnxPadAdjustPass : public Pass {
+namespace mindspore::lite {
+class OnnxPadAdjust {
  public:
-  OnnxPadAdjustPass() : Pass("onnx_pad_adjust_pass") {}
-  ~OnnxPadAdjustPass() override = default;
+  OnnxPadAdjust() {}
+  ~OnnxPadAdjust() = default;
 
-  bool Run(const FuncGraphPtr &func_graph) override;
+  bool Run(const FuncGraphPtr &func_graph);
 
  private:
   ParameterPtr CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data);
   CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, const std::vector<int> &shape);
   CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, std::vector<int> perm);
 };
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_PAD_ADJUST_PASS_H_

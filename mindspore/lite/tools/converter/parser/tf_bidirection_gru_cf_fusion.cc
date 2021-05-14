@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.h"
+#include "tools/converter/parser/tf_bidirection_gru_cf_fusion.h"
 #include <memory>
 #include <set>
 #include <functional>
@@ -183,7 +183,6 @@ const AnfNodePtr TfBidirectionGruCfFusion::Process(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(concat_node != nullptr);
   MS_LOG(DEBUG) << "bidirection tf gru fusion pass";
-
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(concat_node) != lite::RET_OK) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
