@@ -64,7 +64,7 @@ if __name__ == '__main__':
             rank_id = int(os.environ.get('RANK_ID'))
         elif args_opt.device_target == "GPU":
             init()
-            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+            context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=args_opt.device_target)
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=get_group_size(),
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -77,6 +77,8 @@ if __name__ == '__main__':
         if args_opt.device_target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
+        elif args_opt.device_target == "GPU":
+            context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target=args_opt.device_target)
         else:
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
         rank_size = None
