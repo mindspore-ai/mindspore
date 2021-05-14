@@ -66,13 +66,22 @@ def init(backend_name=None):
     Note:
         The full name of HCCL is Huawei Collective Communication Library.
         The full name of NCCL is NVIDIA Collective Communication Library.
+        This method should be used after set_context.
 
     Args:
-        backend_name (str): Backend.
+        backend_name (str): Backend, using HCCL/NCCL. if not been set, infer it by device_target. Default: None.
 
     Raises:
         TypeError: If `backend_name` is not a string.
-        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails,
+                      or the environment variables RANK_ID/MINDSPORE_HCCL_CONFIG_PATH
+                      have not been exported when backend is HCCL.
+        ValueError: If the environment variable RANK_ID has not been exported as a number.
+
+    Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend")
+        >>> init()
     """
     if _is_role_pserver() or _is_role_sched():
         return
@@ -108,6 +117,9 @@ def release():
     """
     Release distributed resource. e.g. HCCL/NCCL.
 
+    Note:
+        This method should be used after init().
+
     Raises:
         RuntimeError: If failed to release distributed resource.
     """
@@ -118,9 +130,12 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
     """
     Get the rank ID for the current device in the specified collective communication group.
 
+    Note:
+        This method should be used after init().
+
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-        otherwise, using the default group.
+                     otherwise, using the default group.
         Default: WORLD_COMM_GROUP.
 
     Returns:
@@ -140,10 +155,11 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         Nccl is not supported.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-        otherwise, using the default group.
+                     otherwise, using the default group.
         Default: WORLD_COMM_GROUP.
 
     Returns:
@@ -161,9 +177,12 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     """
     Get the rank size of the specified collective communication group.
 
+    Note:
+        This method should be used after init().
+
     Args:
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-        otherwise, using the default group.
+                     otherwise, using the default group.
         Default: WORLD_COMM_GROUP.
 
     Returns:
@@ -183,10 +202,11 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         Nccl is not supported.
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
-        or the default world communication group.
+                     or the default world communication group.
 
     Returns:
         int, the local rank size where the calling process is within the group.
@@ -207,10 +227,11 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     Note:
         NCCL is not supported.
         The parameter group should not be "hccl_world_group".
+        This method should be used after init().
 
     Args:
         group (str): The communication group to work on. The group is created by create_group
-        or the default world communication group.
+                     or the default world communication group.
         group_rank_id (int): A rank ID in the communication group.
 
     Returns:
@@ -220,7 +241,10 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         TypeError: If `group_rank_id` is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+
     Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend")
         >>> init()
         >>> group = "0-4"
         >>> rank_ids = [0,4]
@@ -239,11 +263,12 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     Note:
         NCCL is not supported.
         The parameter group should not be "hccl_world_group".
+        This method should be used after init().
 
     Args:
         world_rank_id (int): A rank ID in the world communication group.
         group (str): The communication group to work on. The group is created by create_group
-        or the default world communication group.
+                     or the default world communication group.
 
     Returns:
         int, the rank ID in the user communication group.
@@ -252,7 +277,10 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         TypeError: If world_rank_id is not an integer or the group is not a string.
         ValueError: If group is 'hccl_world_group' or backend is invalid.
         RuntimeError: If HCCL/NCCL is not available or NCCL is not supported.
+
     Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend")
         >>> init()
         >>> group = "0-4"
         >>> rank_ids = [0,4]
@@ -271,6 +299,7 @@ def create_group(group, rank_ids):
         NCCL is not supported.
         The size of rank_ids should be larger than 1.
         Rank_ids should not have duplicate data.
+        This method should be used after init().
 
     Args:
         group (str): The name of the communication group to be created.
@@ -280,7 +309,10 @@ def create_group(group, rank_ids):
         TypeError: If group is not a string or `rank_ids` is not a list.
         ValueError: If `rank_ids` size is not larger than 1, or `rank_ids` has duplicate data, or backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
+
     Examples:
+        >>> from mindspore.context import set_context
+        >>> set_context(device_target="Ascend")
         >>> init()
         >>> group = "0-8"
         >>> rank_ids = [0,8]
@@ -296,6 +328,7 @@ def destroy_group(group):
     Note:
         Nccl is not supported.
         The parameter group should not be "hccl_world_group".
+        This method should be used after init().
 
     Args:
         group (str): The communication group to destroy, the group should be created by create_group.
