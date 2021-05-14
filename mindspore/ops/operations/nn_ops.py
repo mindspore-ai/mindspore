@@ -5138,7 +5138,8 @@ class ApplyAdaMax(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5279,7 +5280,8 @@ class ApplyAdadelta(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5400,7 +5402,8 @@ class ApplyAdagrad(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5500,7 +5503,8 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5604,7 +5608,8 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5706,7 +5711,8 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
@@ -5811,7 +5817,8 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -6043,7 +6050,8 @@ class ApplyAddSign(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -6171,7 +6179,8 @@ class ApplyPowerSign(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -6364,7 +6373,8 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -6555,8 +6565,8 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> import numpy as np
-        >>> from mindspore import Parameter, Tensor
-        >>> import mindspore.context as context
+        >>> from mindspore import Tensor
+        >>> from mindspore import Parameter
         >>> from mindspore.ops import operations as ops
         >>> class ApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
@@ -7042,9 +7052,9 @@ class CTCLoss(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as ops
         >>> inputs = Tensor(np.array([[[0.3, 0.6, 0.6],
         ...                            [0.4, 0.3, 0.9],

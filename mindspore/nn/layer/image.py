@@ -231,8 +231,7 @@ class SSIM(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
+        >>> from mindspore import Tensor
         >>> net = nn.SSIM()
         >>> img1 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
         >>> img2 = Tensor(np.ones([1, 3, 16, 16]).astype(np.float32))
@@ -325,8 +324,7 @@ class MSSSIM(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
+        >>> from mindspore import Tensor
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
         >>> img1 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
         >>> img2 = Tensor(np.ones((1, 3, 128, 128)).astype(np.float32))
