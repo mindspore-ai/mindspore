@@ -296,11 +296,8 @@ class BatchNorm1d(_BatchNorm):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
-        >>> from mindspore.ops import operations as ops
+        >>> from mindspore import Tensor
         >>> net = nn.BatchNorm1d(num_features=4)
-        >>> grad = Tensor(np.array([[0.7, 0.3, 0.7, 0.6],
-        ...                         [0.1, 0.1, 0.8, 0.8]]).astype(np.float32))
         >>> input = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
         ...                          [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
         >>> output = net(input)
@@ -403,7 +400,7 @@ class BatchNorm2d(_BatchNorm):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
         >>> net = nn.BatchNorm2d(num_features=3)
         >>> input = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
         >>> output = net(input)
@@ -507,7 +504,7 @@ class BatchNorm3d(Cell):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import Tensor
         >>> net = nn.BatchNorm3d(num_features=3)
         >>> input = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
         >>> output = net(input)
@@ -612,7 +609,8 @@ class GlobalBatchNorm(_BatchNorm):
         >>> from mindspore.communication import init
         >>> from mindspore import context
         >>> from mindspore.context import ParallelMode
-        >>> from mindspore import nn, Tensor
+        >>> from mindspore import nn
+        >>> from mindspore import Tensor
         >>> from mindspore.common import dtype as mstype
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
@@ -730,7 +728,8 @@ class SyncBatchNorm(_BatchNorm):
         >>> from mindspore.communication import init
         >>> from mindspore import context
         >>> from mindspore.context import ParallelMode
-        >>> from mindspore import nn, Tensor
+        >>> from mindspore import Tensor
+        >>> from mindspore import nn
         >>> from mindspore.common import dtype as mstype
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE)
@@ -934,6 +933,7 @@ class InstanceNorm2d(Cell):
             class inheriting from `Initializer` not exists.
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
