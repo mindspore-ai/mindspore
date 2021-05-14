@@ -20,7 +20,6 @@ if(ENABLE_CONVERTER)
             ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
             )
 else()
-    set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
     add_compile_definitions(USE_ANDROID_LOG)
 endif()
 
@@ -141,10 +140,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/inner_context.cc
-        ${LITE_DIR}/src/registry/kernel_interface.cc
-        ${LITE_DIR}/src/registry/kernel_interface_registry.cc
         ${LITE_DIR}/src/kernel_registry.cc
-        ${LITE_DIR}/src/registry/register_kernel.cc
         ${LITE_DIR}/src/inner_kernel.cc
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_kernel_util.cc
@@ -455,3 +451,4 @@ if(ENABLE_CONVERTER)
             mindspore::glog
             )
 endif()
+target_link_libraries(lite-test mslite_kernel_reg)

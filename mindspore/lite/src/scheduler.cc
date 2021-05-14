@@ -25,6 +25,7 @@
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
+#include "src/registry/register_kernel.h"
 #include "src/lite_kernel_util.h"
 #include "src/sub_graph_kernel.h"
 #include "src/ops/populate/populate_register.h"
@@ -48,7 +49,7 @@
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
-#include "src/registry/kernel_interface_registry.h"
+#include "src/registry/kernel_interface.h"
 
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -132,7 +133,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  if (KernelInterfaceRegistry::Instance()->CheckReg(node, context_->GetProviders())) {
+  if (kernel::RegisterKernelInterface::Instance()->CheckReg(node, context_->GetProviders())) {
     return KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
   }
 

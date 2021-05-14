@@ -133,7 +133,10 @@ set(LITE_SRC
         ${LITE_DIR}/src/common/prim_util.cc
         ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
+        ${LITE_DIR}/src/registry/kernel_interface.cc
         ${LITE_DIR}/src/registry/kernel_interface_registry.cc
+        ${LITE_DIR}/src/registry/register_kernel.cc
+        ${LITE_DIR}/src/registry/register_kernel_impl.cc
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc

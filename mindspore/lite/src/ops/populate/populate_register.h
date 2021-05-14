@@ -22,6 +22,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
 #include "src/common/prim_util.h"
+#include "src/common/version_manager.h"
 
 namespace mindspore {
 namespace lite {

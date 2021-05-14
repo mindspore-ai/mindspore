@@ -16,6 +16,7 @@
 
 #include "src/common/prim_util.h"
 #include "src/common/version_manager.h"
+#include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"

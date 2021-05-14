@@ -18,9 +18,10 @@
 #define MINDSPORE_LITE_SRC_COMMON_VERSION_MANAGER_H_
 
 #include <string>
-#include "src/common/common.h"
+
 namespace mindspore {
 namespace lite {
+enum SCHEMA_VERSION : int { SCHEMA_INVALID = -1, SCHEMA_CUR = 0, SCHEMA_V0 = 1 };
 class VersionManager {
  public:
   static VersionManager *GetInstance() {
