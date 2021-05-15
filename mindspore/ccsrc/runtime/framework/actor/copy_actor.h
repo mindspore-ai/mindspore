@@ -36,14 +36,11 @@ using mindspore::device::DeviceContext;
 // -> OnMemoryAllocFinish -> Copy -> FreeMemory -> SendOutput.
 class CopyActor : public MemoryInterfaceActor {
  public:
-  CopyActor(const std::string &name, const DeviceContext *input_device_context,
-            const DeviceContext *output_device_context, const AID &memory_manager_aid)
+  CopyActor(const std::string &name, const AID &memory_manager_aid)
       : MemoryInterfaceActor(name),
         memory_manager_aid_(memory_manager_aid),
         input_datas_num_(0),
         input_controls_num_(0),
-        input_device_context_(input_device_context),
-        output_device_context_(output_device_context),
         input_device_tensor_(nullptr),
         output_device_tensor_(nullptr) {}
   ~CopyActor() override = default;
@@ -89,9 +86,10 @@ class CopyActor : public MemoryInterfaceActor {
   const DeviceContext *input_device_context_;
   const DeviceContext *output_device_context_;
 
-  // The device tensor for copy.
+  // The input device tensor is saved from the input data.
   DeviceTensor *input_device_tensor_;
-  DeviceTensor *output_device_tensor_;
+  // The output device tensor is created in the copy actor build, so can't be the raw pointer.
+  DeviceTensorPtr output_device_tensor_;
 };
 
 using CopyActorPtr = std::shared_ptr<CopyActor>;

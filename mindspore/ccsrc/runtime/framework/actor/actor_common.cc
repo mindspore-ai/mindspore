@@ -48,7 +48,21 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
     //  Judge whether node is internal parameter.
-    if (graph->GetFrontNodeByInternalParameter(node) == nullptr) {
+    const auto &front_node = graph->GetFrontNodeByInternalParameter(node);
+    if (front_node.first == nullptr) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+    //  Judge whether node is internal parameter.
+    const auto &front_node = graph->GetFrontNodeByInternalParameter(node);
+    if (front_node.first != nullptr) {
       return true;
     }
   }

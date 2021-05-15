@@ -44,14 +44,14 @@ void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *contex
 }
 
 void CopyActor::AllocateMemory(OpContext<DeviceTensor> *context) {
-  std::vector<DeviceTensor *> alloc_list({output_device_tensor_});
+  std::vector<DeviceTensor *> alloc_list({output_device_tensor_.get()});
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, output_device_context_, context,
         GetAID());
 }
 
 void CopyActor::FreeMemory(OpContext<DeviceTensor> *context) {
   std::vector<DeviceTensor *> input_free_list({input_device_tensor_});
-  std::vector<DeviceTensor *> output_free_list({output_device_tensor_});
+  std::vector<DeviceTensor *> output_free_list({output_device_tensor_.get()});
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_free_list, input_device_context_, context);
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, output_free_list, output_device_context_, context);
 }
@@ -59,7 +59,7 @@ void CopyActor::FreeMemory(OpContext<DeviceTensor> *context) {
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
 
-  if (!Copy(output_device_tensor_, input_device_tensor_)) {
+  if (!Copy(output_device_tensor_.get(), input_device_tensor_)) {
     std::string error_info = "Copy device tensor failed: " + GetAID().Name();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
@@ -146,8 +146,8 @@ void CopyActor::SendOutput(OpContext<DeviceTensor> *context) const {
       std::string error_info = "The output index is out of range: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-    auto data =
-      std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, output_device_tensor_, op_arrow->to_input_index_);
+    auto data = std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, output_device_tensor_.get(),
+                                                       op_arrow->to_input_index_);
     Async(op_arrow->to_op_id_, &CopyActor::RunOpData, data, context);
   }
 

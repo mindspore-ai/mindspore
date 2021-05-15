@@ -35,14 +35,10 @@ using mindspore::session::KernelWithIndex;
 using mindspore::tensor::TensorPtr;
 
 // The output actor is used to receive the output result of actor which represents the graph output.
-class OutputActor : public ActorBase {
+class OutputActor : public OpActor<DeviceTensor> {
  public:
   OutputActor(std::string name, size_t loop_count, size_t outputs_num)
-      : ActorBase(name),
-        loop_count_(loop_count),
-        current_count_(0),
-        outputs_num_(outputs_num),
-        current_outputs_num_(0) {
+      : OpActor(name), loop_count_(loop_count), current_count_(0), outputs_num_(outputs_num), current_outputs_num_(0) {
     outputs_.resize(outputs_num);
     output_nodes_.resize(outputs_num);
     device_contexts_.resize(outputs_num);
