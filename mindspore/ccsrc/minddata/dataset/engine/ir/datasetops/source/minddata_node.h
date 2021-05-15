@@ -33,12 +33,12 @@ class MindDataNode : public MappableSourceNode {
   /// \brief Constructor
   MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
                const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
-               std::shared_ptr<DatasetCache> cache);
+               ShuffleMode shuffle_mode = ShuffleMode::kGlobal, std::shared_ptr<DatasetCache> cache = nullptr);
 
   /// \brief Constructor
   MindDataNode(const std::string &dataset_file, const std::vector<std::string> &columns_list,
                const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded,
-               std::shared_ptr<DatasetCache> cache);
+               ShuffleMode shuffle_mode = ShuffleMode::kGlobal, std::shared_ptr<DatasetCache> cache = nullptr);
 
   /// \brief Destructor
   ~MindDataNode() = default;
@@ -72,7 +72,7 @@ class MindDataNode : public MappableSourceNode {
   /// \return Status Status::OK() if input sampler is valid
   Status BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerObj> &sampler,
                                       std::vector<std::shared_ptr<mindrecord::ShardOperator>> *operators_,
-                                      int64_t num_padded);
+                                      int64_t num_padded, ShuffleMode shuffle_mode);
 
   /// \brief Set sample_bytes when padded_sample has py::byte value
   /// \note Pybind will use this function to set sample_bytes into MindDataNode
@@ -118,6 +118,7 @@ class MindDataNode : public MappableSourceNode {
   std::map<std::string, std::string> sample_bytes_;  // enable in python
   int64_t num_padded_;
   std::vector<std::shared_ptr<ShardOperator>> operators_;
+  ShuffleMode shuffle_mode_;
 };
 
 }  // namespace dataset

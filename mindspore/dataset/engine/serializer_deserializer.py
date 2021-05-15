@@ -404,7 +404,7 @@ def to_policy(op_list):
 
 def to_shuffle_mode(shuffle):
     if shuffle == 2: return "global"
-    if shuffle == 1: return "file"
+    if shuffle == 1: return "files"
     return False
 
 

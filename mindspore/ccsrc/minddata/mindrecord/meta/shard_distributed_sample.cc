@@ -72,6 +72,8 @@ MSRStatus ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
     tasks = task_;
   }
   if (shuffle_ == true) {
+    shuffle_op_->SetShardSampleCount(GetShardSampleCount());
+    shuffle_op_->UpdateShuffleMode(GetShuffleMode());
     if (SUCCESS != (*shuffle_op_)(tasks)) {
       return FAILED;
     }

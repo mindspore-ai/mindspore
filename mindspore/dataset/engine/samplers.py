@@ -370,7 +370,8 @@ class DistributedSampler(BuiltinSampler):
 
     def parse_for_minddataset(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle,
+        shuffle = self.shuffle if self.shuffle is not None else True
+        c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, shuffle,
                                                      self.seed, num_samples, self.offset)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)

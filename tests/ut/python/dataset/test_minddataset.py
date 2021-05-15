@@ -1950,6 +1950,623 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
         os.remove("{}".format(mindrecord_file_name))
         os.remove("{}.db".format(mindrecord_file_name))
 
+FILES = ["0.mindrecord", "1.mindrecord", "2.mindrecord", "3.mindrecord"]
+ITEMS = [10, 14, 8, 20]
+FILES_ITEMS = {FILES[0]: ITEMS[0], FILES[1]: ITEMS[1], FILES[2]: ITEMS[2], FILES[3]: ITEMS[3]}
+
+@pytest.fixture
+def create_multi_mindrecord_files():
+    """files: {0.mindrecord : 10, 1.mindrecord : 14, 2.mindrecord : 8, 3.mindrecord : 20}"""
+    try:
+        index = 0
+        for filename in FILES_ITEMS:
+            key = filename
+            if os.path.exists(key):
+                os.remove("{}".format(key))
+                os.remove("{}.db".format(key))
+
+            value = FILES_ITEMS[key]
+            data_list = []
+            for i in range(value):
+                data = {}
+                data['id'] = i + index
+                data_list.append(data)
+            index += value
+
+            writer = FileWriter(key)
+            schema = {"id": {"type": "int32"}}
+            writer.add_schema(schema, "data is so cool")
+            writer.write_raw_data(data_list)
+            writer.commit()
+        yield "yield_create_multi_mindrecord_files"
+    except Exception as error:
+        for filename in FILES_ITMES:
+            if os.path.exists(filename):
+                os.remove("{}".format(filename))
+                os.remove("{}.db".format(filename))
+        raise error
+    else:
+        for filename in FILES_ITEMS:
+            if os.path.exists(filename):
+                os.remove("{}".format(filename))
+                os.remove("{}.db".format(filename))
+
+def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    datas_all = []
+    index = 0
+    for filename in FILES_ITEMS:
+        value = FILES_ITEMS[filename]
+        data_list = []
+        for i in range(value):
+            data = {}
+            data['id'] = np.array(i + index, dtype=np.int32)
+            data_list.append(data)
+        index += value
+        datas_all.append(data_list)
+
+    # no shuffle parameter
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers)
+    assert data_set.get_dataset_size() == 52
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] != datas_all_minddataset[i]
+
+    # shuffle=False
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 52
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] == datas_all_minddataset[i]
+
+    # shuffle=True
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=True)
+    assert data_set.get_dataset_size() == 52
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] != datas_all_minddataset[i]
+
+    # shuffle=Shuffle.GLOBAL
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=ds.Shuffle.GLOBAL)
+    assert data_set.get_dataset_size() == 52
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] != datas_all_minddataset[i]
+
+    # shuffle=Shuffle.INFILE
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=ds.Shuffle.INFILE)
+    assert data_set.get_dataset_size() == 52
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    def sort_list_with_dict(dict_in_list):
+        keys = []
+        for item in dict_in_list:
+            for key in item:
+                keys.append(int(item[key]))
+        keys.sort()
+        data_list = []
+        for item in keys:
+            data = {}
+            data['id'] = np.array(item, dtype=np.int32)
+            data_list.append(data)
+        return data_list
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] != datas_all_minddataset[i]
+        # order the datas_all_minddataset
+        new_datas_all_minddataset = sort_list_with_dict(datas_all_minddataset[i])
+        assert datas_all[i] == new_datas_all_minddataset
+
+    # shuffle=Shuffle.FILES
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=ds.Shuffle.FILES)
+    assert data_set.get_dataset_size() == 52
+
+    num_iter = 0
+    data_list = []
+
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        num_iter += 1
+    assert data_set.get_dataset_size() == 52
+
+    current_shard_size = 0
+    current_shard_index = 0
+    shard_count = 0
+    datas_index = 0
+    origin_index = [i for i in range(len(ITEMS))]
+    current_index = []
+    while shard_count < len(ITEMS):
+        if data_list[datas_index]['id'] < 10:
+            current_shard_index = 0
+        elif data_list[datas_index]['id'] < 24:
+            current_shard_index = 1
+        elif data_list[datas_index]['id'] < 32:
+            current_shard_index = 2
+        elif data_list[datas_index]['id'] < 52:
+            current_shard_index = 3
+        else:
+            raise ValueError("Index out of range")
+        current_shard_size = ITEMS[current_shard_index]
+
+        tmp_datas = data_list[datas_index:datas_index + current_shard_size]
+        current_index.append(current_shard_index)
+        assert len(datas_all[current_shard_index]) == len(tmp_datas)
+        assert datas_all[current_shard_index] == tmp_datas
+
+        datas_index += current_shard_size
+        shard_count += 1
+    assert origin_index != current_index
+
+def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    datas_all = []
+    datas_all_samples = []
+    index = 0
+    for filename in FILES_ITEMS:
+        value = FILES_ITEMS[filename]
+        data_list = []
+        for i in range(value):
+            data = {}
+            data['id'] = np.array(i + index, dtype=np.int32)
+            data_list.append(data)
+            datas_all_samples.append(data)
+        index += value
+        datas_all.append(data_list)
+
+    # no shuffle parameter
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              num_shards=4,
+                              shard_id=3)
+    assert data_set.get_dataset_size() == 13
+    num_iter = 0
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        num_iter += 1
+    assert num_iter == 13
+    assert data_list != datas_all_samples[3*13:]
+
+    # shuffle=False
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=False,
+                              num_shards=4,
+                              shard_id=2)
+    assert data_set.get_dataset_size() == 13
+    num_iter = 0
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        num_iter += 1
+    assert num_iter == 13
+    assert data_list == datas_all_samples[2*13:3*13]
+
+    # shuffle=True
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=True,
+                              num_shards=4,
+                              shard_id=1)
+    assert data_set.get_dataset_size() == 13
+    num_iter = 0
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        num_iter += 1
+    assert num_iter == 13
+    assert data_list != datas_all_samples[1*13:2*13]
+
+    # shuffle=Shuffle.GLOBAL
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=FILES,
+                              num_parallel_workers=num_readers,
+                              shuffle=ds.Shuffle.GLOBAL,
+                              num_shards=4,
+                              shard_id=0)
+    assert data_set.get_dataset_size() == 13
+    num_iter = 0
+    data_list = []
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 1
+        data_list.append(item)
+        num_iter += 1
+    assert num_iter == 13
+    assert data_list != datas_all_samples[0:1*13]
+
+    # shuffle=Shuffle.INFILE
+    output_datas = []
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=ds.Shuffle.INFILE,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        num_iter = 0
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            assert len(item) == 1
+            output_datas.append(item)
+            num_iter += 1
+        assert num_iter == 13
+
+    num_iter = 0
+    datas_all_minddataset = []
+    data_list = []
+    for item in output_datas:
+        assert len(item) == 1
+        data_list.append(item)
+        if num_iter == 9:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 23:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 31:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        elif num_iter == 51:
+            datas_all_minddataset.append(data_list)
+            data_list = []
+        num_iter += 1
+    assert num_iter == 52
+
+    def sort_list_with_dict(dict_in_list):
+        keys = []
+        for item in dict_in_list:
+            for key in item:
+                keys.append(int(item[key]))
+        keys.sort()
+        data_list = []
+        for item in keys:
+            data = {}
+            data['id'] = np.array(item, dtype=np.int32)
+            data_list.append(data)
+        return data_list
+
+    assert len(datas_all) == len(datas_all_minddataset)
+    for i, _ in enumerate(datas_all):
+        assert len(datas_all[i]) == len(datas_all_minddataset[i])
+        assert datas_all[i] != datas_all_minddataset[i]
+        # order the datas_all_minddataset
+        new_datas_all_minddataset = sort_list_with_dict(datas_all_minddataset[i])
+        assert datas_all[i] == new_datas_all_minddataset
+
+    # shuffle=Shuffle.FILES
+    data_list = []
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=ds.Shuffle.FILES,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        num_iter = 0
+        for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            assert len(item) == 1
+            data_list.append(item)
+            num_iter += 1
+        assert num_iter == 13
+    assert len(data_list) == 52
+
+    current_shard_size = 0
+    current_shard_index = 0
+    shard_count = 0
+    datas_index = 0
+    origin_index = [i for i in range(len(ITEMS))]
+    current_index = []
+    while shard_count < len(ITEMS):
+        if data_list[datas_index]['id'] < 10:
+            current_shard_index = 0
+        elif data_list[datas_index]['id'] < 24:
+            current_shard_index = 1
+        elif data_list[datas_index]['id'] < 32:
+            current_shard_index = 2
+        elif data_list[datas_index]['id'] < 52:
+            current_shard_index = 3
+        else:
+            raise ValueError("Index out of range")
+        current_shard_size = ITEMS[current_shard_index]
+
+        tmp_datas = data_list[datas_index:datas_index + current_shard_size]
+        current_index.append(current_shard_index)
+        assert len(datas_all[current_shard_index]) == len(tmp_datas)
+        assert datas_all[current_shard_index] == tmp_datas
+
+        datas_index += current_shard_size
+        shard_count += 1
+    assert origin_index != current_index
+
+def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
+    datas_all = []
+    datas_all_samples = []
+    index = 0
+    for filename in FILES_ITEMS:
+        value = FILES_ITEMS[filename]
+        data_list = []
+        for i in range(value):
+            data = {}
+            data['id'] = np.array(i + index, dtype=np.int32)
+            data_list.append(data)
+            datas_all_samples.append(data)
+        index += value
+        datas_all.append(data_list)
+
+    epoch_size = 3
+
+    # no shuffle parameter
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        data_list = []
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            new_datas = []
+            for item in dataset_iter:
+                assert len(item) == 1
+                new_datas.append(item)
+                num_iter += 1
+            assert num_iter == 13
+            assert new_datas != datas_all_samples[shard_id*13:(shard_id+1)*13]
+            assert data_list != new_datas
+            data_list = new_datas
+
+    # shuffle=False
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=False,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        data_list = []
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            new_datas = []
+            for item in dataset_iter:
+                assert len(item) == 1
+                new_datas.append(item)
+                num_iter += 1
+            assert num_iter == 13
+            assert new_datas == datas_all_samples[shard_id*13:(shard_id+1)*13]
+
+    # shuffle=True
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=True,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        data_list = []
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            new_datas = []
+            for item in dataset_iter:
+                assert len(item) == 1
+                new_datas.append(item)
+                num_iter += 1
+            assert num_iter == 13
+            assert new_datas != datas_all_samples[shard_id*13:(shard_id+1)*13]
+            assert data_list != new_datas
+            data_list = new_datas
+
+    # shuffle=Shuffle.GLOBAL
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=ds.Shuffle.GLOBAL,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        data_list = []
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            new_datas = []
+            for item in dataset_iter:
+                assert len(item) == 1
+                new_datas.append(item)
+                num_iter += 1
+            assert num_iter == 13
+            assert new_datas != datas_all_samples[shard_id*13:(shard_id+1)*13]
+            assert data_list != new_datas
+            data_list = new_datas
+
+    # shuffle=Shuffle.INFILE
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=ds.Shuffle.INFILE,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        data_list = []
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            new_datas = []
+            for item in dataset_iter:
+                assert len(item) == 1
+                new_datas.append(item)
+                num_iter += 1
+            assert num_iter == 13
+            assert new_datas != datas_all_samples[shard_id*13:(shard_id+1)*13]
+            assert data_list != new_datas
+            data_list = new_datas
+
+    # shuffle=Shuffle.FILES
+    datas_epoch1 = []
+    datas_epoch2 = []
+    datas_epoch3 = []
+    for shard_id in range(4):
+        num_readers = 2
+        data_set = ds.MindDataset(dataset_file=FILES,
+                                  num_parallel_workers=num_readers,
+                                  shuffle=ds.Shuffle.FILES,
+                                  num_shards=4,
+                                  shard_id=shard_id)
+        assert data_set.get_dataset_size() == 13
+        dataset_iter = data_set.create_dict_iterator(num_epochs=epoch_size, output_numpy=True)
+        for epoch in range(epoch_size):  # 3 epoch
+            num_iter = 0
+            for item in dataset_iter:
+                assert len(item) == 1
+                if epoch == 0:
+                    datas_epoch1.append(item)
+                elif epoch == 1:
+                    datas_epoch2.append(item)
+                elif epoch == 2:
+                    datas_epoch3.append(item)
+                num_iter += 1
+            assert num_iter == 13
+    assert datas_epoch1 not in (datas_epoch2, datas_epoch3)
+    assert datas_epoch2 not in (datas_epoch1, datas_epoch3)
+    assert datas_epoch3 not in (datas_epoch2, datas_epoch1)
 
 if __name__ == '__main__':
     test_nlp_compress_data(add_and_remove_nlp_compress_file)
@@ -1983,3 +2600,6 @@ if __name__ == '__main__':
     test_write_with_multi_array_and_MindDataset()
     test_numpy_generic()
     test_write_with_float32_float64_float32_array_float64_array_and_MindDataset()
+    test_shuffle_with_global_infile_files(create_multi_mindrecord_files)
+    test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files)
+    test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files)
