@@ -38,8 +38,8 @@ class GraphKernelCluster : public Pass {
  private:
   void Init(const FuncGraphPtr &func_graph);
   bool Process(const FuncGraphPtr &func_graph);
-  std::set<size_t> FindCandidates(size_t basenode_id);
-  void RemoveWildGetitem(std::set<size_t> *candidates);
+  std::vector<size_t> FindCandidates(size_t basenode_id);
+  void RemoveWildGetitem(std::vector<size_t> *candidates);
   void CreateFuncGraph(const FuncGraphPtr &func_graph, const std::vector<size_t> &nodes_id);
   void DumpClusterInfo(const AnfNodePtrList &old_nodes, const AnfNodePtr &new_node);
   void DumpToFile();
