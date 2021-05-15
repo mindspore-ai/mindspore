@@ -76,7 +76,7 @@ void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &compos
 }
 
 CNodePtr StitchAtomicCleanInsertter::CreateInplaceAssignNode(const FuncGraphPtr &sub_graph,
-                                                             const AnfNodePtr &new_parameter) {
+                                                             const AnfNodePtr &new_parameter) const {
   // add inplaceassign
   AnfNodePtr out_node = atomic_add_node_;  // Use result data itself, and set attr "fake_out" true.
   auto inplace_assign_node =

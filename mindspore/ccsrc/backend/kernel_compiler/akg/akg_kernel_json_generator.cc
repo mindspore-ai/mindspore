@@ -61,7 +61,7 @@ class OpInfoExtractor {
   }
 
  private:
-  void ExtractInputs(const OpInfoPtr &op_info) {
+  void ExtractInputs(const OpInfoPtr &op_info) const {
     auto dyn_input_sizes = GetDynInputSize(cnode_);
     if (dyn_input_sizes.empty()) {
       for (size_t i = 1; i < cnode_->size(); i++) {
@@ -79,7 +79,7 @@ class OpInfoExtractor {
     }
   }
 
-  void ExtractOutputs(const OpInfoPtr &op_info) {
+  void ExtractOutputs(const OpInfoPtr &op_info) const {
     size_t output_tensor_num = AnfAlgo::GetOutputTensorNum(cnode_);
     for (size_t i = 0; i < output_tensor_num; i++) {
       auto io_info = std::make_shared<OpIOInfo>();

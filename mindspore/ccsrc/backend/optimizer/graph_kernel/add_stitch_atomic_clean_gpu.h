@@ -35,7 +35,7 @@ class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
 
  private:
   void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
-  CNodePtr CreateInplaceAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
+  CNodePtr CreateInplaceAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter) const;
   std::vector<std::pair<AnfNodePtr, int>> FindInnerCNodeUsers(const AnfNodePtr &inner_node,
                                                               const CNodePtr &target) const;
   void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
