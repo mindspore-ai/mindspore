@@ -298,6 +298,19 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(INFO) << "Finish!";
 }
 
+bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  SyncStream();
+  SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
+  return true;
+}
+
+bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const {
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
+  return true;
+}
+
 bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size, mindspore::TypeId type,
                                            void *host_ptr) const {
   MS_LOG(INFO) << "SyncDeviceToHost, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)

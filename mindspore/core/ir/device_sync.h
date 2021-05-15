@@ -30,8 +30,15 @@ namespace mindspore {
 // Interface for data synchornize between device and host.
 class DeviceSync {
  public:
+  // Used to sync data between different device addresses, only need the data size and data ptr. The CPU device doesn't
+  // need use the interfaces, so need the default implementation.
+  virtual bool SyncDeviceToHost(size_t size, void *host_ptr) const { return true; }
+  virtual bool SyncHostToDevice(size_t size, const void *host_ptr) const { return true; }
+
+  // Used to sync data between host tensor and device address, additional need the data shape and data type.
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const = 0;
+
   virtual void *GetMutablePtr() const = 0;
   virtual void ClearDeviceMemory() = 0;
 };

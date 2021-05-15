@@ -36,8 +36,11 @@ class GPUDeviceAddress : public DeviceAddress {
       : DeviceAddress(ptr, size, format, type_id) {}
   ~GPUDeviceAddress() override;
 
+  bool SyncDeviceToHost(size_t size, void *host_ptr) const override;
+  bool SyncHostToDevice(size_t size, const void *host_ptr) const override;
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override;
+
   void ClearDeviceMemory() override;
   void set_status(DeviceAddressStatus status) { status_ = status; }
   DeviceAddressStatus status() const { return status_; }
