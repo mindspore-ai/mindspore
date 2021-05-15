@@ -22,23 +22,24 @@ get_real_path() {
   fi
 }
 
-if [ $# != 2 ] && [ $# != 3 ]
+if [ $# != 3 ] && [ $# != 4 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [DEVICE_ID](option, default is 0)"
-    echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/ 0"
+    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH] [DEVICE_ID](option, default is 0)"
+    echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/ /path/to/config/ 0"
     echo "=============================================================================================================="
     exit 1
 fi
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 export DEVICE_ID=0
-if [ $# != 2 ]
+if [ $# != 3 ]
 then
-  export DEVICE_ID=$3
+  export DEVICE_ID=$4
 fi
 DATASET=$(get_real_path $1)
 CHECKPOINT=$(get_real_path $2)
+CONFIG_PATH=$(get_real_path $3)
 echo "========== start run evaluation ==========="
 echo "please get log at eval.log"
-python ${PROJECT_DIR}/../eval.py --data_url=$DATASET --ckpt_path=$CHECKPOINT > eval.log 2>&1 &
+python ${PROJECT_DIR}/../eval.py --data_path=$DATASET --checkpoint_file_path=$CHECKPOINT --config_path=$CONFIG_PATH > eval.log 2>&1 &

@@ -18,14 +18,14 @@ if [ $# != 2 ]
 then
     echo "=============================================================================================================="
     echo "Please run the script as: "
-    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]"
+    echo "bash scripts/run_standalone_eval.sh [DATA_PATH] [CHECKPOINT]"
     echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/"
     echo "=============================================================================================================="
 fi
 
 if [ $# != 2 ]
 then
-    echo "Usage: sh run_eval_ascend.sh [IMAGE_PATH] [SEG_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval_ascend.sh [DATA_PATH] [CHECKPOINT_PATH]"
 exit 1
 fi
 

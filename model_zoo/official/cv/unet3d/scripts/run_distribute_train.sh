@@ -16,7 +16,7 @@
 
 if [ $# -ne 2 ]
 then
-    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [IMAGE_PATH] [SEG_PATH]"
+    echo "Usage: sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [DATA_PATH]"
 exit 1
 fi
 

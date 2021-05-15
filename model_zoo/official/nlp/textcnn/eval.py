@@ -22,9 +22,9 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from utils.moxing_adapter import moxing_wrapper
-from utils.device_adapter import get_device_id
-from utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+from src.model_utils.config import config
 from src.textcnn import TextCNN
 from src.dataset import MovieReview, SST2, Subjectivity
 

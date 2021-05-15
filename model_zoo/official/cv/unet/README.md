@@ -160,6 +160,35 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 Then you can run everything just like on ascend.
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config directory to "config_path=/The path of config in S3/"
+# (3) Set the code directory to "/path/unet" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the config directory to "config_path=/The path of config in S3/"
+# (4) Set the code directory to "/path/unet" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
@@ -190,6 +219,16 @@ Then you can run everything just like on ascend.
                 ├──__init__.py              // init file
                 ├──unet_model.py            // unet model
                 ├──unet_parts.py            // unet part
+                ├── model_utils
+                │   ├── config.py          // parameter configuration
+                │   ├── device_adapter.py  // device adapter
+                │   ├── local_adapter.py   // local adapter
+                │   ├── moxing_adapter.py  // moxing adapter
+        ├── unet_medical_config.yaml        // parameter configuration
+        ├── unet_nested_cell_config.yaml    // parameter configuration
+        ├── unet_nested_config.yaml         // parameter configuration
+        ├── unet_simple_config.yaml         // parameter configuration
+        ├── unet_simple_coco_config.yaml    // parameter configuration
         ├── train.py                        // training script
         ├── eval.py                         // evaluation script
         ├── export.py                       // export script

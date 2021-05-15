@@ -20,7 +20,7 @@ import numpy as np
 
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from utils.config import config
+from src.model_utils.config import config
 from src.textcnn import TextCNN
 from src.dataset import MovieReview, SST2, Subjectivity
 

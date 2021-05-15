@@ -13,19 +13,18 @@
 # limitations under the License.
 # ============================================================================
 """unet 310 infer preprocess dataset"""
-import argparse
 import os
 import numpy as np
 import cv2
 
 from src.data_loader import create_dataset
-from src.config import cfg_unet
+from src.model_utils.config import config
 
 
-def preprocess_dataset(data_dir, result_path, cross_valid_ind=1, cfg=None):
+def preprocess_dataset(data_dir, result_path, cross_valid_ind=1):
 
-    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False, do_crop=cfg['crop'],
-                                      img_size=cfg['img_size'])
+    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False, do_crop=config.crop,
+                                      img_size=config.img_size)
 
     labels_list = []
     for i, data in enumerate(valid_dataset):
@@ -87,21 +86,9 @@ class CellNucleiDataset:
         return len(self.val_ids)
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description='Preprocess the UNet dataset ',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_url', dest='data_url', type=str, default='data/',
-                        help='data directory')
-    parser.add_argument('-p', '--result_path', dest='result_path', type=str, default='./preprocess_Result/',
-                        help='result path')
-    return parser.parse_args()
-
-
 if __name__ == '__main__':
-    args = get_args()
-
-    if 'dataset' in cfg_unet and cfg_unet['dataset'] == "Cell_nuclei":
-        cell_dataset = CellNucleiDataset(args.data_url, 1, args.result_path, False, 0.8)
+    if config.dataset == "Cell_nuclei":
+        cell_dataset = CellNucleiDataset(config.data_path, 1, config.result_path, False, 0.8)
     else:
-        preprocess_dataset(data_dir=args.data_url, cross_valid_ind=cfg_unet['cross_valid_ind'], cfg=cfg_unet,
-                           result_path=args.result_path)
+        preprocess_dataset(data_dir=config.data_path, cross_valid_ind=config.cross_valid_ind,
+                           result_path=config.result_path)

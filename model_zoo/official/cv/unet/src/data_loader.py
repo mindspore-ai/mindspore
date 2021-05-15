@@ -122,8 +122,8 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
     ds_valid_images = ds.NumpySlicesDataset(data=valid_image_data, sampler=None, shuffle=False)
     ds_valid_masks = ds.NumpySlicesDataset(data=valid_mask_data, sampler=None, shuffle=False)
 
-    if do_crop:
-        resize_size = [int(img_size[x] * do_crop[x]) for x in range(len(img_size))]
+    if do_crop != "None":
+        resize_size = [int(img_size[x] * do_crop[x] / 572) for x in range(len(img_size))]
     else:
         resize_size = img_size
     c_resize_op = c_vision.Resize(size=(resize_size[0], resize_size[1]), interpolation=Inter.BILINEAR)
@@ -146,7 +146,7 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
         train_ds = train_ds.map(input_columns="image", operations=c_resize_op)
         train_ds = train_ds.map(input_columns="mask", operations=c_resize_op)
 
-    if do_crop:
+    if do_crop != "None":
         train_ds = train_ds.map(input_columns="mask", operations=c_center_crop)
     post_process = data_post_process
     train_ds = train_ds.map(input_columns=["image", "mask"], operations=post_process)
@@ -157,7 +157,7 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
     valid_mask_ds = ds_valid_masks.map(input_columns="mask", operations=c_trans_normalize_mask)
     valid_ds = ds.zip((valid_image_ds, valid_mask_ds))
     valid_ds = valid_ds.project(columns=["image", "mask"])
-    if do_crop:
+    if do_crop != "None":
         valid_ds = valid_ds.map(input_columns="mask", operations=c_center_crop)
     post_process = data_post_process
     valid_ds = valid_ds.map(input_columns=["image", "mask"], operations=post_process)

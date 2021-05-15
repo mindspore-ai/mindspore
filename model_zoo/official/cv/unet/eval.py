@@ -14,7 +14,6 @@
 # ============================================================================
 
 import os
-import argparse
 import logging
 from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -22,38 +21,39 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.data_loader import create_dataset, create_multi_class_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
-from src.config import cfg_unet
 from src.utils import UnetEval, TempLoss, dice_coeff
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
-device_id = int(os.getenv('DEVICE_ID'))
+device_id = int(os.getenv("DEVICE_ID"))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
 
+@moxing_wrapper()
 def test_net(data_dir,
              ckpt_path,
-             cross_valid_ind=1,
-             cfg=None):
-    if cfg['model'] == 'unet_medical':
-        net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
-    elif cfg['model'] == 'unet_nested':
-        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'], use_deconv=cfg['use_deconv'],
-                         use_bn=cfg['use_bn'], use_ds=False)
-    elif cfg['model'] == 'unet_simple':
-        net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+             cross_valid_ind=1):
+    if config.model_name == 'unet_medical':
+        net = UNetMedical(n_channels=config.num_channels, n_classes=config.num_classes)
+    elif config.model_name == 'unet_nested':
+        net = NestedUNet(in_channel=config.num_channels, n_class=config.num_classes, use_deconv=config.use_deconv,
+                         use_bn=config.use_bn, use_ds=False)
+    elif config.model_name == 'unet_simple':
+        net = UNet(in_channel=config.num_channels, n_class=config.num_classes)
     else:
-        raise ValueError("Unsupported model: {}".format(cfg['model']))
+        raise ValueError("Unsupported model: {}".format(config.model_name))
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
     net = UnetEval(net)
-    if 'dataset' in cfg and cfg['dataset'] != "ISBI":
-        split = cfg['split'] if 'split' in cfg else 0.8
-        valid_dataset = create_multi_class_dataset(data_dir, cfg['img_size'], 1, 1,
-                                                   num_classes=cfg['num_classes'], is_train=False,
-                                                   eval_resize=cfg["eval_resize"], split=split,
+    if hasattr(config, "dataset") and config.dataset != "ISBI":
+        split = config.split if hasattr(config, "dataset") else 0.8
+        valid_dataset = create_multi_class_dataset(data_dir, config.image_size, 1, 1,
+                                                   num_classes=config.num_classes, is_train=False,
+                                                   eval_resize=config.eval_resize, split=split,
                                                    python_multiprocessing=False, shuffle=False)
     else:
         _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
-                                          do_crop=cfg['crop'], img_size=cfg['img_size'])
-    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff(cfg_unet)})
+                                          do_crop=config.crop, img_size=config.image_size)
+    model = Model(net, loss_fn=TempLoss(), metrics={"dice_coeff": dice_coeff()})
 
     print("============== Starting Evaluating ============")
     eval_score = model.eval(valid_dataset, dataset_sink_mode=False)["dice_coeff"]
@@ -61,22 +61,8 @@ def test_net(data_dir,
     print("============== Cross valid IOU is:", eval_score[1])
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description='Test the UNet on images and target masks',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_url', dest='data_url', type=str, default='data/',
-                        help='data directory')
-    parser.add_argument('-p', '--ckpt_path', dest='ckpt_path', type=str, default='ckpt_unet_medical_adam-1_600.ckpt',
-                        help='checkpoint path')
-
-    return parser.parse_args()
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-    args = get_args()
-    print("Testing setting:", args)
-    test_net(data_dir=args.data_url,
-             ckpt_path=args.ckpt_path,
-             cross_valid_ind=cfg_unet['cross_valid_ind'],
-             cfg=cfg_unet)
+    test_net(data_dir=config.data_path,
+             ckpt_path=config.checkpoint_file_path,
+             cross_valid_ind=config.cross_valid_ind)

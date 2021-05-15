@@ -14,11 +14,10 @@
 # ============================================================================
 """unet 310 infer."""
 import os
-import argparse
 import cv2
 import numpy as np
 
-from src.config import cfg_unet
+from src.model_utils.config import config
 
 class dice_coeff():
     def __init__(self):
@@ -38,20 +37,20 @@ class dice_coeff():
         if b != 1:
             raise ValueError('Batch size should be 1 when in evaluation.')
         y = y.reshape((h, w, c))
-        if cfg_unet["eval_activate"].lower() == "softmax":
+        if config.eval_activate.lower() == "softmax":
             y_softmax = np.squeeze(inputs[0][0], axis=0)
-            if cfg_unet["eval_resize"]:
+            if config.eval_resize:
                 y_pred = []
-                for m in range(cfg_unet["num_classes"]):
+                for m in range(config.num_classes):
                     y_pred.append(cv2.resize(np.uint8(y_softmax[:, :, m] * 255), (w, h)) / 255)
                 y_pred = np.stack(y_pred, axis=-1)
             else:
                 y_pred = y_softmax
-        elif cfg_unet["eval_activate"].lower() == "argmax":
+        elif config.eval_activate.lower() == "argmax":
             y_argmax = np.squeeze(inputs[0][1], axis=0)
             y_pred = []
-            for n in range(cfg_unet["num_classes"]):
-                if cfg_unet["eval_resize"]:
+            for n in range(config.num_classes):
+                if config.eval_resize:
                     y_pred.append(cv2.resize(np.uint8(y_argmax == n), (w, h), interpolation=cv2.INTER_NEAREST))
                 else:
                     y_pred.append(np.float32(y_argmax == n))
@@ -73,25 +72,13 @@ class dice_coeff():
             raise RuntimeError('Total samples num must not be 0.')
         return (self._dice_coeff_sum / float(self._samples_num), self._iou_sum / float(self._samples_num))
 
-def get_args():
-    parser = argparse.ArgumentParser(description='Test the UNet on images and target masks',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_url', dest='data_url', type=str, default='data/',
-                        help='data directory')
-    parser.add_argument('-p', '--rst_path', dest='rst_path', type=str, default='./result_Files/',
-                        help='infer result path')
-
-    return parser.parse_args()
-
 
 if __name__ == '__main__':
-    args = get_args()
-
-    rst_path = args.rst_path
+    rst_path = config.rst_path
     metrics = dice_coeff()
 
-    if 'dataset' in cfg_unet and cfg_unet['dataset'] == "Cell_nuclei":
-        img_size = tuple(cfg_unet['img_size'])
+    if config.dataset == "Cell_nuclei":
+        img_size = tuple(config.img_size)
         for i, bin_name in enumerate(os.listdir('./preprocess_Result/')):
             f = bin_name.replace(".png", "")
             bin_name_softmax = f + "_0.bin"
@@ -100,7 +87,7 @@ if __name__ == '__main__':
             file_name_arg = rst_path + bin_name_argmax
             softmax_out = np.fromfile(file_name_sof, np.float32).reshape(1, 96, 96, 2)
             argmax_out = np.fromfile(file_name_arg, np.float32).reshape(1, 96, 96)
-            mask = cv2.imread(os.path.join(args.data_url, f, "mask.png"), cv2.IMREAD_GRAYSCALE)
+            mask = cv2.imread(os.path.join(config.data_path, f, "mask.png"), cv2.IMREAD_GRAYSCALE)
             mask = cv2.resize(mask, img_size)
             mask = mask.astype(np.float32) / 255
             mask = (mask > 0.5).astype(np.int)
