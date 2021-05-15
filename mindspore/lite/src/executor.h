@@ -38,7 +38,7 @@ class Executor {
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
- private:
+ protected:
   const lite::InnerContext *ctx_ = nullptr;
 };
 }  // namespace mindspore::lite

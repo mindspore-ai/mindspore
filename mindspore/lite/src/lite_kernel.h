@@ -205,6 +205,16 @@ class LiteKernel {
     }
   }
 
+  void set_in_tensor(lite::Tensor *in_tensor, int index) {
+    MS_ASSERT(kernel_ != nullptr);
+    if (desc_.provider == kBuiltin) {
+      static_cast<InnerKernel *>(kernel_)->set_in_tensor(in_tensor, index);
+    } else {
+      mindspore::tensor::MSTensor *ms_tensors(in_tensor);
+      kernel_->set_input(ms_tensors, index);
+    }
+  }
+
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {

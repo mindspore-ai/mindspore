@@ -70,16 +70,17 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
-#ifdef SUBGRAPH_SPLIT
-  auto search_sub_graph = SearchSubGraph(context_, src_model_, this->graph_output_node_indexes_);
-  search_sub_graph.SubGraphSplitByOutput();
-#endif
-
   auto ret = InferSubGraphShape(kMainSubGraphIndex);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "op infer shape failed.";
     return ret;
   }
+
+#ifdef SUBGRAPH_SPLIT
+  auto search_sub_graph = SearchSubGraph(context_, src_model_, this->graph_output_node_indexes_);
+  search_sub_graph.SubGraphSplitByOutput();
+#endif
+
   ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
   op_parameters_.clear();
   if (ret != RET_OK) {
