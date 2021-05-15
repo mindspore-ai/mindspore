@@ -629,14 +629,17 @@ bool StartServerAction(const ResourcePtr &res) {
   uint64_t fl_server_port = ps::PSContext::instance()->fl_server_port();
 
   // Update model threshold is a certain ratio of start_fl_job threshold.
-  // update_model_threshold_ = start_fl_job_threshold_ * percent_for_update_model_.
+  // update_model_threshold = start_fl_job_threshold * update_model_ratio.
   size_t start_fl_job_threshold = ps::PSContext::instance()->start_fl_job_threshold();
-  float percent_for_update_model = 1;
-  size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * percent_for_update_model));
+  float update_model_ratio = ps::PSContext::instance()->update_model_ratio();
+  size_t update_model_threshold = static_cast<size_t>(std::ceil(start_fl_job_threshold * update_model_ratio));
+  uint64_t start_fl_job_time_window = ps::PSContext::instance()->start_fl_job_time_window();
+  uint64_t update_model_time_window = ps::PSContext::instance()->update_model_time_window();
 
-  std::vector<ps::server::RoundConfig> rounds_config = {{"startFLJob", false, 3000, true, start_fl_job_threshold},
-                                                        {"updateModel", false, 3000, true, update_model_threshold},
-                                                        {"getModel", false, 3000}};
+  std::vector<ps::server::RoundConfig> rounds_config = {
+    {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
+    {"updateModel", true, update_model_time_window, true, update_model_threshold},
+    {"getModel"}};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

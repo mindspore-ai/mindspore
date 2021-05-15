@@ -38,9 +38,9 @@ void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicat
     name_, [&](std::shared_ptr<core::MessageHandler> message) { LaunchRoundKernel(message); });
 
   // Callback when the iteration is finished.
-  finish_iteration_cb_ = [this, finish_iteration_cb](void) -> void {
-    MS_LOG(INFO) << "Round " << name_ << " finished! Proceed to next iteration.";
-    finish_iteration_cb();
+  finish_iteration_cb_ = [this, finish_iteration_cb](bool is_iteration_valid) -> void {
+    MS_LOG(INFO) << "Round " << name_ << " finished! This iteration is valid. Proceed to next iteration.";
+    finish_iteration_cb(is_iteration_valid);
   };
 
   // Callback for finalizing the server. This can only be called once.
@@ -50,9 +50,9 @@ void Round::Initialize(const std::shared_ptr<core::CommunicatorBase> &communicat
     iter_timer_ = std::make_shared<IterationTimer>();
 
     // 1.Set the timeout callback for the timer.
-    iter_timer_->SetTimeOutCallBack([this, timeout_cb](void) -> void {
-      MS_LOG(INFO) << "Round " << name_ << " timeout! Proceed to next iteration.";
-      timeout_cb();
+    iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool is_iteration_valid) -> void {
+      MS_LOG(INFO) << "Round " << name_ << " timeout! This iteration is invalid. Proceed to next iteration.";
+      timeout_cb(is_iteration_valid);
     });
 
     // 2.Stopping timer callback which will be set to the round kernel.
@@ -112,14 +112,19 @@ const std::string &Round::name() const { return name_; }
 
 size_t Round::threshold_count() const { return threshold_count_; }
 
+bool Round::check_timeout() const { return check_timeout_; }
+
 size_t Round::time_window() const { return time_window_; }
 
-void Round::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
+void Round::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message) {
   MS_LOG(INFO) << "Round " << name_ << " first count event is triggered.";
   // The timer starts only after the first count event is triggered by DistributedCountService.
   if (check_timeout_) {
     iter_timer_->Start(std::chrono::milliseconds(time_window_));
   }
+
+  // Some kernels override the OnFirstCountEvent method.
+  kernel_->OnFirstCountEvent(message);
   return;
 }
 

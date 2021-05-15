@@ -52,7 +52,7 @@ class DistributedMetadataStore {
   void ResetMetadata(const std::string &name);
 
   // Update the metadata for the name.
-  void UpdateMetadata(const std::string &name, const PBMetadata &meta);
+  bool UpdateMetadata(const std::string &name, const PBMetadata &meta);
 
   // Get the metadata for the name.
   PBMetadata GetMetadata(const std::string &name);

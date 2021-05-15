@@ -34,10 +34,14 @@ parser.add_argument("--scheduler_ip", type=str, default="127.0.0.1")
 parser.add_argument("--scheduler_port", type=int, default=8113)
 parser.add_argument("--fl_server_port", type=int, default=6666)
 parser.add_argument("--start_fl_job_threshold", type=int, default=1)
+parser.add_argument("--start_fl_job_time_window", type=int, default=3000)
+parser.add_argument("--update_model_ratio", type=float, default=1.0)
+parser.add_argument("--update_model_time_window", type=int, default=3000)
 parser.add_argument("--fl_name", type=str, default="Lenet")
 parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
 parser.add_argument("--client_batch_size", type=int, default=32)
+parser.add_argument("--client_learning_rate", type=float, default=0.1)
 parser.add_argument("--secure_aggregation", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
@@ -50,14 +54,18 @@ scheduler_ip = args.scheduler_ip
 scheduler_port = args.scheduler_port
 fl_server_port = args.fl_server_port
 start_fl_job_threshold = args.start_fl_job_threshold
+start_fl_job_time_window = args.start_fl_job_time_window
+update_model_ratio = args.update_model_ratio
+update_model_time_window = args.update_model_time_window
 fl_name = args.fl_name
 fl_iteration_num = args.fl_iteration_num
 client_epoch_num = args.client_epoch_num
 client_batch_size = args.client_batch_size
+client_learning_rate = args.client_learning_rate
 secure_aggregation = args.secure_aggregation
 
 ctx = {
-    "enable_ps": False,
+    "enable_fl": True,
     "server_mode": server_mode,
     "ms_role": ms_role,
     "worker_num": worker_num,
@@ -66,15 +74,19 @@ ctx = {
     "scheduler_port": scheduler_port,
     "fl_server_port": fl_server_port,
     "start_fl_job_threshold": start_fl_job_threshold,
+    "start_fl_job_time_window": start_fl_job_time_window,
+    "update_model_ratio": update_model_ratio,
+    "update_model_time_window": update_model_time_window,
     "fl_name": fl_name,
     "fl_iteration_num": fl_iteration_num,
     "client_epoch_num": client_epoch_num,
     "client_batch_size": client_batch_size,
+    "client_learning_rate": client_learning_rate,
     "secure_aggregation": secure_aggregation
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=False)
-context.set_ps_context(**ctx)
+context.set_fl_context(**ctx)
 
 if __name__ == "__main__":
     epoch = 5

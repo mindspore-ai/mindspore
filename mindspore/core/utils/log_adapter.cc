@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <map>
+#include <iomanip>
+#include <thread>
 
 // namespace to support utils module definition
 namespace mindspore {
@@ -117,8 +119,8 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #define google mindspore_private
   auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
-    << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << GetProcName()
-    << "):" << GetTimeString() << " "
+    << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << std::hex
+    << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #undef google
 #else

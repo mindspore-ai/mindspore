@@ -49,6 +49,9 @@ class ModelStore {
   // Get model of the given iteration.
   std::map<std::string, AddressPtr> GetModelByIterNum(size_t iteration);
 
+  // Reset the stored models. Called when federated learning job finishes.
+  void Reset();
+
   // Returns all models stored in ModelStore.
   const std::map<size_t, std::shared_ptr<MemoryRegister>> &iteration_to_model() const;
 
@@ -70,6 +73,11 @@ class ModelStore {
 
   size_t max_model_count_;
   size_t model_size_;
+
+  // Initial model which is the model of iteration 0.
+  std::shared_ptr<MemoryRegister> initial_model_;
+
+  // The number of all models stpred is max_model_count_.
   std::map<size_t, std::shared_ptr<MemoryRegister>> iteration_to_model_;
 };
 }  // namespace server

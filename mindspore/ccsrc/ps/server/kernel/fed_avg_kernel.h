@@ -92,7 +92,6 @@ class FedAvgKernel : public AggregationKernel {
         weight_addr[i] /= data_size_addr[0];
       }
       done_ = true;
-      DistributedCountService::GetInstance().ResetCounter(name_);
       return;
     };
     DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler, last_cnt_handler});
@@ -125,6 +124,7 @@ class FedAvgKernel : public AggregationKernel {
     participated_ = true;
     DistributedCountService::GetInstance().Count(
       name_, std::to_string(DistributedCountService::GetInstance().local_rank()) + "_" + std::to_string(accum_count_));
+    GenerateReuseKernelNodeInfo();
     return true;
   }
 
@@ -149,6 +149,7 @@ class FedAvgKernel : public AggregationKernel {
 
  private:
   void GenerateReuseKernelNodeInfo() override {
+    MS_LOG(INFO) << "FedAvg reuse 'weight' of the kernel node.";
     // Only the trainable parameter is reused for federated average.
     reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, cnode_weight_idx_));
     return;

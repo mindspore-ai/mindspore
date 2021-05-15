@@ -61,15 +61,12 @@ class RoundKernel : virtual public CPUKernel {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) = 0;
 
-  // The callbacks when first message and last message for this round kernel is received.
-  // These methods is called by class DistributedCountService and triggered by leader server(Rank 0).
-  // virtual void OnFirstCountEvent(std::shared_ptr<core::MessageHandler> message);
-  // virtual void OnLastCnt(std::shared_ptr<core::MessageHandler> message);
-
   // Some rounds could be stateful in a iteration. Reset method resets the status of this round.
   virtual bool Reset() = 0;
 
   // The counter event handlers for DistributedCountService.
+  // The callbacks when first message and last message for this round kernel is received.
+  // These methods is called by class DistributedCountService and triggered by counting server.
   virtual void OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &message);
   virtual void OnLastCountEvent(const std::shared_ptr<core::MessageHandler> &message);
 

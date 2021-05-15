@@ -23,8 +23,6 @@
 namespace mindspore {
 namespace ps {
 namespace server {
-Iteration::Iteration() : iteration_num_(1) { LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_); }
-
 void Iteration::AddRound(const std::shared_ptr<Round> &round) {
   MS_EXCEPTION_IF_NULL(round);
   rounds_.push_back(round);
@@ -49,28 +47,48 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<core::CommunicatorB
 
   // The time window for one iteration, which will be used in some round kernels.
   size_t iteration_time_window =
-    std::accumulate(rounds_.begin(), rounds_.end(), 0,
-                    [](size_t total, const std::shared_ptr<Round> &round) { return total + round->time_window(); });
+    std::accumulate(rounds_.begin(), rounds_.end(), 0, [](size_t total, const std::shared_ptr<Round> &round) {
+      return round->check_timeout() ? total + round->time_window() : total;
+    });
   LocalMetaStore::GetInstance().put_value(kCtxTotalTimeoutDuration, iteration_time_window);
+  MS_LOG(INFO) << "Time window for one iteration is " << iteration_time_window;
   return;
 }
 
-void Iteration::ProceedToNextIter() {
+void Iteration::ProceedToNextIter(bool is_iteration_valid) {
   iteration_num_ = LocalMetaStore::GetInstance().curr_iter_num();
-  // Store the model for each iteration.
-  const auto &model = Executor::GetInstance().GetModel();
-  ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+  if (is_iteration_valid) {
+    // Store the model which is successfully aggregated for this iteration.
+    const auto &model = Executor::GetInstance().GetModel();
+    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
+  } else {
+    // Store last iteration's model because this iteration is considered as invalid.
+    const auto &model = ModelStore::GetInstance().GetModelByIterNum(iteration_num_ - 1);
+    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid.";
+  }
 
   for (auto &round : rounds_) {
     round->Reset();
   }
 
   iteration_num_++;
+  // After the job is done, reset the iteration to the initial number and reset ModelStore.
+  if (iteration_num_ > PSContext::instance()->fl_iteration_num()) {
+    MS_LOG(INFO) << PSContext::instance()->fl_iteration_num() << " iterations are completed.";
+    iteration_num_ = 1;
+    ModelStore::GetInstance().Reset();
+  }
+
+  is_last_iteration_valid_ = is_iteration_valid;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   MS_LOG(INFO) << "Proceed to next iteration:" << iteration_num_ << "\n";
 }
 
 const std::vector<std::shared_ptr<Round>> &Iteration::rounds() { return rounds_; }
+
+bool Iteration::is_last_iteration_valid() const { return is_last_iteration_valid_; }
 }  // namespace server
 }  // namespace ps
 }  // namespace mindspore

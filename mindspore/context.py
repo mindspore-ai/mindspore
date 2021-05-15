@@ -787,3 +787,59 @@ def reset_ps_context():
     - enable_ps: False.
     """
     _reset_ps_context()
+
+def set_fl_context(**kwargs):
+    """
+    Set federated learning training mode context.
+
+    Args:
+        enable_fl (bool): Whether to enable federated learning training mode.
+                          Default: False.
+        server_mode (string): Describe the server mode, which must one of 'FEDERATED_LEARNING' and 'HYBRID_TRAINING'.
+                              Default: 'FEDERATED_LEARNING'.
+        ms_role (string): The process's role in the federated learning mode,
+                          which must be one of 'MS_SERVER', 'MS_WORKER' and 'MS_SCHED'.
+                          Default: 'MS_NOT_PS'.
+        worker_num (int): The number of workers. Default: 0.
+        server_num (int): The number of federated learning servers. Default: 0.
+        scheduler_ip (string): The scheduler IP. Default: ''.
+        scheduler_port (int): The scheduler port. Default: 0.
+        fl_server_port (int): The http port of the federated learning server.
+                              Normally for each server this should be set to the same value. Default: 0.
+        enable_fl_client (bool): Whether this process is federated learning client. Default: False.
+        start_fl_job_threshold (int): The threshold count of startFLJob. Default: 0.
+        start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 3000.
+        update_model_ratio (float): The ratio for computing the threshold count of updateModel
+                                    which will be multiplied by start_fl_job_threshold. Default: 1.0.
+        update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
+        fl_name (string): The federated learning job name. Default: ''.
+        fl_iteration_num (int): Iteration number of federeated learning,
+                                which is the number of interactions between client and server. Default: 20.
+        client_epoch_num (int): Client training epoch number. Default: 25.
+        client_batch_size (int): Client training data batch size. Default: 32.
+        client_learning_rate (float): Client training learning rate. Default: 0.001.
+        secure_aggregation (bool): Whether to use secure aggregation algorithm. Default: False.
+
+    Raises:
+        ValueError: If input key is not the attribute in federated learning mode context.
+
+    Examples:
+        >>> context.set_fl_context(enable_fl=True, server_mode='FEDERATED_LEARNING')
+    """
+    _set_ps_context(**kwargs)
+
+
+def get_fl_context(attr_key):
+    """
+    Get federated learning mode context attribute value according to the key.
+
+    Args:
+        attr_key (str): The key of the attribute.
+
+    Returns:
+        Returns attribute value according to the key.
+
+    Raises:
+        ValueError: If input key is not attribute in federated learning mode context.
+    """
+    return _get_ps_context(attr_key)

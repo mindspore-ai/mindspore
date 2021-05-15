@@ -117,7 +117,7 @@ class Server {
   std::vector<std::shared_ptr<core::CommunicatorBase>> communicators_with_worker_;
 
   // Iteration consists of multiple kinds of rounds.
-  std::shared_ptr<Iteration> iteration_;
+  Iteration *iteration_;
 
   // Variables set by ps context.
   std::string scheduler_ip_;

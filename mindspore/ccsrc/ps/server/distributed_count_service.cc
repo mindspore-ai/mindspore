@@ -130,7 +130,7 @@ bool DistributedCountService::CountReachThreshold(const std::string &name) {
 
 void DistributedCountService::ResetCounter(const std::string &name) {
   if (local_rank_ == counting_server_rank_) {
-    MS_LOG(INFO) << "Leader server reset count for " << name;
+    MS_LOG(DEBUG) << "Leader server reset count for " << name;
     global_current_count_[name].clear();
   }
   return;
@@ -233,7 +233,7 @@ void DistributedCountService::HandleCounterEvent(const std::shared_ptr<core::Mes
   const auto &type = counter_event.type();
   const auto &name = counter_event.name();
 
-  MS_LOG(INFO) << "Rank " << local_rank_ << " do counter event " << type << " for " << name;
+  MS_LOG(DEBUG) << "Rank " << local_rank_ << " do counter event " << type << " for " << name;
   if (type == CounterEventType::FIRST_CNT) {
     counter_handlers_[name].first_count_handler(message);
   } else if (type == CounterEventType::LAST_CNT) {
@@ -259,7 +259,7 @@ void DistributedCountService::TriggerCounterEvent(const std::string &name) {
 }
 
 void DistributedCountService::TriggerFirstCountEvent(const std::string &name) {
-  MS_LOG(INFO) << "Activating first count event for " << name;
+  MS_LOG(DEBUG) << "Activating first count event for " << name;
   CounterEvent first_count_event;
   first_count_event.set_type(CounterEventType::FIRST_CNT);
   first_count_event.set_name(name);

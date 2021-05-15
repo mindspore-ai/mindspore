@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "ps/server/iteration.h"
 #include "ps/server/model_store.h"
 
 namespace mindspore {
@@ -67,27 +68,31 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
   size_t latest_iter_num = iter_to_model.rbegin()->first;
 
+  // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.
   if ((current_iter == get_model_iter && latest_iter_num != current_iter) || current_iter == get_model_iter - 1) {
     std::string reason = "The model is not ready yet for iteration " + std::to_string(get_model_iter);
     BuildGetModelRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps,
-                     std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
+                     std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(WARNING) << reason;
     return;
   }
 
   if (iter_to_model.count(get_model_iter) == 0) {
-    std::string reason = "The iteration of GetModel request" + std::to_string(get_model_iter) +
-                         " is invalid. Current iteration is " + std::to_string(current_iter);
-    BuildGetModelRsp(fbb, schema::ResponseCode_RequestError, reason, current_iter, feature_maps,
-                     std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
-    MS_LOG(ERROR) << reason;
-    return;
+    // If the model of get_model_iter is not stored, return the latest version of model and current iteration number.
+    MS_LOG(WARNING) << "The iteration of GetModel request " << std::to_string(get_model_iter)
+                    << " is invalid. Current iteration is " << std::to_string(current_iter);
+    feature_maps = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
+  } else {
+    feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
   }
 
-  feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
-  BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED,
-                   "Get model for iteration " + std::to_string(get_model_iter) + " success.", current_iter,
-                   feature_maps, std::to_string(CURRENT_TIME_MILLI.count() + iteration_time_window_));
+  // If the iteration of this model is invalid, return ResponseCode_OutOfTime to the clients could startFLJob according
+  // to next_req_time.
+  auto response_code =
+    Iteration::GetInstance().is_last_iteration_valid() ? schema::ResponseCode_SUCCEED : schema::ResponseCode_OutOfTime;
+  BuildGetModelRsp(fbb, response_code, "Get model for iteration " + std::to_string(get_model_iter), current_iter,
+                   feature_maps,
+                   std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
   return;
 }
 

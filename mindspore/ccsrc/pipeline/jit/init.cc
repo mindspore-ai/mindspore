@@ -345,11 +345,20 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_scheduler_port", &PSContext::set_scheduler_port, "Set scheduler port.")
     .def("set_fl_server_port", &PSContext::set_fl_server_port, "Set federated learning server port.")
     .def("set_fl_client_enable", &PSContext::set_fl_client_enable, "Set federated learning client.")
-    .def("set_start_fl_job_threshold", &PSContext::set_start_fl_job_threshold, "Set threshold count for start_fl_job.")
+    .def("set_start_fl_job_threshold", &PSContext::set_start_fl_job_threshold,
+         "Set threshold count for startFLJob round.")
+    .def("set_start_fl_job_time_window", &PSContext::set_start_fl_job_time_window,
+         "Set time window for startFLJob round.")
+    .def("set_update_model_ratio", &PSContext::set_update_model_ratio,
+         "Set threshold count ratio for updateModel round.")
+    .def("set_update_model_time_window", &PSContext::set_update_model_time_window,
+         "Set time window for updateModel round.")
     .def("set_fl_name", &PSContext::set_fl_name, "Set federated learning name.")
     .def("set_fl_iteration_num", &PSContext::set_fl_iteration_num, "Set federated learning iteration number.")
     .def("set_client_epoch_num", &PSContext::set_client_epoch_num, "Set federated learning client epoch number.")
     .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
+    .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
+         "Set federated learning client learning rate.")
     .def("set_secure_aggregation", &PSContext::set_secure_aggregation,
          "Set federated learning client using secure aggregation.")
     .def("set_enable_ssl", &PSContext::enable_ssl, "Set PS SSL mode enabled or disabled.");

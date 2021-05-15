@@ -36,6 +36,7 @@ _set_ps_context_func_map = {
     "server_mode": ps_context().set_server_mode,
     "ms_role": ps_context().set_ms_role,
     "enable_ps": ps_context().set_ps_enable,
+    "enable_fl": ps_context().set_ps_enable,
     "worker_num": ps_context().set_worker_num,
     "server_num": ps_context().set_server_num,
     "scheduler_ip": ps_context().set_scheduler_ip,
@@ -43,10 +44,14 @@ _set_ps_context_func_map = {
     "fl_server_port": ps_context().set_fl_server_port,
     "enable_fl_client": ps_context().set_fl_client_enable,
     "start_fl_job_threshold": ps_context().set_start_fl_job_threshold,
+    "start_fl_job_time_window": ps_context().set_start_fl_job_time_window,
+    "update_model_ratio": ps_context().set_update_model_ratio,
+    "update_model_time_window": ps_context().set_update_model_time_window,
     "fl_name": ps_context().set_fl_name,
     "fl_iteration_num": ps_context().set_fl_iteration_num,
     "client_epoch_num": ps_context().set_client_epoch_num,
     "client_batch_size": ps_context().set_client_batch_size,
+    "client_learning_rate": ps_context().set_client_learning_rate,
     "secure_aggregation": ps_context().set_secure_aggregation,
     "enable_ps_ssl": ps_context().set_enable_ssl
 }

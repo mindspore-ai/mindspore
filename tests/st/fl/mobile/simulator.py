@@ -15,6 +15,7 @@
 
 import argparse
 import time
+import datetime
 import random
 import sys
 import requests
@@ -129,7 +130,15 @@ def build_get_model(iteration):
     buf = builder_get_model.Output()
     return buf
 
-weight_name_to_idx = {
+def datetime_to_timestamp(datetime_obj):
+    """将本地(local) datetime 格式的时间 (含毫秒) 转为毫秒时间戳
+    :param datetime_obj: {datetime}2016-02-25 20:21:04.242000
+    :return: 13 位的毫秒时间戳  1456402864242
+    """
+    local_timestamp = time.mktime(datetime_obj.timetuple()) * 1000.0 + datetime_obj.microsecond // 1000.0
+    return local_timestamp
+
+weight_to_idx = {
     "conv1.weight": 0,
     "conv2.weight": 1,
     "fc1.weight": 2,
@@ -149,11 +158,12 @@ while True:
     print("start url is ", url1)
     x = requests.post(url1, data=build_start_fl_job(current_iteration))
     rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
-    print("start fl job iteration:", current_iteration, ", id:", args.pid)
     while rsp_fl_job.Retcode() != ResponseCode.ResponseCode.SUCCEED:
         x = requests.post(url1, data=build_start_fl_job(current_iteration))
-        rsp_fl_job = rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
+        rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
     print("epoch is", rsp_fl_job.FlPlanConfig().Epochs())
+    print("iteration is", rsp_fl_job.Iteration())
+    current_iteration = rsp_fl_job.Iteration()
     sys.stdout.flush()
 
     url2 = "http://" + http_ip + ":" + str(generate_port()) + '/updateModel'
@@ -170,22 +180,40 @@ while True:
     print("rsp get model iteration:", current_iteration, ", id:", args.pid, rsp_get_model.Retcode())
     sys.stdout.flush()
 
-    repeat_time = 0
-    while rsp_get_model.Retcode() == ResponseCode.ResponseCode.SucNotReady:
-        time.sleep(0.1)
-        x = session.post(url3, data=build_get_model(current_iteration))
-        rsp_get_model = ResponseGetModel.ResponseGetModel.GetRootAsResponseGetModel(x.content, 0)
-        repeat_time += 1
-        if repeat_time > 1000:
-            print("GetModel try timeout ", args.pid)
-            sys.exit(0)
-
-    for i in range(0, 1):
-        print(rsp_get_model.FeatureMap(i).WeightFullname())
-        origin = update_model_np_data[weight_name_to_idx[rsp_get_model.FeatureMap(i).WeightFullname().decode('utf-8')]]
-        after = rsp_get_model.FeatureMap(i).DataAsNumpy() * 32
-        print("Before update model", args.pid, origin[0:10])
-        print("After get model", args.pid, after[0:10])
+    next_req_timestamp = 0
+    if rsp_get_model.Retcode() == ResponseCode.ResponseCode.OutOfTime:
+        next_req_timestamp = int(rsp_get_model.Timestamp().decode('utf-8'))
+        print("Last iteration is invalid, next request timestamp:", next_req_timestamp)
         sys.stdout.flush()
-        assert np.allclose(origin, after, rtol=1e-05, atol=1e-05)
-    current_iteration += 1
+    elif rsp_get_model.Retcode() == ResponseCode.ResponseCode.SucNotReady:
+        repeat_time = 0
+        while rsp_get_model.Retcode() == ResponseCode.ResponseCode.SucNotReady:
+            time.sleep(0.2)
+            x = session.post(url3, data=build_get_model(current_iteration))
+            rsp_get_model = ResponseGetModel.ResponseGetModel.GetRootAsResponseGetModel(x.content, 0)
+            if rsp_get_model.Retcode() == ResponseCode.ResponseCode.OutOfTime:
+                next_req_timestamp = int(rsp_get_model.Timestamp().decode('utf-8'))
+                print("Last iteration is invalid, next request timestamp:", next_req_timestamp)
+                sys.stdout.flush()
+                break
+            repeat_time += 1
+            if repeat_time > 1000:
+                print("GetModel try timeout ", args.pid)
+                sys.exit(0)
+    else:
+        pass
+
+    if next_req_timestamp == 0:
+        for i in range(0, 1):
+            print(rsp_get_model.FeatureMap(i).WeightFullname())
+            origin = update_model_np_data[weight_to_idx[rsp_get_model.FeatureMap(i).WeightFullname().decode('utf-8')]]
+            after = rsp_get_model.FeatureMap(i).DataAsNumpy() * 32
+            print("Before update model", args.pid, origin[0:10])
+            print("After get model", args.pid, after[0:10])
+            sys.stdout.flush()
+            assert np.allclose(origin, after, rtol=1e-05, atol=1e-05)
+    else:
+        # Sleep to the next request timestamp
+        current_ts = datetime_to_timestamp(datetime.datetime.now())
+        duration = next_req_timestamp - current_ts
+        time.sleep(duration / 1000)
