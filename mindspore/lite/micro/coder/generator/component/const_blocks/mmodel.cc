@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "coder/generator/component/const_blocks/model.h"
+#include "coder/generator/component/const_blocks/mmodel.h"
 
 namespace mindspore::lite::micro {
 
