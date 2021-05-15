@@ -19,6 +19,7 @@
 
 #include <utility>
 #include "mindrt/include/actor/op_actor.h"
+#include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -43,6 +44,12 @@ constexpr int kFailure = 1;
 // Get the max available thread number of system.
 int64_t GetMaxThreadNum();
 
+bool IsDeviceQueueDSActor(const AnfNodePtr &node);
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph);
+bool IsKernelActor(const AnfNodePtr &node);
+
+// Judge whether the device tensor of the node is persistent or not.
+bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 }  // namespace runtime
 }  // namespace mindspore
 

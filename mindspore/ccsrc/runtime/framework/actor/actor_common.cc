@@ -19,6 +19,7 @@
 #ifdef __WIN32__
 #include <windows.h>
 #endif
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace runtime {
@@ -32,6 +33,45 @@ int64_t GetMaxThreadNum() {
 #endif
 
   return max_thread_num;
+}
+
+bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+    //  Judge whether node is internal parameter.
+    if (graph->GetFrontNodeByInternalParameter(node) == nullptr) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsKernelActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) != kGetNextOpName)) {
+    return true;
+  }
+  return false;
+}
+
+bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<ValueNode>()) {
+    return true;
+  }
+  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+    return true;
+  }
+  return false;
 }
 
 }  // namespace runtime

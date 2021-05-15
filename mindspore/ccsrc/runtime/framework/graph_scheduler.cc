@@ -28,47 +28,8 @@
 
 namespace mindspore {
 namespace runtime {
+
 namespace {
-bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
-    return true;
-  }
-  return false;
-}
-
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(graph);
-  if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
-    //  Judge whether node is internal parameter.
-    if (graph->GetFrontNodeByInternalParameter(node) == nullptr) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool IsKernelActor(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) != kGetNextOpName)) {
-    return true;
-  }
-  return false;
-}
-
-// Judge whether the device tensor of the node is persistent or not.
-bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>()) {
-    return true;
-  }
-  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
-    return true;
-  }
-  return false;
-}
-
 KernelActor *FindKernelActor(const KernelMapActor &kernel_actors_map, const std::string &name) {
   auto iter = kernel_actors_map.find(name);
   if (iter != kernel_actors_map.end()) {
@@ -363,6 +324,13 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     auto base_actor = static_cast<ActorReference>(kernel_actor);
+    (void)actorMgr->Spawn(base_actor);
+  }
+
+  // Schedule switch actors.
+  for (auto &switch_actor : actor_set->switch_actors_) {
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    auto base_actor = static_cast<ActorReference>(switch_actor);
     (void)actorMgr->Spawn(base_actor);
   }
 
