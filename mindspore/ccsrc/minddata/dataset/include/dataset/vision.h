@@ -37,7 +37,7 @@ class TensorOperation;
 // Transform operations for performing computer vision.
 namespace vision {
 /// \brief AutoContrast TensorTransform.
-/// \notes Apply automatic contrast on input image.
+/// \note Apply automatic contrast on input image.
 class AutoContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -59,7 +59,7 @@ class AutoContrast final : public TensorTransform {
 };
 
 /// \brief BoundingBoxAugment TensorTransform.
-/// \notes  Apply a given image transform on a random selection of bounding box regions of a given image.
+/// \note  Apply a given image transform on a random selection of bounding box regions of a given image.
 class BoundingBoxAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -90,15 +90,15 @@ class BoundingBoxAugment final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Constructor to apply CutMix on a batch of images
-/// \notes Masks a random section of each image with the corresponding part of another randomly
-///     selected image in that batch
+/// \brief Constructor to apply CutMix on a batch of images.
+/// \note Masks a random section of each image with the corresponding part of another randomly
+///     selected image in that batch.
 class CutMixBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] image_batch_format The format of the batch
-  /// \param[in] alpha The hyperparameter of beta distribution (default = 1.0)
-  /// \param[in] prob The probability by which CutMix is applied to each image (default = 1.0)
+  /// \param[in] image_batch_format The format of the batch.
+  /// \param[in] alpha The hyperparameter of beta distribution (default = 1.0).
+  /// \param[in] prob The probability by which CutMix is applied to each image (default = 1.0).
   explicit CutMixBatch(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
 
   /// \brief Destructor.
@@ -114,13 +114,13 @@ class CutMixBatch final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief CutOut TensorOp
-/// \notes Randomly cut (mask) out a given number of square patches from the input image
+/// \brief CutOut TensorOp.
+/// \note Randomly cut (mask) out a given number of square patches from the input image.
 class CutOut final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] length Integer representing the side length of each square patch
-  /// \param[in] num_patches Integer representing the number of patches to be cut out of an image
+  /// \param[in] length Integer representing the side length of each square patch.
+  /// \param[in] num_patches Integer representing the number of patches to be cut out of an image.
   explicit CutOut(int32_t length, int32_t num_patches = 1);
 
   /// \brief Destructor.
@@ -137,7 +137,7 @@ class CutOut final : public TensorTransform {
 };
 
 /// \brief Equalize TensorTransform.
-/// \notes Apply histogram equalization on input image.
+/// \note Apply histogram equalization on input image.
 class Equalize final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -153,7 +153,7 @@ class Equalize final : public TensorTransform {
 };
 
 /// \brief HwcToChw TensorTransform.
-/// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
+/// \note Transpose the input image; shape (H, W, C) to shape (C, H, W).
 class HWC2CHW final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -169,7 +169,7 @@ class HWC2CHW final : public TensorTransform {
 };
 
 /// \brief Invert TensorTransform.
-/// \notes Apply invert on input image in RGB mode.
+/// \note Apply invert on input image in RGB mode.
 class Invert final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -185,12 +185,12 @@ class Invert final : public TensorTransform {
 };
 
 /// \brief MixUpBatch TensorTransform.
-/// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in
+/// \note Apply MixUp transformation on an input batch of images and labels. The labels must be in
 ///     one-hot format and Batch must be called before calling this function.
 class MixUpBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
+  /// \param[in] alpha hyperparameter of beta distribution (default = 1.0).
   explicit MixUpBatch(float alpha = 1);
 
   /// \brief Destructor.
@@ -207,7 +207,7 @@ class MixUpBatch final : public TensorTransform {
 };
 
 /// \brief NormalizePad TensorTransform.
-/// \notes Normalize the input image with respect to mean and standard deviation and pad an extra
+/// \note Normalize the input image with respect to mean and standard deviation and pad an extra
 ///     channel with value zero.
 class NormalizePad final : public TensorTransform {
  public:
@@ -215,9 +215,9 @@ class NormalizePad final : public TensorTransform {
   /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
   ///     The mean values must be in range [0.0, 255.0].
   /// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
-  ///     The standard deviation values must be in range (0.0, 255.0]
+  ///     The standard deviation values must be in range (0.0, 255.0].
   /// \param[in] dtype The output datatype of Tensor.
-  ///     The standard deviation values must be "float32" or "float16"（default = "float32"）
+  ///     The standard deviation values must be "float32" or "float16"（default = "float32"）.
   explicit NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
                         const std::string &dtype = "float32")
       : NormalizePad(mean, std, StringToChar(dtype)) {}
@@ -237,8 +237,8 @@ class NormalizePad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Pad TensorOp
-/// \notes Pads the image according to padding parameters
+/// \brief Pad TensorOp.
+/// \note Pads the image according to padding parameters.
 class Pad final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -251,7 +251,7 @@ class Pad final : public TensorTransform {
   /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
   ///    BorderType.kConstant. If 1 value is provided, it is used for all RGB channels. If 3 values are provided,
   ///    it is used to fill R, G, B channels respectively.
-  /// \param[in] padding_mode The method of padding (default=BorderType.kConstant)
+  /// \param[in] padding_mode The method of padding (default=BorderType.kConstant).
   ///    Can be any of
   ///    [BorderType.kConstant, BorderType.kEdge, BorderType.kReflect, BorderType.kSymmetric]
   ///    - BorderType.kConstant, means it fills the border with constant values
@@ -276,12 +276,12 @@ class Pad final : public TensorTransform {
 
 /// \brief Blends an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
-///        then the weights are determinate and t equals the bound of the interval
+///        then the weights are determinate and t equals the bound of the interval.
 class RandomColor final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] t_lb Lower bound on the range of random weights
-  /// \param[in] t_lb Upper bound on the range of random weights
+  /// \param[in] t_lb Lower bound on the range of random weights.
+  /// \param[in] t_lb Upper bound on the range of random weights.
   explicit RandomColor(float t_lb, float t_ub);
 
   /// \brief Destructor.
@@ -298,19 +298,19 @@ class RandomColor final : public TensorTransform {
 };
 
 /// \brief RandomColorAdjust TensorTransform.
-/// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image
+/// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 class RandomColorAdjust final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max]. Default value is {1, 1}
+  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] contrast Contrast adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max]. Default value is {1, 1}
+  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] saturation Saturation adjustment factor. Must be a vector of one or two values
-  ///     if it's a vector of two values it needs to be in the form of [min, max]. Default value is {1, 1}
+  ///     if it's a vector of two values it needs to be in the form of [min, max] (Default={1, 1}).
   /// \param[in] hue Brightness adjustment factor. Must be a vector of one or two values
   ///     if it's a vector of two values it must be in the form of [min, max] where -0.5 <= min <= max <= 0.5
-  ///     Default value is {0, 0}
+  ///     (Default={0, 0}).
   explicit RandomColorAdjust(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
                              std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
 
@@ -328,7 +328,7 @@ class RandomColorAdjust final : public TensorTransform {
 };
 
 /// \brief RandomCrop TensorTransform.
-/// \notes Crop the input image at a random location.
+/// \note Crop the input image at a random location.
 class RandomCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -364,7 +364,7 @@ class RandomCrop final : public TensorTransform {
 };
 
 /// \brief RandomCropDecodeResize TensorTransform.
-/// \notes Equivalent to RandomResizedCrop, but crops before decodes.
+/// \note Equivalent to RandomResizedCrop, but crops before decodes.
 class RandomCropDecodeResize final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -372,10 +372,10 @@ class RandomCropDecodeResize final : public TensorTransform {
   ///               If size is a single value, a square crop of size (size, size) is returned.
   ///               If size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the
-  ///               original size to be cropped (default=(0.08, 1.0))
+  ///               original size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be
-  ///               cropped (default=(3. / 4., 4. / 3.))
-  /// \param[in] interpolation An enum for the mode of interpolation
+  ///               cropped (default=(3. / 4., 4. / 3.)).
+  /// \param[in] interpolation An enum for the mode of interpolation.
   /// \param[in] The maximum number of attempts to propose a valid crop_area (default=10).
   ///               If exceeded, fall back to use center_crop instead.
   explicit RandomCropDecodeResize(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -397,7 +397,7 @@ class RandomCropDecodeResize final : public TensorTransform {
 };
 
 /// \brief RandomCropWithBBox TensorTransform.
-/// \notes Crop the input image at a random location and adjust bounding boxes accordingly.
+/// \note Crop the input image at a random location and adjust bounding boxes accordingly.
 ///        If cropped area is out of bbox, the return bbox will be empty.
 class RandomCropWithBBox final : public TensorTransform {
  public:
@@ -436,7 +436,7 @@ class RandomCropWithBBox final : public TensorTransform {
 };
 
 /// \brief RandomHorizontalFlip TensorTransform.
-/// \notes Tensor operation to perform random horizontal flip.
+/// \note Tensor operation to perform random horizontal flip.
 class RandomHorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -457,7 +457,7 @@ class RandomHorizontalFlip final : public TensorTransform {
 };
 
 /// \brief RandomHorizontalFlipWithBBox TensorTransform.
-/// \notes Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
+/// \note Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
 class RandomHorizontalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -478,11 +478,11 @@ class RandomHorizontalFlipWithBBox final : public TensorTransform {
 };
 
 /// \brief RandomPosterize TensorTransform.
-/// \notes Tensor operation to perform random posterize.
+/// \note Tensor operation to perform random posterize.
 class RandomPosterize final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range. (Default={4, 8})
+  /// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range (Default={4, 8}).
   explicit RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
 
   /// \brief Destructor.
@@ -499,13 +499,13 @@ class RandomPosterize final : public TensorTransform {
 };
 
 /// \brief RandomResize TensorTransform.
-/// \notes Resize the input image using a randomly selected interpolation mode.
+/// \note Resize the input image using a randomly selected interpolation mode.
 //      the same image aspect ratio. If size has 2 values, it should be (height, width).
 class RandomResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
-  ///     If size is a single value, the smaller edge of the image will be resized to this value with
+  ///     If size is a single value, the smaller edge of the image will be resized to this value with.
   explicit RandomResize(std::vector<int32_t> size);
 
   /// \brief Destructor.
@@ -522,7 +522,7 @@ class RandomResize final : public TensorTransform {
 };
 
 /// \brief RandomResizeWithBBox TensorTransform.
-/// \notes Resize the input image using a randomly selected interpolation mode and adjust
+/// \note Resize the input image using a randomly selected interpolation mode and adjust
 ///     bounding boxes accordingly.
 class RandomResizeWithBBox final : public TensorTransform {
  public:
@@ -546,7 +546,7 @@ class RandomResizeWithBBox final : public TensorTransform {
 };
 
 /// \brief RandomResizedCrop TensorTransform.
-/// \notes Crop the input image to a random size and aspect ratio.
+/// \note Crop the input image to a random size and aspect ratio.
 class RandomResizedCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -554,11 +554,11 @@ class RandomResizedCrop final : public TensorTransform {
   ///     If size is a single value, a square crop of size (size, size) is returned.
   ///     If size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the original
-  ///     size to be cropped (default=(0.08, 1.0))
+  ///     size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
-  /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear)
-  /// \param[in] max_attempts The maximum number of attempts to propose a valid
+  /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
+  /// \param[in] max_attempts The maximum number of attempts to propose a valid.
   ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
   explicit RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
                              std::vector<float> ratio = {3. / 4., 4. / 3.},
@@ -578,7 +578,7 @@ class RandomResizedCrop final : public TensorTransform {
 };
 
 /// \brief RandomResizedCropWithBBox TensorTransform.
-/// \notes Crop the input image to a random size and aspect ratio.
+/// \note Crop the input image to a random size and aspect ratio.
 ///        If cropped area is out of bbox, the return bbox will be empty.
 class RandomResizedCropWithBBox final : public TensorTransform {
  public:
@@ -587,10 +587,10 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   ///     If size is a single value, a square crop of size (size, size) is returned.
   ///     If size has 2 values, it should be (height, width).
   /// \param[in] scale Range [min, max) of respective size of the original
-  ///     size to be cropped (default=(0.08, 1.0))
+  ///     size to be cropped (default=(0.08, 1.0)).
   /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
   ///     (default=(3. / 4., 4. / 3.)).
-  /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear)
+  /// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear).
   /// \param[in] max_attempts The maximum number of attempts to propose a valid
   ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
   RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -610,16 +610,16 @@ class RandomResizedCropWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief RandomRotation TensorOp
-/// \notes Rotates the image according to parameters
+/// \brief RandomRotation TensorOp.
+/// \note Rotates the image according to parameters.
 class RandomRotation final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] degrees A float vector of size, representing the starting and ending degree
-  /// \param[in] resample An enum for the mode of interpolation
-  /// \param[in] expand A boolean representing whether the image is expanded after rotation
+  /// \param[in] degrees A float vector of size, representing the starting and ending degree.
+  /// \param[in] resample An enum for the mode of interpolation.
+  /// \param[in] expand A boolean representing whether the image is expanded after rotation.
   /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform.
   ///    in the output image. If 1 value is provided, it is used for all RGB channels.
   ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
   RandomRotation(std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour,
@@ -640,23 +640,23 @@ class RandomRotation final : public TensorTransform {
 };
 
 /// \brief RandomSelectSubpolicy TensorTransform.
-/// \notes Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
+/// \note Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
 ///     (op, prob), where op is a TensorTransform operation and prob is the probability that this op will be applied.
 ///     Once a sub-policy is selected, each op within the sub-policy with be applied in sequence according to its
 ///     probability.
 class RandomSelectSubpolicy final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers.
   explicit RandomSelectSubpolicy(const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy);
 
   /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are shared pointers
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are shared pointers.
   explicit RandomSelectSubpolicy(
     const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy);
 
   /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are object pointers
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are object pointers.
   explicit RandomSelectSubpolicy(
     const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy);
 
@@ -674,11 +674,11 @@ class RandomSelectSubpolicy final : public TensorTransform {
 };
 
 /// \brief RandomSharpness TensorTransform.
-/// \notes Tensor operation to perform random sharpness.
+/// \note Tensor operation to perform random sharpness.
 class RandomSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree to uniformly
+  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree to uniformly.
   ///     sample from, to select a degree to adjust sharpness.
   explicit RandomSharpness(std::vector<float> degrees = {0.1, 1.9});
 
@@ -696,8 +696,8 @@ class RandomSharpness final : public TensorTransform {
 };
 
 /// \brief RandomSolarize TensorTransform.
-/// \notes Invert pixels randomly within specified range. If min=max, it is a single fixed magnitude operation
-///     to inverts all pixel above that threshold
+/// \note Invert pixels randomly within specified range. If min=max, it is a single fixed magnitude operation
+///     to inverts all pixel above that threshold.
 class RandomSolarize final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -718,7 +718,7 @@ class RandomSolarize final : public TensorTransform {
 };
 
 /// \brief RandomVerticalFlip TensorTransform.
-/// \notes Tensor operation to perform random vertical flip.
+/// \note Tensor operation to perform random vertical flip.
 class RandomVerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -739,7 +739,7 @@ class RandomVerticalFlip final : public TensorTransform {
 };
 
 /// \brief RandomVerticalFlipWithBBox TensorTransform.
-/// \notes Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
+/// \note Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 class RandomVerticalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -760,7 +760,7 @@ class RandomVerticalFlipWithBBox final : public TensorTransform {
 };
 
 /// \brief RescaleOperation TensorTransform.
-/// \notes Tensor operation to rescale the input image.
+/// \note Tensor operation to rescale the input image.
 class Rescale final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -782,7 +782,7 @@ class Rescale final : public TensorTransform {
 };
 
 /// \brief ResizeWithBBox TensorTransform.
-/// \notes Resize the input image to the given size and adjust bounding boxes accordingly.
+/// \note Resize the input image to the given size and adjust bounding boxes accordingly.
 class ResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -806,7 +806,7 @@ class ResizeWithBBox final : public TensorTransform {
 };
 
 /// \brief RgbaToBgr TensorTransform.
-/// \notes Changes the input 4 channel RGBA tensor to 3 channel BGR.
+/// \note Changes the input 4 channel RGBA tensor to 3 channel BGR.
 class RGBA2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -822,7 +822,7 @@ class RGBA2BGR final : public TensorTransform {
 };
 
 /// \brief RgbaToRgb TensorTransform.
-/// \notes Changes the input 4 channel RGBA tensor to 3 channel RGB.
+/// \note Changes the input 4 channel RGBA tensor to 3 channel RGB.
 class RGBA2RGB final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -838,7 +838,7 @@ class RGBA2RGB final : public TensorTransform {
 };
 
 /// \brief SoftDvppDecodeRandomCropResizeJpeg TensorTransform.
-/// \notes Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
+/// \note Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
 ///     Ascend series chip DVPP module. The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
 ///     The input image size should be in range [32*32, 8192*8192].
 ///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
@@ -872,7 +872,7 @@ class SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
 };
 
 /// \brief SoftDvppDecodeResizeJpeg TensorTransform.
-/// \notes Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
+/// \note Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
 ///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
 ///     When training, the DVPP of the Ascend chip is not used,
 ///     and the DVPP of the Ascend chip is used during inference,
@@ -901,8 +901,8 @@ class SoftDvppDecodeResizeJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief SwapRedBlue TensorOp
-/// \notes Swaps the red and blue channels in image
+/// \brief SwapRedBlue TensorOp.
+/// \note Swaps the red and blue channels in image.
 class SwapRedBlue final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -918,7 +918,7 @@ class SwapRedBlue final : public TensorTransform {
 };
 
 /// \brief UniformAugment TensorTransform.
-/// \notes Tensor operation to perform randomly selected augmentation.
+/// \note Tensor operation to perform randomly selected augmentation.
 class UniformAugment final : public TensorTransform {
  public:
   /// \brief Constructor.

@@ -32,38 +32,74 @@ class DeviceResource;
 // class to run tensor operations in eager mode
 class Execute {
  public:
-  /// \brief Constructor
-  // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
+  /// \brief Constructor.
+  /// \param[in] op TensorOperation to be applied in Eager mode, it accepts op in type of shared pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
                    uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] op TensorTransform to be applied in Eager mode, it accepts op in type of shared pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
                    uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] op TensorTransform to be applied in Eager mode, it accepts op in type of reference.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu,
                    uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] op TensorTransform to be applied in Eager mode, it accepts op in type of raw pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
 
+  /// \brief Constructor.
+  /// \param[in] ops A vector of TensorOperations to be applied in Eager mode, it accepts op in type of shared pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,
                    MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] ops A vector of TensorTransforms to be applied in Eager mode, it accepts op in type of shared pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops,
                    MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] ops A vector of TensorTransforms to be applied in Eager mode, it accepts op in type of raw pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
                    MapTargetDevice deviceType = MapTargetDevice::kCpu, uint32_t device_id = 0);
+
+  /// \brief Constructor.
+  /// \param[in] ops A vector of TensorTransforms to be applied in Eager mode, it accepts op in type of raw pointer.
+  /// \param[in] deviceType Target device env to perform operation, can be kCPU/kGPU/kAscend310 (default=kCPU).
+  /// \param[in] device_id Target device id to perform operation, only valid when deviceType=kAscend310 (default=0).
   explicit Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice deviceType = MapTargetDevice::kCpu,
                    uint32_t device_id = 0);
 
-  /// \brief Destructor
+  /// \brief Destructor.
   ~Execute();
 
-  /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[in] input Tensor to be transformed
-  /// \param[out] output Transformed tensor
-  /// \return Status code
+  /// \brief Callable function to execute the TensorTransform in eager mode.
+  /// \param[in] input Tensor to be transformed.
+  /// \param[out] output Transformed tensor.
+  /// \return Status error code, returns OK if no error encountered.
   Status operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output);
 
-  /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[in] input_tensor_list List of Tensor to be transformed
-  /// \param[out] out Result tensor after transform
-  /// \return - Status
+  /// \brief Callable function to execute the TensorTransform in eager mode.
+  /// \param[in] input_tensor_list List of Tensor to be transformed.
+  /// \param[out] out Result tensor after transform.
+  /// \return Status error code, returns OK if no error encountered.
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 
   Status DeviceMemoryRelease();
