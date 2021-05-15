@@ -242,7 +242,7 @@ Status DeviceQueueOp::SendDataToAscend() {
                       " stage, please check error raised by Network used operator or environment configuration. 2) if"
                       " interrupt in middle process of training, may check whether dataset sending num and network"
                       " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
-                      " try find ascend host log or checking info log ects.");
+                      " try find ascend host log or checking info log etc.");
       }
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;

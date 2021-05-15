@@ -223,6 +223,7 @@ Status TaskManager::GetMasterThreadRc() {
   if (rc.IsError()) {
     // Reset the state once we retrieve the value.
     std::lock_guard<std::mutex> lck(master->mux_);
+    MS_LOG(ERROR) << "Task is terminated with err msg(more detail in info level log):" << master->rc_;
     master->rc_ = Status::OK();
     master->caught_severe_exception_ = false;
     master->ResetIntrpState();
