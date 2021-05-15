@@ -41,6 +41,7 @@
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
+#include "utils/parallel_node_check.h"
 
 namespace mindspore {
 namespace abstract {
@@ -86,16 +87,22 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   }
   ScopeGuard scope_guard(scope);
 
-  AnfNodePtr new_cnode = nullptr;
+  AnfNodePtr new_node = nullptr;
   if (bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
-    new_cnode = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
-                                    args_inputs);
+    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
+                                   args_inputs);
   } else {
-    new_cnode = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
-                                    args_inputs);
+    new_node = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
+                                   args_inputs);
   }
-  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context());
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
+
+  if (out_node->isa<CNode>()) {
+    auto out_cnode = out_node->cast<CNodePtr>();
+    auto new_cnode = new_node->cast<CNodePtr>();
+    new_cnode->CloneCNodeInfo(out_cnode);
+  }
 
   return engine->ForwardConfig(out_conf, fn_conf);
 }
@@ -256,6 +263,10 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   AnfNodePtr new_node = MixedPrecisionCastHelper(out_node_inputs[2], args_spec_list[1], out_node_inputs[1], func_graph);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
 
+  if (new_node->isa<CNode>()) {
+    auto new_cnode = new_node->cast<CNodePtr>();
+    new_cnode->CloneCNodeInfo(out_node);
+  }
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 

@@ -281,9 +281,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
 
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
-    for (auto &attr : attrs) {
-      attrs_[attr.first] = attr.second;
-    }
+    attrs_.insert(attrs.cbegin(), attrs.cend());
   }
 
   void AddAttr(const std::string &name, const ValuePtr &attr) { attrs_[name] = attr; }
@@ -294,6 +292,31 @@ class CNode : public AnfNode, public EffectInfoHolder {
   }
   bool HasAttr(const std::string &name) const { return attrs_.find(name) != attrs_.cend(); }
   ssize_t input_tensor_num() const { return input_tensor_num_; }
+
+  const std::unordered_map<std::string, ValuePtr> &primal_attrs() const { return primal_attrs_; }
+  void set_primal_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    primal_attrs_.insert(attrs.cbegin(), attrs.cend());
+  }
+  void AddPrimalAttr(const std::string &name, const ValuePtr &attr) { primal_attrs_[name] = attr; }
+  void ErasePrimalAttr(const std::string &name) { (void)primal_attrs_.erase(name); }
+  ValuePtr GetPrimalAttr(const std::string &name) const {
+    auto iter = primal_attrs_.find(name);
+    return iter == primal_attrs_.cend() ? nullptr : iter->second;
+  }
+  bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != attrs_.cend(); }
+
+  void CloneCNodeInfo(const CNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    set_abstract(node->abstract());
+    set_forward(node->forward().first, node->forward().second);
+    set_inputs_value(node->inputs_value());
+    set_attrs(node->attrs());
+    set_primal_attrs(node->primal_attrs());
+    set_load_flag(node->get_load_flag());
+    CloneUserData(node);
+    set_kernel_info(node->kernel_info_ptr());
+  }
+
   void set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
 
   // Is effect have been handled.
@@ -314,6 +337,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
   std::pair<ValuePtr, std::string> output_value_;
   std::unordered_map<std::string, ValuePtr> attrs_;
+  std::unordered_map<std::string, ValuePtr> primal_attrs_;
   ssize_t input_tensor_num_ = -1;
 };
 
