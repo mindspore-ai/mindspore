@@ -105,11 +105,11 @@ AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr &fg, const FuncGraphManager
   return outs;
 }
 
-bool GenJson(const AnfNodePtrList &op_nodes, const AnfNodePtrList &inputs, const AnfNodePtrList &outputs,
+bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, AnfNodePtrList> &in_and_out,
              const DumpOption &dump_option, nlohmann::json *op_desc,
              std::map<std::string, AnfNodePtr> *address_node_map = nullptr) {
   kernel::AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
-  if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, inputs, outputs)) {
+  if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, in_and_out.first, in_and_out.second)) {
     MS_LOG(ERROR) << "Collect json desc failed.";
     return false;
   }
@@ -531,8 +531,8 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     // If address_node_map is wanted, we should map the new node in new graph to the old nodes. But... not support now.
     MS_LOG(EXCEPTION) << "No support mixed with basic and composite ops now!";
   }
-
-  return GenJson(op_nodes, inputs, outputs, dump_option, op_desc, address_node_map);
+  std::pair<AnfNodePtrList, AnfNodePtrList> in_and_out = std::make_pair(inputs, outputs);
+  return GenJson(op_nodes, in_and_out, dump_option, op_desc, address_node_map);
 }
 
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc) {
@@ -559,8 +559,8 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     mng = Manage(fg, false);
     fg->set_manager(mng);
   }
-
-  return GenJson(op_nodes, inputs, outputs, dump_option, op_desc);
+  std::pair<AnfNodePtrList, AnfNodePtrList> in_and_out = std::make_pair(inputs, outputs);
+  return GenJson(op_nodes, in_and_out, dump_option, op_desc);
 }
 
 bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &dump_option, nlohmann::json *op_desc) {

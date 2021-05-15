@@ -155,7 +155,7 @@ class Area {
 
  private:
   // This is a CNode that does not belong to this area.
-  bool IsExternalCNode(const AnfNodePtr &node) { return node->isa<CNode>() && this->nodes_.count(node) == 0; }
+  bool IsExternalCNode(const AnfNodePtr &node) const { return node->isa<CNode>() && this->nodes_.count(node) == 0; }
 
   // nodes in this area
   std::unordered_set<AnfNodePtr> nodes_;
@@ -290,7 +290,7 @@ class AreaGraph {
     return new_main_cnode;
   }
 
-  void SortCNodes(std::vector<CNodePtr> *main_cnodes) {
+  void SortCNodes(std::vector<CNodePtr> *main_cnodes) const {
     std::vector<CNodePtr> main_cnodes_sorted;
     std::transform(topo_order_.begin(), topo_order_.end(), std::back_inserter(main_cnodes_sorted),
                    [main_cnodes](size_t index) { return main_cnodes->at(index); });
@@ -360,7 +360,7 @@ class Splitter {
   ~Splitter() = default;
 
  private:
-  void ResetInlinedNodesKernelInfo() {
+  void ResetInlinedNodesKernelInfo() const {
     for (const auto &node : inlined_nodes_) {
       ResetKernelInfo(node);
     }
@@ -376,7 +376,7 @@ class Splitter {
   }
 
   // Rebind nodes to its new sub_func_graph
-  void BindFuncGraph() {
+  void BindFuncGraph() const {
     for (const auto &cnode : new_subgraph_cnodes_) {
       auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
       auto callback = [&sub_func_graph](const AnfNodePtr &node) {
@@ -475,7 +475,7 @@ class Splitter {
     });
   }
 
-  void UpdateSubGraphInfo() {
+  void UpdateSubGraphInfo() const {
     auto graph_manager = main_func_graph_->manager();
     MS_EXCEPTION_IF_NULL(graph_manager);
 

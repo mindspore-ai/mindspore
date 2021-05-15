@@ -19,6 +19,7 @@ from mindspore import log as logger
 from .model import PrimLib, Graph, Tensor
 from .model import DataFormat as DF
 
+
 class GraphSplitByPattern:
     """Graph splitter"""
     class ReachTable:
@@ -270,7 +271,7 @@ class GraphSplitByPattern:
                 os.makedirs(dirname)
             graphname = self.graph.name
             filename = dirname + '/' + graphname + '.log'
-            with open(filename, 'w') as f:
+            with os.fdopen(os.open(filename, os.O_RDWR | os.O_CREAT), 'w+') as f:
                 f.write(subgraphs_str)
 
     def do_split(self):
@@ -316,6 +317,8 @@ class GraphSplitByPattern:
             self.areas += new_areas
 
 use_poly_reduce = True
+
+
 class GraphSplitGpu(GraphSplitByPattern):
     """Graph splitter"""
     BORADCAST_FUSE_DEPTH = 20
@@ -564,6 +567,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                     changed = self.fuse(_reduce_stitch) or changed
         self.fuse(_transpose)
 
+
 class GraphSplitAscend(GraphSplitByPattern):
     """Graph splitter"""
     BORADCAST_FUSE_DEPTH = 6
@@ -754,6 +758,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             changed = self.fuse(_matmul_depth) or changed
             changed = self.fuse(_reduce_output) or changed
         self.fuse(_transdata)
+
 
 
 def split(graph, target, flags):
