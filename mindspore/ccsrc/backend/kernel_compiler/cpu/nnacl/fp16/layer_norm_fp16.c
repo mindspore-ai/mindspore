@@ -18,7 +18,10 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
-void LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, float16_t *square_mean) {
+int LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, float16_t *square_mean) {
+  if (num <= 0) {
+    return NNACL_ERR;
+  }
   int index = 0;
   float sum = 0.0f;
   float square_sum = 0.0f;
@@ -40,6 +43,7 @@ void LayerNormMeanAndSquareFp16(const float16_t *src, int num, float16_t *mean, 
   }
   *mean = (float16_t)(sum / num);
   *square_mean = (float16_t)(square_sum / num);
+  return NNACL_OK;
 }
 
 void LayerNormGammaAndBetaFp16(float16_t *dst, const float16_t *src, const float16_t *gamma_data,
@@ -77,7 +81,10 @@ int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const 
     float16_t *dst_norm = dst_data + i * param->norm_inner_size_;
     out_mean[i] = 0.0f;
     out_deno[i] = 0.0f;
-    LayerNormMeanAndSquareFp16(src_norm, param->norm_inner_size_, &out_mean[i], &out_deno[i]);
+    int ret = LayerNormMeanAndSquareFp16(src_norm, param->norm_inner_size_, &out_mean[i], &out_deno[i]);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
     const float16_t deno = 1 / sqrtf(out_deno[i] - out_mean[i] * out_mean[i] + param->epsilon_);
     if (param->norm_outer_size_ <= param->params_outer_size_) {
       for (int x = 0; x < param->norm_inner_size_ / param->params_inner_size_; x++) {

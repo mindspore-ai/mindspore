@@ -18,7 +18,10 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-void LayerNormMeanAndSquare(const float *src, int num, float *mean, float *square_mean) {
+int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *square_mean) {
+  if (num <= 0) {
+    return NNACL_ERR;
+  }
   int index = 0;
 #ifdef ENABLE_NEON
   float32x4_t sum = vdupq_n_f32(0);
@@ -36,9 +39,9 @@ void LayerNormMeanAndSquare(const float *src, int num, float *mean, float *squar
     *mean += src[index];
     *square_mean += src[index] * src[index];
   }
-
   *mean /= (float)num;
   *square_mean /= (float)num;
+  return NNACL_OK;
 }
 
 void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data, const float *beta_data, int num,
@@ -77,7 +80,10 @@ int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_
     float *dst_norm = dst_data + i * param->norm_inner_size_;
     out_mean[i] = 0.0f;
     out_deno[i] = 0.0f;
-    LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &out_mean[i], &out_deno[i]);
+    int ret = LayerNormMeanAndSquare(src_norm, param->norm_inner_size_, &out_mean[i], &out_deno[i]);
+    if (ret != NNACL_OK) {
+      return NNACL_ERR;
+    }
     const float deno = 1 / sqrtf(out_deno[i] - out_mean[i] * out_mean[i] + param->epsilon_);
     if (param->norm_outer_size_ <= param->params_outer_size_) {
       for (int x = 0; x < param->norm_inner_size_ / param->params_inner_size_; x++) {
