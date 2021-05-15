@@ -61,7 +61,7 @@ class FusionInfo {
   FusionInfo() = default;
   explicit FusionInfo(const std::string &type) : fusion_type_(type) {}
   virtual ~FusionInfo() = default;
-  std::string FusionType() { return fusion_type_; }
+  std::string FusionType() const { return fusion_type_; }
   virtual bool ExistTypeInfo() { return false; }
 
  private:
@@ -110,7 +110,7 @@ class ParellelCostModelWarehouse {
     static ParellelCostModelWarehouse instance;
     return instance;
   }
-  ParallelCostModelPtr GetParallelCostModel(const std::string &target);
+  ParallelCostModelPtr GetParallelCostModel(const std::string &target) const;
 
  private:
   ParellelCostModelWarehouse() { cost_model_ = std::make_shared<ParallelCostModel>(); }

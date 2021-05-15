@@ -590,7 +590,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
 
   // Current nodes is not suitable to fuse, so pop first node to try other fusion possibility.
   if (parallel_infos.size() == 0) {
-    origin_candidates_used[get_index(origin_indices, candidates[parallel_infos.size()])] = true;
+    origin_candidates_used[IntToSize(get_index(origin_indices, candidates[parallel_infos.size()]))] = true;
   }
 
   return std::make_tuple(origin_candidates_used, parallel_infos);
