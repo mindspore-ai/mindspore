@@ -47,12 +47,6 @@ Float::Float(const int nbits) : Number(FloatBitsToTypeId(nbits), nbits, false) {
   }
 }
 
-Complex::Complex(const int nbits) : Number(TypeId::kNumberTypeComplex64, nbits, false) {
-  if (nbits != 64) {
-    MS_LOG(EXCEPTION) << "Wrong number of bits.";
-  }
-}
-
 const TypePtr kBool = std::make_shared<Bool>();
 const TypePtr kInt8 = std::make_shared<Int>(8);
 const TypePtr kInt16 = std::make_shared<Int>(16);
@@ -69,5 +63,5 @@ const TypePtr kInt = std::make_shared<Int>();
 const TypePtr kUInt = std::make_shared<UInt>();
 const TypePtr kFloat = std::make_shared<Float>();
 const TypePtr kNumber = std::make_shared<Number>();
-const TypePtr kComplex64 = std::make_shared<Complex>(64);
+const TypePtr kComplex64 = std::make_shared<Complex64>();
 }  // namespace mindspore
