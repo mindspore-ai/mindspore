@@ -77,7 +77,7 @@ int MultiConvSplit::GetMultiConvNodes(const FuncGraphPtr &func_graph, const AnfN
     auto curr_node = conv_nodes_[idx];
     auto curr_cnode = conv_nodes_[idx]->cast<CNodePtr>();
     auto tmp_node = curr_cnode->input(1);
-    if (IsConv2D(tmp_node)) {
+    if (!IsConv2D(tmp_node)) {
       break;
     }
     auto name = tmp_node->fullname_with_scope();

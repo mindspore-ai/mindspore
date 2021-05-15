@@ -20,6 +20,7 @@ namespace mindspore {
 namespace opt {
 
 int MultiNodeSplitProxy::InitResource() {
+  split_mode_ = strategy_.split_mode_;
   switch (split_mode_) {
     case SplitN:
       multi_node_split_ = std::make_shared<MultiConvSplitN>(strategy_, primitive_type_, fmk_type_, num_);

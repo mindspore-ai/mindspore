@@ -23,6 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "backend/optimizer/common/node_pass.h"
 #include "tools/optimizer/parallel/split_strategy.h"
+#include "tools/optimizer/parallel/operator_info.h"
 
 #ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
@@ -37,12 +38,19 @@ class ParallelPass : public opt::NodePass {
   AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) override;
 
  private:
-  const std::set<PrimitivePtr> PARALLEL_LIST = {prim::kPrimConv2DFusion};
-  const std::unordered_map<std::string, std::string> type_string = {{prim::kPrimConv2DFusion->name(), "Conv2D"}};
-
+  // to check this node whether support to parallel && split
   bool IsParallelCareNode(const AnfNodePtr &node);
+  // mapping primitive to a parallel_op_name
   std::string PrimToString(const PrimitivePtr &prim);
 
+  // set curr_node a new op_name with parallel symbol
+  bool SetParallelOpName(const AnfNodePtr &node, std::string *parallel_name);
+
+  // create a parallel operator from different scope_name
+  OperatorInfoPtr CreateParallelOperator(const AnfNodePtr &node, const std::string &scope_name,
+                                         const std::string &parallel_op_name);
+
+ private:
   std::string type_name_;
   std::unordered_map<std::string, SplitStrategy> split_strategys_;
   int32_t fmk_type_;

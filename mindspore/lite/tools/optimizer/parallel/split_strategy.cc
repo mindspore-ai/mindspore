@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace opt {
-std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(SplitMode parallel_mode) {
+std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy() {
   std::unordered_map<std::string, opt::SplitStrategy> split_strategys;
   if (kSplitRatio.empty() || kSplitDefaultRatio.empty() || kSplitDevTypes.empty()) {
     return split_strategys;
@@ -31,7 +31,7 @@ std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(SplitMod
   }
   std::vector<std::vector<int64_t>> split_feature_map;
   std::vector<std::vector<int64_t>> split_weight;
-  switch (parallel_mode) {
+  switch (kParallelMode) {
     case SplitN:
       split_feature_map = {kSplitRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
       split_weight = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
@@ -52,7 +52,11 @@ std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(SplitMod
       return split_strategys;
   }
   opt::Strategys strategys = {split_feature_map, split_weight};
-  split_strategys[opt::kSplitOp] = {strategys, kSplitDevTypes, kSplitDevTypes.size()};
+
+  for (const auto &supported_parallel_op : kParallelOpNames) {
+    split_strategys[supported_parallel_op.second] = {strategys, kSplitDevTypes, kSplitDevTypes.size(), kParallelMode};
+  }
+
   return split_strategys;
 }
 }  // namespace opt

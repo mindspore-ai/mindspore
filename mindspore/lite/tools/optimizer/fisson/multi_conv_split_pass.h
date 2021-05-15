@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_MULTI_CONV_SPLIT_H_
 
 #include <vector>
+#include <string>
+#include <unordered_map>
 #include "backend/optimizer/common/optimizer.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
@@ -29,19 +31,18 @@ namespace mindspore {
 namespace opt {
 class MultiConvSplitPass : public PatternProcessPass {
  public:
-  explicit MultiConvSplitPass(const SplitStrategy &strategy, PrimitiveType primitive_type, int32_t fmk_type = -1,
+  explicit MultiConvSplitPass(const std::unordered_map<std::string, SplitStrategy> &strategys, int32_t fmk_type = -1,
                               int32_t num = 3, bool multigraph = true)
-      : PatternProcessPass("multi_conv_split", multigraph),
-        strategy_(strategy),
-        primitive_type_(primitive_type),
-        fmk_type_(fmk_type),
-        num_(num) {}
+      : PatternProcessPass("multi_conv_split", multigraph), strategys_(strategys), fmk_type_(fmk_type), num_(num) {}
   ~MultiConvSplitPass() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  SplitStrategy strategy_{};
+  std::string IsMultiParallelConvNode(const AnfNodePtr &node) const;
+
+ private:
+  std::unordered_map<std::string, SplitStrategy> strategys_;
   PrimitiveType primitive_type_{schema::PrimitiveType_NONE};
   int32_t fmk_type_{-1};
   int32_t num_{0};

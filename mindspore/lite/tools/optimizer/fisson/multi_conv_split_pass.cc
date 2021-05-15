@@ -19,13 +19,27 @@
 #include "mindspore/ccsrc/utils/utils.h"
 #include "mindspore/lite/tools/optimizer/fisson/multi_conv_split_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/core/base/base.h"
-#include "mindspore/core/ops/fusion/conv2d_fusion.h"
+#include "base/base.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "tools/optimizer/parallel/split_strategy.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {
+
+std::string MultiConvSplitPass::IsMultiParallelConvNode(const AnfNodePtr &node) const {
+  std::string parallel_name;
+  for (const auto &parallel_prim : kParallelSet) {
+    if (CheckPrimitiveType(node, parallel_prim)) {
+      if (kParallelOpNames.find(parallel_prim) != kParallelOpNames.end()) {
+        return kParallelOpNames.at(parallel_prim);
+      }
+    }
+  }
+  return parallel_name;
+}
+
 const BaseRef MultiConvSplitPass::DefinePattern() const {
   auto conv1_var = std::make_shared<CondVar>(IsConvNode);
   auto conv1_other_var = std::make_shared<SeqVar>();
@@ -50,8 +64,12 @@ const AnfNodePtr MultiConvSplitPass::Process(const FuncGraphPtr &func_graph, con
   if (device_type != kDeviceTypeNone) {
     return node;
   }
+  auto parallel_name = IsMultiParallelConvNode(node);
+  if (parallel_name.empty()) {
+    return node;
+  }
   std::shared_ptr<MultiNodeSplitProxy> multi_node_split_proxy =
-    std::make_shared<MultiNodeSplitProxy>(strategy_, primitive_type_, fmk_type_, num_);
+    std::make_shared<MultiNodeSplitProxy>(strategys_.at(parallel_name), primitive_type_, fmk_type_, num_);
   return multi_node_split_proxy->DoSplit(func_graph, node);
 }
 

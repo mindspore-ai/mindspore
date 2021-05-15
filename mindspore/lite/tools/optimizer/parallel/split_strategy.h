@@ -16,19 +16,19 @@
 
 #include <vector>
 #include <string>
+#include <set>
+#include <utility>
 #include <unordered_map>
+#include "schema/ops_generated.h"
+#include "base/core_ops.h"
 #ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 #define MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 
 namespace mindspore {
 namespace opt {
-constexpr auto OP = "op";
-constexpr auto STRATEGY = "strategy";
-constexpr auto DEV_TYPE = "dev_type";
-
 constexpr auto PARALLEL_NAME_SUFFIX = "_parallel";
 
-constexpr auto kSplitOp = "Conv2D";
+constexpr auto kParallelPrimitiveIndex = 0;
 
 const std::vector<int64_t> kSplitRatio = {1, 1};
 
@@ -62,13 +62,27 @@ enum SplitMode {
   SplitCOUT = 4,
 };
 
+constexpr auto kParallelMode = SplitH;
+
 struct SplitStrategy {
   Strategys strategys;
   std::vector<std::string> dev_types;
   size_t dev_num;
+  SplitMode split_mode_;
 };
 
-std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(SplitMode parallel_mode);
+// this is a set to add mindspore supported ops
+const std::set<PrimitivePtr> kParallelSet = {prim::kPrimConv2DFusion, prim::kPrimConv2D};
+
+// this is a map for key: primitive  value: parallel_op_name
+const std::unordered_map<PrimitivePtr, std::string> kParallelOpNames = {{prim::kPrimConv2D, "Conv2D"},
+                                                                        {prim::kPrimConv2DFusion, "Conv2D"}};
+
+// this is a map for key: primitive  value: schema_primitive_id
+const std::unordered_map<PrimitivePtr, std::pair<schema::PrimitiveType, TypeId>> kParallelSchemaId = {
+  {prim::kPrimConv2D, {schema::PrimitiveType_Conv2DFusion, kNumberTypeFloat32}}};
+
+std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy();
 
 }  // namespace opt
 }  // namespace mindspore

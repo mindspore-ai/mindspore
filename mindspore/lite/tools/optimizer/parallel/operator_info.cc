@@ -36,12 +36,17 @@ bool is_any_not_none(const std::vector<int64_t> &split) {
   return std::any_of(split.begin(), split.end(), [](int64_t v) { return v != static_cast<int64_t>(NoSplit); });
 }
 
+std::shared_ptr<abstract::AbstractTensor> OperatorInfo::CreateFakeAbstractTensor() {
+  auto type_ptr = TypeIdToType(operator_type_id_);
+  std::vector<int64_t> shape_vector;
+  return std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+}
+
 int OperatorInfo::SetCNodeBackend() {
   for (size_t i = 0; i < strategy_.dev_num; ++i) {
     lite::DeviceType dt_type;
     std::string type = strategy_.dev_types[i];
     auto cnode = parallel_output_nodes_[i]->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (type == "GPU") {
       dt_type = lite::DeviceType::DT_GPU;
     } else if (type == "CPU") {
@@ -90,7 +95,6 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
 
   for (size_t i = 0; i < output_num; ++i) {
     auto idx = NewValueNode(SizeToInt(i));
-    MS_ASSERT(idx);
     auto index = std::make_shared<Int32Imm>(SizeToInt(i));
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(index);
     idx->set_abstract(abstract_scalar);
@@ -101,36 +105,11 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     }
     tuple_getitem->set_fullname_with_scope(cnode->fullname_with_scope() + "_TupleGetItem" + std::to_string(i));
     outputs->push_back(tuple_getitem);
-    auto type_id = static_cast<TypeId>(operator_type_id_);
-    auto type_ptr = TypeIdToType(type_id);
-    std::vector<int64_t> shape_vector;
-    ptr_list.push_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
+    auto abstract_tensor = CreateFakeAbstractTensor();
+    ptr_list.push_back(abstract_tensor);
   }
   node->set_abstract(std::make_shared<abstract::AbstractTuple>(ptr_list));
   return lite::RET_OK;
-}
-
-AnfNodePtr OperatorInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
-                                              std::vector<AnfNodePtr> *split_outputs, size_t split_dim,
-                                              size_t split_num, const std::vector<int64_t> &splits, bool trans_format) {
-  MS_EXCEPTION_IF_NULL(orig_node);
-
-  auto split_prim = std::make_shared<ops::Split>();
-  split_prim->set_output_num(split_num);
-  split_prim->set_size_splits(splits);
-  split_prim->set_axis(split_dim);
-  auto value_node = NewValueNode(split_prim);
-  std::vector<AnfNodePtr> split_inputs = {value_node};
-  split_inputs.push_back(orig_node->input(input_index + 1));
-  auto split_cnode = func_graph_->NewCNode(split_inputs);
-  if (split_cnode == nullptr) {
-    MS_LOG(ERROR) << name_ << " : Failed to create split node.";
-    return nullptr;
-  }
-  split_cnode->set_fullname_with_scope("Split_" + name_);
-  CreateMultipleOutputsOfAnfNode(split_cnode, split_num, split_outputs);
-
-  return split_cnode;
 }
 
 AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
@@ -185,10 +164,6 @@ AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::
 }
 
 int OperatorInfo::Init() {
-  if (GetAttrs() != lite::RET_OK) {
-    MS_LOG(ERROR) << name_ << ": Parse attrs failed.";
-    return lite::RET_ERROR;
-  }
   if (CheckStrategyValue() != lite::RET_OK) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy values.";
     return lite::RET_ERROR;
