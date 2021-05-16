@@ -136,6 +136,63 @@ class ReceiveEliminater : public AnfVisitor {
   void Visit(const AnfNodePtr &) override {}
 };
 
+class VirtualAssignAddEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAssignAdd) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+
+    return inputs[1];
+  }
+
+ private:
+  AnfNodePtr x_{nullptr};
+};
+
+class VirtualAccuGradEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAccuGrad) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+
+    return inputs[1];
+  }
+
+ private:
+  AnfNodePtr x_{nullptr};
+};
+
+// {prim::kPrimMirrorMicroStep, X, Z} -> X
+class MirrorMicroStepEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimMirrorMicroStep) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+
+    return inputs[1];
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
 // {prim::kPrimSameTypeShape, X, Y} -> X
 class SameEliminater : public AnfVisitor {
  public:

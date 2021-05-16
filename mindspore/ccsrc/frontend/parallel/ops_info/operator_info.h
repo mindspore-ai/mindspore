@@ -294,6 +294,7 @@ Operator CreateAllGatherOp(const std::string &group);
 Operator CreateMiniStepAllGatherOp(const std::string &group);
 void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 void AddCommOpMeanFlag(const CNodePtr &comm_node);
+void AddCommOpParamFlag(const CNodePtr &comm_node);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);

@@ -342,11 +342,12 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
   MS_EXCEPTION_IF_NULL(comm_node);
   MS_EXCEPTION_IF_NULL(param_node);
+  ParameterPtr param;
   if (IsPrimitiveCNode(param_node, prim::kPrimReceive)) {
-    MS_LOG(WARNING) << "The mirror of Receive does not support fusion type now.";
-    return;
+    param = param_node->user_data<AnfNode>(PIPELINE_PARAM)->cast<ParameterPtr>();
+  } else {
+    param = param_node->cast<ParameterPtr>();
   }
-  auto param = param_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(param);
   auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
@@ -370,6 +371,22 @@ void AddCommOpMeanFlag(const CNodePtr &comm_node) {
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
   attrs[MEAN_FLAG] = MakeValue<bool>(mean_flag);
   prim->SetAttrs(attrs);
+}
+
+void AddCommOpParamFlag(const CNodePtr &comm_node) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  auto graph = comm_node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto node_users = manager->node_users()[comm_node->input(1)];
+  for (auto &node_user : node_users) {
+    if (IsPrimitiveCNode(node_user.first, prim::kPrimSend)) {
+      auto prim = GetCNodePrimitive(comm_node);
+      prim->AddAttr(PARAMETER_MICRO, MakeValue(0));
+      return;
+    }
+  }
 }
 
 Operator CreateAllGatherOp(const std::string &group) {
@@ -438,6 +455,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
   OperatorVector op_for_weight;
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
 
   ValuePtr attr0_value = MakeValue(group_name);
   ValuePtr attr1_value = MakeValue(SizeToLong(dev_num));
@@ -459,6 +477,8 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
     Attr attr3 = std::make_pair(GRAD_ACCUMULATION_STEP, attr3_value);
     operator_attrs.push_back(attr3);
     MS_LOG(INFO) << "The grad accumulation step is " << grad_accumulation_step << ", use mini step mirror";
+  } else if (split_stage_num > 1) {
+    operator_name = MIRROR_MICRO_STEP_OPERATOR;
   } else {
     operator_name = MIRROR_OPERATOR;
   }

@@ -407,7 +407,9 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.env_get_item_depend_swap_,
                                                irpass.incorporate_env_getitem_switch_layer_,
                                                irpass.value_based_eliminate_,
-                                               irpass.receive_eliminate_},
+                                               irpass.virtual_accu_grad_,
+                                               irpass.virtual_assign_add_,
+                                               irpass.mirror_micro_step_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,

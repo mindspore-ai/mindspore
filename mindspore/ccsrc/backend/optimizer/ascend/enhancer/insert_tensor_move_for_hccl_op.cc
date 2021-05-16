@@ -63,6 +63,10 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(cur_node);
+  if (IsPrimitiveCNode(cur_node, prim::kPrimReceive)) {
+    return false;
+  }
+
   // when input is a parameter or is a value node
   if (IsParameterOrValueNode(input)) {
     return true;

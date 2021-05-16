@@ -690,6 +690,72 @@ class _VirtualDataset(PrimitiveWithInfer):
 
 virtual_dataset = _VirtualDataset()
 
+
+class _VirtualAssignAdd(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward, do AssignAdd in backward. It is only for
+    internal use of parallel modules and cannot be called by users.
+
+    Args:
+        micro (int): MicroBatch. Default: 0.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def infer_shape(self, x_shape, y_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        return x_dtype
+
+
+virtual_assign_add = _VirtualAssignAdd()
+
+
+class _VirtualAccuGrad(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward, return y in backward. It is only for
+    internal use of parallel modules and cannot be called by users.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def infer_shape(self, x_shape, y_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        return x_dtype
+
+
+virtual_accu_grad = _VirtualAccuGrad()
+
+
+class _MirrorMicroStepOperator(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward, do all reduce and mean in backward. It is only for
+    internal use of parallel modules and cannot be called by users.
+
+    Args:
+        group (str): The communication group to work on. Default: None.
+        dev_num (int): The device number of the group. Default: None.
+        mean_flag (bool): Whether use mean in backward. Default: None.
+    """
+
+    @prim_attr_register
+    def __init__(self, group=None, dev_num=None, mean_flag=None):
+        self.group = group
+        self.dev_num = dev_num
+        self.mean_flag = mean_flag
+
+    def infer_shape(self, x_shape, z_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, z_shape):
+        return x_dtype
+
+
 class _VirtualOutput(PrimitiveWithInfer):
     """
     Auto parallel virtual out operator.

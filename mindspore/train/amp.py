@@ -20,9 +20,9 @@ from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from ..common import dtype as mstype
 from ..nn import acc
-from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
+from ..nn.wrap.cell_wrapper import _VirtualDatasetCell, _TrainPipelineAccuStepCell
 from ..ops import functional as F
-from ..parallel._utils import _get_parallel_mode
+from ..parallel._utils import _get_parallel_mode, _get_pipeline_stages
 from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from ..context import ParallelMode
 from .. import context
@@ -190,5 +190,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                        scale_sense=update_cell).set_train()
             return network
-    network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
+    if _get_pipeline_stages() > 1:
+        network = _TrainPipelineAccuStepCell(network, optimizer).set_train()
+    else:
+        network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network
