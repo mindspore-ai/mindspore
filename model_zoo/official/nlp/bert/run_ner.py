@@ -214,6 +214,8 @@ def run_ner():
         if bert_net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             bert_net_cfg.compute_type = mstype.float32
+        if optimizer_cfg.optimizer == 'AdamWeightDecay' and args_opt.use_crf.lower() == "false":
+            context.set_context(enable_graph_kernel=True)
     else:
         raise Exception("Target error, GPU or Ascend is supported.")
     label_list = []
