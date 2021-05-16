@@ -341,6 +341,7 @@ if __name__ == "__main__":
     test_case_7()
     test_case_8()
     test_case_9()
+    test_case_10()
     test_pyfunc_implicit_compose()
     test_pyfunc_exception()
     skip_test_pyfunc_exception_multiprocess()

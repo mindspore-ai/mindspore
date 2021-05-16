@@ -66,7 +66,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
             if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem and
                     start_bytes + r.nbytes < self.seg_size):
                 ##need to convert start_bytes to offset in array
-                start_offset = start_bytes // r.dtype.itemsize
+                start_offset = start_bytes
                 dest = np.ndarray(r.shape, r.dtype, buffer=self.shm_list[self.seg_pos].get_obj(), offset=start_offset)
                 np.copyto(dest, r)
                 byte = r.nbytes
@@ -101,7 +101,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 byte = x[2]
                 dtype = x[3]
                 shape = x[4]
-                start_offset = start_bytes // dtype.itemsize
+                start_offset = start_bytes
                 b = self.shm_list[seg_pos]
                 data = np.ndarray(shape, dtype, buffer=b.get_obj(), offset=start_offset)
                 start_bytes += byte

@@ -381,7 +381,7 @@ def get_enable_shared_mem():
 
 
     Returns:
-        bool, the state of shared mem enabled variable (default: True).
+        bool, the state of shared mem enabled variable (default=True).
     """
     return _config.get_enable_shared_mem()
 

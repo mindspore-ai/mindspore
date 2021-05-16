@@ -36,6 +36,15 @@ class DatasetGenerator:
 
     def __len__(self):
         return 10
+class DatasetGeneratorLarge:
+    def __init__(self):
+        self.data = np.array(range(4000))
+
+    def __getitem__(self, item):
+        return (self.data + item, self.data *10)
+
+    def __len__(self):
+        return 10
 
 
 def test_generator_0():
@@ -503,6 +512,26 @@ def test_generator_18():
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
 
+def test_generator_19():
+    """
+    Test multiprocessing flag with 2 different large columns
+    """
+    logger.info("Test map column order when input_columns is None.")
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(DatasetGeneratorLarge(), ["col0", "col1"], python_multiprocessing=True, shuffle=False)
+
+    # Expected column order is |out0|col1|
+    i = 0
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert len(item) == 2
+        golden = np.array(range(4000)) + i
+        np.testing.assert_array_equal(item[0], golden)
+        golden = np.array(range(4000)) * 10
+        np.testing.assert_array_equal(item[1], golden)
+        i = i + 1
+
+
 def test_generator_error_1():
     def generator_np():
         for i in range(64):
@@ -804,6 +833,7 @@ if __name__ == "__main__":
     test_generator_16()
     test_generator_17()
     test_generator_18()
+    test_generator_19()
     test_generator_error_1()
     test_generator_error_2()
     test_generator_error_3()
