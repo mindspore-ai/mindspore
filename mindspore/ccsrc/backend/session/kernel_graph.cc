@@ -1109,12 +1109,20 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   }
 }
 
-AnfNodePtr KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
-  const auto &iter = internal_parameters_to_front_map_.find(parameter);
-  if (iter != internal_parameters_to_front_map_.end()) {
+void KernelGraph::CacheInternalParameterToFrontNode(const AnfNodePtr &parameter,
+                                                    const AnfWithOutIndex &front_node_with_index) {
+  if (parameter == nullptr) {
+    return;
+  }
+  internal_parameter_to_front_node_map_[parameter] = front_node_with_index;
+}
+
+AnfWithOutIndex KernelGraph::GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const {
+  const auto &iter = internal_parameter_to_front_node_map_.find(parameter);
+  if (iter != internal_parameter_to_front_node_map_.end()) {
     return iter->second;
   }
-  return nullptr;
+  return AnfWithOutIndex();
 }
 
 AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {

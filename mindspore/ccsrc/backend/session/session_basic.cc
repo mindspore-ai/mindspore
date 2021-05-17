@@ -771,6 +771,8 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       }
       cnode_inputs->push_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
+      KernelWithIndex front_node_with_index(anf, 0);
+      graph->CacheInternalParameterToFrontNode(parameter_from_cnode, front_node_with_index);
     }
   }
 }

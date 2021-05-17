@@ -48,6 +48,10 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node);
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph);
 bool IsKernelActor(const AnfNodePtr &node);
 
+// Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
+// related to the input of this kernel graph.
+bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
+
 // Judge whether the device tensor of the node is persistent or not.
 bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 }  // namespace runtime
