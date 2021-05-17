@@ -19,6 +19,8 @@
 
 #include <map>
 #include <vector>
+#include <set>
+#include <string>
 #include "src/common/prim_util.h"
 #include "src/common/common.h"
 #include "nnacl/tensor_c.h"
@@ -28,7 +30,7 @@ namespace mindspore::lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter);
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     const void *primitive);
+                     const void *primitive, std::set<std::string> &&providers);
 class InferManager {
  public:
   static InferManager *GetInstance() {

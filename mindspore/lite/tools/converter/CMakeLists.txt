@@ -124,9 +124,9 @@ set(LITE_SRC
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
-        ${SRC_DIR}/kernel_interface_registry.cc
+        ${SRC_DIR}/registry/kernel_interface_registry.cc
         ${SRC_DIR}/kernel_registry.cc
-        ${SRC_DIR}/register_kernel.cc
+        ${SRC_DIR}/registry/register_kernel.cc
         ${SRC_DIR}/inner_kernel.cc
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/lite_kernel_util.cc

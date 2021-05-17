@@ -55,17 +55,6 @@ KernelRegistry *KernelRegistry::GetInstance() {
   return &instance;
 }
 
-std::set<std::string> KernelRegistry::AllProviders() {
-  std::set<std::string> providers;
-  for (auto &&item : kernel_creators_) {
-    providers.insert(item.first);
-  }
-  for (auto &&item : custom_kernel_creators_) {
-    providers.insert(item.first);
-  }
-  return providers;
-}
-
 int KernelRegistry::GetFuncIndex(const kernel::KernelKey &desc) {
   if (desc.data_type >= kNumberTypeEnd) {
     return -1;
@@ -166,12 +155,20 @@ kernel::CreateKernel KernelRegistry::GetProviderCreator(const kernel::KernelKey 
     MS_ASSERT(param != nullptr);
     auto custom_type = param->type()->str();
     auto archs = custom_kernel_creators_[desc.provider];
-    auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
-      return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
-    });
-    if (archs_iter != archs.end()) {
-      return archs_iter->second[custom_type][data_type_index];
+    if (desc.kernel_arch.empty()) {
+      auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
+        return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
+      });
+      if (archs_iter != archs.end()) {
+        return archs_iter->second[custom_type][data_type_index];
+      }
+    } else {
+      auto find_arch_it = archs.find(desc.kernel_arch);
+      if (find_arch_it != archs.end()) {
+        return find_arch_it->second[custom_type][data_type_index];
+      }
     }
+
     return nullptr;
   }
   auto index = GetFuncIndex(desc);

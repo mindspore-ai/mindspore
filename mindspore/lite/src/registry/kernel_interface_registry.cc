@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/kernel_interface_registry.h"
-#include "src/kernel_interface.h"
+#include "src/registry/kernel_interface_registry.h"
+#include "src/registry/kernel_interface.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
@@ -34,7 +34,7 @@ std::string GetCustomType(const schema::Primitive *primitive) {
 }
 }  // namespace
 
-bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node) {
+bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers) {
   if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
     return false;
   }
@@ -46,7 +46,10 @@ bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node) {
   auto op_type = primitive->value_type();
   if (op_type == schema::PrimitiveType_Custom) {
     auto &&custom_type = GetCustomType(primitive);
-    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type](auto &&item) {
+    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type, &providers](auto &&item) {
+      if (providers.find(item.first) == providers.end()) {
+        return false;
+      }
       if (item.second[custom_type] != nullptr) {
         return true;
       }
@@ -154,17 +157,6 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
 
   kernel_creators_[provider][op_type] = creator;
   return RET_OK;
-}
-
-std::set<std::string> KernelInterfaceRegistry::AllProviders() {
-  std::set<std::string> providers;
-  for (auto &&item : kernel_creators_) {
-    providers.insert(item.first);
-  }
-  for (auto &&item : custom_creators_) {
-    providers.insert(item.first);
-  }
-  return providers;
 }
 
 KernelInterfaceRegistry::~KernelInterfaceRegistry() {

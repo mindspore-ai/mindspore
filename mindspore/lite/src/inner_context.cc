@@ -185,6 +185,12 @@ bool InnerContext::IsNpuEnabled() const {
 #endif
 }
 
+bool InnerContext::IsProviderEnabled() const {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(),
+                      [](const DeviceContext &device) { return !device.provider_.empty(); });
+}
+
 bool InnerContext::IsUserSetCpu() const {
   return this->device_list_.end() !=
          std::find_if(this->device_list_.begin(), this->device_list_.end(),
@@ -201,6 +207,16 @@ bool InnerContext::IsUserSetNpu() const {
   return this->device_list_.end() !=
          std::find_if(this->device_list_.begin(), this->device_list_.end(),
                       [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
+}
+
+std::set<std::string> InnerContext::GetProviders() const {
+  std::set<std::string> providers;
+  for (auto &&device : device_list_) {
+    if (!device.provider_.empty()) {
+      providers.insert(device.provider_);
+    }
+  }
+  return providers;
 }
 
 CpuDeviceInfo InnerContext::GetCpuInfo() const {
