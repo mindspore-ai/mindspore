@@ -298,9 +298,9 @@ class BatchNorm1d(_BatchNorm):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm1d(num_features=4)
-        >>> input = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
-        ...                          [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
-        >>> output = net(input)
+        >>> input_tensor = Tensor(np.array([[0.7, 0.5, 0.5, 0.6],
+        ...                                 [0.5, 0.4, 0.6, 0.9]]).astype(np.float32))
+        >>> output = net(input_tensor)
         >>> print(output)
         [[ 0.6999965   0.4999975  0.4999975  0.59999704 ]
          [ 0.4999975   0.399998   0.59999704 0.89999545 ]]
@@ -402,8 +402,8 @@ class BatchNorm2d(_BatchNorm):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm2d(num_features=3)
-        >>> input = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
-        >>> output = net(input)
+        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
+        >>> output = net(input_tensor)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -506,8 +506,8 @@ class BatchNorm3d(Cell):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.BatchNorm3d(num_features=3)
-        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
-        >>> output = net(input)
+        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]).astype(np.float32))
+        >>> output = net(input_tensor)
         >>> print(output.shape)
         (16, 3, 10, 32, 32)
     """
@@ -618,8 +618,8 @@ class GlobalBatchNorm(_BatchNorm):
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=2)
-        >>> input = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
-        >>> output = global_bn_op(input)
+        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
+        >>> output = global_bn_op(input_tensor)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -737,8 +737,8 @@ class SyncBatchNorm(_BatchNorm):
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
-        >>> input = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
-        >>> output = sync_bn_op(input)
+        >>> input_tensor = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
+        >>> output = sync_bn_op(input_tensor)
         >>> print(output)
         [[[[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]
@@ -938,8 +938,8 @@ class InstanceNorm2d(Cell):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> net = nn.InstanceNorm2d(3)
-        >>> input = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
-        >>> output = net(input)
+        >>> input_tensor = Tensor(np.ones([2, 3, 2, 2]), mindspore.float32)
+        >>> output = net(input_tensor)
         >>> print(output.shape)
         (2, 3, 2, 2)
     """
