@@ -30,6 +30,7 @@
 #include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite {
+namespace {
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
     return true;
@@ -37,15 +38,15 @@ bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
 }
 
-void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int i, std::vector<int32_t> *shape) {
+void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int blob_index, std::vector<int32_t> *shape) {
   if (layer.type() == "InnerProduct") {
-    if (i == 0) {
-      if (shape->size() == 4) {
+    if (blob_index == 0) {
+      if (shape->size() == 4 && shape->at(0) == 1 && shape->at(1) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
       }
-    } else if (i == 1) {
-      if (shape->size() == 4) {
+    } else if (blob_index == 1) {
+      if (shape->size() == 4 && shape->at(0) == 1 && shape->at(1) == 1 && shape->at(2) == 1) {
         shape->erase(shape->begin());
         shape->erase(shape->begin());
         shape->erase(shape->begin());
@@ -53,6 +54,7 @@ void FcSqueezeWeightBias(const caffe::LayerParameter &layer, int i, std::vector<
     }
   }
 }
+}  // namespace
 
 CaffeModelParser::CaffeModelParser() = default;
 
