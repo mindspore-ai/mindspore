@@ -1121,28 +1121,29 @@ TextFileDataset::TextFileDataset(const std::vector<std::vector<char>> &dataset_f
 
 VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                        const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                       bool decode, const std::shared_ptr<Sampler> &sampler,
-                       const std::shared_ptr<DatasetCache> &cache) {
+                       bool decode, const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache,
+                       bool extra_metadata) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<VOCNode>(CharToString(dataset_dir), CharToString(task), CharToString(usage),
-                                      MapCharToString(class_indexing), decode, sampler_obj, cache);
+                                      MapCharToString(class_indexing), decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                        const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                       bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+                       bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache,
+                       bool extra_metadata) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<VOCNode>(CharToString(dataset_dir), CharToString(task), CharToString(usage),
-                                      MapCharToString(class_indexing), decode, sampler_obj, cache);
+                                      MapCharToString(class_indexing), decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 VOCDataset::VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
                        const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
                        bool decode, const std::reference_wrapper<Sampler> sampler,
-                       const std::shared_ptr<DatasetCache> &cache) {
+                       const std::shared_ptr<DatasetCache> &cache, bool extra_metadata) {
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<VOCNode>(CharToString(dataset_dir), CharToString(task), CharToString(usage),
-                                      MapCharToString(class_indexing), decode, sampler_obj, cache);
+                                      MapCharToString(class_indexing), decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }  // namespace dataset
 

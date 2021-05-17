@@ -58,7 +58,27 @@ Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
   // Return empty vector if there's no data
   RETURN_OK_IF_TRUE(res.empty());
 
-  std::copy(res.begin(), res.end(), std::back_inserter(*out));
+  // Filter meta column
+  std::vector<size_t> to_keep_indices;
+  for (const auto &colMap : tree_adapter_->GetColumnNameMap()) {
+    std::string column_name = colMap.first;
+    // Need to filter meta column start with kDftMetaColumnPrefix
+    size_t pos = column_name.find(kDftMetaColumnPrefix);
+    if (pos != std::string::npos && pos == 0) {
+      continue;
+    }
+    to_keep_indices.push_back(colMap.second);
+  }
+  if (to_keep_indices.size() == 0) {
+    std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
+    err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
+    err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::sort(to_keep_indices.begin(), to_keep_indices.end());
+  (void)std::transform(to_keep_indices.begin(), to_keep_indices.end(), std::back_inserter(*out),
+                       [&res](const auto &it) { return std::move(res[it]); });
+
   return Status::OK();
 }
 
@@ -74,7 +94,19 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
 
   // Populate the out map from the row and return it
   for (const auto &colMap : tree_adapter_->GetColumnNameMap()) {
+    std::string column_name = colMap.first;
+    // Need to filter meta column start with kDftMetaColumnPrefix
+    size_t pos = column_name.find(kDftMetaColumnPrefix);
+    if (pos != std::string::npos && pos == 0) {
+      continue;
+    }
     (*out_map)[colMap.first] = std::move(res[colMap.second]);
+  }
+  if (out_map->size() == 0) {
+    std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
+    err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
+    err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
 }
@@ -90,23 +122,28 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
   size_t num_cols = curr_row.size();  // num_cols is non-empty.
   // order the column names according to their ids
   if (column_order_.empty()) {
-    const int32_t invalid_col_id = -1;
-    column_order_.resize(num_cols, {std::string(), invalid_col_id});
     for (const auto &itr : tree_adapter_->GetColumnNameMap()) {
       int32_t ind = itr.second;
       CHECK_FAIL_RETURN_UNEXPECTED(ind < num_cols && ind >= 0, "column id out of bounds.");
-      column_order_[ind] = std::make_pair(itr.first, ind);
-    }
-    // error check, make sure the ids in col_name_id_map are continuous and starts from 0
-    for (const auto &col : column_order_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(col.second != invalid_col_id, "column ids are not continuous.");
+      // Need to filter meta column start with kDftMetaColumnPrefix
+      size_t pos = itr.first.find(kDftMetaColumnPrefix);
+      if (pos != std::string::npos && pos == 0) {
+        continue;
+      }
+      column_order_[ind] = itr.first;
     }
   }
 
-  vec->reserve(num_cols);
+  if (column_order_.size() == 0) {
+    std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
+    err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
+    err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  vec->reserve(column_order_.size());
 
   std::transform(column_order_.begin(), column_order_.end(), std::back_inserter(*vec),
-                 [curr_row](const auto &col) { return std::make_pair(col.first, curr_row[col.second]); });
+                 [curr_row](const auto &col) { return std::make_pair(col.second, curr_row[col.first]); });
 
   return Status::OK();
 }

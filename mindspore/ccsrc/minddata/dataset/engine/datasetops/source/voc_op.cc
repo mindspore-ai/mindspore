@@ -78,7 +78,7 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_usage_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_op_connector_size_, builder_decode_,
-                                 std::move(builder_schema_), std::move(builder_sampler_));
+                                 std::move(builder_schema_), std::move(builder_sampler_), false);
   return Status::OK();
 }
 
@@ -96,14 +96,15 @@ Status VOCOp::Builder::SanityCheck() {
 
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
-             std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
+             std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       task_type_(task_type),
       usage_(task_mode),
       folder_path_(folder_path),
       class_index_(class_index),
-      data_schema_(std::move(data_schema)) {
+      data_schema_(std::move(data_schema)),
+      extra_metadata_(extra_metadata) {
   io_block_queues_.Init(num_workers_, queue_size);
 }
 
@@ -124,30 +125,37 @@ void VOCOp::Print(std::ostream &out, bool show_all) const {
 
 Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   std::string image_id = image_ids_[row_id];
+  std::vector<std::string> path_list;
+  const std::string kImageFile =
+    folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
   if (task_type_ == TaskType::Segmentation) {
     std::shared_ptr<Tensor> image, target;
-    const std::string kImageFile =
-      folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
     const std::string kTargetFile =
       folder_path_ + std::string(kSegmentationClassFolder) + image_id + std::string(kSegmentationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
     (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
-    trow->setPath({kImageFile, kTargetFile});
+    path_list = {kImageFile, kTargetFile};
   } else if (task_type_ == TaskType::Detection) {
     std::shared_ptr<Tensor> image;
     TensorRow annotation;
-    const std::string kImageFile =
-      folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
     const std::string kAnnotationFile =
       folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, &annotation));
     trow->setId(row_id);
-    trow->setPath({kImageFile, kAnnotationFile, kAnnotationFile, kAnnotationFile, kAnnotationFile});
     trow->push_back(std::move(image));
     trow->insert(trow->end(), annotation.begin(), annotation.end());
+    path_list = {kImageFile, kAnnotationFile, kAnnotationFile, kAnnotationFile, kAnnotationFile};
   }
+  if (extra_metadata_) {
+    // Now VOCDataset add a new column named "_meta-filename".
+    std::shared_ptr<Tensor> filename;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(image_id, &filename));
+    trow->push_back(std::move(filename));
+    path_list.push_back(kImageFile);
+  }
+  trow->setPath(path_list);
   return Status::OK();
 }
 
@@ -269,7 +277,9 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     }
     object = object->NextSiblingElement("object");
   }
-  if (annotation.size() > 0) annotation_map_[path] = annotation;
+  if (annotation.size() > 0) {
+    annotation_map_[path] = annotation;
+  }
   return Status::OK();
 }
 

@@ -310,7 +310,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {4, 4, 4}));
 
   // Create a Map operation on ds
-  ds = ds->Map({random_crop, random_crop1, random_crop2, random_crop3, random_crop4, random_crop5, random_crop6});
+  ds = ds->Map({random_crop, random_crop1, random_crop2, random_crop3, random_crop4, random_crop5, random_crop6},
+               {"image"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

@@ -151,6 +151,8 @@ def test_get_column_name_to_device():
 def test_get_column_name_voc():
     data = ds.VOCDataset(VOC_DIR, task="Segmentation", usage="train", decode=True, shuffle=False)
     assert data.get_col_names() == ["image", "target"]
+    data = ds.VOCDataset(VOC_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
+    assert data.get_col_names() == ["image", "target", "_meta-filename"]
 
 
 def test_get_column_name_project():

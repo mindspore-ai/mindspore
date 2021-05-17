@@ -58,7 +58,19 @@ Status DatasetIterator::GetNextAsMap(TensorMap *out_map) {
 
   // Populate the out map from the row and return it
   for (const auto colMap : col_name_id_map_) {
+    std::string column_name = colMap.first;
+    // Need to filter meta column start with kDftMetaColumnPrefix
+    size_t pos = column_name.find(kDftMetaColumnPrefix);
+    if (pos != std::string::npos && pos == 0) {
+      continue;
+    }
     (*out_map)[colMap.first] = std::move(curr_row[colMap.second]);
+  }
+  if (out_map->size() == 0) {
+    std::string err_msg = "No effective column found, maybe all columns are meta column and will be filtered. ";
+    err_msg += "If you want to output meta column please rename column name to a new one which is not start with ";
+    err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   return Status::OK();

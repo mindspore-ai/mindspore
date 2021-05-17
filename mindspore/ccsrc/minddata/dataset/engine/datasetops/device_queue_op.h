@@ -184,6 +184,10 @@ class DeviceQueueOp : public PipelineOp {
   std::string Name() const override { return kDeviceQueueOp; }
 
  private:
+  // Name: FilterMetadata(TensorRow *);
+  // Description: Auto filter metadata column before sending to device.
+  Status FilterMetadata(TensorRow *row);
+
   //  Name: checkExceptions(TensorRow);
   //  Description: Check whether the TensorRow meets the condition for performing DeviceQueueOp
   Status CheckExceptions(const TensorRow &row) const;
