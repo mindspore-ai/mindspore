@@ -15,14 +15,13 @@
 """train FCN8s."""
 
 import os
-import argparse
 from mindspore import context, Tensor
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 import mindspore.nn as nn
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.train.callback import LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
@@ -30,56 +29,56 @@ from src.data import dataset as data_generator
 from src.loss import loss
 from src.utils.lr_scheduler import CosineAnnealingLR
 from src.nets.FCN8s import FCN8s
-from src.config import FCN8s_VOC2012_cfg
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
 
 set_seed(1)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser('mindspore FCN training')
-    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend. (Default: None)')
-    args, _ = parser.parse_known_args()
-    return args
+def modelarts_pre_process():
+    config.checkpoint_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
 
 
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
-    args = parse_args()
-    cfg = FCN8s_VOC2012_cfg
-    device_num = int(os.environ.get("DEVICE_NUM", 1))
+    device_num = get_device_num()
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
-                        device_target="Ascend", device_id=args.device_id)
+                        device_target='Ascend', device_id=get_device_id())
     # init multicards training
-    args.rank = 0
-    args.group_size = 1
+    config.rank = 0
+    config.group_size = 1
     if device_num > 1:
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=device_num)
         init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
+        config.rank = get_rank_id()
+        config.group_size = get_device_num()
 
     # dataset
-    dataset = data_generator.SegDataset(image_mean=cfg.image_mean,
-                                        image_std=cfg.image_std,
-                                        data_file=cfg.data_file,
-                                        batch_size=cfg.batch_size,
-                                        crop_size=cfg.crop_size,
-                                        max_scale=cfg.max_scale,
-                                        min_scale=cfg.min_scale,
-                                        ignore_label=cfg.ignore_label,
-                                        num_classes=cfg.num_classes,
+    dataset = data_generator.SegDataset(image_mean=config.image_mean,
+                                        image_std=config.image_std,
+                                        data_file=os.path.join(config.data_path, config.data_file),
+                                        batch_size=config.train_batch_size,
+                                        crop_size=config.crop_size,
+                                        max_scale=config.max_scale,
+                                        min_scale=config.min_scale,
+                                        ignore_label=config.ignore_label,
+                                        num_classes=config.num_classes,
                                         num_readers=2,
                                         num_parallel_calls=4,
-                                        shard_id=args.rank,
-                                        shard_num=args.group_size)
+                                        shard_id=config.rank,
+                                        shard_num=config.group_size)
     dataset = dataset.get_dataset(repeat=1)
 
-    net = FCN8s(n_class=cfg.num_classes)
-    loss_ = loss.SoftmaxCrossEntropyLoss(cfg.num_classes, cfg.ignore_label)
+    net = FCN8s(n_class=config.num_classes)
+    loss_ = loss.SoftmaxCrossEntropyLoss(config.num_classes, config.ignore_label)
 
     # load pretrained vgg16 parameters to init FCN8s
-    if cfg.ckpt_vgg16:
-        param_vgg = load_checkpoint(cfg.ckpt_vgg16)
+    if config.ckpt_vgg16:
+        config.ckpt_vgg16 = os.path.join(config.data_path, config.ckpt_vgg16)
+        param_vgg = load_checkpoint(config.ckpt_vgg16)
         param_dict = {}
         for layer_id in range(1, 6):
             sub_layer_num = 2 if layer_id < 3 else 3
@@ -97,27 +96,28 @@ def train():
                 param_dict[y_beta] = param_vgg[x_beta]
         load_param_into_net(net, param_dict)
     # load pretrained FCN8s
-    elif cfg.ckpt_pre_trained:
-        param_dict = load_checkpoint(cfg.ckpt_pre_trained)
+    elif config.ckpt_pre_trained:
+        config.ckpt_pre_trained = os.path.join(config.data_path, config.ckpt_pre_trained)
+        param_dict = load_checkpoint(config.ckpt_pre_trained)
         load_param_into_net(net, param_dict)
 
     # optimizer
     iters_per_epoch = dataset.get_dataset_size()
 
-    lr_scheduler = CosineAnnealingLR(cfg.base_lr,
-                                     cfg.train_epochs,
+    lr_scheduler = CosineAnnealingLR(config.base_lr,
+                                     config.train_epochs,
                                      iters_per_epoch,
-                                     cfg.train_epochs,
+                                     config.train_epochs,
                                      warmup_epochs=0,
                                      eta_min=0)
     lr = Tensor(lr_scheduler.get_lr())
 
     # loss scale
-    manager_loss_scale = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
+    manager_loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
     optimizer = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=0.9, weight_decay=0.0001,
-                            loss_scale=cfg.loss_scale)
-
+                            loss_scale=config.loss_scale)
+    print(optimizer.get_lr())
     model = Model(net, loss_fn=loss_, loss_scale_manager=manager_loss_scale, optimizer=optimizer, amp_level="O3")
 
     # callback for saving ckpts
@@ -125,13 +125,13 @@ def train():
     loss_cb = LossMonitor()
     cbs = [time_cb, loss_cb]
 
-    if args.rank == 0:
-        config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_steps,
-                                     keep_checkpoint_max=cfg.keep_checkpoint_max)
-        ckpoint_cb = ModelCheckpoint(prefix=cfg.model, directory=cfg.ckpt_dir, config=config_ck)
+    if config.rank == 0:
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_steps,
+                                     keep_checkpoint_max=config.keep_checkpoint_max)
+        ckpoint_cb = ModelCheckpoint(prefix=config.model, directory=config.checkpoint_path, config=config_ck)
         cbs.append(ckpoint_cb)
 
-    model.train(cfg.train_epochs, dataset, callbacks=cbs)
+    model.train(config.train_epochs, dataset, callbacks=cbs)
 
 
 if __name__ == '__main__':
