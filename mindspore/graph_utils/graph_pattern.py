@@ -28,6 +28,7 @@ __all__ = [
     "Imm"
 ]
 
+
 class OneOf(OneOf_):
     r"""
     Express a pattern which allows a list of patterns.
@@ -50,6 +51,7 @@ class OneOf(OneOf_):
             OneOf_.__init__(self, patterns)
         else:
             raise TypeError(f"Expect patterns to be a list of Patterns/Pattern, got : {patterns}")
+
 
 class Prim(Prim_):
     r"""
@@ -95,6 +97,7 @@ class Prim(Prim_):
             raise TypeError(f"Expecting a primitive type string or a list of Primitives, got : {types}")
         Prim_.__init__(self, self.types, self.name)
 
+
 class Call(Call_):
     r"""
     Express a primitive CNode.
@@ -124,6 +127,7 @@ class Call(Call_):
             raise TypeError(f"Expect inputs to be a list of Patterns, got : {inputs}")
         Call_.__init__(self, self.prim_pattern, self.inputs)
 
+
 class NoneOf(NoneOf_):
     r"""
     Express a pattern which forbids a list of patterns.
@@ -134,7 +138,7 @@ class NoneOf(NoneOf_):
     def __init__(self, patterns=None):
         r"""
         Args:
-            patterns(Union[list[:class:`mindspore.graph_utils.graph_pattern`]]: list of forbiden patterns, each element
+            patterns(Union[list[:class:`mindspore.graph_utils.graph_pattern`]]: list of forbidden patterns, each element
                 should be one of the exposed Pattern instance.
 
         Raises:
@@ -150,6 +154,7 @@ class NoneOf(NoneOf_):
         else:
             raise TypeError(f"Expect list of Patterns/Pattern, got : {patterns}")
 
+
 class NewTensor(NewTensor_):
     r"""
     New Tensor to be used in the target.
@@ -157,7 +162,7 @@ class NewTensor(NewTensor_):
     def __init__(self, input_tensor):
         r"""
         Args:
-            input_tensor(:class:`mindspore.common.tensor.Tensor`): new tensor to be used in the target
+            input_tensor(:class:`mindspore.common.tensor.Tensor`): new tensor to be used in the target.
 
         Raises:
             TypeError: raise type error for invalid argument.
@@ -168,6 +173,7 @@ class NewTensor(NewTensor_):
         else:
             raise TypeError(f"Expect input_tensor to be a Tensor， got : {input_tensor}")
 
+
 class NewParameter(NewParameter_):
     r"""
     New Parameter to be used in the target.
@@ -175,10 +181,10 @@ class NewParameter(NewParameter_):
     def __init__(self, para_name, default_tensor, requires_grad=False, layerwise_parallel=False):
         r"""
         Args:
-            para_name(str): name for the new Parameter
-            default_tensor(:class:`mindspore.common.tensor.Tensor`): default value for the new Parameter
-            requires_grad(bool): True if the parameter requires gradient. Default: True
-            layerwise_parallel(bool): switch for layerwise parallel mode. Default: False
+            para_name(str): name for the new Parameter.
+            default_tensor(:class:`mindspore.common.tensor.Tensor`): default value for the new Parameter.
+            requires_grad(bool): True if the parameter requires gradient. Default: True.
+            layerwise_parallel(bool): switch for layerwise parallel mode. Default: False.
 
         Raises:
             TypeError: raise type error for invalid argument.
