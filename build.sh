@@ -577,9 +577,13 @@ build_lite()
       find . -maxdepth 1 | grep -v java | grep '/' | xargs -I {} rm -rf {}
     fi
     if [[ "${LITE_LANGUAGE}" == "cpp"  ]]; then
-      if [[ "${DEVICE}" == ""  &&  "${LOCAL_LITE_PLATFORM}" == "arm64" ]]; then
-        LOCAL_LITE_ENABLE_GPU="opencl"
-        LOCAL_LITE_ENABLE_NPU="on"
+      if [[ "${DEVICE}" == "" ]]; then
+        if [[ "${LOCAL_LITE_PLATFORM}" == "arm64" || "${LOCAL_LITE_PLATFORM}" == "arm32" ]]; then
+          LOCAL_LITE_ENABLE_NPU="on"
+        fi
+        if [[ "${LOCAL_LITE_PLATFORM}" == "arm64" ]]; then
+          LOCAL_LITE_ENABLE_GPU="opencl"
+        fi
       fi
 
       if [[ "${LOCAL_INC_BUILD}" == "off" ]]; then
@@ -589,12 +593,7 @@ build_lite()
     fi
 
     if [ "${LOCAL_LITE_ENABLE_NPU}" == "on" ]; then
-      if [ "${LOCAL_LITE_PLATFORM}" == "arm64" ]; then
-        checkddk
-      else
-        echo "NPU only support platform arm64."
-        exit 1
-      fi
+      checkddk
     fi
 
     cd ${BASEPATH}/mindspore/lite/build

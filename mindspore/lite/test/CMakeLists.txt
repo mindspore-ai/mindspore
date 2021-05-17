@@ -167,6 +167,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/tools/benchmark/benchmark.cc
         ${LITE_DIR}/test/st/benchmark_test.cc
         ${LITE_DIR}/src/errorcode.cc
+        ${LITE_DIR}/src/cpu_info.cc
         )
 ### gpu runtime
 if(SUPPORT_GPU STREQUAL opencl)

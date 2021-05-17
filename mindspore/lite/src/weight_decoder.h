@@ -171,8 +171,12 @@ class WeightDecoder {
           if (!channel_first) {
             index = channels * j + i;
           }
-          auto dequant_data = (quant_datas[index] - zero_point) * scale;
-          dequant_datas[index] = static_cast<DT>(dequant_data * var_corr + mean_corr);
+#ifdef ENABLE_ARM32
+          volatile float dequant_data = (quant_datas[index] - zero_point) * scale * var_corr + mean_corr;
+          dequant_datas[index] = static_cast<DT>(dequant_data);
+#else
+          dequant_datas[index] = static_cast<DT>((quant_datas[index] - zero_point) * scale * var_corr + mean_corr);
+#endif
         }
       }
     } else {
@@ -190,7 +194,12 @@ class WeightDecoder {
           }
           dequant_datas[j] = static_cast<DT>(param.clusters[index - INT8_MIN]);
         } else {
+#ifdef ENABLE_ARM32
+          volatile float dequant_data = (quant_datas[j] - zero_point) * scale;
+          dequant_datas[j] = static_cast<DT>(dequant_data);
+#else
           dequant_datas[j] = static_cast<DT>((quant_datas[j] - zero_point) * scale);
+#endif
         }
       }
     }

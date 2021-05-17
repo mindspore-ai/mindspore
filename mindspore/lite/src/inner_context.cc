@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifdef __ANDROID__
-#include <sys/auxv.h>
-#include <asm/hwcap.h>
-#endif
 #include "src/inner_context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -37,6 +32,10 @@ InnerContext::InnerContext(const Context *context) {
   for (auto &device_ctx : context->device_list_) {
     this->device_list_.push_back(device_ctx);
   }
+#ifdef ENABLE_ARM
+  cpu_info_ = new CpuInfo;
+  fp16_flag_ = cpu_info_->ArmIsSupportFp16();
+#endif
 }
 
 #if SUPPORT_NPU
@@ -59,6 +58,10 @@ InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
     }
   }
   this->npu_manager_ = npu_manager;
+#ifdef ENABLE_ARM
+  cpu_info_ = new CpuInfo;
+  fp16_flag_ = cpu_info_->ArmIsSupportFp16();
+#endif
 }
 #endif
 
@@ -97,6 +100,9 @@ InnerContext::~InnerContext() {
     free(this->thread_pool_);
     this->thread_pool_ = nullptr;
   }
+#ifdef ENABLE_ARM
+  delete cpu_info_;
+#endif
 }
 
 int InnerContext::IsValid() const {
@@ -220,23 +226,5 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
 }
 
 // Support CPU backend to judge whether it supports Float16.
-bool InnerContext::IsSupportFloat16() const {
-  bool status = false;
-
-#if defined(ENABLE_ARM64)
-#if defined(__ANDROID__)
-  int hwcap_type = 16;
-  uint32_t hwcap = getHwCap(hwcap_type);
-  if (hwcap & HWCAP_FPHP) {
-    MS_LOG(DEBUG) << "Hw cap support FP16, hwcap: 0x" << hwcap;
-    status = true;
-  } else {
-    MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
-    status = false;
-  }
-#endif
-#endif
-  return status;
-}
-
+bool InnerContext::IsSupportFloat16() const { return fp16_flag_; }
 }  // namespace mindspore::lite

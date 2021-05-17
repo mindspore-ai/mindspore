@@ -20,6 +20,9 @@
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
 #include "src/runtime/allocator.h"
+#ifdef ENABLE_ARM
+#include "src/cpu_info.h"
+#endif
 #ifdef SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #endif
@@ -67,9 +70,13 @@ struct InnerContext : public Context {
 
   bool IsSupportFloat16() const;
 
-#if SUPPORT_NPU
+  bool fp16_flag_ = false;
 
- private:
+#ifdef ENABLE_ARM
+  CpuInfo *cpu_info_ = nullptr;
+#endif
+
+#if SUPPORT_NPU
   NPUManager *npu_manager_ = nullptr;
 #endif
 };

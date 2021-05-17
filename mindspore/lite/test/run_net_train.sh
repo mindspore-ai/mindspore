@@ -149,7 +149,7 @@ function Run_arm() {
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/libjpeg-turbo/lib/libturbojpeg.so* ${benchmark_train_test_path}/ || exit 1
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
-    if [ "$1" == arm64 ]; then
+    if [ "$1" == arm64 ] || [ "$1" == arm32 ]; then
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1

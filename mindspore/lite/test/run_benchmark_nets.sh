@@ -1898,7 +1898,9 @@ function Run_arm32() {
     if [ -f ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ]; then
         cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
-
+    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
@@ -2124,7 +2126,9 @@ function Run_armv82_a32_fp16() {
     if [ -f ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ]; then
         cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/minddata/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
-
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
     cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
     cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 

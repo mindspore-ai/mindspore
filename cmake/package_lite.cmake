@@ -176,6 +176,14 @@ if(PLATFORM_ARM64)
         install(TARGETS ${BENCHMARK_NAME} RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 elseif(PLATFORM_ARM32)
+    if(SUPPORT_NPU)
+        install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${DDK_LIB_PATH}/libhiai_ir.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${DDK_LIB_PATH}/libhiai_ir_build.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
