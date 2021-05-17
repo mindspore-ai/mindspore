@@ -194,6 +194,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     stack_frame_depth_ = 0;
     stack_frame_max_depth_ = 0;
     forward_count_ = 0;
+
+    enable_recursive_eval_ = (common::GetEnv("ENV_RECURSIVE_EVAL") == "1");
   }
   ~AnalysisEngine() = default;
 
@@ -256,8 +258,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     }
     function_call_depth_--;
   }
-  size_t function_call_depth() { return function_call_depth_; }
-  size_t function_call_max_depth() { return function_call_max_depth_; }
+  size_t function_call_depth() const { return function_call_depth_; }
+  size_t function_call_max_depth() const { return function_call_max_depth_; }
 
   void ResetStackFrameDepth() {
     stack_frame_depth_ = 0;
@@ -275,10 +277,12 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     }
     stack_frame_depth_--;
   }
-  size_t stack_frame_depth() { return stack_frame_depth_; }
-  size_t stack_frame_max_depth() { return stack_frame_max_depth_; }
+  size_t stack_frame_depth() const { return stack_frame_depth_; }
+  size_t stack_frame_max_depth() const { return stack_frame_max_depth_; }
 
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
+
+  bool enable_recursive_eval() const { return enable_recursive_eval_; }
 
  private:
   // Should compare Args based on value other than pointer;
@@ -342,6 +346,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   size_t stack_frame_max_depth_;
 
   size_t forward_count_;
+
+  bool enable_recursive_eval_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;

@@ -205,6 +205,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
   AnalysisContextPtr parent_context_;
 
  private:
+  AbstractBasePtr LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
   // Add functions for stack frame routine.
   AbstractBasePtr LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg);
   void EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,

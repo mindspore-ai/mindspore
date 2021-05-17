@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test control ops """
+import os
 import numpy as np
 import pytest
 
@@ -749,53 +750,6 @@ def test_while_scalar():
     out = net(x, y)
 
 
-def test_large_for_loop():
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.flatten = P.ReLU()  # nn.Flatten()
-
-        def construct(self, x):
-            for elem in range(1, 1900):
-                x = self.flatten(x + elem)
-            return x
-
-    t = Tensor(np.ones([2, 3], dtype=np.float32))
-    net = Net()
-    old_max_call_depth = context.get_context('max_call_depth')
-    context.set_context(max_call_depth=60)
-    with pytest.raises(RuntimeError) as err:
-        net(t)
-    context.set_context(max_call_depth=old_max_call_depth)
-    assert 'Exceed function call depth limit 60' in str(err.value)
-
-
-def test_large_for_loop_with_continue_break():
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.flatten = P.ReLU()  # nn.Flatten()
-
-        def construct(self, x):
-            idx = 0
-            for elem1 in range(200):
-                idx = idx + 1
-                if idx < 10:
-                    x = x + 0.5
-                    continue
-                if idx > 500:
-                    break
-                x = self.flatten(x + elem1)
-            return x
-
-    old_max_call_depth = context.get_context('max_call_depth')
-    context.set_context(max_call_depth=2000)
-    t = Tensor(np.ones([2, 3], dtype=np.float32))
-    net = Net()
-    net(t)
-    context.set_context(max_call_depth=old_max_call_depth)
-
-
 def test_mixed_precision_cast():
     x = Tensor(np.ones([2, 3], dtype=np.float32))
     z = F.mixed_precision_cast(mstype.float16, x)
@@ -871,42 +825,6 @@ def test_parser_switch_layer_func_primitive():
         net(i, input1)
 
 
-def test_recursive_call():
-    class Net(nn.Cell):
-        """ Net definition """
-
-        def __init__(self):
-            super(Net, self).__init__()
-            self.fc = nn.Dense(10, 10)  # padding=0
-            # self.net2 = Net2()
-
-        def construct(self, x):
-            net2 = Net2()
-            x = net2(x)
-            out = self.fc(x)
-            return out
-
-    class Net2(nn.Cell):
-        def __init__(self):
-            super(Net2, self).__init__()
-            self.net = Net()
-            self.fc = nn.Dense(10, 10)
-
-        def construct(self, x):
-            x = self.net(x)
-            out = self.fc(x)
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
-    old_max_call_depth = context.get_context('max_call_depth')
-    context.set_context(max_call_depth=80)
-    input_data = Tensor(np.identity(10).astype(np.float32))
-    net = Net2()
-    with pytest.raises(RuntimeError):
-        net(input_data)
-    context.set_context(max_call_depth=old_max_call_depth)
-
-
 def test_switch_layer_shape_join_failed():
     class AddFuncNet(nn.Cell):
         def __init__(self, funcs, new_func):
@@ -975,6 +893,29 @@ def test_switch_layer_dtype_join_failed():
         net(i, inp)
 
 
+def test_large_for_loop():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.flatten = P.ReLU()  # nn.Flatten()
+
+        def construct(self, x):
+            for elem in range(1, 1900):
+                x = self.flatten(x + elem)
+            return x
+
+    t = Tensor(np.ones([2, 3], dtype=np.float32))
+    net = Net()
+    os.environ['ENV_RECURSIVE_EVAL'] = '1'
+    old_max_call_depth = context.get_context('max_call_depth')
+    context.set_context(max_call_depth=60)
+    with pytest.raises(RuntimeError) as err:
+        net(t)
+    context.set_context(max_call_depth=old_max_call_depth)
+    os.environ['ENV_RECURSIVE_EVAL'] = '0'
+    assert 'Exceed function call depth limit 60' in str(err.value)
+
+
 def test_large_for_loop_case2():
     class Menet(nn.Cell):
         def __init__(self, axis, flag_boottom, flag_top):
@@ -1000,9 +941,77 @@ def test_large_for_loop_case2():
 
     x = Tensor(np.ones([2, 3], dtype=np.float32))
     net = Menet(axis=0, flag_boottom=True, flag_top=True)
+    os.environ['ENV_RECURSIVE_EVAL'] = '1'
     old_max_call_depth = context.get_context('max_call_depth')
     context.set_context(max_call_depth=80)
     with pytest.raises(RuntimeError) as err:
         net(x)
+    os.environ['ENV_RECURSIVE_EVAL'] = '0'
     context.set_context(max_call_depth=old_max_call_depth)
     assert 'Exceed function call depth limit 80' in str(err.value)
+
+
+def test_large_for_loop_with_continue_break():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.flatten = P.ReLU()  # nn.Flatten()
+
+        def construct(self, x):
+            idx = 0
+            for elem1 in range(200):
+                idx = idx + 1
+                if idx < 10:
+                    x = x + 0.5
+                    continue
+                if idx > 500:
+                    break
+                x = self.flatten(x + elem1)
+            return x
+
+    os.environ['ENV_RECURSIVE_EVAL'] = '1'
+    old_max_call_depth = context.get_context('max_call_depth')
+    context.set_context(max_call_depth=2000)
+    t = Tensor(np.ones([2, 3], dtype=np.float32))
+    net = Net()
+    net(t)
+    os.environ['ENV_RECURSIVE_EVAL'] = '0'
+    context.set_context(max_call_depth=old_max_call_depth)
+
+
+def test_recursive_call():
+    class Net(nn.Cell):
+        """ Net definition """
+
+        def __init__(self):
+            super(Net, self).__init__()
+            self.fc = nn.Dense(10, 10)  # padding=0
+            # self.net2 = Net2()
+
+        def construct(self, x):
+            net2 = Net2()
+            x = net2(x)
+            out = self.fc(x)
+            return out
+
+    class Net2(nn.Cell):
+        def __init__(self):
+            super(Net2, self).__init__()
+            self.net = Net()
+            self.fc = nn.Dense(10, 10)
+
+        def construct(self, x):
+            x = self.net(x)
+            out = self.fc(x)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    os.environ['ENV_RECURSIVE_EVAL'] = '1'
+    old_max_call_depth = context.get_context('max_call_depth')
+    context.set_context(max_call_depth=80)
+    input_data = Tensor(np.identity(10).astype(np.float32))
+    net = Net2()
+    with pytest.raises(RuntimeError):
+        net(input_data)
+    os.environ['ENV_RECURSIVE_EVAL'] = '0'
+    context.set_context(max_call_depth=old_max_call_depth)

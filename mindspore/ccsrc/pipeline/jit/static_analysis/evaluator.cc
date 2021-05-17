@@ -80,7 +80,8 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
   // Increase & Check the func graph call depth.
   engine->IncreaseFunctionCallDepth();
   engine->IncreaseStackFrameDepth();
-  if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
+  if (engine->function_call_depth() - engine->stack_frame_depth() >
+      MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit "
                       << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
                       << ", (function call depth: " << engine->function_call_depth()
@@ -157,10 +158,33 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
   return res_base;
 }
 
+AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg) {
+  const AnfNodePtr &func_node = fg->get_return();
+  const auto &all_nodes = TopoSort(func_node, SuccIncoming, [&fg](const AnfNodePtr &node) -> IncludeType {
+    if (node->func_graph() != fg || node->isa<ValueNode>()) {
+      return EXCLUDE;
+    }
+    return FOLLOW;
+  });
+  AbstractBasePtr res_base = nullptr;
+  for (const auto &node : all_nodes) {
+    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context_);
+    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString();
+    auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+    res_base = node_eval_result->abstract();
+    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg << "/" << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString() << ", abstract: " << res_base->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(res_base);
+  return res_base;
+}
+
 EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(engine);
   engine->IncreaseFunctionCallDepth();
-  if (engine->function_call_depth() > MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
+  if (engine->function_call_depth() - engine->stack_frame_depth() >
+      MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)) {
     MS_LOG(EXCEPTION) << "Exceed function call depth limit "
                       << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
                       << ", (function call depth: " << engine->function_call_depth()
@@ -193,7 +217,13 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                 << ", context: " << context_->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
                 << ", current function call depth: " << engine->function_call_depth();
-  auto res_base = LaunchStackFrame(engine, fg);
+  AbstractBasePtr res_base = nullptr;
+  if (engine->enable_recursive_eval()) {
+    res_base = LaunchRecursiveEval(engine, fg);
+  } else {
+    res_base = LaunchStackFrame(engine, fg);
+  }
+
   MS_EXCEPTION_IF_NULL(res_base);
   MS_LOG(DEBUG) << "Analysis FuncGraph end, " << fg << "/" << fg->ToString()
                 << ", evaluated abstract: " << res_base->ToString() << ", is stub: " << fg->stub();
