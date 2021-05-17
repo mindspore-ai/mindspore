@@ -255,6 +255,7 @@ def copy_(a):
     a = a.astype(origin_dtype)
     return a
 
+
 def ones(shape, dtype=mstype.float32):
     """
     Returns a new tensor of given shape and type, filled with ones.
@@ -433,7 +434,7 @@ def arange(start, stop=None, step=None, dtype=None):
     return out.astype(dtype)
 
 
-def _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis):
+def _type_checking_for_xspace(start, stop, num, endpoint, dtype):
     """utility parameter checking function for linspace, logspace, geomspace."""
     if not isinstance(start, ARRAY_TYPES):
         _raise_type_error("start should be int, float, bool, list, tuple, Tensor, but got", start)
@@ -452,8 +453,18 @@ def _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis):
     else:
         dtype = mstype.float32
     start, stop = broadcast_arrays(start, stop)
-    axis = _canonicalize_axis(axis, start.ndim+1)
-    return start, stop, num, endpoint, dtype, axis
+    return start, stop, num, endpoint, dtype
+
+
+def _compute_shapes(start, axis, num, endpoint):
+    """Computes shapes for local variables for np.linspace"""
+    bounds_shape = start.shape
+    bounds_shape = _tuple_slice(bounds_shape, None, axis) + (1,) + _tuple_slice(bounds_shape, axis, None)
+    iota_shape = _list_comprehensions(start.ndim+1, 1, True)
+    iota_shape = _tuple_slice(iota_shape, None, axis) + (num,) + _tuple_slice(iota_shape, axis+1, None)
+    num_tensor = _type_convert(Tensor, num).astype(mstype.float32)
+    div = (num_tensor - 1) if endpoint else num_tensor
+    return bounds_shape, iota_shape, div
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
@@ -497,15 +508,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         [0. 1. 2. 3. 4. 5.]
     """
     # This implementation was inspired by jax.numpy.linspace and numpy.linspace
-    start, stop, num, endpoint, dtype, axis = _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis)
+    start, stop, num, endpoint, dtype = _type_checking_for_xspace(start, stop, num, endpoint, dtype)
+    axis = _canonicalize_axis(axis, start.ndim+1)
     if not isinstance(retstep, bool):
         _raise_type_error("retstep should be an boolean, but got ", retstep)
-    bounds_shape = start.shape
-    bounds_shape = _tuple_slice(bounds_shape, None, axis) + (1,) + _tuple_slice(bounds_shape, axis, None)
-    iota_shape = _list_comprehensions(start.ndim+1, 1, True)
-    iota_shape = _tuple_slice(iota_shape, None, axis) + (num,) + _tuple_slice(iota_shape, axis+1, None)
-    num_tensor = _type_convert(Tensor, num).astype(mstype.float32)
-    div = (num_tensor - 1) if endpoint else num_tensor
+    bounds_shape, iota_shape, div = _compute_shapes(start, axis, num, endpoint)
 
     if num > 1:
         delta = (stop - start) / div
@@ -569,7 +576,8 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
         [ 1.  2.  4.  8. 16. 32.]
     """
     # This implementation was inspired by jax.numpy.linspace and numpy.linspace
-    start, stop, num, endpoint, dtype, axis = _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis)
+    start, stop, num, endpoint, dtype = _type_checking_for_xspace(start, stop, num, endpoint, dtype)
+    axis = _canonicalize_axis(axis, start.ndim+1)
     if not isinstance(base, (int, float, bool)):
         _raise_type_error("base should be a number, but got ", base)
     linspace_res = linspace(start, stop, num, endpoint=endpoint, retstep=False, dtype=None, axis=axis)
@@ -617,7 +625,8 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         >>> print(output)
         [  1.   2.   4.   8.  16.  32.  64. 128.]
     """
-    start, stop, num, endpoint, dtype, axis = _type_checking_for_xspace(start, stop, num, endpoint, dtype, axis)
+    start, stop, num, endpoint, dtype = _type_checking_for_xspace(start, stop, num, endpoint, dtype)
+    axis = _canonicalize_axis(axis, start.ndim+1)
     root = num
     if endpoint:
         root -= 1
@@ -725,6 +734,7 @@ def identity(n, dtype=mstype.float32):
 
 @constexpr
 def empty_compile(dtype, shape):
+    """Returns an empty Tensor."""
     return Tensor_(dtype, shape)
 
 
@@ -1239,9 +1249,9 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     return res
 
 
-def _index(i, size, Cartesian=True):
-    """If Cartesian=True, index 0 is swapped with index 1."""
-    if Cartesian:
+def _index(i, size, cartesian=True):
+    """If cartesian=True, index 0 is swapped with index 1."""
+    if cartesian:
         if i == 1:
             return 0
         if i == 0 and size >= 2:
@@ -1328,12 +1338,12 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
     Cartesian = indexing == 'xy'
     shape_out = ()
     for i in range(len(grids)):
-        grid_index = _index(i, ndim, Cartesian=Cartesian)
+        grid_index = _index(i, ndim, cartesian=Cartesian)
         shape_out += (F.shape(grids[grid_index])[0],)
 
     res = []
     for i, x in enumerate(grids):
-        grid_index = _index(i, ndim, Cartesian=Cartesian)
+        grid_index = _index(i, ndim, cartesian=Cartesian)
         shape_expanded = _expanded_shape(ndim, shape_out[grid_index], grid_index)
         x = x.reshape(shape_expanded)
         if not sparse:
@@ -1397,7 +1407,7 @@ class nd_grid:
         return res
 
 
-class mGridClass(nd_grid):
+class MGridClass(nd_grid):
     """
     mgrid is an :class:`nd_grid` instance with ``sparse=False``.
 
@@ -1442,10 +1452,10 @@ class mGridClass(nd_grid):
         [-1.  -0.5  0.   0.5  1. ]
     """
     def __init__(self):
-        super(mGridClass, self).__init__(sparse=False)
+        super(MGridClass, self).__init__(sparse=False)
 
 
-class oGridClass(nd_grid):
+class OGridClass(nd_grid):
     """
     ogrid is an :class:`nd_grid` instance with ``sparse=True``.
 
@@ -1484,13 +1494,13 @@ class oGridClass(nd_grid):
         [-1.  -0.5  0.   0.5  1. ]
     """
     def __init__(self):
-        super(oGridClass, self).__init__(sparse=True)
+        super(OGridClass, self).__init__(sparse=True)
 
 
-mgrid = mGridClass()
+mgrid = MGridClass()
 
 
-ogrid = oGridClass()
+ogrid = OGridClass()
 
 
 def diag(v, k=0):
@@ -1691,7 +1701,6 @@ def ix_(*args):
         [1]]), Tensor(shape=[1, 2], dtype=Int32, value=
         [[2, 4]]))
     """
-    # TODO boolean mask
     _check_input_tensor(*args)
     ndim = len(args)
     res = ()
