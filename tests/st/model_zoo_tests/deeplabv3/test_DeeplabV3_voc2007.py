@@ -38,7 +38,7 @@ def test_DeeplabV3_voc2007():
 
     old_list = ['model.train(args.train_epochs',
                 'callbacks=cbs']
-    new_list = ['model.train(70',
+    new_list = ['model.train(30',
                 'callbacks=cbs, sink_size=2']
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
@@ -54,10 +54,10 @@ def test_DeeplabV3_voc2007():
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i))
         print("per_step_time is", per_step_time)
-        assert per_step_time < 530.0
+        assert per_step_time < 585.0
     loss_list = []
     for i in range(8):
         loss = utils.get_loss_data_list(log_file.format(i))
         print("loss is", loss[-1])
         loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 2.5
+    assert sum(loss_list) / len(loss_list) < 3.5

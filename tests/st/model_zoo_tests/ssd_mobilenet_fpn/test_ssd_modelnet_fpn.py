@@ -41,7 +41,7 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     new_list = ["ssd_mobilenet_v1_fpn"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config.py"))
     old_list = ["args_opt.epoch_size", "dataset_sink_mode=dataset_sink_mode"]
-    new_list = ["5", "dataset_sink_mode=dataset_sink_mode, sink_size=100"]
+    new_list = ["5", "dataset_sink_mode=dataset_sink_mode, sink_size=20"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
     exec_network_shell = "cd {0}; sh -x scripts/run_distribute_train.sh 8 {1} 0.2 coco {2}"\
@@ -55,10 +55,10 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i))
         print("per_step_time is", per_step_time)
-        assert per_step_time < 545
+        assert per_step_time < 580
     loss_list = []
     for i in range(8):
         loss = utils.get_loss_data_list(log_file.format(i))
         print("loss is", loss[-1])
         loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 2.72
+    assert sum(loss_list) / len(loss_list) < 4.9

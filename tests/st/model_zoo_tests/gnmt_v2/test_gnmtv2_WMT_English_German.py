@@ -30,7 +30,7 @@ def test_gnmtv2_WMT_English_German():
     cur_model_path = os.path.join(cur_path, model_name)
 
     old_list = ['dataset_sink_mode=config.dataset_sink_mode']
-    new_list = ['dataset_sink_mode=config.dataset_sink_mode, sink_size=100']
+    new_list = ['dataset_sink_mode=config.dataset_sink_mode, sink_size=25']
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
     old_list = ['"epochs": 6,']
     new_list = ['"epochs": 4,']
@@ -50,7 +50,7 @@ def test_gnmtv2_WMT_English_German():
     for i in range(8):
         per_step_time = utils.get_perf_data(log_file.format(i, i))
         print("per_step_time is", per_step_time)
-        assert per_step_time < 270.0
+        assert per_step_time < 330.0
 
     log_file = os.path.join(cur_model_path, "scripts/device{}/loss.log")
     loss_list = []
@@ -61,4 +61,4 @@ def test_gnmtv2_WMT_English_German():
         loss_list.append(loss[-1])
     print("loss_list is", loss_list)
     print(sum(loss_list) / len(loss_list))
-    assert sum(loss_list) / len(loss_list) < 120
+    assert sum(loss_list) / len(loss_list) < 260
