@@ -13,11 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+from functools import reduce
 import numpy as np
 import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 from mindspore import Tensor
 
 
@@ -77,3 +79,180 @@ def test_maxpool2d():
     output = maxpool2d(x)
     assert (output.asnumpy() == expect_result).all()
     assert (output2.asnumpy() == expect_result2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_pool3d_1():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_shape = (2, 3, 2, 3, 4)
+    kernel_size = (2, 2, 3)
+    strides = 1
+    pad_mode = 'VALID'
+    x_val = np.arange(reduce(lambda x, y: x * y, x_shape))
+    x_ms = Tensor(x_val).reshape(x_shape).astype(np.float32)
+    output_ms = P.MaxPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)(x_ms)
+    expert_result = (np.array([[[[[18, 19],
+                                  [22, 23]]],
+                                [[[42, 43],
+                                  [46, 47]]],
+                                [[[66, 67],
+                                  [70, 71]]]],
+                               [[[[90, 91],
+                                  [94, 95]]],
+                                [[[114, 115],
+                                  [118, 119]]],
+                                [[[138, 139],
+                                  [142, 143]]]]]))
+    assert (output_ms.asnumpy() == expert_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_pool3d_2():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_shape = (2, 3, 2, 3, 4)
+    kernel_size = 2
+    strides = 1
+    pad_mode = 'VALID'
+    x_val = np.arange(reduce(lambda x, y: x * y, x_shape))
+    x_ms = Tensor(x_val).reshape(x_shape).astype(np.float32)
+    output_ms = P.MaxPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)(x_ms)
+    expert_result = (np.array([[[[[17, 18, 19],
+                                  [21, 22, 23]]],
+                                [[[41, 42, 43],
+                                  [45, 46, 47]]],
+                                [[[65, 66, 67],
+                                  [69, 70, 71]]]],
+                               [[[[89, 90, 91],
+                                  [93, 94, 95]]],
+                                [[[113, 114, 115],
+                                  [117, 118, 119]]],
+                                [[[137, 138, 139],
+                                  [141, 142, 143]]]]]))
+    assert (output_ms.asnumpy() == expert_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_pool3d_3():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_shape = (2, 3, 2, 3, 4)
+    kernel_size = 2
+    strides = 3
+    pad_mode = 'VALID'
+    x_val = np.arange(reduce(lambda x, y: x * y, x_shape))
+    x_ms = Tensor(x_val).reshape(x_shape).astype(np.float32)
+    output_ms = P.MaxPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)(x_ms)
+    expert_result = (np.array([[[[[17]]],
+                                [[[41]]],
+                                [[[65]]]],
+                               [[[[89]]],
+                                [[[113]]],
+                                [[[137]]]]]))
+    assert (output_ms.asnumpy() == expert_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_pool3d_4():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_shape = (2, 3, 2, 3, 4)
+    kernel_size = (2, 2, 3)
+    strides = 1
+    pad_mode = 'SAME'
+    x_val = np.arange(reduce(lambda x, y: x * y, x_shape))
+    x_ms = Tensor(x_val).reshape(x_shape).astype(np.float32)
+    output_ms = P.MaxPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)(x_ms)
+    expert_result = (np.array([[[[[17, 18, 19, 19],
+                                  [21, 22, 23, 23],
+                                  [21, 22, 23, 23]],
+                                 [[17, 18, 19, 19],
+                                  [21, 22, 23, 23],
+                                  [21, 22, 23, 23]]],
+                                [[[41, 42, 43, 43],
+                                  [45, 46, 47, 47],
+                                  [45, 46, 47, 47]],
+                                 [[41, 42, 43, 43],
+                                  [45, 46, 47, 47],
+                                  [45, 46, 47, 47]]],
+                                [[[65, 66, 67, 67],
+                                  [69, 70, 71, 71],
+                                  [69, 70, 71, 71]],
+                                 [[65, 66, 67, 67],
+                                  [69, 70, 71, 71],
+                                  [69, 70, 71, 71]]]],
+                               [[[[89, 90, 91, 91],
+                                  [93, 94, 95, 95],
+                                  [93, 94, 95, 95]],
+                                 [[89, 90, 91, 91],
+                                  [93, 94, 95, 95],
+                                  [93, 94, 95, 95]]],
+                                [[[113, 114, 115, 115],
+                                  [117, 118, 119, 119],
+                                  [117, 118, 119, 119]],
+                                 [[113, 114, 115, 115],
+                                  [117, 118, 119, 119],
+                                  [117, 118, 119, 119]]],
+                                [[[137, 138, 139, 139],
+                                  [141, 142, 143, 143],
+                                  [141, 142, 143, 143]],
+                                 [[137, 138, 139, 139],
+                                  [141, 142, 143, 143],
+                                  [141, 142, 143, 143]]]]]))
+    assert (output_ms.asnumpy() == expert_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_max_pool3d_5():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x_shape = (2, 3, 2, 3, 4)
+    kernel_size = (2, 2, 3)
+    strides = 1
+    pad_mode = 'SAME'
+    x_val = np.arange(reduce(lambda x, y: x * y, x_shape))
+    x_ms = Tensor(x_val).reshape(x_shape).astype(np.float32)
+    output_ms = P.MaxPool3D(kernel_size=kernel_size, strides=strides, pad_mode=pad_mode)(x_ms)
+    expert_result = (np.array([[[[[17, 18, 19, 19],
+                                  [21, 22, 23, 23],
+                                  [21, 22, 23, 23]],
+                                 [[17, 18, 19, 19],
+                                  [21, 22, 23, 23],
+                                  [21, 22, 23, 23]]],
+                                [[[41, 42, 43, 43],
+                                  [45, 46, 47, 47],
+                                  [45, 46, 47, 47]],
+                                 [[41, 42, 43, 43],
+                                  [45, 46, 47, 47],
+                                  [45, 46, 47, 47]]],
+                                [[[65, 66, 67, 67],
+                                  [69, 70, 71, 71],
+                                  [69, 70, 71, 71]],
+                                 [[65, 66, 67, 67],
+                                  [69, 70, 71, 71],
+                                  [69, 70, 71, 71]]]],
+                               [[[[89, 90, 91, 91],
+                                  [93, 94, 95, 95],
+                                  [93, 94, 95, 95]],
+                                 [[89, 90, 91, 91],
+                                  [93, 94, 95, 95],
+                                  [93, 94, 95, 95]]],
+                                [[[113, 114, 115, 115],
+                                  [117, 118, 119, 119],
+                                  [117, 118, 119, 119]],
+                                 [[113, 114, 115, 115],
+                                  [117, 118, 119, 119],
+                                  [117, 118, 119, 119]]],
+                                [[[137, 138, 139, 139],
+                                  [141, 142, 143, 143],
+                                  [141, 142, 143, 143]],
+                                 [[137, 138, 139, 139],
+                                  [141, 142, 143, 143],
+                                  [141, 142, 143, 143]]]]]))
+    assert (output_ms.asnumpy() == expert_result).all()

@@ -41,28 +41,41 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  if (origin_kernel_sizes.size() != 4 || strides.size() != 4) {
+  auto dim = origin_kernel_sizes.size();
+  if (dim < 4 || dim > 5 || dim != strides.size()) {
     MS_LOG(EXCEPTION) << "invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
-  std::vector<int> stride{strides[2], strides[3]};
-  dnnl::memory::dims strides_dims{strides[2], strides[3]};
-  dnnl::memory::dims kernels_dims{origin_kernel_sizes[2], origin_kernel_sizes[3]};
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  std::vector<int> stride;
+  dnnl::memory::dims kernels_dims;
+  dnnl::memory::dims strides_dims;
+  std::vector<size_t> kernel_size;
+  std::vector<int> dummy_dilation;
+  for (size_t i = 2; i < dim; ++i) {
+    stride.emplace_back(strides[i]);
+    kernels_dims.emplace_back(origin_kernel_sizes[i]);
+    strides_dims.emplace_back(strides[i]);
+    kernel_size.emplace_back(IntToSize(origin_kernel_sizes[i]));
+    dummy_dilation.emplace_back(1);
+  }
+
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});
-  std::vector<int> dummy_dilation{1, 1};
+  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
-  if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
+  if (int_padding_l.size() != dim - 2 || int_padding_r.size() != dim - 2) {
     MS_LOG(EXCEPTION) << "pooling get padding failed";
   }
-  dnnl::memory::dims padding_l{int_padding_l[0], int_padding_l[1]};
-  dnnl::memory::dims padding_r{int_padding_r[0], int_padding_r[1]};
+  dnnl::memory::dims padding_l;
+  dnnl::memory::dims padding_r;
+  for (size_t i = 0; i < dim - 2; ++i) {
+    padding_l.emplace_back(int_padding_l[i]);
+    padding_r.emplace_back(int_padding_r[i]);
+  }
   dnnl::pooling_forward::desc desc =
     dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_max, src_desc, dst_desc,
                                 strides_dims, kernels_dims, padding_l, padding_r);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == prim::kPrimAvgPool->name()) {
+  if (kernel_name == prim::kPrimAvgPool->name() || kernel_name == prim::kPrimAvgPool3D->name()) {
     desc = dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
                                        dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
   }

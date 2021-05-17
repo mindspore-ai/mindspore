@@ -21,7 +21,9 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -170,5 +172,86 @@ def test_conv():
     assert (loss < error).all()
 
 
-test_conv2d()
-test_conv()
+class NetConv3d(nn.Cell):
+    def __init__(self):
+        super(NetConv3d, self).__init__()
+        out_channel = 4
+        kernel_size = 2
+        self.conv = P.Conv3D(out_channel,
+                             kernel_size,
+                             mode=1,
+                             pad_mode="valid",
+                             pad=0,
+                             stride=1,
+                             dilation=1,
+                             group=1)
+
+    def construct(self, x, w):
+        return self.conv(x, w)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_conv3d():
+    x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
+    expect = np.array([[[[[12960., 13236.],
+                          [13788., 14064.]],
+                         [[15444., 15720.],
+                          [16272., 16548.]]],
+                        [[[32256., 33108.],
+                          [34812., 35664.]],
+                         [[39924., 40776.],
+                          [42480., 43332.]]],
+                        [[[51552., 52980.],
+                          [55836., 57264.]],
+                         [[64404., 65832.],
+                          [68688., 70116.]]],
+                        [[[70848., 72852.],
+                          [76860., 78864.]],
+                         [[88884., 90888.],
+                          [94896., 96900.]]]]]).astype(np.float32)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    net = NetConv3d()
+    output = net(x, w)
+    assert (output.asnumpy() == expect).all()
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = NetConv3d()
+    output = net(x, w)
+    assert (output.asnumpy() == expect).all()
+
+
+class MSConv3dNet(nn.Cell):
+    def __init__(self, in_channels, out_channels, kernel_size, pad_mode='pad', padding=0, stride=1, dilation=1,
+                 has_bias=False, weight_init='normal'):
+        super(MSConv3dNet, self).__init__()
+        self.cv1 = nn.Conv3d(in_channels=in_channels,
+                             out_channels=out_channels,
+                             kernel_size=kernel_size,
+                             pad_mode=pad_mode,
+                             padding=padding,
+                             stride=stride,
+                             dilation=dilation,
+                             group=1,
+                             has_bias=has_bias,
+                             weight_init=weight_init,
+                             data_format='NCDHW')
+
+    def construct(self, x):
+        x = self.cv1(x)
+        return x
+
+
+class MSGradNet(nn.Cell):
+    def __init__(self, network):
+        super(MSGradNet, self).__init__()
+        self.grad = C.GradOperation(get_all=True, sens_param=True, get_by_list=True)
+        self.network = network
+        self.params = ParameterTuple(network.trainable_params())
+
+    def construct(self, x, dy):
+        grad_op = self.grad(self.network, self.params)
+        output = grad_op(x, dy)
+        return output

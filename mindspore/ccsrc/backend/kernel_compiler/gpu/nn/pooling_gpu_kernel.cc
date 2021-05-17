@@ -26,5 +26,13 @@ MS_REG_GPU_KERNEL_ONE(AvgPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).Add
                       PoolingGpuFwdKernel, float)
 MS_REG_GPU_KERNEL_ONE(AvgPool, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       PoolingGpuFwdKernel, half)
+MS_REG_GPU_KERNEL_ONE(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      PoolingGpuFwdKernel, float)
+MS_REG_GPU_KERNEL_ONE(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      PoolingGpuFwdKernel, half)
+MS_REG_GPU_KERNEL_ONE(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      PoolingGpuFwdKernel, float)
+MS_REG_GPU_KERNEL_ONE(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      PoolingGpuFwdKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

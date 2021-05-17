@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/mkldnn/conv2d_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/mkldnn/conv_cpu_kernel.h"
 #include <string>
 #include <algorithm>
 #include "utils/ms_utils.h"
@@ -22,19 +22,29 @@
 
 namespace mindspore {
 namespace kernel {
-void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+constexpr size_t kConvInputTensorNum = 2;
+constexpr size_t kShapeSize4D = 4;
+constexpr size_t kShapeSize5D = 5;
+constexpr size_t kKernelStartAxis = 2;
+
+void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  if (src_shape.size() != 4 || weight_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "conv2d only support nchw input!";
+  size_t src_dim = src_shape.size();
+  size_t weight_dim = weight_shape.size();
+  if (src_dim < kShapeSize4D || src_dim > kShapeSize5D || src_dim != weight_dim) {
+    MS_LOG(EXCEPTION) << "conv only supports 4D/5D input!";
   }
-  std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
+  std::vector<size_t> kernel_size;
+  for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
+    kernel_size.emplace_back(weight_shape[i]);
+  }
   size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group != 1) {
     if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << "conv2d channels should be divided by group!";
+      MS_LOG(EXCEPTION) << "conv channels should be divided by group!";
     }
     weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
@@ -44,35 +54,50 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   std::vector<int> stride_ori;
   std::vector<int> dilation_ori;
-  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
-  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
+  auto stride_attr = src_dim == kShapeSize4D ? STRIDE : STRIDES;
+  auto dilation_attr = src_dim == kShapeSize4D ? DILATION : DILATIONS;
+  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
+  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
+  if (stride_ori.size() != src_dim) {
+    MS_LOG(EXCEPTION) << "conv stride size must be " << src_dim << "D!";
+  }
   if (stride_ori[0] != 1 || stride_ori[1] != 1) {
     MS_LOG(EXCEPTION) << "conv2d stride only support 1 in N axis and C axis!";
   }
-  if (dilation_ori.size() != 4) {
-    MS_LOG(EXCEPTION) << "conv2d dilation must be 4d!";
+  if (dilation_ori.size() != src_dim) {
+    MS_LOG(EXCEPTION) << "conv dilation size must be " << src_dim << "D!";
   }
   if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
     MS_LOG(EXCEPTION) << "conv2d dilation only support 1 in N axis and C axis!";
   }
 
-  std::vector<int> stride{stride_ori[2], stride_ori[3]};
-  std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};
-  dnnl::memory::dims strides{stride_ori[2], stride_ori[3]};
-  dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
+  std::vector<int> stride;
+  std::vector<int> dilation;
+  dnnl::memory::dims strides;
+  dnnl::memory::dims dilates;
+  for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
+    stride.emplace_back(stride_ori[i]);
+    strides.emplace_back(stride_ori[i]);
+    dilation.emplace_back(dilation_ori[i]);
+    dilates.emplace_back(dilation_ori[i] - 1);
+  }
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
-  if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
+  if (int_padding_l.size() + kKernelStartAxis != src_dim || int_padding_r.size() + kKernelStartAxis != src_dim) {
     MS_LOG(EXCEPTION) << "get padding failed";
   }
-  dnnl::memory::dims padding_l{int_padding_l[0], int_padding_l[1]};
-  dnnl::memory::dims padding_r{int_padding_r[0], int_padding_r[1]};
+  dnnl::memory::dims padding_l;
+  dnnl::memory::dims padding_r;
+  for (size_t i = 0; i < int_padding_l.size(); ++i) {
+    padding_l.emplace_back(int_padding_l[i]);
+    padding_r.emplace_back(int_padding_r[i]);
+  }
   dnnl::convolution_forward::desc desc =
     dnnl::convolution_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc,
                                     weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
@@ -84,10 +109,10 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, dst_desc);
 }
 
-bool Conv2dCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> & /*workspace*/,
-                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 2 || outputs.empty()) {
+bool ConvCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                           const std::vector<kernel::AddressPtr> & /*workspace*/,
+                           const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() < kConvInputTensorNum || outputs.empty()) {
     MS_LOG(EXCEPTION) << "error input output size!";
   }
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);

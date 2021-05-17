@@ -24,6 +24,8 @@
 #include <utility>
 #include <map>
 #include <memory>
+#include <numeric>
+#include <functional>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -140,22 +142,15 @@ class GpuKernel : public KernelMod {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
     }
-    if (format == "NCHW" || format == "DefaultFormat") {
-      dimA[0] = SizeToInt(shape[0]);
-      dimA[1] = SizeToInt(shape[1]);
-      dimA[2] = SizeToInt(shape[2]);
-      dimA[3] = SizeToInt(shape[3]);
+    if (format == "NCHW" || format == "DefaultFormat" || format == "NCDHW") {
+      for (size_t i = 0; i < len; ++i) {
+        dimA[i] = SizeToInt(shape[i]);
+      }
     } else if (format == "NHWC") {
       dimA[0] = SizeToInt(shape[0]);
       dimA[1] = SizeToInt(shape[3]);
       dimA[2] = SizeToInt(shape[1]);
       dimA[3] = SizeToInt(shape[2]);
-    } else if (format == "NCDHW") {
-      dimA[0] = SizeToInt(shape[0]);
-      dimA[1] = SizeToInt(shape[1]);
-      dimA[2] = SizeToInt(shape[2]);
-      dimA[3] = SizeToInt(shape[3]);
-      dimA[4] = SizeToInt(shape[4]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -164,22 +159,15 @@ class GpuKernel : public KernelMod {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
     }
-    if (format == "NCHW" || format == "DefaultFormat") {
-      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
-      strideA[1] = SizeToInt(shape[2] * shape[3]);
-      strideA[2] = SizeToInt(shape[3]);
-      strideA[3] = 1;
+    if (format == "NCHW" || format == "DefaultFormat" || format == "NCDHW") {
+      for (size_t i = 0; i < len; ++i) {
+        strideA[i] = SizeToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<size_t>()));
+      }
     } else if (format == "NHWC") {
       strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3]);
       strideA[1] = 1;
       strideA[2] = SizeToInt(shape[2] * shape[3]);
       strideA[3] = SizeToInt(shape[3]);
-    } else if (format == "NCDHW") {
-      strideA[0] = SizeToInt(shape[1] * shape[2] * shape[3] * shape[4]);
-      strideA[1] = SizeToInt(shape[2] * shape[3] * shape[4]);
-      strideA[2] = SizeToInt(shape[3] * shape[4]);
-      strideA[3] = SizeToInt(shape[4]);
-      strideA[4] = 1;
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -196,6 +184,24 @@ class GpuKernel : public KernelMod {
       *c = SizeToInt(shape[3]);
       *h = SizeToInt(shape[1]);
       *w = SizeToInt(shape[2]);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data format " << format;
+    }
+  }
+
+  void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
+    if (format == "NCDHW" || format == "DefaultFormat") {
+      *n = SizeToInt(shape[0]);
+      *c = SizeToInt(shape[1]);
+      *d = SizeToInt(shape[2]);
+      *h = SizeToInt(shape[3]);
+      *w = SizeToInt(shape[4]);
+    } else if (format == "NDHWC") {
+      *n = SizeToInt(shape[0]);
+      *c = SizeToInt(shape[4]);
+      *d = SizeToInt(shape[1]);
+      *h = SizeToInt(shape[2]);
+      *w = SizeToInt(shape[3]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
