@@ -26,34 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
-  std::vector<std::string> inputs_device_format;
-  std::vector<std::string> outputs_device_format;
-  std::vector<TypeId> inputs_device_type;
-  std::vector<TypeId> outputs_device_type;
-  std::vector<std::vector<size_t>> outputs_shape;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  for (size_t idx = 0; idx < node_list.size(); ++idx) {
-    auto cnode = utils::cast<CNodePtr>(node_list[idx]);
-    MS_EXCEPTION_IF_NULL(cnode);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      inputs_device_format.push_back(kOpFormat_DEFAULT);
-      inputs_device_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
-    for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      outputs_device_format.push_back(kOpFormat_DEFAULT);
-      outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(cnode, output_index));
-      outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
-    }
-  }
-  builder.SetInputsFormat(inputs_device_format);
-  builder.SetOutputsFormat(outputs_device_format);
-  builder.SetInputsDeviceType(inputs_device_type);
-  builder.SetOutputsDeviceType(outputs_device_type);
-  return builder.Build();
-}
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
   std::vector<AnfNodePtr> momentum;
   std::vector<AnfNodePtr> momentum_decay;
