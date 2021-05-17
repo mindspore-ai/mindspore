@@ -1330,10 +1330,10 @@ class Conv2D(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
+        >>> input_tensor = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> conv2d = ops.Conv2D(out_channel=32, kernel_size=3)
-        >>> output = conv2d(input, weight)
+        >>> output = conv2d(input_tensor, weight)
         >>> print(output.shape)
         (10, 32, 30, 30)
     """
@@ -1436,10 +1436,10 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
+        >>> input_tensor = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
         >>> depthwise_conv2d = ops.DepthwiseConv2dNative(channel_multiplier=3, kernel_size=(3, 3))
-        >>> output = depthwise_conv2d(input, weight)
+        >>> output = depthwise_conv2d(input_tensor, weight)
         >>> print(output.shape)
         (10, 96, 30, 30)
     """
@@ -1807,9 +1807,9 @@ class MaxPool3D(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
+        >>> input_tensor = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
         >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="valid")
-        >>> output = max_pool3d(input)
+        >>> output = max_pool3d(input_tensor)
         >>> print(output)
         [[[[[10. 11.]]]
           [[[22. 23.]]]]]
@@ -2364,13 +2364,13 @@ class NLLLoss(PrimitiveWithInfer):
 
 
     Examples:
-        >>> input = Tensor(np.array([[0.5488135, 0.71518934],
-        ...                          [0.60276335, 0.5448832],
-        ...                          [0.4236548, 0.6458941]]).astype(np.float32))
+        >>> input_tensor = Tensor(np.array([[0.5488135, 0.71518934],
+        ...                                 [0.60276335, 0.5448832],
+        ...                                 [0.4236548, 0.6458941]]).astype(np.float32))
         >>> target = Tensor(np.array([0, 0, 0]).astype(np.int32))
         >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
         >>> nll_loss = ops.NLLLoss(reduction="mean")
-        >>> loss, weight = nll_loss(input, target, weight)
+        >>> loss, weight = nll_loss(input_tensor, target, weight)
         >>> print(loss)
         -0.52507716
         >>> print(weight)
@@ -3772,11 +3772,11 @@ class LSTM(PrimitiveWithInfer):
         >>> batch_size = 2
         >>>
         >>> net = P.LSTM(input_size, hidden_size, num_layers, True, False, 0.0)
-        >>> input = Tensor(np.ones([seq_len, batch_size, input_size]).astype(np.float32))
+        >>> input_tensor = Tensor(np.ones([seq_len, batch_size, input_size]).astype(np.float32))
         >>> h0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
         >>> c0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
         >>> w = Tensor(np.ones([112, 1, 1]).astype(np.float32))
-        >>> output, hn, cn, _, _ = net(input, h0, c0, w)
+        >>> output, hn, cn, _, _ = net(input_tensor, h0, c0, w)
         >>> print(output)
         [[[0.9640267  0.9640267 ]
           [0.9640267  0.9640267 ]]
@@ -7865,10 +7865,10 @@ class Conv3D(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
+        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> conv3d = P.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
-        >>> output = conv3d(input, weight)
+        >>> output = conv3d(input_tensor, weight)
         >>> print(output.shape)
         (16, 32, 7, 30, 30)
     """
