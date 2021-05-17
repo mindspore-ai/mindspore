@@ -41,7 +41,7 @@ class TfliteModelParser : public ModelParser {
   std::unordered_map<int, AnfNodePtr> nodes_;
   std::unique_ptr<tflite::ModelT> tflite_model_;
   char *tflite_model_buf_ = nullptr;
-  std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
+  std::unique_ptr<tflite::ModelT> ReadTfliteModel(const std::string &model_path);
   STATUS ConvertConstTensor(const tflite::TensorT *tensor, const ParameterPtr &parameter,
                             const std::string &tensor_name);
   STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
