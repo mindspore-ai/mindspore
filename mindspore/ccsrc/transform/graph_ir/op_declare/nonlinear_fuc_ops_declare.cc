@@ -23,6 +23,12 @@ ATTR_MAP(Relu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Relu, prim::kPrimRelu->name(), ADPT_DESC(Relu))
 
+// ReluV2
+INPUT_MAP(ReluV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ReluV2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ReluV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
+REG_ADPT_DESC(ReluV2, kNameReluV2, ADPT_DESC(ReluV2))
+
 // Elu
 INPUT_MAP(Elu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Elu) = {{"alpha", ATTR_DESC(alpha, AnyTraits<float>())}};

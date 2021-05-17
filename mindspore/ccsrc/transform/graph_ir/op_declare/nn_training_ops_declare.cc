@@ -68,6 +68,39 @@ ATTR_MAP(ApplyAdagradD) = {{"update_slots", ATTR_DESC(update_slots, AnyTraits<bo
 OUTPUT_MAP(ApplyAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 REG_ADPT_DESC(ApplyAdagradD, kNameApplyAdagrad, ADPT_DESC(ApplyAdagradD))
 
+// ApplyAdagradV2D
+INPUT_MAP(ApplyAdagradV2D) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdagradV2D) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                             {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
+                             {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(ApplyAdagradV2D, kNameApplyAdagradV2D, ADPT_DESC(ApplyAdagradV2D))
+
+// ApplyAddSignD
+INPUT_MAP(ApplyAddSignD) = {{1, INPUT_DESC(var)},   {2, INPUT_DESC(m)},          {3, INPUT_DESC(lr)},
+                            {4, INPUT_DESC(alpha)}, {5, INPUT_DESC(sign_decay)}, {6, INPUT_DESC(beta)},
+                            {7, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAddSignD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAddSignD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}};
+REG_ADPT_DESC(ApplyAddSignD, kNameApplyAddSignD, ADPT_DESC(ApplyAddSignD))
+
+// SparseApplyAdagradV2D
+INPUT_MAP(SparseApplyAdagradV2D) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(grad)}, {4, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyAdagradV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
+                                   {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                                   {"update_slots", ATTR_DESC(update_slots, AnyTraits<bool>())},
+                                   {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyAdagradV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(SparseApplyAdagradV2D, kNameSparseApplyAdagradV2D, ADPT_DESC(SparseApplyAdagradV2D))
+
+// DataFormatDimMap
+INPUT_MAP(DataFormatDimMap) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DataFormatDimMap) = {{"src_format", ATTR_DESC(src_format, AnyTraits<std::string>())},
+                              {"dst_format", ATTR_DESC(dst_format, AnyTraits<std::string>())}};
+OUTPUT_MAP(DataFormatDimMap) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DataFormatDimMap, kNameDataFormatDimMap, ADPT_DESC(DataFormatDimMap))
+
 // ApplyAdadeltaD
 INPUT_MAP(ApplyAdadeltaD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(accum_update)},
                              {4, INPUT_DESC(lr)},  {5, INPUT_DESC(rho)},   {6, INPUT_DESC(epsilon)},

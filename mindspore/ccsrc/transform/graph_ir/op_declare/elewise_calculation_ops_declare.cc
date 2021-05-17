@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/elewise_calculation_ops_declare.h"
 #include <memory>
+#include <vector>
 
 namespace mindspore::transform {
 // Assign
@@ -33,6 +34,55 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
+
+// AccumulateNV2
+INPUT_MAP(AccumulateNV2) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(AccumulateNV2) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(AccumulateNV2) = {{"N", ATTR_DESC(N, AnyTraits<int64_t>())}};
+OUTPUT_MAP(AccumulateNV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AccumulateNV2, kNameAccumulateNV2, ADPT_DESC(AccumulateNV2))
+
+// ConfusionMulGrad
+INPUT_MAP(ConfusionMulGrad) = {{1, INPUT_DESC(input0)}, {2, INPUT_DESC(input1)}, {3, INPUT_DESC(input2)}};
+ATTR_MAP(ConfusionMulGrad) = {{"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())},
+                              {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ConfusionMulGrad) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}};
+REG_ADPT_DESC(ConfusionMulGrad, kNameConfusionMulGrad, ADPT_DESC(ConfusionMulGrad))
+
+// FakeQuantWithMinMaxVars
+INPUT_MAP(FakeQuantWithMinMaxVars) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
+ATTR_MAP(FakeQuantWithMinMaxVars) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
+                                     {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
+OUTPUT_MAP(FakeQuantWithMinMaxVars) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FakeQuantWithMinMaxVars, kNameFakeQuantWithMinMaxVars, ADPT_DESC(FakeQuantWithMinMaxVars))
+
+// FakeQuantWithMinMaxVarsGradient
+INPUT_MAP(FakeQuantWithMinMaxVarsGradient) = {
+  {1, INPUT_DESC(gradients)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(min)}, {4, INPUT_DESC(max)}};
+ATTR_MAP(FakeQuantWithMinMaxVarsGradient) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
+                                             {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
+OUTPUT_MAP(FakeQuantWithMinMaxVarsGradient) = {
+  {0, OUTPUT_DESC(backprops_wrt_x)}, {1, OUTPUT_DESC(backprops_wrt_min)}, {2, OUTPUT_DESC(backprops_wrt_max)}};
+REG_ADPT_DESC(FakeQuantWithMinMaxVarsGradient, kNameFakeQuantWithMinMaxVarsGradient,
+              ADPT_DESC(FakeQuantWithMinMaxVarsGradient))
+
+// FakeQuantWithMinMaxVarsPerChannel
+INPUT_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
+ATTR_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
+                                               {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
+OUTPUT_MAP(FakeQuantWithMinMaxVarsPerChannel) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FakeQuantWithMinMaxVarsPerChannel, kNameFakeQuantWithMinMaxVarsPerChannel,
+              ADPT_DESC(FakeQuantWithMinMaxVarsPerChannel))
+
+// FakeQuantWithMinMaxVarsPerChannelGradient
+INPUT_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {
+  {1, INPUT_DESC(gradients)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(min)}, {4, INPUT_DESC(max)}};
+ATTR_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
+                                                       {"narrow_range", ATTR_DESC(narrow_range, AnyTraits<bool>())}};
+OUTPUT_MAP(FakeQuantWithMinMaxVarsPerChannelGradient) = {
+  {0, OUTPUT_DESC(backprops_wrt_x)}, {1, OUTPUT_DESC(backprops_wrt_min)}, {2, OUTPUT_DESC(backprops_wrt_max)}};
+REG_ADPT_DESC(FakeQuantWithMinMaxVarsPerChannelGradient, kNameFakeQuantWithMinMaxVarsPerChannelGradient,
+              ADPT_DESC(FakeQuantWithMinMaxVarsPerChannelGradient))
 
 // GreaterEqual
 INPUT_MAP(GreaterEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
