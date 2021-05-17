@@ -19,12 +19,14 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 #include "utils/ms_utils.h"
 #include "runtime/device/device_address.h"
 
 namespace mindspore {
 namespace runtime {
 using DeviceTensor = mindspore::device::DeviceAddress;
+using DeviceTensorType = mindspore::device::DeviceAddressType;
 using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 
 // The device tensor mainly includes address ptr, size and reference count,
@@ -38,23 +40,54 @@ class DeviceTensorStore {
     return instance;
   }
 
-  //  Support value modifiable, so use the way of array subscript directly.
-  void Insert(void *key, DeviceTensorPtr value) { device_tensors_[key] = value; }
+  //  Support value modifiable.
+  void Insert(AnfNode *key, const DeviceTensorPtr &value) {
+    MS_EXCEPTION_IF_NULL(key);
+    const auto &iter = device_tensors_.find(key);
+    if (iter == device_tensors_.end()) {
+      device_tensors_[key].emplace_back(value);
+      return;
+    }
 
-  void Remove(void *key) {
-    auto iter = device_tensors_.find(key);
+    for (size_t i = 0; i < iter->second.size(); ++i) {
+      if (iter->second[i]->DeviceType() == value->DeviceType()) {
+        iter->second[i] = value;
+        return;
+      }
+    }
+    iter->second.emplace_back(value);
+  }
+
+  void Remove(AnfNode *key) {
+    MS_EXCEPTION_IF_NULL(key);
+    const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       (void)device_tensors_.erase(iter);
     }
   }
 
-  DeviceTensorPtr Fetch(void *key) const {
-    auto iter = device_tensors_.find(key);
+  std::vector<DeviceTensorPtr> Fetch(AnfNode *key) const {
+    MS_EXCEPTION_IF_NULL(key);
+    const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       return iter->second;
     } else {
-      return nullptr;
+      std::vector<DeviceTensorPtr> empty_value;
+      return empty_value;
     }
+  }
+
+  DeviceTensor *Fetch(AnfNode *key, DeviceTensorType value_type) const {
+    MS_EXCEPTION_IF_NULL(key);
+    const auto &iter = device_tensors_.find(key);
+    if (iter != device_tensors_.end()) {
+      for (const auto &devcie_tensor : iter->second) {
+        if (devcie_tensor->DeviceType() == value_type) {
+          return devcie_tensor.get();
+        }
+      }
+    }
+    return nullptr;
   }
 
  private:
@@ -62,8 +95,9 @@ class DeviceTensorStore {
   ~DeviceTensorStore() = default;
   DISABLE_COPY_AND_ASSIGN(DeviceTensorStore);
 
-  // The data storage of device tensor, key is anfNode ptr.
-  std::unordered_map<void *, DeviceTensorPtr> device_tensors_;
+  // The data storage of device tensor. Key is the anf node, value is the vector which may contains the device
+  // tensors from different devices.
+  std::unordered_map<AnfNode *, std::vector<DeviceTensorPtr>> device_tensors_;
 };
 }  // namespace runtime
 }  // namespace mindspore

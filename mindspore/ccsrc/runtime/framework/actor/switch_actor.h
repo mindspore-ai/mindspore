@@ -76,14 +76,14 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, void *>> branch_device_tensor_store_keys_;
+  std::vector<std::pair<size_t, AnfNode *>> branch_device_tensor_store_keys_;
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
   std::vector<FuncGraphPtr> branch_func_graph_;
 
   std::vector<DeviceTensor *> input_device_tensors_;
 
   // Save the DeviceContext of input_nodes_, which is used to release the DeviceTensor.
-  DeviceContext *device_contexts_;
+  DeviceContext *device_context_;
 
   // The id of memory manager actor. Send message to it for alloc and free memory.
   const AID memory_manager_aid_;

@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
@@ -53,6 +54,10 @@ namespace mindspore {
 namespace device {
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
 enum class DeviceAddressType { kUnknown, kAscend, kCPU, kGPU };
+static const std::map<DeviceAddressType, std::string> kDeviceTypeToName = {{DeviceAddressType::kUnknown, "Unknown"},
+                                                                           {DeviceAddressType::kAscend, "Ascend"},
+                                                                           {DeviceAddressType::kCPU, "CPU"},
+                                                                           {DeviceAddressType::kGPU, "GPU"}};
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:

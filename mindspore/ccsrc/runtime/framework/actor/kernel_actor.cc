@@ -151,6 +151,7 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
 
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_context_);
   auto input_size = AnfAlgo::GetInputTensorNum(kernel_);
   if (input_device_tensors_.empty()) {
     input_device_tensors_.resize(input_size);
@@ -165,8 +166,14 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   }
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second);
-    input_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
+    input_device_tensors_[device_tensor_store_key.first] =
+      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
+    if (input_device_tensors_[device_tensor_store_key.first] == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
+        ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 }
 

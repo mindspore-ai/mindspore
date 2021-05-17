@@ -86,6 +86,9 @@ class OpActor : public ActorBase {
   // The op actor run when receive the input control.
   virtual void RunOpControl(AID *input_control, OpContext<T> *context = nullptr) {}
 
+  std::vector<OpArrowPtr> output_op_arrows() const { return output_op_arrows_; }
+  std::vector<AID> output_op_controls() const { return output_op_controls_; }
+
  protected:
   // The op data.
   std::unordered_map<uuids::uuid *, std::vector<OpDataPtr<T>>> input_op_datas_;
