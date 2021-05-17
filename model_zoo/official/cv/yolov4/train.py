@@ -195,7 +195,8 @@ if __name__ == "__main__":
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
 
     network = YOLOV4CspDarkNet53()
-    network_eval = network
+    if args.run_eval:
+        network_eval = network
     # default is kaiming-normal
     args.checkpoint_filter_list = config.checkpoint_filter_list
     default_recurisive_init(network)
@@ -240,20 +241,23 @@ if __name__ == "__main__":
         network = TrainingWrapper(network, opt)
         network.set_train()
 
-    # checkpoint save
-    ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
-                                   keep_checkpoint_max=ckpt_max_num)
-    save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
-    ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                              directory=save_ckpt_path,
-                              prefix='{}'.format(args.rank))
-    cb_params = _InternalCallbackParam()
-    cb_params.train_network = network
-    cb_params.epoch_num = ckpt_max_num
-    cb_params.cur_epoch_num = 1
-    run_context = RunContext(cb_params)
-    ckpt_cb.begin(run_context)
+    if config.rank_save_ckpt_flag or config.run_eval:
+        cb_params = _InternalCallbackParam()
+        cb_params.train_network = network
+        cb_params.epoch_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
+        cb_params.cur_epoch_num = 1
+        run_context = RunContext(cb_params)
+
+    if config.rank_save_ckpt_flag:
+        # checkpoint save
+        ckpt_max_num = 10
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval,
+                                       keep_checkpoint_max=ckpt_max_num)
+        save_ckpt_path = os.path.join(config.outputs_dir, 'ckpt_' + str(config.rank) + '/')
+        ckpt_cb = ModelCheckpoint(config=ckpt_config,
+                                  directory=save_ckpt_path,
+                                  prefix='{}'.format(config.rank))
+        ckpt_cb.begin(run_context)
 
     if args.run_eval:
         rank_id = int(os.environ.get('RANK_ID')) if os.environ.get('RANK_ID') else 0
@@ -275,9 +279,9 @@ if __name__ == "__main__":
     old_progress = -1
     t_end = time.time()
     data_loader = ds.create_dict_iterator(output_numpy=True, num_epochs=1)
+    network.set_train(True)
 
     for i, data in enumerate(data_loader):
-        network.set_train()
         images = data["image"]
         input_shape = images.shape[2:4]
         args.logger.info('iter[{}], shape{}'.format(i, input_shape[0]))
@@ -306,15 +310,17 @@ if __name__ == "__main__":
             time_used = time.time() - t_end
             epoch = int(i / args.steps_per_epoch)
             fps = args.per_batch_size * (i - old_progress) * args.group_size / time_used
-            args.logger.info('epoch[{}], iter[{}], {}, {:.2f} imgs/sec, lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
+            if config.rank == 0:
+                args.logger.info('epoch[{}], iter[{}], {}, {:.2f} imgs/sec, '
+                                 'lr:{}'.format(epoch, i, loss_meter, fps, lr[i]))
             t_end = time.time()
             loss_meter.reset()
             old_progress = i
 
-        if args.run_eval and (i + 1) % args.steps_per_epoch == 0:
-            eval_cb.epoch_end(run_context)
-
-        if (i + 1) % args.steps_per_epoch == 0:
+        if (i + 1) % config.steps_per_epoch == 0 and (config.run_eval or config.rank_save_ckpt_flag):
+            if config.run_eval:
+                eval_cb.epoch_end(run_context)
+                network.set_train()
             cb_params.cur_epoch_num += 1
 
         if args.need_profiler:

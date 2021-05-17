@@ -30,11 +30,12 @@ class LOGGER(logging.Logger):
     def __init__(self, logger_name, rank=0):
         super(LOGGER, self).__init__(logger_name)
         self.rank = rank
-        console = logging.StreamHandler(sys.stdout)
-        console.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
-        console.setFormatter(formatter)
-        self.addHandler(console)
+        if rank % 8 == 0:
+            console = logging.StreamHandler(sys.stdout)
+            console.setLevel(logging.INFO)
+            formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s')
+            console.setFormatter(formatter)
+            self.addHandler(console)
 
     def setup_logging_file(self, log_dir, rank=0):
         """Setup logging file."""
@@ -61,7 +62,7 @@ class LOGGER(logging.Logger):
         self.info('')
 
     def important_info(self, msg, *args, **kwargs):
-        if self.isEnabledFor(logging.INFO):
+        if self.isEnabledFor(logging.INFO) and self.rank == 0:
             line_width = 2
             important_msg = '\n'
             important_msg += ('*'*70 + '\n')*line_width
