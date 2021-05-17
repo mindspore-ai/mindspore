@@ -25,10 +25,10 @@ seg_schema = {"file_name": {"type": "string"}, "label": {"type": "bytes"}, "data
 def parse_args():
     parser = argparse.ArgumentParser('mindrecord')
 
-    parser.add_argument('--data_root', type=str, default='', help='root path of data')
-    parser.add_argument('--data_lst', type=str, default='', help='list of data')
-    parser.add_argument('--dst_path', type=str, default='', help='save path of mindrecords')
-    parser.add_argument('--num_shards', type=int, default=8, help='number of shards')
+    parser.add_argument('--data_root', type=str, default='../../VOC2012', help='root path of data')
+    parser.add_argument('--data_lst', type=str, default='ImageSets/Segmentation/trainval.txt', help='list of data')
+    parser.add_argument('--dst_path', type=str, default='./mindname.mindrecord', help='save path of mindrecords')
+    parser.add_argument('--num_shards', type=int, default=1, help='number of shards')
     parser.add_argument('--shuffle', type=bool, default=True, help='shuffle or not')
 
     parser_args, _ = parser.parse_known_args()

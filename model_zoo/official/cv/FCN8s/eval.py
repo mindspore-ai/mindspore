@@ -14,7 +14,7 @@
 # ============================================================================
 """eval FCN8s."""
 
-import argparse
+import os
 import numpy as np
 import cv2
 from PIL import Image
@@ -24,35 +24,9 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.nets.FCN8s import FCN8s
-
-
-def parse_args():
-    parser = argparse.ArgumentParser('mindspore FCN8s eval')
-
-    # val data
-    parser.add_argument('--data_root', type=str, default='../VOCdevkit/VOC2012/', help='root path of val data')
-    parser.add_argument('--batch_size', type=int, default=16, help='batch size')
-    parser.add_argument('--data_lst', type=str, default='../VOCdevkit/VOC2012/ImageSets/Segmentation/val.txt',
-                        help='list of val data')
-    parser.add_argument('--crop_size', type=int, default=512, help='crop size')
-    parser.add_argument('--image_mean', type=list, default=[103.53, 116.28, 123.675], help='image mean')
-    parser.add_argument('--image_std', type=list, default=[57.375, 57.120, 58.395], help='image std')
-    parser.add_argument('--scales', type=float, default=[1.0], action='append', help='scales of evaluation')
-    parser.add_argument('--flip', type=bool, default=False, help='perform left-right flip')
-    parser.add_argument('--ignore_label', type=int, default=255, help='ignore label')
-    parser.add_argument('--num_classes', type=int, default=21, help='number of classes')
-
-    # model
-    parser.add_argument('--model', type=str, default='FCN8s', help='select model')
-    parser.add_argument('--freeze_bn', action='store_true', default=False, help='freeze bn')
-    parser.add_argument('--ckpt_path', type=str, default='model_new/FCN8s-500_82.ckpt', help='model to evaluate')
-
-    parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend. (Default: None)')
-
-    args, _ = parser.parse_known_args()
-    return args
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 
 def cal_hist(a, b, n):
@@ -84,14 +58,14 @@ class BuildEvalNetwork(nn.Cell):
         return output
 
 
-def pre_process(args, img_, crop_size=512):
+def pre_process(configs, img_, crop_size=512):
     # resize
     img_ = resize_long(img_, crop_size)
     resize_h, resize_w, _ = img_.shape
 
     # mean, std
-    image_mean = np.array(args.image_mean)
-    image_std = np.array(args.image_std)
+    image_mean = np.array(configs.image_mean)
+    image_std = np.array(configs.image_std)
     img_ = (img_ - image_mean) / image_std
 
     # pad to crop_size
@@ -105,14 +79,14 @@ def pre_process(args, img_, crop_size=512):
     return img_, resize_h, resize_w
 
 
-def eval_batch(args, eval_net, img_lst, crop_size=512, flip=True):
+def eval_batch(configs, eval_net, img_lst, crop_size=512, flip=True):
     result_lst = []
     batch_size = len(img_lst)
-    batch_img = np.zeros((args.batch_size, 3, crop_size, crop_size), dtype=np.float32)
+    batch_img = np.zeros((configs.eval_batch_size, 3, crop_size, crop_size), dtype=np.float32)
     resize_hw = []
     for l in range(batch_size):
         img_ = img_lst[l]
-        img_, resize_h, resize_w = pre_process(args, img_, crop_size)
+        img_, resize_h, resize_w = pre_process(configs, img_, crop_size)
         batch_img[l] = img_
         resize_hw.append([resize_h, resize_w])
 
@@ -134,13 +108,13 @@ def eval_batch(args, eval_net, img_lst, crop_size=512, flip=True):
     return result_lst
 
 
-def eval_batch_scales(args, eval_net, img_lst, scales,
+def eval_batch_scales(configs, eval_net, img_lst, scales,
                       base_crop_size=512, flip=True):
     sizes_ = [int((base_crop_size - 1) * sc) + 1 for sc in scales]
-    probs_lst = eval_batch(args, eval_net, img_lst, crop_size=sizes_[0], flip=flip)
+    probs_lst = eval_batch(configs, eval_net, img_lst, crop_size=sizes_[0], flip=flip)
     print(sizes_)
     for crop_size_ in sizes_[1:]:
-        probs_lst_tmp = eval_batch(args, eval_net, img_lst, crop_size=crop_size_, flip=flip)
+        probs_lst_tmp = eval_batch(configs, eval_net, img_lst, crop_size=crop_size_, flip=flip)
         for pl, _ in enumerate(probs_lst):
             probs_lst[pl] += probs_lst_tmp[pl]
 
@@ -150,23 +124,25 @@ def eval_batch_scales(args, eval_net, img_lst, scales,
     return result_msk
 
 
+@moxing_wrapper()
 def net_eval():
-    args = parse_args()
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id,
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id(),
                         save_graphs=False)
 
     # data list
-    with open(args.data_lst) as f:
+    data_lst = os.path.join(config.data_path, config.data_lst)
+    with open(data_lst) as f:
         img_lst = f.readlines()
 
-    net = FCN8s(n_class=args.num_classes)
+    net = FCN8s(n_class=config.num_classes)
 
     # load model
-    param_dict = load_checkpoint(args.ckpt_path)
+    config.ckpt_file = os.path.join(config.data_path, config.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
     # evaluate
-    hist = np.zeros((args.num_classes, args.num_classes))
+    hist = np.zeros((config.num_classes, config.num_classes))
     batch_img_lst = []
     batch_msk_lst = []
     bi = 0
@@ -174,7 +150,7 @@ def net_eval():
     for i, line in enumerate(img_lst):
 
         img_name = line.strip('\n')
-        data_root = args.data_root
+        data_root = config.data_path
         img_path = data_root + '/JPEGImages/' + str(img_name) + '.jpg'
         msk_path = data_root + '/SegmentationClass/' + str(img_name) + '.png'
 
@@ -184,11 +160,11 @@ def net_eval():
         batch_img_lst.append(img_)
         batch_msk_lst.append(msk_)
         bi += 1
-        if bi == args.batch_size:
-            batch_res = eval_batch_scales(args, net, batch_img_lst, scales=args.scales,
-                                          base_crop_size=args.crop_size, flip=args.flip)
-            for mi in range(args.batch_size):
-                hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), args.num_classes)
+        if bi == config.eval_batch_size:
+            batch_res = eval_batch_scales(config, net, batch_img_lst, scales=config.scales,
+                                          base_crop_size=config.crop_size, flip=config.flip)
+            for mi in range(config.eval_batch_size):
+                hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), config.num_classes)
 
             bi = 0
             batch_img_lst = []
@@ -197,10 +173,10 @@ def net_eval():
         image_num = i
 
     if bi > 0:
-        batch_res = eval_batch_scales(args, net, batch_img_lst, scales=args.scales,
-                                      base_crop_size=args.crop_size, flip=args.flip)
+        batch_res = eval_batch_scales(config, net, batch_img_lst, scales=config.scales,
+                                      base_crop_size=config.crop_size, flip=config.flip)
         for mi in range(bi):
-            hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), args.num_classes)
+            hist += cal_hist(batch_msk_lst[mi].flatten(), batch_res[mi].flatten(), config.num_classes)
         print('processed {} images'.format(image_num + 1))
 
     print(hist)
