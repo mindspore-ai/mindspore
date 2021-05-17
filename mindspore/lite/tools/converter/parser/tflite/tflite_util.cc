@@ -246,21 +246,5 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
   return RET_OK;
 }
 
-void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {
-  MS_ASSERT(dst_str != nullptr);
-  if (src_str.empty()) {
-    MS_LOG(ERROR) << "src_str is empty";
-    return;
-  }
-  std::string ::size_type p1 = 0, p2 = src_str.find(chr);
-  while (std::string::npos != p2) {
-    dst_str->push_back(src_str.substr(p1, p2 - p1));
-    p1 = p2 + chr.size();
-    p2 = src_str.find(chr, p1);
-  }
-  if (p1 != src_str.length()) {
-    dst_str->push_back(src_str.substr(p1));
-  }
-}
 }  // namespace lite
 }  // namespace mindspore

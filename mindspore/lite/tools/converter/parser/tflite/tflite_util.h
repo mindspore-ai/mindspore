@@ -46,13 +46,6 @@ TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
 STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode, int strideH,
                        int strideW, int windowH, int windowW, std::vector<int64_t> *params);
 
-void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
-
-struct TfliteTensorsInfo {
-  std::vector<int32_t> tensorsId;
-  std::vector<schema::Format> tensorsFormat;
-  std::map<int, int> tensorsIdMap;
-};
 }  // namespace lite
 }  // namespace mindspore
 
