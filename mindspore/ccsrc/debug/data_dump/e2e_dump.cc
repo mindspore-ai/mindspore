@@ -88,7 +88,13 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(node, j);
-    std::string file_path = dump_path + '/' + *kernel_name + '_' + "output_" + std::to_string(j);
+    std::string op_type = AnfAlgo::GetCNodeName(node);
+    uint32_t task_id = 0;
+    uint32_t stream_id = 0;
+    uint64_t timestamp = GetTimeStamp();
+    std::string file_path = dump_path + '/' + op_type + '.' + *kernel_name + '.' + std::to_string(task_id) + '.' +
+                            std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
+                            std::to_string(j);
     if (IsDeviceTargetGPU()) {
       DumpGPUMemToFile(file_path, node->fullname_with_scope(), NOT_NULL(addr), int_shapes, type, device_type,
                        trans_flag, j, debugger);
@@ -96,6 +102,12 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
       DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type, trans_flag);
     }
   }
+}
+
+uint64_t E2eDump::GetTimeStamp() {
+  auto cur_sys_time = std::chrono::system_clock::now();
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
+  return timestamp;
 }
 
 void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger) {
@@ -143,12 +155,16 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
       tensor_name = node->fullname_with_scope();
       slot = j;
     }
-
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(input, index);
-    std::string file_path = dump_path + '/' + *kernel_name + '_' + "input_" + std::to_string(j);
+    std::string op_type = AnfAlgo::GetCNodeName(node);
+    uint64_t timestamp = GetTimeStamp();
+    uint32_t task_id = 0;
+    uint32_t stream_id = 0;
+    std::string file_path = dump_path + '/' + op_type + '.' + *kernel_name + '.' + std::to_string(task_id) + '.' +
+                            std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     if (IsDeviceTargetGPU()) {
       DumpGPUMemToFile(file_path, tensor_name, NOT_NULL(addr), int_shapes, type, device_type, trans_flag, slot,
                        debugger);
@@ -190,8 +206,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   auto device_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
-
-  std::string file_path = dump_path + '/' + dump_name + '_' + "output_0";
+  std::string file_path = dump_path + '/' + dump_name + "_output_0";
   if (IsDeviceTargetGPU()) {
     DumpGPUMemToFile(file_path, node_name, NOT_NULL(addr), int_shapes, type, device_type, trans_flag, 0, debugger);
   } else {
@@ -235,7 +250,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
   }
   MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
   MS_LOG(INFO) << "Current graph id is " << graph_id;
-  std::string dump_path = GenerateDumpPath(&device_id);
+  std::string dump_path = GenerateDumpPath(graph_id, &device_id);
 
   DumpInput(graph, dump_path, debugger);
   DumpOutput(graph, dump_path, debugger);

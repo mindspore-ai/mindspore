@@ -31,7 +31,7 @@ class TestMemoryDumper : public UT::Common {
 
 TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
   int len = 1000;
-  int data[1000] = {0};
+  int data[len] = {0};
   for (uint32_t i = 0; i < len; i++) {
     data[i] = i % 10;
   }
@@ -41,15 +41,18 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
   ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {10, 100}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open((filename + ".bin").c_str(), O_RDONLY);
-  int readBack[1000] = {0};
-  int readSize = read(fd, readBack, len * sizeof(int));
+  int fd = open((filename + ".npy").c_str(), O_RDONLY);
+  int header_size = 32;
+  int npylen = len + header_size;
+  int readBack[npylen] = {0};
+  int readSize = read(fd, readBack, npylen * sizeof(int));
   (void)close(fd);
-  ASSERT_EQ(readSize, len * sizeof(int));
+  ASSERT_EQ(readSize, npylen * sizeof(int));
 
   ret = true;
   for (uint32_t i = 0; i < len; i++) {
-    if (data[i] != readBack[i]) {
+    // Skip the size of npy header.
+    if (data[i] != readBack[i+header_size]) {
       ret = false;
       break;
     }
@@ -63,7 +66,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileAbsPath) {
 
 TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
   int len = 1000;
-  int data[1000] = {0};
+  int data[len] = {0};
   for (uint32_t i = 0; i < len; i++) {
     data[i] = i % 10;
   }
@@ -73,15 +76,18 @@ TEST_F(TestMemoryDumper, test_DumpToFileRelativePath) {
   ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector{100, 10}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open((filename + ".bin").c_str(), O_RDONLY);
-  int readBack[1000] = {0};
-  int readSize = read(fd, readBack, len * sizeof(int));
+  int fd = open((filename + ".npy").c_str(), O_RDONLY);
+  int header_size = 32;
+  int npylen = len + header_size;
+  int readBack[npylen] = {0};
+  int readSize = read(fd, readBack, npylen * sizeof(int));
   (void)close(fd);
-  ASSERT_EQ(readSize, len * sizeof(int));
+  ASSERT_EQ(readSize, npylen * sizeof(int));
 
   ret = true;
   for (uint32_t i = 0; i < len; i++) {
-    if (data[i] != readBack[i]) {
+    // Skip the size of npy header.
+    if (data[i] != readBack[i+header_size]) {
       ret = false;
       break;
     }
@@ -105,7 +111,7 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
   int ret = DumpJsonParser::DumpToFile(filename, data, len * sizeof(int), ShapeVector {1,}, kNumberTypeInt32);
   ASSERT_EQ(ret, true);
 
-  int fd = open((filename + ".bin").c_str(), O_RDONLY);
+  int fd = open((filename + ".npy").c_str(), O_RDONLY);
   int readBack[1000] = {0};
   int readSize = read(fd, readBack, len * sizeof(int));
   (void)close(fd);
@@ -113,7 +119,8 @@ TEST_F(TestMemoryDumper, test_DumpToFileNotExistDir) {
 
   ret = true;
   for (uint32_t i = 0; i < len; i++) {
-    if (data[i] != readBack[i]) {
+    // Skip the size of npy header.
+    if (data[i] != readBack[i+1]) {
       ret = false;
       break;
     }

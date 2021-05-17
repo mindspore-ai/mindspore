@@ -164,19 +164,11 @@ class TensorLoader {
       MS_LOG(ERROR) << "Dump file path is null!";
       return false;
     }
-    std::string shape = "shape";
-    if (host_shape.size()) {
-      for (auto &value : host_shape) {
-        shape = shape + '_' + std::to_string(value);
-      }
-    } else {
-      shape = shape + "_0";
-    }
     std::string path = "";
     if (trans_flag) {
-      path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt;
+      path = filepath + '.' + host_fmt;
     } else {
-      path = filepath + '_' + shape + '_' + TypeIdToType(device_type)->ToString() + '_' + addr_format;
+      path = filepath + '.' + addr_format;
     }
 
     MS_LOG(INFO) << "Dump path is " << path;

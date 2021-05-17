@@ -27,7 +27,6 @@ constexpr auto kCommonDumpSettings = "common_dump_settings";
 constexpr auto kAsyncDumpSettings = "async_dump_settings";
 constexpr auto kE2eDumpSettings = "e2e_dump_settings";
 constexpr auto kDumpMode = "dump_mode";
-constexpr auto kDumpFormat = "dump_format";
 constexpr auto kPath = "path";
 constexpr auto kNetName = "net_name";
 constexpr auto kIteration = "iteration";
@@ -44,8 +43,6 @@ constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 }  // namespace
 
 namespace mindspore {
-uint32_t DumpJsonParser::dump_format_ = 0;
-
 auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std::string &key) {
   auto iter = content.find(key);
   if (iter == content.end()) {
@@ -116,7 +113,7 @@ void DumpJsonParser::Parse() {
   JudgeDumpEnabled();
 }
 
-void DumpJsonParser::CopyJsonToDir() {
+void DumpJsonParser::CopyJsonToDir(uint32_t device_id) {
   this->Parse();
   if (!IsDumpEnabled()) {
     return;
@@ -127,7 +124,8 @@ void DumpJsonParser::CopyJsonToDir() {
   }
   std::ifstream json_file(dump_config_file.value());
   if (async_dump_enabled_ || e2e_dump_enabled_) {
-    auto realpath = Common::GetRealPath(path_ + "/.metadata/data_dump.json");
+    auto realpath =
+      Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
     }
@@ -137,6 +135,47 @@ void DumpJsonParser::CopyJsonToDir() {
     ChangeFileMode(realpath.value(), S_IRUSR);
   }
 }
+
+void DumpJsonParser::CopyHcclJsonToDir(uint32_t device_id) {
+  if (!IsDumpEnabled()) {
+    return;
+  }
+  std::string config_path = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
+  if (config_path.empty()) {
+    return;
+  }
+  std::ifstream json_file(config_path);
+  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/hccl.json");
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed in CopyHcclJsonToDir.";
+  } else {
+    std::ofstream json_copy(realpath.value());
+    json_copy << json_file.rdbuf();
+    json_copy.close();
+    ChangeFileMode(realpath.value(), S_IRUSR);
+  }
+}
+
+void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t device_id) {
+  if (!IsDumpEnabled()) {
+    return;
+  }
+  auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/config.json");
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed in CopyMSConfigJsonToDir.";
+  } else {
+    nlohmann::json ms_info;
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    ms_info["device_target"] = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    ms_info["ms_version"] = "1.2.0";
+    std::ofstream json_create(realpath.value());
+    json_create << ms_info;
+    json_create.close();
+    ChangeFileMode(realpath.value(), S_IRUSR);
+  }
+}
+
 bool DumpJsonParser::GetIterDumpFlag() {
   return e2e_dump_enabled_ && (iteration_ == 0 || cur_dump_iter_ == iteration_);
 }
@@ -148,8 +187,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     return false;
   }
 
-  std::string file_format = dump_format_ == 1 ? ".npy" : ".bin";
-  auto realpath = Common::GetRealPath(filename + file_format);
+  auto realpath = Common::GetRealPath(filename + ".npy");
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed.";
     return false;
@@ -160,10 +198,8 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     MS_LOG(ERROR) << "Open file " << realpath.value() << " fail.";
     return false;
   }
-  if (dump_format_ == 1) {
-    std::string npy_header = GenerateNpyHeader(shape, type);
-    fd << npy_header;
-  }
+  std::string npy_header = GenerateNpyHeader(shape, type);
+  fd << npy_header;
   (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
   fd.close();
   return true;
@@ -186,7 +222,6 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   ParseInputOutput(*input_output);
   ParseKernels(*kernels);
   ParseSupportDevice(*support_device);
-  ParseDumpFormat(*common_dump_settings);
 }
 
 void DumpJsonParser::ParseAsyncDumpSetting(const nlohmann::json &content) {
@@ -240,18 +275,7 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kDumpMode);
   dump_mode_ = content;
   if (dump_mode_ != 0 && dump_mode_ != 1) {
-    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0 or 1, but got " << dump_format_;
-  }
-}
-
-void DumpJsonParser::ParseDumpFormat(const nlohmann::json &content) {
-  auto iter = content.find(kDumpFormat);
-  if (iter == content.end()) {
-    return;
-  }
-  dump_format_ = *iter;
-  if (dump_format_ != 0 && dump_format_ != 1) {
-    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_format should be 0(.bin) or 1(.npy), but got " << dump_format_;
+    MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0 or 1, but got " << dump_mode_;
   }
 }
 

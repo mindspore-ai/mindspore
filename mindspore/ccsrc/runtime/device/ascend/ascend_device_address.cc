@@ -670,16 +670,8 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     MS_LOG(ERROR) << "Dump file path is null!";
     return ret;
   }
-  std::string shape = "shape";
-  if (host_shape.size()) {
-    for (auto &value : host_shape) {
-      shape = shape + '_' + std::to_string(value);
-    }
-  } else {
-    shape = shape + "_0";
-  }
   if (trans_flag) {
-    std::string path = filepath + '_' + shape + '_' + TypeIdToType(host_type)->ToString() + '_' + host_fmt;
+    std::string path = filepath + '.' + host_fmt;
     MS_LOG(INFO) << "E2E Dump path is " << path;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     size_t host_size = out_tensor->data().nbytes();
@@ -695,7 +687,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     if (ret_rt_memcpy != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
     }
-    std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_;
+    std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
     ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape_, type_id_);
   }

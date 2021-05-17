@@ -106,7 +106,8 @@ void GPUSession::Init(uint32_t device_id) {
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   auto &json_parser = DumpJsonParser::GetInstance();
   // Dump json config file if dump is enabled
-  json_parser.CopyJsonToDir();
+  json_parser.CopyJsonToDir(device_id);
+  json_parser.CopyMSCfgJsonToDir(device_id);
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
   InitExecutor(kGPUDevice, device_id);
 }
@@ -391,7 +392,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   }
   if (json_parser.e2e_dump_enabled()) {
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    std::string root_dir = json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id);
+    std::string root_dir = json_parser.path() + "/rank_" + std::to_string(device_id);
     std::string target_dir = root_dir + "/graphs";
     std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
     DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);

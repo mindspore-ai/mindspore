@@ -55,6 +55,9 @@ class E2eDump {
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);
   inline static unsigned int starting_graph_id = INT32_MAX;
+
+  // Get time stamp since epoch in microseconds
+  static uint64_t GetTimeStamp();
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_

@@ -29,15 +29,7 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
     MS_LOG(ERROR) << "Dump file path is null!";
     return ret;
   }
-  std::string shape = "shape";
-  if (host_shape.empty()) {
-    shape += "_0";
-  } else {
-    for (auto &value : host_shape) {
-      shape += '_' + std::to_string(value);
-    }
-  }
-  std::string path = filepath + '_' + shape + '_' + TypeIdToType(type_id_)->ToString() + '_' + format_;
+  std::string path = filepath + '.' + format_;
   MS_LOG(DEBUG) << "E2E Dump path is " << path;
   ret = DumpJsonParser::DumpToFile(path, ptr_, size_, host_shape, host_type);
   return ret;
