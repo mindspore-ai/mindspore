@@ -35,7 +35,7 @@ typedef struct {
 
 /// \brief NpuDeviceInfo defined for NPU's configuration information.
 typedef struct {
-  int frequency_ = 3; /**< npu frequency inference */
+  int frequency_ = 3; /**< npu frequency inference, low 1, medium 2, high 3, extreme 4, other values will be set to 3 */
 } NpuDeviceInfo;
 
 /// \brief DeviceInfo defined for backend's configuration information.

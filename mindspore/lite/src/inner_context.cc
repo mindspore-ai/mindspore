@@ -24,6 +24,7 @@
 #include "src/common/utils.h"
 #ifdef SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
+#include "include/HiAiModelManagerType.h"
 #endif
 #ifdef SUPPORT_GPU
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
@@ -84,6 +85,19 @@ int InnerContext::Init() {
   }
   if (IsNpuEnabled()) {
     MS_LOG(DEBUG) << "NPU enabled.";
+#ifdef SUPPORT_NPU
+    for (auto &device_ctx : this->device_list_) {
+      if (device_ctx.device_type_ == DT_NPU &&
+          device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_LOW &&
+          device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_MEDIUM &&
+          device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_HIGH &&
+          device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_EXTREME) {
+        MS_LOG(INFO) << "NPU frequency set to 3, original value "
+                     << device_ctx.device_info_.npu_device_info_.frequency_;
+        device_ctx.device_info_.npu_device_info_.frequency_ = hiai::AiModelDescription_Frequency_HIGH;
+      }
+    }
+#endif
   }
   if (IsGpuEnabled()) {
     MS_LOG(DEBUG) << "GPU enabled.";
