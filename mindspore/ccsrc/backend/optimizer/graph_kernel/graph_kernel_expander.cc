@@ -68,8 +68,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimBiasAdd,
     prim::kPrimFusedAdam,
     prim::kPrimFusedAdamWeightDecay,
-    prim::kPrimBatchNorm,
-    prim::kPrimBatchNormGrad,
     prim::kPrimReduceMean,
     prim::kPrimMaximumGrad,
     prim::kPrimMinimumGrad,
