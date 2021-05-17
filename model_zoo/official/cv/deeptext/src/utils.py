@@ -15,7 +15,7 @@
 """metrics utils"""
 
 import numpy as np
-from src.config import config
+from model_utils.config import config
 
 
 def calc_iou(bbox_pred, bbox_ground):

@@ -26,7 +26,7 @@ import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as CC
 import mindspore.common.dtype as mstype
 from mindspore.mindrecord import FileWriter
-from src.config import config
+from model_utils.config import config
 
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):

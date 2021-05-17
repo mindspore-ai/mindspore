@@ -61,10 +61,12 @@ then
 fi
 mkdir ./eval
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
+cp -r ../model_utils ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"
-python eval.py --device_id=$DEVICE_ID --imgs_path=$PATH1 --annos_path=$PATH2 --checkpoint_path=$PATH3 &> log &
+python eval.py --imgs_path=$PATH1 --annos_path=$PATH2 --checkpoint_path=$PATH3 &> log &
 cd ..
