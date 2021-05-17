@@ -653,9 +653,10 @@ std::string AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &
   return GetOutputReshapeType(kernel_with_index.first, kernel_with_index.second);
 }
 
-std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
+std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &node,
+                                                             const abstract::BaseShapePtr &base_shape,
+                                                             size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  abstract::BaseShapePtr base_shape = node->Shape();
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     if (output_idx == 0) {
@@ -689,6 +690,11 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString()
                     << " trace: " << trace::DumpSourceLines(node);
+}
+
+std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  return GetOutputInferShape(node, node->Shape(), output_idx);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
@@ -763,36 +769,33 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
   return build_info->GetOutputReshapeType(output_idx);
 }
 
-TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto get_single_type = [](const TypePtr &type_ptr) -> TypeId {
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    if (type_ptr->isa<TensorType>()) {
-      auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(tensor_ptr);
-      TypePtr elem = tensor_ptr->element();
-      MS_EXCEPTION_IF_NULL(elem);
-      return elem->type_id();
-    }
-    if (type_ptr->isa<Number>()) {
-      return type_ptr->type_id();
-    }
-    return type_ptr->type_id();
-  };
-  auto get_tuple_type = [get_single_type](const TypePtr &type_ptr, size_t output_idx) -> TypeId {
-    MS_EXCEPTION_IF_NULL(type_ptr);
-    if (!type_ptr->isa<Tuple>()) {
-      return get_single_type(type_ptr);
-    }
+TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
+  auto type_ptr = type;
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  if (type_ptr->isa<Tuple>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << " must be less than output number " << tuple_ptr->size();
     }
-    return get_single_type((*tuple_ptr)[output_idx]);
-  };
-  TypePtr type_ptr = node->Type();
-  return get_tuple_type(type_ptr, output_idx);
+    type_ptr = (*tuple_ptr)[output_idx];
+    MS_EXCEPTION_IF_NULL(type_ptr);
+  }
+
+  if (type_ptr->isa<TensorType>()) {
+    auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    TypePtr elem = tensor_ptr->element();
+    MS_EXCEPTION_IF_NULL(elem);
+    return elem->type_id();
+  }
+
+  return type_ptr->type_id();
+}
+
+TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  return GetOutputInferDataType(node->Type(), output_idx);
 }
 
 TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx) {

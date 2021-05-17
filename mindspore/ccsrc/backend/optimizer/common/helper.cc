@@ -173,6 +173,8 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
+  auto type_ptr = node->Type();
+  auto shape_ptr = node->Shape();
   for (size_t i = 0; i < output_num; i++) {
     int64_t temp = SizeToLong(i);
     auto idx = NewValueNode(temp);
@@ -182,8 +184,8 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
     idx->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     MS_EXCEPTION_IF_NULL(tuple_getitem);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(node, i)},
-                                        {AnfAlgo::GetOutputInferShape(node, i)}, tuple_getitem.get());
+    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(type_ptr, i)},
+                                        {AnfAlgo::GetOutputInferShape(node, shape_ptr, i)}, tuple_getitem.get());
     (*outputs).push_back(tuple_getitem);
   }
 }
