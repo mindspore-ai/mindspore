@@ -73,6 +73,7 @@ def get_dropoutgrad_reducesum_output(x, y, z, enable_stitch_fusion):
 
 
 def test_dropoutgrad_reducesum(shape, dtype):
+    np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     z = Tensor(np.random.normal(0, 1, shape).astype(dtype))

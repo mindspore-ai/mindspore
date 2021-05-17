@@ -70,6 +70,7 @@ def get_layernorm_output(x, y, z, enable_stitch_fusion):
 
 
 def test_layernorm(shape1, shape2, dtype):
+    np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape1).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape1).astype(dtype))
     z = Tensor(np.random.normal(0, 1, shape2).astype(dtype))
