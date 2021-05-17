@@ -412,17 +412,23 @@ class Parameter : public ANode {
     return shared_from_this() == other.shared_from_this();
   }
 
-  void set_used_by_real_kernel(bool used) { is_real_kernel_used_ = used; }
-  bool is_used_by_real_kernel() { return is_real_kernel_used_; }
+  void SetNotUsedByRealKernelInGraph(uint32_t graph_id) { (void)not_used_in_graphs_.insert(graph_id); }
 
-  void set_used_by_dynamic_kernel(bool used) { is_used_by_dynamic_kernel_ = used; }
-  bool is_used_by_dynamic_kernel() { return is_used_by_dynamic_kernel_; }
+  bool IsUsedByRealKernelInGraph(uint32_t graph_id) const {
+    if (not_used_in_graphs_.find(graph_id) != not_used_in_graphs_.end()) {
+      return false;
+    }
+    return true;
+  }
+
+  void set_has_dynamic_shape(bool flag) { has_dynamic_shape_ = flag; }
+  bool has_dynamic_shape() const { return has_dynamic_shape_; }
 
  private:
   std::string name_;
   bool has_default_;
-  bool is_real_kernel_used_ = true;
-  bool is_used_by_dynamic_kernel_ = false;
+  std::set<uint32_t> not_used_in_graphs_;
+  bool has_dynamic_shape_ = false;
   ValuePtr default_param_;
   // The count of graphs using the parameter.
   int used_graph_count_;

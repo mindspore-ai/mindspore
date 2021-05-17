@@ -414,6 +414,8 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
 }
 }  // namespace
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
@@ -433,7 +435,8 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     auto refresh_format = selected_kernel_info->GetInputFormat(input_index);
     std::vector<std::string> output_format = {refresh_format};
     // if not find in host convert format map means the host has not registered the convert function of this format
-    if (trans::kTransFormatMapOfHostToDevice.find(refresh_format) == trans::kTransFormatMapOfHostToDevice.end() &&
+    if ((trans::kTransFormatMapOfHostToDevice.find(refresh_format) == trans::kTransFormatMapOfHostToDevice.end() ||
+         !context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) &&
         refresh_format != kOpFormat_DEFAULT) {
       output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
     }

@@ -281,33 +281,30 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   auto graph_valid_input = graph->valid_inputs();
   graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
+  auto add_need_alloc_nodes = [&need_alloc_nodes, this](const AnfNodePtr &node) {
+    if (!node->isa<Parameter>()) {
+      return;
+    }
+    if (NodeOutputDeviceAddressExist(node, 0)) {
+      return;
+    }
+    need_alloc_nodes.push_back(node);
+  };
+
   for (size_t i = 0; i < graph_inputs.size(); ++i) {
     auto input_node = graph_inputs[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (i < graph_valid_input.size() && !graph_valid_input[i]) {
       continue;
     }
-
     if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
       auto outs = AnfAlgo::GetAllOutput(input_node);
       for (auto &out : outs) {
         MS_EXCEPTION_IF_NULL(out);
-        if (!out->isa<Parameter>()) {
-          continue;
-        }
-        if (NodeOutputDeviceAddressExist(out, 0)) {
-          continue;
-        }
-        need_alloc_nodes.push_back(out);
+        add_need_alloc_nodes(out);
       }
     }
-    if (!input_node->isa<Parameter>()) {
-      continue;
-    }
-    if (NodeOutputDeviceAddressExist(input_node, 0)) {
-      continue;
-    }
-    need_alloc_nodes.push_back(input_node);
+    add_need_alloc_nodes(input_node);
   }
 #if (ENABLE_CPU && !_WIN32)
   bool ps_cache_check = false;

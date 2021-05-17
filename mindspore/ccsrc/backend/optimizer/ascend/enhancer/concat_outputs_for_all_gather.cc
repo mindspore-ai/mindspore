@@ -112,6 +112,10 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
     auto kernel_build_info = GenerateKernelBuildInfo(concat, output_info, inputs_size, i);
     AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, concat.get());
+    auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, i)) {
+      kernel_graph->ReplaceInternalOutput(node, concat, i, 0);
+    }
     make_tuple_inputs.push_back(concat);
   }
 

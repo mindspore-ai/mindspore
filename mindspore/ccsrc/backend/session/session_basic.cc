@@ -66,9 +66,14 @@ bool IsShapeDynamic(const abstract::ShapePtr &shape) {
   }
   return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
 }
-bool RecursiveCheck(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, size_t *idx) {
+bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
+  auto node = kernel.first;
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
+  if (kernel.second > 1 &&
+      (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
+    return false;
+  }
   if (AnfAlgo::IsRealKernel(node)) {
     return true;
   }
@@ -77,7 +82,7 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, 
   if (*idx <= max_depth) {
     auto users = manager->node_users()[node];
     if (std::any_of(users.begin(), users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
-          return RecursiveCheck(manager, kernel.first, idx);
+          return RecursiveCheck(manager, kernel, idx);
         })) {
       return true;
     }
@@ -91,7 +96,7 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   auto node_users = manager->node_users()[node];
   size_t idx = 0;
   if (std::any_of(node_users.begin(), node_users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
-        return RecursiveCheck(manager, kernel.first, &idx);
+        return RecursiveCheck(manager, kernel, &idx);
       })) {
     return true;
   }
@@ -102,31 +107,19 @@ void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &m
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(manager);
   auto input_nodes = graph->input_nodes();
-  for (auto input_node : input_nodes) {
+  for (auto &input_node : input_nodes) {
     if (input_node->isa<Parameter>()) {
       auto node_ptr = input_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(node_ptr);
       if (!IsUsedByRealKernel(manager, input_node)) {
-        node_ptr->set_used_by_real_kernel(false);
+        node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
       }
       auto shape = node_ptr->Shape();
       if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
-        node_ptr->set_used_by_dynamic_kernel(true);
+        node_ptr->set_has_dynamic_shape(true);
       }
     }
   }
-}
-
-bool CheckIfNeedCreateOutputTensor(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<Parameter>()) {
-    auto node_ptr = node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(node_ptr);
-    if (!node_ptr->is_used_by_real_kernel()) {
-      return true;
-    }
-  }
-  return false;
 }
 
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
@@ -159,21 +152,23 @@ BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_outpu
     MS_EXCEPTION_IF_NULL(value_node);
     return value_node->value();
   }
+  if (IsPynativeMode()) {
+    return nullptr;
+  }
+  if (!node->isa<Parameter>()) {
+    return nullptr;
+  }
   MS_EXCEPTION_IF_NULL(graph);
-  bool output_addr_exist = AnfAlgo::OutputAddrExist(node, node_output_pair.second);
-  if (!output_addr_exist || (CheckIfNeedCreateOutputTensor(node) && !IsPynativeMode())) {
-    if (node->isa<Parameter>()) {
-      for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
-        if (input_idx >= input_tensors.size()) {
-          MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
-        }
-        if (graph->inputs()[input_idx] == node) {
-          return input_tensors[input_idx];
-        }
-      }
-      if (!output_addr_exist) {
-        MS_LOG(EXCEPTION) << "Parameter : " << node->DebugString() << " has no output addr";
-      }
+  auto param_node = node->cast<ParameterPtr>();
+  if (param_node != nullptr && param_node->IsUsedByRealKernelInGraph(graph->graph_id())) {
+    return nullptr;
+  }
+  for (size_t input_idx = 0; input_idx < graph->inputs().size(); input_idx++) {
+    if (input_idx >= input_tensors.size()) {
+      MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
+    }
+    if (graph->inputs()[input_idx] == node) {
+      return input_tensors[input_idx];
     }
   }
   return nullptr;
@@ -1795,7 +1790,8 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
   auto &users = front_func_graph_manager->node_users()[front_node];
   std::vector<AnfNodePtr> result;
   for (auto &user : users) {
-    if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimDepend)) {
+    if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimDepend) ||
+        AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimLoad)) {
       auto depend_cnode = user.first->cast<CNodePtr>();
       if (depend_cnode == nullptr) {
         continue;
@@ -1825,6 +1821,14 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
   }
   if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
     return front_node;
+  }
+  if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimMakeTuple)) {
+    auto cnode = front_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto &inputs = cnode->inputs();
+    if (inputs.size() > 1) {
+      return GetSupportedInternalNode(inputs[1]);
+    }
   }
   if (AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimDepend)) {
     auto cnode = front_node->cast<CNodePtr>();
@@ -1913,6 +1917,9 @@ void SessionBasic::HandleInternalOutput(const AnfNodePtr &input_front_node, cons
         if (partial_target != kNoTarget && partial_target != kernel_target) {
           unique_target = false;
         }
+        continue;
+      }
+      if (AnfAlgo::CheckPrimitiveType(user, prim::kPrimUpdateState)) {
         continue;
       }
       if (!CNodeFirstInputIsPrimitive(user)) {

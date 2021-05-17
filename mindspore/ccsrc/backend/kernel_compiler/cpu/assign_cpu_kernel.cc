@@ -18,6 +18,7 @@
 #include <string>
 #include <map>
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,21 +46,46 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs) {
+                             const std::vector<AddressPtr> &) {
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
     MS_LOG(EXCEPTION) << "Memcpy size must <= max_size, but got memcpy size is : " << total_size
                       << ", max size is : " << max_size;
   }
-  int ret = memcpy_s(inputs[0]->addr, max_size, inputs[1]->addr, total_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
+  constexpr size_t kBlockSize = 10000;
+  size_t thread_num = (total_size + kBlockSize - 1) / kBlockSize;
+  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
+  if (thread_num == 0) {
+    return true;
   }
-  ret = memcpy_s(outputs[0]->addr, max_size, inputs[1]->addr, total_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
+  size_t stride = total_size / thread_num;
+  std::vector<common::Task> tasks;
+  size_t thread_index = 0;
+  auto input0_addr = reinterpret_cast<int8_t *>(inputs[0]->addr);
+  auto input1_addr = reinterpret_cast<int8_t *>(inputs[1]->addr);
+  size_t length = stride;
+  while (thread_index < thread_num) {
+    auto thread_stride = stride * thread_index;
+    size_t max_length = total_size - thread_stride;
+    if (thread_index == thread_num - 1) {
+      length = max_length;
+    }
+    int8_t *input0 = input0_addr + thread_stride;
+    int8_t *input1 = input1_addr + thread_stride;
+    auto block = [input0, input1, max_length, length]() {
+      int ret = memcpy_s(input0, max_length, input1, length);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "memcpy_s error, error no " << ret;
+        return common::FAIL;
+      }
+      return common::SUCCESS;
+    };
+    tasks.emplace_back(block);
+    thread_index++;
   }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

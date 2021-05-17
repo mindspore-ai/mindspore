@@ -331,7 +331,15 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     auto size = LongToSize(tensor->data().nbytes());
-    if (input_node->isa<Parameter>() && input_node->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
+    if (!input_node->isa<Parameter>()) {
+      continue;
+    }
+    auto input_param = input_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(input_param);
+    if (!input_param->IsUsedByRealKernelInGraph(kernel_graph->graph_id())) {
+      tensor->set_sync_status(kNoNeedSync);
+      continue;
+    } else if (input_param->has_dynamic_shape()) {
       auto tensor_shape = tensor->shape();
       std::vector<size_t> shape_tmp;
       (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
@@ -339,7 +347,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
                                           input_node.get());
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
-    if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
+    if (AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
 #if (ENABLE_CPU && !_WIN32)
       const std::string &param_name = input_node->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {

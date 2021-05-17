@@ -298,41 +298,46 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
   for (size_t input_idx = 0; input_idx < input_nodes.size(); ++input_idx) {
     auto &item = input_nodes[input_idx];
     MS_EXCEPTION_IF_NULL(item);
-    if (item->isa<Parameter>() && !HasAbstractMonad(item)) {
-      auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
-      auto tensor = inputs[input_idx];
-      MS_EXCEPTION_IF_NULL(address);
-      MS_EXCEPTION_IF_NULL(tensor);
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-        auto tensor_address = tensor->device_address();
-        if (AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()) && tensor_address != nullptr &&
-            tensor_address != address) {
-          tensor->data_sync();
-        }
-      }
-      if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {
-        address->ptr_ = tensor->data_c();
-      } else {
-        ShapeVector data_shape = tensor->shape();
-        size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(),
-                                             GetTypeByte(TypeIdToType(address->type_id_)), std::multiplies<size_t>());
-        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
-        if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                       tensor->data_c())) {
-          MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
-        }
-      }
-      if (item->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
-        auto tensor_shape = tensor->shape();
-        std::vector<size_t> shape_tmp;
-        (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
-        AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp}, item.get());
-      }
-      address->ref_count_ = INIT_NODE_REF;
-      tensor->set_device_address(address);
+    if (!item->isa<Parameter>() || HasAbstractMonad(item)) {
+      continue;
     }
+    auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
+    auto tensor = inputs[input_idx];
+    MS_EXCEPTION_IF_NULL(address);
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+      auto tensor_address = tensor->device_address();
+      if (AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()) && tensor_address != nullptr &&
+          tensor_address != address) {
+        tensor->data_sync();
+      }
+    }
+    if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {
+      address->ptr_ = tensor->data_c();
+    } else {
+      ShapeVector data_shape = tensor->shape();
+      size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(),
+                                           GetTypeByte(TypeIdToType(address->type_id_)), std::multiplies<size_t>());
+      if (address->ptr_ == nullptr || address->size_ != tensor_size) {
+        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
+        address->size_ = tensor_size;
+      }
+      if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                     tensor->data_c())) {
+        MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
+      }
+    }
+    auto input_param = item->cast<ParameterPtr>();
+    if (input_param != nullptr && input_param->IsUsedByRealKernelInGraph(kernel_graph.graph_id())) {
+      auto tensor_shape = tensor->shape();
+      std::vector<size_t> shape_tmp;
+      (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
+      AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp}, item.get());
+    }
+    address->ref_count_ = INIT_NODE_REF;
+    tensor->set_device_address(address);
   }
 }
 
