@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export, context
 
-from src.config import config
+from src.config import config_ascend, config_gpu, config_cpu
 from src.inceptionv4 import Inceptionv4
 
 parser = argparse.ArgumentParser(description='inceptionv4 export')
@@ -38,6 +38,13 @@ args = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
+
+CFG_DICT = {
+    "Ascend": config_ascend,
+    "GPU": config_gpu,
+    "CPU": config_cpu,
+}
+config = CFG_DICT[args.device_target]
 
 if __name__ == '__main__':
     net = Inceptionv4(classes=config.num_classes)
