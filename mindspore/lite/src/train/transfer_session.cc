@@ -40,7 +40,7 @@
 namespace mindspore {
 namespace lite {
 
-TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, lite::Context *context)
+TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, const lite::Context *context)
     : is_valid_(false) {
   lite_model_ = reinterpret_cast<char *>(malloc(size_backbone));
   size_backbone_ = size_backbone;
@@ -179,10 +179,25 @@ std::unordered_map<size_t, size_t> TransferSession::ConnectionMap() {
   return map;
 }
 
-int TransferSession::ExportInference(std::string file_name) {
+int TransferSession::Export(const std::string &filename, ModelType model_type, QuantType quant_type,
+                            FormatType format) {
+  if (format != FT_FLATBUFFER) {
+    MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
+    return RET_ERROR;
+  }
+
+  if (quant_type != QT_DEFAULT) {
+    MS_LOG(ERROR) << "Currently only QuantType default is supported";
+    return RET_ERROR;
+  }
+
+  if (model_type == MT_TRAIN) {
+    return TrainSession::Export(filename, model_type, quant_type, format);
+  }
+
   bool orig_train_state = IsTrain();
   Eval();
-  TrainExport texport(file_name);
+  TrainExport texport(filename);
   int status = texport.LoadModel(lite_model_, size_backbone_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot init export";
@@ -197,14 +212,14 @@ int TransferSession::ExportInference(std::string file_name) {
       return status;
     }
   }
-  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_);
+  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_, quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot serialize head";
     return status;
   }
   status = texport.SaveToFile();
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "failed to save to " << file_name;
+    MS_LOG(ERROR) << "failed to save to " << filename;
     return status;
   }
   if (orig_train_state) Train();
@@ -213,10 +228,10 @@ int TransferSession::ExportInference(std::string file_name) {
 
 }  // namespace lite
 
-session::TrainSession *session::TrainSession::CreateTransferSession(const char *model_buf_backbone,
-                                                                    size_t size_backbone, const char *model_buf_head,
-                                                                    size_t size_head, lite::Context *context,
-                                                                    bool train_mode) {
+static session::TrainSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
+                                                       const char *model_buf_head, size_t size_head,
+                                                       const lite::Context *context, bool train_mode,
+                                                       const lite::TrainCfg *cfg) {
   auto ValidModelSize = [](size_t size) -> bool {
     constexpr size_t MaxModelSize = 1024 * 1024 * 1024ULL;  // 1G B
     return size < MaxModelSize && size > 0;
@@ -240,7 +255,7 @@ session::TrainSession *session::TrainSession::CreateTransferSession(const char *
     return nullptr;
   }
 
-  auto ret = session->Init(context);
+  auto ret = session->Init(context, cfg);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init transfer session failed";
     delete session;
@@ -282,9 +297,10 @@ session::TrainSession *session::TrainSession::CreateTransferSession(const char *
 
 session::TrainSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,
                                                                     const std::string &filename_head,
-                                                                    lite::Context *context, bool train_mode) {
-  size_t size_head = -1;
-  size_t size_backbone = -1;
+                                                                    const lite::Context *ctxt, bool train_mode,
+                                                                    const lite::TrainCfg *cfg) {
+  size_t size_head = 0;
+  size_t size_backbone = 0;
   auto buf_head = lite::ReadFileToBuf(filename_head, &size_head);
   if (buf_head == nullptr) {
     return nullptr;
@@ -293,8 +309,7 @@ session::TrainSession *session::TrainSession::CreateTransferSession(const std::s
   if (buf_backbone == nullptr) {
     return nullptr;
   }
-  return session::TrainSession::CreateTransferSession(buf_backbone.get(), size_backbone, buf_head.get(), size_head,
-                                                      context, train_mode);
+  return CreateTransferSessionInt(buf_backbone.get(), size_backbone, buf_head.get(), size_head, ctxt, train_mode, cfg);
 }
 
 }  // namespace mindspore

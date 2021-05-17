@@ -196,7 +196,7 @@ class MS_API NetTrain {
 
   int MarkAccuracy(session::LiteSession *lite_session);
   int CompareOutput(const session::LiteSession &lite_session);
-  int SaveModels(session::TrainSession *session, mindspore::lite::Model *model);
+  int SaveModels(session::TrainSession *session);
   int CheckExecutionOfSavedModels();
   NetTrainFlags *flags_;
 

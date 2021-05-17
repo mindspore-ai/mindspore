@@ -112,6 +112,9 @@ if [ "${TARGET}" == "arm64" ]; then
   echo "========Training on Device====="
   adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh"
 
+  echo "===Evaluating trained Model====="
+  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh"
+  echo
 else
   cd ${PACKAGE} || exit 1
   echo "==Evaluating Untrained Model==="
@@ -120,5 +123,8 @@ else
   echo "======Training Locally========="
   ./train.sh
 
+  echo "===Evaluating trained Model====="
+  ./eval.sh
+  cd ..
 fi
 

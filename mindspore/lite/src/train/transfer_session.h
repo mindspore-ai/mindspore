@@ -48,7 +48,7 @@ namespace lite {
 
 class TransferSession : public lite::TrainSession {
  public:
-  explicit TransferSession(const char *model_buf_backbone, size_t size_backbone, lite::Context *context);
+  explicit TransferSession(const char *model_buf_backbone, size_t size_backbone, const lite::Context *context);
 
   ~TransferSession();
 
@@ -61,7 +61,7 @@ class TransferSession : public lite::TrainSession {
   mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override;
 
   int CompileTransferGraph();
-  int ExportInference(std::string file_name) override;
+  int Export(const std::string &fb_name, ModelType model_type, QuantType quant_type, FormatType) override;
 
  protected:
   lite::LiteSession *backbone_session_ = nullptr;

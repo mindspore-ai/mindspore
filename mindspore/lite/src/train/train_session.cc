@@ -55,6 +55,13 @@ TrainSession::TrainSession() {
   }
 }
 
+int TrainSession::Init(const Context *context, const TrainCfg *train_cfg) {
+  if (train_cfg != nullptr) {
+    train_cfg_ = *train_cfg;
+  }
+  return lite::LiteSession::Init(context);
+}
+
 std::vector<CreatorOp> TrainSession::ReplaceOps() {
   const std::vector<CreatorOp> replace = {
     // currently no ops are Hijacked by TrainSession
@@ -421,7 +428,7 @@ bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
           kernel->type() == schema::PrimitiveType_SmoothL1LossGrad ||
           kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
           kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad) ||
-         kernel->name().find(get_loss_name()) != std::string::npos;
+         kernel->name().find(train_cfg_.loss_name_) != std::string::npos;
 }
 
 bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
@@ -442,19 +449,21 @@ bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
-int TrainSession::SetLossName(std::string loss_name) {
-  session::TrainSession::SetLossName(loss_name);
-  CompileEvalOutputs();
-  CompileInferenceKernels();
-  if (IsEval()) {
-    output_node_map_ = eval_output_node_map_;
-    output_tensor_map_ = eval_output_tensor_map_;
-    output_tensor_names_ = eval_output_tensor_names_;
+int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantType quant_type, FormatType format) {
+  if (format != FT_FLATBUFFER) {
+    MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
+    return RET_ERROR;
   }
-  return RET_OK;
-}
 
-int TrainSession::ExportInference(std::string file_name) {
+  if (quant_type != QT_DEFAULT) {
+    MS_LOG(ERROR) << "Currently only QuantType default is supported";
+    return RET_ERROR;
+  }
+
+  if (model_type == MT_TRAIN) {
+    return lite::Model::Export(model_, file_name.c_str());
+  }
+
   bool orig_train_state = IsTrain();
   Eval();
   TrainExport texport(file_name);
@@ -463,7 +472,8 @@ int TrainSession::ExportInference(std::string file_name) {
     MS_LOG(ERROR) << "cannot init export";
     return status;
   }
-  status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_);
+  status = texport.ExportNet((model_type == MT_TRAIN) ? kernels_ : inference_kernels_, tensors_, GetOutputTensorNames(),
+                             model_, quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot export Network";
     return status;
@@ -479,19 +489,25 @@ int TrainSession::ExportInference(std::string file_name) {
 
 }  // namespace lite
 
-session::TrainSession *session::TrainSession::CreateSession(mindspore::lite::Model *model, lite::Context *context,
-                                                            bool train_mode) {
+session::TrainSession *session::TrainSession::CreateSession(const std::string &filename, const lite::Context *context,
+                                                            bool train_mode, const lite::TrainCfg *cfg) {
   auto session = new (std::nothrow) lite::TrainSession();
   if (session == nullptr) {
-    delete model;
     MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
-  auto ret = session->Init(context);
+
+  auto ret = session->Init(context, cfg);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init session failed";
     delete session;
-    delete model;
+    return nullptr;
+  }
+
+  auto *model = mindspore::lite::Model::Import(filename.c_str());
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "create model for train session failed";
+    delete session;
     return nullptr;
   }
 

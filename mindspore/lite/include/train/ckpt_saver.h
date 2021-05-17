@@ -29,8 +29,8 @@ namespace lite {
 
 class CkptSaver : public session::TrainLoopCallBack {
  public:
-  CkptSaver(int save_every_n, const std::string &filename_prefix, mindspore::lite::Model *model)
-      : save_every_n_(save_every_n), filename_prefix_(filename_prefix), model_(model) {}
+  CkptSaver(int save_every_n, const std::string &filename_prefix)
+      : save_every_n_(save_every_n), filename_prefix_(filename_prefix) {}
 
   ~CkptSaver() = default;
 
@@ -38,7 +38,7 @@ class CkptSaver : public session::TrainLoopCallBack {
     if ((cb_data.epoch_ + 1) % save_every_n_ == 0) {
       auto cpkt_fn = filename_prefix_ + "_trained_" + std::to_string(cb_data.epoch_ + 1) + ".ms";
       remove(cpkt_fn.c_str());
-      Model::Export(model_, cpkt_fn.c_str());
+      cb_data.session_->Export(cpkt_fn);
     }
     return session::RET_CONTINUE;
   }
@@ -46,7 +46,6 @@ class CkptSaver : public session::TrainLoopCallBack {
  private:
   int save_every_n_;
   std::string filename_prefix_;
-  mindspore::lite::Model *model_ = nullptr;
 };
 
 }  // namespace lite
