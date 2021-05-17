@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,11 +340,17 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
       }
     }
   } else if (graph_proto_list_.size() == 1) {
+    if (device_target_ == kGPUDevice && num_step_ != 0) {
+      if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
+        CommandLoop();
+      }
+      debug_services_->ResetLoadedTensors();
+    }
     // In single graph case, reset graph_ptr_ to be nullptr for the initial step
     if (num_step_ == 0) {
       graph_ptr_ = nullptr;
+      CheckGraphPtr(graph_ptr);
     }
-    CheckGraphPtr(graph_ptr);
   }
   // resets for the new graph
   suspended_at_last_kernel_ = 0;
