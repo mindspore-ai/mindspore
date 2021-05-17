@@ -38,6 +38,8 @@ HcclResult HcclAdapter::HcclBroadcast(void *, uint64_t, HcclDataType, uint32_t, 
 HcclResult HcclAdapter::HcclAllReduce(void *, void *, uint64_t, HcclDataType, HcclReduceOp, aclrtStream) const {
   return HCCL_SUCCESS;
 }
-HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &, HExecCallBack) const { return HCCL_SUCCESS; }
+HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
+  return HCCL_SUCCESS;
+}
 }  // namespace hccl
 }  // namespace mindspore

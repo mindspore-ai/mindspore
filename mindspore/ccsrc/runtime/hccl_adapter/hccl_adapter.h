@@ -62,7 +62,7 @@ class HcclAdapter {
                            aclrtStream stream) const;
 
   // for enqueue op
-  HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, HExecCallBack callback) const;
+  HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
 
  private:
   HcclAdapter() = default;
@@ -86,19 +86,19 @@ class HcclAdapter {
   GetHcclKernelInfoStoreFunObj get_hccl_kernel_info_store_ = nullptr;
   GetAllKernelBuilderFunObj get_all_kernel_builder_ = nullptr;
 
-  InitHcclCommFunObj init_hccl_comm_ = nullptr;
-  FinalizeHcclCommFunObj finalize_hccl_comm_ = nullptr;
-  LaunchHcclBroadcastFunObj launch_hccl_broadcast_ = nullptr;
-  LaunchHcclAllReduceFunObj launch_hccl_all_reduce_ = nullptr;
+  HcclCommInitClusterInfoFunObj init_hccl_comm_ = nullptr;
+  HcclCommDestroyFunObj finalize_hccl_comm_ = nullptr;
+  HcclBroadcastFunObj launch_hccl_broadcast_ = nullptr;
+  HcclAllReduceFunObj launch_hccl_all_reduce_ = nullptr;
 
-  HcclCreateGroupFunObj hccl_create_group_ = nullptr;
-  HcclDestroyGroupFunObj hccl_destroy_group_ = nullptr;
-  HcclGetRankIdFunObj hccl_get_rank_id_ = nullptr;
-  HcclGetRankSizeFunObj hccl_get_rank_size_ = nullptr;
+  HcomCreateGroupFunObj hccl_create_group_ = nullptr;
+  HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;
+  HcomGetRankIdFunObj hccl_get_rank_id_ = nullptr;
+  HcomGetRankSizeFunObj hccl_get_rank_size_ = nullptr;
 
-  HcclExecInitializeFunObj hccl_exec_initialize_ = nullptr;
-  HcclExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
-  HcclExecEnqueueOpFunObj hccl_exec_enqueue_op_ = nullptr;
+  HcomExecInitializeFunObj hccl_exec_initialize_ = nullptr;
+  HcomExecFinalizeFunObj hccl_exec_finalize_ = nullptr;
+  HcomExecEnqueueOperationFunObj hccl_exec_enqueue_op_ = nullptr;
 
   HcclComm hccl_comm_ = nullptr;
 
