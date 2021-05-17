@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_H_
-#define MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_H_
+#ifndef MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_H_
+#define MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_H_
 
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 #include "include/model.h"
 #include "include/ms_tensor.h"
 #include "schema/model_generated.h"
@@ -44,7 +45,7 @@ class MS_API KernelInterface {
     return 0;
   }
 };
-typedef KernelInterface *(*KernelInterfaceCreator)();
+MS_API typedef std::shared_ptr<KernelInterface> (*KernelInterfaceCreator)();
 
 class MS_API RegisterKernelInterface {
  public:
@@ -52,7 +53,8 @@ class MS_API RegisterKernelInterface {
   int CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
   bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
-  KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
+  std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
+                                                              const schema::Primitive *primitive);
   virtual ~RegisterKernelInterface() = default;
 
  private:
@@ -72,11 +74,11 @@ class MS_API KernelInterfaceReg {
 };
 
 #define REGISTER_KERNEL_INTERFACE(provider, op_type, creator) \
-  static KernelInterfaceReg g_##provider##op_type##_inter_reg(provider, op_type, creator);
+  static KernelInterfaceReg g_##provider##op_type##_inter_reg(#provider, op_type, creator);
 
 #define REGISTER_CUSTOM_KERNEL_INTERFACE(provider, op_type, creator) \
-  static KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(provider, op_type, creator);
+  static KernelInterfaceReg g_##provider##op_type##_custom_inter_reg(#provider, #op_type, creator);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_H_
+#endif  // MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_H_

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/registry/kernel_interface_registry.h"
+#include <memory>
 #include "src/registry/kernel_interface.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -46,10 +47,7 @@ bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node, std::set<s
   auto op_type = primitive->value_type();
   if (op_type == schema::PrimitiveType_Custom) {
     auto &&custom_type = GetCustomType(primitive);
-    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type, &providers](auto &&item) {
-      if (providers.find(item.first) == providers.end()) {
-        return false;
-      }
+    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type](auto &&item) {
       if (item.second[custom_type] != nullptr) {
         return true;
       }
@@ -57,13 +55,17 @@ bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node, std::set<s
     });
   }
 
-  return std::any_of(kernel_creators_.begin(), kernel_creators_.end(), [op_type, &mutex = this->mutex_](auto &&item) {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (item.second[op_type] != nullptr) {
-      return true;
-    }
-    return false;
-  });
+  return std::any_of(kernel_creators_.begin(), kernel_creators_.end(),
+                     [op_type, &providers, &mutex = this->mutex_](auto &&item) {
+                       std::unique_lock<std::mutex> lock(mutex);
+                       if (providers.find(item.first) == providers.end()) {
+                         return false;
+                       }
+                       if (item.second[op_type] != nullptr) {
+                         return true;
+                       }
+                       return false;
+                     });
 }
 
 int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
@@ -72,7 +74,8 @@ int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::s
   return RET_OK;
 }
 
-kernel::KernelInterface *KernelInterfaceRegistry::GetCacheInterface(const std::string &provider, int op_type) {
+std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCacheInterface(const std::string &provider,
+                                                                                    int op_type) {
   auto provider_iter = kernel_interfaces_.find(provider);
   if (provider_iter != kernel_interfaces_.end()) {
     auto kernel_iter = provider_iter->second.find(op_type);
@@ -83,8 +86,8 @@ kernel::KernelInterface *KernelInterfaceRegistry::GetCacheInterface(const std::s
   return nullptr;
 }
 
-kernel::KernelInterface *KernelInterfaceRegistry::GetCustomCacheInterface(const std::string &provider,
-                                                                          const std::string &type) {
+std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomCacheInterface(const std::string &provider,
+                                                                                          const std::string &type) {
   auto provider_iter = custom_kernels_.find(provider);
   if (provider_iter == custom_kernels_.end()) {
     return nullptr;
@@ -96,13 +99,13 @@ kernel::KernelInterface *KernelInterfaceRegistry::GetCustomCacheInterface(const 
   return nullptr;
 }
 
-kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::string &provider,
-                                                                     const schema::Primitive *primitive) {
+std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomKernelInterface(
+  const schema::Primitive *primitive) {
   MS_ASSERT(primitive != nullptr);
-  int op_type = primitive->value_type();
   std::unique_lock<std::mutex> lock(mutex_);
-  if (op_type == schema::PrimitiveType_Custom) {
-    auto &&type = GetCustomType(primitive);
+  auto &&type = GetCustomType(primitive);
+  for (auto &&item : custom_creators_) {
+    auto &&provider = item.first;
     auto kernel = GetCustomCacheInterface(provider, type);
     if (kernel != nullptr) {
       return kernel;
@@ -117,8 +120,19 @@ kernel::KernelInterface *KernelInterfaceRegistry::GetKernelInterface(const std::
       custom_kernels_[provider][type] = kernel;
       return kernel;
     }
-    return nullptr;
   }
+
+  return nullptr;
+}
+
+std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInterface(
+  const std::string &provider, const schema::Primitive *primitive) {
+  MS_ASSERT(primitive != nullptr);
+  int op_type = primitive->value_type();
+  if (op_type == schema::PrimitiveType_Custom) {
+    return GetCustomKernelInterface(primitive);
+  }
+  std::unique_lock<std::mutex> lock(mutex_);
   auto kernel = GetCacheInterface(provider, op_type);
   if (kernel != nullptr) {
     return kernel;
@@ -163,18 +177,6 @@ KernelInterfaceRegistry::~KernelInterfaceRegistry() {
   for (auto &&item : kernel_creators_) {
     free(item.second);
     item.second = nullptr;
-  }
-  for (auto &&i : kernel_interfaces_) {
-    for (auto &&j : i.second) {
-      delete (j.second);
-      j.second = nullptr;
-    }
-  }
-  for (auto &&i : custom_kernels_) {
-    for (auto &&j : i.second) {
-      delete (j.second);
-      j.second = nullptr;
-    }
   }
 }
 }  // namespace lite
