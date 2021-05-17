@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,12 @@ class DebugServices {
     }
   };
 
+  typedef std::vector<std::vector<int>> partitioned_numbers;
+  typedef std::vector<std::vector<std::string>> partitioned_names;
+  typedef std::vector<std::vector<std::vector<parameter_t>>> partitioned_parameters;
+  typedef std::vector<std::vector<int32_t>> partitioned_error_code;
+  typedef std::vector<std::vector<unsigned int>> partitioned_id;
+
   struct watchpoint_t {
     unsigned int id;
     condition_t condition;
@@ -189,6 +195,18 @@ class DebugServices {
     const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list = nullptr);
 
   void RemoveWatchpoint(unsigned int id);
+
+  void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
+                                 partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
+                                 partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
+                                 const std::vector<std::string> &op_overflows,
+                                 const std::vector<std::string> &async_file_pool,
+                                 partitioned_numbers *chunk_exec_orders,
+                                 std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end,
+                                 int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
+                                 partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
+                                 std::vector<uint64_t> *chunk_tensor_byte_size, std::vector<unsigned int> *device_id,
+                                 std::vector<unsigned int> *root_graph_id);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
