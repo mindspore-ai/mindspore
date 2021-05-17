@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Reference for python pass registration."""
-from .python_pass_register import registe_pass, unregiste_pass, gen_new_parameter, cancel_new_parameter, set_renorm,\
+from .python_pass_register import register_pass, unregister_pass, gen_new_parameter, cancel_new_parameter, set_renorm,\
     set_reopt
 
 __all__ = [
-    "registe_pass",
-    "unregiste_pass",
+    "register_pass",
+    "unregister_pass",
     "gen_new_parameter",
     "cancel_new_parameter",
     "set_renorm",
