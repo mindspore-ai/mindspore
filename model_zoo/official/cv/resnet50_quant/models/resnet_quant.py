@@ -13,39 +13,24 @@
 # limitations under the License.
 # ============================================================================
 """ResNet."""
+import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from mindspore.common.tensor import Tensor
 
+def _weight_variable(shape, factor=0.01):
+    init_value = np.random.randn(*shape).astype(np.float32) * factor
+    return Tensor(init_value)
 
-class ConvBNReLU(nn.Cell):
+def ConvBNReLU(in_channel, out_channel, kernel_size, stride=1):
     """
     Convolution/Depthwise fused with Batchnorm and ReLU block definition.
-
-    Args:
-        in_planes (int): Input channel.
-        out_planes (int): Output channel.
-        kernel_size (int): Input kernel size.
-        stride (int): Stride size for the first convolutional layer. Default: 1.
-        groups (int): channel group. Convolution is 1 while Depthiwse is input channel. Default: 1.
-
-    Returns:
-        Tensor, output tensor.
-
-    Examples:
-        >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
-
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
-        super(ConvBNReLU, self).__init__()
-        padding = (kernel_size - 1) // 2
-        conv = nn.Conv2dBnAct(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding,
-                              group=groups, has_bn=True, activation='relu')
-        self.features = conv
-
-    def construct(self, x):
-        output = self.features(x)
-        return output
-
+    weight_shape = (out_channel, in_channel, kernel_size, kernel_size)
+    weight = _weight_variable(weight_shape)
+    padding = (kernel_size - 1) // 2
+    return nn.Conv2dBnAct(in_channel, out_channel, kernel_size, stride, weight_init=weight,
+                          pad_mode='pad', padding=padding, has_bn=True, activation='relu')
 
 class ResidualBlock(nn.Cell):
     """
@@ -73,8 +58,7 @@ class ResidualBlock(nn.Cell):
         channel = out_channel // self.expansion
         self.conv1 = ConvBNReLU(in_channel, channel, kernel_size=1, stride=1)
         self.conv2 = ConvBNReLU(channel, channel, kernel_size=3, stride=stride)
-        self.conv3 = nn.Conv2dBnAct(channel, out_channel, kernel_size=1, stride=1, pad_mode='same', padding=0,
-                                    has_bn=True, activation='relu')
+        self.conv3 = nn.Conv2dBnAct(channel, out_channel, kernel_size=1, stride=1, pad_mode='same', has_bn=True)
 
         self.down_sample = False
         if stride != 1 or in_channel != out_channel:
@@ -82,9 +66,7 @@ class ResidualBlock(nn.Cell):
         self.down_sample_layer = None
 
         if self.down_sample:
-            self.down_sample_layer = nn.Conv2dBnAct(in_channel, out_channel,
-                                                    kernel_size=1, stride=stride,
-                                                    pad_mode='same', padding=0, has_bn=True, activation='relu')
+            self.down_sample_layer = nn.Conv2dBnAct(in_channel, out_channel, 1, stride, has_bn=True)
         self.add = P.Add()
         self.relu = P.ReLU()
 
@@ -164,7 +146,7 @@ class ResNet(nn.Cell):
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.flatten = nn.Flatten()
-        self.end_point = nn.DenseBnAct(out_channels[3], num_classes, has_bias=True, has_bn=False)
+        self.end_point = nn.DenseBnAct(out_channels[3], num_classes, has_bn=False)
 
     def _make_layer(self, block, layer_num, in_channel, out_channel, stride):
         """
@@ -211,7 +193,7 @@ class ResNet(nn.Cell):
 
 def resnet50_quant(class_num=10):
     """
-    Get ResNet50 neural network.
+    Get ResNet50_quant neural network.
 
     Args:
         class_num (int): Class number.
@@ -232,7 +214,7 @@ def resnet50_quant(class_num=10):
 
 def resnet101_quant(class_num=1001):
     """
-    Get ResNet101 neural network.
+    Get ResNet101_quant neural network.
 
     Args:
         class_num (int): Class number.
@@ -241,7 +223,7 @@ def resnet101_quant(class_num=1001):
         Cell, cell instance of ResNet101 neural network.
 
     Examples:
-        >>> net = resnet101(1001)
+        >>> net = resnet101_quant(1001)
     """
     return ResNet(ResidualBlock,
                   [3, 4, 23, 3],

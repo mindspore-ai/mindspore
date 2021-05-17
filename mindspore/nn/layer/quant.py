@@ -28,7 +28,7 @@ from mindspore._checkparam import Validator, twice
 from mindspore.compression.common import QuantDtype
 import mindspore.context as context
 from .normalization import BatchNorm2d
-from .activation import get_activation, ReLU
+from .activation import get_activation
 from ..cell import Cell
 from ...ops.operations import _quant_ops as Q
 
@@ -1601,9 +1601,6 @@ class QuantMindirBlock(Cell):
         self.activation = activation
         self.has_act = activation is not None
         self.bias_add = P.BiasAdd()
-        if isinstance(activation, ReLU):
-            self.activation = None
-            self.has_act = False
 
     def construct(self, x):
         if self.has_bias:
@@ -1611,6 +1608,8 @@ class QuantMindirBlock(Cell):
             x = self.bias_add(x, self.bias)
         else:
             x = self.core_op(x, self.weight)
+        if self.has_act:
+            x = self.activation(x)
         return x
 
     def extend_repr(self):

@@ -193,7 +193,7 @@ class QuantizationAwareTraining(Quantizer):
         >>> quantizer = QuantizationAwareTraining(bn_fold=False, per_channel=[True, False], symmetric=[True, False])
         >>> net_qat = quantizer.quantize(net)
     """
-    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
+    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv", "ReduceMean"]
 
     def __init__(self,
                  bn_fold=True,

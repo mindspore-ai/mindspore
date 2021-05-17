@@ -64,6 +64,8 @@ def fake_learned_scale_quant_perlayer_grad_d_compute(dout, input_data, alpha_dat
                                                      kernel_name="fake_learned_scale_quant_perlayer_grad_d"):
     """FakeLearnedScaleQuantPerLayerGradD"""
     input_shape = te.lang.cce.util.shape_to_list(input_data.shape)
+    eps = tvm.const(1e-6, input_data.dtype)
+    alpha_data = te.lang.cce.vcmpsel(te.lang.cce.vabs(alpha_data), eps, 'ge', alpha_data, eps)
     alpha_data = te.lang.cce.broadcast(alpha_data, input_shape, input_data.dtype)
     quant_max_data = te.lang.cce.broadcast(quant_max_data, input_shape, input_data.dtype)
 
