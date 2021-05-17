@@ -615,7 +615,7 @@ def _tensor_setitem_by_bool_tensor_with_tensor(data, index, value):
     data_shape = F.shape(data)
     data_shape = const_utils.check_equal(data_shape, index_shape,
                                          "The tensor(shape={}) and tensor index(shape={}) should be the same shape.")
-    size = F.size(value)
+    size = F.shape_mul(F.shape(value))
     size = const_utils.check_equal(1, size,
                                    "When assign value is a tensor, its size should be {}, but current size is {}.")
     dtype = F.dtype(data)
@@ -636,7 +636,7 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
 
 
 def tensor_setitem_by_tensor_with_number(data, index, value):
-    value = F.fill(F.dtype(data), (1,), value)
+    value = F.fill(F.dtype(data), (), value)
     return tensor_setitem_by_tensor_with_tensor(data, index, value)
 
 
@@ -868,8 +868,8 @@ def remove_expanded_dims(tuple_index, data_shape, value):
         expand_true = has_true and not(has_false or has_sequence) # whether to expand dimension at True
         tensor_index_ndim = len(broadcast_shape)                  # ndim of tensor indices
         rem_ndim = len(data_shape) - cur_dim       # number of remaining dimensions in data not indexed
-        not_expanded_dim = const_utils.rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim,
-                                                             rem_ndim, not_expanded_dim)
+        not_expanded_dim, idx_advanced = const_utils.rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim,
+                                                                           rem_ndim, not_expanded_dim)
         if not indices_out:
             indices_out = (True,)
 

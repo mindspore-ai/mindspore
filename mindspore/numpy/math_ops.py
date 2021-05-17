@@ -4512,6 +4512,8 @@ def digitize(x, bins, right=False):
         [1 3 3 4 5]
     """
     x, bins = _to_tensor(x, bins)
+    if F.rank(bins) > 1:
+        _raise_value_error('bins should be 1-dimensional')
     if x.size == 0:
         return x
     if bins.size == 0:
@@ -4542,7 +4544,7 @@ def bincount(x, weights=None, minlength=0, length=None):
         are treated as zeros instead.
 
     Args:
-        x (Union[int, float, bool, list, tuple, Tensor]): 1-d input array.
+        x (Union[list, tuple, Tensor]): 1-d input array.
         weights (Union[int, float, bool, list, tuple, Tensor], optional): Weights,
             array of the same shape as `x`.
         minlength (int, optional): A minimum number of bins for the output array.
@@ -4573,6 +4575,8 @@ def bincount(x, weights=None, minlength=0, length=None):
     x = _to_tensor(x)
     if F.rank(x) != 1:
         _raise_value_error('`x` should be one-dimensional')
+    if not _check_is_int(F.dtype(x)):
+        _raise_type_error('`x` should be an array of ints')
     x = clip(x, 0, None)
     if length is None:
         if F.isconstant(x):
@@ -4781,7 +4785,7 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
     if _get_device() == 'Ascend':
         stacked_indices = F.cast(stacked_indices, mstype.float32)
     flattened_hist = F.reduce_sum(stacked_indices.astype(mstype.float32), 0)
-    count = bincount(flattened_hist, weights, length=flattened_bin_size)
+    count = bincount(flattened_hist.astype(mstype.int32), weights, length=flattened_bin_size)
     count = F.reshape(count, nbin)
     slices = _list_comprehensions(ndim, F.make_slice(1, -1, 1), True)
     count = count[slices]
@@ -5128,8 +5132,8 @@ def polymul(a1, a2):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> print(np.polyder([1, 1, 1, 1]))
-        [3 2 1]
+        >>> print(np.polymul([3, 1, 2], [2, 5]))
+        [ 6 17  9 10]
     """
     a1 = _to_poly1d(a1)
     a2 = _to_poly1d(a2)
@@ -5176,7 +5180,7 @@ def polyint(p, m=1, k=None):
     k = atleast_1d(_to_tensor(k))
     if k.size == 1:
         k = F.tile(k, (m,))
-    k = F.reshape(k, (m, 1))
+    k = F.expand_dims(k, -1)
     for i in range(m):
         coeff = _to_tensor(F.make_range(_type_convert(int, p.size), 0, -1))
         p = concatenate((true_divide(p, coeff), k[i]))
