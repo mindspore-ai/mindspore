@@ -134,7 +134,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   // 1. deal with split strategy
-  std::unordered_map<std::string, opt::SplitStrategy> split_strategys = ParserSplitStrategy(opt::SplitH);
+  std::unordered_map<std::string, opt::SplitStrategy> split_strategys = opt::ParserSplitStrategy();
   if (split_strategys.empty()) {
     MS_LOG(ERROR) << "parse split_strategy error.";
     return RET_OK;
@@ -144,9 +144,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
   parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 3. multi_conv parallel pass
-  auto strategy = split_strategys.begin()->second;
-  parallel_pm->AddPass(
-    std::make_shared<opt::MultiConvSplitPass>(strategy, schema::PrimitiveType_Conv2DFusion, config->fmk, 3));
+  parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, 3));
   parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 4. single conv parallel pass
   parallel_pm->AddPass(std::make_shared<opt::ParallelPass>(split_strategys, config->fmk));

@@ -25,7 +25,7 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "schema/inner/model_generated.h"
+#include "schema/model_generated.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 
@@ -42,10 +42,8 @@ namespace opt {
  * 5.REGISTER XXXInfo in dynamic_creator.cc
  */
 using schema::ReduceMode;
-
 class OperatorInfo;
 using OperatorInfoPtr = std::shared_ptr<OperatorInfo>;
-
 class OperatorInfo {
  public:
   OperatorInfo(const std::string &name, const SplitStrategy &strategy)
@@ -59,20 +57,23 @@ class OperatorInfo {
   void set_name(const std::string &name) { name_ = name; }
   void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
-  void setFmk(const int32_t fmk_type) { fmk_type_ = fmk_type; }
+  void set_fmk(const int32_t fmk_type) { fmk_type_ = fmk_type; }
   AnfNodePtr replace_op() const { return replace_op_; }
   int Init();
 
  protected:
   int CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num, std::vector<AnfNodePtr> *outputs);
-  virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
-                                          std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
-                                          const std::vector<int64_t> &splits, bool trans_format);
+
   AnfNodePtr CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                int32_t concat_dim, size_t input_nodes_num, bool trans_format);
   AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes, int32_t reduce_dim,
                               size_t input_nodes_num, bool trans_format);
-  virtual int GetAttrs() = 0;
+
+  std::shared_ptr<abstract::AbstractTensor> CreateFakeAbstractTensor();
+
+  virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
+                                          std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
+                                          const std::vector<int64_t> &splits, bool trans_format) = 0;
   virtual int InferReplaceOp() = 0;
   virtual int InferParallelCNodes() = 0;
   virtual int CheckStrategy(const SplitStrategy &strategy) = 0;

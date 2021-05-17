@@ -31,8 +31,6 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
 namespace opt {
 
-int Conv2DInfo::GetAttrs() { return lite::RET_OK; }
-
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;
@@ -77,7 +75,6 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
     MS_LOG(ERROR) << "Strategy ERROR, only support split one dimension.";
     return lite::RET_ERROR;
   }
-
   return lite::RET_OK;
 }
 
@@ -120,7 +117,6 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
 
   split_cnode->set_fullname_with_scope("Split_" + name_);
   CreateMultipleOutputsOfAnfNode(split_cnode, split_num, split_outputs);
-
   return split_cnode;
 }
 
@@ -208,7 +204,6 @@ int Conv2DInfo::InferParallelCNodes() {
       MS_LOG(DEBUG) << "No Split mode chosen";
   }
   name_ = orig_name;
-
   return ConstructOutputCNodes(conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 
@@ -218,7 +213,6 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
                                       const std::vector<AnfNodePtr> &bias_split_outputs) {
   Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
-
   int cin_strategy_sum = std::accumulate(strategys[0][kAxisCIn].begin(), strategys[0][kAxisCIn].end(), 0);
   int cout_strategy_sum = std::accumulate(strategys[1][kAxisCOut].begin(), strategys[1][kAxisCOut].end(), 0);
   std::string conv_cnode_name = cnode_->fullname_with_scope();
@@ -243,7 +237,6 @@ int Conv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &
     prim->set_pad_list(conv_prim->get_pad_list());
     prim->set_stride(conv_prim->get_stride());
     prim->set_activation_type(conv_prim->get_activation_type());
-
     switch (split_mode_) {
       case SplitH: {
         if (i != 0) {
@@ -350,7 +343,6 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
   size_t dev_num = strategy_.dev_num;
   std::vector<AnfNodePtr> feature_split_outputs;
   std::string orig_name = name_;
-
   switch (split_mode_) {
     case SplitCIN: {
       MS_LOG(ERROR) << "DepthwiseConv2DInfo doesn't support split Cin.";
@@ -367,7 +359,6 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     default:
       break;
   }
-
   parallel_output_nodes_.clear();
   std::string conv_cnode_name = cnode_->fullname_with_scope();
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
@@ -385,7 +376,6 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     }
   }
   name_ = orig_name;
-
   // construct parallel Conv2D nodes
   for (size_t i = 0; i < dev_num; ++i) {
     std::vector<AnfNodePtr> tmp_outputs;
@@ -403,7 +393,6 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     prim->set_pad_list(conv_prim->get_pad_list());
     prim->set_stride(conv_prim->get_stride());
     prim->set_activation_type(conv_prim->get_activation_type());
-
     std::vector<AnfNodePtr> conv_inputs = {NewValueNode(prim)};
     conv_inputs.push_back(feature_split_outputs[i]);
     conv_inputs.push_back(cnode_->input(2));

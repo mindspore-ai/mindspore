@@ -18,7 +18,7 @@
 #include <utility>
 #include <memory>
 #include "tools/optimizer/parallel/split_strategy.h"
-#include "schema/inner/model_generated.h"
+#include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "base/base.h"
 

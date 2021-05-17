@@ -35,7 +35,6 @@ class Conv2DInfo : public OperatorInfo {
 
  protected:
   int CheckStrategy(const SplitStrategy &strategy) override;
-  int GetAttrs() override;
   int InferReplaceOp() override;
   int InferParallelCNodes() override;
   int ConstructOutputCNodes(const std::shared_ptr<ops::Conv2DFusion> &conv_prim,
