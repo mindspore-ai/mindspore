@@ -54,8 +54,6 @@ class OnnxNodeParser {
 
   STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
-  static void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
-
   const std::string name;
 
  private:
