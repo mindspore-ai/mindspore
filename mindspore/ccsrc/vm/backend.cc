@@ -50,10 +50,6 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   MS_LOG(DEBUG) << "MsConvert";
   MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  auto cached = g_ConvertCache.find(segment);
-  if (cached != g_ConvertCache.end()) {
-    return cached->second;
-  }
   LinConvertResult result;
   FuncGraphPtr fg;
   AnfNodePtrList inputs;
@@ -107,9 +103,6 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   result.graph_id = graph_id;
 
   graph_id_map_[graph_id] = result;
-  if (!pynative_mode) {
-    (void)g_ConvertCache.emplace(segment, result);
-  }
   return result;
 }
 
