@@ -59,11 +59,18 @@ def conver_training_shape(args):
     training_shape = [int(args.training_shape), int(args.training_shape)]
     return training_shape
 
+def set_graph_kernel_context():
+    if context.get_context("device_target") == "GPU":
+        context.set_context(enable_graph_kernel=True)
+        context.set_context(graph_kernel_flags="--enable_parallel_fusion "
+                                               "--disable_expand_ops=BatchNorm,BatchNormGrad "
+                                               "--disable_cluster_ops=ReduceMax,Reshape")
 
 def network_init(args):
     devid = int(os.getenv('DEVICE_ID', '0'))
     context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
                         device_target=args.device_target, save_graphs=False, device_id=devid)
+    set_graph_kernel_context()
 
     profiler = None
     if args.need_profiler:
