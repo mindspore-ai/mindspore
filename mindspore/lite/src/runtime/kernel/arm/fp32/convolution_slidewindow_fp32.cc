@@ -186,8 +186,8 @@ int ConvolutionSWCPUKernel::Run() {
     FreeTmpBuffer();
     return error_code;
   }
-  auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   if (oc_res_ != 0) {
+    auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     PackNHWCXToNHWCFp32(output_data_, out_data, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_, oc_tile_);
   }

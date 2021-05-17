@@ -228,7 +228,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
   if (approximate) {
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
 #if defined(ENABLE_AVX)
-    int C8 = UP_ROUND(length, C8NUM);
+    int C8 = DOWN_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       MS_FLOAT32X8 in = MS_LD256_F32(src + i);
       MS_FLOAT32X8 res = 0.5 * in * (1.0 + MS_TANHX8_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
@@ -236,7 +236,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
     }
 #endif
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
-    int C4 = UP_ROUND(length, C4NUM);
+    int C4 = DOWN_ROUND(length, C4NUM);
     for (; i < C4; i += C4NUM) {
       MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
       MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_TANHX4_F32((0.79788456080287f + 0.035677408136f * in * in) * in));
@@ -248,7 +248,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
     }
   } else {
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
-    int C4 = UP_ROUND(length, C4NUM);
+    int C4 = DOWN_ROUND(length, C4NUM);
     for (; i < C4; i += C4NUM) {
       MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
       MS_FLOAT32X4 res = 0.5 * in * (1.0 + MS_ERFX4_F32(in / 1.4142135623730951f));

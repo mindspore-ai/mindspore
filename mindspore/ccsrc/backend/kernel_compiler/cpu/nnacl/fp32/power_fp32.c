@@ -67,7 +67,7 @@ void PowerBroadCast(const float *input, const float *exponent, float *output, in
   }
   int i = 0;
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
-  int len_c4 = UP_ROUND(len, C4NUM);
+  int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
   for (; i < len_c4; i += C4NUM) {
@@ -84,7 +84,7 @@ void PowerSingle(const float *input, const float *exponent, float *output, int l
   int i = 0;
   PowerScalarFun PowerScalarFun_ = NULL;
 #if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
-  int len_c4 = UP_ROUND(len, C4NUM);
+  int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
   for (; i < len_c4; i += C4NUM) {

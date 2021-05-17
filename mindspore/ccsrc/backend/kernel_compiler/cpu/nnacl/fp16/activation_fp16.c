@@ -56,7 +56,7 @@ int Relu6Fp16(const float16_t *data, float16_t *dst, int ele_num) {
 int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha) {
   int i = 0;
 #ifdef ENABLE_NEON
-  int ele_c8 = UP_ROUND(ele_num, C8NUM);
+  int ele_c8 = DOWN_ROUND(ele_num, C8NUM);
   for (; i < ele_c8; i += C8NUM) {
     float16x8_t src_tmp = vld1q_f16(src + i);
     float16x8_t mul_tmp = vmulq_n_f16(src_tmp, alpha);
@@ -187,7 +187,7 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
   if (approximate) {
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
 #ifdef ENABLE_NEON
-    int C8 = UP_ROUND(length, C8NUM);
+    int C8 = DOWN_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       float16x8_t in = vld1q_f16(src + i);
       float16x8_t res =
@@ -202,7 +202,7 @@ int GeluFp16(const float16_t *src, int length, float16_t *dst, bool approximate)
     }
   } else {
 #ifdef ENABLE_NEON
-    int C8 = UP_ROUND(length, C8NUM);
+    int C8 = DOWN_ROUND(length, C8NUM);
     for (; i < C8; i += C8NUM) {
       float16x8_t in = vld1q_f16(src + i);
       const float16x8_t res = 0.5f * in * (1.0f + MS_ERFX8_F16(in / (float16_t)1.4142135623730951f));
