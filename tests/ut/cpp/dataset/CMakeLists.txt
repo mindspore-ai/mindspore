@@ -69,6 +69,7 @@ SET(DE_UT_SRCS
         equalize_op_test.cc
         execution_tree_test.cc
         fill_op_test.cc
+        c_api_vision_gaussian_blur_test.cc
         global_context_test.cc
         gnn_graph_test.cc
         image_folder_op_test.cc

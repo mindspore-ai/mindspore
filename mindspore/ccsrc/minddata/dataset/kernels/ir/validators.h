@@ -76,6 +76,9 @@ Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uin
 // Helper function to validate mean/std value
 Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float> &mean, const std::vector<float> &std);
 
+// Helper function to validate odd value
+Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &value);
+
 // Helper function to validate padding
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding);
 
@@ -85,6 +88,9 @@ Status ValidateVectorPositive(const std::string &op_name, const std::string &vec
 // Helper function to validate non-negative value
 Status ValidateVectorNonNegative(const std::string &op_name, const std::string &vec_name,
                                  const std::vector<int32_t> &vec);
+
+// Helper function to validate size of sigma
+Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma);
 
 // Helper function to validate size of size
 Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t> &size);

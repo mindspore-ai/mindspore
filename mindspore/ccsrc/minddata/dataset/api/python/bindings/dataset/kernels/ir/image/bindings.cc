@@ -25,6 +25,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 #include "minddata/dataset/kernels/ir/vision/invert_ir.h"
 #include "minddata/dataset/kernels/ir/vision/mixup_batch_ir.h"
@@ -141,6 +142,17 @@ PYBIND_REGISTER(EqualizeOperation, 1, ([](const py::module *m) {
                         return equalize;
                       }));
                 }));
+
+PYBIND_REGISTER(
+  GaussianBlurOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::GaussianBlurOperation, TensorOperation, std::shared_ptr<vision::GaussianBlurOperation>>(
+      *m, "GaussianBlurOperation")
+      .def(py::init([](std::vector<int32_t> kernel_size, std::vector<float> sigma) {
+        auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
+        THROW_IF_ERROR(gaussian_blur->ValidateParams());
+        return gaussian_blur;
+      }));
+  }));
 
 PYBIND_REGISTER(HwcToChwOperation, 1, ([](const py::module *m) {
                   (void)

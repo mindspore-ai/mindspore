@@ -154,6 +154,29 @@ class Decode final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief GaussianBlur TensorTransform.
+/// \notes Blur the input image with specified Gaussian kernel.
+class GaussianBlur final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The values must be positive and odd.
+  /// \param[in] sigma A vector of Gaussian kernel standard deviation sigma for width and height. The values must be
+  ///     positive. Using default value 0 means to calculate the sigma according to the kernel size.
+  GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
+
+  /// \brief Destructor.
+  ~GaussianBlur() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Normalize TensorTransform.
 /// \note Normalize the input image with respect to mean and standard deviation.
 class Normalize final : public TensorTransform {

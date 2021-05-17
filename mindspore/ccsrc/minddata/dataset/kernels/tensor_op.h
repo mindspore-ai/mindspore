@@ -69,6 +69,7 @@ constexpr char kDvppDecodePngOp[] = "DvppDecodePngOp";
 constexpr char kDvppNormalizeOp[] = "DvppNormalizeOp";
 constexpr char kDvppResizeJpegOp[] = "DvppResizeJpegOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
+constexpr char kGaussianBlurOp[] = "GaussianBlurOp";
 constexpr char kHwcToChwOp[] = "HWC2CHWOp";
 constexpr char kInvertOp[] = "InvertOp";
 constexpr char kMixUpBatchOp[] = "MixUpBatchOp";

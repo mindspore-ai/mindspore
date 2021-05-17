@@ -142,6 +142,16 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
               InterpolationMode interpolation, uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
+/// \brief Filter the input image with a Gaussian kernel
+/// \param[in] input Input Tensor
+/// \param[out] output Transformed Tensor
+/// \param[in] kernel_size_x Gaussian kernel size of width
+/// \param[in] kernel_size_y Gaussian kernel size of height
+/// \param[in] sigma_x Gaussian kernel standard deviation of width
+/// \param[in] sigma_y Gaussian kernel standard deviation of height
+Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_size_x,
+                    int32_t kernel_size_y, float sigma_x, float sigma_y);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

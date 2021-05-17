@@ -1232,5 +1232,21 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
+Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_x,
+                    int32_t kernel_y, float sigma_x, float sigma_y) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+    RETURN_UNEXPECTED_IF_NULL(output_cv);
+
+    cv::GaussianBlur(input_cv->mat(), output_cv->mat(), cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
+                     static_cast<double>(sigma_y));
+    (*output) = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("GaussianBlur: " + std::string(e.what()));
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

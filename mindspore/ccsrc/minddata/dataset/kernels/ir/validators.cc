@@ -97,6 +97,18 @@ Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float
   return Status::OK();
 }
 
+Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &value) {
+  for (int i = 0; i < value.size(); i++) {
+    if (value[i] % 2 != 1) {
+      std::string err_msg = op_name + ":" + vec_name + " must be odd value, got: " + vec_name + "[" +
+                            std::to_string(i) + "]=" + std::to_string(value[i]);
+      MS_LOG(ERROR) << err_msg;
+      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    }
+  }
+  return Status::OK();
+}
+
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding) {
   if (padding.empty() || padding.size() == 3 || padding.size() > 4) {
     std::string err_msg = op_name + ": padding expecting size 1, 2 or 4, got size: " + std::to_string(padding.size());
@@ -123,6 +135,19 @@ Status ValidateVectorNonNegative(const std::string &op_name, const std::string &
                                  const std::vector<int32_t> &vec) {
   for (const auto &vec_val : vec) {
     RETURN_IF_NOT_OK(ValidateScalar(op_name, vec_name, vec_val, {0}, false));
+  }
+
+  return Status::OK();
+}
+
+Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma) {
+  if (sigma.empty() || sigma.size() > 2) {
+    std::string err_msg = op_name + ": sigma expecting size 2, got sigma.size(): " + std::to_string(sigma.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  for (const auto &sigma_val : sigma) {
+    RETURN_IF_NOT_OK(ValidateScalar(op_name, "sigma", sigma_val, {0}, false));
   }
 
   return Status::OK();
