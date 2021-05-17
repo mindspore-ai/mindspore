@@ -361,6 +361,8 @@ Status ModelProcess::SetBatchSize(const std::vector<MSTensor> &inputs) {
 Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
+  size_t dynamic_batch_size = 1;
+  size_t dynamic_image_size = 2;
   size_t dynamic_nums = GetDynamicDims(input_infos_);
   // check inputs
   if (inputs.size() != input_infos_.size()) {
@@ -419,7 +421,7 @@ Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
       return kMCDeviceError;
     }
   }
-  if (dynamic_nums == 1) {
+  if (dynamic_nums == dynamic_batch_size) {
     if (SetBatchSize(inputs) != kSuccess) {
       MS_LOG(ERROR) << "failed to convert dynamic batch size";
       return kMCDeviceError;
@@ -428,7 +430,7 @@ Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
       MS_LOG(ERROR) << "reset output size failed";
       return kMCDeviceError;
     }
-  } else if (dynamic_nums == 2) {
+  } else if (dynamic_nums == dynamic_image_size) {
     MS_LOG(ERROR) << "only dynamic batch size is supported";
     return kMCInvalidInput;
   }

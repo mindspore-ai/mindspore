@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_SIGNAL_UTIL_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_SIGNAL_UTIL_H_
 
-#include <signal.h>
+#include <csignal>
 
 namespace mindspore {
 class SignalGuard {
