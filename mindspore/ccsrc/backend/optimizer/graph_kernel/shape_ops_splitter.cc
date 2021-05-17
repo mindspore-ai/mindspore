@@ -74,7 +74,7 @@ void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
 }
 }  // namespace
 
-bool ShapeOpsSplitter::IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
+bool ShapeOpsSplitter::IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) const {
   auto &users = mng->node_users();
   std::set<AnfNodePtr> user_set;
   std::transform(users[node].cbegin(), users[node].cend(), std::inserter(user_set, user_set.end()),

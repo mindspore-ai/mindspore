@@ -219,7 +219,7 @@ bool ExtendOutputForUpdateState::ProcessIndex(const FuncGraphPtr &func_graph, co
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   for (auto user : mng->node_users()[getitems_[index]]) {
-    user.first->cast<CNodePtr>()->set_input(static_cast<size_t>(user.second), new_node);
+    user.first->cast<CNodePtr>()->set_input(IntToSize(user.second), new_node);
   }
   return true;
 }

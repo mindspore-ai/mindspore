@@ -70,7 +70,7 @@ void RaiseReductionPrecision::ReplaceNode(const AnfNodePtr &reduce_node, const A
   auto users = mng->node_users()[reduce_node];
   for (const auto &user : users) {
     auto user_node = user.first;
-    size_t user_index = static_cast<size_t>(user.second);
+    size_t user_index = IntToSize(user.second);
     if (IsPrimitiveCNode(user_node, prim::kPrimCast) &&
         AnfAlgo::GetOutputDeviceDataType(user_node, 0) == kNumberTypeFloat32) {
       if (!(mng->Replace(user_node, reduce_node))) {
