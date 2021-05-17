@@ -191,6 +191,9 @@ REGISTER(StackInfo);
 REGISTER(ConcatInfo);
 REGISTER(SplitInfo);
 REGISTER(UniqueInfo);
+REGISTER(SelectInfo);
+REGISTER(TopKInfo);
+REGISTER(GatherNdInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

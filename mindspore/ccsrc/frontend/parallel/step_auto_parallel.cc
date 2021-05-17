@@ -162,8 +162,8 @@ bool IsSplittableOperator(const std::string &op_name) {
      EXPM1, LOG1P, SIN, SINH, TAN, RSQRT, INV, RECIPROCAL, ROUND, FLOOR, SIGN, ERF, ERFC, ZEROSLIKE, ONESLIKE,
      BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6, RELUV2,
      SOFTPLUS, SOFTSIGN, GREATEREQUAL, LESSEQUAL, LESS, APPROXIMATEEQUAL, MOD, UNIQUE, UNSORTED_SEGMENT_SUM,
-     UNSORTED_SEGMENT_MIN, REPEAT_ELEMENTS, TENSOR_DOT, RANGE, UNIFORM_CANDIDATE_SAMPLER, SLICE,
-     UNSORTED_SEGMENT_MAX};
+     UNSORTED_SEGMENT_MIN, REPEAT_ELEMENTS, TENSOR_DOT, RANGE, UNIFORM_CANDIDATE_SAMPLER, SLICE, SELECT,
+     UNSORTED_SEGMENT_MAX, GATHER_ND, TOPK};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -495,10 +495,9 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   std::map<size_t, size_t> loop_to_ops;
   // extract strategy from checkpoint for multi-train
   StrategyMap stra_map;
-  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
-    if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
-    }
+  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
+      StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
   }
   std::vector<std::string> last_forward_node_ids;
   if (!root->has_flag(TRAINING)) {
@@ -508,8 +507,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
     auto cnode = node->cast<CNodePtr>();
-    bool bool_result = (cnode == nullptr) || (!IsValueNode<Primitive>(cnode->input(0)));
-    if (bool_result) {
+    if ((cnode == nullptr) || (!IsValueNode<Primitive>(cnode->input(0)))) {
       continue;
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
@@ -555,9 +553,8 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       bool is_last_nodes = std::find(last_forward_node_ids.begin(), last_forward_node_ids.end(), cnode->UniqueId()) !=
                            last_forward_node_ids.end();
       auto operator_info = CreateTheOperatorInfo(prim, cnode, is_last_nodes, &stra_map);
-      if (operator_info == nullptr) {
-        return FAILED;
-      }
+      MS_EXCEPTION_IF_NULL(operator_info);
+
       // Needed by rec_parser
       operator_info->set_type(prim->name());
       operator_info->set_last_node_flag(is_last_nodes);
@@ -632,8 +629,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
   MS_LOG(INFO) << "Constructing edges for cost graph begins.";
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
-    bool bool_result_cnode = (cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0));
-    if (bool_result_cnode) {
+    if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
     auto &inputs = cnode->inputs();
@@ -643,7 +639,6 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     size_t edge_count = 0;
-
     auto node_op_info = cnode->user_data<OperatorInfo>();
 
     for (size_t i = 1; i < inputs.size(); ++i) {
