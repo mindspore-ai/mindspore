@@ -29,9 +29,9 @@
 #include "ir/func_graph.h"
 
 namespace mindspore::lite {
-std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
+std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::string &model_path) {
   size_t size = 0;
-  tflite_model_buf_ = ReadFile(model_path, &size);
+  tflite_model_buf_ = ReadFile(model_path.c_str(), &size);
   if (tflite_model_buf_ == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
     return nullptr;
@@ -47,7 +47,7 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
 FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::string &weight_file,
                                       const QuantType &quant_type) {
   // load graph
-  tflite_model_ = ReadTfliteModel(model_file.c_str());
+  tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {
     MS_LOG(ERROR) << "read tflite model failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);

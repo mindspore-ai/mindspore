@@ -26,9 +26,10 @@
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
+namespace {
 static constexpr size_t BIAS_SIZE = 3;
 static constexpr size_t BIAS_ADD_SIZE = 2;
-
+}  // namespace
 STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
   // int32 weight no need to quant
