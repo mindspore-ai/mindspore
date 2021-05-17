@@ -258,7 +258,7 @@ def reshape(x, *shape):
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
         >>> x = Tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], dtype=mstype.float32)
-        >>> output = np.reshape(x, (3, 2))
+        >>> output = x.reshape((3, 2))
         >>> print(output)
         [[-0.1  0.3]
         [ 3.6  0.4]
@@ -347,7 +347,7 @@ def swapaxes(x, axis1, axis2):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
-        >>> output = np.swapaxes(x, 0, 2)
+        >>> output = x.swapaxes(0, 2)
         >>> print(output.shape)
         (4,3,2)
     """
@@ -425,7 +425,7 @@ def argmax(x, axis=None):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
-        >>> print(np.argmax(a))
+        >>> print(a.argmax())
         5
     """
     # P.Argmax only supports float
@@ -461,7 +461,7 @@ def argmin(x, axis=None):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
-        >>> print(np.argmin(a))
+        >>> print(a.argmin())
         0
     """
     # P.Argmax only supports float
@@ -481,7 +481,7 @@ def cumsum(x, axis=None, dtype=None):
 
     Note:
         If ``x.dtype`` is :class:`int8`, :class:`int16` or :class:`bool`, the result
-        `dtype` will be elevated to :class:`int32`.
+        `dtype` will be elevated to :class:`int32`, :class:`int64` is not supported.
 
     Args:
         x (Tensor): Input tensor.
@@ -501,7 +501,7 @@ def cumsum(x, axis=None, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> a = Tensor(np.ones((3,3)).astype("float32"))
-        >>> output = a.cumsum(0)
+        >>> output = a.cumsum()
         >>> print(output)
         [[1. 1. 1.]
         [2. 2. 2.]
@@ -1119,7 +1119,7 @@ def clip(x, xmin, xmax, dtype=None):
     Examples:
         >>> from mindspore import Tensor
         >>> x = Tensor([1, 2, 3, -4, 0, 3, 2, 0]).astype("float32")
-        >>> output = x.clip(x, 0, 2)
+        >>> output = x.clip(0, 2)
         >>> print(output)
         [1 2 2 0 0 2 2 0]
     """
