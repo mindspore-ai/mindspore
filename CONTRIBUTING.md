@@ -32,11 +32,15 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
 - Coding guidelines
 
-    The *Python* coding style suggested by [Python PEP 8 Coding Style](https://pep8.org/) and *C++* coding style suggested by [Google C++ Coding Guidelines](http://google.github.io/styleguide/cppguide.html) are used in MindSpore community.
+    The *Python* coding style suggested by [Python PEP 8 Coding Style](https://pep8.org/) and *C++* coding style suggested by [Google C++ Coding Guidelines](http://google.github.io/styleguide/cppguide.html) are used in MindSpore community. The [CppLint](https://github.com/cpplint/cpplint), [CppCheck](http://cppcheck.sourceforge.net), [CMakeLint](https://github.com/cmake-lint/cmake-lint), [CodeSpell](https://github.com/codespell-project/codespell), [Lizard](http://www.lizard.ws), [ShellCheck](https://github.com/koalaman/shellcheck) and [PyLint](https://pylint.org) are used to check the format of codes, installing these plugins in your IDE is recommended.
 
 - Unittest guidelines
 
-    The *Python* unittest style suggested by [pytest](http://www.pytest.org/en/latest/) and *C++* unittest style suggested by [Googletest Primer](https://github.com/google/googletest/blob/master/docs/primer.md) are used in MindSpore community.
+    The *Python* unittest style suggested by [pytest](http://www.pytest.org/en/latest/) and *C++* unittest style suggested by [Googletest Primer](https://github.com/google/googletest/blob/master/docs/primer.md) are used in MindSpore community. The design intent of a testcase should be reflected by its name of comment.
+
+- Refactoring guidelines
+
+    We encourage developers to refactor our code to eliminate the [code smell](https://en.wikipedia.org/wiki/Code_smell). All codes should conform to needs to the coding style and testing style, and refactoring codes are no exception.
 
 - Document guidelines
 
