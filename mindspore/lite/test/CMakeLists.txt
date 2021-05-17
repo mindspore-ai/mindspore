@@ -163,11 +163,18 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/dynamic_library_loader.cc
         ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/src/common/quant_utils.cc
-        ${LITE_DIR}/tools/common/flag_parser.cc
-        ${LITE_DIR}/tools/benchmark/benchmark.cc
-        ${LITE_DIR}/test/st/benchmark_test.cc
         ${LITE_DIR}/src/errorcode.cc
         )
+
+if(ENABLE_TOOLS)
+    set(TEST_LITE_SRC
+            ${TEST_LITE_SRC}
+            ${LITE_DIR}/tools/common/flag_parser.cc
+            ${LITE_DIR}/tools/benchmark/benchmark.cc
+            ${LITE_DIR}/test/st/benchmark_test.cc
+            )
+endif()
+
 ### gpu runtime
 if(SUPPORT_GPU STREQUAL opencl)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-headers-src)

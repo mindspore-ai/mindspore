@@ -8,7 +8,7 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
-if(NOT(COMPILE_LITE))
+if(NOT(BUILD_LITE))
     add_subdirectory(mindrt)
 endif()
 
@@ -24,7 +24,7 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
 file(GLOB_RECURSE PROTO_FILE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "proto/*.proto")
-if(NOT(COMPILE_LITE))
+if(NOT(BUILD_LITE))
     ms_protobuf_generate_py(PROTO_SRCS PY_HDRS PY_PYS ${PROTO_FILE})
 else()
     ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
@@ -41,7 +41,7 @@ endif()
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
 add_library(mindspore_core STATIC ${CORE_SRC_LIST} ${PROTO_SRCS})
 target_link_libraries(mindspore_core PRIVATE mindspore_gvar)
-if(NOT(COMPILE_LITE))
+if(NOT(BUILD_LITE))
     target_link_libraries(mindspore_core PRIVATE mindrt_mid)
 endif()
 

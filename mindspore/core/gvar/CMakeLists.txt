@@ -9,7 +9,11 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wuser-defined-warnings -Winconsistent-missing-override")
 endif()
 
-add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
+if(BUILD_LITE)
+    add_library(mindspore_gvar STATIC ${MS_GVAR_SRC_LIST})
+else()
+    add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
+endif()
 
 if(APPLE)
     set_target_properties(mindspore_gvar PROPERTIES MACOSX_RPATH ON)
