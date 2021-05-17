@@ -198,8 +198,11 @@ class BaseFuncGraphEvaluator : public Evaluator {
   virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
 
   AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list);
+
   AnalysisContextPtr context() const { return context_; }
   void set_context(const AnalysisContextPtr &context) { context_ = context; }
+  AnalysisContextPtr parent_context() const { return parent_context_; }
+  void set_parent_context(const AnalysisContextPtr &parent_context) { parent_context_ = parent_context; }
 
  protected:
   AnalysisContextPtr parent_context_;
@@ -241,7 +244,7 @@ using FuncGraphEvaluatorPtr = std::shared_ptr<FuncGraphEvaluator>;
 class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
  public:
   // Note: context parameter is not used;
-  MetaFuncGraphEvaluator(const MetaFuncGraphPtr &meta_func_graph, AnalysisContextPtr, const ScopePtr &scope)
+  MetaFuncGraphEvaluator(const MetaFuncGraphPtr &meta_func_graph, const ScopePtr &scope)
       : BaseFuncGraphEvaluator(AnalysisContext::DummyContext()), meta_func_graph_(meta_func_graph), scope_(scope) {}
   ~MetaFuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(MetaFuncGraphEvaluator, BaseFuncGraphEvaluator);

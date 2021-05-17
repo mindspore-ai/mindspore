@@ -127,10 +127,16 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
                       << ", res_base: " << res_base->ToString();
         break;
       }
+
+      // Overwrite the result if func graph is stub.
+      if (current_stack_frame->func_graph()->stub()) {
+        eval_result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
+      }
       // Save func graph eval result for specialize.
       auto evaluator = current_stack_frame->evaluator();
       MS_EXCEPTION_IF_NULL(evaluator);
-      (*evaluator->evaluator_cache_map())[current_stack_frame->args_abs_list()] = eval_result;
+      EvaluatorCacheMap &evaluator_cache_map = *evaluator->evaluator_cache_map();
+      evaluator_cache_map[current_stack_frame->args_abs_list()] = eval_result;
 
       // Leave current func graph.
       LeaveStackFrame(engine, current_stack_frame);

@@ -650,7 +650,7 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
   MS_EXCEPTION_IF_NULL(eval);
   MS_EXCEPTION_IF_NULL(result);
 
-  EvaluatorCacheMap evaluator_cache_map = *eval->evaluator_cache_map();
+  EvaluatorCacheMap &evaluator_cache_map = *eval->evaluator_cache_map();
   if (evaluator_cache_map.find(argvals) != evaluator_cache_map.end()) {
     *result = std::make_pair(argvals, evaluator_cache_map[argvals]->abstract());
     return kSpecializeSuccess;

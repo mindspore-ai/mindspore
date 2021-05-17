@@ -29,6 +29,7 @@ namespace abstract {
 class StackFrame;
 using StackFramePtr = std::shared_ptr<StackFrame>;
 using EvaluatorWeakPtr = std::weak_ptr<Evaluator>;
+using BaseFuncGraphEvaluatorPtr = std::shared_ptr<BaseFuncGraphEvaluator>;
 
 class StackFrame : public Base {
  public:
@@ -121,8 +122,10 @@ class StackFrame : public Base {
  private:
   AbstractBasePtrList GenerateArgsAbsList(const AnalysisEnginePtr &engine, const EvaluatorPtr &evaluator,
                                           const CNodePtr current_cnode);
+  AnalysisContextPtr GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
+                                      const AbstractFunctionPtr &graph_func);
   StackFramePtr DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
-                       const FuncGraphAbstractClosurePtr &graph_func);
+                       const AbstractFunctionPtr &graph_func);
 
   EvaluatorWeakPtr evaluator_;
   FuncGraphPtr func_graph_;
