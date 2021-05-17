@@ -23,20 +23,6 @@
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::lite::micro::nnacl {
-ScaleFP32Coder::~ScaleFP32Coder() {
-  if (scale_param_->const_scale_) {
-    if (scale_) {
-      free(scale_);
-      scale_ = nullptr;
-    }
-  }
-  if (scale_param_->const_offset_) {
-    if (offset_) {
-      free(offset_);
-      offset_ = nullptr;
-    }
-  }
-}
 
 int ScaleFP32Coder::InitScaleOffset() {
   Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
