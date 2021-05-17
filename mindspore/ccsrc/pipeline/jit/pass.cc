@@ -33,6 +33,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/optimizer/auto_monad_eliminate.h"
+#include "frontend/parallel/context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
@@ -94,6 +95,26 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 
 namespace {
 bool ReAutoMonadWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return ReAutoMonad(root); }
+
+bool parallel_mode() {
+#if (ENABLE_CPU && !_WIN32)
+  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
+    return false;
+  }
+#endif
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  return (parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL);
+}
+
+void AddParallelRenormalize(OptPassGroupMap *map_a) {
+  if (parallel_mode()) {
+    auto parallel_end_opt =
+      find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "grad"; });
+    if (parallel_end_opt != map_a->end()) {
+      map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+    }
+  }
+}
 
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
@@ -204,7 +225,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
                          {"a_3", a_3}});
-
+  AddParallelRenormalize(&map_a);
   return map_a;
 }
 
