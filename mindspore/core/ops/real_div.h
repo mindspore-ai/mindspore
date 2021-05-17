@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_REAL_DIV_H_
 #define MINDSPORE_CORE_OPS_REAL_DIV_H_
+#include <string>
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -24,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRealDiv = "RealDiv";
+constexpr auto kNameRealDiv = prim::kRealDiv;
 class RealDiv : public PrimitiveC {
  public:
   RealDiv() : PrimitiveC(kNameRealDiv) { InitIOName({"x", "y"}, {"output"}); }

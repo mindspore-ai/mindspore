@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "ops/real_div.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
 
@@ -202,7 +203,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimPad, {InferImplPad, nullptr, true}},
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, {InferImplDiv, nullptr, true}},
-    {prim::kPrimRealDiv, {InferImplRealDiv, nullptr, true}},
+    {prim::kPrimRealDiv, {ops::RealDivInfer, nullptr, false}},
     {prim::kPrimShape, {InferImplShape, nullptr, false}},
     {prim::kPrimTranspose, {InferImplTranspose, nullptr, true}},
     {prim::kPrimReshape, {InferImplReshape, nullptr, true}},
