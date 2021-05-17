@@ -136,6 +136,9 @@ class TFRecordToMR:
             else:
                 if len(val.shape) != 1:
                     raise ValueError("Parameter len(feature_dict[{}].shape) should be 1.")
+                if not isinstance(val.shape[0], int):
+                    raise ValueError("Invalid parameter feature_dict, value and type mismatch, " +
+                                     "please check item of feature_dict[\"{}\"].".format(key))
                 if val.shape[0] < 1:
                     raise ValueError("Parameter feature_dict[{}].shape[0] should > 0".format(key))
                 if val.dtype == self.tf.string:
@@ -149,11 +152,11 @@ class TFRecordToMR:
         """Validation check for inputs of init method"""
         if not isinstance(source, str):
             raise ValueError("Parameter source must be string.")
-        check_filename(source)
+        check_filename(source, "source")
 
         if not isinstance(destination, str):
             raise ValueError("Parameter destination must be string.")
-        check_filename(destination)
+        check_filename(destination, "destination")
 
         if feature_dict is None or not isinstance(feature_dict, dict):
             raise ValueError("Parameter feature_dict is None or not dict.")
