@@ -15,7 +15,7 @@
  */
 
 #include "runtime/device/ascend/signal_util.h"
-#include <signal.h>
+#include <csignal>
 #include "utils/log_adapter.h"
 #include "backend/session/kernel_build_client.h"
 
