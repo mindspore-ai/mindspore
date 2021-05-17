@@ -24,6 +24,7 @@
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
 
+#define GRAD_INDEX 3
 namespace mindspore {
 namespace opt {
 const BaseRef ReplaceMomentumCastFusion::DefinePattern() const {
@@ -38,7 +39,7 @@ const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
 
-  auto grad_cast = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 3);
+  auto grad_cast = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), GRAD_INDEX);
   MS_EXCEPTION_IF_NULL(grad_cast);
   auto src = AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
   // momentum only support fp32/fp16 by now, do nothing if not.
@@ -57,7 +58,7 @@ const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, c
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, i));
     outputs_shape.push_back(AnfAlgo::GetOutputInferShape(node, i));
   }
-  outputs_type[3] = AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
+  outputs_type[GRAD_INDEX] = AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
 
   AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, node.get());
 

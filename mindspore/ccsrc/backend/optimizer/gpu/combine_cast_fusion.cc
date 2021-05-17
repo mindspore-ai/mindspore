@@ -15,7 +15,6 @@
  */
 #include "backend/optimizer/gpu/combine_cast_fusion.h"
 
-#include <memory>
 #include <vector>
 #include <string>
 
@@ -27,35 +26,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
-  std::vector<std::string> inputs_device_format;
-  std::vector<std::string> outputs_device_format;
-  std::vector<TypeId> inputs_device_type;
-  std::vector<TypeId> outputs_device_type;
-  std::vector<std::vector<size_t>> outputs_shape;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  for (size_t idx = 0; idx < node_list.size(); ++idx) {
-    auto cnode = utils::cast<CNodePtr>(node_list[idx]);
-    MS_EXCEPTION_IF_NULL(cnode);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      inputs_device_format.push_back(kOpFormat_DEFAULT);
-      inputs_device_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
-    for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      outputs_device_format.push_back(kOpFormat_DEFAULT);
-      outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(cnode, output_index));
-      outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
-    }
-  }
-  builder.SetInputsFormat(inputs_device_format);
-  builder.SetOutputsFormat(outputs_device_format);
-  builder.SetInputsDeviceType(inputs_device_type);
-  builder.SetOutputsDeviceType(outputs_device_type);
-  return builder.Build();
-}
-
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
   std::vector<AnfNodePtr> cast_32to16_list;
   std::vector<AnfNodePtr> cast_16to32_list;
@@ -65,31 +35,32 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
   for (auto &cast_node : node_list) {
     // currently, we only deal with the construct : [Param->Cast->] to avoid being a cycle.
     // { prim::kPrimCast, { prim::kPrimLoad, Parameter, U }}
-    if (IsPrimitiveCNode(cast_node, prim::kPrimCast)) {
-      auto input0 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
-      if (input0->isa<Parameter>() || (IsPrimitiveCNode(input0, prim::kPrimLoad) &&
-                                       (AnfAlgo::GetInputNode(utils::cast<CNodePtr>(input0), 0))->isa<Parameter>())) {
-        auto dst = AnfAlgo::GetOutputInferDataType(cast_node, 0);
-        auto src = AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
-        if (dst == kNumberTypeFloat16 && src == kNumberTypeFloat32) {
-          cast_32to16_list.push_back(cast_node);
-          if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
-            auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
-            if (cast_32to16_load_monad == nullptr) {
-              cast_32to16_load_monad = monad;
-            } else if (cast_32to16_load_monad != monad) {
-              return false;
-            }
+    if (!IsPrimitiveCNode(cast_node, prim::kPrimCast)) {
+      continue;
+    }
+    auto input0 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
+    if (input0->isa<Parameter>() || (IsPrimitiveCNode(input0, prim::kPrimLoad) &&
+                                     (AnfAlgo::GetInputNode(utils::cast<CNodePtr>(input0), 0))->isa<Parameter>())) {
+      auto dst = AnfAlgo::GetOutputInferDataType(cast_node, 0);
+      auto src = AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
+      if (dst == kNumberTypeFloat16 && src == kNumberTypeFloat32) {
+        cast_32to16_list.push_back(cast_node);
+        if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
+          auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
+          if (cast_32to16_load_monad == nullptr) {
+            cast_32to16_load_monad = monad;
+          } else if (cast_32to16_load_monad != monad) {
+            return false;
           }
-        } else if (dst == kNumberTypeFloat32 && src == kNumberTypeFloat16) {
-          cast_16to32_list.push_back(cast_node);
-          if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
-            auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
-            if (cast_16to32_load_monad == nullptr) {
-              cast_16to32_load_monad = monad;
-            } else if (cast_16to32_load_monad != monad) {
-              return false;
-            }
+        }
+      } else if (dst == kNumberTypeFloat32 && src == kNumberTypeFloat16) {
+        cast_16to32_list.push_back(cast_node);
+        if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
+          auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
+          if (cast_16to32_load_monad == nullptr) {
+            cast_16to32_load_monad = monad;
+          } else if (cast_16to32_load_monad != monad) {
+            return false;
           }
         }
       }

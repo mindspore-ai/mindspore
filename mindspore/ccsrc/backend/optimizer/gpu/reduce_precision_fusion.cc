@@ -79,16 +79,17 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
       for (size_t i = 0; i < output_num; i++) {
         auto inferType = AnfAlgo::GetOutputInferDataType(node, i);
         auto deviceType = AnfAlgo::GetOutputDeviceDataType(node, i);
-        if (inferType == kNumberTypeInt64 && deviceType == kNumberTypeInt32) {
-          auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
-          for (size_t j = 0; j < used_node_list->size(); j++) {
-            auto used_node = used_node_list->at(j).first;
-            auto used_node_index = used_node_list->at(j).second - 1;
-            if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
-              ProcessTupleGetItem(graph, used_node, used_node_index, deviceType, inferType);
-            } else {
-              ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);
-            }
+        if (inferType != kNumberTypeInt64 || deviceType != kNumberTypeInt32) {
+          continue;
+        }
+        auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, i);
+        for (size_t j = 0; j < used_node_list->size(); j++) {
+          auto used_node = used_node_list->at(j).first;
+          auto used_node_index = used_node_list->at(j).second - 1;
+          if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+            ProcessTupleGetItem(graph, used_node, used_node_index, deviceType, inferType);
+          } else {
+            ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);
           }
         }
       }
