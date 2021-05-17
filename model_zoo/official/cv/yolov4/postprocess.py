@@ -35,7 +35,7 @@ parser.add_argument('--log_path', type=str, default='outputs/', help='checkpoint
 # detect_related
 parser.add_argument('--nms_thresh', type=float, default=0.5, help='threshold for NMS')
 parser.add_argument('--ann_file', type=str, default='', help='path to annotation')
-parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
+parser.add_argument('--eval_ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
 
 parser.add_argument('--img_id_file_path', type=str, default='', help='path of image dataset')
 parser.add_argument('--result_files', type=str, default='./result_Files', help='path to 310 infer result floder')

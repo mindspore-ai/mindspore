@@ -16,7 +16,7 @@
 
 import os
 import sys
-import argparse
+import time
 import datetime
 from collections import defaultdict
 import json
@@ -27,48 +27,25 @@ from mindspore import Tensor
 from mindspore.context import ParallelMode
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore as ms
 
 from src.yolo import YOLOV4CspDarkNet53
 from src.logger import get_logger
 from src.yolo_dataset import create_yolo_datasetv2
-from src.config import ConfigYOLOV4CspDarkNet53
+
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 devid = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Davinci", save_graphs=False, device_id=devid)
 
-parser = argparse.ArgumentParser('mindspore coco testing')
-
-# dataset related
-parser.add_argument('--data_dir', type=str, default='', help='train data dir')
-parser.add_argument('--per_batch_size', default=1, type=int, help='batch size for per gpu')
-
-# network related
-parser.add_argument('--pretrained', default='', type=str, help='model_path, local pretrained model to load')
-
-# logging related
-parser.add_argument('--log_path', type=str, default='outputs/', help='checkpoint save location')
-
-# distributed related
-parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-
-# detect_related
-parser.add_argument('--nms_thresh', type=float, default=0.45, help='threshold for NMS')
-parser.add_argument('--annFile', type=str, default='', help='path to annotation')
-parser.add_argument('--testing_shape', type=str, default='', help='shape for test ')
-parser.add_argument('--ignore_threshold', type=float, default=0.001, help='threshold to throw low quality boxes')
-
-args, _ = parser.parse_known_args()
-
-args.data_root = os.path.join(args.data_dir, 'test2017')
-
+config.data_root = os.path.join(config.data_dir, 'test2017')
+config.nms_thresh = config.test_nms_thresh
 
 class DetectionEngine():
     """Detection engine"""
     def __init__(self, args_engine):
-        self.ignore_threshold = args_engine.ignore_threshold
+        self.test_ignore_threshold = args_engine.test_ignore_threshold
         self.labels = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat',
                        'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat',
                        'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack',
@@ -230,7 +207,7 @@ class DetectionEngine():
                     flag[i, c] = True
                 confidence = cls_emb[flag] * conf
                 for x_lefti, y_lefti, wi, hi, confi, clsi in zip(x_top_left, y_top_left, w, h, confidence, cls_argmax):
-                    if confi < self.ignore_threshold:
+                    if confi < self.test_ignore_threshold:
                         continue
                     if img_id not in self.results:
                         self.results[img_id] = defaultdict(list)
@@ -243,39 +220,87 @@ class DetectionEngine():
                     self.results[img_id][coco_clsi].append([x_lefti, y_lefti, wi, hi, confi])
 
 
-def convert_testing_shape(args_test):
-    testing_shape = [int(args_test.testing_shape), int(args_test.testing_shape)]
-    return testing_shape
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
 
 
-def test():
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_test():
     """test method"""
 
     # init distributed
-    if args.is_distributed:
+    if config.is_distributed:
         init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
+        config.rank = get_rank()
+        config.group_size = get_group_size()
 
     # logger
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.outputs_dir = os.path.join(config.log_path,
+                                      datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 
-    args.logger = get_logger(args.outputs_dir, args.rank)
+    config.logger = get_logger(config.outputs_dir, config.rank)
 
     context.reset_auto_parallel_context()
-    if args.is_distributed:
+    if config.is_distributed:
         parallel_mode = ParallelMode.DATA_PARALLEL
     else:
         parallel_mode = ParallelMode.STAND_ALONE
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=1)
 
-    args.logger.info('Creating Network....')
+    config.logger.info('Creating Network....')
     network = YOLOV4CspDarkNet53()
 
-    args.logger.info(args.pretrained)
-    if os.path.isfile(args.pretrained):
-        param_dict = load_checkpoint(args.pretrained)
+    config.logger.info(config.pretrained)
+    if os.path.isfile(config.pretrained):
+        param_dict = load_checkpoint(config.pretrained)
         param_dict_new = {}
         for key, values in param_dict.items():
             if key.startswith('moments.'):
@@ -285,40 +310,35 @@ def test():
             else:
                 param_dict_new[key] = values
         load_param_into_net(network, param_dict_new)
-        args.logger.info('load_model {} success'.format(args.pretrained))
+        config.logger.info('load_model %s success', config.pretrained)
     else:
-        args.logger.info('{} not exists or not a pre-trained file'.format(args.pretrained))
-        assert FileNotFoundError('{} not exists or not a pre-trained file'.format(args.pretrained))
+        config.logger.info('%s not exists or not a pre-trained file', config.pretrained)
+        assert FileNotFoundError('{} not exists or not a pre-trained file'.format(config.pretrained))
         exit(1)
 
-    data_root = args.data_root
+    data_root = config.data_root
 
-    config = ConfigYOLOV4CspDarkNet53()
-    if args.testing_shape:
-        config.test_img_shape = convert_testing_shape(args)
-
-    data_txt = os.path.join(args.data_dir, 'testdev2017.txt')
-    ds, data_size = create_yolo_datasetv2(data_root, data_txt=data_txt, batch_size=args.per_batch_size,
-                                          max_epoch=1, device_num=args.group_size, rank=args.rank, shuffle=False,
+    data_txt = os.path.join(config.data_dir, 'testdev2017.txt')
+    ds, data_size = create_yolo_datasetv2(data_root, data_txt=data_txt, batch_size=config.per_batch_size,
+                                          max_epoch=1, device_num=config.group_size, rank=config.rank, shuffle=False,
                                           config=config)
 
-    args.logger.info('testing shape : {}'.format(config.test_img_shape))
-    args.logger.info('totol {} images to eval'.format(data_size))
+    config.logger.info('testing shape : %s', config.test_img_shape)
+    config.logger.info('totol %d images to eval', data_size)
 
     network.set_train(False)
 
     # init detection engine
-    detection = DetectionEngine(args)
+    detection = DetectionEngine(config)
 
-    input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
-    args.logger.info('Start inference....')
+    config.logger.info('Start inference....')
     for i, data in enumerate(ds.create_dict_iterator()):
         image = Tensor(data["image"])
 
         image_shape = Tensor(data["image_shape"])
         image_id = Tensor(data["img_id"])
 
-        prediction = network(image, input_shape)
+        prediction = network(image)
         output_big, output_me, output_small = prediction
         output_big = output_big.asnumpy()
         output_me = output_me.asnumpy()
@@ -326,14 +346,14 @@ def test():
         image_id = image_id.asnumpy()
         image_shape = image_shape.asnumpy()
 
-        detection.detect([output_small, output_me, output_big], args.per_batch_size, image_shape, image_id)
+        detection.detect([output_small, output_me, output_big], config.per_batch_size, image_shape, image_id)
         if i % 1000 == 0:
-            args.logger.info('Processing... {:.2f}% '.format(i * args.per_batch_size / data_size * 100))
+            config.logger.info('Processing... {:.2f}% '.format(i * config.per_batch_size / data_size * 100))
 
-    args.logger.info('Calculating mAP...')
+    config.logger.info('Calculating mAP...')
     detection.do_nms_for_results()
     result_file_path = detection.write_result()
-    args.logger.info('result file path: {}'.format(result_file_path))
+    config.logger.info('result file path: %s', result_file_path)
 
 if __name__ == "__main__":
-    test()
+    run_test()

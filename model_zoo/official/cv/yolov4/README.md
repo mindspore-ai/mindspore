@@ -93,58 +93,148 @@ other datasets need to use the same format as MS COCO.
       python hccl_tools.py --device_num "[0,8)"
       ```
 
-```text
-# The parameter of training_shape define image shape for network, default is
-                   [416, 416],
-                   [448, 448],
-                   [480, 480],
-                   [512, 512],
-                   [544, 544],
-                   [576, 576],
-                   [608, 608],
-                   [640, 640],
-                   [672, 672],
-                   [704, 704],
-                   [736, 736].
-# It means use 11 kinds of shape as input shape, or it can be set some kind of shape.
-```
+- Run on local
 
-```bash
-#run training example(1p) by python command (Training with a single scale)
-python train.py \
-    --data_dir=./dataset/xxx \
-    --pretrained_backbone=cspdarknet53_backbone.ckpt \
-    --is_distributed=0 \
-    --lr=0.1 \
-    --t_max=320 \
-    --max_epoch=320 \
-    --warmup_epochs=4 \
-    --training_shape=416 \
-    --lr_scheduler=cosine_annealing > log.txt 2>&1 &
-```
+  ```text
+  # The parameter of training_shape define image shape for network, default is
+                     [416, 416],
+                     [448, 448],
+                     [480, 480],
+                     [512, 512],
+                     [544, 544],
+                     [576, 576],
+                     [608, 608],
+                     [640, 640],
+                     [672, 672],
+                     [704, 704],
+                     [736, 736].
+  # It means use 11 kinds of shape as input shape, or it can be set some kind of shape.
 
-```bash
-# standalone training example(1p) by shell script (Training with a single scale)
-sh run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
-```
+  #run training example(1p) by python command (Training with a single scale)
+  python train.py \
+      --data_dir=./dataset/xxx \
+      --pretrained_backbone=cspdarknet53_backbone.ckpt \
+      --is_distributed=0 \
+      --lr=0.1 \
+      --t_max=320 \
+      --max_epoch=320 \
+      --warmup_epochs=4 \
+      --training_shape=416 \
+      --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 
-```bash
-# For Ascend device, distributed training example(8p) by shell script (Training with multi scale)
-sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
-```
+  # standalone training example(1p) by shell script (Training with a single scale)
+  sh run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
 
-```bash
-# run evaluation by python command
-python eval.py \
-    --data_dir=./dataset/xxx \
-    --pretrained=yolov4.ckpt \
-    --testing_shape=608 > log.txt 2>&1 &
-```
+  # For Ascend device, distributed training example(8p) by shell script (Training with multi scale)
+  sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
 
-```bash
-# run evaluation by shell script
-sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
-```
+  # run evaluation by python command
+  python eval.py \
+      --data_dir=./dataset/xxx \
+      --pretrained=yolov4.ckpt \
+      --testing_shape=608 > log.txt 2>&1 &
+
+  # run evaluation by shell script
+  sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
+  ```
+
+- Train on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+  ```python
+  # Train 8p with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_pretrain/'" on base_config.yaml file.
+  #          Set "pretrained_backbone='/cache/checkpoint_path/cspdarknet53_backbone.ckpt'" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_pretrain/" on the website UI interface.
+  #          Add "pretrained_backbone=/cache/checkpoint_path/cspdarknet53_backbone.ckpt" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your pretrained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov4" on the website UI interface.
+  # (6) Set the startup file to "train.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  #
+  # Train 1p with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_pretrain/'" on base_config.yaml file.
+  #          Set "pretrained_backbone='/cache/checkpoint_path/cspdarknet53_backbone.ckpt'" on base_config.yaml file.
+  #          Set "is_distributed=0" on base_config.yaml file.
+  #          Set "warmup_epochs=4" on base_config.yaml file.
+  #          Set "training_shape=416" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_pretrain/" on the website UI interface.
+  #          Add "pretrained_backbone=/cache/checkpoint_path/cspdarknet53_backbone.ckpt" on the website UI interface.
+  #          Add "is_distributed=0" on the website UI interface.
+  #          Add "warmup_epochs=4" on the website UI interface.
+  #          Add "training_shape=416" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your pretrained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov4" on the website UI interface.
+  # (6) Set the startup file to "train.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  #
+  # Eval 1p with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on base_config.yaml file.
+  #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+  #          Set "is_distributed=0" on base_config.yaml file.
+  #          Set "per_batch_size=1" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_trained_ckpt/" on the website UI interface.
+  #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+  #          Add "is_distributed=0" on the website UI interface.
+  #          Add "per_batch_size=1" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your trained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov4" on the website UI interface.
+  # (6) Set the startup file to "eval.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  #
+  # Test 1p with Ascend
+  # (1) Perform a or b.
+  #       a. Set "enable_modelarts=True" on base_config.yaml file.
+  #          Set "data_dir='/cache/data/coco/'" on base_config.yaml file.
+  #          Set "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on base_config.yaml file.
+  #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on base_config.yaml file.
+  #          Set "is_distributed=0" on base_config.yaml file.
+  #          Set "per_batch_size=1" on base_config.yaml file.
+  #          Set "test_nms_thresh=0.45" on base_config.yaml file.
+  #          Set "test_ignore_threshold=0.001" on base_config.yaml file.
+  #          Set other parameters on base_config.yaml file you need.
+  #       b. Add "enable_modelarts=True" on the website UI interface.
+  #          Add "data_dir=/cache/data/coco/" on the website UI interface.
+  #          Add "checkpoint_url=s3://dir_to_your_trained_ckpt/" on the website UI interface.
+  #          Add "pretrained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+  #          Add "is_distributed=0" on the website UI interface.
+  #          Add "per_batch_size=1" on the website UI interface.
+  #          Add "test_nms_thresh=0.45" on the website UI interface.
+  #          Add "test_ignore_threshold=0.001" on the website UI interface.
+  #          Add other parameters on the website UI interface.
+  # (3) Upload or copy your trained model to S3 bucket.
+  # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+  # (5) Set the code directory to "/path/yolov4" on the website UI interface.
+  # (6) Set the startup file to "test.py" on the website UI interface.
+  # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+  # (8) Create your job.
+  ```
 
 # [Script Description](#contents)
 
@@ -448,7 +538,7 @@ YOLOv4 on 118K images(The annotation and data format must be the same as coco201
 
 | Parameters                 | YOLOv4                                                      |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8; System, Euleros 2.8;|
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G; System, Euleros 2.8;|
 | uploaded Date              | 10/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0-alpha                                                 |
 | Dataset                    | 118K images                                                 |
@@ -468,7 +558,7 @@ YOLOv4 on 20K images(The annotation and data format must be the same as coco tes
 
 | Parameters                 | YOLOv4                                                      |
 | -------------------------- | ----------------------------------------------------------- |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             |
 | uploaded Date              | 10/16/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0-alpha                                                 |
 | Dataset                    | 20K images                                                  |
