@@ -75,7 +75,7 @@ class LocalNode : public Node {
   // @param NodeIdType - The id of adjacent node to be processed
   // @param std::shared_ptr<EdgeIdType> - The id of relative connecting edge
   // @return Status - The status code that indicate the result of function execution
-  Status GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType **out_edge_id) override;
+  Status GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType *out_edge_id) override;
 
   // Update feature of node
   // @param std::shared_ptr<Feature> feature -
