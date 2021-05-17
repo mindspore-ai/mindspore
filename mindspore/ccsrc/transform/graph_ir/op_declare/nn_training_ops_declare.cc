@@ -129,6 +129,14 @@ ATTR_MAP(ApplyProximalAdagradD) = {{"use_locking", ATTR_DESC(use_locking, AnyTra
 OUTPUT_MAP(ApplyProximalAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 REG_ADPT_DESC(ApplyProximalAdagradD, kNameApplyProximalAdagrad, ADPT_DESC(ApplyProximalAdagradD))
 
+// SparseApplyProximalAdagradD
+INPUT_MAP(SparseApplyProximalAdagradD) = {{1, INPUT_DESC(var)},    {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)},
+                                          {4, INPUT_DESC(l1)},     {5, INPUT_DESC(l2)},    {6, INPUT_DESC(grad)},
+                                          {7, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyProximalAdagradD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseApplyProximalAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
+REG_ADPT_DESC(SparseApplyProximalAdagradD, kNameSparseApplyProximalAdagradD, ADPT_DESC(SparseApplyProximalAdagradD))
+
 // SparseApplyFtrlD
 INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
                                {2, INPUT_DESC(accum)},
@@ -142,6 +150,16 @@ ATTR_MAP(SparseApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<b
                               {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())}};
 OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(SparseApplyFtrlD, kNameSparseApplyFtrlD, ADPT_DESC(SparseApplyFtrlD))
+
+// SparseApplyFtrlV2D
+INPUT_MAP(SparseApplyFtrlV2D) = {{1, INPUT_DESC(var)},
+                                 {2, INPUT_DESC(accum)},
+                                 {3, INPUT_DESC(linear)},
+                                 {4, INPUT_DESC(grad)},
+                                 {5, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyFtrlV2D) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())}, {"l1", ATTR_DESC(l1, AnyTraits<float>())}};
+OUTPUT_MAP(SparseApplyFtrlV2D) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
+REG_ADPT_DESC(SparseApplyFtrlV2D, kNameSparseApplyFtrlV2D, ADPT_DESC(SparseApplyFtrlV2D))
 
 // ApplyFtrl
 INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},

@@ -44,4 +44,11 @@ INPUT_MAP(Erfc) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Erfc) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Erfc) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Erfc, kNameErfc, ADPT_DESC(Erfc))
+
+// WtsARQ
+INPUT_MAP(WtsARQ) = {{1, INPUT_DESC(w)}, {2, INPUT_DESC(w_min)}, {3, INPUT_DESC(w_max)}};
+ATTR_MAP(WtsARQ) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
+                    {"offset_flag", ATTR_DESC(offset_flag, AnyTraits<bool>())}};
+OUTPUT_MAP(WtsARQ) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(WtsARQ, kNameWtsARQ, ADPT_DESC(WtsARQ))
 }  // namespace mindspore::transform

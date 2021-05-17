@@ -24,11 +24,11 @@ ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DropOutGenMask, prim::kPrimDropoutGenMask->name(), ADPT_DESC(DropOutGenMask))
 
-// LinSpaceD
-INPUT_MAP(LinSpaceD) = {{1, INPUT_DESC(assist)}, {2, INPUT_DESC(start)}, {3, INPUT_DESC(stop)}, {4, INPUT_DESC(num)}};
-ATTR_MAP(LinSpaceD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(LinSpaceD) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(LinSpaceD, kNameLinSpaceD, ADPT_DESC(LinSpaceD))
+// LinSpace
+INPUT_MAP(LinSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(stop)}, {3, INPUT_DESC(num)}};
+ATTR_MAP(LinSpace) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LinSpace) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LinSpace, kNameLinSpace, ADPT_DESC(LinSpace))
 
 // RandomChoiceWithMask
 INPUT_MAP(RandomChoiceWithMask) = {{1, INPUT_DESC(x)}};

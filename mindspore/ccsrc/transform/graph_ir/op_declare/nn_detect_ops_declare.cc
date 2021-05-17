@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,13 @@ INPUT_MAP(CheckValid) = {{1, INPUT_DESC(bbox_tensor)}, {2, INPUT_DESC(img_metas)
 ATTR_MAP(CheckValid) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(CheckValid) = {{0, OUTPUT_DESC(valid_tensor)}};
 REG_ADPT_DESC(CheckValid, kNameCheckValid, ADPT_DESC(CheckValid))
+
+// Sort
+INPUT_MAP(Sort) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Sort) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                  {"descending", ATTR_DESC(descending, AnyTraits<bool>())}};
+OUTPUT_MAP(Sort) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+REG_ADPT_DESC(Sort, kNameSort, ADPT_DESC(Sort))
 
 // ROIAlign
 INPUT_MAP(ROIAlign) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(rois)}};

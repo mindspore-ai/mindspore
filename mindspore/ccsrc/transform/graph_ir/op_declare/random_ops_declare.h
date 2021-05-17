@@ -26,8 +26,8 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(DropOutGenMask)
 DECLARE_OP_USE_OUTPUT(DropOutGenMask)
 
-DECLARE_OP_ADAPTER(LinSpaceD)
-DECLARE_OP_USE_OUTPUT(LinSpaceD)
+DECLARE_OP_ADAPTER(LinSpace)
+DECLARE_OP_USE_OUTPUT(LinSpace)
 
 DECLARE_OP_ADAPTER(RandomChoiceWithMask)
 DECLARE_OP_USE_OUTPUT(RandomChoiceWithMask)

@@ -53,10 +53,10 @@ OUTPUT_MAP(TopK) = {{0, OUTPUT_DESC(values)}, {1, OUTPUT_DESC(indices)}};
 REG_ADPT_DESC(TopK, kNameTopK, ADPT_DESC(TopK))
 
 // InTopK
-INPUT_MAP(InTopK) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {2, INPUT_DESC(k)}};
-ATTR_MAP(InTopK) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(InTopK) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(InTopK, kNameInTopK, ADPT_DESC(InTopK))
+INPUT_MAP(InTopKD) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(InTopKD) = {{"k", ATTR_DESC(k, AnyTraits<int64_t>())}};
+OUTPUT_MAP(InTopKD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(InTopKD, kNameInTopKD, ADPT_DESC(InTopKD))
 
 // TileD
 INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
@@ -86,6 +86,12 @@ ATTR_MAP(ScatterNdD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ScatterNdD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ScatterNdD, kNameScatterNdD, ADPT_DESC(ScatterNdD))
 
+// ScatterNonAliasingAdd
+INPUT_MAP(ScatterNonAliasingAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(ScatterNonAliasingAdd) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ScatterNonAliasingAdd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ScatterNonAliasingAdd, kNameScatterNonAliasingAdd, ADPT_DESC(ScatterNonAliasingAdd))
+
 // GatherNd
 INPUT_MAP(GatherNd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
@@ -102,22 +108,19 @@ REG_ADPT_DESC(RangeD, kNameRange, ADPT_DESC(RangeD))
 
 // InplaceAddD
 INPUT_MAP(InplaceAddD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-INPUT_ATTR_MAP(InplaceAddD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(InplaceAddD) = EMPTY_ATTR_MAP;
+ATTR_MAP(InplaceAddD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(InplaceAddD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceAddD, kNameInplaceAddD, ADPT_DESC(InplaceAddD))
 
 // InplaceSubD
 INPUT_MAP(InplaceSubD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-INPUT_ATTR_MAP(InplaceSubD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(InplaceSubD) = EMPTY_ATTR_MAP;
+ATTR_MAP(InplaceSubD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(InplaceSubD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceSubD, kNameInplaceSubD, ADPT_DESC(InplaceSubD))
 
 // InplaceUpdateD
 INPUT_MAP(InplaceUpdateD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(v)}};
-INPUT_ATTR_MAP(InplaceUpdateD) = {{3, ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(InplaceUpdateD) = EMPTY_ATTR_MAP;
+ATTR_MAP(InplaceUpdateD) = {{"indices", ATTR_DESC(indices, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(InplaceUpdateD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(InplaceUpdateD, kNameInplaceUpdateD, ADPT_DESC(InplaceUpdateD))
 
@@ -154,6 +157,18 @@ INPUT_ATTR_MAP(UnsortedSegmentSumD) = {{3, ATTR_DESC(num_segments, AnyTraits<int
 ATTR_MAP(UnsortedSegmentSumD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSumD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentSumD, prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSumD))
+
+// UnsortedSegmentProdD
+INPUT_MAP(UnsortedSegmentProdD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
+ATTR_MAP(UnsortedSegmentProdD) = {{"num_segments", ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+OUTPUT_MAP(UnsortedSegmentProdD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnsortedSegmentProdD, kNameUnsortedSegmentProdD, ADPT_DESC(UnsortedSegmentProdD))
+
+// UnsortedSegmentMaxD
+INPUT_MAP(UnsortedSegmentMaxD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
+ATTR_MAP(UnsortedSegmentMaxD) = {{"num_segments", ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+OUTPUT_MAP(UnsortedSegmentMaxD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(UnsortedSegmentMaxD, kNameUnsortedSegmentMaxD, ADPT_DESC(UnsortedSegmentMaxD))
 
 // UnsortedSegmentMin
 INPUT_MAP(UnsortedSegmentMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}, {3, INPUT_DESC(num_segments)}};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,9 @@ DECLARE_OP_USE_OUTPUT(SparseApplyAdagradD)
 DECLARE_OP_ADAPTER(ApplyProximalAdagradD)
 DECLARE_OP_USE_OUTPUT(ApplyProximalAdagradD)
 
+DECLARE_OP_ADAPTER(SparseApplyProximalAdagradD)
+DECLARE_OP_USE_OUTPUT(SparseApplyProximalAdagradD)
+
 DECLARE_OP_ADAPTER(LarsV2Update)
 DECLARE_OP_USE_OUTPUT(LarsV2Update)
 
@@ -67,6 +70,9 @@ DECLARE_OP_USE_OUTPUT(ApplyFtrl)
 
 DECLARE_OP_ADAPTER(SparseApplyFtrlD)
 DECLARE_OP_USE_OUTPUT(SparseApplyFtrlD)
+
+DECLARE_OP_ADAPTER(SparseApplyFtrlV2D)
+DECLARE_OP_USE_OUTPUT(SparseApplyFtrlV2D)
 
 DECLARE_OP_ADAPTER(ApplyRMSPropD)
 DECLARE_OP_USE_INPUT_ATTR(ApplyRMSPropD)
