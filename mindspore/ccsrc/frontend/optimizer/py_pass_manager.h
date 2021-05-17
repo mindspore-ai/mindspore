@@ -52,9 +52,9 @@ class PyPassManager {
   // Access the only global instance
   static PyPassManagerPtr GetInstance();
   virtual ~PyPassManager() = default;
-  void Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target, bool requires_grad,
-               bool run_only_once);
-  void Unregiste(const std::string &pass_name);
+  void Register(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target, bool requires_grad,
+                bool run_only_once);
+  void Unregister(const std::string &pass_name);
   void GenNewParameter(const PatternPtr &parameter);
   PassGroupPtr GetPassGroup(Phase phase);
   MatchResultPtr GetMatchResult() { return res_; }

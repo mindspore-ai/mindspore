@@ -20,7 +20,7 @@ from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
-from mindspore.graph_utils.python_pass import registe_pass, unregiste_pass, set_renorm, gen_new_parameter,\
+from mindspore.graph_utils.python_pass import register_pass, unregister_pass, set_renorm, gen_new_parameter,\
     cancel_new_parameter, set_reopt
 from mindspore.common.api import _generate_pip_args
 from mindspore._c_expression import generate_key, Executor_
@@ -48,7 +48,7 @@ def test_softmax_relu():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def softmax_relu_pass():
         x = Any()
         pattern = Call(P.Softmax(), [x])
@@ -56,7 +56,7 @@ def test_softmax_relu():
         return pattern, target
 
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(2)
-    unregiste_pass(softmax_relu_pass)
+    unregister_pass(softmax_relu_pass)
     assert "ReLU" in transformed_repr
     assert "Softmax" not in transformed_repr
 
@@ -64,7 +64,7 @@ def test_prim():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def softmax_relu_pass():
         x = Any()
         sigmoid_softmax_pattern = Prim([P.Sigmoid(), P.Softmax()])
@@ -73,7 +73,7 @@ def test_prim():
         return pattern, target
 
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(3)
-    unregiste_pass(softmax_relu_pass)
+    unregister_pass(softmax_relu_pass)
     assert "ReLU" in transformed_repr
     assert "Softmax" not in transformed_repr
 
@@ -87,7 +87,7 @@ def test_softmax_relu_sigmoid():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def softmax_relu_pass():
         x = Any()
         softmax_pattern = Prim(P.Softmax())
@@ -99,7 +99,7 @@ def test_softmax_relu_sigmoid():
         return pattern, target
 
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(3)
-    unregiste_pass(softmax_relu_pass)
+    unregister_pass(softmax_relu_pass)
     assert "ReLU" in transformed_repr
     assert "Sigmoid" in transformed_repr
     assert "Softmax" not in transformed_repr
@@ -112,7 +112,7 @@ def test_isin_pattern_0():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def softmax_relu_pass():
         x = Any()
         softmax_pattern = Prim(P.Softmax())
@@ -125,7 +125,7 @@ def test_isin_pattern_0():
         target = Call(relu6_pattern, [x])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(2)
-    unregiste_pass(softmax_relu_pass)
+    unregister_pass(softmax_relu_pass)
     assert "ReLU6" in transformed_repr
     assert "Softmax" not in transformed_repr
 
@@ -136,7 +136,7 @@ def test_isin_pattern_1():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def softmax_neg_pass():
         x = Any()
         softmax_pattern = Prim(P.Softmax())
@@ -149,7 +149,7 @@ def test_isin_pattern_1():
         target = Call(neg_ops, [pattern])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(4)
-    unregiste_pass(softmax_neg_pass)
+    unregister_pass(softmax_neg_pass)
     assert "Neg" in transformed_repr
     assert "Softmax" in transformed_repr
 
@@ -177,7 +177,7 @@ def test_isnot_pattern_0():
     inputs = Tensor(np.random.normal(0, 1, (10, 32, 32, 32)), mindspore.float32)
     conv_bn_model = ConvBN()
 
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def single_bn_pass():
         """
         Sub a BN which does NOT take Conv as inputs to ReLU6.
@@ -189,7 +189,7 @@ def test_isnot_pattern_0():
         target = Call(P.ReLU6(), [pattern_0])
         return pattern, target
 
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def bn_pass():
         """
         Sub a BN to Softmax.
@@ -199,8 +199,8 @@ def test_isnot_pattern_0():
         return pattern, target
 
     transformed_repr = get_func_graph(conv_bn_model, inputs).get_return().expanded_str(5)
-    unregiste_pass(single_bn_pass)
-    unregiste_pass(bn_pass)
+    unregister_pass(single_bn_pass)
+    unregister_pass(bn_pass)
     assert "ReLU6" not in transformed_repr
     assert "Softmax" in transformed_repr
     set_renorm(True)
@@ -213,7 +213,7 @@ def test_isnot_pattern_1():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(run_only_once=True)
+    @register_pass(run_only_once=True)
     def single_bn_pass():
         """
         Sub a BN which does NOT take MatMul as inputs to ReLU6.
@@ -227,7 +227,7 @@ def test_isnot_pattern_1():
         return pattern, target
 
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
-    unregiste_pass(single_bn_pass)
+    unregister_pass(single_bn_pass)
     assert "ReLU6" in transformed_repr
     assert "Softmax" not in transformed_repr
 
@@ -240,7 +240,7 @@ def test_newtensor_pattern():
     inputs = Tensor(np.ones([42]), mindspore.float16)
     softmax_model = nn.Softmax()
 
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def softmax_addn_pass():
         x = Any()
         pattern = Call(P.Softmax(), [x])
@@ -250,7 +250,7 @@ def test_newtensor_pattern():
         target = Call(P.AddN(), [x, new_weight])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(2)
-    unregiste_pass(softmax_addn_pass)
+    unregister_pass(softmax_addn_pass)
     assert "AddN" in transformed_repr
     assert "Softmax" not in transformed_repr
     set_renorm(True)
@@ -264,7 +264,7 @@ def test_newparameter_pattern():
 
     set_renorm(False)
     set_reopt(False)
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def softmax_addn_pass():
         x = Any()
         pattern = Call(P.Softmax(), [x])
@@ -277,7 +277,7 @@ def test_newparameter_pattern():
         target = Call("MakeTuple", [target_0])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
-    unregiste_pass(softmax_addn_pass)
+    unregister_pass(softmax_addn_pass)
     assert "MatMul" in transformed_repr
     assert "MakeTuple" in transformed_repr
     assert "Softmax" not in transformed_repr
@@ -291,7 +291,7 @@ def test_imm_target():
 
     set_renorm(False)
     set_reopt(False)
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def softmax_pass():
         x = Any()
         pattern = Call(P.Softmax(), [x])
@@ -300,7 +300,7 @@ def test_imm_target():
         target = Call(Constants.kTupleGetItem, [target_0, imm])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
-    unregiste_pass(softmax_pass)
+    unregister_pass(softmax_pass)
     assert "MakeTuple" in transformed_repr
     assert Constants.kTupleGetItem in transformed_repr
     assert "Softmax" in transformed_repr
@@ -317,7 +317,7 @@ def test_gen_new_parameter():
     set_renorm(False)
     set_reopt(False)
     gen_new_parameter(new_para)
-    @registe_pass(requires_grad=False, run_only_once=True)
+    @register_pass(requires_grad=False, run_only_once=True)
     def softmax_make_tuple_pass():
         x = Any()
         softmax = P.Softmax()
@@ -327,7 +327,7 @@ def test_gen_new_parameter():
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     assert "Merlin" in transformed_repr
-    unregiste_pass(softmax_make_tuple_pass)
+    unregister_pass(softmax_make_tuple_pass)
     cancel_new_parameter(new_para)
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     assert "Merlin" not in transformed_repr

@@ -48,8 +48,8 @@ PyPassManager::PyPassManager() {
   res_ = std::make_shared<MatchResult>();
 }
 
-void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
-                            bool requires_grad, bool run_only_once) {
+void PyPassManager::Register(const std::string &pass_name, const PatternPtr &pattern, const PatternPtr &target,
+                             bool requires_grad, bool run_only_once) {
   PassGroupPtr cur_pg;
   if (requires_grad) {
     cur_pg = GetPassGroup(Phase::PREAD);
@@ -65,7 +65,7 @@ void PyPassManager::Registe(const std::string &pass_name, const PatternPtr &patt
   cur_pg->AddPass(new_pass);
 }
 
-void PyPassManager::Unregiste(const std::string &pass_name) {
+void PyPassManager::Unregister(const std::string &pass_name) {
   auto opt_pm = GetPassGroup(Phase::OPT);
   if (!opt_pm->DeletePass(pass_name)) {
     MS_LOG(WARNING) << "Opt has no such pass : " + pass_name + "\n";
@@ -101,8 +101,8 @@ REGISTER_PYBIND_DEFINE(
     (void)py::enum_<Phase>(*m, "phase", py::arithmetic()).value("pre_ad", Phase::PREAD).value("opt", Phase::OPT);
     (void)py::class_<PyPassManager, std::shared_ptr<PyPassManager>>(*m, "PyPassManager_")
       .def(py::init([]() { return PyPassManager::GetInstance(); }))
-      .def("registe", &PyPassManager::Registe, "Registe python pass")
-      .def("unregiste", &PyPassManager::Unregiste, "Delete Python Pass")
+      .def("register", &PyPassManager::Register, "Register python pass")
+      .def("unregister", &PyPassManager::Unregister, "Unregister Python Pass")
       .def("gen_new_parameter", &PyPassManager::GenNewParameter, "Generate new parameter")
       .def("set_renorm", &PyPassManager::SetRenorm, "Set whether or not to do renorm after modified graph")
       .def("set_reopt", &PyPassManager::SetReOpt, "Set whether or not to do optimization after modified graph");
