@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,21 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  return BroadCastInferShape(op_name, input_args);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 2, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  return BroadCastInferShape(prim_name, input_args);
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto op_name = prim->name();
+  CheckAndConvertUtils::CheckInteger("RealDiv infer", input_args.size(), kGreaterEqual, 2, op_name);
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("y", input_args[1]->BuildType());
