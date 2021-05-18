@@ -1971,7 +1971,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   InitResourceAndDfBuilder(cell_id, args);
   // Check whether cell has dynamic construct
   if (!top_cell()->is_dynamic()) {
-    bool is_dynamic = parse::DynamicAnalysis::IsDynamicCell(cell);
+    bool is_dynamic = parse::DynamicParser::IsDynamicCell(cell);
     MS_LOG(DEBUG) << "Current cell dynamic " << is_dynamic;
     if (is_dynamic) {
       top_cell()->set_is_dynamic(is_dynamic);

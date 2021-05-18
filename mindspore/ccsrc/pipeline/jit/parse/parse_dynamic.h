@@ -26,10 +26,10 @@
 
 namespace mindspore::parse {
 
-class DynamicAnalysis {
+class DynamicParser {
  public:
-  DynamicAnalysis() = default;
-  ~DynamicAnalysis() = default;
+  DynamicParser() = default;
+  ~DynamicParser() = default;
 
   // Check cell struct
   static bool IsDynamicCell(const py::object &cell);

@@ -361,13 +361,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   auto func_graph = GetValueNode<FuncGraphPtr>(input_fg);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = Manage({fg, func_graph}, false);
-  auto need_replace_forward = true;
-  auto forward_value = GenNewTensor(manager, equivdout, forward, need_replace_forward);
-  if (!need_replace_forward) {
-    cnode_morph->clear_inputs_value();
-    MS_LOG(DEBUG) << "No need replace forward result";
-    return;
-  }
+  auto forward_value = GenNewTensor(manager, equivdout, forward, true);
   MS_LOG(DEBUG) << "Replace: " << equivdout->ToString() << " with " << forward;
   auto value_node = NewValueNode(forward_value);
   value_node->set_has_new_value(true);
@@ -406,7 +400,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   }
   auto out_node = c_input->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(out_node);
-  out_node->set_value(GenNewTensor(manager, out_node, out_node->value(), need_replace_forward));
+  out_node->set_value(GenNewTensor(manager, out_node, out_node->value(), true));
 }
 
 bool DFunctor::IsFreeMorphism(const AnfNodePtr &node) {
