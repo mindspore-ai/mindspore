@@ -149,6 +149,8 @@ class Parameter(Tensor_):
         self._inited_param = None
         self._sliced = False
         self.is_param_ps = False
+        self.push_weight_to_server = False
+        self.pull_weight_from_server = False
         self._cast_type = None
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
@@ -231,6 +233,19 @@ class Parameter(Tensor_):
         self.is_param_ps = True
         self.init_in_server = init_in_server
         self.param_info.init_in_server = init_in_server
+
+    def set_param_fl(self, push_to_server=False, pull_from_server=False):
+        """
+        Set the way of parameter and server interaction.
+
+        Args:
+            push_to_server (bool): Whether the parameter should be pushed to server. Default: False.
+            pull_from_server (bool): Whether the parameter should be pulled from server. Default: False.
+        """
+        if push_to_server:
+            self.push_weight_to_server = True
+        if pull_from_server:
+            self.pull_weight_from_server = True
 
     @property
     def inited_param(self):

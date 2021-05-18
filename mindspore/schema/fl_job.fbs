@@ -110,12 +110,12 @@ table ResponseAsyncUpdateModel{
   iteration:int;
 }
 
-table RequestOverwriteWeightsByKey{
+table RequestPushWeight{
   iteration:int;
   feature_map:[FeatureMap];
 }
 
-table ResponseOverwriteWeightsByKey{
+table ResponsePushWeight{
   retcode:int;
   reason:string;
 }
@@ -144,11 +144,11 @@ table ResponseAsyncGetModel{
   feature_map:[FeatureMap];
 }
 
-table RequestGetWeightsByKey{
+table RequestPullWeight{
   iteration:int;
   weight_names:[string];
 }
-table ResponseGetWeightsByKey{
+table ResponsePullWeight{
   retcode:int;
   reason:string;
   feature_map:[FeatureMap];

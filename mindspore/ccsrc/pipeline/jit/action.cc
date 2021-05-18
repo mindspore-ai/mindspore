@@ -47,6 +47,7 @@
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
+#include "ps/worker/fl_worker.h"
 #include "ps/server/server.h"
 #endif
 
@@ -616,6 +617,10 @@ bool StartPSWorkerAction(const ResourcePtr &) {
   ps::Worker::GetInstance().Run();
   return true;
 }
+bool StartFLWorkerAction(const ResourcePtr &) {
+  ps::worker::FLWorker::GetInstance().Run();
+  return true;
+}
 
 bool StartPSServerAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
@@ -824,7 +829,12 @@ std::vector<ActionItem> VmPipeline() {
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if (ENABLE_CPU && !_WIN32)
   if (ps::PSContext::instance()->is_worker()) {
-    actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+    std::string server_mode = ps::PSContext::instance()->server_mode();
+    if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
+      actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
+    } else {
+      actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
+    }
   }
 #endif
   // compile the ANF graph

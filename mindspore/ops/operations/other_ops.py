@@ -715,6 +715,55 @@ class Pull(PrimitiveWithInfer):
     def infer_dtype(self, key_dtype, weight_dtype):
         return mstype.float32
 
+class PullWeight(PrimitiveWithInfer):
+    """
+    Pull weight by its names from server.
+
+    Inputs:
+        - **weight** (Tensor) - The weight to be pulled.
+        - **name** (String) - The full name of the weight.
+        - **index** (Int) - The index of the weight.
+
+    Outputs:
+        None.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PullWeight"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['weight', "name", "index"], outputs=['output'])
+
+    def infer_shape(self, weight, name, index):
+        return [1]
+
+    def infer_dtype(self, weight, name, index):
+        return mstype.float32
+
+class PushWeight(PrimitiveWithInfer):
+    """
+    Upload weight by its names to server.
+
+    Inputs:
+        - **weight** (Tensor) - The weight to be uploaded.
+        - **name** (String) - The full name of the weight.
+        - **index** (Int) - The index of the weight.
+
+    Outputs:
+        None.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PushWeight"""
+        self.add_prim_attr("primitive_target", "CPU")
+        self.init_prim_io_names(inputs=['weight', "name", "index"], outputs=['output'])
+
+    def infer_shape(self, weight, name, index):
+        return [1]
+
+    def infer_dtype(self, weight, ps_key, index):
+        return mstype.float32
 
 class identity(Primitive):
     """

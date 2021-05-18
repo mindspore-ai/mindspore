@@ -165,6 +165,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Comm Ops
     {prim::kPrimAllSwap, {InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, nullptr, true}},
+    {prim::kPrimFusedPushWeight, {nullptr, nullptr, true}},
+    {prim::kPrimFusedPullWeight, {nullptr, nullptr, true}},
   };
   return prim_eval_implement_map;
 }

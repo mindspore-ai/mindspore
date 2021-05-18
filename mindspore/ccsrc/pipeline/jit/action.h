@@ -41,6 +41,7 @@ bool PynativeElimOpt(const ResourcePtr &res);
 bool TaskEmitAction(const ResourcePtr &res);
 bool ExecuteAction(const ResourcePtr &res);
 bool StartPSWorkerAction(const ResourcePtr &res);
+bool StartFLWorkerAction(const ResourcePtr &res);
 bool StartPSServerAction(const ResourcePtr &res);
 bool StartPSSchedulerAction(const ResourcePtr &res);
 // This action is only for federated learning only. In later version, parameter server mode and federated learning will

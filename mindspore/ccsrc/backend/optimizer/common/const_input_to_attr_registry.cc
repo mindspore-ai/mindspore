@@ -81,6 +81,8 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kBatchToSpaceOpName, {1});
   Register(kPadOpName, {1});
   Register(kPushOpName, {1});
+  Register(kPullWeightOpName, {1, 2});
+  Register(kPushWeightOpName, {1, 2});
 }
 
 ConstInputToAttrInfoRegistry &ConstInputToAttrInfoRegistry::Instance() {

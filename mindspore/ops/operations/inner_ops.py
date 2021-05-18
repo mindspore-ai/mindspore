@@ -521,6 +521,7 @@ class AdamWeightDecay(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
+        self.add_prim_attr('side_effect_mem', True)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
