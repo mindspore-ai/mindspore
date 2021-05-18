@@ -159,10 +159,6 @@ PrimBpropOptimizer &PrimBpropOptimizer::GetPrimBpropOptimizerInst() {
   return g_prim_bprop_opt;
 }
 
-PrimBpropOptimizer::PrimBpropOptimizer() {}
-
-PrimBpropOptimizer::~PrimBpropOptimizer() {}
-
 void PrimBpropOptimizer::Clear() {
   prim_bprop_cache_.clear();
   tuple_list_bprop_cache_.clear();

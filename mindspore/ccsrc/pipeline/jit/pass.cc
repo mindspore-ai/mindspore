@@ -113,7 +113,7 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 }
 
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
-  opt::OptPassConfig pynative_eliminate_ = opt::OptPassConfig({
+  opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
     irpass.pynative_eliminate_,
   });
   opt::irpass::ResolveIRPassLib resolve_irpass;
@@ -123,23 +123,23 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
     resolve_irpass.resolver_getattr_,
   });
 
-  opt::OptPassConfig switch_simplify_ = opt::OptPassConfig({
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
   });
 
-  opt::OptPassConfig inline_ = opt::OptPassConfig({
+  opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
   });
 
   opt::OptPassConfig bool_scalar_eliminate = opt::OptPassConfig({
-    irpass.bool_scalar_eliminate,
+    irpass.bool_scalar_eliminate_,
   });
 
-  OptPassGroupMap map({{"ad_eliminate_", pynative_eliminate_},
+  OptPassGroupMap map({{"ad_eliminate_", pynative_eliminate},
                        {"ad_resolver_prim", resolver_prim},
-                       {"ad_inline_", inline_},
-                       {"bool_scalar_eliminate", bool_scalar_eliminate},
-                       {"ad_switch_simplify_", switch_simplify_}});
+                       {"ad_inline_", inline_opt},
+                       {"bool_scalar_eliminate_", bool_scalar_eliminate},
+                       {"ad_switch_simplify_", switch_simplify}});
 
   auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
   FuncGraphPtr func_graph = res->func_graph();

@@ -128,7 +128,7 @@ class PrimBpropOptGraphLevel2Info {
 
 class PrimBpropOptimizer {
  public:
-  ~PrimBpropOptimizer();
+  ~PrimBpropOptimizer() = default;
 
   void Clear();
 
@@ -146,7 +146,7 @@ class PrimBpropOptimizer {
   FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res);
 
  private:
-  PrimBpropOptimizer();
+  PrimBpropOptimizer() = default;
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
                                    PrimBpropOptGraphLevel2InfoPtr *level_2_graph_info,

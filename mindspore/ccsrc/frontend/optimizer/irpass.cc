@@ -243,7 +243,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   switch_layer_defer_inline_ =
     MakeSubstitution(std::make_shared<SwitchLayerDeferInline>(), "switch_layer_defer_inline", prim::kPrimSwitchLayer);
 
-  bool_scalar_eliminate = MakeSubstitution(std::make_shared<BoolScalarEliminate>(), "bool_scalar_eliminate", IsCNode);
+  bool_scalar_eliminate_ = MakeSubstitution(std::make_shared<BoolScalarEliminate>(), "bool_scalar_eliminate_", IsCNode);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
