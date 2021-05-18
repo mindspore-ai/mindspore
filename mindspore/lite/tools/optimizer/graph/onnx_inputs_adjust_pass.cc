@@ -48,7 +48,11 @@ STATUS OnnxInputAdjustOpPass::AddAttrToInput(const FuncGraphPtr &func_graph, con
     auto value_data = GetValue<std::vector<int32_t>>(value_ptr);
     auto param_node = BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
     inputs.push_back(param_node);
-    cnode->set_inputs(inputs);
+    auto manager = func_graph->manager();
+    MS_ASSERT(manager != nullptr);
+    auto tr = manager->Transact();
+    tr.AddEdge(cnode, param_node);
+    tr.Commit();
     primitive_c->EraseAttr(attr_name);
   } else {
     MS_LOG(ERROR) << "there is no attr :" << attr_name;
