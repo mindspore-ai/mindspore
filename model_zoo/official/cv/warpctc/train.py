@@ -65,6 +65,8 @@ if __name__ == '__main__':
     else:
         device_num = 1
         rank = 0
+    enable_graph_kernel = args_opt.platform == 'GPU'
+    context.set_context(enable_graph_kernel=enable_graph_kernel)
 
     max_captcha_digits = cf.max_captcha_digits
     input_size = m.ceil(cf.captcha_height / 64) * 64 * 3
