@@ -123,7 +123,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBiasAdd, {InferImplBiasAdd, nullptr, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, nullptr, true}},
     {prim::kPrimDropout, {InferImplDropout, nullptr, true}},
-    {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, nullptr, true}},
     {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, nullptr, true}},
     {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, nullptr, true}},
     {prim::kPrimSGD, {InferImplSGD, nullptr, true}},

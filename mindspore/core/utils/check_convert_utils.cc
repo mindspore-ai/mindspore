@@ -398,8 +398,9 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
   return shape_map;
 }
 
-abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::vector<AbstractBasePtr> &input_args,
-                                                             int64_t index, const std::string &prim_name) {
+abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &prim_name,
+                                                             const std::vector<AbstractBasePtr> &input_args,
+                                                             int64_t index) {
   auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, index);
   MS_EXCEPTION_IF_NULL(abstract);
   auto base_shape = abstract->BuildShape();

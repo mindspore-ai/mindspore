@@ -57,6 +57,7 @@ from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
 from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
+from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
 from .gelu import _gelu_tbe
 from .gelu_grad import _gelu_grad_tbe
 from .fast_gelu import _fast_gelu_tbe

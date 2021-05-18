@@ -3087,7 +3087,7 @@ class DropoutGenMask(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class DropoutDoMask(PrimitiveWithInfer):
+class DropoutDoMask(Primitive):
     """
     Applies dropout mask on the input tensor.
 
@@ -3128,36 +3128,6 @@ class DropoutDoMask(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def __infer__(self, input_x, mask, keep_prob):
-        input_x_shape = input_x['shape']
-        mask_shape = mask['shape']
-        keep_prob_shape = keep_prob['shape']
-        validator.check("keep_prob's dim", len(keep_prob_shape), '0(scalar)', 0, Rel.EQ, self.name)
-        size_x = reduce(lambda x, y: x * y, input_x_shape)
-        if len(mask_shape) != 1:
-            raise ValueError("DropoutDoMask mask shape should be 1-dimension.")
-        size_y = mask_shape[0] * 8
-        if size_x > size_y:
-            raise ValueError(f"DropoutDoMask y mask do not math input input_x shape:"
-                             "{input_x_shape}, mask shape: {mask_shape}.")
-
-        validator.check_tensor_dtype_valid("input_x", input_x['dtype'], [mstype.float32, mstype.float16, mstype.int32],
-                                           self.name)
-        validator.check_tensor_dtype_valid("input_mask", mask['dtype'], [mstype.uint8], self.name)
-
-        keep_prob_v = keep_prob['value']
-        if keep_prob_v is not None:
-            if isinstance(keep_prob['dtype'], type(mstype.tensor)):
-                validator.check_float_range(keep_prob_v.asnumpy(), 0, 1, Rel.INC_BOTH, 'keep_prob', self.name)
-            else:
-                validator.check_value_type("keep_prob", keep_prob_v, [float], self.name)
-                validator.check_float_range(keep_prob_v, 0, 1, Rel.INC_BOTH, 'keep_prob', self.name)
-
-        out = {'shape': input_x_shape,
-               'dtype': input_x['dtype'],
-               'value': None}
-        return out
 
 
 class ResizeBilinear(PrimitiveWithInfer):

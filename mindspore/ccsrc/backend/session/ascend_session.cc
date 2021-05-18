@@ -456,11 +456,11 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "Start";
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
-  // Update Graph Dynamic Shape Attr
-  UpdateAllGraphDynamicShapeAttr(all_graphs);
   for (const auto &graph : all_graphs) {
     UnifyMindIR(graph);
   }
+  // Update Graph Dynamic Shape Attr
+  UpdateAllGraphDynamicShapeAttr(all_graphs);
   BackendOptimization(all_graphs);
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {

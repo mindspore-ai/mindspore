@@ -68,10 +68,12 @@ constexpr auto kOnesLike = "OnesLike";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
-
-// NN
 constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
+constexpr auto kDropoutGenMask = "DropoutGenMask";
+constexpr auto kDropoutDoMask = "DropoutDoMask";
+constexpr auto kDropout = "Dropout";
+constexpr auto kDropoutGrad = "DropoutGrad";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
@@ -294,10 +296,10 @@ inline const PrimitivePtr kPrimLayerNormGrad = std::make_shared<Primitive>(kLaye
 inline const PrimitivePtr kPrimLayerNormXBackprop = std::make_shared<Primitive>("LayerNormXBackprop");
 inline const PrimitivePtr kPrimLayerNormBetaGammaBackprop = std::make_shared<Primitive>("LayerNormBetaGammaBackprop");
 inline const PrimitivePtr kPrimLog1p = std::make_shared<Primitive>("Log1p");
-inline const PrimitivePtr kPrimDropoutGenMask = std::make_shared<Primitive>("DropoutGenMask");
-inline const PrimitivePtr kPrimDropoutDoMask = std::make_shared<Primitive>("DropoutDoMask");
-inline const PrimitivePtr kPrimDropoutGrad = std::make_shared<Primitive>("DropoutGrad");
-inline const PrimitivePtr kPrimDropout = std::make_shared<Primitive>("Dropout");
+inline const PrimitivePtr kPrimDropoutGenMask = std::make_shared<Primitive>(kDropoutGenMask);
+inline const PrimitivePtr kPrimDropoutDoMask = std::make_shared<Primitive>(kDropoutDoMask);
+inline const PrimitivePtr kPrimDropoutGrad = std::make_shared<Primitive>(kDropoutGrad);
+inline const PrimitivePtr kPrimDropout = std::make_shared<Primitive>(kDropout);
 inline const PrimitivePtr kPrimUniformReal = std::make_shared<Primitive>("UniformReal");
 inline const PrimitivePtr kPrimCudnnUniformReal = std::make_shared<Primitive>("CudnnUniformReal");
 inline const PrimitivePtr kPrimOneHot = std::make_shared<Primitive>("OneHot");
