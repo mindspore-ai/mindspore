@@ -50,14 +50,7 @@ int ReduceFP32Coder::ReSize() {
 }
 
 int ReduceFP32Coder::DoCode(CoderContext *const context) {
-  // generate code .h .c
-  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSum)) {
-    Collect(context, {"runtime/kernel/fp32/reduce_sum.h"}, {"reduce_sum.c"});
-  } else if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
-    Collect(context, {"runtime/kernel/fp32/reduce_mean.h"}, {"reduce_mean.c"});
-  } else {
-    Collect(context, {"runtime/kernel/fp32/reduce.h"}, {"reduce.c"});
-  }
+  Collect(context, {"nnacl/fp32/reduce_fp32.h"}, {"reduce_fp32.c"});
 
   NNaclFp32Serializer code;
   // call the op function
