@@ -45,7 +45,7 @@ def test_net(data_dir,
     load_param_into_net(net, param_dict)
     net = UnetEval(net)
     if hasattr(config, "dataset") and config.dataset != "ISBI":
-        split = config.split if hasattr(config, "dataset") else 0.8
+        split = config.split if hasattr(config, "split") else 0.8
         valid_dataset = create_multi_class_dataset(data_dir, config.image_size, 1, 1,
                                                    num_classes=config.num_classes, is_train=False,
                                                    eval_resize=config.eval_resize, split=split,

@@ -26,7 +26,7 @@ import cv2
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C2
 from mindspore.mindrecord import FileWriter
-from .config_ghostnet_13x import config
+from src.model_utils.config import config
 from .box_utils import jaccard_numpy, ssd_bboxes_encode
 
 
@@ -252,7 +252,7 @@ def create_coco_label(is_training):
     """Get image path and annotation from COCO."""
     from pycocotools.coco import COCO
 
-    coco_root = config.coco_root
+    coco_root = os.path.join(config.data_path, "coco_ori")
     data_type = config.val_data_type
     if is_training:
         data_type = config.train_data_type
@@ -364,7 +364,7 @@ def voc_data_to_mindrecord(mindrecord_dir, is_training, prefix="ssd.mindrecord",
 
 def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="ssd.mindrecord", file_num=8):
     """Create MindRecord file."""
-    mindrecord_dir = config.mindrecord_dir
+    mindrecord_dir = os.path.join(config.data_path, "MindRecord_COCO")
     mindrecord_path = os.path.join(mindrecord_dir, prefix)
     writer = FileWriter(mindrecord_path, file_num)
     if dataset == "coco":

@@ -26,9 +26,9 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.model_utils.moxing_adapter import moxing_wrapper
-from src.model_utils.device_adapter import get_device_id, get_rank_id
-from src.model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_rank_id
+from model_utils.config import config
 from src.textcnn import TextCNN
 from src.textcnn import SoftmaxCrossEntropyExpand
 from src.dataset import MovieReview, SST2, Subjectivity

@@ -17,7 +17,7 @@
 import os
 import json
 import numpy as np
-from .config_ghostnet_13x import config
+from src.model_utils.config import config
 from .box_utils import ssd_bboxes_decode
 
 
@@ -62,7 +62,7 @@ def metrics(pred_data):
     from pycocotools.cocoeval import COCOeval
     num_classes = config.num_classes
 
-    coco_root = config.coco_root
+    coco_root = os.path.join(config.data_path, "coco_ori")
     data_type = config.val_data_type
 
     # Classes need to train or test.

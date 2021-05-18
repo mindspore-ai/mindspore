@@ -20,7 +20,7 @@ import numpy as np
 
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from src.model_utils.config import config
+from model_utils.config import config
 from src.textcnn import TextCNN
 from src.dataset import MovieReview, SST2, Subjectivity
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     net = TextCNN(vocab_len=instance.get_dict_len(), word_len=config.word_len,
                   num_classes=config.num_classes, vec_length=config.vec_length)
 
-    param_dict = load_checkpoint(config.ckpt_file)
+    param_dict = load_checkpoint(config.checkpoint_file_path)
     load_param_into_net(net, param_dict)
 
     input_arr = Tensor(np.ones([config.batch_size, config.word_len], np.int32))

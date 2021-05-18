@@ -26,6 +26,7 @@ from mindspore.communication.management import get_group_size
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
+from src.model_utils.config import config
 
 
 def _make_divisible(x, divisor=4):
@@ -364,14 +365,11 @@ class FlattenConcat(nn.Cell):
     """
     Concatenate predictions into a single tensor.
 
-    Args:
-        config (dict): The default config of SSD.
-
     Returns:
         Tensor, flatten predictions.
     """
 
-    def __init__(self, config):
+    def __init__(self):
         super(FlattenConcat, self).__init__()
         self.num_ssd_boxes = config.num_ssd_boxes
         self.concat = P.Concat(axis=1)
@@ -391,15 +389,12 @@ class MultiBox(nn.Cell):
     """
     Multibox conv layers. Each multibox layer contains class conf scores and localization predictions.
 
-    Args:
-        config (dict): The default config of SSD.
-
     Returns:
         Tensor, localization predictions.
         Tensor, class conf scores.
     """
 
-    def __init__(self, config):
+    def __init__(self):
         super(MultiBox, self).__init__()
         num_classes = config.num_classes
         out_channels = config.extras_out_channels
@@ -415,7 +410,7 @@ class MultiBox(nn.Cell):
 
         self.multi_loc_layers = nn.layer.CellList(loc_layers)
         self.multi_cls_layers = nn.layer.CellList(cls_layers)
-        self.flatten_concat = FlattenConcat(config)
+        self.flatten_concat = FlattenConcat()
 
     def construct(self, inputs):
         loc_outputs = ()
@@ -432,18 +427,16 @@ class SSD300(nn.Cell):
 
     Args:
         backbone (Cell): Backbone Network.
-        config (dict): The default config of SSD.
 
     Returns:
         Tensor, localization predictions.
         Tensor, class conf scores.
 
     Examples:backbone
-         SSD300(backbone=resnet34(num_classes=None),
-                config=config).
+         SSD300(backbone=resnet34(num_classes=None)).
     """
 
-    def __init__(self, backbone, config, is_training=True, **kwargs):
+    def __init__(self, backbone, is_training=True, **kwargs):
         super(SSD300, self).__init__()
 
         self.backbone = backbone
@@ -457,7 +450,7 @@ class SSD300(nn.Cell):
                                         expand_ratio=ratios[i], last_relu=True)
             residual_list.append(residual)
         self.multi_residual = nn.layer.CellList(residual_list)
-        self.multi_box = MultiBox(config)
+        self.multi_box = MultiBox()
         self.is_training = is_training
         if not is_training:
             self.activation = P.Sigmoid()
@@ -520,13 +513,12 @@ class SSDWithLossCell(nn.Cell):
 
     Args:
         network (Cell): The training network.
-        config (dict): SSD config.
 
     Returns:
         Tensor, the loss of the network.
     """
 
-    def __init__(self, network, config):
+    def __init__(self, network):
         super(SSDWithLossCell, self).__init__()
         self.network = network
         self.less = P.Less()

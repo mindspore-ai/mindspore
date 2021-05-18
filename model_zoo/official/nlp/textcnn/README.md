@@ -109,11 +109,11 @@ If you want to run in modelarts, please check the official documentation of [mod
         ├── src
         │   ├── dataset.py                // Processing dataset
         │   ├── textcnn.py                // textcnn architecture
-               ├── utils
-               │   ├──device_adapter.py   // device adapter
-               │   ├──local_adapter.py    // local adapter
-               │   ├──moxing_adapter.py   // moxing adapter
-               │   ├──config.py           // parameter analysis
+        ├── model_utils
+        │   ├──device_adapter.py          // device adapter
+        │   ├──local_adapter.py           // local adapter
+        │   ├──moxing_adapter.py          // moxing adapter
+        │   ├──config.py                  // parameter analysis
         ├── mr_config.yaml                 // parameter configuration
         ├── sst2_config.yaml               // parameter configuration
         ├── subj_config.yaml               // parameter configuration
