@@ -2164,13 +2164,15 @@ def test_digitize():
 def test_bincount():
     x = onp.random.randint(0, 10, 20)
     weights = onp.random.randn(20)
-    match_res(mnp.bincount, onp.bincount, x)
-    match_res(mnp.bincount, onp.bincount, x, minlength=25)
-    match_res(mnp.bincount, onp.bincount, x, weights, error=3)
-    match_res(mnp.bincount, onp.bincount, x, weights, minlength=25, error=3)
+    match_res(mnp.bincount, onp.bincount, x, dtype=mnp.int32)
+    match_res(mnp.bincount, onp.bincount, x, minlength=25, dtype=mnp.int32)
+    match_all_arrays(mnp.bincount(to_tensor(x), to_tensor(weights)),
+                     onp.bincount(x, weights), error=3)
+    match_all_arrays(mnp.bincount(to_tensor(x), to_tensor(weights), minlength=25),
+                     onp.bincount(x, weights, minlength=25), error=3)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2193,7 +2195,7 @@ def test_histogram():
             match_all_arrays(mnp_res, onp_res, error=1)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2236,7 +2238,7 @@ def test_histogramdd():
     match_all_arrays(mnp_res[1], onp_res[1], error=3)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

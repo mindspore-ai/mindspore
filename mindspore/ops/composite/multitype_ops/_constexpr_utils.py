@@ -781,7 +781,13 @@ def rem_not_expanded_dims(idx_advanced, expand_true, tensor_index_ndim, rem_ndim
         else:
             tensor_dims = (True,)*tensor_index_ndim
         not_expanded_dim = not_expanded_dim[:idx_advanced] + tensor_dims + not_expanded_dim[idx_advanced:]
-    return not_expanded_dim + (True,)*rem_ndim
+    not_expanded_dim = not_expanded_dim + (True,)*rem_ndim
+
+    count_leading_false = 0
+    while count_leading_false < len(not_expanded_dim) and not not_expanded_dim[count_leading_false]:
+        count_leading_false += 1
+    idx_advanced = max(0, idx_advanced - count_leading_false)
+    return not_expanded_dim, idx_advanced
 
 
 @constexpr
