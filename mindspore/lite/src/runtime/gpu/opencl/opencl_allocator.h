@@ -62,6 +62,10 @@ class OpenCLAllocator : public mindspore::Allocator {
   // malloc image
   void *Malloc(const ImageSize &img_size, void *data = nullptr) { return _Malloc(MemType::IMG, data, 0, img_size); }
   void Free(void *ptr) override;
+  int RefCount(void *ptr) override;
+  int SetRefCount(void *ptr, int ref_count) override;
+  int DecRefCount(void *ptr, int ref_count) override;
+  int IncRefCount(void *ptr, int ref_count) override;
   size_t total_size() override;
 
   void Clear();
@@ -94,6 +98,7 @@ class OpenCLAllocator : public mindspore::Allocator {
   OpenCLRuntime *ocl_runtime_{nullptr};
   std::mutex lock;
   struct MemBuf {
+    std::atomic_int ref_count_ = 0;
     size_t size_{0};
     void *device_ptr_{nullptr};
     void *host_ptr_{nullptr};
@@ -109,7 +114,7 @@ class OpenCLAllocator : public mindspore::Allocator {
   uint64_t total_size_{0};
   // 6 is empirical value
   int shift_factor_ = 6;
-  bool lock_flag_ = false;
+  bool lock_flag_ = true;
 };
 
 }  // namespace mindspore::lite::opencl

@@ -56,6 +56,7 @@ void *OpenCLAllocator::MinimumFit(MemType mem_type, size_t size, const ImageSize
     if (is_match) {
       free_list_.erase(iter);
       allocated_list_[mem_buf->host_ptr_] = mem_buf;
+      mem_buf->ref_count_ = 0;
       MS_LOG(DEBUG) << "Find Mem from free list. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
                     << ", device addr: " << mem_buf->device_ptr_;
       return mem_buf->host_ptr_;
@@ -215,6 +216,7 @@ void *OpenCLAllocator::_Malloc(MemType mem_type, void *data, size_t size, const 
     UnLock();
     return nullptr;
   }
+  mem_buf->ref_count_ = 0;
   mem_buf->size_ = size;
   mem_buf->device_ptr_ = static_cast<void *>(buffer);
   mem_buf->host_ptr_ = host_ptr;
@@ -247,6 +249,7 @@ void OpenCLAllocator::Free(void *buf) {
       iter->second->map_flags_ = false;
     }
     auto mem_buf = iter->second;
+    mem_buf->ref_count_ = 0;
     allocated_list_.erase(iter);
     free_list_.insert(std::make_pair(mem_buf->size_, mem_buf));
     UnLock();
@@ -257,6 +260,66 @@ void OpenCLAllocator::Free(void *buf) {
   }
   UnLock();
   MS_LOG(WARNING) << "Host ptr " << buf << " has freed";
+}
+int OpenCLAllocator::RefCount(void *buf) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
+    auto mem_buf = iter->second;
+    int ref_count = std::atomic_load(&mem_buf->ref_count_);
+    UnLock();
+    return ref_count;
+  }
+  UnLock();
+  return -1;
+}
+int OpenCLAllocator::SetRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
+    auto mem_buf = iter->second;
+    std::atomic_store(&mem_buf->ref_count_, ref_count);
+    UnLock();
+    return ref_count;
+  }
+  UnLock();
+  return -1;
+}
+int OpenCLAllocator::IncRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
+    auto membuf = iter->second;
+    auto ref = std::atomic_fetch_add(&membuf->ref_count_, ref_count);
+    UnLock();
+    return (ref - ref_count);
+  }
+  UnLock();
+  return -1;
+}
+int OpenCLAllocator::DecRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
+    auto mem_buf = iter->second;
+    auto ref = std::atomic_fetch_sub(&mem_buf->ref_count_, ref_count);
+    UnLock();
+    return (ref - ref_count);
+  }
+  UnLock();
+  return -1;
 }
 
 size_t OpenCLAllocator::total_size() {

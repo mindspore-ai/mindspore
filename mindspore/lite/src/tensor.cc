@@ -355,16 +355,29 @@ void *Tensor::MutableData() {
   return this->data_;
 }
 
-void Tensor::IncRefCount() { ++ref_count_; }
+void Tensor::IncRefCount() {
+  ref_count_++;
+  if (allocator_ != nullptr) {
+    allocator_->IncRefCount(this->data_, 1);
+  }
+}
 
 void Tensor::DecRefCount() {
   if (this->IsConst() || this->IsGraphInput()) {
     return;
   }
-  bool free_data = --ref_count_ <= 0;
-  if (free_data) {
-    FreeData();
-    this->ref_count_ = 0;
+  int tensor_ref_count = --ref_count_;
+  int data_ref_count = tensor_ref_count;
+
+  if (allocator_ != nullptr) {
+    data_ref_count = allocator_->DecRefCount(this->data_, 1);
+  }
+  if (tensor_ref_count <= 0) {
+    if (data_ref_count <= 0) {
+      FreeData();
+    } else {
+      data_ = nullptr;
+    }
   }
 }
 
