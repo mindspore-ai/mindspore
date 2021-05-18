@@ -30,22 +30,15 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 struct ProfilingTraceInfo {
-  // execute order's first execute op(like: Cast or Four2Five ...), except tdt op(GetNext ...)
+  // (trace_begin) -> FP -> BP -> (trace_bp_end) -> OPTIMIZER -> (trace_iter_end)
   std::string trace_begin;
-  // get first net_output(apply kernel) from graph outputs: fp ->net_output<- bp
   std::string trace_bp_end;
-  // execute order's end execute (like: Conv2DBackpropFilter)
-  std::string trace_netoutput;
+  std::set<std::string> trace_iter_end;
 
   // profiling specific op, such as AllReduce;
   std::set<std::string> trace_custom_node;
 
-  // 1. insert profiling_trace_begin if profiling_trace_bp_end is not empty.
-  // 2. op lanuch get task info with callback func.
-  // 3. insert profiling_trace_bp_end.
-  // 4. insert profiling_trace_net_output if profiling_trace_bp_end is not empty.
-
-  bool IsValid() const { return !(trace_begin.empty() || trace_netoutput.empty()); }
+  bool IsValid() const { return !(trace_begin.empty() || trace_iter_end.empty()); }
 };
 
 struct ProfilingContent {
@@ -60,51 +53,31 @@ class ProfilingUtils {
   ProfilingUtils() = default;
   ~ProfilingUtils() = default;
 
-  // Insert job_id profiling node and fp_start profiling node.
-  // Job_id is got from envs, which shound be a number greater than 255
-  // Fp_start node should been inserted in the start of a network, and the log_id is hard code to 1.
-  static void ProfilingTraceFpStart(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
-                                    NotNull<session::KernelGraph *> graph_ptr,
-                                    NotNull<std::vector<CNodePtr> *> kernel_list);
-
-  static void ProfilingTraceJobId(const AnfNodePtr &anf_node, NotNull<session::KernelGraph *> graph_ptr,
-                                  NotNull<std::vector<CNodePtr> *> kernel_list);
-
-  // Insert net output profiling node, which tells the device to stop profiling.
-  // The notify in struct ProfilingContent should be 'true', which tells the device to send data to host.
-  static void ProfilingTraceEnd(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
-                                NotNull<session::KernelGraph *> graph_ptr,
-                                NotNull<std::vector<CNodePtr> *> kernel_list);
-
-  // Insert bp_end profiling node, which should been inserted after the last backpropagation CNode in the network.
-  static void ProfilingTraceBpEnd(const mindspore::AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
-                                  NotNull<session::KernelGraph *> graph_ptr,
-                                  NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
-
-  // Mapping graph id and the kernels' name in the graph
+  static void InsertProfilingTraceFp(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
+                                     NotNull<session::KernelGraph *> graph_ptr,
+                                     NotNull<std::vector<CNodePtr> *> kernel_list);
+  static void InsertProfilingTraceJobId(const AnfNodePtr &anf_node, NotNull<session::KernelGraph *> graph_ptr,
+                                        NotNull<std::vector<CNodePtr> *> kernel_list);
+  static void InsertProfilingTraceIterEnd(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
+                                          NotNull<session::KernelGraph *> graph_ptr,
+                                          NotNull<std::vector<CNodePtr> *> kernel_list);
+  static void InsertProfilingTraceBpEnd(const mindspore::AnfNodePtr &anf_node,
+                                        const ProfilingTraceInfo &profiling_trace_info,
+                                        NotNull<session::KernelGraph *> graph_ptr,
+                                        NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
   static void SetGraphProfilingCNode(uint32_t graph_id, const std::vector<CNodePtr> &profiling_cnode_list);
-
   static void SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names);
-
-  // Mapping task_id and kernel name for device to generate the time cost of specific kernel.
-  // Device calculate the time cost of the task which is marked by task id.
-  // But we need data of (kernel name , time cost)
+  // Save graph information to Framework file
   static void ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                  NotNull<const session::KernelGraph *> graph);
-
-  // Get profiling trace point from envs.
-  // export PROFILING_FP_START='full name of the first cnode to execute'
-  // export PROFILING_BP_END='full name of the last backpropagation cnode to execute'
-  // export PROFILING_ITER_END='full name of last cnode in graph to execute'
-  // And other cnode, like AllReduce, export PROFILING_CUSTOM_1='full name of AllReduce cnode'
-  // GetNext, export PROFIFLING_CUSTOM_2='full name fo GetNext cnode'
-  // The variable i in PROFILING_CUSTOM_i should start from 1 without interruption.
-  static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr);
+                                  const session::KernelGraph &graph);
+  // Generate profiling trace
+  static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
   // Insert two profiling trace points, one in front and one behind
-  static void ProfilingCustomOp(const mindspore::AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
-                                NotNull<session::KernelGraph *> graph_ptr,
-                                NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
+  static void InsertProfilingCustomOp(const mindspore::AnfNodePtr &anf_node,
+                                      const ProfilingTraceInfo &profiling_trace_info,
+                                      NotNull<session::KernelGraph *> graph_ptr,
+                                      NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
 
   static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
@@ -118,23 +91,22 @@ class ProfilingUtils {
                                                 NotNull<session::KernelGraph *> graph_ptr);
   static CNodePtr CreateProfilingCNodeWithStream(const AnfNodePtr &anf_node, const ProfilingContent &profiling_content,
                                                  NotNull<session::KernelGraph *> graph_ptr);
-  static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
-  static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
-  static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
-  static std::string GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order);
-  static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
-                           NotNull<ProfilingTraceInfo *> profiling_trace);
-  static void GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
+  static std::string GetTraceBegin(const session::KernelGraph &kernel_graph, const nlohmann::json &option);
+  static std::string GetTraceBpEnd(const session::KernelGraph &kernel_graph, const nlohmann::json &option);
+  static std::set<std::string> GetTraceIterEnd(const session::KernelGraph &kernel_graph);
+  static std::string GetGraphLastKernelName(const session::KernelGraph &kernel_graph);
+  static void GetTraceHccl(const session::KernelGraph &kernel_graph, NotNull<ProfilingTraceInfo *> profiling_trace);
+  static void GetCNodeOutputRealNode(const std::string &node_name, const session::KernelGraph &kernel_graph,
                                      NotNull<std::set<std::string> *> getnext_outputs);
 
-  static bool ValidComputeGraph(NotNull<const session::KernelGraph *> graph_ptr);
+  static bool ValidComputeGraph(const session::KernelGraph &kernel_graph);
   static void SaveProfilingPoint(uint32_t graph_id, const std::string &node_name, uint32_t point_id);
 
   // graph id --> (kernel name list)
-  static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
-  static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
-  static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
-  static uint32_t custom_node_index_;
+  inline static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
+  inline static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
+  inline static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
+  inline static uint32_t custom_node_index_;
 };
 }  // namespace ascend
 }  // namespace device

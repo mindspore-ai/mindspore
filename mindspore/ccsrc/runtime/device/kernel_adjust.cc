@@ -807,7 +807,7 @@ void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
       return;
     }
   }
-  ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GetProfilingTraceFromEnv(kernel_graph_ptr);
+  ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GenerateProfilingTrace(*kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
     MS_LOG(INFO) << "[profiling] no profiling node found!";
     return;
@@ -829,11 +829,15 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
     return;
   }
   for (const auto &cnode_ptr : cnode_ptr_list) {
-    ProfilingUtils::ProfilingTraceFpStart(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
+    ProfilingUtils::InsertProfilingTraceFp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
+                                           NOT_NULL(&new_cnode_list));
     new_cnode_list.emplace_back(cnode_ptr);
-    ProfilingUtils::ProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
-    ProfilingUtils::ProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
-    ProfilingUtils::ProfilingTraceEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
+    ProfilingUtils::InsertProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
+                                            NOT_NULL(&new_cnode_list));
+    ProfilingUtils::InsertProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
+                                              NOT_NULL(&new_cnode_list));
+    ProfilingUtils::InsertProfilingTraceIterEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
+                                                NOT_NULL(&new_cnode_list));
   }
   kernel_graph_ptr->set_execution_order(new_cnode_list);
 }

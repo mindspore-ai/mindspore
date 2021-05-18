@@ -467,7 +467,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, NOT_NULL(graph));
+    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, *graph);
   }
 
   LaunchDataDump(graph->graph_id());
