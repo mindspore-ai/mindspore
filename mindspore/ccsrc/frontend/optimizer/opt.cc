@@ -240,13 +240,14 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
 
 void SubstitutionList::DisplayStatusOfSubstitution(const std::unordered_map<std::string, std::vector<bool>> &status,
                                                    const OptimizerPtr &optimizer, size_t space) const {
+  constexpr int pad_width = 4;
   std::stringstream ss;
   ss << std::endl
      << "Pass: " << optimizer->name() << "(" << optimizer->CurPass_.counter << ")_" << optimizer->CurPass_.name
      << std::endl;
   for (size_t i = 0; i < list_.size(); i++) {
     auto name = list_[i]->name_;
-    ss << std::left << std::setw(SizeToInt(space) + 4) << name << "\t";
+    ss << std::left << std::setw(SizeToInt(space) + pad_width) << name << "\t";
     for (auto change : status.at(name + std::to_string(i))) {
       ss << change << " ";
     }
