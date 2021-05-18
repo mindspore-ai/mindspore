@@ -25,6 +25,23 @@
 
 namespace mindspore {
 namespace abstract {
+namespace {
+std::string ShapeVectorToStr(const std::vector<int64_t> &shp) {
+  std::ostringstream buffer;
+  bool f_begin = true;
+  buffer << "(";
+  for (auto &x : shp) {
+    if (!f_begin) {
+      buffer << ", ";
+    } else {
+      f_begin = false;
+    }
+    buffer << x;
+  }
+  buffer << ")";
+  return buffer.str();
+}
+}  // namespace
 // used for print BaseShape content
 std::ostream &operator<<(std::ostream &os, const BaseShape &bs) {
   os << bs.ToString();
@@ -48,17 +65,18 @@ bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == oth
 
 std::string Shape::ToString() const {
   std::ostringstream buffer;
-  bool f_begin = true;
-  buffer << "(";
-  for (auto &x : shape_) {
-    if (!f_begin) {
-      buffer << ", ";
-    } else {
-      f_begin = false;
-    }
-    buffer << x;
+  bool has_dyn_shape = IsDynamic();
+  if (has_dyn_shape) {
+    buffer << "{ shape : ";
   }
-  buffer << ")";
+  buffer << ShapeVectorToStr(shape_);
+  if (has_dyn_shape) {
+    buffer << " | min shape: ";
+    buffer << ShapeVectorToStr(min_shape_);
+    buffer << " | max shape: ";
+    buffer << ShapeVectorToStr(max_shape_);
+    buffer << " }";
+  }
   return buffer.str();
 }
 

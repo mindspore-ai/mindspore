@@ -23,7 +23,7 @@ from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 
 
-class Assign(PrimitiveWithCheck):
+class Assign(Primitive):
     """
     Assigns `Parameter` with a value.
 
@@ -72,12 +72,6 @@ class Assign(PrimitiveWithCheck):
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def check_dtype(self, variable, value):
-        types = mstype.number_type + (mstype.bool_,)
-        if variable != mstype.type_refkey:
-            validator.check_tensor_dtype_valid("variable", variable, types, self.name)
-        validator.check_scalar_or_tensor_types_same({"value": value}, types, self.name)
 
 
 class InplaceAssign(PrimitiveWithInfer):

@@ -562,19 +562,5 @@ AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &pri
   }
   return args_spec_list[0]->Broaden();
 }
-
-AbstractBasePtr InferImplAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: Ref, value, [universal]
-  CheckRequiredArgsSize(primitive->name(), args_spec_list, 2);
-
-  MS_LOG(DEBUG) << "InferImplAssign " << args_spec_list[0];
-  auto type = args_spec_list[0]->BuildType();
-  if (type->type_id() == kObjectTypeRefKey) {
-    return args_spec_list[1]->Broaden();
-  } else {
-    return args_spec_list[0];
-  }
-}
 }  // namespace abstract
 }  // namespace mindspore
