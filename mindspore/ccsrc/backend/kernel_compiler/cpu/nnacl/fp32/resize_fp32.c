@@ -393,10 +393,10 @@ int ResizeBicubic(const float *input_data, float *output_data, const int *input_
   return NNACL_OK;
 }
 
-int CropAndResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                          const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                          const int h_begin, const int h_end) {
+int CropAndResizeBilinear(const float *input_data, float *output_data, const int *box_idx, const int *input_shape,
+                          const int *output_shape, const int *y_bottoms, const int *y_tops, const int *x_lefts,
+                          const int *x_rights, const float *y_bottom_weights, const float *x_left_weights, float *line0,
+                          float *line1, const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -405,8 +405,11 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
   int new_height = output_shape[1];
   int new_width = output_shape[2];
   int new_channel = output_shape[3];
+  int input_h = input_shape[1];
+  int input_w = input_shape[2];
 
   for (int b = 0; b < batch; b++) {
+    const float *cur_img = input_data + box_idx[b] * input_h * input_w * new_channel;
     const int *y_bottom = y_bottoms + b * new_height;
     const int *y_top = y_tops + b * new_height;
     const float *y_bottom_weight = y_bottom_weights + b * new_height;
@@ -415,7 +418,7 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
     const float *x_left_weight = x_left_weights + b * new_width;
     float *output = output_data + b * new_height * new_width * new_channel;
 
-    Bilinear(input_data, output, input_shape, output_shape, y_bottom, y_top, x_left, x_right, y_bottom_weight,
+    Bilinear(cur_img, output, input_shape, output_shape, y_bottom, y_top, x_left, x_right, y_bottom_weight,
              x_left_weight, line0, line1, h_begin, h_end);
   }
   return NNACL_OK;
