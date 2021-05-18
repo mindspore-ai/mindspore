@@ -1,0 +1,102 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "ops/ctcloss.h"
+
+#include <set>
+#include <string>
+#include <vector>
+#include <memory>
+
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
+#include "abstract/primitive_infer_map.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 4, op_name);
+  auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto labels_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+
+  CheckAndConvertUtils::CheckInteger("inputs rank", inputs_shape.size(), kEqual, 3, op_name);
+  CheckAndConvertUtils::CheckInteger("label_indices rank", labels_indices_shape.size(), kEqual, 2, op_name);
+  CheckAndConvertUtils::CheckInteger("label_indices second dim", labels_indices_shape[1], kEqual, 2, op_name);
+  CheckAndConvertUtils::CheckInteger("label_values rank", labels_values_shape.size(), kEqual, 1, op_name);
+  CheckAndConvertUtils::CheckInteger("sequence_length rank", sequence_length_shape.size(), kEqual, 1, op_name);
+
+  if (labels_indices_shape[0] != labels_values_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For CTCLoss first dim of label_indices and label_value must be same, but got "
+                             << labels_indices_shape[0] << " and " << labels_values_shape[0];
+  }
+  if (inputs_shape[1] != sequence_length_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For CTCLoss input batch_size must be same with sequence_length batch_size, but got "
+                             << inputs_shape[1] << " and " << sequence_length_shape[0];
+  }
+}
+
+std::vector<abstract::ShapePtr> InferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  CheckCTCLossInputs(input_args, op_name);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape = input_shape[kShape];
+  auto min_shape = input_shape[kMinShape];
+  auto max_shape = input_shape[kMaxShape];
+
+  ShapeVector batch = {shape[1]};
+  abstract::ShapePtr loss_shape;
+  abstract::ShapePtr gradient_shape;
+  if (min_shape.empty() || max_shape.empty()) {
+    loss_shape = std::make_shared<abstract::Shape>(batch);
+    gradient_shape = std::make_shared<abstract::Shape>(shape);
+    return std::vector<abstract::ShapePtr>{loss_shape, gradient_shape};
+  }
+
+  ShapeVector batch_min = {min_shape[1]};
+  ShapeVector batch_max = {max_shape[1]};
+  loss_shape = std::make_shared<abstract::Shape>(batch, batch_min, batch_max);
+  gradient_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+  return std::vector<abstract::ShapePtr>{loss_shape, gradient_shape};
+}
+
+TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[1]->BuildType(), {kInt64}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[2]->BuildType(), {kInt32}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[3]->BuildType(), {kInt32}, op_name);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), valid_types, op_name);
+}
+
+}  // namespace
+
+AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto type = InferType(primitive, input_args);
+  auto shapes = InferShape(primitive, input_args);
+  auto loss = std::make_shared<abstract::AbstractTensor>(type, shapes[0]);
+  auto gradient = std::make_shared<abstract::AbstractTensor>(type, shapes[1]);
+  AbstractBasePtrList outputs = {loss, gradient};
+  return std::make_shared<abstract::AbstractTuple>(outputs);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(CTCLoss, prim::kPrimCTCLoss, CTCLossInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

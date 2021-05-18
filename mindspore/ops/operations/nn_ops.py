@@ -6991,7 +6991,7 @@ class Dropout3D(PrimitiveWithInfer):
         return x_dtype, mask_dtype
 
 
-class CTCLoss(PrimitiveWithInfer):
+class CTCLoss(Primitive):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
@@ -7064,28 +7064,6 @@ class CTCLoss(PrimitiveWithInfer):
         validator.check_value_type("ignore_longer_outputs_than_inputs",
                                    ignore_longer_outputs_than_inputs, [bool], self.name)
         self.ignore_longer_outputs_than_inputs_ = ignore_longer_outputs_than_inputs
-
-    def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
-        validator.check_int(len(inputs), 3, Rel.EQ, "inputs rank", self.name)
-        validator.check_int(len(labels_indices), 2, Rel.EQ, "labels_indices rank", self.name)
-        validator.check_int(labels_indices[1], 2, Rel.EQ, "labels_indices dim one", self.name)
-        validator.check_int(len(labels_values), 1, Rel.EQ, "labels_values rank", self.name)
-        validator.check_int(len(sequence_length), 1, Rel.EQ, "sequence_length rank", self.name)
-        validator.check('labels_indices size', labels_indices[0], 'labels_values size',
-                        labels_values[0], Rel.EQ, self.name)
-        validator.check('inputs batch_size', inputs[1], 'sequence_length batch_size',
-                        sequence_length[0], Rel.EQ, self.name)
-        batch_size = []
-        batch_size.append(inputs[1])
-        return batch_size, inputs
-
-    def infer_dtype(self, inputs, labels_indices, labels_values, sequence_length):
-        valid_dtype = [mstype.float16, mstype.float32, mstype.double]
-        validator.check_tensor_dtype_valid("inputs", inputs, valid_dtype, self.name)
-        validator.check_tensor_dtype_valid("labels_indices", labels_indices, [mstype.int64], self.name)
-        validator.check_tensor_dtype_valid("labels_values", labels_values, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid("sequence_length", sequence_length, [mstype.int32], self.name)
-        return inputs, inputs
 
 
 class CTCGreedyDecoder(PrimitiveWithCheck):
