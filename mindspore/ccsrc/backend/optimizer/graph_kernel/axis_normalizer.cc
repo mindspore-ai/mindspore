@@ -51,9 +51,9 @@ bool AxisNormalizer::Process(const FuncGraphPtr &func_graph) const {
         auto v1 = GetValue<int64_t>(axis);
         auto v2 = NormAxis(v1, rank);
         axis_vec.push_back(v2);
-        diff = diff || (v1 != v2);
-      } else if (axis->isa<ValueList>() || axis->isa<ValueTuple>()) {
-        auto vec = axis->isa<ValueList>() ? axis->cast<ValueListPtr>()->value() : axis->cast<ValueTuplePtr>()->value();
+        diff = true;
+      } else if (axis->isa<ValueSequeue>()) {
+        auto vec = axis->cast<ValueSequeuePtr>()->value();
         if (vec.empty()) {
           diff = true;
           for (size_t i = 0; i < rank; i++) {
