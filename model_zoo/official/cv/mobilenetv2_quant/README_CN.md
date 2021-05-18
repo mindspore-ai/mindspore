@@ -86,11 +86,13 @@ MobileNetV2总体网络架构如下：
 ```python
 ├── mobileNetv2_quant
   ├── Readme.md     # MobileNetV2-Quant相关描述
+  ├── ascend310_infer   # 实现310推理源代码
   ├── scripts
   │   ├──run_train.sh    # 使用Ascend或GPU进行训练的shell脚本
   │   ├──run_infer.sh    # 使用Ascend或GPU进行评估的shell脚本
   │   ├──run_lsq_train.sh    # 使用Ascend或GPU进行LSQ训练的shell脚本
   │   ├──run_lsq_infer.sh    # 使用Ascend或GPU进行LSQ评估的shell脚本
+  │   ├──run_infer_310.sh    # Ascend 310 推理shell脚本
   ├── src
   │   ├──config.py      # 参数配置
   │   ├──dataset.py     # 创建数据集
@@ -101,6 +103,8 @@ MobileNetV2总体网络架构如下：
   ├── train.py      # 训练脚本
   ├── eval.py       # 评估脚本
   ├── export.py     # 导出检查点文件到air/mindir中
+  ├── export_bin_file.py     # 导出ImageNet数据集的bin文件用于310推理
+  ├── postprocess.py         # 310推理后处理脚本
 ```
 
 ## 脚本参数
@@ -240,6 +244,28 @@ python export.py --checkpoint_path [CKPT_PATH] --file_format [EXPORT_FORMAT] --d
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
 
 `OptimizeOption` 可选 ["QAT", "LEARNED_SCALE"].
+
+## Ascend 310 推理
+
+在推理之前需要在昇腾910环境上完成AIR模型的导出。
+并使用export_bin_file.py导出ImageNet数据集的bin文件和对应的label文件：
+
+```shell
+python export_bin_file.py --dataset_dir [EVAL_DATASET_PATH] --save_dir [SAVE_PATH]
+```
+
+执行推理并得到推理精度：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+您可以通过acc.log文件查看结果。QAT量化推理准确性如下：
+
+```bash
+'Accuracy':0.7221
+```
 
 # 模型描述
 

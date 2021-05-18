@@ -84,6 +84,9 @@ python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_
     ├── README.md                        // descriptions about all the models
     ├── lenet_quant
         ├── README.md                    // descriptions about LeNet-Quant
+        ├── ascend310_infer              // application for 310 inference
+        ├── scripts
+            ├── run_infer_310.sh         // shell script for 310 inference
         ├── src
         │   ├── config.py                // parameter configuration
         │   ├── dataset.py               // creating dataset
@@ -93,6 +96,8 @@ python eval.py --device_target=Ascend --data_path=[DATA_PATH] --ckpt_path=[CKPT_
         ├── requirements.txt             // package needed
         ├── train.py               // training LeNet-Quant network with device Ascend
         ├── eval.py                // evaluating LeNet-Quant network with device Ascend
+        ├── export_bin_file.py     // export bin file of MNIST for 310 inference
+        ├── postprocess.py         // post process for 310 inference
 ```
 
 ## [Script Parameters](#contents)
@@ -150,6 +155,34 @@ You can view the results through the file "log.txt". The accuracy of the test da
 ```bash
 # grep "Accuracy: " log.txt
 'Accuracy': 0.9842
+```
+
+## [Model Export](#contents)
+
+```shell
+python export.py --ckpt_path [CKPT_PATH] --data_path [DATA_PATH] --device_target [PLATFORM]
+```
+
+## [Ascend 310 inference](#contents)
+
+You should export AIR model at Ascend 910 before  running the command below.
+You can use export_bin_file.py to export MNIST bin and label for 310 inference.
+
+```shell
+python export_bin_file.py --dataset_dir [DATASET_PATH] --save_dir [SAVE_PATH]
+```
+
+Run run_infer_310.sh and get the accuracy：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+You can view the results through the file "acc.log". The accuracy of the test dataset will be as follows:
+
+```bash
+'Accuracy':0.9883
 ```
 
 ## [Model Description](#contents)

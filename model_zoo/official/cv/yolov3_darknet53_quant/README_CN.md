@@ -116,11 +116,13 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
 .
 └─yolov3_darknet53_quant
   ├─README.md
+  ├─ascend310_infer                   # 实现310推理源代码
   ├─mindspore_hub_conf.md             # Mindspore Hub配置
   ├─scripts
     ├─run_standalone_train.sh         # 在Ascend中启动单机训练(1卡)
     ├─run_distribute_train.sh         # 在Ascend中启动分布式训练(8卡)
-    └─run_eval.sh                     # 在Ascend中启动评估
+    ├─run_eval.sh                     # 在Ascend中启动评估
+    ├─run_infer_310.sh                # Ascend 310 推理shell脚本
   ├─src
     ├─__init__.py                     # python初始化文件
     ├─config.py                       # 参数配置
@@ -136,6 +138,8 @@ sh run_eval.sh dataset/coco2014/ checkpoint/yolov3_quant.ckpt 0
     ├─yolo_dataset.py                 # 为YOLOV3创建数据集
   ├─eval.py                           # 评估网络
   └─train.py                          # 训练网络
+  ├─export_bin_file.py                # 导出coco2014数据集的bin文件用于310推理
+  ├─postprocess.py                    # 310推理后处理脚本
 ```
 
 ### 脚本参数
@@ -264,6 +268,48 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.429
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.232
 Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.450
 Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
+```
+
+## 模型导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
+
+## Ascend 310 推理
+
+在推理之前需要在昇腾910环境上完成AIR模型的导出。
+并使用export_bin_file.py导出coco2014数据集的bin文件和对应的image_shape, image_id文件：
+
+```shell
+python export_bin_file.py --data_dir [DATASET_PATH] --save_path [SAVE_PATH]
+```
+
+执行推理并得到推理精度：
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANNO_PATH] [IMAGESHAPE_PATH] [IMAGEID_PATH] [DEVICE_ID]
+```
+
+您可以通过acc.log文件查看结果。推理准确性如下：
+
+```bash
+=============coco eval reulst=========
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.306
+Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.528
+Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.315
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.122
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.322
+Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.426
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.259
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.398
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.423
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.226
+Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.442
+Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.555
 ```
 
 ## 模型描述
