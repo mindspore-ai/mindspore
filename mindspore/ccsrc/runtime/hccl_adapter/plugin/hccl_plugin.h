@@ -34,7 +34,7 @@ struct HcomOperation;
 
 using OptionsType = std::map<std::string, std::string>;
 using OpsKernelBuilderMap = std::map<std::string, std::shared_ptr<ge::OpsKernelBuilder>>;
-using HExecCallBack = std::function<void(HcclResult status)>;
+using HExecCallBack = std::function<void(HcclResult)>;
 
 #define PLUGIN_METHOD(name, return_type, params...)                        \
   extern "C" {                                                             \
@@ -44,20 +44,28 @@ using HExecCallBack = std::function<void(HcclResult status)>;
   using name##FunObj = std::function<return_type(params)>;                 \
   using name##FunPtr = return_type (*)(params);
 
+#define ORIGIN_METHOD(name, return_type, params...)        \
+  extern "C" {                                             \
+  return_type name(params);                                \
+  }                                                        \
+  constexpr const char *k##name##Name = #name;             \
+  using name##FunObj = std::function<return_type(params)>; \
+  using name##FunPtr = return_type (*)(params);
+
 PLUGIN_METHOD(InitHcomGraphAdapter, ge::Status, const OptionsType &);
 PLUGIN_METHOD(FinalizeHcomGraphAdapter, ge::Status);
 PLUGIN_METHOD(GetHcclKernelInfoStore, void, std::shared_ptr<ge::OpsKernelInfoStore> *);
 PLUGIN_METHOD(GetAllKernelBuilder, void, OpsKernelBuilderMap *);
-PLUGIN_METHOD(LaunchHcclBroadcast, HcclResult, void *, uint64_t, HcclDataType, uint32_t, HcclComm, aclrtStream);
-PLUGIN_METHOD(LaunchHcclAllReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, HcclComm,
-              aclrtStream);
-PLUGIN_METHOD(InitHcclComm, HcclResult, const char *, uint32_t, HcclComm *);
-PLUGIN_METHOD(FinalizeHcclComm, HcclResult, HcclComm);
-PLUGIN_METHOD(HcclCreateGroup, HcclResult, const char *, uint32_t, uint32_t *);
-PLUGIN_METHOD(HcclDestroyGroup, HcclResult, const char *);
-PLUGIN_METHOD(HcclGetRankId, HcclResult, const char *, uint32_t *);
-PLUGIN_METHOD(HcclGetRankSize, HcclResult, const char *, uint32_t *);
-PLUGIN_METHOD(HcclExecInitialize, HcclResult);
-PLUGIN_METHOD(HcclExecFinalize, HcclResult);
-PLUGIN_METHOD(HcclExecEnqueueOp, HcclResult, const ::HcomOperation &, HExecCallBack);
+
+ORIGIN_METHOD(HcclBroadcast, HcclResult, void *, uint64_t, HcclDataType, uint32_t, HcclComm, aclrtStream);
+ORIGIN_METHOD(HcclAllReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, HcclComm, aclrtStream);
+ORIGIN_METHOD(HcclCommInitClusterInfo, HcclResult, const char *, uint32_t, HcclComm *);
+ORIGIN_METHOD(HcclCommDestroy, HcclResult, HcclComm);
+ORIGIN_METHOD(HcomCreateGroup, HcclResult, const char *, uint32_t, uint32_t *);
+ORIGIN_METHOD(HcomDestroyGroup, HcclResult, const char *);
+ORIGIN_METHOD(HcomGetRankId, HcclResult, const char *, uint32_t *);
+ORIGIN_METHOD(HcomGetRankSize, HcclResult, const char *, uint32_t *);
+ORIGIN_METHOD(HcomExecInitialize, HcclResult);
+ORIGIN_METHOD(HcomExecFinalize, HcclResult);
+ORIGIN_METHOD(HcomExecEnqueueOperation, HcclResult, ::HcomOperation, HExecCallBack);
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_PLUGIN_HCCL_PLUGIN_H
