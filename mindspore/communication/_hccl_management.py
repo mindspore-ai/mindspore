@@ -67,12 +67,14 @@ def check_rank_id(rank_id):
 
 
 def load_lib():
+    """load hccl lib"""
     try:
         base_dir = os.path.dirname(os.path.realpath(__file__))
         lib_path = os.path.join(base_dir, "../lib", HCCL_LIB)
         hccl_lib = ctypes.CDLL(lib_path)
     except Exception:
         raise RuntimeError('Get hccl lib error.')
+
     global HCCL_LIB_CTYPES
     HCCL_LIB_CTYPES = hccl_lib
 
