@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace lite {
 static const char *DELIM_SLASH = "/";
+constexpr int RET_TOO_BIG = -9;
 
 namespace {
 float *ReadFileBuf(const char *file, size_t *size) {
@@ -205,9 +206,9 @@ int NetTrain::CompareOutput(const session::LiteSession &lite_session) {
     std::cout << "=======================================================" << std::endl << std::endl;
 
     if (mean_bias > this->flags_->accuracy_threshold_) {
-      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
-      std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
-      return RET_ERROR;
+      MS_LOG(INFO) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
+      std::cout << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
+      return RET_TOO_BIG;
     } else {
       return RET_OK;
     }
@@ -264,7 +265,7 @@ int NetTrain::MarkPerformance(session::TrainSession *session) {
   return RET_OK;
 }
 
-int NetTrain::MarkAccuracy(session::LiteSession *session) {
+int NetTrain::MarkAccuracy(session::LiteSession *session, bool enforce_accuracy) {
   MS_LOG(INFO) << "MarkAccuracy";
   for (auto &msInput : session->GetInputs()) {
     switch (msInput->data_type()) {
@@ -290,6 +291,12 @@ int NetTrain::MarkAccuracy(session::LiteSession *session) {
   }
 
   status = CompareOutput(*session);
+  if (status == RET_TOO_BIG && !enforce_accuracy) {
+    MS_LOG(INFO) << "Accuracy Error is big but not enforced";
+    std::cout << "Accuracy Error is big but not enforced" << std::endl;
+    return RET_OK;
+  }
+
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compare output error " << status;
     std::cerr << "Compare output error " << status << std::endl;
@@ -308,7 +315,7 @@ static CpuBindMode FlagToBindMode(int flag) {
   return NO_BIND;
 }
 
-int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session, int epochs) {
+int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session, int epochs, bool check_accuracy) {
   auto start_prepare_time = GetTimeUs();
   std::string model_name = filename.substr(filename.find_last_of(DELIM_SLASH) + 1);
   Context context;
@@ -339,9 +346,14 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
     }
     session = t_session;
   } else {
-    MS_LOG(INFO) << "start reading model file" << filename.c_str();
-    std::cout << "start reading model file " << filename.c_str() << std::endl;
-    auto *model = mindspore::lite::Model::Import(filename.c_str());
+    std::string filenamems = filename;
+    if (filenamems.substr(filenamems.find_last_of(".") + 1) != "ms") {
+      filenamems = filenamems + ".ms";
+    }
+
+    MS_LOG(INFO) << "start reading model file" << filenamems.c_str();
+    std::cout << "start reading model file " << filenamems.c_str() << std::endl;
+    auto *model = mindspore::lite::Model::Import(filenamems.c_str());
     if (model == nullptr) {
       MS_LOG(ERROR) << "create model for train session failed";
       return RET_ERROR;
@@ -386,7 +398,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
     if (t_session != nullptr) {
       t_session->Eval();
     }
-    status = MarkAccuracy(session);
+    status = MarkAccuracy(session, check_accuracy);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
@@ -397,9 +409,14 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
 }
 
 int NetTrain::RunNetTrain() {
-  CreateAndRunNetwork(flags_->model_file_, true, flags_->epochs_);
+  auto status = CreateAndRunNetwork(flags_->model_file_, true, flags_->epochs_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "CreateAndRunNetwork failed for model" << flags_->model_file_ << ". Status is " << status;
+    std::cout << "CreateAndRunNetwork failed for model" << flags_->model_file_ << ". Status is " << status << std::endl;
+    return status;
+  }
 
-  auto status = CheckExecutionOfSavedModels();  // re-initialize sessions according to flags
+  status = CheckExecutionOfSavedModels();  // re-initialize sessions according to flags
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run CheckExecute error: " << status;
     std::cout << "Run CheckExecute error: " << status << std::endl;
@@ -410,19 +427,32 @@ int NetTrain::RunNetTrain() {
 
 int NetTrain::SaveModels(session::TrainSession *session) {
   if (!flags_->export_file_.empty()) {
-    auto status = session->Export(flags_->export_file_);
+    auto status = session->Export(flags_->export_file_ + "_qt", lite::MT_TRAIN, lite::QT_WEIGHT);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "SaveToFile error";
-      std::cout << "Run SaveToFile error";
+      MS_LOG(ERROR) << "Export quantized model error" << flags_->export_file_ + "_qt";
+      std::cout << "Export quantized model error" << flags_->export_file_ + "_qt" << std::endl;
+      return RET_ERROR;
+    }
+    status = session->Export(flags_->export_file_, lite::MT_TRAIN, lite::QT_NONE);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Export non quantized model error" << flags_->export_file_;
+      std::cout << "Export non quantized model error" << flags_->export_file_ << std::endl;
       return RET_ERROR;
     }
   }
   if (!flags_->inference_file_.empty()) {
-    auto tick = GetTimeUs();
-    auto status = session->Export(flags_->inference_file_, lite::MT_INFERENCE);
+    auto status = session->Export(flags_->inference_file_ + "_qt", lite::MT_INFERENCE, lite::QT_WEIGHT);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Save model error: " << status;
-      std::cout << "Save model error: " << status << std::endl;
+      MS_LOG(ERROR) << "Export quantized inference model error" << flags_->inference_file_ + "_qt";
+      std::cout << "Export quantized inference model error" << flags_->inference_file_ + "_qt" << std::endl;
+      return RET_ERROR;
+    }
+
+    auto tick = GetTimeUs();
+    status = session->Export(flags_->inference_file_, lite::MT_INFERENCE, lite::QT_NONE);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Export non quantized inference model error" << flags_->inference_file_ + "_qt";
+      std::cout << "Export non quantized inference model error" << flags_->inference_file_ + "_qt" << std::endl;
       return status;
     }
     std::cout << "ExportInference() execution time is " << GetTimeUs() - tick << "us\n";
@@ -439,12 +469,24 @@ int NetTrain::CheckExecutionOfSavedModels() {
       std::cout << "Run Exported model " << flags_->export_file_ << " error: " << status << std::endl;
       return status;
     }
+    status = NetTrain::CreateAndRunNetwork(flags_->export_file_ + "_qt", true, 0, false);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status;
+      std::cout << "Run Exported model " << flags_->export_file_ << "_qt.ms error: " << status << std::endl;
+      return status;
+    }
   }
   if (!flags_->inference_file_.empty()) {
-    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_ + ".ms", false, 0);
+    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_, false, 0);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Running saved model " << flags_->inference_file_ << ".ms error: " << status;
       std::cout << "Running saved model " << flags_->inference_file_ << ".ms error: " << status << std::endl;
+      return status;
+    }
+    status = NetTrain::CreateAndRunNetwork(flags_->inference_file_ + "_qt", false, 0, false);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Running saved model " << flags_->inference_file_ << "_qt.ms error: " << status;
+      std::cout << "Running saved model " << flags_->inference_file_ << "_qt.ms error: " << status << std::endl;
       return status;
     }
   }

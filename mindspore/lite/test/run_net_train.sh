@@ -82,20 +82,17 @@ function Run_x86() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
-        export_file=""
-        inference_file=""
         if [[ $model_name == \#* ]]; then
           continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
-        else
-            export_file="${ms_models_path}/${model_name}_tod"
-            rm -f ${export_file}"*"
         fi
+        export_file="${ms_models_path}/${model_name}_tod"
         inference_file="${ms_models_path}/${model_name}_infer"
         rm -f ${inference_file}"*"
+        rm -f ${export_file}"*"
         echo ${model_name} >> "${run_x86_log_file}"
         ${run_valgrind}./tools/benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}.ms \
@@ -174,16 +171,14 @@ function Run_arm() {
         model_prefix=${line_array[0]}
         model_name=${line_array[0]}'_train'
         accuracy_limit=0.5
-        export_file=""
         if [[ $model_name == \#* ]]; then
             continue
         fi
         if [[ "${line_array[1]}" == "weight_quant" ]]; then
             model_name=${line_array[0]}'_train_quant'
             accuracy_limit=${line_array[2]}
-        else
-            export_file="${tmp_dir}/${model_name}_tod"
         fi
+        export_file="${tmp_dir}/${model_name}_tod"
         inference_file="${tmp_dir}/${model_name}_infer"
 
         if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
@@ -201,8 +196,8 @@ function Run_arm() {
             echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
         fi 
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
-        echo "rm -f ${export_file} ${inference_file}.ms" >> ${run_arm_log_file}
-        echo "rm -f ${export_file} ${inference_file}.ms" >> ${adb_cmd_run_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> ${run_arm_log_file}
+        echo "rm -f ${export_file}* ${inference_file}*" >> ${adb_cmd_run_file}
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         adb_cmd=$(cat <<-ENDM
         export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \

@@ -70,6 +70,7 @@ class TrainExport {
   bool NeedQuantization(const mindspore::lite::Tensor *tensor);
   virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
   mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);
+  void TagQuantizedNodes();
   QuantType quant_type_;
 };
 };  // namespace lite
