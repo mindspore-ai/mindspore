@@ -367,7 +367,14 @@ void IrExportBuilder::SetShapeToNodeProto(const TypePtr &type, const BaseShapePt
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
     tensor_proto->set_name(shape_name);
     SetTensorProto(type, shape, tensor_proto);
-  } else if (type->isa<Number>() || type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
+  } else if (type->isa<Number>()) {
+    string shape_name = "shape" + std::to_string(GetTupleIndex());
+    *seq_string += shape_name + ",";
+    mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
+    tensor_proto->set_name(shape_name);
+    tensor_proto->set_data_type(mind_ir::TensorProto_DataType_UINT64);
+    tensor_proto->add_dims(1);
+  } else if (type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
     *seq_string += type->type_name() + ",";
   } else {
     MS_LOG(EXCEPTION) << "Type of cnode need to be supported: " << type->type_name();
