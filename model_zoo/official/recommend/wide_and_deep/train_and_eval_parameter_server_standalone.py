@@ -47,6 +47,7 @@ class ModelBuilder():
     """
     ModelBuilder
     """
+
     def __init__(self):
         pass
 
@@ -124,6 +125,8 @@ if __name__ == "__main__":
         wide_deep_config.sparse = True
     if wide_deep_config.sparse:
         context.set_context(enable_sparse=True)
+    if wide_deep_config.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
     context.set_ps_context(enable_ps=True)
 
     train_and_eval(wide_deep_config)
