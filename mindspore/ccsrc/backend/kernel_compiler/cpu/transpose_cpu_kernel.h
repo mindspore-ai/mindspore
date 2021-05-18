@@ -21,6 +21,8 @@
 #include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/transpose_base.h"
+
 namespace mindspore {
 namespace kernel {
 class TransposeCPUFwdKernel : public CPUKernel {
@@ -37,6 +39,10 @@ class TransposeCPUFwdKernel : public CPUKernel {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  template <typename T>
+  void ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count);
+
+  TransposeParameter transpose_param_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> axes_;

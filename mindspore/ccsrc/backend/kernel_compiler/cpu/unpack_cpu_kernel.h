@@ -23,6 +23,7 @@
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/unstack_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,11 +42,8 @@ class UnpackCPUKernel : public CPUKernel {
 
  protected:
   virtual void CheckParam(const CNodePtr &kernel_node);
-  size_t input_size_{1};
+  UnstackParameter unstack_param_;
   size_t output_num_{0};
-  size_t dims_after_axis_{1};
-  T *input_{nullptr};
-  T **outputs_host_{nullptr};
   TypeId dtype_{kTypeUnknown};
 };
 MS_REG_CPU_KERNEL_T(Unstack,

@@ -16,6 +16,7 @@
 #include <vector>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "backend/kernel_compiler/cpu/dropout_grad_kernel.h"
+#include "nnacl/fp32_grad/dropout_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,6 +47,8 @@ bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs,
     DropoutBackwardKernel<float16>(inputs, outputs, num_count_, keep_prob_);
   } else if (dtype_ == kNumberTypeFloat32) {
     DropoutBackwardKernel<float>(inputs, outputs, num_count_, keep_prob_);
+  } else {
+    MS_LOG(ERROR) << "Input data type: " << dtype_ << " is not supported for DropoutGrad kernel for CPU.";
   }
 
   return true;
@@ -55,13 +58,28 @@ template <typename T>
 void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &outputs, size_t num_count,
                                                     float keep_prob) {
-  auto dx = reinterpret_cast<T *>(outputs[0]->addr);
-  auto dy = reinterpret_cast<T *>(inputs[0]->addr);
-  auto mask = reinterpret_cast<T *>(inputs[1]->addr);
-
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *mask = reinterpret_cast<T *>(inputs[1]->addr);
   const float scale = 1.f / keep_prob;
-  for (size_t i = 0; i < num_count; i += 1) {
-    dx[i] = (T)(scale * static_cast<float>(dy[i] * mask[i]));
+
+  if constexpr (std::is_same_v<T, float16>) {
+    float *input_tmp = new float[num_count_];
+    float *output_tmp = new float[num_count_];
+    float *mask_tmp = new float[num_count_];
+    for (size_t i = 0; i < num_count_; ++i) {
+      input_tmp[i] = static_cast<float>(input[i]);
+      mask_tmp[i] = static_cast<float>(mask[i]);
+    }
+    DropoutGrad(input_tmp, mask_tmp, output_tmp, num_count_, scale);
+    for (size_t i = 0; i < num_count_; ++i) {
+      output[i] = static_cast<float16>(output_tmp[i]);
+    }
+    delete[] input_tmp;
+    delete[] output_tmp;
+    delete[] mask_tmp;
+  } else if constexpr (std::is_same_v<T, float>) {
+    DropoutGrad(input, mask, output, num_count_, scale);
   }
 }
 }  // namespace kernel
