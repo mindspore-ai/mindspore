@@ -88,6 +88,7 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
 FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
 
 Parser::Parser(const std::shared_ptr<ParseAst> &ast) : ast_(ast) {
+  max_for_loop_count_str_ = common::GetEnv("ENV_FOR_TO_WHILE_LOOP");
   errcode_ = PARSE_SUCCESS;
   BuildMethodMap();
 }
@@ -1170,18 +1171,18 @@ FunctionBlockPtr Parser::GenerateBlockInFor(const TraceInfoPtr &trace_info) {
   return body_block;
 }
 
-int64_t GetForTransToWhileLoop() {
-  static const auto loop_str = common::GetEnv("ENV_FOR_TO_WHILE_LOOP");
+int64_t Parser::GetForTransToWhileLoop() {
   // int64 support 63bits positive num mostly.
-  if (loop_str.size() > 63 || loop_str.empty()) {
+  if (max_for_loop_count_str_.size() > 63 || max_for_loop_count_str_.empty()) {
     return MAX_FOR_LOOP_COUNT;
   }
-  if (std::any_of(loop_str.begin(), loop_str.end(), [](char c) { return c < '0' || c > '9'; })) {
+  if (std::any_of(max_for_loop_count_str_.begin(), max_for_loop_count_str_.end(),
+                  [](char c) { return c < '0' || c > '9'; })) {
     return MAX_FOR_LOOP_COUNT;
   }
   int64_t loop_count;
   std::stringstream ss;
-  ss << loop_str;
+  ss << max_for_loop_count_str_;
   ss >> loop_count;
   return loop_count;
 }
@@ -1357,11 +1358,16 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   MS_EXCEPTION_IF_NULL(body_block);
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
-  CNodePtr target_var = body_block->func_graph()->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+  auto body_func_graph = body_block->func_graph();
+  CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
   WriteAssignVars(body_block, target_node, target_var);
   // Create 'i = i + 1'
-  CNodePtr loop_var_inc = body_block->func_graph()->NewCNodeInOrder(
-    {NewValueNode(prim::kPrimScalarAdd), loop_var, NewValueNode(static_cast<int64_t>(1))});
+  auto prim_add = prim::GetPythonOps("Add", "mindspore.ops.operations");
+  auto add_node = body_func_graph->NewCNodeInOrder({NewValueNode(prim_add)});
+  auto body_scalar_to_tensor_node = body_func_graph->NewCNodeInOrder({NewValueNode(scalar_to_tensor)});
+  auto add_tensor_node =
+    body_func_graph->NewCNodeInOrder({body_scalar_to_tensor_node, NewValueNode(static_cast<int64_t>(1))});
+  CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({add_node, loop_var, add_tensor_node});
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
 
   // Link the variable name with the target
@@ -1377,7 +1383,9 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   MS_EXCEPTION_IF_NULL(after_block);
   after_block->AddPrevBlock(header_block);
 
-  block->Jump(header_block, NewValueNode(static_cast<int64_t>(0)));
+  CNodePtr zero_tensor =
+    block->func_graph()->NewCNodeInOrder({scalar_to_tensor_node, NewValueNode(static_cast<int64_t>(0))});
+  block->Jump(header_block, zero_tensor);
   body_block->Mature();
 
   header_block->ConditionalJump(cond_node, body_block, after_block, false);

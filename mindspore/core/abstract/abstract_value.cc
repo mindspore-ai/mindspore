@@ -90,7 +90,7 @@ std::string AbstractBase::ToString() const {
 }
 
 AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const {
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || config == kBroadenScalarParameterOnly) {
     return AbstractBase::Broaden(config);
   } else {
     return Clone();

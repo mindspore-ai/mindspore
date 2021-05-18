@@ -245,7 +245,10 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
     (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_list),
                          [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                            MS_EXCEPTION_IF_NULL(arg);
-                           if (arg->GetValueTrack() != kAnyValue) {
+                           if (arg->isa<AbstractScalar>()) {
+                             auto config = abstract::AbstractBase::kBroadenScalarParameterOnly;
+                             return arg->Broaden(config);
+                           } else if (arg->GetValueTrack() != kAnyValue) {
                              return arg->Broaden();
                            }
                            return arg;

@@ -75,9 +75,12 @@ class AbstractBase : public Base {
   // mask for Broaden config
   inline static const uint8_t kBroadenTensorOnly = 1;
   inline static const uint8_t kBroadenParameterOnly = 2;
+  // Scalar as Parameter, should boarden
+  inline static const uint8_t kBroadenScalarParameterOnly = 4;
   // Each bit for on config.
   // 00000001 -> 1: only boarden tensor
   // 00000010 -> 2: only boarden parameter
+  // 00000100 -> 4: only boarden scalar parameter
   virtual AbstractBasePtr Broaden(uint8_t config = 0) const;
   virtual AbstractBasePtr Join(const AbstractBasePtr &) { return shared_from_base<AbstractBase>(); }
 
