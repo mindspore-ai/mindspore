@@ -77,6 +77,7 @@ def get_softmax_output(x, y, enable_stitch_fusion):
 
 
 def test_softmax(shape, dtype):
+    np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     expect = get_softmax_output(x, y, False)
