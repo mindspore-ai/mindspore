@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/registry/kernel_interface.h"
+#include <set>
+#include <utility>
 #include "src/registry/kernel_interface_registry.h"
 
 namespace mindspore {
@@ -30,6 +32,15 @@ int RegisterKernelInterface::Reg(const std::string &provider, int op_type, Kerne
 int RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
                                        KernelInterfaceCreator creator) {
   return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
+}
+
+bool RegisterKernelInterface::CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers) {
+  return lite::KernelInterfaceRegistry::Instance()->CheckReg(node, std::forward<std::set<std::string>>(providers));
+}
+
+KernelInterface *RegisterKernelInterface::GetKernelInterface(const std::string &provider,
+                                                             const schema::Primitive *primitive) {
+  return lite::KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);
 }
 }  // namespace kernel
 }  // namespace mindspore

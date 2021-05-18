@@ -124,9 +124,7 @@ set(LITE_SRC
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
-        ${SRC_DIR}/registry/kernel_interface_registry.cc
         ${SRC_DIR}/kernel_registry.cc
-        ${SRC_DIR}/registry/register_kernel.cc
         ${SRC_DIR}/inner_kernel.cc
         ${SRC_DIR}/lite_kernel.cc
         ${SRC_DIR}/lite_kernel_util.cc
@@ -209,6 +207,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::json
         mindspore::eigen
         -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+        mslite_kernel_reg
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers

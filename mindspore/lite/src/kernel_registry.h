@@ -23,7 +23,6 @@
 #include <vector>
 #include <set>
 #include "src/lite_kernel.h"
-#include "src/registry/register_kernel.h"
 #include "schema/model_generated.h"
 
 using mindspore::kernel::kKernelArch_MAX;
@@ -40,15 +39,9 @@ class KernelRegistry {
   static KernelRegistry *GetInstance();
   static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
-  virtual kernel::CreateKernel GetProviderCreator(const kernel::KernelKey &desc, const schema::Primitive *prim);
   int GetCreatorFuncIndex(kernel::KernelKey desc);
-  int GetFuncIndex(const kernel::KernelKey &desc);
-  int RegCustomKernel(const std::string &arch, const std::string &vendor, TypeId data_type, const std::string &type,
-                      kernel::CreateKernel creator);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
   void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, int type, kernel::KernelCreator creator);
-  int RegKernel(const std::string &arch, const std::string &vendor, TypeId data_type, int type,
-                kernel::CreateKernel creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
   bool SupportKernel(const kernel::KernelKey &key);
   int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -61,10 +54,6 @@ class KernelRegistry {
   static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
   static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
   kernel::KernelCreator *creator_arrays_ = nullptr;
-  std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>> kernel_creators_;
-  // keys:provider, arch, type
-  std::map<std::string, std::map<std::string, std::unordered_map<std::string, kernel::CreateKernel *>>>
-    custom_kernel_creators_;
 
  private:
   std::mutex lock_;

@@ -234,9 +234,5 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
   }
   return RET_OK;
 }
-
-void Tensor2MSTensor(const std::vector<Tensor *> &&tensors, std::vector<tensor::MSTensor *> *out_tensors) {
-  std::copy(tensors.begin(), tensors.end(), std::back_inserter(*out_tensors));
-}
 }  // namespace lite
 }  // namespace mindspore

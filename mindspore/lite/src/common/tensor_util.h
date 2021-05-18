@@ -40,7 +40,6 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
                        const std::vector<lite::Tensor *> &outputs, std::vector<TensorC *> *out_tensor_c);
 
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
-void Tensor2MSTensor(const std::vector<Tensor *> &&tensors, std::vector<tensor::MSTensor *> *out_tensors);
 }  // namespace lite
 }  // namespace mindspore
 

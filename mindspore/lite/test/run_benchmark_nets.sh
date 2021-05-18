@@ -1482,6 +1482,7 @@ function Run_arm64() {
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
@@ -1900,6 +1901,7 @@ function Run_arm32() {
     fi
 
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${arm32_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
@@ -1957,6 +1959,7 @@ function Run_arm64_fp16() {
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
@@ -2126,6 +2129,7 @@ function Run_armv82_a32_fp16() {
     fi
 
     cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${armv82_path}/mindspore-lite-${version}-inference-android-aarch32/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
@@ -2303,6 +2307,7 @@ function Run_gpu() {
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone
@@ -2455,6 +2460,7 @@ function Run_npu() {
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/inference/lib/libmslite_kernel_reg.so ${benchmark_test_path}/libmslite_kernel_reg.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/tools/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone

@@ -14,28 +14,51 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_REGISTER_KERNEL_H_
-#define MINDSPORE_LITE_SRC_REGISTER_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_REGISTRY_REGISTER_KERNEL_H_
+#define MINDSPORE_LITE_SRC_REGISTRY_REGISTER_KERNEL_H_
 
+#include <set>
 #include <string>
 #include <vector>
-#include "schema/ops_generated.h"
-#include "src/lite_kernel.h"
+#include "schema/model_generated.h"
+#include "include/context.h"
+#include "include/ms_tensor.h"
+#include "src/kernel.h"
 
 namespace mindspore {
 namespace kernel {
+struct MS_API KernelDesc {
+  TypeId data_type;
+  int type;
+  std::string arch;
+  std::string provider;
+
+  bool operator<(const KernelDesc &dst) const {
+    if (provider != dst.provider) {
+      return provider < dst.provider;
+    } else if (arch != dst.arch) {
+      return arch < dst.arch;
+    } else if (data_type != dst.data_type) {
+      return data_type < dst.data_type;
+    } else {
+      return type < dst.type;
+    }
+  }
+};
+
 typedef kernel::Kernel *(*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
                                         const std::vector<tensor::MSTensor *> &outputs,
                                         const schema::Primitive *primitive, const lite::Context *ctx);
-class RegisterKernel {
+class MS_API RegisterKernel {
  public:
   static RegisterKernel *GetInstance();
   int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type, CreateKernel creator);
   int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &type,
                       CreateKernel creator);
+  CreateKernel GetCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive);
 };
 
-class KernelReg {
+class MS_API KernelReg {
  public:
   ~KernelReg() = default;
 
@@ -57,4 +80,4 @@ class KernelReg {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_REGISTER_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_REGISTRY_REGISTER_KERNEL_H_

@@ -17,19 +17,21 @@
 #ifndef MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_H_
 #define MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_H_
 
+#include <set>
 #include <string>
 #include <vector>
+#include "include/model.h"
 #include "include/ms_tensor.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
 namespace kernel {
-struct CapabilityParam {
+struct MS_API CapabilityParam {
   float exec_time_;
   float power_usage_;
 };
 
-class KernelInterface {
+class MS_API KernelInterface {
  public:
   virtual ~KernelInterface() = default;
   virtual int Infer(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
@@ -44,18 +46,20 @@ class KernelInterface {
 };
 typedef KernelInterface *(*KernelInterfaceCreator)();
 
-class RegisterKernelInterface {
+class MS_API RegisterKernelInterface {
  public:
   static RegisterKernelInterface *Instance();
   int CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
+  bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
+  KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
   virtual ~RegisterKernelInterface() = default;
 
  private:
   RegisterKernelInterface() = default;
 };
 
-class KernelInterfaceReg {
+class MS_API KernelInterfaceReg {
  public:
   KernelInterfaceReg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
     RegisterKernelInterface::Instance()->Reg(provider, op_type, creator);
