@@ -17,6 +17,13 @@
         - [用法](#usage)
         - [运行](#running)
         - [结果](#outcome)
+     - [模型导出](#模型导出)
+        - [用法](#usage)
+        - [运行](#running)
+    - [推理过程](#推理过程)
+        - [用法](#usage)
+        - [运行](#running)
+        - [结果](#outcome)
     - [模型说明](#模型说明)
         - [性能](#性能)
             - [训练性能](#训练性能)
@@ -73,9 +80,11 @@ MSCOCO2017
 .
 └─Retinanet
   ├─README.md
+  ├─ascend310_infer                           # 实现310推理源代码
   ├─scripts
     ├─run_single_train.sh                     # 使用Ascend环境单卡训练
     ├─run_distribute_train.sh                 # 使用Ascend环境八卡并行训练
+    ├─run_infer_310.sh                        # Ascend推理shell脚本
     ├─run_eval.sh                             # 使用Ascend环境运行推理脚本
   ├─src
     ├─config.py                               # 参数配置
@@ -87,6 +96,8 @@ MSCOCO2017
     ├─box_utils.py                            # 先验框设置
     ├─_init_.py                               # 初始化
   ├─train.py                                  # 网络训练脚本
+  ├─export.py                                 # 导出 AIR,MINDIR模型的脚本
+  ├─postprogress.py                           # 310推理后处理脚本
   └─eval.py                                   # 网络推理脚本
 
 ```
@@ -249,6 +260,65 @@ sh scripts/run_eval.sh coco 0
 ========================================
 
 mAP: 0.34747137754625645
+```
+
+### [模型导出](#content)
+
+#### <span id="usage">用法</span>
+
+导出模型前要修改config.py文件中的checkpoint_path配置项，值为checkpoint的路径。
+
+```shell
+python export.py --run_platform [RUN_PLATFORM] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+#### <span id="running">运行</span>
+
+```运行
+python export.py  --run_platform ascend --file_format MINDIR
+```
+
+### [推理过程](#content)
+
+#### <span id="usage">用法</span>
+
+在推理之前需要在昇腾910环境上完成模型的导出。推理时要将iscrowd为true的图片排除掉。在ascend310_infer目录下保存了去排除后的图片id。
+还需要修改config.py文件中的coco_root、val_data_type、instances_set配置项，值分别取coco数据集的目录，推理所用数据集的目录名称，推理完成后计算精度用的annotation文件，instances_set是用val_data_type拼接起来的，要保证文件正确并且存在。
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+#### <span id="running">运行</span>
+
+```运行
+ bash run_infer_310.sh ./retinanet.mindir ./dataset/coco2017/val2017 ./image_id.txt 0
+```
+
+#### <span id="outcome">结果</span>
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+```mAP
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.350
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.509
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.385
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.139
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.368
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.509
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.303
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.413
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.415
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.155
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.435
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.608
+
+========================================
+
+mAP: 0.3499478734634595
 ```
 
 ## [模型说明](#content)
