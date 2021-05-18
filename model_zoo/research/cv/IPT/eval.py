@@ -1,4 +1,3 @@
-"""eval script"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""eval script"""
 import os
 import numpy as np
 import mindspore.dataset as ds
@@ -49,13 +48,6 @@ def add_mean(x):
 
 def eval_net():
     """eval"""
-    args.batch_size = 128
-    args.decay = 70
-    args.patch_size = 48
-    args.num_queries = 6
-    args.model = 'vtip'
-    args.num_layers = 4
-
     if args.epochs == 0:
         args.epochs = 1e8
 
@@ -87,7 +79,7 @@ def eval_net():
         pred = inference.forward(lr, idx)
         pred_np = add_mean(pred.asnumpy())
         pred_np = quantize(pred_np, 255)
-        psnr = calc_psnr(pred_np, hr, 4, 255.0)
+        psnr = calc_psnr(pred_np, hr, args.scale[0], 255.0)
         print("current psnr: ", psnr)
         psnrs[batch_idx, 0] = psnr
     if args.denoise:

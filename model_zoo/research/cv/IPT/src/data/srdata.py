@@ -1,4 +1,3 @@
-"""srdata"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""srdata"""
 import os
 import glob
 import random
@@ -173,6 +172,21 @@ class SRData:
         if self.train:
             return idx % len(self.images_hr)
         return idx
+
+    def _load_file_deblur(self, idx, train=True):
+        """srdata"""
+        idx = self._get_index(idx)
+        if train:
+            f_hr = self.images_hr[idx]
+            f_lr = self.images_lr[idx]
+        else:
+            f_hr = self.deblur_hr_test[idx]
+            f_lr = self.deblur_lr_test[idx]
+        filename, _ = os.path.splitext(os.path.basename(f_hr))
+        filename = f_hr[-27:-17] + filename
+        hr = imageio.imread(f_hr)
+        lr = imageio.imread(f_lr)
+        return lr, hr, filename
 
     def _load_file_hr(self, idx):
         """srdata"""

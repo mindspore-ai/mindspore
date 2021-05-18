@@ -24,7 +24,6 @@ export MODEL=$3
 export TASK_ID=$4
 echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
-
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))
 for((i=0; i<${DEVICE_NUM}; i++))
@@ -38,6 +37,6 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     cd ./train_parallel$i ||exit
     env > env$i.log
-    python train_finetune.py --distribute --imagenet 0 --batch_size 64 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --num_layers 4 --task_id $TASK_ID --dir_data $DATA_PATH --pth_path $MODEL --epochs 100 > log 2>&1 &
+    python train_finetune.py --distribute --imagenet 0 --batch_size 16 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --data_train RainTrainL --num_layers 12 --task_id 3 --dir_data $DATA_PATH --pth_path $MODEL --epochs 300 --derain --save experiment> log 2>&1 &
     cd ..
 done

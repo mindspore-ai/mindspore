@@ -1,4 +1,3 @@
-"""div2k"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""div2k"""
 import os
 from src.data.srdata import SRData
 

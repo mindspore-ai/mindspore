@@ -1,4 +1,3 @@
-"""utils"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""utils"""
 import os
 import time
 from bisect import bisect_right
@@ -28,7 +27,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.train.serialization import save_checkpoint
-from src.loss import SupConLoss
+from src.loss import SupConLoss, IPTTrainOneStepWithLossScaleCell
 
 
 class MyTrain(nn.Cell):
@@ -118,11 +117,14 @@ class Trainer():
         self.con_loss = SupConLoss()
         self.optimizer = nn.Adam(self.model.trainable_params(), learning_rate=args.lr, loss_scale=1024.0)
         self.train_net = MyTrain(self.model, self.criterion, self.con_loss, use_con=args.con_loss)
-        self.bp = MyTrainOneStepCell(self.train_net, self.optimizer, 1024.0)
+        self.loss_scale_manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=args.init_loss_scale, \
+            scale_factor=2, scale_window=1000)
+        self.bp = IPTTrainOneStepWithLossScaleCell(self.train_net, self.optimizer, self.loss_scale_manager)
 
     def train(self):
         """Trainer"""
         losses = 0
+        batch_idx = 0
         for batch_idx, imgs in enumerate(self.trainloader):
             lr = imgs["LR"]
             hr = imgs["HR"]
@@ -130,11 +132,12 @@ class Trainer():
             hr = Tensor(sub_mean(hr), mstype.float32)
             idx = Tensor(np.ones(imgs["idx"][0]), mstype.int32)
             t1 = time.time()
-            loss = self.bp(lr, hr, idx)
+            loss, overflow, sens = self.bp(lr, hr, idx)
             t2 = time.time()
             losses += loss.asnumpy()
-            print('Task: %g, Step: %g, loss: %f, time: %f s' % (idx.shape[0], batch_idx, loss.asnumpy(), t2 - t1),
-                  flush=True)
+            print('Task: %g, Step: %g, loss: %f, scaling factor:%f, time: %f s, overflow: %s' % \
+                (idx.shape[0], batch_idx, loss.asnumpy(), sens.asnumpy(), t2 - t1, overflow), flush=True)
+        print("the epoch loss is", losses / (batch_idx + 1), flush=True)
         os.makedirs(self.args.save, exist_ok=True)
         if self.args.rank == 0:
             save_checkpoint(self.bp, self.args.save + "model_" + str(self.epoch) + '.ckpt')

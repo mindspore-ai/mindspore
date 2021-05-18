@@ -20,6 +20,9 @@ export RANK_SIZE=8
 RANK_TABLE_FILE=$(realpath $1)
 export RANK_TABLE_FILE
 export DATA_PATH=$2
+export MODEL=$3
+export TASK_ID=$4
+export SIGMA=$5
 echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
 export SERVER_ID=0
@@ -35,6 +38,6 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     cd ./train_parallel$i ||exit
     env > env$i.log
-    python train.py --distribute --imagenet 1 --batch_size 64 --lr 5e-5 --scale 2+3+4+1+1+1 --alltask --con_loss --react --model vtip --num_queries 6 --chop_new --num_layers 12 --data_train imagenet --dir_data $DATA_PATH --derain --save experiments/ckpt_new_init/ > log 2>&1 &
+    python train_finetune.py --distribute --imagenet 0 --batch_size 16 --lr 2e-5 --scale 2+3+4+1+1+1 --model vtip --num_queries 6 --chop_new --num_layers 12 --task_id $TASK_ID --dir_data $DATA_PATH --pth_path $MODEL --epochs 100 --denoise --sigma $SIGMA --save experiment/> log 2>&1 &
     cd ..
 done

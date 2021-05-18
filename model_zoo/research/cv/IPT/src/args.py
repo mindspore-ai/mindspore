@@ -1,4 +1,3 @@
-"""args"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""args"""
 import argparse
 
 parser = argparse.ArgumentParser(description='EDSR and MDSR')
@@ -113,6 +112,8 @@ parser.add_argument('--gan_k', type=int, default=1,
 # Optimization specifications
 parser.add_argument('--lr', type=float, default=1e-4,
                     help='learning rate')
+parser.add_argument('--init_loss_scale', type=float, default=65536.,
+                    help='scaling factor')
 parser.add_argument('--decay', type=str, default='200',
                     help='learning rate decay type')
 parser.add_argument('--gamma', type=float, default=0.5,

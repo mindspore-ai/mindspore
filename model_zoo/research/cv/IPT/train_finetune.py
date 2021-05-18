@@ -1,4 +1,3 @@
-"""train finetune"""
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""train finetune"""
 import os
 from mindspore import context
 from mindspore.context import ParallelMode
@@ -46,18 +45,18 @@ def train_net(distribute, imagenet):
 
     if distribute:
         init()
-        rank_id = get_rank()
-        rank_size = get_group_size()
+        args.rank = get_rank()
+        args.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
-        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=rank_size, gradients_mean=True)
-        print('Rank {}, group_size {}'.format(rank_id, rank_size))
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size, gradients_mean=True)
+        print('Rank {}, group_size {}'.format(args.rank, args.group_size))
         if imagenet == 1:
             train_de_dataset = ds.GeneratorDataset(train_dataset,
                                                    ["HR", "Rain", "LRx2", "LRx3", "LRx4", "scales", "filename"],
-                                                   num_shards=rank_size, shard_id=rank_id, shuffle=True)
+                                                   num_shards=args.group_size, shard_id=args.rank, shuffle=True)
         else:
             train_de_dataset = ds.GeneratorDataset(train_dataset, ["LR", "HR", "idx", "filename"],
-                                                   num_shards=rank_size, shard_id=rank_id, shuffle=True)
+                                                   num_shards=args.group_size, shard_id=args.rank, shuffle=True)
     else:
         if imagenet == 1:
             train_de_dataset = ds.GeneratorDataset(train_dataset,

@@ -70,20 +70,22 @@ IPT
 ├── train.py # pre-training entry
 ├── train_finetune.py # fine-tuning entry
 ├── image
-│   └── ipt.png # the illustration of IPT network
+│   └── ipt.png # the illustration of IPT network
 ├── readme.md # Readme
 ├── scripts
-│   ├── run_eval.sh # inference script for all tasks
-│   ├── run_distributed.sh # pre-training script for all tasks
-│   └── run_finetune_distributed.sh # fine-tuning script for all tasks
+│   ├── run_eval.sh # inference script for all tasks
+│   ├── run_distributed.sh # pre-training script for all tasks
+│   ├── run_dr_distributed.sh # pre-training script for deraining tasks
+│   ├── run_dn_distributed.sh # pre-training script for denoising tasks
+│   └── run_sr_distributed.sh # fine-tuning script for super resolution tasks
 └── src
     ├── args.py # options/hyper-parameters of IPT
     ├── data
-    │   ├── common.py # common dataset
-    │   ├── bicubic.py # scripts for data pre-processing
-    │   ├── div2k.py # DIV2K dataset
-    │   ├── imagenet.py # Imagenet data for pre-training
-    │   └── srdata.py # All dataset
+    │   ├── common.py # common dataset
+    │   ├── bicubic.py # scripts for data pre-processing
+    │   ├── div2k.py # DIV2K dataset
+    │   ├── imagenet.py # Imagenet data for pre-training
+    │   └── srdata.py # All dataset
     ├── metrics.py # PSNR calculator
     ├── utils.py # training scripts
     ├── loss.py # contrastive_loss
@@ -131,7 +133,9 @@ python train_finetune.py --distribute --imagenet 0 --batch_size 64 --lr 2e-5 --s
 > Or one can run following script for all tasks.
 
 ```bash
-sh scripts/run_finetune_distributed.sh RANK_TABLE_FILE DATA_PATH MODEL TASK_ID
+sh scripts/run_sr_distributed.sh RANK_TABLE_FILE DATA_PATH MODEL TASK_ID
+sh scripts/run_dn_distributed.sh RANK_TABLE_FILE DATA_PATH MODEL TASK_ID
+sh scripts/run_dr_distributed.sh RANK_TABLE_FILE DATA_PATH MODEL TASK_ID
 ```
 
 ## Evaluation
@@ -156,7 +160,7 @@ sh scripts/run_eval.sh DATA_PATH DATA_TEST MODEL TASK_ID
 The result are evaluated by the value of PSNR (Peak Signal-to-Noise Ratio), and the format is as following.
 
 ```bash
-result: {"Mean psnr of Set5 x4 is 32.68"}
+result: {"Mean psnr of Set5 x4 is 32.71"}
 ```
 
 ## Performance
@@ -169,22 +173,22 @@ Super-resolution results:
 
 | Scale | Set5 | Set14 | B100 | Urban100 |
 | ----- | ----- | ----- | ----- | ----- |
-| ×2    | 38.36 | 34.54 | 32.50 | 33.88 |
-| ×3    | 34.83 | 30.96 | 29.39 | 29.59 |
-| ×4    | 32.68 | 29.01 | 27.81 | 27.24 |
+| ×2    | 38.33 | 34.49 | 32.46 | 33.74 |
+| ×3    | 34.86 | 30.85 | 29.38 | 29.50 |
+| ×4    | 32.71 | 29.03 | 27.84 | 27.24 |
 
 Denoising results:
 
 | noisy level | CBSD68 | Urban100 |
 | ----- | ----- | ----- |
-| 30    | 32.37 | 33.82 |
-| 50    | 29.94 | 31.56 |
+| 30    | 32.35 | 33.99 |
+| 50    | 29.93 | 31.49 |
 
 Derain results:
 
 | Task | Rain100L |
 | ----- | ----- |
-| Derain   | 41.98 |
+| Derain   | 42.08 |
 
 ## ModeZoo Homepage
 
