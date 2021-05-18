@@ -58,7 +58,10 @@ set(JNI_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
   )
 
+set(LITE_SO_NAME mindspore-lite)
+
 if(SUPPORT_TRAIN)
+  set(LITE_SO_NAME mindspore-lite-train)
   set(JNI_SRC
   ${JNI_SRC}
   ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
@@ -69,7 +72,7 @@ add_library(mindspore-lite-jni SHARED ${JNI_SRC})
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     find_library(log-lib log)
-    target_link_libraries(mindspore-lite-jni mindspore-lite ${log-lib})
+    target_link_libraries(mindspore-lite-jni ${LITE_SO_NAME} ${log-lib})
 else()
-    target_link_libraries(mindspore-lite-jni mindspore-lite)
+    target_link_libraries(mindspore-lite-jni ${LITE_SO_NAME})
 endif()

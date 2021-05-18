@@ -114,11 +114,6 @@ if(SUPPORT_GPU STREQUAL vulkan)
             )
 endif()
 
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if(ENABLE_CONVERTER)
-        set(BUILD_MINDDATA "off")
-    endif()
-endif()
 ### runtime framework
 add_definitions(-DENABLE_V0)
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)

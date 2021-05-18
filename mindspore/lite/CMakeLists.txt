@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(Lite)
 
+set(BUILD_LITE "on")
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
     message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
 endif()
@@ -47,32 +49,17 @@ if(ENABLE_ASAN)
     endif()
 endif()
 
-set(DIR_PREFIX mindspore-lite)
-set(MS_VERSION ${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
-set(MAIN_DIR ${DIR_PREFIX}-${MS_VERSION})
+set(PKG_NAME_PREFIX mindspore-lite-${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMS_VERSION_MAJOR=${MS_VERSION_MAJOR} -DMS_VERSION_MINOR=${MS_VERSION_MINOR} \
--DMS_VERSION_REVISION=${MS_VERSION_REVISION}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMS_VERSION_MAJOR=${MS_VERSION_MAJOR} -DMS_VERSION_MINOR=${MS_VERSION_MINOR} \
--DMS_VERSION_REVISION=${MS_VERSION_REVISION}")
 set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
-set(BUILD_LITE "on")
-set(PLATFORM_ARM "off")
+
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_ARM "on")
+    set(ENABLE_CONVERTER off)
     #set for cross-compiling toolchain
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
-endif()
-
-#if(BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
-if(SUPPORT_GPU)
-    set(PROCESS_UNIT gpu)
-elseif(SUPPORT_NPU)
-    set(PROCESS_UNIT npu)
-else()
-    set(PROCESS_UNIT cpu)
 endif()
 
 if(SUBGRAPH_SPLIT)
@@ -242,25 +229,14 @@ if(ENABLE_MINDRT)
     add_compile_definitions(ENABLE_MINDRT)
 endif()
 
-
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if(NOT APPLE AND NOT DEFINED ENV{ANDROID_NDK})
-        message(FATAL_ERROR "env ANDROID_NDK should be set for ARM compile")
-    endif()
-    add_compile_definitions(ENABLE_ARM)
-endif()
 if(PLATFORM_ARM32)
     add_definitions(-mfloat-abi=softfp -mfpu=neon)
     add_compile_definitions(ENABLE_ARM32)
+    add_compile_definitions(ENABLE_ARM)
 endif()
 if(PLATFORM_ARM64)
     add_compile_definitions(ENABLE_ARM64)
-endif()
-
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-  if(ENABLE_CONVERTER)
-    set(BUILD_MINDDATA "off")
-  endif()
+    add_compile_definitions(ENABLE_ARM)
 endif()
 
 if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)

@@ -12,7 +12,6 @@ include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
-  set(ENABLE_CONVERTER ON)
   set(BUILD_LITE ON)
   include(${TOP_DIR}/cmake/external_libs/glog.cmake)
   ### flatbuffer
@@ -30,8 +29,6 @@ if(NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
     ${CMAKE_BINARY_DIR}/schema/inner
     "inner"
   )
-else()
-  set(ENABLE_CONVERTER OFF)
 endif()
 
 

@@ -457,7 +457,6 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
 
     if(PLATFORM_ARM32 OR PLATFORM_ARM64)
         target_link_libraries(minddata-lite log)
-    elseif(BUILD_MINDDATA_EXAMPLE)
     endif()
 elseif(BUILD_MINDDATA STREQUAL "lite")
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES "${MINDDATA_DIR}/core/client.cc")
