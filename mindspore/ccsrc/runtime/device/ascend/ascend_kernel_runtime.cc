@@ -703,7 +703,6 @@ bool AscendKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
   }
-  FreeAndClearBufferPtrs();
   return true;
 }
 
@@ -714,11 +713,11 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
     return false;
   }
 
-  std::shared_ptr<char[]> buffer(new char[size]());
-  MS_EXCEPTION_IF_NULL(buffer);
-  std::copy(reinterpret_cast<const char *>(src), reinterpret_cast<const char *>(src) + size, buffer.get());
-  AddBufferPtr(buffer);
-  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, buffer.get(), size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
+  auto copy_kind = static_cast<rtMemcpyKind_t>(kind);
+  if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX) {
+    MS_LOG(EXCEPTION) << "Memory copy async not support cache host buffer in kind: " << kind;
+  }
+  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;
   }

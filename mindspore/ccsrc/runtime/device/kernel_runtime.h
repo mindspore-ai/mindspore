@@ -105,8 +105,6 @@ class KernelRuntime {
 
   virtual void PreInit() {}
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
-  void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
-  void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
   void GenKernelEvents(const session::KernelGraph *graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
@@ -162,7 +160,6 @@ class KernelRuntime {
   std::map<uint32_t,
            std::pair<std::vector<std::vector<std::function<void()>>>, std::vector<std::vector<std::function<void()>>>>>
     graph_kernel_events_map_;
-  std::vector<std::shared_ptr<char[]>> buffer_ptrs_ = {};
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device

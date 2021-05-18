@@ -113,7 +113,7 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
       MS_EXCEPTION(DeviceProcessError) << "rtMemcpy failed";
     }
   } else {
-    auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(kind));
+    auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(RT_MEMCPY_HOST_TO_DEVICE_EX));
     if (!ret) {
       MS_EXCEPTION(DeviceProcessError) << "MemcpyAsync failed";
     }
