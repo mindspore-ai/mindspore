@@ -50,13 +50,17 @@ class PANGUALPHAConfig:
         self.embedding_size = embedding_size
         self.num_layers = num_layers
         self.num_heads = num_heads
+        # The expand ratio of feature size in FFN
         self.expand_ratio = expand_ratio
+        # Use post-layernorm or pre-layernrom, default:pre-layernorm
         self.post_layernorm_residual = post_layernorm_residual
         self.dropout_rate = dropout_rate
         self.compute_dtype = compute_dtype
+        # Whether use incremental inference
         self.use_past = use_past
         self.dp = data_parallel_num
         self.mp = model_parallel_num
+        # Whether use self implemented layernorm
         self.self_layernorm = self_layernorm
         self.stage_num = stage_num
         self.micro_size = micro_size

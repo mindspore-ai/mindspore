@@ -40,16 +40,22 @@ def get_input_data(input_ids, eod_id, rank, dis):
     input_ids = input_ids[rank*dis: (rank+1)*dis]
     seq_length = input_ids.shape[1] - 1
 
+    # Initialize position_ids and attention_mask
     batch_input_ids = input_ids
     batch_position_ids = np.ones((dis, seq_length))
     batch_attention_mask = np.ones((dis, seq_length, seq_length))
+
+    # Loop through batches
     for bs_i, _ in enumerate(range(len(input_ids))):
+        # Get normal position_ids and attention_mask
         local_ids = input_ids[bs_i]
         batch_attention_mask[bs_i] = np.tril(np.ones(shape=(seq_length, seq_length)))
         batch_position_ids[bs_i] = np.arange(seq_length)
+        # Find eod_of_document
         eod_index = batch_position_ids[bs_i, local_ids[:-1] == eod_id].astype(np.int32)
         prev_index = 0
         for i in range(eod_index.size):
+            # Reset position_ids and attention_mask considering EOD
             index = eod_index[i]
             batch_attention_mask[bs_i, (index+1):, :(index+1)] = 0
             batch_position_ids[bs_i, (index+1):] -= (index + 1 - prev_index)
@@ -76,6 +82,8 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, data_
         dataset_restore: the dataset for training or evaluating
     """
     ds.config.set_seed(1)
+
+    # Get path for source data files
     home_path = os.path.join(os.getcwd(), data_path)
     files = os.listdir(data_path)
     dis = int(batch_size / device_num)
@@ -89,9 +97,12 @@ def create_dataset(batch_size, data_path, device_num=1, rank=0, drop=True, data_
         if not name.endswith(".db")
     ]
 
+    # Load data files and preprocess
     dataset = ds.MindDataset(data[data_start_index:], columns_list=[column_name], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     type_cast_op_float = C.TypeCast(mstype.float16)
+
+    # If eod_reset enabled, another two inputs will be generated through input_ids
     if eod_reset:
         map_func = (lambda input_ids: get_input_data(input_ids, eod_id, rank, dis))
         dataset = dataset.batch(batch_size, drop_remainder=drop)

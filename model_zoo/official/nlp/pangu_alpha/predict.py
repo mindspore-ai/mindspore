@@ -43,11 +43,13 @@ def run_predict(args_opt):
     device_id = int(os.getenv('DEVICE_ID'))
     local_rank = rank_id
     print('local_rank:{}, device id:{} start to run...'.format(local_rank, device_id), flush=True)
+    # Set execution mode
     context.set_context(save_graphs=False,
                         mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         device_id=device_id)
     context.set_context(variable_memory_max_size="30GB")
+    # Set parallel context
     if args_opt.distribute == "true":
         D.init()
         device_num = D.get_group_size()
@@ -71,6 +73,7 @@ def run_predict(args_opt):
         rank = 0
         device_num = 1
 
+    # Set model property
     model_parallel_num = args_opt.tensor_model_parallel_num
     data_parallel_num = int(device_num / model_parallel_num)
     per_batch_size = args_opt.per_batch_size
@@ -99,10 +102,13 @@ def run_predict(args_opt):
     print("=====args_opt is: ", args_opt, flush=True)
 
     ckpt_name = args_opt.load_ckpt_name
+    # Define network
     pangu_alpha = PanguAlpha(config)
     eval_net = EvalNet(pangu_alpha)
     eval_net.set_train(False)
     model_predict = Model(eval_net)
+
+    # Compile network and obtain tensor layout for loading ckpt
     inputs_np = Tensor(np.ones(shape=(config.batch_size, config.seq_length)), mstype.int32)
     predict_layout = model_predict.infer_predict_layout(inputs_np)
     print("======start load_distributed checkpoint", flush=True)
@@ -111,19 +117,24 @@ def run_predict(args_opt):
     ckpt_file_list = [os.path.join(args_opt.load_ckpt_path, f"{ckpt_name}_{ckpt_rank}.ckpt") for ckpt_rank in
                       range(0, 512)]
     print(f"Loading from path {ckpt_file_list[0]}", flush=True)
+    # Load checkpoint files
     load_distributed_checkpoint(eval_net, ckpt_file_list, predict_layout)
     print("================load param ok=================", flush=True)
 
     from src.tokenization_jieba import JIEBATokenizer
     from src.generate import generate
+    # Define tokenizer
     tokenizer = JIEBATokenizer(os.path.join(args_opt.tokenizer_path, 'vocab10.vocab'),
                                os.path.join(args_opt.tokenizer_path, 'vocab10.model'))
 
+    # Tokenize input sentence to ids
     sample = "今天是一个好天气"
     tokenized_token = tokenizer.tokenize(sample)
     start_sentence = tokenizer.convert_tokens_to_ids(tokenized_token)
     input_ids = np.array(start_sentence).reshape(1, -1)
+    # Call inference
     output_ids = generate(model_predict, input_ids, config.seq_length, 9)
+    # Decode output ids to sentence
     output_samples = tokenizer.convert_ids_to_tokens(output_ids.tolist())
     print('Output is:', output_samples, flush=True)
 
