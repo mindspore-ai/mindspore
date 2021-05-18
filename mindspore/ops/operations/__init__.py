@@ -72,7 +72,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCGreedyDecoder,
                      LogSoftmax, MaxPool3D,
                      MaxPool, DataFormatDimMap,
-                     AvgPool, AvgPool3D, Conv2DBackpropInput, ComputeAccidentalHits,
+                     AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid, SeLU,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
@@ -317,7 +317,6 @@ __all__ = [
     'UpdateState',
     'identity',
     'AvgPool',
-    'AvgPool3D',
     # Back Primitive
     'Equal',
     'EqualCount',
