@@ -850,14 +850,14 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
   for (auto &[primal_user, j_user] : primal_j_pair) {
     // Check if J operation has relevant primal call in the same graph
     auto graph = j_user->func_graph();
-    auto iter = primal_users_map.find(graph);
-    if (iter == primal_users_map.end()) {
+    auto graph_iter = primal_users_map.find(graph);
+    if (graph_iter == primal_users_map.end()) {
       MS_LOG(WARNING) << "J operation has no relevant primal call in the same graph. Func graph: " << graph->ToString()
                       << ", J user: " << j_user->DebugString();
       continue;
     }
 
-    auto primal_count_pair = iter->second;
+    auto primal_count_pair = graph_iter->second;
     // Check input size.
     auto primal = primal_count_pair.first;
     if (primal->size() != j_user->size()) {
