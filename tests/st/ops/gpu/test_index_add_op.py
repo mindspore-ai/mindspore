@@ -255,13 +255,6 @@ def test_index_add_invalid_inputs():
         net = NetIndexAdd(x, 1)
         _ = net(Tensor(idx), Tensor(y))
 
-    with pytest.raises(RuntimeError) as info:
-        #index value not in the range of 0 to len(x[axis])
-        idx = np.array([5, 6]).astype(np.int32)
-        net = NetIndexAdd(x, 1)
-        _ = net(Tensor(idx), Tensor(y))
-    assert "out of range" in str(info.value)
-
 
 class IndexAddGradNet(nn.Cell):
     def __init__(self, network):

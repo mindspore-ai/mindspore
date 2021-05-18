@@ -16,16 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_INDEXADD_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_INDEXADD_H_
-enum class IndexAddErrorCode {
-  kOk = 0,
-  kIndexOutOfRange
-};
-
-void ValidateIndexAddInputValues(const int *index, const size_t src_axis_size, const size_t dst_axis_size,
-  IndexAddErrorCode *error_code, cudaStream_t cuda_stream);
-
 template <typename T>
 void CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size, const size_t src_axis_size,
   const size_t dst_axis_size, const size_t inner_size, const bool use_lock, cudaStream_t cuda_stream);
-
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_INDEXADD_H_
