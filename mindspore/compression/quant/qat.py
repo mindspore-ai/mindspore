@@ -336,9 +336,8 @@ class QuantizationAwareTraining(Quantizer):
                                                   symmetric=self.act_symmetric,
                                                   narrow_range=self.act_range,
                                                   optimize_option=self.optimize_option)
-            prefix = self._convert_op_name(prim_op.name)
             if network.param_prefix:
-                prefix = '.'.join([network.param_prefix, self._convert_op_name(prim_op.name)])
+                prefix = '.'.join([network.param_prefix, prefix])
             add_quant.update_parameters_name(prefix + '.')
             del network.__dict__[name]
             network.insert_child_to_cell(name, add_quant)
