@@ -16,7 +16,11 @@
             - [运行测试代码](#运行测试代码)
                 - [ICDAR2015评估脚本](#icdar2015评估脚本)
                 - [用法](#用法)
-                    - [结果](#结果)
+                - [结果](#结果)
+        - [推理过程](#推理过程)
+            - [导出MindIR](#导出mindir)
+            - [在Ascend310执行推理](#在ascend310执行推理)
+            - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -177,6 +181,33 @@ sh ./script/run_eval_ascend.sh.sh
 #### 结果
 
 Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"hmean"：0.8076736279747451，"AP"：0}
+
+## 推理过程
+
+### [导出MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+目前仅支持batch_Size为1的推理。在执行推理前，请按照[快速入门](#快速入门)配置环境。
+
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DEVICE_ID` 可选，默认值为0。
+
+### result
+
+在运行目录的上一级目录将生成`res`文件夹，最终精度计算过程，请参照[ICDAR2015评估脚本](#icdar2015评估脚本).
 
 # 模型描述
 
