@@ -367,6 +367,9 @@ def test_multiple_channels():
     util_test(np.ones(shape=[20, 45, 4]) * 1.3, mean=[0.5, 0.6, 0.7, 0.8], std=[0.1, 0.2, 0.3, 0.4])
     util_test(np.ones(shape=[2, 2]), mean=[0.5], std=[0.1])
     util_test(np.ones(shape=[2, 2, 5]), mean=[0.5], std=[0.1])
+    util_test(np.ones(shape=[6, 6, 129]), mean=[0.5]*129, std=[0.1]*129)
+    util_test(np.ones(shape=[6, 6, 129]), mean=[0.5], std=[0.1])
+
 
 
 if __name__ == "__main__":
