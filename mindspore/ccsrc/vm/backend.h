@@ -101,30 +101,42 @@ class MindRTBackend : public Backend {
 
   // The parameter root_graph is a root graph, and the root graph maybe contain multiple sub graphs, It will traverse
   // all sub graphs to call CompileGraph.
-  ActorInfo CompileGraphs(const FuncGraphPtr &root_graph);
+  const ActorInfo &CompileGraphs(const FuncGraphPtr &root_graph);
 
   // Compile single op kernel graph in the pyNative mode.
-  ActorInfo CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                         const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
+  const ActorInfo &CompileGraph(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                                const std::vector<int64_t> *tensors_mask,
+                                std::vector<tensor::TensorPtr> *input_tensors);
 
   // Run Graph in the graph mode.
   VectorRef RunGraph(const ActorInfo &actor_info, const VectorRef &args);
 
   // Run Graph in the pyNative mode.
-  VectorRef RunGraph(const GraphInfo &graph_info, const std::vector<tensor::TensorPtr> &input_tensors);
+  VectorRef RunGraph(const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
+                     const std::vector<tensor::TensorPtr> *input_tensors);
 
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
-  // The result of graph compiler is stored in graph_to_device_context_ and control_nodes_.
+  // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
   void CompileGraph(const FuncGraphPtr &func_graph);
 
-  // Construct the GraphCompilerInfo by the compilation results of graph.
+  // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
+
+  // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
+  std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const std::vector<int64_t> *tensors_mask,
+                                                                const std::vector<tensor::TensorPtr> *input_tensors);
+
+  // Split complete kernel graph to single op graph in PyNative back
+  // propagation, then compile and run single op graph.
+  void RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
+                          const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
 
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.
-  std::unordered_map<GraphId, DeviceContext *> graph_to_device_context_;
+  std::unordered_map<GraphId, DeviceContext *> graph_id_to_device_context_;
+  std::unordered_map<GraphInfo, DeviceContext *> graph_info_to_device_context_;
   std::vector<AnfNodePtr> control_nodes_;
 
   std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;

@@ -31,7 +31,7 @@
 namespace mindspore {
 // OpActor data route.
 struct OpArrow {
-  OpArrow(int from_output_index, AID to_op_id, int to_input_index)
+  OpArrow(int from_output_index, const AID &to_op_id, int to_input_index)
       : from_output_index_(from_output_index), to_op_id_(to_op_id), to_input_index_(to_input_index) {}
   int from_output_index_;
   AID to_op_id_;

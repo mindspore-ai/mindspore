@@ -21,12 +21,19 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include "runtime/hardware/device_context.h"
 #include "backend/session/session_basic.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
-namespace runtime {
 using device::DeviceContext;
+using mindspore::tensor::TensorPtr;
+using session::InputTensorInfo;
+using session::KernelWithIndex;
+using session::OpRunInfo;
+
+namespace runtime {
 class GraphCompiler {
  public:
   static GraphCompiler &GetInstance() {
@@ -43,14 +50,39 @@ class GraphCompiler {
   GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs);
 
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
-  GraphId CompileGraph(session::OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                       std::vector<tensor::TensorPtr> *input_tensors, const std::vector<int64_t> &tensors_mask);
+  GraphId CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                       const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
+                       bool *single_op_cache_hit);
 
   // Get graph by graph id, if not exist return nullptr, used in Graph mode.
   KernelGraphPtr Fetch(GraphId graph_id) const;
 
   // Get graph by graph info, if not exist return nullptr, used in PyNative mode.
   KernelGraphPtr Fetch(const GraphInfo &graph_info) const;
+
+  // The following four methods used in PyNative back propagation to split complete kernel graph to single
+  // op graph, and these methods will be removed to class MindRTBackend after deleting session module.
+
+  // Cache index for all parameter and output nodes of kernel graph, used to get parameter of single op and
+  // recover output of original complete back propagation kernel graph.
+  void GetParamAndOutputIndex(const KernelGraphPtr &graph, const std::vector<TensorPtr> &inputs, VectorRef *outputs,
+                              std::map<AnfNodePtr, size_t> *parameter_index,
+                              std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
+
+  // Get input tensors for single op compile and run, input tensors may convert from value node and parameter in graph
+  // and prev kernel node's output.
+  void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
+                               const std::map<AnfNodePtr, size_t> &parameter_index,
+                               const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
+
+  // Get OpRunInfo and GraphInfo for single op compile and run.
+  void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
+                                      OpRunInfo *run_info, GraphInfo *graph_info);
+
+  // Handle single op output tensor and recover output of original complete kernel graph.
+  void RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
+                          const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
+                          std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs);
 
  private:
   GraphCompiler() = default;

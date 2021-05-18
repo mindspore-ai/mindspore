@@ -37,7 +37,7 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
   // Put device tensor into host tensor.
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index);
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   tensor->set_device_address(device_tensor);
 
   return tensor;
@@ -72,7 +72,7 @@ void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *c
       auto &output_node = output_nodes_[i].first;
       auto output_index = output_nodes_[i].second;
       if ((output_node != nullptr) && (!IsPersistentDeviceTensor(output_node))) {
-        const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index);
+        const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
         // The outputs may have the same output node, so need skip when the node has been set to new device tensor.
         if ((device_tensor == nullptr) || (device_tensor->GetPtr() == nullptr)) {
           continue;
@@ -102,15 +102,21 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
   MS_EXCEPTION_IF_NULL(context);
 
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
-  if (loop_count_ - current_count_ == 1) {
-    if (output_position >= outputs_.size()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
-    }
-    outputs_[output_position] = CreateOutputTensor(output_node, output_index, output_position);
-    current_outputs_num_++;
+  if (loop_count_ - current_count_ != 1) {
+    return;
+  }
 
-    // Save the output nodes to clear the device tensor in the running end.
-    output_nodes_[output_position] = KernelWithIndex(output_node, output_index);
+  if (output_position >= outputs_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
+  }
+  outputs_[output_position] = CreateOutputTensor(output_node, output_index, output_position);
+  current_outputs_num_++;
+
+  // Save the output nodes to clear the device tensor in the running end.
+  output_nodes_[output_position] = KernelWithIndex(output_node, output_index);
+  // There is no loop count actor in step mode, need trigger call CollectLoopCount to replace old output device tensors.
+  if (!need_loop_count_ && (current_outputs_num_ + device_tensor_store_keys_.size() == outputs_num_)) {
+    CollectLoopCount(++current_count_, context);
   }
 }
 }  // namespace runtime

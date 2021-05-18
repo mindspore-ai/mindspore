@@ -48,6 +48,22 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   }
 }
 
+void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<DeviceTensor> *context,
+                                              const std::vector<TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  auto sequential_num = context->sequential_num_;
+  input_op_controls_[sequential_num].emplace_back(input_control);
+  PushInputDeviceTensor(input_tensors);
+  // When all the inputs are collected, then allocate memory and callback launch.
+  if (CheckLaunchCondition(context)) {
+    FetchInputDeviceTensor(context);
+    FetchOutputDeviceTensor();
+    FetchWorkspaceDeviceTensor();
+    AllocateMemory(context);
+  }
+}
+
 void KernelActor::AllocateMemory(OpContext<DeviceTensor> *context) {
   std::vector<DeviceTensor *> alloc_list(output_device_tensors_);
   alloc_list.insert(alloc_list.end(), workspace_device_tensors_.begin(), workspace_device_tensors_.end());
@@ -111,10 +127,34 @@ bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   return true;
 }
 
+void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  auto input_size = AnfAlgo::GetInputTensorNum(kernel_);
+  if (input_tensors->size() != input_size) {
+    MS_LOG(ERROR) << "Input tensor number: " << input_tensors->size()
+                  << " is not equal to kernel's input size: " << input_size;
+    return;
+  }
+
+  if (input_device_tensors_.empty()) {
+    input_device_tensors_.resize(input_size);
+  }
+
+  for (size_t input_index = 0; input_index < input_tensors->size(); input_index++) {
+    const auto &device_tensor =
+      std::dynamic_pointer_cast<DeviceTensor>((*input_tensors)[input_index]->device_address());
+    if (device_tensor != nullptr) {
+      input_device_tensors_[input_index] = device_tensor.get();
+    }
+  }
+}
+
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto input_size = input_datas_num_ + device_tensor_store_keys_.size();
-  input_device_tensors_.resize(input_size);
+  auto input_size = AnfAlgo::GetInputTensorNum(kernel_);
+  if (input_device_tensors_.empty()) {
+    input_device_tensors_.resize(input_size);
+  }
 
   auto data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
