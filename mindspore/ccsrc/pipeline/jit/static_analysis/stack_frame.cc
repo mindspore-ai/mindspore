@@ -33,18 +33,42 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
   return args_abs_list;
 }
 
+AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
+                                                const AbstractFunctionPtr &graph_func) {
+  AnalysisContextPtr parent_context = nullptr;
+  auto func_graph_abs = dyn_cast<FuncGraphAbstractClosure>(graph_func);
+  if (func_graph_abs != nullptr) {  // Find parent context for FuncGraphAbstractClosure.
+    auto branch_fg = func_graph_abs->func_graph();
+    parent_context = func_graph_abs->context()->FindParentContext(branch_fg);
+  } else if (graph_func->isa<MetaFuncGraphAbstractClosure>()) {  // Or DummyContext for MetaFuncGraphAbstractClosure.
+    parent_context = fg_evaluator->parent_context();
+    if (parent_context == nullptr) {
+      parent_context = AnalysisContext::DummyContext();
+      fg_evaluator->set_parent_context(parent_context);
+    }
+  } else {  // Not call FuncGraph or MetaFuncGraph.
+    MS_LOG(EXCEPTION) << "Should be FuncGraphAbstractClosure or MetaFuncGraphAbstractClosure.";
+  }
+  return parent_context;
+}
+
 StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
-                                 const FuncGraphAbstractClosurePtr &graph_func) {
+                                 const AbstractFunctionPtr &graph_func) {
   // Get the evaluator for func graph.
   auto evaluator = engine->GetEvaluatorFor(graph_func);
   auto fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator);
   if (fg_evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
   }
-  fg_evaluator->set_context(current_context_);
 
   // Evaluate the inputs firstly. Build arguments for the func graph.
   AbstractBasePtrList args_abs_list = GenerateArgsAbsList(engine, evaluator, current_cnode);
+
+  // Check if already evaluated before.
+  EvaluatorCacheMap &evaluator_cache_map = *evaluator->evaluator_cache_map();
+  if (evaluator_cache_map.find(args_abs_list) != evaluator_cache_map.end()) {
+    return nullptr;
+  }
 
   // Generate func graph with arguments.
   auto fg = fg_evaluator->GetFuncGraph(engine, args_abs_list);
@@ -60,9 +84,9 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
                 << ", current_context_: " << current_context_->ToString();
 
   // Find parent context and create new context.
-  auto branch_fg = graph_func->func_graph();
-  auto parent_context = graph_func->context()->FindParentContext(branch_fg);
+  AnalysisContextPtr parent_context = GetParentContext(fg_evaluator, graph_func);
   auto new_context = parent_context->NewFuncGraphContext(fg, args_abs_list);
+
   // Evaluate the parameters with new context.
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg_abs = args_abs_list[i];
@@ -72,7 +96,8 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   }
 
   // Create a new stack frame and set arguments for it.
-  auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, current_context());
+  fg_evaluator->set_context(new_context);
+  auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, parent_context);
   new_stack_frame->set_args_abs_list(std::move(args_abs_list));
   return new_stack_frame;
 }
@@ -85,13 +110,13 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
   }
   auto cnode = current_node->cast<CNodePtr>();
   auto maybe_func = engine->GetCNodeOperatorAbstract(cnode, current_context_);
-  auto graph_func = dyn_cast<FuncGraphAbstractClosure>(maybe_func);  // Not handle MetaFuncGraphAbstractClosure by now.
-  if (graph_func == nullptr) {
-    return nullptr;  // Not call FuncGraph.
+  if (!maybe_func->isa<abstract::MetaFuncGraphAbstractClosure>() &&
+      !maybe_func->isa<abstract::FuncGraphAbstractClosure>()) {
+    return nullptr;  // Not call FuncGraph or MetaFuncGraph.
   }
 
-  // It's FuncGraph Call.
-  return DoJump(engine, cnode, graph_func);
+  // It's FuncGraph Call or MetaFuncGraph Call. `maybe_func` is definitely a AbstractFunction.
+  return DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
 }
 
 EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {

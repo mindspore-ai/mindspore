@@ -186,8 +186,8 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     eval_result = EvalCNode(cnode, conf);
     trace::TraceEvalCNodeLeave();
   } else {
-    MS_LOG(EXCEPTION) << "Illegal AnfNode for evaluating, node: " << node->DebugString()
-                      << ", fg: " << (node->func_graph() != nullptr ? node->func_graph()->ToString() : "nullgraph")
+    MS_LOG(EXCEPTION) << "Illegal AnfNode for evaluating, node: " << node->DebugString() << "(" << node->type_name()
+                      << "), fg: " << (node->func_graph() != nullptr ? node->func_graph()->ToString() : "nullgraph")
                       << ". NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 
@@ -443,7 +443,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<MetaFuncGrap
   }
   MS_EXCEPTION_IF_NULL(func);
   std::shared_ptr<MetaFuncGraphEvaluator> evaluator =
-    std::make_shared<MetaFuncGraphEvaluator>(func->meta_func_graph(), func->context(), func->GetScope());
+    std::make_shared<MetaFuncGraphEvaluator>(func->meta_func_graph(), func->GetScope());
   evaluators_[func] = evaluator;
   return evaluator;
 }
