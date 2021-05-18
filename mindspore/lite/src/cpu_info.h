@@ -18,12 +18,10 @@
 #ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
 #define MINDSPORE_LITE_SRC_CPU_INFO_H
 namespace mindspore::lite {
-#define CPUINFO_HARDWARE_VALUE_MAX 64
-/* As per include/sys/system_properties.h in Android NDK */
-#define CPUINFO_ARM_MIDR_IMPLEMENTER_MASK UINT32_C(0xFF000000)
-#define CPUINFO_ARM_MIDR_PART_MASK UINT32_C(0x0000FFF0)
-#define CPUINFO_ARM_MIDR_IMPLEMENTER_OFFSET 24
-#define CPUINFO_ARM_MIDR_PART_OFFSET 4
+#define ARM_CPU_IMPLEMENTER_MASK UINT32_C(0xFF000000)
+#define ARM_CPU_PART_MASK UINT32_C(0x0000FFF0)
+#define ARM_CPU_IMPLEMENTER_OFFSET 24
+#define ARM_CPU_PART_OFFSET 4
 typedef struct AndroidCpuInfo {
   uint32_t cpu_implementer = 0;
   uint32_t cpu_part = 0;
