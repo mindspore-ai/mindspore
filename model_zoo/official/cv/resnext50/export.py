@@ -21,6 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
 from src.config import config
 from src.image_classification import get_network
+from src.utils.auto_mixed_precision import auto_mixed_precision
 
 parser = argparse.ArgumentParser(description='checkpoint export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")

@@ -55,11 +55,9 @@ if __name__ == '__main__':
         net = vgg16(num_classes=args.num_classes, args=args)
     else:
         net = vgg16(args.num_classes, args, phase="test")
-        net.add_flags_recursive(fp16=True)
 
     load_checkpoint(args.ckpt_file, net=net)
     net.set_train(False)
 
     input_data = Tensor(np.zeros([cfg.batch_size, 3, args.image_size[0], args.image_size[1]]), mstype.float32)
-
     export(net, input_data, file_name=args.file_name, file_format=args.file_format)
