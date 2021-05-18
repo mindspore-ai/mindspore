@@ -109,7 +109,7 @@ class _Elemwise(OpInfer):
             if t.data_format != DF.DEFAULT:
                 return t.shape
             flatten_size = reduce(lambda x, y: x * y, t.shape)
-            if flatten_size >= max_flatten_size:
+            if flatten_size > max_flatten_size or (flatten_size == max_flatten_size and len(t.shape) > len(shape)):
                 max_flatten_size = flatten_size
                 shape = t.shape
         return shape
