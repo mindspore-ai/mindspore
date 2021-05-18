@@ -25,7 +25,7 @@ std::string Array::ToString() const {
   std::ostringstream buffer;
   buffer << "[ ";
   for (auto &element : array_) {
-    buffer << std::to_string(element) + " ";
+    buffer << (std::to_string(element) + " ");
   }
   buffer << "]";
   return buffer.str();

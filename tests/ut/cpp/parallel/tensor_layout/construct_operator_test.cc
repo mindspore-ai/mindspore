@@ -131,7 +131,8 @@ TEST_F(TestConstructOperator, TestAlltoAllOP) {
   int64_t split_dim = 0;
   int64_t concat_dim = 1;
   int64_t dev_dim = 3;
-  Args args = {split_count, split_dim, concat_dim, dev_dim};
+  int64_t dev_num = 8;
+  Args args = {split_count, split_dim, concat_dim, dev_dim, dev_num};
   ASSERT_EQ(constructor.AlltoAllOP(args), Status::SUCCESS);
 }
 
