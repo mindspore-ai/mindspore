@@ -45,6 +45,5 @@ ComplexType ComplexInnerProductWithControl(const Simulator::StateVector &v1, con
   ComplexType result = {real_part, imag_part};
   return result;
 }
-
 }  // namespace mindquantum
 }  // namespace mindspore

@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace mindquantum {
-
 class ParameterResolver {
  public:
   ParameterResolver();

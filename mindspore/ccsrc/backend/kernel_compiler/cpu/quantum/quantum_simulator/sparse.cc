@@ -118,7 +118,6 @@ SparseMatrix GoodTerm2Sparse(const GoodTerm &gt, Index n_qubits) {
   out = KroneckerProductSparse(IdentitySparse(n_qubits - gt.first.second.second - 1), out).eval();
   return out;
 }
-
 }  // namespace sparse
 }  // namespace mindquantum
 }  // namespace mindspore

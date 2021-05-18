@@ -77,7 +77,6 @@ class ZZGate : public IntrinsicOneParaGate {
  public:
   ZZGate(const Indexes &, const Indexes &, const ParameterResolver &);
 };
-
 }  // namespace mindquantum
 }  // namespace mindspore
 #endif  // MINDQUANTUM_ENGINE_GATES_H_
