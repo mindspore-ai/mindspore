@@ -40,7 +40,7 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
 - Refactoring guidelines
 
-    We encourage developers to refactor our code to eliminate the [code smell](https://en.wikipedia.org/wiki/Code_smell). All codes should conform to needs to the coding style and testing style, and refactoring codes are no exception.
+    We encourage developers to refactor our code to eliminate the [code smell](https://en.wikipedia.org/wiki/Code_smell). All codes should conform to needs to the coding style and testing style, and refactoring codes are no exception. [Lizard](http://www.lizard.ws) threshold for nloc (lines of code without comments) is 100 and for cnc (cyclomatic complexity number) is 20, when you receive a *Lizard* warning, you have to refactor the code you want to merge.
 
 - Document guidelines
 
@@ -78,6 +78,7 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
     git checkout -b {new_branch_name} origin/master
     ```
 
+    Taking the master branch as an example, MindSpore may create version branches and downstream development branches as needed, please fix bugs upstream first.
     Then you can change the code arbitrarily.
 
 - Push the code to the remote repository
@@ -94,7 +95,7 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
 - Pull a request to MindSpore repository
 
-    In the last step, your need to pull a compare request between your new branch and MindSpore `master` branch. After finishing the pull request, the Jenkins CI will be automatically set up for building test.
+    In the last step, your need to pull a compare request between your new branch and MindSpore `master` branch. After finishing the pull request, the Jenkins CI will be automatically set up for building test. Your pull request should be merged into the upstream master branch as soon as possible to reduce the risk of merging.
 
 ### Report issues
 
