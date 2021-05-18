@@ -160,6 +160,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/string_util.cc
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/src/errorcode.cc
+        ${LITE_DIR}/src/cpu_info.cc
         )
 
 if(ENABLE_TOOLS)

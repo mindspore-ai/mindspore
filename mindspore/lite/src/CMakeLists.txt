@@ -73,6 +73,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
 if(SUPPORT_GPU STREQUAL opencl)
