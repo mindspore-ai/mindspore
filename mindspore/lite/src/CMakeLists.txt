@@ -200,22 +200,15 @@ if(SUPPORT_TRAIN)
     target_link_libraries(mindspore-lite_static minddata-lite)
 endif()
 
-
-if(NOT APPLE AND PLATFORM_ARM)
-    set(NDK_STRIP
-            "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
-endif()
-
-if(NOT APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
-    add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-            ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
-endif()
 target_link_libraries(mindspore-lite mslite_kernel_reg)
 target_link_libraries(mindspore-lite_static mslite_kernel_reg)
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     if(NOT APPLE AND PLATFORM_ARM)
+        set(NDK_STRIP
+            "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-                ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
+                            ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     elseif(NOT WIN32)
         add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
     endif()

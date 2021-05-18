@@ -18,6 +18,3 @@ add_library(quantizer_mid OBJECT ${QUANTIZER})
 
 add_dependencies(quantizer_mid fbs_src)
 add_dependencies(quantizer_mid fbs_inner_src)
-if(ENABLE_ASAN)
-    target_link_libraries(quantizer_mid libasan libSecodefuzz)
-endif()
