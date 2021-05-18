@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Data paralell allreduce fusion"""
+"""Data parallel allreduce fusion"""
 
 import ctypes
 
@@ -41,27 +41,27 @@ def _c_array(ctype, values):
     return (ctype * len(values))(*values)
 
 
-def _set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
+def _set_fusion_strategy_by_idx(idx_list, group="hccl_world_group"):
     """
     A function set gradient segment strategy according to the index list.
 
     Note:
         In the back propagation,
         the fusion of the allreduce operators with a fusion attribute equals 1,
-        will be performed according to the idxList,
+        will be performed according to the idx_list,
         to achieve the effect of parallel between calculation and communication.
 
     Args:
-        idxList (list): The index list of the gradient.
+        idx_list (list): The index list of the gradient.
         group (str): The hccl communication group.
 
     Raises:
         TypeError: If group is not a python str.
-        TypeError: If IdxList is not a python list.
-        TypeError: If type of idxList item is not int.
+        TypeError: If idx_list is not a python list.
+        TypeError: If type of idx_list item is not int.
         ValueError: If group name length is out of range.
-        ValueError: If idxList length is 0.
-        ValueError: If idxList item is less than 0.
+        ValueError: If idx_list length is 0.
+        ValueError: If idx_list item is less than 0.
         RuntimeError: If allreduce split failed.
     """
     try:
@@ -70,6 +70,8 @@ def _set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
         import hccl_test.manage.api as hccl
         hccl.set_fusion_strategy_by_idx()
         return
+    finally:
+        pass
     if isinstance(group, (str)):
         group_len = len(group)
         if (group_len > _MAX_GROUP_NAME_LEN or group_len == 0):
@@ -77,49 +79,49 @@ def _set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
     else:
         raise TypeError('Group must be a python str')
 
-    if isinstance(idxList, (list)):
-        idx_len = len(idxList)
+    if isinstance(idx_list, (list)):
+        idx_len = len(idx_list)
         if idx_len == 0:
-            raise ValueError('IdxList length is 0')
+            raise ValueError('idx_list length is 0')
     else:
-        raise TypeError('IdxList must be a python list')
+        raise TypeError('idx_list must be a python list')
 
-    for idx in idxList:
+    for idx in idx_list:
         if isinstance(idx, (int)):
             if idx < 0:
                 raise ValueError('Idx < 0')
         else:
-            raise TypeError('Idx in idxList is invalid')
+            raise TypeError('Idx in idx_list is invalid')
 
-    c_array_idxList = _c_array(ctypes.c_uint, idxList)
-    c_idx_num = ctypes.c_uint(len(idxList))
+    c_array_idx_list = _c_array(ctypes.c_uint, idx_list)
+    c_idx_num = ctypes.c_uint(len(idx_list))
     c_group = _c_str(group)
-    ret = lib_ctype.hcom_set_split_strategy_by_index(c_group, c_idx_num, c_array_idxList)
+    ret = lib_ctype.hcom_set_split_strategy_by_index(c_group, c_idx_num, c_array_idx_list)
     if ret != 0:
         raise RuntimeError('Allreduce split error')
 
 
-def _set_fusion_strategy_by_size(dataSizeList, group="hccl_world_group"):
+def _set_fusion_strategy_by_size(data_size_list, group="hccl_world_group"):
     """
     A function set gradient segment strategy according to the data size percentage list.
 
     Note:
         In the back propagation,
         the fusion of the allreduce operators with a fusion attribute equals 1,
-        will be performed according to dataSizeList,
+        will be performed according to data_size_list,
         to achieve the effect of parallel between calculation and communication.
 
     Args:
-        dataSizeList (list): The data size percentage list of the gradient.
+        data_size_list (list): The data size percentage list of the gradient.
         group (str): The hccl communication group.
 
     Raises:
         TypeError: If group is not a python str.
-        TypeError: If dataSizeList is not a python list.
-        TypeError: If type of dataSizeList item is not int or float.
+        TypeError: If data_size_list is not a python list.
+        TypeError: If type of data_size_list item is not int or float.
         ValueError: If group name length is out of range.
-        ValueError: If dataSizeList length is 0.
-        ValueError: If dataSizeList item is less than 0.
+        ValueError: If data_size_list length is 0.
+        ValueError: If data_size_list item is less than 0.
         RuntimeError: If allreduce split failed.
     """
     try:
@@ -128,24 +130,27 @@ def _set_fusion_strategy_by_size(dataSizeList, group="hccl_world_group"):
         import hccl_test.manage.api as hccl
         hccl.set_fusion_strategy_by_size()
         return
+    finally:
+        pass
+
     if isinstance(group, (str)):
         group_len = len(group)
         if group_len > _MAX_GROUP_NAME_LEN or group_len == 0:
             raise ValueError('Group name is out of range {_MAX_GROUP_NAME_LEN}')
     else:
         raise TypeError('Group must be a python str')
-    if isinstance(dataSizeList, (list)):
-        len_data_size = len(dataSizeList)
+    if isinstance(data_size_list, (list)):
+        len_data_size = len(data_size_list)
         if len_data_size == 0:
-            raise ValueError('DataSizeList length is 0')
+            raise ValueError('data_size_list length is 0')
     else:
-        raise TypeError('DataSizeList must be a python list')
-    for dataSize in dataSizeList:
-        if not isinstance(dataSize, (int, float)):
-            raise TypeError('DataSize in dataSizeList is invalid')
+        raise TypeError('data_size_list must be a python list')
+    for data_size in data_size_list:
+        if not isinstance(data_size, (int, float)):
+            raise TypeError('data_size in data_size_list is invalid')
 
-    c_array_sizeList = _c_array(ctypes.c_float, dataSizeList)
-    c_size_num = ctypes.c_uint(len(dataSizeList))
+    c_array_sizeList = _c_array(ctypes.c_float, data_size_list)
+    c_size_num = ctypes.c_uint(len(data_size_list))
     c_group = _c_str(group)
     ret = lib_ctype.hcom_set_split_strategy_by_size(c_group, c_size_num, c_array_sizeList)
     if ret != 0:

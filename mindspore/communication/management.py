@@ -29,6 +29,7 @@ __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 
+
 def _get_group(group):
     """Return the world communication group if the `group` is `DEFAULT_WORLD_COMM_GROUP`."""
     if group == DEFAULT_WORLD_COMM_GROUP:
@@ -79,6 +80,7 @@ def init(backend_name=None):
         GlobalComm.INITED = True
     else:
         raise RuntimeError("Backend name {} is not supported.".format(backend_name))
+
 
 def release():
     """

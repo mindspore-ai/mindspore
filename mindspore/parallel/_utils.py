@@ -35,9 +35,11 @@ def _get_full_batch():
     """Get whether to use full_batch."""
     return auto_parallel_context().get_full_batch()
 
+
 def _get_pipeline_stages():
     """Get pipeline stages"""
     return auto_parallel_context().get_pipeline_stages()
+
 
 def _check_full_batch():
     """
@@ -60,6 +62,7 @@ def _need_to_full():
             and (not full_batch))
     return need
 
+
 def _to_full_shapes(shapes, device_num):
     """Expanding batch dimension according to device_num, adapt to mindspore minddata graph solution."""
     new_shapes = []
@@ -73,9 +76,11 @@ def _to_full_shapes(shapes, device_num):
         new_shapes.append(new_shape)
     return new_shapes
 
+
 def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
     """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
-       from host solution."""
+       from host solution.
+    """
     lst = []
     if not isinstance(elem, (tuple, list)):
         elem = [elem]
@@ -106,6 +111,7 @@ def _to_full_tensor(elem, device_num, global_rank, scaling_sens=None):
     if scaling_sens:
         lst.append(Tensor(scaling_sens, mstype.float32))
     return tuple(lst)
+
 
 def _get_gradients_mean():
     """Get if using gradients_mean."""
@@ -185,6 +191,7 @@ def _parameter_broadcast_check(parallel_mode, parameter_broadcast):
         raise ValueError("stand_alone, semi_auto_parallel and auto_parallel "
                          "do not support parameter broadcast, parallel_mode: {0}, parameter_broadcast:{1}"
                          .format(parallel_mode, parameter_broadcast))
+
 
 def _get_python_op(op_name, op_path, instance_name, arglist):
     """Get python operator."""
