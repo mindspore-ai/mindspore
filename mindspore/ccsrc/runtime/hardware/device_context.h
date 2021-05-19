@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/device_address.h"
+#include "runtime/device/bucket.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
@@ -96,6 +97,10 @@ class DeviceContext {
 
   // Get device_context_key_ to obtain device name and device id.
   const DeviceContextKey &device_context_key() const { return device_context_key_; }
+
+  // Create and initialize bucket for every allreduce operator. Bucket is used in PyNative distributed training mode,
+  // one bucket handles all resource to launch and sync allreduce operator.
+  virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 
  protected:
   DeviceContextKey device_context_key_;

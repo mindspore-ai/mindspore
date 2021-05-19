@@ -30,6 +30,7 @@
 #include "runtime/hardware/gpu/optimizer.h"
 #include "common/trans.h"
 #include "utils/context/graph_kernel_flags.h"
+#include "runtime/device/gpu/gpu_bucket.h"
 
 namespace mindspore {
 namespace device {
@@ -94,12 +95,16 @@ bool GPUDeviceContext::InitDevice() {
 
   // Initialize device resource, such as stream, cudnn and cublas handle.
   GPUDeviceManager::GetInstance().InitDevice();
+
   auto stream = GPUDeviceManager::GetInstance().default_stream();
-  if (stream == nullptr) {
-    MS_LOG(ERROR) << "No default CUDA stream found.";
-    return false;
-  }
+  MS_ERROR_IF_NULL(stream);
   streams_.push_back(stream);
+
+  void *communication_stream = nullptr;
+  GPUDeviceManager::GetInstance().CreateStream(&communication_stream);
+  MS_ERROR_IF_NULL(communication_stream);
+  streams_.push_back(communication_stream);
+
   return true;
 }
 
@@ -284,6 +289,14 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
     MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
   }
   return GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
+}
+
+std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
+  auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size);
+  MS_EXCEPTION_IF_NULL(bucket);
+
+  bucket->Init({streams_[0]}, {streams_[1]});
+  return bucket;
 }
 
 bool GPUDeviceContext::BindDeviceToCurrentThread() const {

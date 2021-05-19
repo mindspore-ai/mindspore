@@ -2305,7 +2305,7 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
   }
 }
 
-void SessionBasic::InitAllBucket(const KernelGraphPtr &graph) {
+void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Init Bucket start, graph_id:" << graph->graph_id();
   auto ms_context = MsContext::GetInstance();
@@ -2331,8 +2331,12 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph) {
   uint32_t bucket_id = 0;
   for (auto bucket_size : bucket_size_list) {
     MS_LOG(INFO) << "Create new bucket:" << bucket_id;
-    auto bucket = CreateBucket(bucket_id++, bucket_size);
-    bucket->Init();
+    std::shared_ptr<device::Bucket> bucket = nullptr;
+    if (device_context != nullptr) {
+      bucket = device_context->CreateBucket(bucket_id++, bucket_size);
+    } else {
+      bucket = CreateBucket(bucket_id++, bucket_size);
+    }
     bucket_list.emplace_back(bucket);
   }
 

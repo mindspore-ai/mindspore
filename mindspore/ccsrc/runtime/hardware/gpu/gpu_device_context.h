@@ -60,6 +60,10 @@ class GPUDeviceContext : public DeviceContext {
 
   bool SyncStream(size_t stream_id = 0) const override;
 
+  // Create bucket for every allreduce operator. Bucket is used in PyNative distributed training mode, one bucket
+  // handles all resource to launch and sync allreduce operator.
+  std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool InitDevice();

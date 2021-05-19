@@ -355,6 +355,11 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     runtime::GraphCompiler::GetInstance().GetParamAndOutputIndex(graph, inputs[graph_index], outputs, &parameter_index,
                                                                  &output_indexes);
 
+    // Clear bucket resources every step
+    if (graph->is_bprop()) {
+      runtime::GraphCompiler::GetInstance().ClearAllBucket(graph->graph_id());
+    }
+
     for (const auto &kernel : graph->execution_order()) {
       OpRunInfo op_run_info;
       GraphInfo graph_info;
@@ -369,8 +374,14 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       VectorRef op_outputs =
         RunGraph(actor_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
 
+      std::vector<tensor::TensorPtr> new_output_tensors;
       runtime::GraphCompiler::GetInstance().RecoverGraphOutput(kernel, op_outputs, output_indexes, &op_output_map,
-                                                               outputs);
+                                                               outputs, &new_output_tensors);
+
+      // Save grad node to Bucket
+      if (graph->is_bprop()) {
+        runtime::GraphCompiler::GetInstance().AddGradAddrToBucket(graph->graph_id(), new_output_tensors);
+      }
     }
   }
 }
@@ -529,6 +540,13 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const std::vector
   }
 
   mindspore::ScopedLongRunning long_running;
+
+  for (auto &tensor : tensors_without_value_node) {
+    if (tensor->NeedWaitDevice()) {
+      tensor->WaitDevice();
+    }
+  }
+
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, {tensors_without_value_node});
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set, runtime::GraphExecutionStrategy::kStep, input_tensors)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;

@@ -82,7 +82,17 @@ class GraphCompiler {
   // Handle single op output tensor and recover output of original complete kernel graph.
   void RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                           const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
-                          std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs);
+                          std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs,
+                          std::vector<TensorPtr> *runop_output_tensors);
+
+  // Collect output tensors of back propagation graph for allreduce operators to average gradient,
+  // used in PyNative distributed training mode.
+  void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
+
+  // Clear resource in bucket, such as useless tensors and device memory of all communication operators,
+  // Bucket is used in PyNative distributed training mode, one bucket handles all resource to launch and sync allreduce
+  // operator.
+  void ClearAllBucket(const GraphId &graph_id);
 
  private:
   GraphCompiler() = default;
