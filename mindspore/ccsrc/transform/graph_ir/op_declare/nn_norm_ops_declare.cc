@@ -140,4 +140,10 @@ INPUT_MAP(BinaryCrossEntropyGrad) = {
 ATTR_MAP(BinaryCrossEntropyGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
 OUTPUT_MAP(BinaryCrossEntropyGrad) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(BinaryCrossEntropyGrad, kNameBinaryCrossEntropyGrad, ADPT_DESC(BinaryCrossEntropyGrad))
+
+// Centralization
+INPUT_MAP(Centralization) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Centralization) = {{"axes", ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(Centralization) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Centralization, kNameCentralization, ADPT_DESC(Centralization))
 }  // namespace mindspore::transform

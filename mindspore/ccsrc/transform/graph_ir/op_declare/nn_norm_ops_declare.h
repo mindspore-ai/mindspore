@@ -73,5 +73,8 @@ DECLARE_OP_USE_OUTPUT(BinaryCrossEntropy)
 
 DECLARE_OP_ADAPTER(BinaryCrossEntropyGrad)
 DECLARE_OP_USE_OUTPUT(BinaryCrossEntropyGrad)
+
+DECLARE_OP_ADAPTER(Centralization)
+DECLARE_OP_USE_OUTPUT(Centralization)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
