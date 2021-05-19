@@ -21,6 +21,7 @@
 #include "common/thread_pool.h"
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/int8/transpose_int8.h"
+#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
@@ -90,26 +91,32 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
   if (axes_.size() <= MAX_TRANSPOSE_DIM_SIZE) {
+    int res = NNACL_OK;
     if constexpr (std::is_same_v<T, int8_t>) {
-      DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, int16_t>) {
-      DoTransposeInt16(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeInt16(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, int32_t>) {
-      DoTransposeInt32(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeInt32(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, int64_t>) {
-      DoTransposeInt64(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeInt64(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, uint8_t>) {
-      DoTransposeUInt8(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeUInt8(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, uint16_t>) {
-      DoTransposeUInt16(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeUInt16(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, uint32_t>) {
-      DoTransposeUInt32(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeUInt32(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, uint64_t>) {
-      DoTransposeUInt64(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeUInt64(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, float>) {
-      DoTransposeFp32(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeFp32(input_addr, output_addr, output_shape, &transpose_param_);
     } else if constexpr (std::is_same_v<T, bool>) {
-      DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
+      res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
+    }
+    if (res == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "Transpose input addr or output addr is null";
+    } else if (res == NNACL_PARAM_INVALID) {
+      MS_LOG(EXCEPTION) << "Transpose parameters are invalid.";
     }
   } else {
     size_t data_count = (inputs[0]->size) / sizeof(T);

@@ -211,10 +211,6 @@ int DoTransposeFp32(const float *in_data, float *out_data, const int *output_sha
   int data_size = transpose_param->data_size_;
   int num_axes = transpose_param->num_axes_;
 
-  if (num_axes < 2) {
-    return NNACL_ERR;
-  }
-
   // check if transpose is needed
   bool needTranspose = false;
   for (int i = 1; i < num_axes; ++i) {
