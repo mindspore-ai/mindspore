@@ -140,10 +140,10 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const BatchNormPar
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter) {
-  CodeBaseStruct("SoftmaxQuantArg", name, softmax_quant_parameter.in_quant_args_,
-                 softmax_quant_parameter.out_quant_arg_, softmax_quant_parameter.output_activation_min_,
-                 softmax_quant_parameter.output_activation_max_, softmax_quant_parameter.output_multiplier_,
-                 softmax_quant_parameter.shift_left_, softmax_quant_parameter.shift_right_);
+  CodeBaseStruct<false>("SoftmaxQuantArg", name, softmax_quant_parameter.in_quant_args_,
+                        softmax_quant_parameter.out_quant_arg_, softmax_quant_parameter.output_activation_min_,
+                        softmax_quant_parameter.output_activation_max_, softmax_quant_parameter.output_multiplier_,
+                        softmax_quant_parameter.shift_left_, softmax_quant_parameter.shift_right_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParameter &concat_parameter,
