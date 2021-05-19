@@ -17,14 +17,14 @@
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 namespace mindspore {
 namespace parallel {
-std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, int device_id) {
-  std::string device_key = device_name + "_" + std::to_string(device_id);
-  auto iter = executors_.find(device_key);
+std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &name, int id) {
+  std::string key_device = name + "_" + std::to_string(id);
+  auto iter = executors_.find(key_device);
   if (iter != executors_.end()) {
     return iter->second;
   }
-  auto executor = std::make_shared<Executor>(device_name, device_id);
-  executors_[device_key] = executor;
+  auto executor = std::make_shared<Executor>(name, id);
+  executors_[key_device] = executor;
   return executor;
 }
 }  // namespace parallel
