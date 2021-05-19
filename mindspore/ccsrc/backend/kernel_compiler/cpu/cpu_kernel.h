@@ -59,6 +59,8 @@ const char START[] = "start";
 const char LIMIT[] = "limit";
 const char DELTA[] = "delta";
 const char SORTED[] = "sorted";
+const char ADJ_ST[] = "adjoint_st";
+const char ADJ_dT[] = "adjoint_dt";
 
 enum OperateType {
   ADD = 0,

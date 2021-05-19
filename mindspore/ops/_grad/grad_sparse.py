@@ -19,6 +19,7 @@ from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprops, bprop_getters
 
+
 # Unused parameters are placeholders.
 
 
@@ -55,4 +56,25 @@ def get_bprop_sparse_to_dense(self):
     def bprop(indices, values, dense_shape, out, dout):
         return zeros_like(indices), dout, zeros_like(dense_shape)
 
+    return bprop
+
+
+@bprop_getters.register(P.SparseTensorDenseMatmul)
+def get_bprop_sparse_tensor_dense_matmul(self):
+    """Generate bprop for SparseTensorDenseMatmul"""
+    adj_s = self.adjoint_st
+    adj_d = self.adjoint_dt
+    sparse_tensor_dense_mat_mul = P.SparseTensorDenseMatmul(not adj_s)
+
+    def bprop(indices, values, dense_shape, dense, out, dout):
+        dense_grad = sparse_tensor_dense_mat_mul(indices, values, dense_shape, dout)
+        perm = (1, 0)
+        if adj_d:
+            dense_grad = F.transpose(dense_grad, perm)
+        rows = indices[:, 0]
+        cols = indices[:, 1]
+        parts_a = F.gather(dout, cols if adj_s else rows, 0)
+        parts_b = F.gather(F.transpose(dense, perm) if adj_d else dense, rows if adj_s else cols, 0)
+        values_grad = F.reduce_sum(parts_a * parts_b, 1)
+        return zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad
     return bprop

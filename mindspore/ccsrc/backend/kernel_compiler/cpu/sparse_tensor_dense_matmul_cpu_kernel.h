@@ -37,8 +37,10 @@ class SparseTensorDenseMatmulCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> output_shape_;
   std::vector<size_t> b_shape_;
-  size_t output_size_;
-  size_t aValues_size_;
+  size_t output_size_{0};
+  size_t values_size_{0};
+  bool adj_st_{false};
+  bool adj_dt_{false};
 };
 MS_REG_CPU_KERNEL_T_S(SparseTensorDenseMatmul,
                       KernelAttr()

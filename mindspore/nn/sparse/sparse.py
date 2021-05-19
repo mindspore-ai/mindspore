@@ -36,7 +36,6 @@ class SparseToDense(Cell):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, SparseTensor
         >>> import mindspore.nn as nn
-
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.int32)
         >>> dense_shape = (3, 4)
@@ -48,6 +47,7 @@ class SparseToDense(Cell):
          [0 0 2 0]
          [0 0 0 0]]
     """
+
     def __init__(self):
         super(SparseToDense, self).__init__()
         self.sparse_to_dense = P.SparseToDense()
@@ -56,6 +56,7 @@ class SparseToDense(Cell):
         return self.sparse_to_dense(sparse_tensor.indices,
                                     sparse_tensor.values,
                                     sparse_tensor.dense_shape)
+
 
 class SparseTensorDenseMatmul(Cell):
     """
@@ -94,6 +95,7 @@ class SparseTensorDenseMatmul(Cell):
         >>> test_SparseDenseMatmul = NetSparseDenseMatmul()
         >>> out = test_SparseDenseMatmul(indices, values, dens_shape, dsMatrix)
     """
+
     def __init__(self, adjoint_st=False, adjoint_dt=False):
         """Initialize SparseTensorDenseMatmul"""
         super(SparseTensorDenseMatmul, self).__init__()

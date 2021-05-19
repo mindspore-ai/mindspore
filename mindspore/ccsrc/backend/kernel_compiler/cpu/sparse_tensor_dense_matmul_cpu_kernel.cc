@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
+#include <functional>
+
 #include "backend/kernel_compiler/cpu/sparse_tensor_dense_matmul_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename I, typename T>
 void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
-  output_size_ = 1;
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  for (auto &dim : output_shape) {
-    output_size_ *= dim;
+  adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
+  adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
+  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
+  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (values_shape.size() != 1) {
+    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul requires the values must be a 1-D tensor, but got "
+                      << values_shape.size() << "-D";
   }
-
-  aValues_size_ = 1;
-  auto aValues_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  for (auto &dim : aValues_shape) {
-    aValues_size_ *= dim;
-  }
-
-  b_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 3);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  values_size_ = values_shape[0];
+  b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 }
 
 template <typename I, typename T>
@@ -44,29 +43,31 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   auto a_values = reinterpret_cast<T *>(inputs[1]->addr);
   auto b = reinterpret_cast<T *>(inputs[3]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
-
   memset(out, 0, output_size_);
 
-  const size_t nnz = aValues_size_;
-  const size_t rhs_right = b_shape_[1];
-  const size_t lhs_right = b_shape_[0];
+  const size_t out_dim_0 = output_shape_[0];
+  const size_t out_dim_1 = output_shape_[1];
+  const size_t b_dim_0 = b_shape_[0];
+  const size_t b_dim_1 = b_shape_[1];
+  const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
 
-  for (size_t i = 0; i < nnz; ++i) {
-    const size_t m = a_indices[i * 2];
-    const size_t k = a_indices[i * 2 + 1];
-
-    if (k > lhs_right) {
-      MS_LOG(ERROR) << "Invalid value: k: " << k << ", lhs_right: " << lhs_right;
+  for (size_t i = 0; i < values_size_; ++i) {
+    const int row = adj_st_ ? a_indices[i * 2 + 1] : a_indices[i * 2];
+    const int col = adj_st_ ? a_indices[i * 2] : a_indices[i * 2 + 1];
+    if (row > SizeToInt(out_dim_0) || row < 0 || col > SizeToInt(same_dim) || col < 0) {
+      MS_LOG(ERROR) << "The indices including out of bounds index, row range: [0, " << out_dim_0 << "), col range: [0, "
+                    << same_dim << "), but got row: " << row << ", col: " << col;
       return false;
     }
-    if (m > output_shape_[0]) {
-      MS_LOG(ERROR) << "Invalid value: m: " << m << ", output_shape: " << output_shape_[0];
-      return false;
-    }
 
-    for (size_t n = 0; n < rhs_right; ++n) {
-      const float b_value = b[k * lhs_right + n];
-      out[m * output_shape_[0] + n] += a_values[i] * b_value;
+    for (size_t n = 0; n < out_dim_1; ++n) {
+      if (adj_dt_) {
+        const T b_value = b[n * b_dim_1 + col];
+        out[row * out_dim_1 + n] += a_values[i] * b_value;
+      } else {
+        const T b_value = b[col * b_dim_1 + n];
+        out[row * out_dim_1 + n] += a_values[i] * b_value;
+      }
     }
   }
   return true;

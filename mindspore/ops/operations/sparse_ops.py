@@ -22,6 +22,7 @@ from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.
@@ -56,6 +57,7 @@ class SparseToDense(PrimitiveWithInfer):
                'dtype': values['dtype'],
                'value': None}
         return out
+
 
 class SparseTensorDenseMatmul(PrimitiveWithInfer):
     """
@@ -95,6 +97,7 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         >>> dsMatrix = Tensor([[1,1], [2,2], [3,3 ], [4, 4]], dtype=ms.float32)
         >>> out = ops.SparseTensorDenseMatmul(indices, values, dense_shape, dsMatrix)
     """
+
     @prim_attr_register
     def __init__(self, adjoint_st=False, adjoint_dt=False):
         """Initialize SparseTensorDenseMatmul"""
@@ -112,15 +115,16 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         valid_types = mstype.number_type + (mstype.bool_,)
         args = {'values': values['dtype'], 'dense': dense['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
-        a_shape = dense_shape['value']
-        b_shape = dense['shape']
+        a_shape = dense_shape['value'][::-1] if self.adjoint_st else dense_shape['value']
+        b_shape = dense['shape'][::-1] if self.adjoint_dt else dense['shape']
         if len(a_shape) != 2 or len(b_shape) != 2:
-            raise ValueError('SparseTensorDenseMatmul SparseTensor, DenseTensor should have the same dimension size '
-                             + f'and equal to 2, while SparseTensor size is ({len(a_shape)}) and DenseTensor size is '
+            raise ValueError('SparseTensorDenseMatmul requires SparseTensor and DenseTensor have the same dimension'
+                             + f'and equal to 2, while SparseTensor dim is ({len(a_shape)}) and DenseTensor dim is '
                              + f'({len(b_shape)}).')
-        out_shape = []
-        out_shape.append(a_shape[0])
-        out_shape.append(b_shape[1])
+        if a_shape[1] != b_shape[0]:
+            raise ValueError('SparseTensorDenseMatmul requires SparseTensor dim_1 should be equal to DenseTensor dim_0,'
+                             f'but got SparseTensor dim_1: {a_shape[1]}, DenseTensor dim_0: {b_shape[0]}')
+        out_shape = [a_shape[0], b_shape[1]]
         out = {'shape': tuple(out_shape),
                'dtype': values['dtype'],
                'value': None}
