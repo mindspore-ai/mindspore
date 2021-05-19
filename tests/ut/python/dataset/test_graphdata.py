@@ -241,6 +241,36 @@ def test_graphdata_getedgefeature():
     assert features[1].shape == (40,)
 
 
+def test_graphdata_getedgefeature_invalidcase():
+    """
+    Test get edge feature with invalid edge id, 0 should be returned for those invalid edge id in correct index
+    """
+    logger.info('test get_edge_feature.\n')
+    g = ds.GraphData(DATASET_FILE)
+    edges = g.get_all_edges(0)
+    edges[-6] = -1
+    features = g.get_edge_feature(edges, [1, 2])
+    assert features[0].shape == (40,)
+    assert features[1].shape == (40,)
+    assert features[0][-6] == 0
+    assert features[1][-6] == 0.
+
+
+def test_graphdata_getnodefeature_invalidcase():
+    """
+    Test get node feature with invalid node id, 0 should be returned for those invalid node id in correct index
+    """
+    logger.info('test get_node_feature.\n')
+    g = ds.GraphData(DATASET_FILE)
+    nodes = g.get_all_nodes(node_type=1)
+    nodes[5] = -1
+    features = g.get_node_feature(node_list=nodes, feature_types=[2, 3])
+    assert features[0].shape == (10,)
+    assert features[1].shape == (10,)
+    assert features[0][5] == 0.
+    assert features[1][5] == 0
+
+
 def test_graphdata_getedgesfromnodes():
     """
     Test get edges from nodes
@@ -249,7 +279,7 @@ def test_graphdata_getedgesfromnodes():
     g = ds.GraphData(DATASET_FILE)
 
     nodes_pair_list = [(101, 201), (103, 207), (204, 105), (108, 208), (110, 210), (210, 110)]
-    edges = g.get_edges_from_nodes(nodes_pair_list)
+    edges = g.get_edges_from_nodes(node_list=nodes_pair_list)
     assert edges.tolist() == [1, 9, 31, 17, 20, 40]
 
 
@@ -264,3 +294,5 @@ if __name__ == '__main__':
     test_graphdata_randomwalk()
     test_graphdata_getedgefeature()
     test_graphdata_getedgesfromnodes()
+    test_graphdata_getnodefeature_invalidcase()
+    test_graphdata_getedgefeature_invalidcase()

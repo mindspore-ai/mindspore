@@ -141,10 +141,10 @@ Status GraphDataImpl::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, 
     std::shared_ptr<Node> src_node;
     RETURN_IF_NOT_OK(GetNodeByNodeId(node_id.first, &src_node));
 
-    EdgeIdType *edge_id = nullptr;
+    EdgeIdType edge_id;
     src_node->GetEdgeByAdjNodeId(node_id.second, &edge_id);
 
-    std::vector<EdgeIdType> connection_edge = {*edge_id};
+    std::vector<EdgeIdType> connection_edge = {edge_id};
     edge_list.emplace_back(std::move(connection_edge));
   }
 
@@ -365,8 +365,8 @@ Status GraphDataImpl::GetNodeFeature(const std::shared_ptr<Tensor> &nodes,
         feature = default_feature;
       } else {
         std::shared_ptr<Node> node;
-        RETURN_IF_NOT_OK(GetNodeByNodeId(*node_itr, &node));
-        if (!node->GetFeatures(f_type, &feature).IsOk()) {
+
+        if (!GetNodeByNodeId(*node_itr, &node).IsOk() || !node->GetFeatures(f_type, &feature).IsOk()) {
           feature = default_feature;
         }
       }
@@ -449,9 +449,9 @@ Status GraphDataImpl::GetEdgeFeature(const std::shared_ptr<Tensor> &edges,
     dsize_t index = 0;
     for (auto edge_itr = edges->begin<EdgeIdType>(); edge_itr != edges->end<EdgeIdType>(); ++edge_itr) {
       std::shared_ptr<Edge> edge;
-      RETURN_IF_NOT_OK(GetEdgeByEdgeId(*edge_itr, &edge));
       std::shared_ptr<Feature> feature;
-      if (!edge->GetFeatures(f_type, &feature).IsOk()) {
+
+      if (!GetEdgeByEdgeId(*edge_itr, &edge).IsOk() || !edge->GetFeatures(f_type, &feature).IsOk()) {
         feature = default_feature;
       }
       RETURN_IF_NOT_OK(fea_tensor->InsertTensor({index}, feature->Value()));

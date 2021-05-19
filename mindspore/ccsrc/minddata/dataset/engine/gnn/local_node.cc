@@ -138,13 +138,13 @@ Status LocalNode::AddAdjacent(const std::shared_ptr<Node> &node, const std::shar
   return Status::OK();
 }
 
-Status LocalNode::GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType **out_edge_id) {
+Status LocalNode::GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType *out_edge_id) {
   auto itr = adjacent_nodes_.find(adj_node_id);
 
   if (itr != adjacent_nodes_.end()) {
-    (*out_edge_id) = &(itr->second);
+    (*out_edge_id) = itr->second;
   } else {
-    (*out_edge_id) = new EdgeIdType(-1);
+    (*out_edge_id) = -1;
     MS_LOG(WARNING) << "Number " << adj_node_id << " node is not adjacent to number " << this->id() << " node.";
   }
 
