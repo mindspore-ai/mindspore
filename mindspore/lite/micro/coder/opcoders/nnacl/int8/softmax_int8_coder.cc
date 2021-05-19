@@ -90,7 +90,7 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(outter_size, thread_num_);
   int count = MSMIN(stride, outter_size - stride * kDefaultTaskId);
-  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "quant_args",
+  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "&quant_args",
                     "(SoftmaxParameter *)&softmax_parameter");
   context->AppendCode(code.str());
   return RET_OK;
