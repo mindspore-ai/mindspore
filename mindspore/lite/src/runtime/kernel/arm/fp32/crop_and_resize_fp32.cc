@@ -113,6 +113,10 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
+  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+  if (box_idx == nullptr) {
+    return RET_NULL_PTR;
+  }
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
@@ -127,9 +131,9 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
   int c = in_tensors_.at(0)->shape().at(3);
   float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
   float *line1 = line0 + new_width_ * c;
-  auto ret = CropAndResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
-                                   y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0,
-                                   line1, h_begin, h_end);
+  auto ret = CropAndResizeBilinear(input_data, output_data, box_idx, input_shape.data(),
+                                   out_tensors_.at(0)->shape().data(), y_bottoms_, y_tops_, x_lefts_, x_rights_,
+                                   y_bottom_weights_, x_left_weights_, line0, line1, h_begin, h_end);
   return ret;
 }
 
