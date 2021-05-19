@@ -2,7 +2,6 @@ set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
-set(NNACL_DIR ${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl)
 set(CONVERTER_DIR ${TOP_DIR}/mindspore/lite/tools/converter)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
@@ -29,65 +28,14 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/fp32/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/int8/*.cc
         ${LITE_DIR}/src/runtime/kernel/arm/string/*.cc
-        ${NNACL_DIR}/*.c
-        ${NNACL_DIR}/fp32/*.c
-        ${NNACL_DIR}/int8/*.c
-        ${NNACL_DIR}/base/*.c
-        ${NNACL_DIR}/infer/*.c
         )
 
 file(GLOB KERNEL_OP_TRAIN_SRC
-        ${NNACL_DIR}/fp32_grad/*.c
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
         )
 
 if(SUPPORT_TRAIN)
     list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
-endif()
-if(PLATFORM_ARM64)
-    # assembly
-    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.s
-            ${NNACL_DIR}/assembly/arm64/*.S)
-
-    set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${TEST_ASSEMBLY_SRC}
-            )
-endif()
-
-if(PLATFORM_ARM32)
-    # assembly
-    file(GLOB TEST_ASSEMBLY_SRC
-            ${NNACL_DIR}/assembly/arm32/*.S
-            ${NNACL_DIR}/assembly/arm32/*.s)
-    set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${TEST_ASSEMBLY_SRC}
-            )
-endif()
-
-if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
-    set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${TEST_ASSEMBLY_SRC}
-            )
-endif()
-
-if("${X86_64_SIMD}" STREQUAL "avx")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
-    file(GLOB TEST_ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
-            ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S)
-    set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${TEST_ASSEMBLY_SRC}
-            )
 endif()
 
 ### gpu kernel
@@ -116,6 +64,7 @@ endif()
 
 ### runtime framework
 add_definitions(-DENABLE_V0)
+
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 if(ENABLE_CONVERTER)
     set(OPS_SRC ${OPS_SRC})
@@ -156,12 +105,12 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/common/quant_utils.cc
         ${LITE_DIR}/src/errorcode.cc
         ${LITE_DIR}/src/cpu_info.cc
+        ${LITE_DIR}/tools/common/flag_parser.cc
         )
 
 if(ENABLE_TOOLS)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
-            ${LITE_DIR}/tools/common/flag_parser.cc
             ${LITE_DIR}/tools/benchmark/benchmark.cc
             ${LITE_DIR}/test/st/benchmark_test.cc
             )
@@ -408,7 +357,7 @@ if(SUPPORT_TRAIN)
     add_dependencies(lite-test fbs_inner_src)
 endif()
 
-target_link_libraries(lite-test dl mindspore::gtest)
+target_link_libraries(lite-test nnacl_mid dl mindspore::gtest)
 
 if(PLATFORM_ARM AND ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid)
