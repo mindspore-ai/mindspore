@@ -206,10 +206,6 @@ int Fp16DoTranspose(const float16_t *in_data, float16_t *out_data, const int *ou
   int data_size = transpose_param->data_size_;
   int num_axes = transpose_param->num_axes_;
 
-  if (num_axes < 2) {
-    return NNACL_ERR;
-  }
-
   // check if transpose is needed
   bool needTranspose = false;
   for (int i = 1; i < num_axes; ++i) {

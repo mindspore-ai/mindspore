@@ -183,10 +183,6 @@ int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_s
   int *out_strides = transpose_param->out_strides_;
   int num_axes = transpose_param->num_axes_;
 
-  if (num_axes < 2) {
-    return NNACL_ERR;
-  }
-
   // check if transpose is needed
   bool needTranspose = false;
   for (int i = 1; i < num_axes; i++) {

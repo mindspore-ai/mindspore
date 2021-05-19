@@ -237,9 +237,6 @@
     const int *out_strides = transpose_param->out_strides_;                                                   \
     int data_size = transpose_param->data_size_;                                                              \
     int num_axes = transpose_param->num_axes_;                                                                \
-    if (num_axes < 2) {                                                                                       \
-      return NNACL_ERR;                                                                                       \
-    }                                                                                                         \
     bool needTranspose = false;                                                                               \
     for (int i = 1; i < num_axes; ++i) {                                                                      \
       if (perm[i] - perm[i - 1] != 1) {                                                                       \
