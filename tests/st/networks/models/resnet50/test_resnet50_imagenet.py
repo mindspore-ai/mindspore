@@ -30,7 +30,6 @@ from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.nn as nn
 import mindspore.dataset as ds
-from mindspore.nn.optim import THOR
 
 from tests.st.networks.models.resnet50.src.resnet import resnet50
 from tests.st.networks.models.resnet50.src.dataset import create_dataset
@@ -42,7 +41,7 @@ from tests.st.networks.models.resnet50.src_thor.config import config as thor_con
 from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset as create_dataset_thor
 from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
 from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
-
+from tests.st.networks.models.resnet50.src_thor.thor import THOR
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_1.json"
 MINDSPORE_HCCL_CONFIG_PATH_2 = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_2.json"
