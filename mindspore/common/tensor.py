@@ -451,15 +451,16 @@ class Tensor(Tensor_):
         r"""
         Return a view of the tensor with axes transposed.
 
-        For a 1-D tensor this has no effect, as a transposed vector is simply the
-        same vector. For a 2-D tensor, this is a standard matrix transpose. For a
-        n-D tensor, if axes are given, their order indicates how the axes are permuted.
-        If axes are not provided and tensor.shape = (i[0], i[1],...i[n-2], i[n-1]),
-        then tensor.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
+        - For a 1-D tensor this has no effect, as a transposed vector is simply the same vector.
+        - For a 2-D tensor, this is a standard matrix transpose.
+        - For an n-D tensor, if axes are given, their order indicates how the axes are permuted.
+
+        If axes are not provided and ``tensor.shape = (i[0], i[1],...i[n-2], i[n-1])``,
+        then ``tensor.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])``.
 
         Args:
             axes(Union[None, tuple(int), list(int), int], optional): If axes is None or
-                blank, tensor.transpose() will reverse the order of the axes. If axes is tuple(int)
+                blank, the method will reverse the order of the axes. If axes is tuple(int)
                 or list(int), tensor.transpose() will transpose the tensor to the new axes order.
                 If axes is int, this form is simply intended as a convenience alternative to the
                 tuple/list form.
@@ -630,7 +631,9 @@ class Tensor(Tensor_):
         Remove single-dimensional entries from the shape of a tensor.
 
         Args:
-            axis (Union[None, int, list(int), tuple(int)], optional): Default is None.
+            axis (Union[None, int, list(int), tuple(int)], optional): Selects a subset of the entries of
+                length one in the shape. If an axis is selected with shape entry greater than one,
+                an error is raised. Default is None.
 
         Returns:
             Tensor, with all or a subset of the dimensions of length 1 removed.
@@ -693,15 +696,15 @@ class Tensor(Tensor_):
 
     def argmax(self, axis=None):
         """
-        Returns the indices of the maximum values along an axis.
+        Return the indices of the maximum values along an axis.
 
         Args:
             axis (int, optional): By default, the index is into
-                the flattened array, otherwise along the specified axis.
+                the flattened tensor, otherwise along the specified axis.
 
         Returns:
-            Tensor, array of indices into the array. It has the same
-            shape as a.shape with the dimension along axis removed.
+            Tensor, indices into the input tensor. It has the same
+            shape as self.shape with the dimension along axis removed.
 
         Raises:
             ValueError: if axis is out of range.
@@ -727,16 +730,15 @@ class Tensor(Tensor_):
 
     def argmin(self, axis=None):
         """
-        Returns the indices of the minimum values along an axis.
+        Return the indices of the minimum values along an axis.
 
         Args:
-            a (Union[int, float, bool, list, tuple, Tensor]): Input array.
             axis (int, optional): By default, the index is into
-                the flattened array, otherwise along the specified axis.
+                the flattened tensor, otherwise along the specified axis.
 
         Returns:
-            Tensor, array of indices into the array. It has the same
-            shape as a.shape with the dimension along axis removed.
+            Tensor, indices into the input tensor. It has the same
+            shape as self.shape with the dimension along axis removed.
 
         Raises:
             ValueError: if axis is out of range.
@@ -763,25 +765,24 @@ class Tensor(Tensor_):
 
     def cumsum(self, axis=None, dtype=None):
         """
-        Returns the cumulative sum of the elements along a given axis.
+        Return the cumulative sum of the elements along a given axis.
 
         Note:
             If ``self.dtype`` is :class:`int8`, :class:`int16` or :class:`bool`, the result
             `dtype` will be elevated to :class:`int32`, :class:`int64` is not supported.
 
         Args:
-            self (Tensor): Input tensor.
             axis (int, optional): Axis along which the cumulative sum is computed. The
                 default (None) is to compute the cumsum over the flattened array.
             dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as original,
                 tensor, unless it has an integer dtype with a precision less than :class:`float32`.
-                In that case, :class:`float32` is used.
+                In that case, :class:`float32` is used. Default: None.
 
         Returns:
             Tensor.
 
         Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -808,13 +809,10 @@ class Tensor(Tensor_):
 
     def copy(self):
         """
-        Returns a copy of the tensor.
+        Return a copy of the tensor.
 
         Note:
             The current implementation does not support `order` argument.
-
-        Args:
-            self (Tensor): Input tensor.
 
         Returns:
             Copied tensor.
@@ -847,25 +845,24 @@ class Tensor(Tensor_):
 
     def max(self, axis=None, keepdims=False, initial=None, where=True):
         """
-        Returns the maximum of a tensor or maximum along an axis.
+        Return the maximum of a tensor or maximum along an axis.
 
         Args:
-            self (Tensor): Input Tensor.
-            axis (None or int or tuple of ints, optional): defaults to None. Axis or
+            axis (Union[None, int, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the maximum is selected over multiple axes,
-                instead of a single axis or all the axes as before.
-            keepdims (boolean, optional): defaults to False.
+                instead of a single axis or all the axes as before. Default: None.
+            keepdims (bool, optional):
                 If this is set to True, the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
-                broadcast correctly against the input array.
+                broadcast correctly against the input array. Default: False.
             initial (scalar, optional):
                 The minimum value of an output element. Must be present to allow
-                computation on empty slice.
-            where (boolean Tensor, optional): defaults to True.
+                computation on empty slice. Default: None.
+            where (bool Tensor, optional):
                 A boolean array which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
-                is passed, initial must also be provided.
+                is passed, initial must also be provided. Default: True.
 
         Returns:
             Tensor or scalar, maximum of input tensor. If `axis` is None, the result is a scalar
@@ -880,8 +877,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> import mindspore.numpy as np
-            >>> a = Tensor(np.arange(4).reshape((2,2)).astype('float32'))
+            >>> a = Tensor(np.arange(4).reshape((2, 2)).astype('float32'))
             >>> output = a.max()
             >>> print(output)
             3.0
@@ -894,25 +890,24 @@ class Tensor(Tensor_):
 
     def min(self, axis=None, keepdims=False, initial=None, where=True):
         """
-        Returns the minimum of a tensor or minimum along an axis.
+        Return the minimum of a tensor or minimum along an axis.
 
         Args:
-            self (Tensor): Input data.
-            axis (None or int or tuple of ints, optional): defaults to None. Axis or
+            axis (Union[None, int, tuple of ints], optional): Axis or
                 axes along which to operate. By default, flattened input is used. If
                 this is a tuple of ints, the minimum is selected over multiple axes,
-                instead of a single axis or all the axes as before.
-            keepdims (boolean, optional): defaults to False.
+                instead of a single axis or all the axes as before. Default: None.
+            keepdims (bool, optional):
                 If this is set to True, the axes which are reduced are left in the
                 result as dimensions with size one. With this option, the result will
-                broadcast correctly against the input array.
+                broadcast correctly against the input array. Default: False.
             initial (scalar, optional):
                 The maximum value of an output element. Must be present to allow
-                computation on empty slice.
-            where (boolean Tensor, optional): defaults to True.
+                computation on empty slice. Default: None.
+            where (bool Tensor, optional):
                 A boolean array which is broadcasted to match the dimensions of array,
                 and selects elements to include in the reduction. If non-default value
-                is passed, initial must also be provided.
+                is passed, initial must also be provided. Default: True.
 
         Returns:
             Tensor or scalar, minimum of input tensor. If axis is None, the result is a scalar
@@ -941,7 +936,7 @@ class Tensor(Tensor_):
 
     def fill(self, value):
         """
-        Fills the array with a scalar value.
+        Fill the array with a scalar value.
 
         Note:
             Unlike Numpy, tensor.fill() will always returns a new tensor, instead of
@@ -985,10 +980,11 @@ class Tensor(Tensor_):
             Numpy arguments `dtype` and `out` are not supported.
 
         Args:
-            self (Tensor): Input tensor.
             axis (Union[None, int, tuple(int)]): Axis or axes along which the range is computed.
                 The default is to compute the variance of the flattened array. Default: None.
-            keepdims (bool): Default is False.
+            keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
+                dimensions with size one. With this option, the result will broadcast correctly against the array.
+                Default is False.
 
         Returns:
             Tensor.
@@ -1026,18 +1022,17 @@ class Tensor(Tensor_):
         and values larger than 1 become 1.
 
         Note:
-            Currently, clip with `nan` is not supported.
+            Currently, clip with `xmin=nan` or `xmax=nan` is not supported.
 
         Args:
-            self (Tensor): Tensor containing elements to clip.
             xmin (Tensor, scalar, None): Minimum value. If None, clipping is not performed
                 on lower interval edge. Not more than one of `xmin` and `xmax` may be None.
             xmax (Tensor, scalar, None): Maximum value. If None, clipping is not performed
                 on upper interval edge. Not more than one of `xmin` and `xmax` may be None.
                 If `xmin` or `xmax` are tensors, then the three tensors will be broadcasted
                 to match their shapes.
-            dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
-                output Tensor.
+            dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
+                output Tensor. Default is None.
 
         Returns:
             Tensor, a tensor with the elements of input tensor, but where values
@@ -1161,8 +1156,9 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore import numpy as np
-            >>> x = np.array([[0, 1], [2, 3]])
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[0, 1], [2, 3]]))
             >>> x = x.resize(2, 3)
             >>> print(x)
             [[0 1 2]
@@ -1186,7 +1182,7 @@ class Tensor(Tensor_):
 
     def diagonal(self, offset=0, axis1=0, axis2=1):
         """
-        Returns specified diagonals.
+        Return specified diagonals.
 
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
@@ -1208,8 +1204,9 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> a = np.arange(4).reshape(2,2)
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.arange(4).reshape(2, 2))
             >>> print(a)
             [[0 1]
             [2 3]]
@@ -1267,7 +1264,7 @@ class Tensor(Tensor_):
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None):
         """
-        Returns the sum along diagonals of the array.
+        Return the sum along diagonals of the array.
 
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
@@ -1291,8 +1288,9 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> x = np.eye(3)
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.eye(3))
             >>> print(x.trace())
             3.0
         """
@@ -1310,10 +1308,9 @@ class Tensor(Tensor_):
         Takes elements from an array along an axis.
 
         Args:
-            a (Tensor): Source array with shape `(Ni…, M, Nk…)`.
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
-                the flattened input array is used.
+                the flattened input array is used. Default: `None`.
             mode (‘raise’, ‘wrap’, ‘clip’, optional):
                 - edge: Pads with the edge values of `arr`.
                 - raise: Raises an error;
@@ -1321,6 +1318,7 @@ class Tensor(Tensor_):
                 - clip: Clips to the range. `clip` mode means that all indices that are
                   too large are replaced by the index that addresses the last element
                   along that axis. Note that this disables indexing with negative numbers.
+                Default: `clip`.
 
         Returns:
             Tensor, the indexed result.
@@ -1333,9 +1331,10 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> a = np.array([4, 3, 5, 7, 6, 8])
-            >>> indices = np.array([0, 1, 4])
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([4, 3, 5, 7, 6, 8]))
+            >>> indices = Tensor(np.array([0, 1, 4]))
             >>> output = a.take(indices)
             >>> print(output)
             [4 3 6]
@@ -1395,13 +1394,14 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Raises:
-            ValueError: if ``len(condlist) != len(choicelist)``.
+            ValueError: if the input tensor and any of the `choices` cannot be broadcast.
 
         Examples:
-            >>> import mindspore.numpy as np
+            >>> import numpy as np
+            >>> from mindspore import Tensor
             >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
                 [20, 21, 22, 23], [30, 31, 32, 33]]
-            >>> x = np.array([2, 3, 1, 0])
+            >>> x = Tensor(np.array([2, 3, 1, 0]))
             >>> print(x.choose(choices))
             [20 31 12  3]
         """
@@ -1452,6 +1452,7 @@ class Tensor(Tensor_):
             side ('left', 'right', optional): If ‘left’, the index of the first suitable
                 location found is given. If ‘right’, return the last such index. If there is
                 no suitable index, return either 0 or N (where N is the length of `a`).
+                Default: `left`.
             sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional array of
                 integer indices that sort array `a` into ascending order. They are typically
                 the result of argsort.
@@ -1466,8 +1467,9 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore import numpy as np
-            >>> x = np.array([1,2,3,4,5])
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([1, 2, 3, 4, 5]))
             >>> print(x.searchsorted(3))
             2
         """
@@ -1499,6 +1501,7 @@ class Tensor(Tensor_):
     def var(self, axis=None, ddof=0, keepdims=False):
         """
         Compute the variance along the specified axis.
+
         The variance is the average of the squared deviations from the mean, i.e.,
         :math:`var = mean(abs(x - x.mean())**2)`.
 
@@ -1509,7 +1512,6 @@ class Tensor(Tensor_):
             Numpy arguments `dtype`, `out` and `where` are not supported.
 
         Args:
-            self (Tensor): A Tensor to be calculated.
             axis (Union[None, int, tuple(int)]): Axis or axes along which the variance is computed.
                 The default is to compute the variance of the flattened array. Default: `None`.
             ddof (int): Means Delta Degrees of Freedom. Default: 0.
@@ -1523,8 +1525,9 @@ class Tensor(Tensor_):
             Standard deviation tensor.
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> input_x = np.array([1., 2., 3., 4.])
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1., 2., 3., 4.]))
             >>> output = input_x.var()
             >>> print(output)
             1.25
@@ -1581,8 +1584,9 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> input_x = np.array([1., 2., 3., 4.])
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1., 2., 3., 4.]))
             >>> output = input_x.std()
             >>> print(output)
             1.118034
@@ -1599,7 +1603,6 @@ class Tensor(Tensor_):
             `extobj` are not supported.
 
         Args:
-            self (Union[int, float, bool, list, tuple, Tensor]): Elements to sum.
             axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
                 If None, sum all of the elements of the input array.
                 If axis is negative it counts from the last to the first axis.
@@ -1611,27 +1614,28 @@ class Tensor(Tensor_):
                 dimensions with size one. With this option, the result will broadcast correctly against the input array.
                 If the default value is passed, then keepdims will not be passed through to the sum method of
                 sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
-                implement keepdims any exceptions will be raised.
-            initial (scalar): Starting value for the sum.
+                implement keepdims any exceptions will be raised. Default: `False`.
+            initial (scalar): Starting value for the sum. Default: `None`.
 
         Returns:
             Tensor. A tensor with the same shape as input, with the specified axis removed.
             If input tensor is a 0-d array, or if axis is None, a scalar is returned.
 
         Raises:
-            TypeError: If input is not array_like or `axis` is not int or tuple of ints or
-                `keepdims` is not integer or `initial` is not scalar.
+            TypeError: If input is not array_like, or `axis` is not int or tuple of ints,
+                or `keepdims` is not integer, or `initial` is not scalar.
             ValueError: If any axis is out of range or duplicate axes exist.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> input_x = np.array([-1, 0, 1]).astype('int32')
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([-1, 0, 1]).astype('int32'))
             >>> print(input_x.sum())
             0
-            >>> input_x = np.arange(10).reshape(2, 5).astype('float32')
+            >>> input_x = Tensor(np.arange(10).reshape(2, 5).astype('float32'))
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """
@@ -1658,7 +1662,6 @@ class Tensor(Tensor_):
         Repeat elements of an array.
 
         Args:
-            self (Tensor): Input tensor.
             repeats (Union[int, tuple, list]): The number of repetitions for each element.
                 `repeats` is broadcasted to fit the shape of the given axis.
             axis (int, optional): The axis along which to repeat values. By default,
@@ -1675,11 +1678,12 @@ class Tensor(Tensor_):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore.numpy as np
-            >>> x = np.array(3)
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array(3))
             >>> print(x.repeat(4))
             [3 3 3 3]
-            >>> x = np.array([[1,2],[3,4]])
+            >>> x = Tensor(np.array([[1, 2],[3, 4]]))
             >>> print(x.repeat(2))
             [1 1 2 2 3 3 4 4]
             >>> print(x.repeat(3, axis=1))
