@@ -15,7 +15,6 @@
 
 """Evaluation for yolov3-resnet18"""
 import os
-import argparse
 import time
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -23,6 +22,10 @@ from src.yolov3 import yolov3_resnet18, YoloWithEval
 from src.dataset import create_yolo_dataset, data_to_mindrecord_byte_image
 from src.config import ConfigYOLOV3ResNet18
 from src.utils import metrics
+
+from model_utils.config import config as default_config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 def yolo_eval(dataset_path, ckpt_path):
     """Yolov3 evaluation."""
@@ -66,40 +69,85 @@ def yolo_eval(dataset_path, ckpt_path):
     for i in range(config.num_classes):
         print("class {} precision is {:.2f}%, recall is {:.2f}%".format(i, precisions[i] * 100, recalls[i] * 100))
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, default_config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Yolov3 evaluation')
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_eval",
-                        help="Mindrecord directory. If the mindrecord_dir is empty, it wil generate mindrecord file by"
-                             "image_dir and anno_path. Note if mindrecord_dir isn't empty, it will use mindrecord_dir "
-                             "rather than image_dir and anno_path. Default is ./Mindrecord_eval")
-    parser.add_argument("--image_dir", type=str, default="", help="Dataset directory, "
-                                                                  "the absolute image path is joined by the image_dir "
-                                                                  "and the relative path in anno_path.")
-    parser.add_argument("--anno_path", type=str, default="", help="Annotation path.")
-    parser.add_argument("--ckpt_path", type=str, required=True, help="Checkpoint path.")
-    args_opt = parser.parse_args()
+    if default_config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(default_config.data_path, default_config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(default_config.data_path)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+        sync_lock = "/tmp/unzip_sync.lock"
 
-    # It will generate mindrecord file in args_opt.mindrecord_dir,
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+
+    # It will generate mindrecord file in default_config.eval_mindrecord_dir,
     # and the file name is yolo.mindrecord0, 1, ... file_num.
-    if not os.path.isdir(args_opt.mindrecord_dir):
-        os.makedirs(args_opt.mindrecord_dir)
+    if not os.path.isdir(default_config.eval_mindrecord_dir):
+        os.makedirs(default_config.eval_mindrecord_dir)
 
     yolo_prefix = "yolo.mindrecord"
-    mindrecord_file = os.path.join(args_opt.mindrecord_dir, yolo_prefix + "0")
+    mindrecord_file = os.path.join(default_config.eval_mindrecord_dir, yolo_prefix + "0")
     if not os.path.exists(mindrecord_file):
-        if os.path.isdir(args_opt.image_dir) and os.path.exists(args_opt.anno_path):
+        if os.path.isdir(default_config.image_dir) and os.path.exists(default_config.anno_path):
             print("Create Mindrecord")
-            data_to_mindrecord_byte_image(args_opt.image_dir,
-                                          args_opt.anno_path,
-                                          args_opt.mindrecord_dir,
+            data_to_mindrecord_byte_image(default_config.image_dir,
+                                          default_config.anno_path,
+                                          default_config.eval_mindrecord_dir,
                                           prefix=yolo_prefix,
                                           file_num=8)
-            print("Create Mindrecord Done, at {}".format(args_opt.mindrecord_dir))
+            print("Create Mindrecord Done, at {}".format(default_config.eval_mindrecord_dir))
         else:
             print("image_dir or anno_path not exits")
-    print("Start Eval!")
-    yolo_eval(mindrecord_file, args_opt.ckpt_path)
+
+    if not default_config.only_create_dataset:
+        print("Start Eval!")
+        yolo_eval(mindrecord_file, default_config.ckpt_path)
+
+
+if __name__ == '__main__':
+    run_eval()

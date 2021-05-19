@@ -17,7 +17,7 @@
 echo "========================================================================================================================================="
 echo "Please run the script as: "
 echo "sh run_standalone_train.sh DEVICE_ID EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "for example: sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt /opt/yolov3-50.ckpt(optional) 30(optional)"
+echo "for example: sh run_standalone_train.sh 0 60 ./Mindrecord_train ./dataset ./dataset/train.txt /opt/yolov3-50.ckpt(optional) 30(optional)"
 echo "========================================================================================================================================="
 
 if [ $# != 5 ] && [ $# != 7 ]
@@ -30,12 +30,16 @@ fi
 BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
 
+export RANK_SIZE=1
+export DEVICE_ID=$1
+export RANK_ID=$1
+
 if [ $# == 5 ]
 then
-    python train.py --device_id=$1 --epoch_size=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5
+    python train.py --epoch_size=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5
 fi
 
 if [ $# == 7 ]
 then
-    python train.py --device_id=$1 --epoch_size=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5 --pre_trained=$6 --pre_trained_epoch_size=$7
+    python train.py --epoch_size=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5 --pre_trained=$6 --pre_trained_epoch_size=$7
 fi

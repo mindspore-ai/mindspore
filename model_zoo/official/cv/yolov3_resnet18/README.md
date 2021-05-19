@@ -79,7 +79,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 After installing MindSpore via the official website, you can start training and evaluation on Ascend as follows:
 
-- running on Ascend
+- Running on Ascend
 
     ```shell script
     #run standalone training example
@@ -92,16 +92,138 @@ After installing MindSpore via the official website, you can start training and 
     sh run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
     ```
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='coco'" on default_config.yaml file.
+    #          Set "lr=0.005" on default_config.yaml file.
+    #          Set "mindrecord_dir='/cache/data/coco/Mindrecord_train'" on default_config.yaml file.
+    #          Set "image_dir='/cache/data'" on default_config.yaml file.
+    #          Set "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'" on default_config.yaml file.
+    #          Set "epoch_size=160" on default_config.yaml file.
+    #          (optional)Set "pre_trained_epoch_size=YOUR_SIZE" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          (optional)Set "pre_trained=/cache/checkpoint_path/model.ckpt" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='coco'" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "lr=0.005" on the website UI interface.
+    #          Add "mindrecord_dir=/cache/data/coco/Mindrecord_train" on the website UI interface.
+    #          Add "image_dir=/cache/data" on the website UI interface.
+    #          Add "anno_path=/cache/data/coco/train_Person+Face-coco-20190118.txt" on the website UI interface.
+    #          Add "epoch_size=160" on the website UI interface.
+    #          (optional)Add "pre_trained_epoch_size=YOUR_SIZE" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          (optional)Add "pre_trained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "train.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR --anno_path=$ANNO_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/yolov3_resnet18" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='coco'" on default_config.yaml file.
+    #          Set "mindrecord_dir='/cache/data/coco/Mindrecord_train'" on default_config.yaml file.
+    #          Set "image_dir='/cache/data'" on default_config.yaml file.
+    #          Set "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'" on default_config.yaml file.
+    #          Set "epoch_size=160" on default_config.yaml file.
+    #          (optional)Set "pre_trained_epoch_size=YOUR_SIZE" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          (optional)Set "pre_trained=/cache/checkpoint_path/model.ckpt" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='coco'" on the website UI interface.
+    #          Add "mindrecord_dir='/cache/data/coco/Mindrecord_train'" on the website UI interface.
+    #          Add "image_dir='/cache/data'" on the website UI interface.
+    #          Add "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'" on the website UI interface.
+    #          Add "epoch_size=160" on the website UI interface.
+    #          (optional)Add "pre_trained_epoch_size=YOUR_SIZE" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          (optional)Add "pre_trained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "train.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR --anno_path=$ANNO_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/yolov3_resnet18" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='coco'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "ckpt_path='/cache/checkpoint_path/yolov3-160_156.ckpt'" on default_config.yaml file.
+    #          Set "eval_mindrecord_dir='/cache/data/coco/Mindrecord_eval'" on default_config.yaml file.
+    #          Set "image_dir='/cache/data'" on default_config.yaml file.
+    #          Set "anno_path='/cache/data/coco/test_Person+Face-coco-20190118.txt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='coco'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "ckpt_path='/cache/checkpoint_path/yolov3-160_156.ckpt'" on the website UI interface.
+    #          Add "eval_mindrecord_dir='/cache/data/coco/Mindrecord_eval'" on the website UI interface.
+    #          Add "image_dir='/cache/data'" on the website UI interface.
+    #          Add "anno_path='/cache/data/coco/test_Person+Face-coco-20190118.txt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, run "eval.py" like the following to create MindRecord dataset locally from coco2017.
+    #             "python eval.py --only_create_dataset=True --eval_mindrecord_dir=$EVAL_MINDRECORD_DIR --image_dir=$EVAL_IMAGE_DIR --anno_path=$EVAL_ANNO_PATH"
+    #          Second, zip MindRecord dataset to one zip file.
+    #          Finally, Upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/yolov3_resnet18" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
 
-```python
+```text
 └── cv
     ├── README.md                           // descriptions about all the models
     ├── mindspore_hub_conf.md               // config for mindspore hub
     └── yolov3_resnet18
         ├── README.md                       // descriptions about yolov3_resnet18
+        ├── README_CN.md                    // descriptions about yolov3_resnet18 with Chinese
+        ├── model_utils
+            ├── __init__.py                 // init file
+            ├── config.py                   // Parse arguments
+            ├── device_adapter.py           // Device adapter for ModelArts
+            ├── local_adapter.py            // Local adapter
+            └── moxing_adapter.py           // Moxing adapter for ModelArts
         ├── scripts
             ├── run_distribute_train.sh     // shell script for distributed on Ascend
             ├── run_standalone_train.sh     // shell script for distributed on Ascend
@@ -109,10 +231,14 @@ After installing MindSpore via the official website, you can start training and 
         ├── src
             ├── dataset.py                  // creating dataset
             ├── yolov3.py                   // yolov3 architecture
-            ├── config.py                   // parameter configuration
+            ├── config.py                   // default arguments for network architecture
             └── utils.py                    // util function
-        ├── train.py                        // training script
-        └── eval.py                         // evaluation script  
+        ├── default_config.yaml             // configurations
+        ├── eval.py                         // evaluation script
+        ├── export.py                       // export script
+        ├── mindspore_hub_conf.py           // hub config
+        ├── postprocess.py                  // postprocess script
+        └── train.py                        // train script
 ```
 
 ## [Script Parameters](#contents)
@@ -238,11 +364,11 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | YOLOv3_Resnet18 V1                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8             |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
 | uploaded Date              | 09/15/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | COCO2017                                                    |
-| Training Parameters        | epoch = 150, batch_size = 32, lr = 0.001                    |
+| Training Parameters        | epoch = 160, batch_size = 32, lr = 0.005                    |
 | Optimizer                  | Adam                                                        |
 | Loss Function              | Sigmoid Cross Entropy                                       |
 | outputs                    | probability                                                 |
@@ -256,7 +382,7 @@ Inference result is saved in current path, you can find result in acc.log file.
 | Parameters          | Ascend                                          |
 | ------------------- | ----------------------------------------------- |
 | Model Version       | YOLOv3_Resnet18 V1                              |
-| Resource            | Ascend 910; OS Euler2.8                                       |
+| Resource            | Ascend 910; OS Euler2.8                         |
 | Uploaded Date       | 09/15/2020 (month/day/year)                     |
 | MindSpore Version   | 1.0.0                                           |
 | Dataset             | COCO2017                                        |
