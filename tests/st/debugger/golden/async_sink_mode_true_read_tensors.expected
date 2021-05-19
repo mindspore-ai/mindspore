@@ -1,0 +1,28 @@
+-----------------------------------------------------------
+tensor_info_1 attributes:
+node name =  Default/network-TrainOneStepCell/network-WithLossCell/_backbone-AlexNet/conv3-Conv2d/Conv2D-op169
+slot =  0
+iteration =  2
+device_id =  None
+root_graph_id =  1
+is_parameter =  False
+
+tensor_data_1 attributes:
+data (printed in uint8) =  [149 167 122 ... 160 212 164]
+size in bytes =  2076672
+debugger dtype =  10
+shape =  [32, 12, 13, 13, 16]
+-----------------------------------------------------------
+tensor_info_2 attributes:
+node name =  Default/network-TrainOneStepCell/network-WithLossCell/_backbone-AlexNet/ReLUV2-op348
+slot =  1
+iteration =  2
+device_id =  None
+root_graph_id =  1
+is_parameter =  False
+
+tensor_data_2 attributes:
+data (printed in uint8) =  [ 20  21  18 ... 126  98  25]
+size in bytes =  129792
+debugger dtype =  6
+shape =  [32, 12, 13, 13, 2]

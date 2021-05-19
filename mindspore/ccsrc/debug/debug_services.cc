@@ -22,6 +22,7 @@
 #include <map>
 #include <numeric>
 #include <unordered_set>
+#include "pybind11/embed.h"
 #ifdef ONLINE_DBG_MODE
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
@@ -352,10 +353,6 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
         files_to_convert_in_dir.push_back(dump_key + "/" + file_name);
       }
     }
-    std::string current_working_dir(__FILE__);
-    std::size_t pos = current_working_dir.find_last_of("\\/");
-    current_working_dir = (std::string::npos == pos) ? "" : current_working_dir.substr(0, pos);
-    MS_LOG(INFO) << current_working_dir;
     std::ostringstream input_file_o;
     const char *const delim = " ";
     std::copy(files_to_convert_in_dir.begin(), files_to_convert_in_dir.end(),
@@ -363,9 +360,19 @@ void DebugServices::ConvertToHostFormat(const std::map<std::string, std::vector<
     std::string input_files = input_file_o.str();
     MS_LOG(INFO) << "Ops to convert: " << input_files;
     if (input_files != "") {
-      std::string convert_command = "python " + current_working_dir + "/convert_async.py -out " + dump_key + " -t " +
-                                    file_format + " -d " + dump_key + " -f NCHW -l " + input_files;
-      (void)(system(convert_command.c_str()) + 1);
+      // Look for the installation path to the conver_async package. If not found, throw exception and terminate the
+      // later task.
+      try {
+        auto pkg = pybind11::module::import("mindspore.offline_debug.convert_async");
+        std::string convert_pkg_path = pkg.attr("__file__").cast<std::string>();
+        MS_LOG(INFO) << "The file for converting async dump data is in " << convert_pkg_path;
+        std::string convert_command = "python " + convert_pkg_path + " -out " + dump_key + " -t " + file_format +
+                                      " -d " + dump_key + " -f NCHW -l " + input_files;
+        (void)(system(convert_command.c_str()) + 1);
+      } catch (pybind11::error_already_set &e) {
+        MS_LOG(EXCEPTION) << "Can't find package mindspore.offline_debug.convert_async";
+      }
+
       DIR *d_handle;
       d_handle = opendir(dump_key.c_str());
       if (d_handle != nullptr) {
