@@ -270,7 +270,8 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error for build parameter, errorno " << ret;
+    MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
+    return false;
   }
 
   node->set_default_param(tensor_info);
@@ -467,7 +468,8 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    MS_LOG(ERROR) << "Obtain CNode in TensorForm occur memcpy_s error.";
+    return false;
   }
   prim->AddAttr(attr_proto.name(), MakeValue(tensor_info));
   return true;
@@ -543,7 +545,8 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    MS_LOG(ERROR) << "Obtain ValueNode in TensorForm occur memcpy_s error.";
+    return false;
   }
 
   auto new_value_node = NewValueNode(MakeValue(tensor_info));

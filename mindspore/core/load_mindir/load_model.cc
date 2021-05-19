@@ -82,7 +82,8 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, i
   }
   max_dep--;
   if (max_dep < 0) {
-    MS_LOG(EXCEPTION) << "The file is greater than " << max_dep << ", exit the program.";
+    MS_LOG(ERROR) << "The file is greater than " << max_dep << ", exit the program.";
+    return false;
   }
   struct stat s;
   int ret = stat(dir_in.c_str(), &s);
@@ -94,10 +95,11 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, i
     return false;
   }
   DIR *open_dir = opendir(dir_in.c_str());
-  if (NULL == open_dir) {
-    MS_LOG(EXCEPTION) << "open dir " << dir_in.c_str() << " failed";
+  if (open_dir == nullptr) {
+    MS_LOG(ERROR) << "Load MindIR open dir " << dir_in.c_str() << " failed";
+    return false;
   }
-  dirent *p = nullptr;
+  dirent *p;
   while ((p = readdir(open_dir)) != nullptr) {
     struct stat st;
     if (p->d_name[0] != '.') {
@@ -105,12 +107,14 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, i
       ret = stat(name.c_str(), &st);
       if (ret != 0) {
         MS_LOG(ERROR) << "stat error, ret is : " << ret;
+        closedir(open_dir);
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
         ret = get_all_files(name, files, max_dep);
         if (!ret) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
+          closedir(open_dir);
           return false;
         }
       } else if (S_ISREG(st.st_mode)) {
@@ -150,9 +154,17 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   // Load parameter into graph
   if (str == tag_str && origin_model.graph().parameter_size() == 0) {
     int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
-    memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
     char var[] = "variables";
-    memcpy_s(abs_path + path_len, PATH_MAX, var, strlen(var));
+    int ret = memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Load MindIR occur memcpy_s error.";
+      return nullptr;
+    }
+    int res_code = memcpy_s(abs_path + path_len, PATH_MAX, var, strlen(var));
+    if (res_code != 0) {
+      MS_LOG(ERROR) << "Load MindIR occur memcpy_s error.";
+      return nullptr;
+    }
     abs_path[path_len + strlen(var)] = '\0';
     std::ifstream ifs(abs_path);
     if (ifs.good()) {
