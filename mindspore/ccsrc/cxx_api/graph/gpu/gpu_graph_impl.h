@@ -57,6 +57,7 @@ class GPUGraphImpl : public GraphCell::GraphImpl {
   std::vector<std::string> output_names_;
   bool init_flag_;
   bool load_flag_;
+  bool set_device_id_flag_;
 
   // tensor-rt
   uint32_t batch_size_;
