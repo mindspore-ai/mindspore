@@ -398,6 +398,25 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
   return shape_map;
 }
 
+abstract::ShapePtr CheckAndConvertUtils::GetInputShapePtr(const std::vector<AbstractBasePtr> &input_args, int64_t index,
+                                                          const std::string &prim_name) {
+  int64_t input_size = input_args.size();
+  if (input_size < index + 1) {
+    MS_EXCEPTION(ValueError) << prim_name << " input args index out of bound, size " << input_args.size() << ", index "
+                             << index;
+  }
+  auto input = input_args[index];
+  MS_EXCEPTION_IF_NULL(input);
+  auto base_shape = input->BuildShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (!base_shape->isa<abstract::Shape>()) {
+    MS_EXCEPTION(ValueError) << prim_name << " can not get shape for input " << index;
+  }
+  auto shape = base_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape);
+  return shape;
+}
+
 void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
                                  const string &value_name, int64_t value, const string &prim_name,
                                  ExceptionType exception_type) {

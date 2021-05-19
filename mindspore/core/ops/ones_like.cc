@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/ones_like.h"
 
-#include <set>
 #include <string>
 #include <vector>
 #include <memory>
-#include "ops/ones_like.h"
+
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
@@ -28,21 +28,23 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(input_shape);
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("infer_shape", input_args.size(), kGreaterEqual, 1, op_name);
+  return CheckAndConvertUtils::GetInputShapePtr(input_args, 0, op_name);
 }
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
   auto infer_type = input_args[0]->BuildType();
   auto valid_type = common_valid_types;
   valid_type.insert(kBool);
-  return CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, valid_type, "OnesLike");
+  return CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, valid_type, op_name);
 }
-
 }  // namespace
+
 AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args));
 }
