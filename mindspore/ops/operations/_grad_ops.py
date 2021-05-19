@@ -1640,6 +1640,7 @@ class GatherDGrad(PrimitiveWithInfer):
         """Initialize GatherDGrad"""
         validator.check_is_int(dim, int)
         self.add_prim_attr("dim", dim)
+        self.dim = dim
         self.out_shape = shape
         self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
 
