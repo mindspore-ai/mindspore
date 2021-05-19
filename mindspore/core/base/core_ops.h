@@ -60,6 +60,9 @@ constexpr auto kGeLUGrad = "GeLUGrad";
 constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 
+// NN
+constexpr auto kCTCLoss = "CTCLoss";
+
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
 inline const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>(kScalarAdd);
@@ -233,6 +236,7 @@ inline const PrimitivePtr kPrimAvgPoolGradVm = std::make_shared<Primitive>("AvgP
 inline const PrimitivePtr kPrimFusedSparseAdam = std::make_shared<Primitive>("FusedSparseAdam");
 inline const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("FusedBatchNorm");
 inline const PrimitivePtr kPrimConv2D = std::make_shared<Primitive>("Conv2D");
+inline const PrimitivePtr kPrimCTCLoss = std::make_shared<Primitive>(kCTCLoss);
 inline const PrimitivePtr kPrimFullConnection = std::make_shared<Primitive>("FullConnection");
 inline const PrimitivePtr kPrimConv2DTranspose = std::make_shared<Primitive>("Conv2DTranspose");
 inline const PrimitivePtr kPrimGroupConv2DGradInput = std::make_shared<Primitive>("GroupConv2DGradInput");
