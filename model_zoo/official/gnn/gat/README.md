@@ -123,11 +123,16 @@ After installing MindSpore via the official website and Dataset is correctly gen
   | └─run_train_ascend.sh         # Launch training
   |
   ├─src
-  | ├─config.py            # Training configurations
   | ├─dataset.py           # Data preprocessing
   | ├─gat.py               # GAT model
-  | └─utils.py             # Utils for training gat
+  | ├─utils.py             # Utils for training gat
+  | └─model_utils
+  |   ├─config.py          # Processing configuration parameters
+  |   ├─device_adapter.py  # Get cloud ID
+  |   ├─local_adapter.py   # Get local ID
+  |   └─moxing_adapter.py  # Parameter processing
   |
+  ├─default_config.yaml    # Training parameter profile
   └─train.py               # Train net
 ```
 

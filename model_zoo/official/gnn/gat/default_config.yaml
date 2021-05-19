@@ -1,0 +1,57 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: Ascend
+enable_profiling: False
+
+# ==============================================================================
+lr: 0.005
+num_epochs: 200
+hid_units: [8]
+n_heads: [8, 1]
+early_stopping: 100
+l2_coeff: 0.0005
+attn_dropout: 0.6
+feature_dropout: 0.6
+
+# Training options
+data_dir: "/cache/data"
+train_nodes_num: 140
+eval_nodes_num: 500
+test_nodes_num: 1000
+
+# export
+device_id: 0
+ckpt_file: ''
+dataset: "cora" # "Dataset."
+file_name: "gat"
+file_format: 'MINDIR'
+
+---
+# Config description for each option
+enable_modelarts: 'Whether training on modelarts, default: False'
+data_url: 'Dataset url for obs'
+train_url: 'Training output url for obs'
+data_path: 'Dataset path for local'
+output_path: 'Training output path for local'
+
+data_dir: 'Data dir'
+train_nodes_num: 'Nodes numbers for training'
+eval_nodes_num: 'Nodes numbers for evaluation'
+test_nodes_num: 'Nodes numbers for test'
+dataset: "Dataset."
+
+device_target: 'Target device type' 
+enable_profiling: 'Whether enable profiling while training, default: False'
+file_name: 'output file name.'
+file_format: 'file format'
+
+---
+dataset: ["cora", "citeseer"]
+device_target: ['Ascend', 'GPU', 'CPU']
+file_format: ['AIR', 'ONNX', 'MINDIR']

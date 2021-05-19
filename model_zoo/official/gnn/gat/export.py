@@ -13,32 +13,20 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air, mindir and onnx models"""
-import argparse
 import numpy as np
-
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
+from src.gat import GAT
 from mindspore import Tensor, context, load_checkpoint, export
 
-from src.gat import GAT
-from src.config import GatConfig
 
-parser = argparse.ArgumentParser(description="GAT export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--dataset", type=str, default="cora", choices=["cora", "citeseer"], help="Dataset.")
-parser.add_argument("--file_name", type=str, default="gat", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
-args = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=get_device_id()) # config.device_id
 
 if __name__ == "__main__":
 
-
-    if args.dataset == "citeseer":
+    if config.dataset == "citeseer":
         feature_size = [1, 3312, 3703]
         biases_size = [1, 3312, 3312]
         num_classes = 6
@@ -47,8 +35,8 @@ if __name__ == "__main__":
         biases_size = [1, 2708, 2708]
         num_classes = 7
 
-    hid_units = GatConfig.hid_units
-    n_heads = GatConfig.n_heads
+    hid_units = config.hid_units
+    n_heads = config.n_heads
 
     feature = np.random.uniform(0.0, 1.0, size=feature_size).astype(np.float32)
     biases = np.random.uniform(0.0, 1.0, size=biases_size).astype(np.float64)
@@ -65,7 +53,7 @@ if __name__ == "__main__":
                   ftr_drop=0.0)
 
     gat_net.set_train(False)
-    load_checkpoint(args.ckpt_file, net=gat_net)
+    load_checkpoint(config.ckpt_file, net=gat_net)
     gat_net.add_flags_recursive(fp16=True)
 
-    export(gat_net, Tensor(feature), Tensor(biases), file_name=args.file_name, file_format=args.file_format)
+    export(gat_net, Tensor(feature), Tensor(biases), file_name=config.file_name, file_format=config.file_format)

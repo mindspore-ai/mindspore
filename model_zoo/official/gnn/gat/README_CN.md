@@ -121,11 +121,16 @@
   | └─run_train_ascend.sh         # 启动训练
   |
   ├─src
-  | ├─config.py            # 训练配置
   | ├─dataset.py           # 数据预处理
   | ├─gat.py               # GAT模型
-  | └─utils.py             # 训练gat的工具
+  | ├─utils.py             # 训练gat的工具
+  | └─model_utils
+  |   ├─config.py          # 训练配置
+  |   ├─device_adapter.py  # 获取云上id
+  |   ├─local_adapter.py   # 获取本地id
+  |   └─moxing_adapter.py  # 参数处理
   |
+  ├─default_config.yaml    # 训练参数配置文件
   └─train.py               # 训练网络
 ```
 
