@@ -97,12 +97,18 @@ SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
         │   ├──dataset.py                     // creating dataset
         │   ├──pre_process_data.py            // pre-process dataset
         │   ├──musictagger.py                 // googlenet architecture
-        │   ├──config.py                      // parameter configuration
         │   ├──loss.py                        // loss function
         │   ├──tag.txt                        // tag for each number
+        |   └─model_utils
+        |     ├─config.py          // Processing configuration parameters
+        |     ├─device_adapter.py  // Get cloud ID
+        |     ├─local_adapter.py   // Get local ID
+        |     └─moxing_adapter.py  // Parameter processing
         ├── train.py               // training script
         ├── eval.py                //  evaluation script
         ├── export.py              //  export model in air format
+        ├─default_config.yaml      // Training parameter profile
+        └─train.py                 // Train net
 ```
 
 ### [Script Parameters](#contents)

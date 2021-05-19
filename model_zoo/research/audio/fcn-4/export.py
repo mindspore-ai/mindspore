@@ -21,8 +21,10 @@ import numpy as np
 from mindspore.train.serialization import export
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
+from src.model_utils.config import config
 from src.musictagger import MusicTaggerCNN
-from src.config import music_cfg as cfg
+
 
 if __name__ == "__main__":
     network = MusicTaggerCNN(in_classes=[1, 128, 384, 768, 2048],
@@ -30,11 +32,11 @@ if __name__ == "__main__":
                              padding=[0] * 5,
                              maxpool=[(2, 4), (4, 5), (3, 8), (4, 8)],
                              has_bias=True)
-    param_dict = load_checkpoint(cfg.checkpoint_path + "/" + cfg.model_name)
+    param_dict = load_checkpoint(config.checkpoint_path + "/" + config.model_name)
     load_param_into_net(network, param_dict)
     input_data = np.random.uniform(0.0, 1.0, size=[1, 1, 96, 1366]).astype(np.float32)
     export(network,
            Tensor(input_data),
-           filename="{}/{}.air".format(cfg.checkpoint_path,
-                                       cfg.model_name[:-5]),
+           filename="{}/{}.air".format(config.checkpoint_path,
+                                       config.model_name[:-5]),
            file_format="AIR")
