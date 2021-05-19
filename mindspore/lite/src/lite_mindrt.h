@@ -42,7 +42,12 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   void RunOpData(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) override {
     auto op_uuid = context->sequential_num_;
     input_op_datas_[op_uuid].push_back(inputs);
-    inputs_data_.push_back(inputs->data_);
+
+    if (inputs->index_ >= static_cast<int>(inputs_data_.size()) || inputs->index_ < 0) {
+      return;
+    }
+    inputs_data_[inputs->index_] = inputs->data_;
+
     if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
       return;
     }
@@ -75,7 +80,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       return;
     }
     input_op_datas_.erase(op_uuid);
-    inputs_data_.clear();
     AsyncOutput(context);
 
     BindThreads(static_cast<const lite::InnerContext *>(kernel_->Context())->thread_pool_, false, cpu_bind_mode);
@@ -87,6 +91,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   }
   int CastTensorData(Tensor *dst, Tensor *src);
   void Init() override {
+    inputs_data_.resize(kernel_->in_tensors().size());
     auto ret = CompileArrow();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "CompileArrow failed, name: " << kernel_->name();
