@@ -14,13 +14,10 @@
 # ============================================================================
 '''post process for 310 inference'''
 import os
-import argparse
 import numpy as np
 
-parser = argparse.ArgumentParser(description='fasterrcnn_export')
-parser.add_argument("--result_path", type=str, required=True, help="result file path")
-parser.add_argument("--label_file", type=str, required=True, help="label file")
-args = parser.parse_args()
+from src.model_utils.config import config
+
 
 def read_label(label_file):
     f = open(label_file, "r")
@@ -55,4 +52,4 @@ def cal_acc(result_path, label_file):
     print("========accuraty:{}========".format(accuracy))
 
 if __name__ == "__main__":
-    cal_acc(args.result_path, args.label_file)
+    cal_acc(config.result_path, config.label_file)

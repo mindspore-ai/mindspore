@@ -43,6 +43,9 @@ echo $data_path
 echo $label_file
 echo $device_id
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
 export ASCEND_HOME=/usr/local/Ascend/
 if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
     export PATH=$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
@@ -82,7 +85,7 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/out/main --model_path=$model --dataset_path=$data_path --device_id=$device_id &> infer.log
+    ../ascend310_infer/out/main --config_path=$CONFIG_FILE --model_path=$model --dataset_path=$data_path --device_id=$device_id &> infer.log
 
     if [ $? -ne 0 ]; then
         echo "execute inference failed"
@@ -92,7 +95,7 @@ function infer()
 
 function cal_acc()
 {
-    python ../postprocess.py --label_file=$label_file --result_path=result_Files &> acc.log
+    python ../postprocess.py --config_path=$CONFIG_FILE --label_file=$label_file --result_path=result_Files &> acc.log
     if [ $? -ne 0 ]; then
         echo "calculate accuracy failed"
         exit 1

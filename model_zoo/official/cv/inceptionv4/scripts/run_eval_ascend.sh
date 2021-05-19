@@ -19,10 +19,13 @@ DATA_DIR=$2
 CHECKPOINT_PATH=$3
 export RANK_SIZE=1
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
 rm -rf evaluation_ascend
 mkdir ./evaluation_ascend
 cd ./evaluation_ascend || exit
 echo  "start training for device id $DEVICE_ID"
 env > env.log
-python ../eval.py --platform=Ascend --dataset_path=$DATA_DIR --checkpoint_path=$CHECKPOINT_PATH > eval.log 2>&1 &
+python ../eval.py --config_path=$CONFIG_FILE --platform=Ascend --dataset_path=$DATA_DIR --checkpoint_path=$CHECKPOINT_PATH > eval.log 2>&1 &
 cd ../
