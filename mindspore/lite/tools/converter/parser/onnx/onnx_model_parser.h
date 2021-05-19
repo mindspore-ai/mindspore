@@ -42,9 +42,9 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) override;
 
-  int PostAdjust() override;
+  int OnnxModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
   static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_tensor,

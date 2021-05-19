@@ -29,6 +29,8 @@
 #include "abstract/utils.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/quant_param_holder.h"
+#include "tools/converter/parser/tf/functionalize_control_op_pass.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -473,31 +475,31 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(
   return RET_OK;
 }
 
-int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile) {
+FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::string &weightFile) {
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.pb";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   tf_root_graph_ = std::make_unique<tensorflow::GraphDef>();
   if (tf_root_graph_ == nullptr) {
     MS_LOG(ERROR) << "tf_root_graph_ is nullptr";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return status;
+    return nullptr;
   }
   status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), tf_root_graph_.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Open modelFile for TF converter failed!";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   res_graph_ = std::make_shared<FuncGraph>();
   if (res_graph_ == nullptr) {
     MS_LOG(ERROR) << "funGraphPtr is nullptr";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return status;
+    return nullptr;
   }
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
@@ -510,7 +512,7 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
   status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
   bool success_flag = true;
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
@@ -523,7 +525,7 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
   }
   if (!success_flag) {
     MS_LOG(ERROR) << "Convert ops failed.";
-    return RET_ERROR;
+    return nullptr;
   }
 
   if (!nodes_with_null_input_.empty()) {
@@ -531,7 +533,7 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Connect null inputs failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      return nullptr;
     }
   }
 
@@ -539,16 +541,27 @@ int TFModelParser::ParseToFuncGraph(const std::string &modelFile, const std::str
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph outputs failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
 
   status = ConvertSubgraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert subgraph failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return status;
+    return nullptr;
   }
-  return RET_OK;
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(res_graph_, &all_func_graphs);
+
+  if (PostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForAnf failed.";
+    return nullptr;
+  }
+  if (TFModelPostAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "AdjustForOnnxModel failed.";
+    return nullptr;
+  }
+  return res_graph_;
 }
 
 STATUS TFModelParser::ConvertSubgraphInputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
@@ -1070,7 +1083,17 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
   return RET_OK;
 }
 
-int TFModelParser::PostAdjust() { return 0; }
+int TFModelParser::TFModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+  for (auto func_graph : all_func_graphs) {
+    auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
+    if (!functionalize_control_op_pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "functionalize control op pass failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 
 REG_MODEL_PARSER(TF, LiteModelParserCreator<TFModelParser>)
 }  // namespace lite

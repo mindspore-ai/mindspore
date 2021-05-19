@@ -34,9 +34,7 @@ class CaffeModelParser : public ModelParser {
 
   ~CaffeModelParser() override;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
-
-  int PostAdjust() override;
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) override;
 
  private:
   STATUS InitOriginModel(const std::string &model_file, const std::string &weight_file);

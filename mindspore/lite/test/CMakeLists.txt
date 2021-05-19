@@ -228,6 +228,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/graphdef_transform.cc
             ${LITE_DIR}/tools/converter/converter_flags.cc
             ${LITE_DIR}/tools/converter/converter.cc
+            ${LITE_DIR}/tools/converter/parser/parser_utils.cc
             ${LITE_DIR}/tools/optimizer/common/node_pass_extends.cc
             ${LITE_DIR}/tools/optimizer/common/pass_manager_extends.cc
             ${LITE_DIR}/tools/optimizer/common/gllo_utils.cc
@@ -248,36 +249,26 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/tflite_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_lstm_cell_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_fusion.cc
-            ${LITE_DIR}/tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/matmul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/mul_add_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/tf_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/onnx_gelu_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/squeeze_fusion.cc
-            ${LITE_DIR}/tools/optimizer/graph/conv1d_inout_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_transform_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/conv1d_weight_expanding_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/group_depthwise_op_convert_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/update_conv2d_param_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/redundant_op_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/onnx_pad_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/functionalize_while.cc
-            ${LITE_DIR}/tools/optimizer/graph/functionalize_cond.cc
-            ${LITE_DIR}/tools/optimizer/graph/inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/primitive_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
@@ -299,6 +290,10 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc
             ${LITE_DIR}/tools/common/storage.cc
+            ${LITE_DIR}/tools/converter/parser/inputs_adjust.cc
+            ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
+            ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
+            ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc
             )
 endif()
 ### train

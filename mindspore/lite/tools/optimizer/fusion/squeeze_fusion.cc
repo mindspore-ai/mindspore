@@ -21,10 +21,15 @@
 
 namespace mindspore::opt {
 const BaseRef SqueezeFusion::DefinePattern() const {
-  auto squeeze_var = std::make_shared<CondVar>(IsSqueezeNode);
-  auto act_var = std::make_shared<CondVar>(IsActivationNode);
-  VectorRef act_ref = VectorRef({act_var, squeeze_var});
-  auto unsqueeze_var = std::make_shared<CondVar>(IsSqueezeNode);
+  auto squeeze_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqueeze>);
+  auto bn_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimFusedBatchNorm>);
+  auto bn_mean_var = std::make_shared<CondVar>(IsParamNode);
+  auto bn_variable_var = std::make_shared<CondVar>(IsParamNode);
+  auto bn_other_var = std::make_shared<SeqVar>();
+  VectorRef bn_ref = VectorRef({bn_var, squeeze_var, bn_mean_var, bn_variable_var, bn_other_var});
+  auto act_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimActivation>);
+  VectorRef act_ref = VectorRef({act_var, bn_ref});
+  auto unsqueeze_var = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimUnsqueeze>);
   return VectorRef({unsqueeze_var, act_ref});
 }
 
@@ -41,7 +46,11 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
   if (CheckIfCNodeIsNull(act_node->cast<CNodePtr>()) != lite::RET_OK) {
     return nullptr;
   }
-  auto squeeze_node = act_node->cast<CNodePtr>()->input(1);
+  auto bn_node = act_node->cast<CNodePtr>()->input(1);
+  if (CheckIfCNodeIsNull(bn_node->cast<CNodePtr>()) != lite::RET_OK) {
+    return nullptr;
+  }
+  auto squeeze_node = bn_node->cast<CNodePtr>()->input(1);
   if (CheckIfCNodeIsNull(squeeze_node->cast<CNodePtr>()) != lite::RET_OK) {
     return nullptr;
   }

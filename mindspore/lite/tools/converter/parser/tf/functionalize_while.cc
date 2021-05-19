@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "tools/converter/parser/tf/functionalize_while.h"
 #include <algorithm>
 #include <memory>
 #include <deque>
-#include "tools/optimizer/graph/functionalize_while.h"
 #include "include/errorcode.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/converter/ops/while.h"

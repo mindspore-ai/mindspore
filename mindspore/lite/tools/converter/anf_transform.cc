@@ -35,33 +35,21 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_bidirection_gru_fusion.h"
-#include "tools/optimizer/fusion/tf_bidirection_gru_cf_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
-#include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "tools/optimizer/fusion/squeeze_fusion.h"
-#include "tools/optimizer/graph/conv1d_inout_adjust_pass.h"
-#include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
-#include "tools/optimizer/graph/conv1d_weight_expanding_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
-#include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
-#include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
-#include "tools/optimizer/graph/onnx_pad_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
-#include "tools/optimizer/graph/unused_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
-#include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/optimizer/graph/while_pass.h"
 #include "tools/optimizer/graph/if_pass.h"
-#include "tools/optimizer/graph/functionalize_control_op_pass.h"
-#include "tools/optimizer/graph/inputs_adjust_pass.h"
 #include "tools/optimizer/graph/unify_format_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
@@ -86,6 +74,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   // for now - training is not supporting fuse operations
   if (!config->trainModel) {
     // remove quantdtype when awaretraining
+    fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     auto conv_bn_pass = std::make_shared<opt::ConvBatchNormFusion>();
     conv_bn_pass->SetFmkType(config->fmk);
@@ -190,7 +179,6 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   if (config->fmk == lite::converter::FmkType_TFLITE) {
     convert_pm->AddPass(std::make_shared<opt::GroupDepthwiseOpConvertPass>());
-    convert_pm->AddPass(std::make_shared<opt::TfliteInputsAdjustPass>());
   }
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
@@ -220,106 +208,6 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   optimizer->AddPassManager(const_fold_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run const fold failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::RunAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  if (config->fmk == converter::FmkType_MS) {
-    if (RunMindirAdjustPass(old_graph, config) != RET_OK) {
-      return RET_ERROR;
-    }
-  }
-  auto adjust_input = std::make_shared<opt::InputAdjustPass>();
-  if (!adjust_input->Run(old_graph)) {
-    MS_LOG(ERROR) << "adjust input failed.";
-    return RET_ERROR;
-  }
-  switch (config->fmk) {
-    case converter::FmkType_ONNX:
-      return RunOnnxAdjustPass(old_graph, config);
-    case converter::FmkType_TF:
-      return RunTFAdjustPass(old_graph, config);
-    default:
-      return RET_OK;
-  }
-}
-
-int AnfTransform::RunConv1DAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto conv1d_pm = std::make_shared<opt::PassManager>("conv1d adjust pass manager", true);
-  conv1d_pm->AddPass(std::make_shared<opt::Conv1DInOutAdjustPass>());
-  conv1d_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
-  auto conv1d_weight_expanding_pass = std::make_shared<opt::Conv1DWeightExpandingPass>();
-  conv1d_pm->AddPass(conv1d_weight_expanding_pass);
-  optimizer->AddPassManager(conv1d_pm);
-  if (optimizer->Optimize(old_graph) == nullptr) {
-    MS_LOG(ERROR) << "run conv1d adjust failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::RunMindirAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto primitive_adjust_pass = std::make_shared<opt::PrimitiveAdjustPass>();
-  primitive_adjust_pass->SetFmkType(config->fmk);
-  if (!primitive_adjust_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "primitive adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
-  mindir_adjust_pass->SetFmkType(config->fmk);
-  mindir_adjust_pass->SetQuantType(config->quantType);
-  mindir_adjust_pass->SetTrainFlag(config->trainModel);
-  if (!mindir_adjust_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "mindir adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::RunOnnxAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  // onnx pre adjustment
-  auto onnx_adjust_pass = std::make_shared<opt::OnnxInputAdjustOpPass>();
-  if (!onnx_adjust_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "onnx adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  auto onnx_pad_adjust_pass = std::make_shared<opt::OnnxPadAdjustPass>();
-  if (!onnx_pad_adjust_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "onnx pad adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
-  if (!functionalize_control_op_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "functionalize control op pass failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int AnfTransform::RunPrecedingPass(const FuncGraphPtr &old_graph, const converter::Flags &config) {
-  MS_ASSERT(old_graph != nullptr);
-  auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto asylic_pm = std::make_shared<opt::PassManager>("asylic pass manager", false);
-  // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
-  asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
-  // remove remaining cyclic nodes
-  asylic_pm->AddPass(std::make_shared<opt::UnusedNodeRemovePass>());
-  asylic_optimizer->AddPassManager(asylic_pm);
-  if (!asylic_optimizer->Optimize(old_graph)) {
-    MS_LOG(ERROR) << "gru cf fusion pass failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
   return RET_OK;
@@ -378,18 +266,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   }
   int status;
   for (auto &fg : func_graphs_) {
-    status = RunPrecedingPass(fg, *config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run Preceding pass failed.";
-      return nullptr;
-    }
-
-    status = RunAdjustPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run Adjust pass failed.";
-      return nullptr;
-    }
-
     status = RunConstFoldPass(fg, config);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run const fold pass failed.";
@@ -423,12 +299,6 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
         MS_LOG(ERROR) << "Run fusion pass failed.";
         return nullptr;
       }
-    }
-
-    status = RunConv1DAdjustPass(fg, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Run conv1d adjust pass failed.";
-      return nullptr;
     }
   }
 

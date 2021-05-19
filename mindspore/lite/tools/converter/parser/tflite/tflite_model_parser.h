@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <set>
 #include "tools/converter/model_parser.h"
 #include "tools/converter/registry/model_parser_registry.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
@@ -33,9 +34,9 @@ class TfliteModelParser : public ModelParser {
 
   ~TfliteModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &model_file, const std::string &weight_file) override;
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) override;
 
-  int PostAdjust() override;
+  int TfliteModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   std::unordered_map<int, AnfNodePtr> nodes_;

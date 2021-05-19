@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
+#include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include <vector>
 #include <memory>
 #include "ops/batch_to_space.h"
 #include "ops/batch_to_space_nd.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "ops/fusion/arg_min_fusion.h"
-#include "ops/fusion/pad_fusion.h"
-#include "ops/fusion/reduce_fusion.h"
 #include "ops/op_utils.h"
 #include "ops/resize.h"
 #include "ops/space_to_batch.h"
@@ -30,7 +28,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quant_cast.h"
 
-namespace mindspore::opt {
+namespace mindspore::lite {
 namespace {
 constexpr size_t split_inputs_size = 3;
 const std::vector<std::string> single_input_ops = {
@@ -38,7 +36,7 @@ const std::vector<std::string> single_input_ops = {
   ops::kNameSpaceToBatch, ops::kNameSpaceToBatchND, ops::kNameSpaceToDepth};
 
 bool CheckResize(const CNodePtr &cnode) {
-  if (!CheckPrimitiveType(cnode, prim::kPrimResize)) {
+  if (!opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
     return false;
   }
   auto prim_resize = GetValueNode<std::shared_ptr<ops::Resize>>(cnode->input(0));
@@ -86,8 +84,7 @@ lite::STATUS ReorderCnodeInputs(CNode *cnode, const std::vector<size_t> &perm) {
 }
 }  // namespace
 
-STATUS TfliteInputsAdjustPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph,
-                                                         const ParameterPtr &param_node) {
+STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(param_node != nullptr);
   if (param_node->abstract() == nullptr) {
@@ -107,7 +104,7 @@ STATUS TfliteInputsAdjustPass::ReplaceInt64ParameterNode(const FuncGraphPtr &fun
     MS_LOG(DEBUG) << "don't need to convert to int32.";
     return lite::RET_OK;
   }
-  auto manager = func_graph->manager();
+  auto manager = Manage(func_graph, true);
   MS_ASSERT(manager != nullptr);
   if (param_node->has_default()) {
     auto default_value = param_node->default_param();
@@ -120,7 +117,7 @@ STATUS TfliteInputsAdjustPass::ReplaceInt64ParameterNode(const FuncGraphPtr &fun
       MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = BuildParameterNode(func_graph, param_node, tensor_info);
+    auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
     manager->Replace(param_node, param_node_new);
   } else {
     // set graph input
@@ -129,7 +126,7 @@ STATUS TfliteInputsAdjustPass::ReplaceInt64ParameterNode(const FuncGraphPtr &fun
   return lite::RET_OK;
 }
 
-STATUS TfliteInputsAdjustPass::AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &graph) {
+STATUS TfliteInputsAdjust::AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &graph) {
   auto cnode = node->cast<CNodePtr>();
   if (cnode->inputs().size() < 4) {
     MS_LOG(ERROR) << "Slice should own 3 inputs";
@@ -150,14 +147,14 @@ STATUS TfliteInputsAdjustPass::AdjustSlice(const AnfNodePtr &node, const FuncGra
   return RET_OK;
 }
 
-bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {
+bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
   auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (CheckPrimitiveType(cnode, prim::kPrimFill)) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimFill)) {
       // dims, value => value, dims
       if (RET_OK != ReorderCnodeInputs(cnode.get(), {2, 1})) {
         MS_LOG(ERROR) << "Reorder fill inputs failed";
@@ -166,7 +163,7 @@ bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {
       continue;
     }
 
-    if (CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
       // output_shape, weights, input => input, weight
       if (RET_OK != ReorderCnodeInputs(cnode.get(), {3, 2})) {
         MS_LOG(ERROR) << "Reorder deconv inputs failed";
@@ -175,7 +172,7 @@ bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {
       continue;
     }
 
-    if (CheckPrimitiveType(cnode, prim::kPrimSplit) && cnode->inputs().size() == split_inputs_size) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimSplit) && cnode->inputs().size() == split_inputs_size) {
       // axis, input, ??? => input, axis
       if (RET_OK != ReorderCnodeInputs(cnode.get(), {2, 1})) {
         MS_LOG(ERROR) << "Reorder split inputs failed";
@@ -190,7 +187,7 @@ bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {
         return false;
       }
     }
-    if (CheckPrimitiveType(node, prim::kPrimSliceFusion)) {
+    if (opt::CheckPrimitiveType(node, prim::kPrimSliceFusion)) {
       if (AdjustSlice(node, graph) == RET_OK) {
         continue;
       }
@@ -199,4 +196,4 @@ bool TfliteInputsAdjustPass::Run(const FuncGraphPtr &graph) {
   }
   return true;
 }
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite

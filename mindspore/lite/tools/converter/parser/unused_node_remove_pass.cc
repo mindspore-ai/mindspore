@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/unused_node_remove_pass.h"
+#include "tools/converter/parser/unused_node_remove_pass.h"
 #include <deque>
 #include <unordered_set>
 #include "tools/optimizer/common/gllo_utils.h"

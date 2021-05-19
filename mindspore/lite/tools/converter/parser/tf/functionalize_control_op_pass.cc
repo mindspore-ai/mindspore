@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "tools/optimizer/graph/functionalize_control_op_pass.h"
+#include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include <algorithm>
 #include <deque>
-#include "tools/optimizer/graph/functionalize_while.h"
-#include "tools/optimizer/graph/functionalize_cond.h"
+#include "tools/converter/parser/tf/functionalize_while.h"
+#include "tools/converter/parser/tf/functionalize_cond.h"
 #include "include/errorcode.h"
 
 namespace mindspore::opt {

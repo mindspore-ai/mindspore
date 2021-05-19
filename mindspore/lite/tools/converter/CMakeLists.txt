@@ -30,6 +30,11 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/dynamic_library_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/parser_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf_bidirection_gru_cf_fusion.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
@@ -51,7 +56,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/tflite_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_bidirection_gru_fusion.cc
-        ../optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
         ../optimizer/fusion/matmul_add_fusion.cc
         ../optimizer/fusion/mul_add_fusion.cc
         ../optimizer/fusion/gelu_fusion.cc
@@ -71,29 +75,20 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/parallel/operator_info_register.cc
         ../optimizer/parallel/spliter.cc
         ../optimizer/parallel/split_strategy.cc
-        ../optimizer/graph/conv1d_inout_adjust_pass.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/conv1d_weight_expanding_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
         ../optimizer/graph/group_depthwise_op_convert_pass.cc
-        ../optimizer/graph/tflite_inputs_adjust_pass.cc
         ../optimizer/graph/update_conv2d_param_pass.cc
-        ../optimizer/graph/unused_node_remove_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
         ../optimizer/graph/redundant_op_remove_pass.cc
         ../optimizer/graph/infershape_pass.cc
         ../optimizer/graph/slice_prepose_pass.cc
         ../optimizer/graph/mindir_adjust_pass.cc
-        ../optimizer/graph/onnx_inputs_adjust_pass.cc
-        ../optimizer/graph/onnx_pad_adjust_pass.cc
         ../optimizer/graph/while_pass.cc
         ../optimizer/graph/if_pass.cc
-        ../optimizer/graph/functionalize_control_op_pass.cc
-        ../optimizer/graph/functionalize_while.cc
-        ../optimizer/graph/functionalize_cond.cc
-        ../optimizer/graph/inputs_adjust_pass.cc
         ../optimizer/graph/primitive_adjust_pass.cc
         ../optimizer/graph/unify_format_pass.cc
         ../optimizer/graph/node_infershape.cc

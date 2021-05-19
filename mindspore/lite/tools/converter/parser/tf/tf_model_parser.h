@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <set>
 #include <utility>
 #include "proto/graph.pb.h"
 #include "proto/node_def.pb.h"
@@ -39,9 +40,9 @@ class TFModelParser : public ModelParser {
   TFModelParser() = default;
   ~TFModelParser() override = default;
 
-  int ParseToFuncGraph(const std::string &modelFile, const std::string &weightFile) override;
+  FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile) override;
 
-  int PostAdjust() override;
+  int TFModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);

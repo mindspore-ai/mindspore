@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/onnx_pad_adjust_pass.h"
+#include "tools/converter/parser/onnx/onnx_pad_adjust_pass.h"
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -24,11 +24,11 @@
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-namespace mindspore::opt {
+namespace mindspore::lite {
 namespace {
 constexpr uint32_t kTripleNum = 3;
 }  // namespace
-ParameterPtr OnnxPadAdjustPass::CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data) {
+ParameterPtr OnnxPadAdjust::CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(data != nullptr);
   auto parameter = func_graph->add_parameter();
@@ -47,12 +47,11 @@ ParameterPtr OnnxPadAdjustPass::CreateNewParameter(const FuncGraphPtr &func_grap
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return nullptr;
   }
-
   return parameter;
 }
 
-CNodePtr OnnxPadAdjustPass::NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                             const std::vector<int> &shape) {
+CNodePtr OnnxPadAdjust::NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
+                                         const std::vector<int> &shape) {
   auto reshape_prim = std::make_shared<ops::Reshape>();
   if (reshape_prim == nullptr) {
     MS_LOG(ERROR) << "create reshape failed.";
@@ -68,8 +67,8 @@ CNodePtr OnnxPadAdjustPass::NewReshapeOpNode(const FuncGraphPtr &func_graph, con
   return reshape;
 }
 
-CNodePtr OnnxPadAdjustPass::NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                               std::vector<int> perm) {
+CNodePtr OnnxPadAdjust::NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
+                                           std::vector<int> perm) {
   auto transpose_prim = std::make_shared<ops::Transpose>();
   if (transpose_prim == nullptr) {
     MS_LOG(ERROR) << "create transpose failed.";
@@ -85,11 +84,11 @@ CNodePtr OnnxPadAdjustPass::NewTransposeOpNode(const FuncGraphPtr &func_graph, c
   return reshape;
 }
 
-bool OnnxPadAdjustPass::Run(const FuncGraphPtr &func_graph) {
+bool OnnxPadAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    if (!CheckPrimitiveType(cnode, prim::kPrimPadFusion) || cnode->inputs().size() != kTripleNum) {
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) || cnode->inputs().size() != kTripleNum) {
       continue;
     }
     // get the second input node whose output is the padding parameter of pad.
@@ -118,7 +117,7 @@ bool OnnxPadAdjustPass::Run(const FuncGraphPtr &func_graph) {
       return false;
     }
 
-    auto manager = func_graph->manager();
+    auto manager = Manage(func_graph, true);
     if (manager == nullptr) {
       MS_LOG(ERROR) << "manager is nullptr.";
       return false;
@@ -127,4 +126,4 @@ bool OnnxPadAdjustPass::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/inputs_adjust_pass.h"
+#include "tools/converter/parser/inputs_adjust.h"
 #include <string>
 #include <memory>
 #include "ops/primitive_c.h"
 
-namespace mindspore::opt {
-STATUS InputAdjustPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
-                                       const std::string &attr_name, int flag) {
+namespace mindspore::lite {
+STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+                                   const std::string &attr_name, int flag) {
   MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
+  if (!opt::CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
@@ -43,30 +43,30 @@ STATUS InputAdjustPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   }
   switch (flag) {
     case 1: {
-      auto value_data = CastToInt(value_ptr).front();
+      auto value_data = opt::CastToInt(value_ptr).front();
       auto param_node =
-        BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+        opt::BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
     case 2: {
-      auto value_data = CastToInt(value_ptr);
+      auto value_data = opt::CastToInt(value_ptr);
       auto param_node =
-        BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+        opt::BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
     case 3: {
-      auto value_data = CastToVec2DInt(value_ptr);
+      auto value_data = opt::CastToVec2DInt(value_ptr);
       auto param_node =
-        BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+        opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
     case 4: {
       auto value_data = GetValue<float>(value_ptr);
       auto param_node =
-        BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+        opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
@@ -80,7 +80,7 @@ STATUS InputAdjustPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   return lite::RET_OK;
 }
 
-bool InputAdjustPass::Run(const FuncGraphPtr &func_graph) {
+bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
@@ -94,34 +94,34 @@ bool InputAdjustPass::Run(const FuncGraphPtr &func_graph) {
     if (cnode == nullptr) {
       continue;
     }
-    if (CheckPrimitiveType(node, prim::kPrimTranspose)) {
+    if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
       MS_LOG(INFO) << "Adjust Transpose";
       status = AddAttrToInput(func_graph, cnode, 2, "perm", 2);
-    } else if (CheckPrimitiveType(node, prim::kPrimReshape)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimReshape)) {
       MS_LOG(INFO) << "Adjust Reshape";
       status = AddAttrToInput(func_graph, cnode, 2, "shape", 2);
-    } else if (CheckPrimitiveType(node, prim::kPrimGather)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimGather)) {
       MS_LOG(INFO) << "Adjust Gather";
       status = AddAttrToInput(func_graph, cnode, 3, "axis", 1);
-    } else if (CheckPrimitiveType(node, prim::kPrimCast)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimCast)) {
       MS_LOG(INFO) << "Adjust Cast";
       status = AddAttrToInput(func_graph, cnode, 2, "to", 1);
-    } else if (CheckPrimitiveType(node, prim::kPrimTopKFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTopKFusion)) {
       MS_LOG(INFO) << "Adjust TopKFusion";
       status = AddAttrToInput(func_graph, cnode, 2, "k", 1);
-    } else if (CheckPrimitiveType(node, prim::kPrimTileFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTileFusion)) {
       MS_LOG(INFO) << "Adjust TileFusion";
       status = AddAttrToInput(func_graph, cnode, 2, "multiples", 2);
-    } else if (CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
       MS_LOG(INFO) << "Adjust ReduceFusion";
       status = AddAttrToInput(func_graph, cnode, 2, "axes", 2);
-    } else if (CheckPrimitiveType(node, prim::kPrimPadFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       MS_LOG(INFO) << "Adjust PadFusion";
       status = AddAttrToInput(func_graph, cnode, 2, "paddings", 3);
-    } else if (CheckPrimitiveType(node, prim::kPrimPowFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimPowFusion)) {
       MS_LOG(INFO) << "Adjust PowFuison";
       status = AddAttrToInput(func_graph, cnode, 2, "power", 4);
-    } else if (CheckPrimitiveType(node, prim::kPrimResize)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
       status = AddAttrToInput(func_graph, cnode, 2, "zoom_factor", 1);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
@@ -131,4 +131,4 @@ bool InputAdjustPass::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite

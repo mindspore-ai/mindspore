@@ -23,7 +23,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/optimizer/graph/functionalize_control_op_pass.h"
+#include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
