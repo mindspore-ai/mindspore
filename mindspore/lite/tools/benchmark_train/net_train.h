@@ -120,7 +120,7 @@ class MS_API NetTrain {
   int GenerateRandomData(size_t size, void *data);
 
   int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
-  int CreateAndRunNetwork(const std::string &filename, int train_session, int epochs);
+  int CreateAndRunNetwork(const std::string &filename, int train_session, int epochs, bool check_accuracy = true);
 
   int InitCallbackParameter();
 
@@ -194,7 +194,7 @@ class MS_API NetTrain {
 
   int MarkPerformance(session::TrainSession *session);
 
-  int MarkAccuracy(session::LiteSession *lite_session);
+  int MarkAccuracy(session::LiteSession *lite_session, bool enforce_accuracy = true);
   int CompareOutput(const session::LiteSession &lite_session);
   int SaveModels(session::TrainSession *session);
   int CheckExecutionOfSavedModels();

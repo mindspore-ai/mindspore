@@ -34,24 +34,32 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
     return RET_ERROR;
   }
-  if (access((outputPath + ".ms").c_str(), F_OK) == 0) {
-    chmod((outputPath + ".ms").c_str(), S_IWUSR);
+  std::string filename = outputPath;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
   }
-  std::ofstream output(outputPath + ".ms", std::ofstream::binary);
+  if (access(filename.c_str(), F_OK) == 0) {
+    chmod(filename.c_str(), S_IWUSR);
+  }
+  std::ofstream output(filename, std::ofstream::binary);
   if (!output.is_open()) {
-    MS_LOG(ERROR) << "Can not open output file: " << outputPath << ".ms";
+    MS_LOG(ERROR) << "Can not open output file: " << filename;
     return RET_ERROR;
   }
 
   output.write((const char *)content, size);
   output.close();
-  chmod((outputPath + ".ms").c_str(), S_IRUSR);
+  chmod(filename.c_str(), S_IRUSR);
   return RET_OK;
 }
 
 schema::MetaGraphT *Storage::Load(const std::string &inputPath) {
   size_t size = 0;
-  auto buf = ReadFile(inputPath.c_str(), &size);
+  std::string filename = inputPath;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
+  }
+  auto buf = ReadFile(filename.c_str(), &size);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
     return nullptr;

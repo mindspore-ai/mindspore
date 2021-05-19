@@ -455,15 +455,6 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
     return RET_ERROR;
   }
 
-  if (quant_type != QT_DEFAULT) {
-    MS_LOG(ERROR) << "Currently only QuantType default is supported";
-    return RET_ERROR;
-  }
-
-  if (model_type == MT_TRAIN) {
-    return lite::Model::Export(model_, file_name.c_str());
-  }
-
   bool orig_train_state = IsTrain();
   Eval();
   TrainExport texport(file_name);
@@ -472,8 +463,9 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
     MS_LOG(ERROR) << "cannot init export";
     return status;
   }
-  status = texport.ExportNet((model_type == MT_TRAIN) ? kernels_ : inference_kernels_, tensors_, GetOutputTensorNames(),
-                             model_, quant_type);
+  status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
+                             (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_, model_,
+                             quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot export Network";
     return status;
@@ -489,7 +481,7 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
 
 }  // namespace lite
 
-session::TrainSession *session::TrainSession::CreateSession(const std::string &filename, const lite::Context *context,
+session::TrainSession *session::TrainSession::CreateSession(const std::string &fn, const lite::Context *context,
                                                             bool train_mode, const lite::TrainCfg *cfg) {
   auto session = new (std::nothrow) lite::TrainSession();
   if (session == nullptr) {
@@ -504,9 +496,14 @@ session::TrainSession *session::TrainSession::CreateSession(const std::string &f
     return nullptr;
   }
 
+  std::string filename = fn;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
+  }
+
   auto *model = mindspore::lite::Model::Import(filename.c_str());
   if (model == nullptr) {
-    MS_LOG(ERROR) << "create model for train session failed";
+    MS_LOG(ERROR) << "create model for train session failed " << filename;
     delete session;
     return nullptr;
   }

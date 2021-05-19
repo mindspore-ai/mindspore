@@ -36,8 +36,9 @@ std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   return data;
 }
 
-bool TrainExport::NeedQuantization(const lite::Tensor *tensor) {
-  return (tensor->quant_params().size() > 0 && tensor->quant_params().at(0).inited);
+bool TrainExport::NeedQuantization(const lite::Tensor *t) {
+  return ((quant_type_ == QT_WEIGHT && t->shape().size() > 1) ||
+          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited)));
 }
 
 schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel) {
@@ -49,13 +50,31 @@ schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel
   return schema::QuantType_QUANT_NONE;
 }
 
+void TrainExport::TagQuantizedNodes() {
+  for (auto &node : meta_graph_->nodes) {
+    if (node->quantType != schema::QuantType_QUANT_WEIGHT) {
+      for (auto t_idx : node->inputIndex) {
+        if ((meta_graph_->allTensors.at(t_idx)->nodeType == NodeType_ValueNode) &&
+            (meta_graph_->allTensors.at(t_idx)->quantParams.size() > 0)) {
+          node->quantType = schema::QuantType_QUANT_WEIGHT;
+        }
+      }
+    }
+  }
+}
+
 int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tensor *src_tensor) {
-  int channels = src_tensor->quant_params().size();
+  int channels = 1;
+  int bit_num = 8;
+
+  if (src_tensor->quant_params().size() > 0) {
+    channels = src_tensor->quant_params().size();
+    bit_num = src_tensor->quant_params().at(0).bitNum;
+  }
   if (channels < 1) {
     MS_LOG(ERROR) << "Quant Params is empty";
     return RET_ERROR;
   }
-  int bit_num = src_tensor->quant_params().at(0).bitNum;
   int quant_max = QuantMax(bit_num, kNumberTypeInt8);
   int quant_min = QuantMin(bit_num, kNumberTypeInt8);
   std::vector<int8_t> data(src_tensor->ElementsNum());
@@ -335,6 +354,10 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       meta_graph_->outputIndex.push_back(remap_[id]);
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorT));
+  }
+
+  if (quant_type_ == QT_WEIGHT) {  // do another loop to mark QUANT_WEIGHT_NODES
+    TagQuantizedNodes();
   }
   return RET_OK;
 }
