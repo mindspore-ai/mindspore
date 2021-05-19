@@ -165,6 +165,9 @@ def main():
                   amp_level=cfg.amp_level
                   )
 
+    if args.GPU:
+        context.set_context(enable_graph_kernel=True)
+
 #    callbacks = callbacks if is_master else []
 
     if args.resume:
