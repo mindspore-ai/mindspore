@@ -97,7 +97,7 @@ class InlinerBase : public AnfVisitor {
     auto &inputs = cnode->inputs();
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (!CheckFuncGraph(node, fg)) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
       return nullptr;
     }
 
@@ -180,21 +180,6 @@ class InlinerBase : public AnfVisitor {
       }
     }
     return is_match;
-  }
-
-  bool CheckFuncGraph(const AnfNodePtr &node, const FuncGraphPtr &fg) const {
-    if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
-      return false;
-    }
-
-    // Do not inline GraphKernel to Cell.
-    if (fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-      // If the GraphKernel only contains a return node, we make it inlined.
-      if (fg->nodes().size() - fg->parameters().size() > 1) {
-        return false;
-      }
-    }
-    return true;
   }
 
   void ReplaceParams(const FuncGraphManagerPtr &mng, const std::vector<AnfNodePtr> &new_params,
