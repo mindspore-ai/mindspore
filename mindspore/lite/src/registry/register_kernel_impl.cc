@@ -98,9 +98,8 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
   return RET_OK;
 }
 
-kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const KernelDesc &desc,
+kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const kernel::KernelDesc &desc,
                                                             const schema::Primitive *primitive) {
-  MS_ASSERT(primitive != nullptr);
   kernel::CreateKernel creator = nullptr;
   std::unique_lock<std::mutex> lock(lock_);
   if (desc.type == schema::PrimitiveType_Custom) {
@@ -111,18 +110,13 @@ kernel::CreateKernel RegistryKernelImpl::GetProviderCreator(const KernelDesc &de
     auto param = primitive->value_as_Custom();
     MS_ASSERT(param != nullptr);
     auto custom_type = param->type()->str();
-    auto archs = custom_kernel_creators_[desc.provider];
-    if (desc.arch.empty()) {
+    for (auto &&providers : custom_kernel_creators_) {
+      auto archs = providers.second;
       auto archs_iter = std::find_if(archs.begin(), archs.end(), [custom_type, data_type_index](auto &&item) {
         return item.second[custom_type] != nullptr && item.second[custom_type][data_type_index] != nullptr;
       });
       if (archs_iter != archs.end()) {
         return archs_iter->second[custom_type][data_type_index];
-      }
-    } else {
-      auto find_arch_it = archs.find(desc.arch);
-      if (find_arch_it != archs.end()) {
-        return find_arch_it->second[custom_type][data_type_index];
       }
     }
 

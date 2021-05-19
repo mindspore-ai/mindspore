@@ -445,6 +445,16 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
                                   const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel) {
   MS_ASSERT(kernel != nullptr);
   int ret = RET_NOT_SUPPORT;
+  auto prim_type = GetPrimitiveType(node->primitive_);
+  if (prim_type == schema::PrimitiveType_Custom) {
+    kernel::KernelKey desc{kCPU, data_type, prim_type, "", ""};
+    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
+                                                   node->primitive_);
+    if (ret == RET_OK && *kernel != nullptr) {
+      return ret;
+    }
+    return RET_NOT_SUPPORT;
+  }
   if (!context_->IsProviderEnabled()) {
     return ret;
   }
@@ -453,8 +463,7 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   }
   for (auto &&device : context_->device_list_) {
     if (!device.provider_.empty()) {
-      kernel::KernelKey desc{kCPU, data_type, GetPrimitiveType(node->primitive_), device.provider_device_,
-                             device.provider_};
+      kernel::KernelKey desc{kCPU, data_type, prim_type, device.provider_device_, device.provider_};
       ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, desc, nullptr, kernel,
                                                      node->primitive_);
       if (ret == RET_OK && *kernel != nullptr) {

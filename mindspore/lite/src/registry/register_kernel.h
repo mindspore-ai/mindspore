@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 #include "schema/model_generated.h"
 #include "include/context.h"
 #include "include/ms_tensor.h"
@@ -46,9 +47,9 @@ struct MS_API KernelDesc {
   }
 };
 
-typedef kernel::Kernel *(*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
-                                        const std::vector<tensor::MSTensor *> &outputs,
-                                        const schema::Primitive *primitive, const lite::Context *ctx);
+typedef std::shared_ptr<kernel::Kernel> (*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
+                                                        const std::vector<tensor::MSTensor *> &outputs,
+                                                        const schema::Primitive *primitive, const lite::Context *ctx);
 class MS_API RegisterKernel {
  public:
   static RegisterKernel *GetInstance();
@@ -73,10 +74,10 @@ class MS_API KernelReg {
 };
 
 #define REGISTER_KERNEL(arch, provider, data_type, op_type, creator) \
-  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(arch, provider, data_type, op_type, creator);
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, op_type, creator);
 
 #define REGISTER_CUSTOM_KERNEL(arch, provider, data_type, op_type, creator) \
-  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(arch, provider, data_type, op_type, creator);
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, #op_type, creator);
 }  // namespace kernel
 }  // namespace mindspore
 

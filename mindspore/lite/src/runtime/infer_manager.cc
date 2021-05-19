@@ -30,25 +30,31 @@ namespace mindspore {
 namespace lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers) {
-  std::vector<tensor::MSTensor *> in_tensors;
-  std::copy(inputs.begin(), inputs.end(), std::back_inserter(in_tensors));
-  std::vector<tensor::MSTensor *> out_tensors;
-  std::copy(outputs.begin(), outputs.end(), std::back_inserter(out_tensors));
-  for (auto &&provider : providers) {
-    auto kernel_interface = kernel::RegisterKernelInterface::Instance()->GetKernelInterface(
-      provider, static_cast<const schema::Primitive *>(primitive));
-    if (kernel_interface == nullptr) {
-      continue;
+  std::vector<tensor::MSTensor *> in_tensors(inputs.begin(), inputs.end());
+  std::vector<tensor::MSTensor *> out_tensors(outputs.begin(), outputs.end());
+  auto prim_type = GetPrimitiveType(primitive);
+  std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
+  if (prim_type == schema::PrimitiveType_Custom) {
+    kernel_interface = kernel::RegisterKernelInterface::Instance()->GetKernelInterface(
+      "", static_cast<const schema::Primitive *>(primitive));
+  } else {
+    for (auto &&provider : providers) {
+      kernel_interface = kernel::RegisterKernelInterface::Instance()->GetKernelInterface(
+        provider, static_cast<const schema::Primitive *>(primitive));
+      if (kernel_interface != nullptr) {
+        break;
+      }
     }
-    auto ret = kernel_interface->Infer(in_tensors, out_tensors, static_cast<const schema::Primitive *>(primitive));
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "provider: " << provider << ", op_type: " << PrimitiveTypeName(GetPrimitiveType(primitive))
-                    << " infer fail!";
-      return ret;
-    }
-    return RET_OK;
   }
-
+  if (kernel_interface == nullptr) {
+    MS_LOG(ERROR) << "Can't find kernel_interface!op_type: " << PrimitiveTypeName(prim_type);
+    return RET_ERROR;
+  }
+  auto ret = kernel_interface->Infer(in_tensors, out_tensors, static_cast<const schema::Primitive *>(primitive));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!";
+    return ret;
+  }
   return RET_ERROR;
 }
 

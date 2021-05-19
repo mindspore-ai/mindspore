@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_REGISTRY_H_
-#define MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_REGISTRY_H_
+#ifndef MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_REGISTRY_H_
+#define MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_REGISTRY_H_
 
 #include <string>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <set>
 #include "src/registry/kernel_interface.h"
@@ -33,25 +34,28 @@ class KernelInterfaceRegistry {
     return &instance;
   }
   bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
-  kernel::KernelInterface *GetKernelInterface(const std::string &provider, const schema::Primitive *primitive);
+  std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
+                                                              const schema::Primitive *primitive);
   int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);
   int Reg(const std::string &provider, int op_type, kernel::KernelInterfaceCreator creator);
   virtual ~KernelInterfaceRegistry();
 
  private:
   KernelInterfaceRegistry() = default;
-  kernel::KernelInterface *GetCacheInterface(const std::string &provider, int op_type);
-  kernel::KernelInterface *GetCustomCacheInterface(const std::string &provider, const std::string &type);
+  std::shared_ptr<kernel::KernelInterface> GetCacheInterface(const std::string &provider, int op_type);
+  std::shared_ptr<kernel::KernelInterface> GetCustomCacheInterface(const std::string &provider,
+                                                                   const std::string &type);
+  std::shared_ptr<kernel::KernelInterface> GetCustomKernelInterface(const schema::Primitive *primitive);
 
   std::mutex mutex_;
   // key: provider
   std::map<std::string, kernel::KernelInterfaceCreator *> kernel_creators_;
-  std::map<std::string, std::map<int, kernel::KernelInterface *>> kernel_interfaces_;
+  std::map<std::string, std::map<int, std::shared_ptr<kernel::KernelInterface>>> kernel_interfaces_;
   // key: provider        key: custom type
   std::map<std::string, std::map<std::string, kernel::KernelInterfaceCreator>> custom_creators_;
-  std::map<std::string, std::map<std::string, kernel::KernelInterface *>> custom_kernels_;
+  std::map<std::string, std::map<std::string, std::shared_ptr<kernel::KernelInterface>>> custom_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_KERNEL_DEV_DELEGATE_REGISTRY_H_
+#endif  // MINDSPORE_LITE_SRC_REGISTRY_KERNEL_INTERFACE_REGISTRY_H_

@@ -158,13 +158,11 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     std::vector<tensor::MSTensor *> tensors_out(out_tensors.begin(), out_tensors.end());
     auto base_kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
     if (base_kernel != nullptr) {
-      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
+      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel.get());
       if (lite_kernel != nullptr) {
         lite_kernel->set_desc(key);
         *kernel = lite_kernel;
         return RET_OK;
-      } else {
-        delete base_kernel;
       }
     }
     return RET_ERROR;
