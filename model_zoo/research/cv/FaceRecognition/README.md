@@ -55,8 +55,9 @@ The directory structure is as follows:
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor.
+- Hardware（Ascend, CPU）
+    - Prepare hardware environment with Ascend processor. It also supports the use of CPU processor to prepare the
+    hardware environment.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -76,9 +77,12 @@ The entire code structure is as following:
   │   ├── run_distribute_train_base.sh      // shell script for distributed training on Ascend
   │   ├── run_distribute_train_beta.sh      // shell script for distributed training on Ascend
   │   ├── run_eval.sh                       // shell script for evaluation on Ascend
+  │   ├── run_eval_cpu.sh                   // shell script for evaluation on CPU
   │   ├── run_export.sh                     // shell script for exporting air model
   │   ├── run_standalone_train_base.sh      // shell script for standalone training on Ascend
   │   ├── run_standalone_train_beta.sh      // shell script for standalone training on Ascend
+  │   ├── run_train_base_cpu.sh             // shell script for training on CPU
+  │   ├── run_train_btae_cpu.sh             // shell script for training on CPU
   ├── src
   │   ├── backbone
   │   │   ├── head.py                       // head unit
@@ -100,8 +104,11 @@ The entire code structure is as following:
   │   ├── local_adapter.py                  // local adapter
   │   ├── moxing_adapter.py                 // moxing adapter
   ├─ base_config.yaml                       // parameter configuration
+  ├─ base_config_cpu.yaml                   // parameter configuration
   ├─ beta_config.yaml                       // parameter configuration
+  ├─ beta_config_cpu.yaml                   // parameter configuration
   ├─ inference_config.yaml                  // parameter configuration
+  ├─ inference_config_cpu.yaml              // parameter configuration
   ├─ train.py                               // training scripts
   ├─ eval.py                                // evaluation scripts
   └─ export.py                              // export air model
@@ -111,7 +118,7 @@ The entire code structure is as following:
 
 ### Train
 
-- Stand alone mode
+- Stand alone mode(Ascend)
 
     - base model
 
@@ -169,6 +176,36 @@ The entire code structure is as following:
       ```bash
       cd ./scripts
       sh run_distribute_train_beta.sh ./rank_table_8p.json
+      ```
+
+- Stand alone mode(CPU)
+
+    - base model
+
+      ```bash
+      cd ./scripts
+      sh run_train_base_cpu.sh
+      ```
+
+      for example:
+
+      ```bash
+      cd ./scripts
+      sh run_train_base_cpu.sh
+      ```
+
+    - beta model
+
+      ```bash
+      cd ./scripts
+      sh run_train_beta_cpu.sh
+      ```
+
+      for example:
+
+      ```bash
+      cd ./scripts
+      sh run_train_beta_cpu.sh
       ```
 
 - ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)

@@ -21,6 +21,7 @@ from collections import defaultdict
 import numpy as np
 
 from PIL import Image, ImageFile
+from utils.config import config
 from mindspore.communication.management import get_group_size, get_rank
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -56,9 +57,14 @@ class DistributedCustomSampler:
         self.epoch_gen = 1
 
     def _sample_(self, indices):
+        """sample"""
         sampled = []
+
         for indice in indices:
             sampled_id = indice
+            if config.device_target == 'CPU':
+                if self.k >= len(sampled_id):
+                    continue
             sampled.extend(np.random.choice(self.dataset.id2range[sampled_id][:], self.k).tolist())
 
         return sampled

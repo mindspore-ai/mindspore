@@ -33,7 +33,7 @@ from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
 
 
 class TxtDataset():
