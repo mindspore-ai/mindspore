@@ -123,5 +123,9 @@ if [ $# == 5 ]
 then
     python train.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --run_eval=$RUN_EVAL \
            --eval_dataset_path=$EVAL_DATASET_PATH --enable_cache=True --cache_session_id=$CACHE_SESSION_ID &> log &
+    if [ "x${RUN_EVAL}" == "xTrue" ]
+    then
+      echo -e "\nWhen training run is done, remember to shut down the cache server via \"cache_admin --stop\""
+    fi
 fi
 cd ..

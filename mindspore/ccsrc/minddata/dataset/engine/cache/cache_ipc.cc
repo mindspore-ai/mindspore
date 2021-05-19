@@ -42,7 +42,7 @@ SharedMessage::~SharedMessage() {
 
 Status SharedMessage::Create() {
   CHECK_FAIL_RETURN_UNEXPECTED(msg_qid_ == -1, "Message queue already created");
-  auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
+  auto access_mode = S_IRUSR | S_IWUSR;
   msg_qid_ = msgget(IPC_PRIVATE, IPC_CREAT | IPC_EXCL | access_mode);
   if (msg_qid_ == -1) {
     std::string errMsg = "Unable to create a message queue. Errno = " + std::to_string(errno);
@@ -99,7 +99,7 @@ SharedMemory::~SharedMemory() {
 }
 
 Status SharedMemory::Create(int64_t sz) {
-  auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
+  auto access_mode = S_IRUSR | S_IWUSR;
   shm_id_ = shmget(shm_key_, sz, IPC_CREAT | IPC_EXCL | access_mode);
   if (shm_id_ == -1) {
     RETURN_STATUS_UNEXPECTED("Shared memory creation failed. Errno " + std::to_string(errno));

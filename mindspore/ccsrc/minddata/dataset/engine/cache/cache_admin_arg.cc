@@ -529,7 +529,8 @@ Status CacheAdminArgHandler::StopServer(CommandId command_id) {
   if (rc.IsError()) {
     msg.RemoveResourcesOnExit();
     if (rc == StatusCode::kMDNetWorkError) {
-      std::string errMsg = "Server on port " + std::to_string(port_) + " is not up or has been shutdown already.";
+      std::string errMsg =
+        "Server on port " + std::to_string(port_) + " is not reachable or has been shutdown already.";
       return Status(StatusCode::kMDNetWorkError, errMsg);
     }
     return rc;
