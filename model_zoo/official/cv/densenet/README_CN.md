@@ -18,6 +18,10 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [导出过程](#导出过程)
+        - [导出](#导出)
+    - [推理过程](#推理过程)
+        - [推理](#推理)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练准确率结果](#训练准确率结果)
@@ -106,6 +110,9 @@ DenseNet-100使用的数据集： Cifar-10
   python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
+
+  # 推理示例
+  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -139,10 +146,12 @@ DenseNet-100使用的数据集： Cifar-10
     ├── README.md                          // 所有模型的说明
     ├── densenet
         ├── README.md                    // DenseNet相关说明
+        ├── ascend310_infer              // 实现310推理源代码
         ├── scripts
         │   ├── run_distribute_train.sh             // Ascend分布式shell脚本
         │   ├── run_distribute_train_gpu.sh             // GPU分布式shell脚本
         │   ├── run_distribute_eval.sh              // Ascend评估shell脚本
+        │   ├── run_infer_310.sh                    // Ascend 310 推理shell脚本
         │   ├── run_distribute_eval_gpu.sh              // GPU评估shell脚本
         ├── src
         │   ├── datasets             // 数据集处理函数
@@ -158,6 +167,8 @@ DenseNet-100使用的数据集： Cifar-10
         │       ├──var_init.py            // DenseNet变量init函数
         │   ├── config.py             // 网络配置
         ├── train.py               // 训练脚本
+        ├── export.py              // 导出 AIR,MINDIR模型的脚本
+        ├── postprogress.py        // 310推理后处理脚本
         ├── eval.py               //  评估脚本
 ```
 
@@ -317,6 +328,37 @@ DenseNet-100使用的数据集： Cifar-10
 
   ```log
   2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
+  ```
+
+## 导出过程
+
+### 导出
+
+```shell
+python export.py --net [NET_NAME] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+## 推理过程
+
+### 推理
+
+在推理之前需要先导出模型，AIR模型只能在昇腾910环境上导出，MINDIR可以在任意环境上导出。
+
+```shell
+# 昇腾310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+```
+
+-注: Densnet121网络使用ImageNet数据集,图片的label是将文件夹排序后从0开始编号所得的数字.
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+Densenet121网络使用ImageNet推理得到的结果如下:
+
+  ```log
+  2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.56%
+  2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.74%
   ```
 
 # 模型描述
