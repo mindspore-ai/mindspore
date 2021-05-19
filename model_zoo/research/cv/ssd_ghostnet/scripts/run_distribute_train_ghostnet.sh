@@ -50,6 +50,7 @@ do
     mkdir ./LOG$i
     cp ./*.py ./LOG$i
     cp -r ./src ./LOG$i
+    cp -r ./*yaml ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
@@ -57,25 +58,27 @@ do
     if [ $# == 5 ]
     then
         python train.py  \
-        --distribute=True  \
+        --run_distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --epoch_size=$EPOCH_SIZE \
+        --output_path './output' > log.txt 2>&1 &
     fi
 
     if [ $# == 7 ]
     then
         python train.py  \
-        --distribute=True  \
+        --run_distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
         --pre_trained=$PRE_TRAINED \
         --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --epoch_size=$EPOCH_SIZE \
+        --output_path './output' > log.txt 2>&1 &
     fi
 
     cd ../

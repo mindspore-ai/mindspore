@@ -18,7 +18,7 @@
 import math
 import itertools as it
 import numpy as np
-from .config_ghostnet_13x import config
+from src.model_utils.config import config
 
 
 class GeneratDefaultBoxes():

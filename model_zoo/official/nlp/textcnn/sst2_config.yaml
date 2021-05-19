@@ -31,9 +31,8 @@ result_path: './preprocess_Result/'
 
 # Export options
 device_id: 0
-ckpt_file: ""
-file_name: ""
-file_format: ""
+file_name: "textcnn"
+file_format: "AIR"
 
 ---
 # Help description for each configuration

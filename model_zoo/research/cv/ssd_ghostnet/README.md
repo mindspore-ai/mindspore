@@ -83,6 +83,37 @@ sh run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RA
 python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.ckpt
 ```
 
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the Dataset directory in config file.
+# (3) Set the code directory to "/path/ssd_ghostne" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the Dataset directory in config file.
+# (4) Set the code directory to "/path/ssd_ghostnet" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -96,20 +127,25 @@ python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.c
     ├── src
       ├─ box_util.py              ## bbox utils
       ├─ coco_eval.py             ## coco metrics utils
-      ├─ config_ghostnet_13x.py   ## total config
       ├─ dataset.py               ## create dataset and process dataset
       ├─ init_params.py           ## parameters utils
       ├─ lr_schedule.py           ## learning ratio generator
       └─ ssd_ghostnet.py          ## ssd architecture
-    ├── eval.py           ## eval scripts
-    ├── train.py          ## train scripts
-    ├── mindspore_hub_conf.py       # export model for hub
+      ├── model_utils
+      │   ├── config.py          ## parameter configuration
+      │   ├── device_adapter.py  ## device adapter
+      │   ├── local_adapter.py   ## local adapter
+      │   ├── moxing_adapter.py  ## moxing adapter
+    ├── default_config.yaml       ## parameter configuration
+    ├── eval.py                   ## eval scripts
+    ├── train.py                  ## train scripts
+    ├── mindspore_hub_conf.py     ## export model for hub
 ```
 
 ## [Script Parameters](#contents)
 
   ```python
-  Major parameters in train.py and config_ghostnet_13x.py as follows:
+  Major parameters in train.py and default_config.yaml as follows:
 
     "device_num": 1                            # Use device nums
     "lr": 0.05                                 # Learning rate init value

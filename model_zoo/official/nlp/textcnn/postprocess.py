@@ -18,7 +18,7 @@
 import os
 import numpy as np
 from mindspore.nn.metrics import Accuracy
-from src.model_utils.config import config
+from model_utils.config import config
 
 if __name__ == '__main__':
 

@@ -17,7 +17,7 @@
 """
 import os
 import numpy as np
-from src.model_utils.config import config
+from model_utils.config import config
 from src.dataset import MovieReview, SST2, Subjectivity
 
 if __name__ == '__main__':
