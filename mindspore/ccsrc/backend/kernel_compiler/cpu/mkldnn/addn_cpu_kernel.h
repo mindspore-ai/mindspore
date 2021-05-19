@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 class AddNCPUKernel : public MKLCPUKernel {
  public:
-  AddNCPUKernel() : input_num_(0) {}
+  AddNCPUKernel() = default;
   ~AddNCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,12 +34,16 @@ class AddNCPUKernel : public MKLCPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  size_t input_num_;
+  size_t input_num_{0};
   std::vector<size_t> output_shape_;
+  TypeId dtype_{kNumberTypeFloat32};
 };
 
 MS_REG_CPU_KERNEL(AddN,
                   KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  AddNCPUKernel);
+MS_REG_CPU_KERNEL(AddN,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                   AddNCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

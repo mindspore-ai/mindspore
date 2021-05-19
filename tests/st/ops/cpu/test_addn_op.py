@@ -19,60 +19,62 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
-class Net2I(nn.Cell):
+
+class Net2Inputs(nn.Cell):
     def __init__(self):
-        super(Net2I, self).__init__()
+        super(Net2Inputs, self).__init__()
         self.addn = P.AddN()
 
     def construct(self, x, y):
         return self.addn((x, y))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net_2Input():
-    x = np.arange(2 * 3 * 2).reshape(2, 3, 2).astype(np.float32)
-    y = np.arange(2 * 3 * 2).reshape(2, 3, 2).astype(np.float32)
-    addn = Net2I()
-    output = addn(Tensor(x, mstype.float32), Tensor(y, mstype.float32))
-    print("output:\n", output)
-    expect_result = [[[0., 2.],
-                      [4., 6.],
-                      [8., 10.]],
-                     [[12., 14.],
-                      [16., 18.],
-                      [20., 22.]]]
+def test_two_tensors_add():
+    x = np.arange(2 * 3 * 2).reshape((2, 3, 2))
+    y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2))
+    addn_net = Net2Inputs()
+    dtypes = (np.int32, np.float32)
+    for dtype in dtypes:
+        output = addn_net(Tensor(x.astype(dtype)), Tensor(y.astype(dtype)))
+        expect_result = (x + y).astype(dtype)
+        assert output.asnumpy().dtype == expect_result.dtype
+        assert np.array_equal(output.asnumpy(), expect_result)
 
-    assert (output.asnumpy() == expect_result).all()
 
-class Net3I(nn.Cell):
+class Net4Inputs(nn.Cell):
     def __init__(self):
-        super(Net3I, self).__init__()
+        super(Net4Inputs, self).__init__()
         self.addn = P.AddN()
 
-    def construct(self, x, y, z):
-        return self.addn((x, y, z))
+    def construct(self, x, y, m, n):
+        return self.addn((x, y, m, n))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net_3Input():
-    x = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
-    y = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
-    z = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
-    addn = Net3I()
-    output = addn(Tensor(x, mstype.float32), Tensor(y, mstype.float32), Tensor(z, mstype.float32))
-    print("output:\n", output)
-    expect_result = [[0., 3., 6.],
-                     [9., 12., 15]]
+def test_four_tensors_add():
+    x = np.arange(2 * 3).reshape((2, 3))
+    y = np.arange(1, 2 * 3 + 1).reshape((2, 3))
+    m = np.arange(2, 2 * 3 + 2).reshape((2, 3))
+    n = np.arange(3, 2 * 3 + 3).reshape((2, 3))
+    addn_net = Net4Inputs()
+    dtypes = (np.int32, np.float32)
+    for dtype in dtypes:
+        output = addn_net(Tensor(x.astype(dtype)), Tensor(y.astype(dtype)),
+                          Tensor(m.astype(dtype)), Tensor(n.astype(dtype)))
+        expect_result = (x + y + m + n).astype(dtype)
+        assert output.asnumpy().dtype == expect_result.dtype
+        assert np.array_equal(output.asnumpy(), expect_result)
 
-    assert (output.asnumpy() == expect_result).all()
 
 if __name__ == '__main__':
-    test_net_2Input()
-    test_net_3Input()
+    test_two_tensors_add()
+    test_four_tensors_add()
