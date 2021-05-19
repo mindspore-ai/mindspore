@@ -85,21 +85,27 @@ Dataset used:
         │   ├──loss
         │       ├──loss.py            // loss function
         │   ├──utils
-        │       ├──lr_scheduler.py            // getting learning_rateFCN-8s  
+        │       ├──lr_scheduler.py            // getting learning_rateFCN-8s
+        │   ├──model_utils
+        │       ├──config.py                     // getting config parameters
+        │       ├──device_adapter.py            // getting device info
+        │       ├──local_adapter.py            // getting device info
+        │       ├──moxing_adapter.py          // Decorator
+        ├── default_config.yaml               // Parameters config
         ├── train.py                 // training script
         ├── eval.py                  //  evaluation script
 ```
 
 ## [脚本参数](#contents)
 
-训练以及评估的参数可以在config.py中设置
+训练以及评估的参数可以在default_config.yaml中设置
 
 - config for FCN8s
 
   ```python
      # dataset
     'data_file': '/data/workspace/mindspore_dataset/FCN/FCN/dataset/MINDRECORED_NAME.mindrecord', # path and name of one mindrecord file
-    'batch_size': 32,
+    'train_batch_size': 32,
     'crop_size': 512,
     'image_mean': [103.53, 116.28, 123.675],
     'image_std': [57.375, 57.120, 58.395],
@@ -124,7 +130,7 @@ Dataset used:
     'ckpt_dir': './ckpt',
   ```
 
-如需获取更多信息，请查看`config.py`.
+如需获取更多信息，请查看`default_config.yaml`.
 
 ## [生成数据步骤](#contents)
 
@@ -151,11 +157,15 @@ Dataset used:
 
 - running on Ascend with default parameters
 
-  ```python
-  python train.py --device_id device_id
+  ```python 单卡训练
+  sh scripts/run_standalone_train.sh DEVICE_ID
   ```
 
-  训练时，训练过程中的epch和step以及此时的loss和精确度会呈现在终端上：
+  ```python 分布式训练
+  sh scripts/run_train.sh DEVICE_NUM RANK_TABLE_FILES
+  ```
+
+  训练时，训练过程中的epch和step以及此时的loss和精确度会呈现log.txt中:
 
   ```python
   epoch: * step: **, loss is ****
@@ -174,6 +184,10 @@ Dataset used:
 
   ```python
   python eval.py
+  ```
+
+  ```python shell脚本验证
+  sh scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
   ```
 
   以上的python命令会在终端上运行，你可以在终端上查看此次评估的结果。测试集的精确度会以如下方式呈现：

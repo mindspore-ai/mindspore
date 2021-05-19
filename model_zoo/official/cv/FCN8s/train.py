@@ -14,7 +14,7 @@
 # ============================================================================
 """train FCN8s."""
 
-import os
+
 from mindspore import context, Tensor
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -38,7 +38,7 @@ set_seed(1)
 
 
 def modelarts_pre_process():
-    config.checkpoint_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
+    pass
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
@@ -59,7 +59,7 @@ def train():
     # dataset
     dataset = data_generator.SegDataset(image_mean=config.image_mean,
                                         image_std=config.image_std,
-                                        data_file=os.path.join(config.data_path, config.data_file),
+                                        data_file=config.data_file,
                                         batch_size=config.train_batch_size,
                                         crop_size=config.crop_size,
                                         max_scale=config.max_scale,
@@ -77,7 +77,6 @@ def train():
 
     # load pretrained vgg16 parameters to init FCN8s
     if config.ckpt_vgg16:
-        config.ckpt_vgg16 = os.path.join(config.data_path, config.ckpt_vgg16)
         param_vgg = load_checkpoint(config.ckpt_vgg16)
         param_dict = {}
         for layer_id in range(1, 6):
@@ -97,7 +96,6 @@ def train():
         load_param_into_net(net, param_dict)
     # load pretrained FCN8s
     elif config.ckpt_pre_trained:
-        config.ckpt_pre_trained = os.path.join(config.data_path, config.ckpt_pre_trained)
         param_dict = load_checkpoint(config.ckpt_pre_trained)
         load_param_into_net(net, param_dict)
 
@@ -117,7 +115,6 @@ def train():
 
     optimizer = nn.Momentum(params=net.trainable_params(), learning_rate=lr, momentum=0.9, weight_decay=0.0001,
                             loss_scale=config.loss_scale)
-    print(optimizer.get_lr())
     model = Model(net, loss_fn=loss_, loss_scale_manager=manager_loss_scale, optimizer=optimizer, amp_level="O3")
 
     # callback for saving ckpts
@@ -128,7 +125,7 @@ def train():
     if config.rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_steps,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
-        ckpoint_cb = ModelCheckpoint(prefix=config.model, directory=config.checkpoint_path, config=config_ck)
+        ckpoint_cb = ModelCheckpoint(prefix=config.model, directory=config.ckpt_dir, config=config_ck)
         cbs.append(ckpoint_cb)
 
     model.train(config.train_epochs, dataset, callbacks=cbs)

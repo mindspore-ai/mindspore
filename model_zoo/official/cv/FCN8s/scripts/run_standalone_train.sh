@@ -16,7 +16,7 @@
 
 if [ $# != 1 ]
 then
-    echo "Usage: sh run_standalone_train.sh [device_num]"
+    echo "Usage: sh scripts/run_standalone_train.sh DEVICE_ID"
 exit 1
 fi
 
@@ -30,9 +30,10 @@ fi
 mkdir -p ${train_path}
 cp -r ./src ${train_path}
 cp ./train.py ${train_path}
+cp ./*.yaml ${train_path}
 
 echo "start training for device $DEVICE_ID"
 
 cd ${train_path}|| exit
-python train.py --device_id=${DEVICE_ID} > log 2>&1 &
+python train.py > log 2>&1 &
 cd ..

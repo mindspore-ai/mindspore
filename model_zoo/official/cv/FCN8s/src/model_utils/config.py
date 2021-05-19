@@ -21,6 +21,9 @@ from pprint import pprint, pformat
 import yaml
 
 
+global_yaml = '../../default_config.yaml'
+
+
 class Config:
     """
     Configuration namespace. Convert dictionary to members
@@ -115,7 +118,7 @@ def get_config():
     """
     parser = argparse.ArgumentParser(description='default name', add_help=False)
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    parser.add_argument('--config_path', type=str, default=os.path.join(current_dir, '../../default_config.yaml'),
+    parser.add_argument('--config_path', type=str, default=os.path.join(current_dir, global_yaml),
                         help='Config file path')
     path_args, _ = parser.parse_known_args()
     default, helper, choices = parse_yaml(path_args.config_path)

@@ -15,8 +15,8 @@
 # ============================================================================
 
 export DEVICE_ID=0
-python src/data/build_seg_data.py  --data_root=/home/sun/data/Mindspore/benchmark_RELEASE/dataset  \
-                    --data_lst=/home/sun/data/Mindspore/benchmark_RELEASE/dataset/trainaug.txt  \
-                    --dst_path=dataset/MINDRECORED_NAME.mindrecord  \
+python src/data/build_seg_data.py  --data_root=/data/mjq/dataset  \
+                    --data_lst=/data/mjq/dataset/vocaug_train_lst.txt  \
+                    --dst_path=./mindrecords/vocaug_train.mindrecords  \
                     --num_shards=1  \
                     --shuffle=True

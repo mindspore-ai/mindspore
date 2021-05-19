@@ -18,26 +18,27 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh run_distribute_eval.sh DEVICE_NUM RANK_TABLE_FILE DATASET CKPT_PATH"
-echo "for example: sh run_eval.sh [RANK_TABLE_FILE] /path/to/dataset /path/to/ckpt device_id"
+echo "for example: sh scripts/run_eval.sh path/to/data_root /path/to/dataset /path/to/ckpt"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
 
-export DATA_PATH=$1
-CKPT_PATH=$2
-DEVICE_ID=$3
+export DATA_ROOT=$1
+DATA_PATH=$2
+CKPT_PATH=$3
 
 rm -rf eval
 mkdir ./eval
 cp ./*.py ./eval
+cp ./*.yaml ./eval
 cp -r ./src ./eval
 cd ./eval || exit
 echo "start testing"
 env > env.log
 python eval.py  \
---device_id=$DEVICE_ID  \
---data_path=$DATA_PATH   \
---ckpt_path=$CKPT_PATH #> log.txt 2>&1 &
+--data_root=$DATA_ROOT  \
+--data_lst=$DATA_PATH   \
+--ckpt_file=$CKPT_PATH #> log.txt 2>&1 &
 
 cd ../
 

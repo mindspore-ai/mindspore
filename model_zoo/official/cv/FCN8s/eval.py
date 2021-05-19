@@ -14,7 +14,7 @@
 # ============================================================================
 """eval FCN8s."""
 
-import os
+
 import numpy as np
 import cv2
 from PIL import Image
@@ -102,7 +102,7 @@ def eval_batch(configs, eval_net, img_lst, crop_size=512, flip=True):
     for bs in range(batch_size):
         probs_ = net_out[bs][:, :resize_hw[bs][0], :resize_hw[bs][1]].transpose((1, 2, 0))
         ori_h, ori_w = img_lst[bs].shape[0], img_lst[bs].shape[1]
-        probs_ = cv2.resize(probs_, (ori_w, ori_h))
+        probs_ = cv2.resize(probs_.astype(np.float32), (ori_w, ori_h))
         result_lst.append(probs_)
 
     return result_lst
@@ -130,14 +130,12 @@ def net_eval():
                         save_graphs=False)
 
     # data list
-    data_lst = os.path.join(config.data_path, config.data_lst)
-    with open(data_lst) as f:
+    with open(config.data_lst) as f:
         img_lst = f.readlines()
 
     net = FCN8s(n_class=config.num_classes)
 
     # load model
-    config.ckpt_file = os.path.join(config.data_path, config.ckpt_file)
     param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
 
@@ -150,7 +148,7 @@ def net_eval():
     for i, line in enumerate(img_lst):
 
         img_name = line.strip('\n')
-        data_root = config.data_path
+        data_root = config.data_root
         img_path = data_root + '/JPEGImages/' + str(img_name) + '.jpg'
         msk_path = data_root + '/SegmentationClass/' + str(img_name) + '.png'
 
