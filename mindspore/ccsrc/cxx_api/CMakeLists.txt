@@ -35,6 +35,7 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc
               ${API_MS_INFER_SRC}
               ${API_ACL_SRC}
               ${API_OPS_SRC}

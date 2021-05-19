@@ -33,7 +33,6 @@ class ModelConverter {
   ModelConverter() : options_(nullptr) {}
 
   Buffer LoadMindIR(const FuncGraphPtr &func_graph);
-  Buffer LoadAscendIR(const Buffer &model_data);
 
   void set_options(AclModelOptions *options) { options_ = options; }
 
@@ -43,7 +42,6 @@ class ModelConverter {
                        const std::map<std::string, std::string> &build_options);
   AclModelOptions *options_;
 
-  Buffer LoadMindIRInner(const FuncGraphPtr &func_graph);
   Buffer LoadAscendIRInner(const Buffer &model_data);
 };
 }  // namespace mindspore

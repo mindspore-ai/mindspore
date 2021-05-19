@@ -59,7 +59,8 @@ Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall
     MS_LOG_ERROR << "Get shared memory failed";
     return ret;
   }
-  shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * 2;
+  constexpr size_t kMsgStructNum = 2;
+  shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * kMsgStructNum;
   shmat_data_max_size_ = memory_size_ - (shmat_data_addr_ - shmat_addr_);
   MS_LOG_INFO << "Shm addr " << (uint64_t)shmat_addr_;
   if (pid == 0) {
@@ -192,6 +193,7 @@ Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
 void MultiProcess::HeartbeatThreadFunc(MultiProcess *multi_process) { multi_process->HeartbeatThreadFuncInner(); }
 
 void MultiProcess::HeartbeatThreadFuncInner() {
+  constexpr uint64_t kOvertime = 1024;
   uint64_t last_beat_cnt = 0;
   uint64_t repeat_cnt = 0;
   while (!stopped_) {
@@ -201,7 +203,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
       break;
     }
     uint64_t heartbeat_gap = receive_msg_->heartbeat - last_beat_cnt;
-    if (heartbeat_gap > 0 && heartbeat_gap < 1024) {
+    if (heartbeat_gap > 0 && heartbeat_gap < kOvertime) {
       last_beat_cnt = receive_msg_->heartbeat;
       repeat_cnt = 0;
     } else {
