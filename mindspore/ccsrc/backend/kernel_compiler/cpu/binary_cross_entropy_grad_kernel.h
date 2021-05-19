@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 class BinaryCrossEntropyGradCpuKernel : public CPUKernel {
  public:
-  BinaryCrossEntropyGradCpuKernel() : input_size_(1), reduction_(1) {}
+  BinaryCrossEntropyGradCpuKernel() : input_size_(1), reduction_(1), weight_defined_(false) {}
   ~BinaryCrossEntropyGradCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -39,6 +39,7 @@ class BinaryCrossEntropyGradCpuKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
   size_t input_size_;
   int reduction_;
+  bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
 };
 MS_REG_CPU_KERNEL(BinaryCrossEntropyGrad,
                   KernelAttr()
@@ -51,6 +52,20 @@ MS_REG_CPU_KERNEL(BinaryCrossEntropyGrad,
 MS_REG_CPU_KERNEL(BinaryCrossEntropyGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  BinaryCrossEntropyGradCpuKernel);
+MS_REG_CPU_KERNEL(BinaryCrossEntropyGrad,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddInputAttr(kNumberTypeFloat16)
+                    .AddOutputAttr(kNumberTypeFloat16),
+                  BinaryCrossEntropyGradCpuKernel);
+MS_REG_CPU_KERNEL(BinaryCrossEntropyGrad,
+                  KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class BinaryCrossEntropyGpuKernel : public GpuKernel {
  public:
-  BinaryCrossEntropyGpuKernel() : input_size_(1), reduction_(1) {}
+  BinaryCrossEntropyGpuKernel() : weight_defined_(false), input_size_(1), reduction_(1) {}
   ~BinaryCrossEntropyGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -37,7 +37,10 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input_x = GetDeviceAddress<T>(inputs, 0);
     T *input_y = GetDeviceAddress<T>(inputs, 1);
-    T *weight = GetDeviceAddress<T>(inputs, 2);
+    T *weight = nullptr;
+    if (weight_defined_) {
+      weight = GetDeviceAddress<T>(inputs, 2);
+    }
     T *loss = GetDeviceAddress<T>(outputs, 0);
     T *tmp_loss = GetDeviceAddress<T>(workspace, 0);
     if (input_size_ > 0) {
@@ -49,6 +52,8 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    weight_defined_ = (input_num == 3);
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
@@ -70,7 +75,9 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
     input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
+    if (weight_defined_) {
+      input_size_list_.push_back(input_size_ * sizeof(T));
+    }
     if (reduction_ == 0) {
       output_size_list_.push_back(input_size_ * sizeof(T));
     } else {
@@ -80,6 +87,7 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
   }
 
  private:
+  bool weight_defined_;  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
   size_t input_size_;
   int reduction_;
   size_t workspace_size_;
