@@ -37,7 +37,7 @@ class ModelImpl {
   virtual Status Build() = 0;
   virtual Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
 
-  virtual Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
+  virtual Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
   virtual std::vector<MSTensor> GetInputs() = 0;
   virtual std::vector<MSTensor> GetOutputs() = 0;
@@ -58,8 +58,9 @@ class ModelImpl {
     return graph_data->GetFuncGraph();
   }
 
-  std::shared_ptr<Graph> graph_;
-  std::shared_ptr<Context> model_context_;
+  std::shared_ptr<Graph> graph_ = nullptr;
+  std::shared_ptr<GraphCell> graph_cell_ = nullptr;
+  std::shared_ptr<Context> model_context_ = nullptr;
 
  private:
   friend class Model;

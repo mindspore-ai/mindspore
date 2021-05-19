@@ -156,32 +156,6 @@ Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<s
   return kSuccess;
 }
 
-Status AclModel::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
-  MS_EXCEPTION_IF_NULL(outputs);
-  if (graph_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid data, graph_ is null.";
-    return kMCFailed;
-  }
-
-  if (graph_cell_ == nullptr) {
-    MS_LOG(WARNING) << "Model has not been built, it will be built with default options";
-    Status ret = Build();
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Build model failed.";
-      return ret;
-    }
-  }
-
-  MS_EXCEPTION_IF_NULL(graph_cell_);
-  Status ret = graph_cell_->Run(inputs, outputs);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Run graph failed.";
-    return ret;
-  }
-
-  return kSuccess;
-}
-
 std::vector<MSTensor> AclModel::GetInputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
   return graph_cell_->GetInputs();
