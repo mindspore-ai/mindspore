@@ -48,7 +48,6 @@ class ExportToQuantInferNetwork:
     Returns:
         Cell, Infer network.
     """
-    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         network = Validator.check_isinstance('network', network, (nn.Cell,))

@@ -30,10 +30,9 @@ parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
 parser.add_argument('--device_target', type=str, default="Ascend",
                     choices=['Ascend', 'GPU'],
                     help='device where the code will be implemented (default: Ascend)')
-parser.add_argument('--data_path', type=str, default="./MNIST_Data",
-                    help='path where the dataset is saved')
 parser.add_argument('--ckpt_path', type=str, default="",
                     help='if mode is test, must provide path where the trained ckpt file')
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -54,4 +53,4 @@ if __name__ == "__main__":
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='QUANT')
+    export(network, inputs, file_name="lenet_quant", file_format=args.file_format, quant_mode='QUANT')
