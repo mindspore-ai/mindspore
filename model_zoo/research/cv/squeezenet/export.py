@@ -17,36 +17,29 @@
 python export.py --net squeezenet --dataset cifar10 --checkpoint_path squeezenet_cifar10-120_1562.ckpt
 """
 
-import argparse
 import numpy as np
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from model_utils.config import config
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Image classification')
-    parser.add_argument('--net', type=str, default='squeezenet', choices=['squeezenet', 'squeezenet_residual'],
-                        help='Model.')
-    parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'imagenet'], help='Dataset.')
-    parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
-    args_opt = parser.parse_args()
-
-    if args_opt.net == "squeezenet":
+    if config.net_name == "squeezenet":
         from src.squeezenet import SqueezeNet as squeezenet
     else:
         from src.squeezenet import SqueezeNet_Residual as squeezenet
-    if args_opt.dataset == "cifar10":
+    if config.dataset == "cifar10":
         num_classes = 10
     else:
         num_classes = 1000
 
-    onnx_filename = args_opt.net + '_' + args_opt.dataset
-    air_filename = args_opt.net + '_' + args_opt.dataset
+    onnx_filename = config.net_name + '_' + config.dataset
+    air_filename = config.net_name + '_' + config.dataset
 
     net = squeezenet(num_classes=num_classes)
 
-    assert args_opt.checkpoint_path is not None, "checkpoint_path is None."
+    assert config.checkpoint_file_path is not None, "checkpoint_file_path is None."
 
-    param_dict = load_checkpoint(args_opt.checkpoint_path)
+    param_dict = load_checkpoint(config.checkpoint_file_path)
     load_param_into_net(net, param_dict)
 
     input_arr = Tensor(np.zeros([1, 3, 227, 227], np.float32))

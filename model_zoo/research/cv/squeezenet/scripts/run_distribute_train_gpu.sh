@@ -64,22 +64,42 @@ ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
 
+BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
+CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
+
+if [ $1 == "squeezenet" ] && [ $2 == "cifar10" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
+elif [ $1 == "squeezenet" ] && [ $2 == "imagenet" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_imagenet_config.yaml"
+elif [ $1 == "squeezenet_residual" ] && [ $2 == "cifar10" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_cifar10_config.yaml"
+elif [ $1 == "squeezenet_residual" ] && [ $2 == "imagenet" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_imagenet_config.yaml"
+else
+     echo "error: the selected dataset is not in supported set{squeezenet, squeezenet_residual, cifar10, imagenet}"
+exit 1
+fi
+
 rm -rf ./train_parallel
 mkdir ./train_parallel
 cp ./train.py ./train_parallel
 cp -r ./src ./train_parallel
+cp -r ./model_utils ./train_parallel
+cp -r ./*.yaml ./train_parallel
 cd ./train_parallel || exit
 
 if [ $# == 3 ]
 then
     mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-    python train.py --net=$1 --dataset=$2 --run_distribute=True \
-    --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 &> log &
+    python train.py --net_name=$1 --dataset=$2 --run_distribute=True \
+    --device_num=$DEVICE_NUM --device_target="GPU" --data_path=$PATH1 \
+    --config_path=$CONFIG_FILE --output_path './output' &> log &
 fi
     
 if [ $# == 4 ]
 then
     mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-    python train.py --net=$1 --dataset=$2 --run_distribute=True \
-    --device_num=$DEVICE_NUM --device_target="GPU" --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+    python train.py --net_name=$1 --dataset=$2 --run_distribute=True \
+    --device_num=$DEVICE_NUM --device_target="GPU" --data_path=$PATH1 --pre_trained=$PATH2 \
+    --config_path=$CONFIG_FILE --output_path './output' &> log &
 fi
