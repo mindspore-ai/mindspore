@@ -37,10 +37,10 @@ class NetAsinhGrad(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_asinh_grad():
-    x = np.array([-0.5, 0, 0.5]).astype('float32')
+    out = np.array([-0.5, 0, 0.5]).astype('float32')
     dy = np.array([1, 0, -1]).astype('float32')
     asinh_grad = NetAsinhGrad()
-    output = asinh_grad(Tensor(x), Tensor(dy))
+    output = asinh_grad(Tensor(out), Tensor(dy))
     print(output)
-    expect = dy / np.sqrt(1 + x * x)
+    expect = dy / np.cosh(out)
     assert np.allclose(output.asnumpy(), expect)

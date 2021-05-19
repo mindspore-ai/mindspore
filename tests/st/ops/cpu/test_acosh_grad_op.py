@@ -37,10 +37,10 @@ class NetAcoshGrad(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_acosh_grad():
-    x = np.array([5, 4, 3]).astype('float32')
+    out = np.array([5, 4, 3]).astype('float32')
     dy = np.array([1, 0, -1]).astype('float32')
     acosh_grad = NetAcoshGrad()
-    output = acosh_grad(Tensor(x), Tensor(dy))
+    output = acosh_grad(Tensor(out), Tensor(dy))
     print(output)
-    expect = dy / np.sqrt(x * x - 1)
+    expect = dy / np.sinh(out)
     assert np.allclose(output.asnumpy(), expect)
