@@ -68,7 +68,6 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
 }
 
 #ifdef ENABLE_AVX
-
 void SWBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
               int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param, const SWConvKernel kernel,
               int act_type, int ow_bock, int oc_block) {
