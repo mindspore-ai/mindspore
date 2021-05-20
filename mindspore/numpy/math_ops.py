@@ -4580,7 +4580,7 @@ def bincount(x, weights=None, minlength=0, length=None):
     x = clip(x, 0, None)
     if length is None:
         if F.isconstant(x):
-            length = int(maximum(F.reduce_max(x), minlength - 1).asnumpy()) + 1
+            length = int(maximum(F.reduce_max(x.astype(mstype.float32)), minlength - 1).asnumpy()) + 1
         else:
             _raise_value_error('argument `length` must be provided in graph mode')
     idx = arange(length).reshape(length, 1)
@@ -4651,6 +4651,8 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
     data_to_bins = searchsorted(bin_edges, a, 'right')
     bin_size = _type_convert(int, bin_edges.size)
     data_to_bins = where_(a == bin_edges[-1], _to_tensor(bin_size - 1), data_to_bins)
+    if weights is not None:
+        weights = _to_tensor(weights).ravel()
     count = bincount(data_to_bins, weights, length=bin_size)[1:]
     if count.size == 0:
         return count, bin_edges
@@ -4750,10 +4752,10 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
 
     if isinstance(bins, int):
         bins = _list_comprehensions(ndim, bins)
-    if isinstance(bins, (tuple, list)):
+    if isinstance(bins, (tuple, list, Tensor)):
         if len(bins) != ndim:
             _raise_value_error('The dimension of bins must be equal to the dimension of the sample')
-    elif not isinstance(bins, Tensor):
+    else:
         _raise_type_error('bins should be int or sequence')
 
     if range is None:
