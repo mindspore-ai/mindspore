@@ -26,9 +26,6 @@ using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
 int SplitBaseCPUKernel::Init() {
-  auto split_dim = param->split_dim_;
-  param->split_dim_ = split_dim >= 0 ? split_dim : in_tensors_.front()->shape().size() + split_dim;
-
   output_ptr_.resize(param->num_split_);
   for (size_t i = 0; i < output_ptr_.size(); i++) {
     output_ptr_.at(i) = nullptr;
