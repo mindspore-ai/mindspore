@@ -37,24 +37,25 @@ class Tensor(Tensor_):
     Some functions are implemented in C++ and some functions are implemented in Python.
 
     Args:
-        input_data (Tensor, float, int, bool, tuple, list, numpy.ndarray): Input data of the tensor.
+        input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): Input data of the tensor.
         dtype (:class:`mindspore.dtype`): Input data should be None, bool or numeric type defined in `mindspore.dtype`.
             The argument is used to define the data type of the output tensor. If it is None, the data type of the
             output tensor will be as same as the `input_data`. Default: None.
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
             output. If `input_data` is available, `shape` doesn't need to be set. Default: None.
         init (Initializer): the information of init data.
-            'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to
-            use 'init' interface to initialize parameters in other conditions. If 'init' interface is used
-            to initialize parameters, the `init_data` API need to be called to convert `Tensor` to the actual data.
+            'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
+            'init' interface to initialize parameters in other conditions. If 'init' interface is used to initialize
+            parameters, the `Tensor.init_data` API need to be called to convert `Tensor` to the actual data.
 
     Outputs:
-        Tensor, with the same shape as `input_data`.
+        Tensor. If `dtype` and `shape` are not set, return a tensor with the same dtype and shape as `input_data`.
+        If `dtype` or `shape` is set, the dtype or shape of the output Tensor is consistent with the setting.
 
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.common.initializer import One
         >>> # initialize a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), ms.float32)
@@ -316,7 +317,7 @@ class Tensor(Tensor_):
 
     @property
     def virtual_flag(self):
-        """Mark tensor is virtual."""
+        """Used to mark whether the tensor is virtual. If the tensor is virtual, return True."""
         return self._virtual_flag
 
     @virtual_flag.setter
@@ -328,11 +329,29 @@ class Tensor(Tensor_):
 
     @staticmethod
     def from_numpy(array):
-        """Convert numpy array to Tensor without copy data."""
+        """
+        Convert numpy array to Tensor without copy data.
+
+        Args:
+            array (numpy.array): The input array.
+
+        Returns:
+            Tensor, has the same data type as input array.
+        """
         return Tensor(Tensor_.from_numpy(array))
 
     def item(self, index=None):
-        """Getitem from the Tensor with the index."""
+        """
+        Getitem from the Tensor with the index.
+
+        Args:
+            index (Union[None, int, tuple(int)]): The index in Tensor. Default: None.
+
+        Returns:
+            Tensor getitem by index whose dtype is int or tuple with int. If index is None,
+            the `item` API can only convert an array of size 1 to a Python scalar.
+
+        """
         output = tensor_operator_registry.get('item')(self, index)
         return output
 
@@ -361,7 +380,8 @@ class Tensor(Tensor_):
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, if all array elements along the given axis evaluate to True, its value is True,
+            otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
         """
 
         self.init_check()
@@ -379,7 +399,8 @@ class Tensor(Tensor_):
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, if any array element along the given axis evaluates to True, its value is True,
+            otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
         """
 
         self.init_check()
@@ -425,7 +446,7 @@ class Tensor(Tensor_):
         Return absolute value element-wisely.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, with absolute value element-wisely.
         """
         self.init_check()
         return tensor_operator_registry.get('abs')()(self)
@@ -1086,10 +1107,10 @@ class Tensor(Tensor_):
         Args:
             slice_index (int): Slice index of a parameter's slices.
                 It is used when initialize a slice of a parameter, it guarantees that devices
-                using the same slice can generate the same tensor.
-            shape (list(int)): Shape of the slice, it is used when initialize a slice of the parameter.
+                using the same slice can generate the same tensor. Default: None.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
-                to get one shard of a parameter's slice.
+                to get one shard of a parameter's slice. Default: None.
         """
         if self.init is None:
             raise TypeError("init_data must be set Tensor.init, init can't be None")
@@ -1137,7 +1158,20 @@ class Tensor(Tensor_):
         return self
 
     def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
-        """Return init_data()."""
+        """
+        Return init_data() and get the tensor format data of this Tensor.
+
+        Note:
+            The usage of `to_tensor` is deprecated. Please use `init_data`.
+
+        Args:
+            slice_index (int): Slice index of a parameter's slices.
+                It is used when initialize a slice of a parameter, it guarantees that devices
+                using the same slice can generate the same tensor. Default: None.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter. Default: None.
+            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
+                to get one shard of a parameter's slice. Default: None.
+        """
         logger.warning("WARN_DEPRECATED: The usage of to_tensor is deprecated."
                        " Please use init_data")
         return self.init_data(slice_index, shape, opt_shard_group)
