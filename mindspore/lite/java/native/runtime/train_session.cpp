@@ -239,7 +239,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_saveT
     return (jboolean) false;
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
-  auto ret = train_session_ptr->SaveToFile(JstringToChar(env, model_file_name));
+  auto ret = train_session_ptr->Export(JstringToChar(env, model_file_name));
   return (jboolean)(ret == 0);
 }
 
@@ -316,18 +316,5 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setup
   }
   auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
   auto ret = train_session_ptr->SetupVirtualBatch(virtualBatchMultiplier, learningRate, momentum);
-  return (jboolean)(ret == mindspore::lite::RET_OK);
-}
-
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setLossName(JNIEnv *env, jobject thiz,
-                                                                                       jlong session_ptr,
-                                                                                       jstring lossName) {
-  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
-  if (session_pointer == nullptr) {
-    MS_LOGE("Session pointer from java is nullptr");
-    return (jboolean) false;
-  }
-  auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
-  auto ret = train_session_ptr->SetLossName(JstringToChar(env, lossName));
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }

@@ -149,10 +149,6 @@ public class TrainSession {
     public boolean setupVirtualBatch(int virtualBatchMultiplier) {
         return this.setupVirtualBatch(this.sessionPtr, virtualBatchMultiplier, -1.0f, -1.0f);
     }
-
-    public boolean setLossName(String lossName) {
-        return this.setLossName(this.sessionPtr, lossName);
-    }
     
     
     private native long createSession(String modelFilename, long msConfigPtr);
@@ -190,6 +186,4 @@ public class TrainSession {
     private native boolean setLearningRate(long sessionPtr, float learning_rate);
 
     private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
-
-    private native boolean setLossName(long sessionPtr, String lossName);
 }
