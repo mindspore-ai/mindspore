@@ -1160,6 +1160,18 @@ bool AnfRuntimeAlgorithm::IsNodeInGraphKernel(const AnfNodePtr &node) {
   return node->func_graph() != nullptr && node->func_graph()->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
 }
 
+AnfNodePtr AnfRuntimeAlgorithm::GetOutputOfGraphkernel(const KernelWithIndex &kernel_with_index) {
+  auto func_graph = GetCNodeFuncGraph(kernel_with_index.first);
+  if (func_graph == nullptr) {
+    return kernel_with_index.first;
+  }
+  auto output = func_graph->output();
+  if (CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
+    return output->cast<CNodePtr>()->input(kernel_with_index.second + 1);
+  }
+  return output;
+}
+
 bool AnfRuntimeAlgorithm::IsParameterWeight(const ParameterPtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->has_default();
