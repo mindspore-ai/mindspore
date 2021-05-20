@@ -721,7 +721,7 @@ class CumProd(PrimitiveWithInfer):
         ValueError: If `axis` is None.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> a, b, c, = 1, 2, 3

@@ -3470,10 +3470,68 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
-        validator.check('the dimension of x', len(x_shape),
-                        'the dimension of indices', indices_shape[-1], Rel.GE)
         if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
             raise ValueError("For 'TensorScatterUpdate', input value are not match with input indices.")
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
+        args = {"x": x_dtype, "value": value_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
+        return x_dtype
+
+
+class TensorScatterAdd(PrimitiveWithInfer):
+    """
+    Creates a new tensor by adding the values from the positions in `input_x` indicicated by
+    `indices`, with values from `update`. When multiple values are given for the same
+    index, the updated result will be the sum of all values. This operation is almost
+    equivalent to using ScatterNdAdd, except that the updates are applied on `Tensor`
+    instead of `Parameter`.
+
+    The last axis of `indices` is the depth of each index vectors. For each index vector,
+    there must be a corresponding value in `update`. The shape of `update` should be
+    equal to the shape of `input_x[indices]`.
+
+    Inputs:
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+          The rank must be at least 2.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> op = ops.TensorScatterAdd()
+        >>> output = op(input_x, indices, update)
+        >>> print(output)
+        [[ 3.1  0.3  3.6]
+         [ 0.4  0.5 -3.2]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize TensorScatterAdd"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+
+    def infer_shape(self, x_shape, indices_shape, value_shape):
+        if len(indices_shape) < 2:
+            raise ValueError("For 'TensorScatterAdd', the rank of the indices must > 2.")
+        update_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:]
+        if update_shape != value_shape:
+            raise ValueError("For 'TensorScatterAdd', input value are not match with input indices.")
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
