@@ -100,7 +100,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
-  (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");
+  (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");

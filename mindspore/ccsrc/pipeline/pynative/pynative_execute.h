@@ -56,7 +56,7 @@ using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAb
 using OpInfoWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
 
-py::object RunOp(const py::args &args);
+py::object RealRunOp(const py::args &args);
 
 void ClearPyNativeSession();
 
