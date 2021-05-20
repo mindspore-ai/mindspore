@@ -266,14 +266,20 @@ class DropoutInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>()) {}
   ~DropoutInfo() override = default;
   Status GenerateStrategies(int64_t stage_id) override;
+  Status Init(const StrategyPtr &strategy) override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status GetAttrs() override { return SUCCESS; }
+  Status GetAttrs() override;
   Status InferTensorInfo() override;
+  Status InferReplaceOps(const StrategyPtr &strategy);
 
  private:
-  bool IsRepeatedStrategy(const StrategyPtr &sp);
+  int64_t seed0_ = 0;
+  int64_t seed1_ = 0;
+  int64_t get_seed() {
+    static int64_t SEED_NUM;
+    return ++SEED_NUM;
+  }
 };
 }  // namespace parallel
 }  // namespace mindspore

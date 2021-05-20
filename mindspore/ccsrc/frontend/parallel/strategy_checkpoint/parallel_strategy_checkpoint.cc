@@ -134,8 +134,8 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
     for (auto &dims : node_stra.second->GetInputDim()) {
       straspb::ParallelStrategy *parallel_strategy = parallel_strategys->add_parallel_strategy();
       MS_EXCEPTION_IF_NULL(parallel_strategy);
-      for (auto dim : dims) {
-        parallel_strategy->add_dim(LongToUlong(dim));
+      for (auto stra_dim : dims) {
+        parallel_strategy->add_dim(LongToUlong(stra_dim));
       }
     }
   }
@@ -147,13 +147,13 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
     straspb::ParallelLayouts *parallel_layouts = parallel_layout_item->mutable_parallel_layouts();
     straspb::DevMatrix *dev_matrix = parallel_layouts->add_dev_matrix();
     MS_EXCEPTION_IF_NULL(dev_matrix);
-    for (auto dim : tensor_layout->device_arrangement().array()) {
-      dev_matrix->add_dim(LongToUlong(dim));
+    for (auto dev_dim : tensor_layout->device_arrangement().array()) {
+      dev_matrix->add_dim(LongToUlong(dev_dim));
     }
     straspb::TensorMap *tensor_map = parallel_layouts->add_tensor_map();
     MS_EXCEPTION_IF_NULL(tensor_map);
-    for (auto dim : tensor_layout->tensor_map().array()) {
-      tensor_map->add_dim(dim);
+    for (auto map_dim : tensor_layout->tensor_map().array()) {
+      tensor_map->add_dim(map_dim);
     }
     straspb::ParamSplitShape *param_split_shape = parallel_layouts->add_param_split_shape();
     straspb::IndicesOffset *indices_offset = parallel_layouts->add_indices_offset();
