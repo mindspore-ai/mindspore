@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.posenet import PoseNet
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    if name == "posenet":
+        net = PoseNet()
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

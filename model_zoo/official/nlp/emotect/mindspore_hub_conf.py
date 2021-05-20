@@ -13,10 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.ernie_for_finetune import ErnieCLS
+from src.finetune_eval_config import ernie_net_cfg
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    """create net which should set the trainable, default is False"""
+    if name == "emotect":
+        if "trainable" in kwargs:
+            isTrained = kwargs.get("trainable")
+
+        else:
+            isTrained = False
+
+        net = ErnieCLS(ernie_net_cfg, isTrained, dropout=0.1)
+
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

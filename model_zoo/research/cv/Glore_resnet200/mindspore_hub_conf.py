@@ -13,10 +13,18 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.glore_resnet50 import glore_resnet50
+from src.config import config
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    """create net which should give the param if wants to use glore, default is True"""
+    if name == "glore_resnet50":
+        if "use_glore" in kwargs:
+            useGlore = kwargs.get("use_glore")
+
+        else:
+            useGlore = True
+
+        net = glore_resnet50(class_num=config.class_num, use_glore=useGlore)
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

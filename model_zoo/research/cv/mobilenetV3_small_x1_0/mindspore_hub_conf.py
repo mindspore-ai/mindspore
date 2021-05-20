@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.mobilenetv3 import mobilenet_v3_small
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    if name == "mobilenetv3_small_x1_0":
+        net = mobilenet_v3_small()
         return net
     raise NotImplementedError(f"{name} is not implemented in the repo")

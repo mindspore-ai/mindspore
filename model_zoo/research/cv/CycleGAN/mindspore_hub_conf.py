@@ -13,10 +13,32 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.models.cycle_gan import get_generator, get_discriminator
+from src.utils.args import get_args
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
+    """create net which should give the params like trainable, style"""
+    if name == "cyclegan":
+        if "trainable" in kwargs:
+            isTrained = kwargs.get("trainable")
+
+        else:
+            isTrained = False
+
+        if isTrained:
+            args_param = get_args("trainable")
+        else:
+            args_param = get_args("predict")
+
+        if "style" in kwargs:
+            style = kwargs.get("style")
+        else:
+            style = "G"
+
+        if style == "G":
+            net = get_generator(args_param)
+        elif style == "D":
+            net = get_discriminator(args_param)
         return net
+
     raise NotImplementedError(f"{name} is not implemented in the repo")

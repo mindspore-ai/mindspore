@@ -13,10 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.pose_resnet import PoseResNet, Bottleneck
+from src.config import config
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
-        return net
+    if name == "simple_baselines":
+        resnet_spec = {50: (Bottleneck, [3, 4, 6, 3]),
+                       101: (Bottleneck, [3, 4, 23, 3]),
+                       152: (Bottleneck, [3, 8, 36, 3])}
+        num_layers = config.NETWORK.NUM_LAYERS
+        block_class, layers = resnet_spec[num_layers]
+        network = PoseResNet(block_class, layers, config)
+        return network
     raise NotImplementedError(f"{name} is not implemented in the repo")

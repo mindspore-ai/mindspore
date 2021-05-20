@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.network import NTS_NET
+from src.models.effnet import EfficientNet
 
 def create_network(name, *args, **kwargs):
-    if name == "ntsnet":
-        net = NTS_NET(topK=6)
-        return net
+
+    if name == "efficientnet-b0":
+        EffNet = EfficientNet(width_coeff=1, depth_coeff=1)
+        return EffNet
     raise NotImplementedError(f"{name} is not implemented in the repo")
