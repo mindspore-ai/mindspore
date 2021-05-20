@@ -46,7 +46,7 @@ void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool LogSoftmaxGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "LogSoftmaxGrad error input output size!";

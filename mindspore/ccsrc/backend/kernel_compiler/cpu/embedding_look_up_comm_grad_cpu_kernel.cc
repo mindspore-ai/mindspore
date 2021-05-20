@@ -31,7 +31,7 @@ void EmbeddingLookUpCommGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                              const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
@@ -52,13 +52,14 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   for (int64_t i = 0; i < split_num_; i++) {
     MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group, input_split_lens);
   }
+  constexpr uint64_t kUSecondInSecond = 1000000;
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();
-  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+  std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
   MS_LOG(INFO) << "EmbeddingLookUpCommGradCPUKernel, used time: " << cost.count() << " us";
 #else
   (void)gettimeofday(&end_time, nullptr);
-  uint64_t time = 1000000 * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "EmbeddingLookUpCommGradCPUKernel, used time: " << time << " us";
 #endif

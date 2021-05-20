@@ -358,8 +358,7 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
 }
 
-bool ArithmeticCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool ArithmeticCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);

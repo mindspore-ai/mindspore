@@ -25,7 +25,7 @@ namespace kernel {
 namespace {
 template <typename T>
 void Square(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = in[i] * in[i];
     }
@@ -35,7 +35,7 @@ void Square(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Sign(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       if (in[i] < 0) {
         out[i] = -1;
@@ -51,7 +51,7 @@ void Sign(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Neg(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = -in[i];
     }
@@ -61,7 +61,7 @@ void Neg(const T *in, T *out, size_t size) {
 
 template <typename T>
 void LogicalNot(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = !in[i];
     }
@@ -70,8 +70,8 @@ void LogicalNot(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void OnesLike(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+void OnesLike(const T *, T *out, size_t size) {
+  auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1);
     }
@@ -80,8 +80,8 @@ void OnesLike(const T *in, T *out, size_t size) {
 }
 
 template <typename T>
-void ZerosLike(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+void ZerosLike(const T *, T *out, size_t size) {
+  auto task = [&out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(0);
     }
@@ -91,7 +91,7 @@ void ZerosLike(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Floor(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(floor(in[i]));
     }
@@ -101,7 +101,7 @@ void Floor(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Reciprocal(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(1.0 / in[i]);
     }
@@ -111,12 +111,12 @@ void Reciprocal(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Gelu(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T x = in[i];
       auto double_x = static_cast<T>(x);
-      T tanh_res = (T)std::tanh(0.7978845608 * (double_x + 0.044715 * double_x * double_x * double_x));
-      out[i] = x * ((T)1.0 + tanh_res) / (T)2.0;
+      T tanh_res = static_cast<T>(std::tanh(0.7978845608 * (double_x + 0.044715 * double_x * double_x * double_x)));
+      out[i] = x * (static_cast<T>(1.0) + tanh_res) / static_cast<T>(2.0);
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -124,7 +124,7 @@ void Gelu(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Asin(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = asin(in[i]);
     }
@@ -134,7 +134,7 @@ void Asin(const T *in, T *out, size_t size) {
 
 template <typename T>
 void ACos(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = acos(in[i]);
     }
@@ -144,7 +144,7 @@ void ACos(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Atan(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = atan(in[i]);
     }
@@ -154,7 +154,7 @@ void Atan(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Sin(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = sin(in[i]);
     }
@@ -164,7 +164,7 @@ void Sin(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Cos(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = cos(in[i]);
     }
@@ -174,7 +174,7 @@ void Cos(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Tan(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = tan(in[i]);
     }
@@ -184,7 +184,7 @@ void Tan(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Sinh(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = sinh(in[i]);
     }
@@ -194,7 +194,7 @@ void Sinh(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Cosh(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = cosh(in[i]);
     }
@@ -204,7 +204,7 @@ void Cosh(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Asinh(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = asinh(in[i]);
     }
@@ -214,7 +214,7 @@ void Asinh(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Acosh(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = acosh(in[i]);
     }
@@ -224,7 +224,7 @@ void Acosh(const T *in, T *out, size_t size) {
 
 template <typename T>
 void Atanh(const T *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = atanh(in[i]);
     }
@@ -263,7 +263,7 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);

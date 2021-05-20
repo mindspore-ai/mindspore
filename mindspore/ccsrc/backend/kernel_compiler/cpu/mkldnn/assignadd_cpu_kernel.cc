@@ -47,8 +47,7 @@ void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, src0_desc);
 }
 
-bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2) {
     MS_LOG(EXCEPTION) << "AssignAdd error input output size!";

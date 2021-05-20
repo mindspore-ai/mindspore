@@ -35,7 +35,7 @@ void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "inputs outputs size not supoort";

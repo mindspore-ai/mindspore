@@ -75,8 +75,7 @@ void MaximumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 }
 
 template <typename T>
-bool MaximumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool MaximumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
@@ -146,7 +145,7 @@ void MaximumCPUKernel<T>::InitTensorBroadcastShape() {
   }
 }
 
-// Broadcast comparation
+// Broadcast comparison
 template <typename T>
 size_t MaximumCPUKernel<T>::Index(const size_t &index, const size_t &dim) {
   return dim == 1 ? 0 : index;

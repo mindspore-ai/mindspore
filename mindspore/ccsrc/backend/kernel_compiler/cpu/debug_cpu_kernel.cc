@@ -21,8 +21,7 @@ namespace mindspore {
 namespace kernel {
 void DebugCPUKernel::InitKernel(const CNodePtr &kernel_node) { MS_EXCEPTION_IF_NULL(kernel_node); }
 
-bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 1 || outputs.empty()) {
     MS_LOG(EXCEPTION) << " input or output empty!";

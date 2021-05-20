@@ -26,7 +26,7 @@ void DynamicAssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool DynamicAssignCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                    const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   if (input_x_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);

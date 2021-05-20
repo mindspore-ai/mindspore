@@ -56,8 +56,7 @@ void GatherNdCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool GatherNdCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool GatherNdCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     return LaunchKernel<int32_t>(inputs, outputs);

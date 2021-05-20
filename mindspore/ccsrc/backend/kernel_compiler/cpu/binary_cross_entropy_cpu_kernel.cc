@@ -23,7 +23,7 @@ void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const in
     tmp_loss[0] += tmp_loss[input_size - 1];
   }
 
-  for (int stride = input_size / 2; stride > 0; stride >>= 1) {
+  for (int stride = input_size / 2; stride > 0; stride = stride / 2) {
     for (int i = 0; i < stride; i++) {
       tmp_loss[i] += tmp_loss[i + stride];
     }

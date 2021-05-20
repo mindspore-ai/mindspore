@@ -32,8 +32,7 @@ void GatherV2CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
 
-bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto buff_size = outputs[0]->size;
