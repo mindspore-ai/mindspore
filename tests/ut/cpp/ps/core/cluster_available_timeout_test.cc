@@ -31,12 +31,9 @@ class TestClusterAvailableTimeout : public UT::Common {
 };
 
 TEST_F(TestClusterAvailableTimeout, TestClusterAvailableTimeout) {
-  ClusterMetadata::instance()->Init(1, 1, "127.0.0.1", 9999);
-  ClusterMetadata::instance()->set_cluster_available_timeout(3);
+  PSContext::instance()->cluster_config().Init(1, 1, "127.0.0.1", 9999);
+  MS_LOG(INFO) << "The timeout is:" << PSContext::instance()->cluster_config().cluster_available_timeout;
   SchedulerNode node;
-  node.Start();
-  node.Finish();
-  node.Stop();
 }
 }  // namespace core
 }  // namespace ps

@@ -53,7 +53,7 @@ TEST_F(TestCommUtil, GetAvailableInterfaceAndIP) {
 }
 
 TEST_F(TestCommUtil, ValidateRankId) {
-  ClusterMetadata::instance()->Init(3, 2, "127.0.0.1", 9999);
+  PSContext::instance()->cluster_config().Init(3, 2, "127.0.0.1", 9999);
   EXPECT_TRUE(CommUtil::ValidateRankId(NodeRole::WORKER, 2));
   EXPECT_FALSE(CommUtil::ValidateRankId(NodeRole::WORKER, 3));
   EXPECT_TRUE(CommUtil::ValidateRankId(NodeRole::SERVER, 1));

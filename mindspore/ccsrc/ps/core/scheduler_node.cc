@@ -87,8 +87,8 @@ void SchedulerNode::InitCommandHandler() {
 void SchedulerNode::CreateTcpServer() {
   node_manager_.InitNodeNum();
 
-  std::string scheduler_host = ClusterMetadata::instance()->scheduler_host();
-  uint32_t scheduler_port = ClusterMetadata::instance()->scheduler_port();
+  std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
+  uint32_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
   server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                   const Protos &protos, const void *data, size_t size) {
@@ -168,19 +168,20 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       // 1. update cluster timeout
       if (!node_manager_.is_cluster_ready() &&
           (std::chrono::steady_clock::now() - start_time >
-           std::chrono::seconds(ClusterMetadata::instance()->cluster_available_timeout()))) {
+           std::chrono::seconds(PSContext::instance()->cluster_config().cluster_available_timeout))) {
         node_manager_.CheckClusterTimeout();
       }
 
       // 2. update cluster state
-      std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval()));
+      std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
       node_manager_.UpdateClusterState();
       if (node_manager_.is_cluster_ready()) {
         is_ready_ = true;
         wait_start_cond_.notify_all();
       }
       if (node_manager_.is_cluster_finish()) {
-        std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval() * 2));
+        std::this_thread::sleep_for(
+          std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval * 2));
         is_finish_ = true;
         wait_finish_cond_.notify_all();
       }

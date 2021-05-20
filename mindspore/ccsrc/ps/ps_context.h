@@ -22,6 +22,7 @@
 #include <memory>
 #include "ps/constants.h"
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
 
 namespace mindspore {
 namespace ps {
@@ -147,6 +148,8 @@ class PSContext {
   void set_secure_aggregation(bool secure_aggregation);
   bool secure_aggregation() const;
 
+  core::ClusterConfig &cluster_config();
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -229,6 +232,9 @@ class PSContext {
 
   // Whether to use secure aggregation algorithm. Used in federated learning for now.
   bool secure_aggregation_;
+
+  // The cluster config read through environment variables, the value does not change.
+  core::ClusterConfig cluster_config_;
 };
 }  // namespace ps
 }  // namespace mindspore

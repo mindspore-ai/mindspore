@@ -38,6 +38,7 @@
 #include "ps/core/communicator/tcp_message_handler.h"
 #include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
 #include "ps/constants.h"

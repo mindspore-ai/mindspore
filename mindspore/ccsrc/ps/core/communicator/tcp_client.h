@@ -34,6 +34,7 @@
 #include <condition_variable>
 
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
 #include "utils/convert_utils_base.h"
 #include "ps/core/comm_util.h"
 #include "ps/core/communicator/ssl_wrapper.h"
@@ -58,7 +59,8 @@ class TcpClient {
   std::string GetServerAddress() const;
   void set_disconnected_callback(const OnDisconnected &disconnected);
   void set_connected_callback(const OnConnected &connected);
-  bool WaitConnected(const uint32_t &connected_timeout = ClusterMetadata::instance()->cluster_available_timeout());
+  bool WaitConnected(
+    const uint32_t &connected_timeout = PSContext::instance()->cluster_config().cluster_available_timeout);
   void Init();
   void StartWithDelay(int seconds);
   void Stop();
