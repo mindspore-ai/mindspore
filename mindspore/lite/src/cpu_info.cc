@@ -18,17 +18,17 @@
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 #include <fstream>
+#include <set>
 #include "src/common/log_adapter.h"
 #include "nnacl/nnacl_utils.h"
 
 namespace mindspore::lite {
 uint32_t CpuInfo::MidrSetPart(uint32_t part) {
-  return (midr_ & ~CPUINFO_ARM_MIDR_PART_MASK) | ((part << CPUINFO_ARM_MIDR_PART_OFFSET) & CPUINFO_ARM_MIDR_PART_MASK);
+  return ((part << ARM_CPU_PART_OFFSET) & ARM_CPU_PART_MASK) | (midr_ & ~ARM_CPU_PART_MASK);
 }
 
 uint32_t CpuInfo::MidrSetImplementer(uint32_t implementer) {
-  return (midr_ & ~CPUINFO_ARM_MIDR_IMPLEMENTER_MASK) |
-         ((implementer << CPUINFO_ARM_MIDR_IMPLEMENTER_OFFSET) & CPUINFO_ARM_MIDR_IMPLEMENTER_MASK);
+  return ((implementer << ARM_CPU_IMPLEMENTER_OFFSET) & ARM_CPU_IMPLEMENTER_MASK) | (midr_ & ~ARM_CPU_IMPLEMENTER_MASK);
 }
 
 uint32_t CpuInfo::StringToDigit(const std::string &str) {
@@ -51,7 +51,7 @@ uint32_t CpuInfo::StringToDigit(const std::string &str) {
     } else {
       return 0;
     }
-    str_digit = str_digit * 16 + digit;
+    str_digit = (str_digit << 4) + digit;
   }
   return str_digit;
 }
@@ -77,8 +77,8 @@ uint32_t CpuInfo::ParseArmCpuImplementer(const std::string &str) {
   return StringToDigit(str);
 }
 
-/* Only get hardware and midr now*/
 void CpuInfo::GetArmProcCpuInfo(AndroidCpuInfo *android_cpu_info) {
+  // only get cpu part, implementer and hardware
   std::ifstream infile("/proc/cpuinfo", std::ios::in);
   std::string line;
   while (getline(infile, line)) {
@@ -106,22 +106,30 @@ bool CpuInfo::ArmIsSupportFp16() {
   GetArmProcCpuInfo(&android_cpu_info_);
   midr_ = MidrSetPart(android_cpu_info_.cpu_part);
   midr_ = MidrSetImplementer(android_cpu_info_.cpu_implementer);
-  switch (midr_ & (CPUINFO_ARM_MIDR_IMPLEMENTER_MASK | CPUINFO_ARM_MIDR_PART_MASK)) {
-    case UINT32_C(0x4100D050): /* Cortex-A55 */
-    case UINT32_C(0x4100D060): /* Cortex-A65 */
-    case UINT32_C(0x4100D0B0): /* Cortex-A76 */
-    case UINT32_C(0x4100D0C0): /* Neoverse N1 */
-    case UINT32_C(0x4100D0D0): /* Cortex-A77 */
-    case UINT32_C(0x4100D0E0): /* Cortex-A76AE */
-    case UINT32_C(0x4800D400): /* Cortex-A76 (HiSilicon) */
-    case UINT32_C(0x51008020): /* Kryo 385 Gold (Cortex-A75) */
-    case UINT32_C(0x51008030): /* Kryo 385 Silver (Cortex-A55) */
-    case UINT32_C(0x51008040): /* Kryo 485 Gold (Cortex-A76) */
-    case UINT32_C(0x51008050): /* Kryo 485 Silver (Cortex-A55) */
-    case UINT32_C(0x53000030): /* Exynos M4 */
-    case UINT32_C(0x53000040): /* Exynos M5 */
-      fp16_flag_ = true;
+  midr_ = (ARM_CPU_IMPLEMENTER_MASK | ARM_CPU_PART_MASK) & midr_;
+  std::set<uint32_t> cpu_list_support_fp16 = {
+    UINT32_C(0x4800D400),  // Cortex-A76 in HiSilicon Cpu
+    UINT32_C(0x4100D050),  // Arm Cortex-A55
+    UINT32_C(0x4100D060),  // Arm Cortex-A65
+    UINT32_C(0x4100D0B0),  // Arm Cortex-A76
+    UINT32_C(0x4100D0E0),  // Arm Cortex-A76-AE
+    UINT32_C(0x4100D0D0),  // Arm Cortex-A77
+    UINT32_C(0x4100D0C0),  // Neoverse-N1 Cpu
+    UINT32_C(0x53000030),  // Exynos-M4 Cpu
+    UINT32_C(0x53000040),  // Exynos-M5 Cpu
+    UINT32_C(0x51008050),  // Cortex-A55 in Kryo-485-Silver
+    UINT32_C(0x51008040),  // Cortex-A76 in Kryo-485-Gold
+    UINT32_C(0x51008030),  // Cortex-A55 in Kryo-385-Silver
+    UINT32_C(0x51008020)   // Cortex-A75 in Kryo-385-Gold
+  };
+  if (cpu_list_support_fp16.find(midr_) != cpu_list_support_fp16.end()) {
+    fp16_flag_ = true;
   }
+#ifdef Debug
+  if (!fp16_flag_) {
+    MS_LOG(DEBUG) << "cpu midr_:" << midr_ << "is not support fp16!";
+  }
+#endif
 #elif defined(ENABLE_ARM64)
   int hwcap_type = 16;
   uint32_t hwcap = getHwCap(hwcap_type);
