@@ -382,6 +382,16 @@ class Tensor(Tensor_):
         Returns:
             Tensor, if all array elements along the given axis evaluate to True, its value is True,
             otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([True, True, False])
+            >>> output = a.all()
+            >>> print(output)
+            False
         """
 
         self.init_check()
@@ -401,6 +411,16 @@ class Tensor(Tensor_):
         Returns:
             Tensor, if any array element along the given axis evaluates to True, its value is True,
             otherwise its value is False. If axis is None or empty tuple, reduce all dimensions.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([True, True, False])
+            >>> output = a.any()
+            >>> print(output)
+            True
         """
 
         self.init_check()
@@ -447,6 +467,16 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, with absolute value element-wisely.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([1.1, -2.1]).astype("float32")
+            >>> output = a.abs()
+            >>> print(output)
+            [1.1 2.1]
         """
         self.init_check()
         return tensor_operator_registry.get('abs')()(self)
