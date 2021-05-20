@@ -55,7 +55,7 @@ void ArgMinWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += shape_len;
   if (axis < 0) {
-    MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << shape_len - 1 << "]";
+    MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << (shape_len - 1) << "]";
   }
   axis = axis % static_cast<int64_t>(shape_len);
   num_before_axis_ = 1;
@@ -72,7 +72,7 @@ void ArgMinWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool ArgMinWithValueCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> & /*workspaces*/,
+                                         const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   if (!check_validation<T>(shape_, num_before_axis_, num_after_axis_, inputs, outputs)) {
     return false;

@@ -46,8 +46,7 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dim_n_ = static_cast<dnnl_dim_t>(dst_shape[1]);
 }
 
-bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "matmul error input output size!";

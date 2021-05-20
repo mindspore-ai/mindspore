@@ -38,8 +38,7 @@ void IsFiniteCPUKernel::InitKernel(const CNodePtr &kernelNode) {
   }
 }
 
-bool IsFiniteCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool IsFiniteCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernelFloat16(inputs, outputs);

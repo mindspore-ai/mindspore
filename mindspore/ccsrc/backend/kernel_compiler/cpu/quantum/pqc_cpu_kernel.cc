@@ -190,8 +190,7 @@ void PQCCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool PQCCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                          const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool PQCCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                           const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 3) {
     MS_LOG(EXCEPTION) << "pqc error input output size!";

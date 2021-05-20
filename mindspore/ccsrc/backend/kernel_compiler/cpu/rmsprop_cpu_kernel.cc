@@ -87,8 +87,7 @@ void RMSPropCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (!use_center_) {
     float *variable = reinterpret_cast<float *>(inputs[0]->addr);

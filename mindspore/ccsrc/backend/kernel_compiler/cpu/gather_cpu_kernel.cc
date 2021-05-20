@@ -79,7 +79,7 @@ int GatherV2CPUKernel<T>::GatherLaunch(int8_t *input_data, int8_t *output_data, 
 
 template <typename T>
 bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                  const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   int8_t *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   indices_data_ = reinterpret_cast<int32_t *>(inputs[1]->addr);

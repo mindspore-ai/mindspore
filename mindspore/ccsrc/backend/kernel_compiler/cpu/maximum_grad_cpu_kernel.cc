@@ -34,7 +34,7 @@ void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool MaximumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                  const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
@@ -53,7 +53,7 @@ bool MaximumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-void MaximumGradRecTask(T *x, T *y, T *dout, T *dx, T *dy, size_t dim, size_t x_index, size_t y_index,
+void MaximumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, size_t dim, size_t x_index, size_t y_index,
                         size_t dout_index, const std::vector<size_t> &x_cargo, const std::vector<size_t> &y_cargo,
                         const std::vector<size_t> &dout_cargo, const std::vector<size_t> &x_shape,
                         const std::vector<size_t> &y_shape, const std::vector<size_t> &dout_shape) {

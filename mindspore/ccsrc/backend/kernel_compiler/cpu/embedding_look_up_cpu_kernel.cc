@@ -125,7 +125,7 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
 }
 
 bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (indices_data_type_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);

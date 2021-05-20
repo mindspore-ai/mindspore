@@ -18,10 +18,10 @@
 
 namespace mindspore {
 namespace kernel {
-void EqualCountCPUKernel::InitKernel(const CNodePtr & /*kernel_node*/) {}
 
-bool EqualCountCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+void EqualCountCPUKernel::InitKernel(const CNodePtr &) {}
+
+bool EqualCountCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "input or output empty!";

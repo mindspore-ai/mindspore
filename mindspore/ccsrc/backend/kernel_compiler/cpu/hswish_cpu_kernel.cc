@@ -30,8 +30,7 @@ void HSwishCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool HSwishCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool HSwishCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
   auto y = reinterpret_cast<T *>(outputs[0]->addr);

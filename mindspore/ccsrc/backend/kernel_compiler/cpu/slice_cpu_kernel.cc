@@ -99,8 +99,7 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
   slice_param_.op_parameter_.thread_num_ = std::min(slice_param_.size_[1], SizeToInt(max_thread_num));
 }
 
-bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (outputs[0]->size == 0) {
     return true;

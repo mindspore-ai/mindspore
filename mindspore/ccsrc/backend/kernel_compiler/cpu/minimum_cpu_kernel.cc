@@ -75,8 +75,7 @@ void MinimumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 }
 
 template <typename T>
-bool MinimumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool MinimumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);

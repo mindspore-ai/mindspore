@@ -56,7 +56,7 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   size_t h_index = iter->second;
   if (stride_me.size() < h_index + 2) {
-    MS_LOG(EXCEPTION) << "Strides should greater than " << h_index + 1 << ", but got " << stride_me.size();
+    MS_LOG(EXCEPTION) << "Strides should greater than " << (h_index + 1) << ", but got " << stride_me.size();
   }
   (void)std::transform(stride_me.begin() + h_index, stride_me.begin() + h_index + 2, std::back_inserter(stride_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
@@ -102,7 +102,7 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool Conv2dGradInputCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "error input output size!";
