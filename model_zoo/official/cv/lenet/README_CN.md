@@ -15,9 +15,14 @@
         - [训练](#训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
+        - [推理性能](#推理性能)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -86,19 +91,23 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     ├── lenet
         ├── README.md                    // Lenet描述
         ├── requirements.txt             // 需要的包
+        ├── ascend310_infer              // 用于310推理
         ├── scripts
         │   ├──run_standalone_train_cpu.sh             // CPU训练
+        │   ├──run_infer_310.sh                        // 310推理
         │   ├──run_standalone_train_gpu.sh             // GPU训练
         │   ├──run_standalone_train_ascend.sh          // Ascend训练
         │   ├──run_standalone_eval_cpu.sh             //  CPU评估  
         │   ├──run_standalone_eval_gpu.sh             //  GPU评估
         │   ├──run_standalone_eval_ascend.sh          //  Ascend评估
         ├── src
-        │   ├──dataset.py             // 创建数据集
-        │   ├──lenet.py              // Lenet架构
+        │   ├──aipp.cfg             // aipp配置文件
+        │   ├──dataset.py           // 创建数据集
+        │   ├──lenet.py             // Lenet架构
         │   ├──config.py            // 参数配置
-        ├── train.py               // 训练脚本
-        ├── eval.py               //  评估脚本  
+        ├── train.py                // 训练脚本
+        ├── eval.py                //  评估脚本
+        ├── postprocess.py         //  310推理后处理脚本
 ```
 
 ## 脚本参数
@@ -159,6 +168,38 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 'Accuracy':0.9842
 ```
 
+## 推理过程
+
+### 导出MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+目前仅支持batch_Size为1的推理。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。Lenet执行推理的图片尺寸为[32, 32]，DVPP硬件限制宽为16整除，高为2整除，网络符合标准，网络可以通过DVPP对图像进行前处理。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'Accuracy':0.9843
+```
+
 ## 模型描述
 
 ## 性能
@@ -180,6 +221,20 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 | 总时长                 | 43.1秒                          |                                       |
 | 微调检查点 | 482k (.ckpt文件)                                         |
 | 脚本                    | [LeNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
+
+### 推理性能
+
+| 参数            | Ascend                      |
+| ------------- | ----------------------------|
+| 模型版本        | LeNet                       |
+| 资源           | Ascend 310；系统 CentOS 3.10 |
+| 上传日期        | 2021-05-07                  |
+| MindSpore版本  | 1.2.0                       |
+| 数据集          | Mnist                      |
+| batch_size     | 1                          |
+| 输出            | Accuracy                   |
+| 准确率          | Accuracy=0.9843            |
+| 推理模型        | 482K（.ckpt文件）            |
 
 ## 随机情况说明
 

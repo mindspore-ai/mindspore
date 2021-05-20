@@ -12,9 +12,14 @@
         - [Training](#training)  
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+     - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 ## [LeNet Description](#contents)
@@ -82,7 +87,9 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
     ├── lenet
         ├── README.md                    // descriptions about lenet
         ├── requirements.txt             // package needed
+        ├── ascend310_infer              // application for 310 inference
         ├── scripts
+        │   ├──run_infer_310.sh                        // infer in 310
         │   ├──run_standalone_train_cpu.sh             // train in cpu
         │   ├──run_standalone_train_gpu.sh             // train in gpu
         │   ├──run_standalone_train_ascend.sh          // train in ascend
@@ -90,11 +97,13 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         │   ├──run_standalone_eval_gpu.sh             //  evaluate in gpu
         │   ├──run_standalone_eval_ascend.sh          //  evaluate in ascend
         ├── src
+        │   ├──aipp.cfg               // aipp config
         │   ├──dataset.py             // creating dataset
-        │   ├──lenet.py              // lenet architecture
-        │   ├──config.py            // parameter configuration
+        │   ├──lenet.py               // lenet architecture
+        │   ├──config.py              // parameter configuration
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
+        ├── postprocess.py        //  postprocess script
 ```
 
 ## [Script Parameters](#contents)
@@ -157,6 +166,38 @@ You can view the results through the file "log.txt". The accuracy of the test da
 'Accuracy': 0.9842
 ```
 
+## [Inference Process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must bu exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_Size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive.The size of the picture that Lenet performs inference is [32, 32], the DVPP hardware limits the width of divisible by 16, and the height is divisible by 2. The network conforms to the standard, and the network can pre-process the image through DVPP.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'Accuracy': 0.9843
+```
+
 ## [Model Description](#contents)
 
 ### [Performance](#contents)
@@ -178,6 +219,20 @@ You can view the results through the file "log.txt". The accuracy of the test da
 | Total time                 | 32.1s                          |                                       |
 | Checkpoint for Fine tuning | 482k (.ckpt file)                                         |
 | Scripts                    | [LeNet Script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet)s |
+
+#### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | LeNet                       |
+| Resource            | Ascend 310; CentOS 3.10     |
+| Uploaded Date       | 07/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | Mnist                       |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | Accuracy=0.9843             |
+| Model for inference | 482K(.ckpt file)            |
 
 ## [Description of Random Situation](#contents)
 

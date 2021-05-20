@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export checkpoint file into air, onnx, mindir models"""
+"""export checkpoint file into air, mindir models"""
 
 from src.model_utils.config import config
 from src.model_utils.device_adapter import get_device_id
