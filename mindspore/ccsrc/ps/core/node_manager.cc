@@ -20,7 +20,8 @@ namespace mindspore {
 namespace ps {
 namespace core {
 void NodeManager::InitNodeNum() {
-  total_node_num_ = ClusterMetadata::instance()->total_server_num() + ClusterMetadata::instance()->total_worker_num();
+  total_node_num_ = PSContext::instance()->cluster_config().initial_server_num +
+                    PSContext::instance()->cluster_config().initial_worker_num;
 }
 
 int NodeManager::NextRankId(const RegisterMessage &register_message) {
@@ -39,7 +40,7 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     uint32_t port = register_message.port();
 
     rank_id = ++next_server_rank_id_;
-    if (IntToUint(rank_id) >= ClusterMetadata::instance()->total_server_num()) {
+    if (IntToUint(rank_id) >= PSContext::instance()->cluster_config().initial_server_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of servers.";
       rank_id = -1;
       --next_server_rank_id_;
@@ -55,7 +56,7 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
                  << " assign rank id:" << rank_id;
   } else if (register_message.role() == NodeRole::WORKER) {
     rank_id = ++next_worker_rank_id_;
-    if (IntToUint(rank_id) >= ClusterMetadata::instance()->total_worker_num()) {
+    if (IntToUint(rank_id) >= PSContext::instance()->cluster_config().initial_worker_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of workers.";
       rank_id = -1;
       --next_worker_rank_id_;
@@ -104,7 +105,7 @@ void NodeManager::UpdateClusterState() {
   (void)gettimeofday(&current_time, nullptr);
   timeout_nodes_info_.clear();
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
-    if (it->second.tv_sec + ClusterMetadata::instance()->heartbeat_timeout() < current_time.tv_sec) {
+    if (it->second.tv_sec + PSContext::instance()->cluster_config().heartbeat_timeout < current_time.tv_sec) {
       MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
       timeout_nodes_info_[it->first] = nodes_info_[it->first];
     }
@@ -130,7 +131,8 @@ void NodeManager::UpdateClusterState() {
 
 void NodeManager::CheckClusterTimeout() {
   if (total_node_num_ != nodes_info_.size()) {
-    MS_LOG(WARNING) << "The cluster is not ready after " << ClusterMetadata::instance()->cluster_available_timeout()
+    MS_LOG(WARNING) << "The cluster is not ready after "
+                    << PSContext::instance()->cluster_config().cluster_available_timeout
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
                     << nodes_info_.size();
     current_node_num_ = nodes_info_.size();

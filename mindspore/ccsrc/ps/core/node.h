@@ -31,6 +31,8 @@
 #include <tuple>
 
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
+#include "ps/ps_context.h"
 #include "ps/core/node_info.h"
 #include "ps/core/communicator/tcp_client.h"
 #include "ps/core/communicator/tcp_server.h"
@@ -54,7 +56,7 @@ class Node {
   using OnNodeEventMessage = std::function<void(const NodeEvent &event)>;
   using MessageCallback = std::function<void()>;
 
-  virtual bool Start(const uint32_t &timeout = ClusterMetadata::instance()->cluster_available_timeout()) = 0;
+  virtual bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) = 0;
   virtual bool Stop() = 0;
   virtual bool Finish(const uint32_t &timeout = kTimeoutInSeconds) = 0;
 

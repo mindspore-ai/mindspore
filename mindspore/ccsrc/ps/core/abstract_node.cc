@@ -294,7 +294,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
       } else {
         UpdateSchedulerTime();
       }
-      std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval()));
+      std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
     }
   });
   heart_beat_thread_->detach();
@@ -326,7 +326,7 @@ void AbstractNode::UpdateSchedulerTime() {
 bool AbstractNode::CheckSchedulerTimeout() const {
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
-  if (scheduler_time_.tv_sec + ClusterMetadata::instance()->scheduler_timeout() < current_time.tv_sec) {
+  if (scheduler_time_.tv_sec + PSContext::instance()->cluster_config().scheduler_timeout < current_time.tv_sec) {
     return true;
   }
   return false;
@@ -411,8 +411,8 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 }
 
 bool AbstractNode::InitClientToScheduler() {
-  std::string scheduler_host = ClusterMetadata::instance()->scheduler_host();
-  uint16_t scheduler_port = ClusterMetadata::instance()->scheduler_port();
+  std::string scheduler_host = PSContext::instance()->cluster_config().scheduler_host;
+  uint16_t scheduler_port = PSContext::instance()->cluster_config().scheduler_port;
   client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_host, scheduler_port);
   client_to_scheduler_->SetMessageCallback(
     [&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
@@ -438,7 +438,7 @@ bool AbstractNode::InitClientToScheduler() {
   client_to_scheduler_thread_->detach();
 
   client_to_scheduler_->set_disconnected_callback([&]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ClusterMetadata::instance()->connect_interval()));
+    std::this_thread::sleep_for(std::chrono::milliseconds(PSContext::instance()->cluster_config().connect_interval));
     if (is_ready_.load() == false) {
       client_to_scheduler_->Init();
     }

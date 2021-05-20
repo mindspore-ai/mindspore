@@ -50,6 +50,8 @@
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
+#include "ps/ps_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

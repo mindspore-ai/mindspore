@@ -25,6 +25,7 @@
 #include "proto/ps.pb.h"
 #include "ps/core/server_node.h"
 #include "ps/core/cluster_metadata.h"
+#include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
 #include "ps/core/communicator/task_executor.h"
 #include "ps/core/communicator/communicator_base.h"
