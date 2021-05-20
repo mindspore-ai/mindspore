@@ -296,5 +296,18 @@ def _add_rowtensor_tensor(x, y):
    """
     return x + y
 
+@_add_backward.register("None", "None")
+def _add_nonetensor_tensor(x, y):
+    """
+   Adds None and None.
+
+   Args:
+       x (None): x
+       y (None): y
+
+   Returns:
+       None.
+   """
+    return x + y
 
 hyper_add = base.HyperMap(_add_backward)

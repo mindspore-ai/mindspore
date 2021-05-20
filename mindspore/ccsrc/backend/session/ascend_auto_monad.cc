@@ -1694,13 +1694,17 @@ class ExecuteOrderGenerator {
         }
       }
     }
-    // Search all nodes for parameter write assigns.
+
+    std::set<AnfNodePtr> refed_parameters;
     for (auto &item : search_list) {
       auto &node = item.first;
-      std::set<AnfNodePtr> refed_parameters;
       for (auto [iter, end] = ref_multimap.equal_range(node); iter != end; ++iter) {
         (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
       }
+    }
+    // Search all nodes for parameter write assigns.
+    for (auto &item : search_list) {
+      auto &node = item.first;
       for (auto &in : node->inputs()) {
         auto visit_node = AnfAlgo::VisitKernelWithReturnType(in, 0).first;
         visit_node = validate_ref_parameter(visit_node);

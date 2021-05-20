@@ -44,7 +44,7 @@ class Primitive : public Named {
   Primitive(const std::string &name, const std::unordered_map<std::string, ValuePtr> &attrs);
   Primitive(const Primitive &prim);
   MS_DECLARE_PARENT(Primitive, Named);
-  abstract::AbstractBasePtr ToAbstract();
+  abstract::AbstractBasePtr ToAbstract() override;
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
   void BeginRecordAddAttr() {

@@ -108,11 +108,6 @@ void SyncDeviceInfoToValueNode(const ValueNodePtr &value_node, std::vector<std::
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(value, &tensors);
   if (!tensors.empty()) {
-    if (tensors.size() != AnfAlgo::GetOutputTensorNum(value_node)) {
-      MS_LOG(EXCEPTION) << "The size of tensors converted from value [" << tensors.size()
-                        << "] is not equal to output size of value node [" << AnfAlgo::GetOutputTensorNum(value_node)
-                        << "]";
-    }
     device_formats->clear();
     device_types->clear();
     for (const auto &tensor : tensors) {
@@ -692,7 +687,7 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto make_tuple = TransValueNodeTuple(value_node->abstract(), value_node->value());
-    if (RemoveValueNodeFromGraph(value_node)) {
+    if (!RemoveValueNodeFromGraph(value_node)) {
       MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
     }
     return make_tuple;

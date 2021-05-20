@@ -288,6 +288,9 @@ void PrimitivePy::CopyHookFunction(const PrimitivePtr &primitive) {
   auto primitive_py = primitive->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(primitive_py);
   this->set_hook(primitive_py->hook());
+  if (primitive_py->HasAttr(kBpropAttrName)) {
+    this->AddAttr(kBpropAttrName, primitive_py->GetAttr(kBpropAttrName));
+  }
 }
 
 BaseRef PrimitivePy::RunComputeFunction(const VectorRef &args) const {

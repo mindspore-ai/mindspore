@@ -49,6 +49,7 @@
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
+#include "pipeline/jit/prim_bprop_optimizer.h"
 #if (ENABLE_CPU && !_WIN32)
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -1166,6 +1167,8 @@ void ClearResAtexit() {
   }
 #endif
   ad::g_k_prims.clear();
+  ad::ClearKPynativeCellStaticRes();
+  PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();
   compile::ClearConvertCache();

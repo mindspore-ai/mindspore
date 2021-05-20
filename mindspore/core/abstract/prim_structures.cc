@@ -165,8 +165,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
     if (dyn_cast<AbstractScalar>(queue->elements()[0]) != nullptr) {
       return std::make_shared<AbstractScalar>(queue->elements()[0]->BuildType());
     }
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
-                             << index_value->ToString();
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got " << index->ToString();
   }
   auto idx_v = GetValue<int64_t>(index_value);
   std::size_t nelems = queue->elements().size();

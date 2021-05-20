@@ -531,6 +531,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     MS_LOG(DEBUG) << "Add graph:" << obj_key << ", func_graph:" << func_graph->ToString();
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
+
   return func_graph;
 }
 namespace data_converter {

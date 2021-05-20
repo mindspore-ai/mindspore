@@ -147,6 +147,7 @@ class KPrim {
     bprop_registry_meta_.clear();
     bprop_registry_.clear();
   }
+  FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
  private:
   FuncGraphPtr GetBprop(const PrimitivePtr &prim);

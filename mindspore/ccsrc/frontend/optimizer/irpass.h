@@ -149,6 +149,9 @@ class OptimizeIRPassLib {
 
   // Pynative Eliminate
   SubstitutionPtr pynative_eliminate_;
+
+  // Eliminate getattr bool scalar
+  SubstitutionPtr bool_scalar_eliminate_;
 };
 
 // the collection of irpass for resolve action

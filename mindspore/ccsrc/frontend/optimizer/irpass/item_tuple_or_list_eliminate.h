@@ -154,6 +154,7 @@ class TupleListGetitemConstEliminator : public AnfVisitor {
     if (is_match_) {
       auto out = NewValueNode((*tuple_)[id_]);
       out->set_has_new_value(has_new_value_);
+      out->set_abstract((*tuple_)[id_]->ToAbstract());
       return out;
     }
     return nullptr;

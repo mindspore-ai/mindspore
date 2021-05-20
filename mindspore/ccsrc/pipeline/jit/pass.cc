@@ -41,6 +41,7 @@
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #if (ENABLE_CPU && !_WIN32)
@@ -75,6 +76,24 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   return true;
 }
 
+bool TransformTopGraphPass(const ResourcePtr &res) {
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "Transform top graph error.";
+  }
+  FuncGraphPtr func_graph = res->func_graph();
+  if (opt::FuncGraphHasTupleInput(func_graph)) {
+    opt::GraphTupleParamTransform graph_trans;
+    func_graph = graph_trans(func_graph, res->manager());
+    res->set_func_graph(func_graph);
+    AbstractBasePtrList abs_spec_list;
+    auto &params = func_graph->parameters();
+    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
+                   [](AnfNodePtr node) { return node->abstract(); });
+    res->set_args_spec(abs_spec_list);
+  }
+  return true;
+}
+
 bool CleanAfterOptAPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
@@ -91,6 +110,104 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
   }
   res->set_args_spec(args_spec);
   return true;
+}
+
+FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
+    irpass.pynative_eliminate_,
+  });
+  opt::irpass::ResolveIRPassLib resolve_irpass;
+  opt::OptPassConfig resolver_prim = opt::OptPassConfig({
+    resolve_irpass.resolver_resolve_and_getattr_,
+    resolve_irpass.resolver_resolve_,
+    resolve_irpass.resolver_getattr_,
+  });
+
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
+    irpass.switch_simplify_,
+  });
+
+  opt::OptPassConfig inline_opt = opt::OptPassConfig({
+    irpass.inline_,
+  });
+
+  opt::OptPassConfig bool_scalar_eliminate = opt::OptPassConfig({
+    irpass.bool_scalar_eliminate_,
+  });
+
+  OptPassGroupMap map({{"ad_eliminate_", pynative_eliminate},
+                       {"ad_resolver_prim", resolver_prim},
+                       {"ad_inline_", inline_opt},
+                       {"bool_scalar_eliminate_", bool_scalar_eliminate},
+                       {"ad_switch_simplify_", switch_simplify}});
+
+  auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
+  FuncGraphPtr func_graph = res->func_graph();
+  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1"))[&prim_bprop_opt_step_1, &func_graph]() {
+    func_graph = prim_bprop_opt_step_1->step(func_graph, true);
+  };
+  return func_graph;
+}
+
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
+  opt::OptPassConfig switch_simplify_ = opt::OptPassConfig({
+    irpass.switch_simplify_,
+    irpass.reduce_eliminate_,
+  });
+
+  opt::OptPassConfig inline_ = opt::OptPassConfig({
+    irpass.inline_,
+  });
+
+  opt::OptPassConfig zero_like_fill_zero_ = opt::OptPassConfig({
+    irpass.zero_like_fill_zero_,
+  });
+
+  auto re_auto_monadwrapper = [](const FuncGraphPtr &root, const opt::OptimizerPtr &) -> bool {
+    return ReAutoMonad(root);
+  };
+  OptPassGroupMap map({{"ad_renormalize", opt::OptPassConfig::Renormalize()},
+                       {"ad_inline_", inline_},
+                       {"ad_switch_simplify_", switch_simplify_},
+                       {"ad_zero_like_fill_zero_", zero_like_fill_zero_},
+                       {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
+
+  auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", res, map);
+  FuncGraphPtr func_graph = res->func_graph();
+  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_2"))[&prim_bprop_opt_step_2, &func_graph]() {
+    func_graph = prim_bprop_opt_step_2->step(func_graph, true);
+  };
+  return func_graph;
+}
+
+FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  if (!TransformTopGraphPass(res)) {
+    MS_LOG(EXCEPTION) << "Run TransformTopGraphPass failed";
+  }
+
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig bg_final_opt_ = opt::OptPassConfig({
+    irpass.inline_,
+    irpass.tuple_list_get_set_item_eliminator_,
+    irpass.tuple_list_get_item_eliminator_,
+    irpass.tuple_list_set_item_eliminator_,
+    irpass.depend_value_elim_,
+    irpass.reshape_eliminate_,
+    irpass.switch_simplify_,
+  });
+  OptPassGroupMap map({{"ad_final_opt_", bg_final_opt_}});
+  if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
+    map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+  }
+
+  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
+  FuncGraphPtr func_graph = res->func_graph();
+  WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
+    func_graph = bprop_graph_final_opt->step(func_graph, true);
+  };
+
+  return func_graph;
 }
 
 namespace {
@@ -469,24 +586,6 @@ bool CconvPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
   res->set_func_graph(new_fg);
-  return true;
-}
-
-bool TransformTopGraphPass(const ResourcePtr &res) {
-  if (res->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Transform top graph error.";
-  }
-  FuncGraphPtr func_graph = res->func_graph();
-  if (opt::FuncGraphHasTupleInput(func_graph)) {
-    opt::GraphTupleParamTransform graph_trans;
-    func_graph = graph_trans(func_graph, res->manager());
-    res->set_func_graph(func_graph);
-    AbstractBasePtrList abs_spec_list;
-    auto &params = func_graph->parameters();
-    std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
-                   [](AnfNodePtr node) { return node->abstract(); });
-    res->set_args_spec(abs_spec_list);
-  }
   return true;
 }
 
