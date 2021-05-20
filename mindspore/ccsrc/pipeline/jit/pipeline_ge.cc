@@ -524,7 +524,7 @@ void ExportDFGraph(const std::string &file_name, const std::string &phase) {
   }
 
   transform::DfGraphPtr ge_graph = wrap_ptr->graph_ptr_;
-  if (nullptr == ge_graph) {
+  if (ge_graph == nullptr) {
     MS_LOG(ERROR) << "Graph is null!";
     return;
   }
