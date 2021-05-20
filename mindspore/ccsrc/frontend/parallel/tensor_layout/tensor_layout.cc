@@ -365,23 +365,24 @@ bool TensorLayout::operator!=(const TensorLayout &t1) const {
 /*
  * remove elements equal to 1 in tensor_shape, if all elements are 1, squeeze the tensor_shape to [ 1 ]
  * example 1:
- * original tensor layout:
- * device arrangement = [ 8 ]
- * tensor map = [ 0 -1 -1 -1 ]
- * tensor shape = [ 128 64 1 1 ]
- * return tensor layout:
- * device arrangement = [ 8 ]
- * tensor map = [ 0 -1 ]
- * tensor shape = [ 128 64 ]
+ *  original tensor layout:
+ *    device arrangement = [ 8 ]
+ *    tensor map = [ 0 -1 -1 -1 ]
+ *    tensor shape = [ 128 64 1 1 ]
+ *  return tensor layout:
+ *    device arrangement = [ 8 ]
+ *    tensor map = [ 0 -1 ]
+ *    tensor shape = [ 128 64 ]
  *
  * example 2:
- * device arrangement = [ 8 ]
- * tensor map = [ -1 -1 -1 -1 ]
- * tensor shape = [ 1 1 1 1 ]
- * return tensor layout:
- * device arrangement = [ 8 ]
- * tensor map = [ -1 ]
- * tensor shape = [ 1 ]
+ *  original tensor layout:
+ *    device arrangement = [ 8 ]
+ *    tensor map = [ -1 -1 -1 -1 ]
+ *    tensor shape = [ 1 1 1 1 ]
+ *  return tensor layout:
+ *    device arrangement = [ 8 ]
+ *    tensor map = [ -1 ]
+ *    tensor shape = [ 1 ]
  */
 TensorLayout TensorLayout::SqueezeShape() const {
   TensorLayout out;

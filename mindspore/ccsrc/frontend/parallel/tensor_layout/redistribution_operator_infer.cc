@@ -211,26 +211,26 @@ Status RedistributionOperatorInfer::InsertOperator(OperatorName name, Args args)
 }
 
 Status RedistributionOperatorInfer::TransferSplitByAxis(Args args) {
-  if (args.size() < 3) {
+  if (args.size() < TRANSFER_SPLIT_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  size_t index = LongToSize(args[1]);
+  size_t index = LongToSize(args[TRANSFER_PERMUTE_SPLIT_DIM_INDEX]);
   if (constructor_.StridedSliceOP(args) != Status::SUCCESS) {
     return Status::FAILED;
   } else {
     operator_vector_.push_back(constructor_.GetOperator());
     output_info_vector_.push_back(std::make_pair(false, 0));
   }
-  if (cur_tensor_layout_.UpdateTensorMap(index, args[2]) == Status::FAILED) {
+  if (cur_tensor_layout_.UpdateTensorMap(index, args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX]) == Status::FAILED) {
     return Status::FAILED;
   }
   return Status::SUCCESS;
 }
 
 Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
-  if (args.size() < 3) {
-    MS_LOG(ERROR) << "args size should not be less than 3!";
+  if (args.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
+    MS_LOG(ERROR) << "args size should not be less than 5!";
     return Status::FAILED;
   }
   if (constructor_.AlltoAllOP(args) != Status::SUCCESS) {
@@ -239,8 +239,8 @@ Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
     operator_vector_.push_back(constructor_.GetOperator());
     output_info_vector_.push_back(std::make_pair(false, 0));
   }
-  size_t index = LongToSize(args[1]);
-  int64_t val = args[2];
+  size_t index = LongToSize(args[TRANSFER_PERMUTE_SPLIT_DIM_INDEX]);
+  int64_t val = args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
   int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
 
   if (cur_tensor_layout_.UpdateTensorMap(LongToSize(val), NONE) == Status::FAILED) {
@@ -253,13 +253,13 @@ Status RedistributionOperatorInfer::TransferPermuteByAxis(Args args) {
 }
 
 Status RedistributionOperatorInfer::TransferConcatByAxis(Args args) {
-  if (args.size() < 3) {
+  if (args.size() < TRANSFER_CONCAT_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  int64_t tensor_dim = args[0];
-  int64_t dev_dim = args[1];
-  int64_t split_count = args[2];
+  int64_t tensor_dim = args[TRANSFER_CONCAT_TENSOR_DIM_INDEX];
+  int64_t dev_dim = args[TRANSFER_CONCAT_DEV_DIM_INDEX];
+  int64_t split_count = args[TRANSFER_CONCAT_SPLIT_COUNT_INDEX];
   if (constructor_.AllGatherOP(dev_dim) != Status::SUCCESS) {
     return Status::FAILED;
   } else {

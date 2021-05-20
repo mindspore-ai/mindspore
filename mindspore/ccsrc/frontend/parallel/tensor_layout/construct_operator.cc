@@ -70,12 +70,12 @@ Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &en
   OperatorAttrs attrs = {attr_begin_mask, attr_end_mask, attr_ellipsis_mask, attr_new_axis_mask, attr_shrink_axis_mask};
 
   ValuePtr param_begin_value = MakeValue(begin);
-  Param param_begin = std::make_pair(std::make_pair(BEGIN, param_begin_value), 2);
+  Param param_begin = std::make_pair(std::make_pair(BEGIN, param_begin_value), STRIDED_SLICE_BEGIN_INDEX + 1);
   ValuePtr param_end_value = MakeValue(end);
-  Param param_end = std::make_pair(std::make_pair(END, param_end_value), 3);
+  Param param_end = std::make_pair(std::make_pair(END, param_end_value), STRIDED_SLICE_END_INDEX + 1);
 
   ValuePtr param_strides_value = MakeValue(strides);
-  Param param_strides = std::make_pair(std::make_pair(STRIDES, param_strides_value), 4);
+  Param param_strides = std::make_pair(std::make_pair(STRIDES, param_strides_value), STRIDED_SLICE_STRIDES_INDEX + 1);
   OperatorParams params = {param_begin, param_end, param_strides};
   OperatorArgs op_args = std::make_pair(attrs, params);
 
@@ -83,17 +83,17 @@ Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &en
 }
 
 Status ConstructOperator::StridedSliceOP(Args args) {
-  if (args.size() < 3) {
+  if (args.size() < STRIDED_SLICE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
   }
-  int64_t split_count = args[0];
+  int64_t split_count = args[TRANSFER_PERMUTE_SPLIT_COUNT_INDEX];
   if (split_count <= 0) {
     MS_LOG(ERROR) << "split_count should not be less than 0!";
     return Status::FAILED;
   }
-  int64_t split_dim = args[1];
-  int64_t dev_dim = args[2];
+  int64_t split_dim = args[TRANSFER_PERMUTE_SPLIT_DIM_INDEX];
+  int64_t dev_dim = args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
   std::vector<Group> group_list;
 
   if (CreateGroupByDim(dev_size_ - LongToSize(dev_dim) - 1, &group_list) != SUCCESS) {
@@ -193,14 +193,14 @@ Status ConstructOperator::SplitOP(int64_t split_count) {
 }
 
 Status ConstructOperator::AlltoAllOP(Args args) {
-  if (args.size() < 4) {
-    MS_LOG(ERROR) << "args size should not be less than 4!";
+  if (args.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
+    MS_LOG(ERROR) << "args size should not be less than 5!";
     return Status::FAILED;
   }
-  int64_t split_count = args[0];
-  int64_t split_dim = args[1];
-  int64_t concat_dim = args[2];
-  int64_t dev_dim = args[3];
+  int64_t split_count = args[TRANSFER_PERMUTE_SPLIT_COUNT_INDEX];
+  int64_t split_dim = args[TRANSFER_PERMUTE_SPLIT_DIM_INDEX];
+  int64_t concat_dim = args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
+  int64_t dev_dim = args[TRANSFER_PERMUTE_DEV_DIM_INDEX];
   if (split_count <= 0) {
     MS_LOG(ERROR) << "Invalid split count when construct AlltoAll operator!";
     return Status::FAILED;

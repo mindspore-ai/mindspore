@@ -219,7 +219,7 @@ Status TensorRedistribution::ComputeCost() {
       // There is only computation cost in SplitByAxis.
       // computation cost = before_slice_shape
       computation_cost_ += prod;
-      // This addtion may be  erroneous
+      // This addition may be erroneous
       memory_cost_ += prod;
     }
   }
@@ -232,8 +232,8 @@ Status TensorRedistribution::ComputeCost() {
     }
     double prev_prod =
       std::accumulate(prev_shape.begin(), prev_shape.end(), static_cast<double>(1.0), std::multiplies<double>());
-    computation_cost_ += 2.0 * prev_prod;
-    memory_cost_ += 2.0 * prev_prod;
+    computation_cost_ += COST_FACTOR * prev_prod;
+    memory_cost_ += COST_FACTOR * prev_prod;
   }
   return Status::SUCCESS;
 }
@@ -241,21 +241,21 @@ Status TensorRedistribution::ComputeCost() {
 Status TensorRedistribution::ComputePermuteCost(double input_size, Shape attrs) {
   // Since AlltoAll is a virtual operator, the expanded operators are used here to compute cost.
   // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
-  if (attrs.size() < 4) {
-    MS_LOG(ERROR) << "attrs size should not be less than 4!";
+  if (attrs.size() < TRANSFER_PERMUTE_ARGS_SIZE) {
+    MS_LOG(ERROR) << "attrs size should not be less than 5!";
     return Status::FAILED;
   }
   forward_comm_cost_ += input_size * ALLTOALL_SCALE_FACTOR;
   backward_comm_cost_ += input_size * ALLTOALL_SCALE_FACTOR;
-  comm_cost_ += 2.0 * input_size * ALLTOALL_SCALE_FACTOR;
-  int32_t concat_dim = attrs[2];
+  comm_cost_ += COST_FACTOR * input_size * ALLTOALL_SCALE_FACTOR;
+  int32_t concat_dim = attrs[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
   if (concat_dim == 0) {
     // memory cost = all_gather
     computation_cost_ += input_size;
     memory_cost_ += input_size;
   } else {
     // memory cost = all_gather + split + concat
-    int32_t dev_num = attrs[4];
+    int32_t dev_num = attrs[TRANSFER_PERMUTE_DEV_NUM_INDEX];
     computation_cost_ += (input_size + input_size * dev_num + input_size * dev_num);
     memory_cost_ += (input_size * dev_num + input_size * dev_num + input_size);
   }
@@ -265,16 +265,16 @@ Status TensorRedistribution::ComputePermuteCost(double input_size, Shape attrs) 
 Status TensorRedistribution::ComputeConcatCost(double input_size, Shape attrs) {
   // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
   // computation cost = before_slice_shape
-  if (attrs.size() < 3) {
+  if (attrs.size() < TRANSFER_CONCAT_ARGS_SIZE) {
     MS_LOG(ERROR) << "op.second size should not be less than 3!";
     return Status::FAILED;
   }
-  double dev_num = attrs[2];
+  double dev_num = attrs[TRANSFER_CONCAT_SPLIT_COUNT_INDEX];
   // here, communication cost = all_gather + reduce_scatter
   forward_comm_cost_ += input_size * dev_num * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
   backward_comm_cost_ += input_size * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
   comm_cost_ += input_size * (dev_num + 1.0) * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
-  int32_t concat_dim = attrs[0];
+  int32_t concat_dim = attrs[TRANSFER_CONCAT_TENSOR_DIM_INDEX];
   if (concat_dim == 0) {
     // computation cost = all_gather
     computation_cost_ += input_size;
