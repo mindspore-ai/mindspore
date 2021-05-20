@@ -48,7 +48,8 @@ constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
 
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
-
+inline const PrimitivePtr kPrimUnPadAkg = std::make_shared<Primitive>("UnPadAkg");
+inline const PrimitivePtr kPrimPadAkg = std::make_shared<Primitive>("PadAkg");
 struct DataInfo {
   std::string format{kOpFormat_DEFAULT};
   ShapeVector shape{1};
@@ -64,6 +65,10 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
                                                       const std::vector<TypeId> &inputs_type,
                                                       const std::vector<std::string> &output_formats,
                                                       const std::vector<TypeId> &output_types, const AnfNodePtr &node);
+kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::string> &inputs_format,
+                                                      const std::vector<TypeId> &inputs_type,
+                                                      const std::vector<std::string> &output_formats,
+                                                      const std::vector<TypeId> &output_types);
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                               const AnfNodePtrList &outputs);
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
