@@ -75,6 +75,20 @@ MS_REG_GPU_KERNEL_TWO(
 // dynamic shape
 MS_REG_GPU_KERNEL_TWO(Gather,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      GatherV2GpuFwdKernel, double, int)
+MS_REG_GPU_KERNEL_TWO(Gather,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      GatherV2GpuFwdKernel, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(Gather,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
