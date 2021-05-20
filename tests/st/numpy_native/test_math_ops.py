@@ -2418,6 +2418,8 @@ def onp_around(x):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_around():
     arrs = [
@@ -2696,9 +2698,11 @@ def test_invert():
     match_res(mnp.invert, onp.invert, x.astype(onp.uint16), dtype=mnp.uint16)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 @pytest.mark.env_onecard
 def test_rint():
     arrs = [

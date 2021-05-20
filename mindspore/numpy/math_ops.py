@@ -61,6 +61,7 @@ _cumsum_default = P.CumSum()
 _concat = P.Concat(-1)
 _cumprod_default = P.CumProd()
 _round = P.Round()
+_rint = P.Rint()
 
 
 def absolute(x, dtype=None):
@@ -4906,7 +4907,7 @@ def matrix_power(a, n):
     if not isinstance(n, int):
         _raise_type_error("exponent must be an integer")
     if a.ndim < 2:
-        _raise_value_error(str(a.ndim) + "-dimensional array given. Array must be at least two-dimensional")
+        _raise_value_error("Array must be at least two-dimensional")
     if a.shape[-2] != a.shape[-1]:
         _raise_value_error("Last 2 dimensions of the array must be square")
 
@@ -4934,8 +4935,6 @@ def around(a, decimals=0):
     Args:
         a (Union[int, float, list, tuple, Tensor]): Input data.
         decimals (int): Number of decimal places to round to. Default: 0.
-            If decimals is negative, it specifies the number of positions
-            to the left of the decimal point.
 
     Returns:
         Tensor. A tensor of the same type as a, containing the rounded values.
@@ -4946,7 +4945,7 @@ def around(a, decimals=0):
             the `decimals` argument is not integer.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -5419,11 +5418,13 @@ def ravel_multi_index(multi_index, dims, mode='clip', order='C'):
     if isinstance(dims, int):
         dims = (dims,)
     dims = _to_tensor(dims)
-    if dims.ndim > 1:
-        _raise_type_error("only integer scalar arrays can be converted to a scalar index.")
+    if dims.ndim > 1 or dims.dtype in (mstype.float16, mstype.float32, mstype.float64, mstype.bool_):
+        _raise_type_error("only 1-D integer arrays are accepted.")
     multi_index = _to_tensor(multi_index)
     if len(multi_index) != len(dims):
         _raise_value_error("parameter multi_index must be a sequence of length ", len(dims))
+    if multi_index.dtype in (mstype.float16, mstype.float32, mstype.float64):
+        _raise_type_error("only int indices permitted")
 
     multi_index = _process_index(multi_index, dims, mode)
     strides = _get_strides(dims, order)
@@ -5682,7 +5683,7 @@ def rint(x, dtype=None):
         not supported.
 
     Args:
-        x (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        x (Union[float, list, tuple, Tensor]): Input tensor.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
 
@@ -5693,7 +5694,7 @@ def rint(x, dtype=None):
         TypeError: If `x` can not be converted to tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -5701,7 +5702,11 @@ def rint(x, dtype=None):
         >>> print(np.rint(x))
         [-2. -2. 0. 2. 2. 2.]
     """
-    return _apply_tensor_op(_round, x, dtype=dtype)
+    x = _to_tensor_origin_dtype(x)
+    res = _rint(x)
+    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
+        res = F.cast(res, dtype)
+    return res
 
 
 def correlate(a, v, mode='valid'):
