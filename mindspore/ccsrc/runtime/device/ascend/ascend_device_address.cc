@@ -716,11 +716,13 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetName(tensor_name);
   tensor_data->SetExecutionOrder(execution_order);
   tensor_data->SetSlot(slot);
+
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   size_t host_size = out_tensor->data().nbytes();
-  auto ret_rt_memcpy = rtMemcpy(out_tensor->data_c(), host_size, ptr_, host_size, RT_MEMCPY_DEVICE_TO_HOST);
-  if (ret_rt_memcpy != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "SyncDeviceToHost: rtMemcpy mem size[" << size_ << "] fail, ret[" << ret_rt_memcpy << "]";
+  auto ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
+  if (!ret_sync) {
+    MS_LOG(ERROR) << "Copy device mem to host failed";
+    return ret;
   }
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   tensor_data->SetTensor(out_tensor);
