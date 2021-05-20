@@ -17,6 +17,7 @@
 #include "ps/util.h"
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include "ps/constants.h"
 #include "ps/ps_context.h"
 #include "utils/ms_utils.h"
@@ -127,6 +128,108 @@ void Util::ReduceSparseGradient(float *gradients, int *indices, const size_t ind
   param.value_stride_ = outer_dim_size;
 
   mindspore::kernel::SparseOptimizerCPUKernel::BucketReduceSparseGradient(param);
+}
+
+bool Util::FuseServerCommOps(const pipeline::ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  DoFusion(func_graph, kPullWeightOpName, kFusedPullWeightOpName);
+  DoFusion(func_graph, kPushWeightOpName, kFusedPushWeightOpName);
+  return true;
+}
+
+void Util::DoFusion(FuncGraphPtr func_graph, const std::string &cnode_name, const std::string &fused_cnode_name) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
+
+  std::vector<AnfNodePtr> single_nodes;
+  std::vector<std::string> weight_names;
+  std::vector<int64_t> indices;
+  for (const AnfNodePtr &node : node_list) {
+    if (node != nullptr && node->isa<CNode>()) {
+      if (AnfAlgo::GetCNodeName(node) == cnode_name) {
+        single_nodes.push_back(node);
+
+        auto weight_name_value_node =
+          AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightNameOffset)->cast<ValueNodePtr>();
+        const std::string &weight_name = GetValue<std::string>(weight_name_value_node->value());
+        weight_names.push_back(weight_name);
+
+        auto weight_index_value_node =
+          AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightIndexOffset)->cast<ValueNodePtr>();
+        int64_t weight_index = GetValue<int64_t>(weight_index_value_node->value());
+        indices.push_back(weight_index);
+      }
+    }
+  }
+
+  auto prim = std::make_shared<Primitive>(fused_cnode_name);
+  MS_EXCEPTION_IF_NULL(prim);
+  std::vector<AnfNodePtr> fused_node_inputs = {};
+  fused_node_inputs.push_back(NewValueNode(prim));
+  std::for_each(single_nodes.begin(), single_nodes.end(), [&](AnfNodePtr node) {
+    fused_node_inputs.push_back(AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0));
+  });
+
+  auto fused_cnode = func_graph->NewCNode(fused_node_inputs);
+  MS_EXCEPTION_IF_NULL(fused_cnode);
+  AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(weight_names), fused_cnode);
+  AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(indices), fused_cnode);
+  AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), fused_cnode);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  fused_cnode->set_kernel_info(kernel_info);
+  auto kernel_build_info = GenerateKernelBuildInfo(single_nodes);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, fused_cnode.get());
+
+  AbstractBasePtrList abstract_list;
+  for (const auto &node : single_nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    abstract_list.push_back(cnode->abstract());
+  }
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  fused_cnode->set_abstract(abstract_tuple);
+
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &node : single_nodes) {
+    if (!manager->Replace(node, fused_cnode)) {
+      MS_LOG(EXCEPTION) << "manager replace node failed";
+    }
+  }
+  return;
+}
+
+kernel::KernelBuildInfoPtr Util::GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
+  std::vector<std::string> inputs_device_format;
+  std::vector<std::string> outputs_device_format;
+  std::vector<TypeId> inputs_device_type;
+  std::vector<TypeId> outputs_device_type;
+  std::vector<std::vector<size_t>> outputs_shape;
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  for (size_t idx = 0; idx < node_list.size(); ++idx) {
+    auto cnode = utils::cast<CNodePtr>(node_list[idx]);
+    MS_EXCEPTION_IF_NULL(cnode);
+    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t input_index = 0; input_index < input_num; ++input_index) {
+      inputs_device_format.push_back(kOpFormat_DEFAULT);
+      inputs_device_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
+    }
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    for (size_t output_index = 0; output_index < output_num; ++output_index) {
+      outputs_device_format.push_back(kOpFormat_DEFAULT);
+      outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(cnode, output_index));
+      outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
+    }
+  }
+  builder.SetInputsFormat(inputs_device_format);
+  builder.SetOutputsFormat(outputs_device_format);
+  builder.SetInputsDeviceType(inputs_device_type);
+  builder.SetOutputsDeviceType(outputs_device_type);
+  return builder.Build();
 }
 }  // namespace ps
 }  // namespace mindspore

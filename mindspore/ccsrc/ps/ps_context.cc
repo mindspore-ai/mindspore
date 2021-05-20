@@ -99,7 +99,7 @@ std::string PSContext::ms_role() const {
 
 bool PSContext::is_worker() const {
   if (server_mode_ == kServerModeFL || server_mode_ == kServerModeHybrid) {
-    return role_ == kRoleOfWorker;
+    return role_ == kEnvRoleOfWorker;
   }
   return is_worker_;
 }
@@ -185,7 +185,7 @@ const std::string &PSContext::server_mode() const { return server_mode_; }
 
 void PSContext::set_ms_role(const std::string &role) {
   if (server_mode_ != kServerModeFL && server_mode_ != kServerModeHybrid) {
-    MS_LOG(EXCEPTION) << "Only federated learning supports to set role by ps context.";
+    MS_LOG(EXCEPTION) << "Only federated learning supports to set role by fl context.";
     return;
   }
   if (role != kEnvRoleOfWorker && role != kEnvRoleOfServer && role != kEnvRoleOfScheduler) {
@@ -198,7 +198,7 @@ void PSContext::set_ms_role(const std::string &role) {
 void PSContext::set_worker_num(uint32_t worker_num) {
   // Hybrid training mode only supports one worker for now.
   if (server_mode_ == kServerModeHybrid && worker_num != 1) {
-    MS_LOG(EXCEPTION) << "The worker number should be set to 1 in hybrid training mode.";
+    MS_LOG(EXCEPTION) << "The worker number should be set to 1 for now in hybrid training mode.";
     return;
   }
   worker_num_ = worker_num;

@@ -463,7 +463,14 @@ bool OptInlineAction(const ResourcePtr &res) {
 
 bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePasses); }
 
-bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
+bool VmOptimizeAction(const ResourcePtr &res) {
+#if (ENABLE_CPU && !_WIN32)
+  if (ps::PSContext::instance()->is_ps_mode()) {
+    kVmPasses.push_back({"server_communication_op_fusion", ps::Util::FuseServerCommOps});
+  }
+#endif
+  return OptimizeAction(res, kVmPasses);
+}
 
 bool PynativeOptimizeAction(const ResourcePtr &resource) {
   WITH(MsProfile::GetProfile())[&resource]() { (void)OptimizeAction(resource, kPynativePasses); };
@@ -613,7 +620,7 @@ bool ExecuteAction(const ResourcePtr &res) {
 }
 
 #if (ENABLE_CPU && !_WIN32)
-bool StartPSWorkerAction(const ResourcePtr &) {
+bool StartPSWorkerAction(const ResourcePtr &res) {
   ps::Worker::GetInstance().Run();
   return true;
 }
@@ -632,7 +639,8 @@ bool StartPSServerAction(const ResourcePtr &res) {
 bool StartServerAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   const std::string &server_mode_ = ps::PSContext::instance()->server_mode();
-  size_t worker_num = ps::PSContext::instance()->initial_worker_num();
+  uint32_t worker_num = ps::PSContext::instance()->initial_worker_num();
+  uint32_t server_num = ps::PSContext::instance()->initial_server_num();
   uint64_t fl_server_port = ps::PSContext::instance()->fl_server_port();
 
   // Update model threshold is a certain ratio of start_fl_job threshold.
@@ -646,7 +654,9 @@ bool StartServerAction(const ResourcePtr &res) {
   std::vector<ps::server::RoundConfig> rounds_config = {
     {"startFLJob", true, start_fl_job_time_window, true, start_fl_job_threshold},
     {"updateModel", true, update_model_time_window, true, update_model_threshold},
-    {"getModel"}};
+    {"getModel"},
+    {"pullWeight"},
+    {"pushWeight", false, 3000, true, server_num}};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

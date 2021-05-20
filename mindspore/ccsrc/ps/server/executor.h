@@ -63,11 +63,11 @@ class Executor {
   // asynchronously.
   bool HandleModelUpdateAsync(const std::map<std::string, UploadData> &feature_map);
 
-  // Forcibly overwrite specific weights in overwriteWeights message.
-  bool HandleOverwriteWeightsByKey(const std::map<std::string, Address> &feature_map);
+  // Overwrite the weights in server using pushed feature map.
+  bool HandlePushWeight(const std::map<std::string, Address> &feature_map);
 
-  // Returns value for multiple trainable parameters passed by weight_names.
-  std::map<std::string, AddressPtr> HandleGetWeightsByKey(const std::vector<std::string> &param_names);
+  // Returns multiple trainable parameters passed by weight_names.
+  std::map<std::string, AddressPtr> HandlePullWeight(const std::vector<std::string> &param_names);
 
   // Reset the aggregation status for all aggregation kernels in the server.
   void ResetAggregationStatus();

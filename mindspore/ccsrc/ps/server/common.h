@@ -131,12 +131,22 @@ const OptimParamNameToIndex kSparseAdamNameToIdx = {{"inputs",
                                                     {"outputs", {}}};
 const OptimParamNameToIndex kSparseFtrlNameToIdx = {
   {"inputs", {{kWeight, 0}, {kAccumulation, 1}, {kFtrlLinear, 2}, {kGradient, 3}, {kIndices, 4}}}, {"outputs", {}}};
-const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {
-  {kApplyMomentumOpName, kMomentumNameToIdx},
-  {kFusedSparseAdamName, kSparseAdamNameToIdx},
-  {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
-  {kApplyAdamOpName, kAdamNameToIdx},
-};
+const OptimParamNameToIndex kAdamWeightDecayNameToIdx = {{"inputs",
+                                                          {{"weight", 0},
+                                                           {"m", 1},
+                                                           {"v", 2},
+                                                           {"lr", 3},
+                                                           {"beta1", 4},
+                                                           {"beta2", 5},
+                                                           {"eps", 6},
+                                                           {"weight_decay", 7},
+                                                           {"grad", 8}}},
+                                                         {"outputs", {}}};
+const std::map<std::string, OptimParamNameToIndex> kNameToIdxMap = {{kApplyMomentumOpName, kMomentumNameToIdx},
+                                                                    {kFusedSparseAdamName, kSparseAdamNameToIdx},
+                                                                    {kSparseApplyFtrlOpName, kSparseFtrlNameToIdx},
+                                                                    {kApplyAdamOpName, kAdamNameToIdx},
+                                                                    {"AdamWeightDecay", kAdamWeightDecayNameToIdx}};
 
 constexpr uint32_t kLeaderServerRank = 0;
 constexpr size_t kWorkerMgrThreadPoolSize = 32;
