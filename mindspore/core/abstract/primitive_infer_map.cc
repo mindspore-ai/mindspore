@@ -21,8 +21,8 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include "ops/real_div.h"
+#include "ops/add.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
 
@@ -174,8 +174,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
   static PrimitiveEvalImplMap prim_backend_eval_implement_map = {
-    {prim::kPrimMul, {InferImplMul, nullptr, false}},
-    {prim::kPrimAdd, {InferImplAdd, nullptr, true}},
+    {prim::kPrimMul, {InferImplMul, nullptr, true}},
+    {prim::kPrimAdd, {ops::AddInfer, nullptr, false}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, {InferImplSub, nullptr, false}},
     {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
