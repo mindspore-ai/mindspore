@@ -25,6 +25,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "utils/utils.h"
+#include "frontend/operator/ops.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/kernel_graph.h"
 
@@ -62,6 +63,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {kTensorAddOpName, {{0, 1}, {0}}},
   {prim::kPrimConcat->name(), {{kAllPositions}, {0}}},
   {prim::kPrimAddN->name(), {{kAllPositions}, {0}}},
+  {prim::kPrimSplit->name(), {{0}, {kAllPositions}}},
 };
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);

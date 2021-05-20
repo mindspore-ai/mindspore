@@ -41,8 +41,8 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
 
 # 环境要求
 
-- 硬件（Ascend）
-    - 使用Ascend来搭建硬件环境。
+- 硬件（Ascend/GPU）
+    - 使用Ascend来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -60,6 +60,8 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
     ├─run_standalone_train.sh                 # Ascend环境下的单卡训练脚本
     ├─run_distribute_train.sh                 # Ascend环境下的八卡并行训练脚本
     ├─run_eval.sh                             # Ascend环境下的评估脚本
+    ├─run_train_gpu.sh                        # GPU环境下的训练脚本
+    ├─run_eval_gpu.sh                         # GPU环境下的评估脚本
   ├─src
     ├─config.py                               # 参数配置
     ├─dataset.py                              # 数据预处理
@@ -104,11 +106,12 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
 ```shell
 # 训练示例
   python:
-      Ascend单卡训练示例：python train.py --device_id [DEVICE_ID] --dataset_path [DATA_DIR]
+      Ascend单卡训练示例: python train.py --device_id [DEVICE_ID] --dataset_path [DATA_DIR]
 
   shell:
       Ascend八卡并行训练: sh scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_DIR]
       Ascend单卡训练示例: sh scripts/run_standalone_train.sh [DEVICE_ID] [DATA_DIR]
+      GPU训练示例：sh run_train_gpu.sh [DEVICE_NUM] [RANK_TABLE_FILE] [DATA_DIR]
 ```
 
 ### 结果
@@ -133,9 +136,9 @@ epoch time: 99864.092, per step time: 79.827, avg loss: 3.442
 # 评估示例
   python:
       python eval.py --device_id [DEVICE_ID] --dataset_path [DATA_DIR] --checkpoint_path [PATH_CHECKPOINT]
-
   shell:
-      sh scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+      Ascend评估示例: sh scripts/run_eval.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
+      GPU评估示例：sh scripts/run_eval_gpu.sh [DEVICE_ID] [DATA_DIR] [PATH_CHECKPOINT]
 ```
 
 > 训练过程中可以生成ckpt文件。
@@ -152,22 +155,22 @@ result:{'Loss': 2.0479587888106323, 'Top_1_Acc': 0.7385817307692307, 'Top_5_Acc'
 
 ## 训练性能
 
-| 参数                        | Ascend                                |
-| -------------------------- | ------------------------------------- |
-| 模型名称                    | ShuffleNetV1                           |
-| 运行环境                    | Ascend 910；系统 Euler2.8                            |
-| 上传时间                    | 2020-12-3                             |
-| MindSpore 版本             | 1.0.0                                 |
-| 数据集                      | imagenet                              |
-| 训练参数                    | src/config.py                         |
-| 优化器                      | Momentum                              |
-| 损失函数                    | SoftmaxCrossEntropyWithLogits         |
-| 最终损失                    | 2.05                                  |
-| 精确度 (8p)                 | Top1[73.9%], Top5[91.4%]               |
-| 训练总时间 (8p)             | 7.0h                                    |
-| 评估总时间                  | 99s                                    |
-| 参数量 (M)                 | 44M                                   |
-| 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/shufflenetv1) |
+| 参数                        | Ascend                                |GPU                |
+| -------------------------- | ------------------------------------- |-------------------|
+| 模型名称                    | ShuffleNetV1                           |ShuffleNetV1       |
+| 运行环境                    | Ascend 910                            |NV SMX2 V100-32G    |
+| 上传时间                    | 2020-12-3                             |2021-3-20           |
+| MindSpore 版本             | 1.0.0                                 |1.2.0                |
+| 数据集                      | imagenet                              |imagenet             |
+| 训练参数                    | src/config.py                         |src/config.py        |
+| 优化器                      | Momentum                              |Momentum             |
+| 损失函数                    | SoftmaxCrossEntropyWithLogits         |SoftmaxCrossEntropyWithLogits|  
+| 最终损失                    | 2.05                                  |1.90                         |
+| 精确度 (8p)                 | Top1[73.9%], Top5[91.4%]               |Top1[73.7%], Top5[91.5%]    |
+| 训练总时间 (8p)             | 7.0h                                    |17h44m                      |
+| 评估总时间                  | 99s                                    | 3m8s                        |
+| 参数量 (M)                 | 44M                                   |44M                            |
+| 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/shufflenetv1) |[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/shufflenetv1) |
 
 # 随机情况的描述
 

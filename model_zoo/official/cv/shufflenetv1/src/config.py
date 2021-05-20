@@ -36,7 +36,7 @@ config = edict({
     'lr_max': 0.50,
     'lr_end': 0.00,
     'warmup_epochs': 4,
-    "loss_scale": 1024,
+    "loss_scale": 1,
 
     # Optimization Config
     'weight_decay': 0.00004,

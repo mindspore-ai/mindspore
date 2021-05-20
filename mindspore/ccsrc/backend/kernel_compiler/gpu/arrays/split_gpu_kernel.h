@@ -57,6 +57,11 @@ class SplitGpuFwdKernel : public GpuKernel {
       auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
       axis_ += SizeToInt(input_shape.size());
     }
+
+    auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
+    auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
+    axis_ = AxisTransform(origin_data_format, input_format, axis_);
+
     output_num_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "output_num"));
 
     if (!CheckParam(kernel_node)) {
