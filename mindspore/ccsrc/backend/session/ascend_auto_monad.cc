@@ -53,6 +53,9 @@ const char KEEP[] = "keep";
 // Attribute to indicate that this is an assign for output.
 const char OUTPUT[] = "output";
 
+// Attribute to indicate that the node is last node in an iteration.
+const char ITEREND[] = "PROFILING_ITER_END";
+
 bool IsSaveGraph() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -627,6 +630,8 @@ class AscendAutoMonadConverter {
       AscendAutoMonadConverter converter(entry.first, context, &entry.second);
       converter.Run();
     }
+    const auto &top_graph = context->TopGraph();
+    SetIterEndAttrForTopGraph(context, top_graph);
   }
 
  private:
@@ -666,6 +671,95 @@ class AscendAutoMonadConverter {
         MS_LOG(INFO) << "graph:" << kernel_graph_->ToString() << ", loop call_site:" << call_site.cnode->DebugString();
         InsertStackOps(call_site);
       }
+    }
+  }
+
+  // Set iteration end points for Profiling.
+  static void SetIterEndAttrForTopGraph(AscendAutoMonadContext *context, const KernelGraphPtr &kg) {
+    kg->SetExecOrderByDefault();
+    auto &nodes = kg->execution_order();
+    auto end_iter = nodes.rend();
+    std::set<KernelGraphPtr> memo;
+    memo.insert(kg);
+    auto call_info = context->call_info_map[kg];
+    if (call_info.call_sites.empty()) {
+      SetIterEndAttr(context, kg, false);
+      return;
+    } else {
+      const auto &end_node = call_info.call_sites.back().cnode;
+      end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
+    }
+    for (auto iter = nodes.rbegin(); iter != end_iter; iter++) {
+      if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
+        continue;
+      }
+      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
+        const auto &last_call_site = context->call_info_map[kg].call_sites.back();
+        for (auto &branch : last_call_site.callees) {
+          if (memo.find(branch.graph) != memo.end()) {
+            continue;
+          }
+          FindProfilingEndPoints(context, branch.graph, &memo);
+        }
+        break;
+      }
+      AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
+      MS_LOG(INFO) << "Set profiling iter-end points: " << (*iter)->DebugString();
+      return;
+    }
+  }
+
+  // Set Attr to the iter-end points.
+  static void SetIterEndAttr(AscendAutoMonadContext *context, const KernelGraphPtr &kg, bool has_call_site) {
+    kg->SetExecOrderByDefault();
+    auto &nodes = kg->execution_order();
+    auto end_iter = nodes.rend();
+    if (has_call_site) {
+      const auto &end_node = context->call_info_map[kg].call_sites.back().cnode;
+      end_iter = std::find(nodes.rbegin(), nodes.rend(), end_node);
+    }
+    for (auto iter = nodes.rbegin(); iter != end_iter; iter++) {
+      if (!AnfAlgo::IsRealCNodeKernel(*iter)) {
+        continue;
+      }
+      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) && AnfAlgo::HasNodeAttr(kAttrReturn, *iter)) {
+        continue;
+      }
+      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) ||
+          AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSwitch) ||
+          AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
+        MS_LOG(ERROR) << "this node is Labelxxxx, do not found iter end.";
+        break;
+      }
+      AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
+      MS_LOG(INFO) << "Set profiling iter-end points: " << (*iter)->DebugString();
+      return;
+    }
+    MS_LOG(ERROR) << "Do not find iter_end point";
+  }
+
+  // Find all iteration end points recursively.
+  static void FindProfilingEndPoints(AscendAutoMonadContext *context, const KernelGraphPtr &kg,
+                                     std::set<KernelGraphPtr> *memo) {
+    memo->insert(kg);
+    auto call_info = context->call_info_map[kg];
+    // 1. find the last call site; if no call site, goto step 3.
+    // 2. Judge the call site whether is tail call or not.
+    // 3. if yes, recursively find call site in subgraph; if no, find the last TBE node and set extra attr.
+    if (!call_info.call_sites.empty()) {
+      const auto &last_call_site = call_info.call_sites.back();
+      if (last_call_site.tail) {
+        for (auto &branch : last_call_site.callees) {
+          if (memo->find(branch.graph) != memo->end()) {
+            continue;
+          }
+          FindProfilingEndPoints(context, branch.graph, memo);
+        }
+      } else {
+        SetIterEndAttr(context, kg, true);
+      }
+    } else {
+      SetIterEndAttr(context, kg, false);
     }
   }
 
