@@ -85,18 +85,16 @@ class Parameter(Tensor_):
             Default: True.
 
     Examples:
-        >>> from mindspore import Parameter, Tensor
-        >>> from mindspore.common import initializer as init
-        >>> from mindspore.ops import operations as P
-        >>> from mindspore.nn import Cell
-        >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import context
+        >>> from mindspore import Parameter, Tensor
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> import mindspore
         >>>
-        >>> class Net(Cell):
+        >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.matmul = P.MatMul()
+        ...         self.matmul = ops.MatMul()
         ...         self.weight = Parameter(Tensor(np.ones((1, 2)), mindspore.float32), name="w", requires_grad=True)
         ...
         ...     def construct(self, x):
@@ -343,8 +341,12 @@ class Parameter(Tensor_):
         Clone the parameter.
 
         Args:
-            init (Union[Tensor, str, numbers.Number]): Initialize the shape of the parameter.
-                Default: 'same'.
+            init (Union[Tensor, str, numbers.Number]): Initialize the shape and dtype of the parameter.
+                If `init` is a `Tensor` or `numbers.Number`, clone a new parameter with the same shape
+                and dtype, and the data of the new parameter will be set according to `init`. If `init`
+                is a `str`, the `init` should be the alias of the class inheriting from `Initializer`.
+                For example, if `init` is 'same', clone a new parameter with the same data, shape, and
+                dtype. Default: 'same'.
 
         Returns:
             Parameter, a new parameter.
@@ -580,11 +582,14 @@ class ParameterTuple(tuple):
 
     def clone(self, prefix, init='same'):
         """
-        Clone the parameter.
+        Clone the parameters in ParameterTuple element-wisely to generate a new ParameterTuple.
 
         Args:
             prefix (str): Namespace of parameter.
-            init (str): Initialize the shape of the parameter. Default: 'same'.
+            init (Union[Tensor, str, numbers.Number]): Initialize the shape and dtype of the parameters.
+                The definition of `init` is the same as in `Parameter` API. If `init` is 'same', the
+                parameters in the new parameter tuple are the same as those in the original parameter tuple.
+                Default: 'same'.
 
         Returns:
             Tuple, the new Parameter tuple.
