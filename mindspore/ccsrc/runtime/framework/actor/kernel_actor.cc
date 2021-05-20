@@ -31,7 +31,7 @@ void KernelActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<Device
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     FetchWorkspaceDeviceTensor();
-    AllocateMemory(context);
+    SendMemoryAllocReq(context);
   }
 }
 
@@ -44,7 +44,7 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     FetchWorkspaceDeviceTensor();
-    AllocateMemory(context);
+    SendMemoryAllocReq(context);
   }
 }
 
@@ -60,17 +60,17 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     FetchWorkspaceDeviceTensor();
-    AllocateMemory(context);
+    SendMemoryAllocReq(context);
   }
 }
 
-void KernelActor::AllocateMemory(OpContext<DeviceTensor> *context) {
+void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   std::vector<DeviceTensor *> alloc_list(output_device_tensors_);
   alloc_list.insert(alloc_list.end(), workspace_device_tensors_.begin(), workspace_device_tensors_.end());
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, device_context_, context, GetAID());
 }
 
-void KernelActor::FreeMemory(OpContext<DeviceTensor> *context) {
+void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   std::vector<DeviceTensor *> free_list(input_device_tensors_);
   free_list.insert(free_list.end(), output_device_tensors_.begin(), output_device_tensors_.end());
   free_list.insert(free_list.end(), workspace_device_tensors_.begin(), workspace_device_tensors_.end());
@@ -95,11 +95,11 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   // The input is invalid and needs to be erased when finish kernel launch.
   EraseInput(context);
 
-  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
-  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
-  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
-  //  the execution order and avoid the illegal memory timing problem.
-  FreeMemory(context);
+  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
+  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
+  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  SendMemoryFreeReq(context);
   SendOutput(context);
 }
 

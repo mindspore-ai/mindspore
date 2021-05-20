@@ -41,7 +41,7 @@ void MemoryManagerActor::AllocateMemory(std::vector<DeviceTensor *> alloc_list, 
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  Async(from_aid, &MemoryInterfaceActor::OnMemoryAllocFinish, op_context);
+  Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
 
 void MemoryManagerActor::FreeMemory(std::vector<DeviceTensor *> free_list, const DeviceContext *device_context,

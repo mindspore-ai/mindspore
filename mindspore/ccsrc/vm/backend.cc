@@ -409,7 +409,7 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
     input_tensors.emplace_back(input_tensor);
   }
 
-  // Run actor DAG.
+  // Run in the pynative mode.
   VectorRef outputs;
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
@@ -419,7 +419,7 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   }
 
   mindspore::ScopedLongRunning long_running;
-
+  // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);

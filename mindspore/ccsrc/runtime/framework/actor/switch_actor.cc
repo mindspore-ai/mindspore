@@ -235,7 +235,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   }
 }
 
-void SwitchActor::FreeMemory(OpContext<DeviceTensor> *context) {
+void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_device_tensors_, device_context_, context);
 }
 

@@ -25,7 +25,6 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "utils/utils.h"
-#include "frontend/operator/ops.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/kernel_graph.h"
 

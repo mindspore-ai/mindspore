@@ -24,7 +24,7 @@
 #include <queue>
 #include <utility>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/memory_interface_actor.h"
+#include "runtime/framework/actor/memory_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/host_tensor_queue.h"
@@ -35,20 +35,20 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
-// and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> AllocateMemory
-// -> OnMemoryAllocFinish -> FreeMemory -> SendOutput.
-class DataSourceActor : public MemoryInterfaceActor {
+// and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq
+// -> OnMemoryAllocFinish -> SendMemoryFreeReq -> SendOutput.
+class DataSourceActor : public MemoryAwareActor {
  public:
   DataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid)
-      : MemoryInterfaceActor(name), buffer_capacity_(buffer_capacity), memory_manager_aid_(memory_manager_aid) {}
+      : MemoryAwareActor(name), buffer_capacity_(buffer_capacity), memory_manager_aid_(memory_manager_aid) {}
   virtual ~DataSourceActor() = default;
 
   // The process entry of data processing.
   void FetchData(OpContext<DeviceTensor> *context);
 
   // The memory related operation interface.
-  void AllocateMemory(OpContext<DeviceTensor> *context) override{};
-  void FreeMemory(OpContext<DeviceTensor> *context) override{};
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override{};
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override{};
   // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override{};
 
@@ -83,8 +83,8 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
       : DataSourceActor(name, buffer_capacity, memory_manager_aid), device_context_(device_context) {}
   ~DeviceQueueDataSourceActor() override = default;
 
-  void AllocateMemory(OpContext<DeviceTensor> *context) override;
-  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 
  protected:
@@ -108,8 +108,8 @@ class HostQueueDataSourceActor : public DataSourceActor {
       : DataSourceActor(name, buffer_capacity, memory_manager_aid), host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
-  void AllocateMemory(OpContext<DeviceTensor> *context) override;
-  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 
   size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
@@ -121,6 +121,7 @@ class HostQueueDataSourceActor : public DataSourceActor {
  private:
   friend class GraphScheduler;
 
+  // Judge all the data_nodes_ is from the same device.
   bool IsSameDeviceType() const;
 
   HostTensorQueuePtr host_queue_;

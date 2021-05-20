@@ -23,7 +23,7 @@
 #include <utility>
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/memory_interface_actor.h"
+#include "runtime/framework/actor/memory_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 
@@ -32,12 +32,12 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 
 // The copy actor is used to receive the device tensors and control info to copy data between input device tensor and
-// output device tensor. The processing flow is RunOpData/RunOpControl -> CheckCopyCondition -> AllocateMemory
-// -> OnMemoryAllocFinish -> Copy -> FreeMemory -> SendOutput.
-class CopyActor : public MemoryInterfaceActor {
+// output device tensor. The processing flow is RunOpData/RunOpControl -> CheckCopyCondition -> SendMemoryAllocReq
+// -> OnMemoryAllocFinish -> Copy -> SendMemoryFreeReq -> SendOutput.
+class CopyActor : public MemoryAwareActor {
  public:
   CopyActor(const std::string &name, const AID &memory_manager_aid)
-      : MemoryInterfaceActor(name),
+      : MemoryAwareActor(name),
         memory_manager_aid_(memory_manager_aid),
         input_datas_num_(0),
         input_controls_num_(0),
@@ -51,8 +51,8 @@ class CopyActor : public MemoryInterfaceActor {
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
 
   // The memory related operation interface.
-  void AllocateMemory(OpContext<DeviceTensor> *context) override;
-  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
   // The copy processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 

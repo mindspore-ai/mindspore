@@ -28,11 +28,11 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == buffer_capacity_) {
-    //  Note that FreeMemory must be before SendOutput, because SendOutput will trigger AllocateMemory of the next actor
-    //  and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor is
-    //  before AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure the
-    //  execution order and avoid the illegal memory timing problem.
-    FreeMemory(context);
+    // Note that SendMemoryFreeReq must be before SendOutput, because SendOutput will trigger SendMemoryAllocReq of the
+    // next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
+    // current actor is before SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the other
+    // is to ensure the execution order and avoid the illegal memory timing problem.
+    SendMemoryFreeReq(context);
     SendOutput(context);
     buffers_.pop();
     return;
@@ -45,7 +45,7 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   }
 
   // Allocate memory for device tensors.
-  AllocateMemory(context);
+  SendMemoryAllocReq(context);
 }
 
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
@@ -88,12 +88,12 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
   buffers_.push(device_tensors);
 }
 
-void DeviceQueueDataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   auto device_tensors = buffers_.back();
   Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_context_, context, GetAID());
 }
 
-void DeviceQueueDataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
+void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   auto device_tensors = buffers_.front();
   Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_context_, context);
 }
@@ -122,11 +122,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
-  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
-  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
-  //  the execution order and avoid the illegal memory timing problem.
-  FreeMemory(context);
+  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
+  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
+  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  SendMemoryFreeReq(context);
   SendOutput(context);
   buffers_.pop();
 }
@@ -151,7 +151,7 @@ void HostQueueDataSourceActor::FillDataBuffer() {
   buffers_.push(device_tensors);
 }
 
-void HostQueueDataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
   auto device_tensors = buffers_.back();
   if (IsSameDeviceType()) {
     Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_contexts_[0], context,
@@ -165,7 +165,7 @@ void HostQueueDataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) 
   }
 }
 
-void HostQueueDataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
+void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
   auto device_tensors = buffers_.front();
   if (IsSameDeviceType()) {
     Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_contexts_[0], context);
@@ -205,11 +205,11 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
     }
   }
 
-  //  Note that FreeMemory must be in front of SendOutput, because SendOutput will trigger AllocateMemory of the next
-  //  actor and the actor is asynchronous execution. So it is necessary to ensure that FreeMemory of the current actor
-  //  is in front of AllocateMemory of the next actor.  One is to reuse the memory more fully, the other is to ensure
-  //  the execution order and avoid the illegal memory timing problem.
-  FreeMemory(context);
+  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
+  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
+  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  SendMemoryFreeReq(context);
   SendOutput(context);
   buffers_.pop();
 }
