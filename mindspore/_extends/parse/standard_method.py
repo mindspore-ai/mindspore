@@ -316,7 +316,8 @@ def enumerate_(x, start=0):
     x_type = F.typeof(x)
     ret = ()
     op_name = "enumerate"
-    if check_is_tuple_or_list_or_tensor(x_type, op_name, "first input") and check_is_const_int(start, op_name, "start"):
+    if check_is_tuple_or_list_or_tensor(x_type, op_name, "first input") and \
+            check_is_const_int(start, op_name, "start"):
         if check_is_tensor(x_type):
             for i in range(x.shape[0]):
                 ret += ((start + i, x[i]),)

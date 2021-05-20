@@ -1132,13 +1132,13 @@ class IrParser {
 
     std::string parent_name = lexer_.GetTokenText();
     // NOTICE: require definition of parent graph must before child graph
-    auto iter = func_graphs_map_.find(parent_name);
-    if (iter == func_graphs_map_.end()) {
+    auto func_graphs_map_iter = func_graphs_map_.find(parent_name);
+    if (func_graphs_map_iter == func_graphs_map_.end()) {
       MS_LOG(EXCEPTION) << "Can not find definition of parent func graph '" << parent_name << "' at line "
                         << lexer_.GetLineNo();
     }
     if (parent_ptr != nullptr) {
-      *parent_ptr = iter->second;
+      *parent_ptr = func_graphs_map_iter->second;
     }
 
     if (lexer_.GetNextToken() != TOK_RBRACKET) {
@@ -1513,12 +1513,12 @@ class IrParser {
       {"Number", kObjectTypeNumber}};
     // clang-format on
 
-    auto iter = basic_types.find(type);
-    if (iter == basic_types.end()) {
+    auto basic_types_iter = basic_types.find(type);
+    if (basic_types_iter == basic_types.end()) {
       return false;
     }
     if (typeid_ptr != nullptr) {
-      *typeid_ptr = iter->second;
+      *typeid_ptr = basic_types_iter->second;
     }
     return true;
   }
@@ -1546,9 +1546,9 @@ class IrParser {
       {static_cast<int>(kObjectTypeNumber), std::make_shared<Number>()},    // Number
     };
 
-    auto iter = type_map.find(static_cast<int>(typeId));
-    if (iter != type_map.end()) {
-      dtype = iter->second;
+    auto type_map_iter = type_map.find(static_cast<int>(typeId));
+    if (type_map_iter != type_map.end()) {
+      dtype = type_map_iter->second;
     } else {
       MS_LOG(EXCEPTION) << "Unknown number type " << type;
     }
@@ -1730,11 +1730,11 @@ class IrParser {
           return ptr;
         }
       }
-      auto iter = parents_map_.find(func_graph);
-      if (iter == parents_map_.end()) {
+      auto parents_map_iter = parents_map_.find(func_graph);
+      if (parents_map_iter == parents_map_.end()) {
         break;
       }
-      func_graph = iter->second;
+      func_graph = parents_map_iter->second;
     }
 
     return nullptr;
@@ -1970,8 +1970,8 @@ class IrParser {
     if (lexer_.GetNextToken() != TOK_RPARENTHESIS) {
       return TOK_ERROR;
     }
-    auto iter = param_nodes_.find(param_name);
-    if (iter == param_nodes_.end()) {
+    auto param_nodes_iter = param_nodes_.find(param_name);
+    if (param_nodes_iter == param_nodes_.end()) {
       MS_LOG(EXCEPTION) << "Can not find param '" << param_name << "' for SymbolicKeyInstance at line "
                         << lexer_.GetLineNo();
     }
@@ -1979,7 +1979,7 @@ class IrParser {
     PrimitivePtr embed = std::make_shared<Primitive>("embed");
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(std::make_shared<ValueNode>(embed));
-    inputs.push_back(iter->second);
+    inputs.push_back(param_nodes_iter->second);
     if (node_ptr != nullptr) {
       MS_EXCEPTION_IF_NULL(func_graph);
       *node_ptr = func_graph->NewCNode(inputs);
@@ -2201,11 +2201,11 @@ class IrParser {
       tok = lexer_.GetNextToken();
     }
     if (tok == TOK_VARIABLE) {
-      auto iter = cnodes_.find(lexer_.GetTokenText());
-      if (iter == cnodes_.end()) {
+      auto cnodes_iter = cnodes_.find(lexer_.GetTokenText());
+      if (cnodes_iter == cnodes_.end()) {
         MS_LOG(EXCEPTION) << "Can not find definition of '" << lexer_.GetTokenText() << "'";
       }
-      *node_ptr = iter->second;
+      *node_ptr = cnodes_iter->second;
     } else if (tok == TOK_PARAMETER) {
       AnfNodePtr param = FindParameter(func_graph, lexer_.GetTokenText());
       if (param == nullptr) {

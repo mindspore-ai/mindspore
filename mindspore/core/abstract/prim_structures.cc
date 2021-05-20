@@ -202,7 +202,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   int64_t idx_t = idx_v >= 0 ? idx_v : idx_v + SizeToLong(nelems);
   if (idx_t < 0 || idx_t >= SizeToLong(nelems)) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << idx_v << " to set out of range: [-" << nelems
-                             << "," << nelems - 1 << "].";
+                             << "," << (nelems - 1) << "].";
   }
   size_t uidx_v = LongToSize(idx_t);
   elements[uidx_v] = args_spec_list[2];
