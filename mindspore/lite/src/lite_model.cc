@@ -383,7 +383,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
 }
 
 std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size) {
-  std::ifstream ifs(filename);
+  std::ifstream ifs(filename, std::ifstream::in | std::ifstream::binary);
   if (!ifs.good()) {
     MS_LOG(ERROR) << "File: " << filename << " does not exist";
     return std::unique_ptr<char[]>(nullptr);
