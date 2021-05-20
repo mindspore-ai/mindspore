@@ -177,3 +177,13 @@ class TrainOneStepCell(nn.Cell):
             grads = self.grad_reducer(grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         return F.depend(loss, self.optimizer(grads))
+
+class MaskRcnn_Mobilenetv1_Infer(nn.Cell):
+    def __init__(self, config):
+        super(MaskRcnn_Mobilenetv1_Infer, self).__init__()
+        self.network = Mask_Rcnn_Mobilenetv1(config)
+        self.network.set_train(False)
+
+    def construct(self, img_data, img_metas):
+        output = self.network(img_data, img_metas, None, None, None, None)
+        return output
