@@ -99,7 +99,7 @@ class KernelActor : public MemoryInterfaceActor {
   size_t input_controls_num_;
 
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, void *>> device_tensor_store_keys_;
+  std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;

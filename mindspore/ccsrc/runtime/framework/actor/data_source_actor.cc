@@ -48,16 +48,6 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   AllocateMemory(context);
 }
 
-void DataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.back();
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_context_, context, GetAID());
-}
-
-void DataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.front();
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_context_, context);
-}
-
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
@@ -96,6 +86,16 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
   }
 
   buffers_.push(device_tensors);
+}
+
+void DeviceQueueDataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) {
+  auto device_tensors = buffers_.back();
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_context_, context, GetAID());
+}
+
+void DeviceQueueDataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
+  auto device_tensors = buffers_.front();
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_context_, context);
 }
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
@@ -151,6 +151,32 @@ void HostQueueDataSourceActor::FillDataBuffer() {
   buffers_.push(device_tensors);
 }
 
+void HostQueueDataSourceActor::AllocateMemory(OpContext<DeviceTensor> *context) {
+  auto device_tensors = buffers_.back();
+  if (IsSameDeviceType()) {
+    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_contexts_[0], context,
+          GetAID());
+  } else {
+    for (size_t i = 0; i < device_tensors.size(); ++i) {
+      std::vector<DeviceTensor *> alloc_list({device_tensors[i]});
+      Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, device_contexts_[i], context,
+            GetAID());
+    }
+  }
+}
+
+void HostQueueDataSourceActor::FreeMemory(OpContext<DeviceTensor> *context) {
+  auto device_tensors = buffers_.front();
+  if (IsSameDeviceType()) {
+    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_contexts_[0], context);
+  } else {
+    for (size_t i = 0; i < device_tensors.size(); ++i) {
+      std::vector<DeviceTensor *> free_list({device_tensors[i]});
+      Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, free_list, device_contexts_[i], context);
+    }
+  }
+}
+
 void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   if (buffers_.size() == 0) {
@@ -198,5 +224,23 @@ void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
           result_arrow->to_input_index_, context);
   }
 }
+
+size_t HostQueueDataSourceActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
+  const auto &iter = data_node_position_map_.find(data_node);
+  if (iter == data_node_position_map_.end()) {
+    MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope() << " is not exist.";
+  }
+  return iter->second;
+}
+
+bool HostQueueDataSourceActor::IsSameDeviceType() const {
+  for (size_t i = 1; i < device_contexts_.size(); i++) {
+    if (device_contexts_[i] != device_contexts_[0]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace runtime
 }  // namespace mindspore

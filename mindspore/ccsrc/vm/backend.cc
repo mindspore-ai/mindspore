@@ -409,10 +409,8 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
     input_tensors.emplace_back(input_tensor);
   }
 
-  VectorRef outputs;
-
   // Run actor DAG.
-
+  VectorRef outputs;
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (pynative_mode) {
@@ -425,9 +423,21 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
-
   if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
+  }
+
+  // Sync device stream.
+  const auto &first_device_context = graph_compiler_info.device_contexts_[0];
+  MS_EXCEPTION_IF_NULL(first_device_context);
+  if (!first_device_context->SyncStream()) {
+    MS_LOG(EXCEPTION) << "Sync stream failed:" << first_device_context->device_context_key().ToString();
+  }
+  for (size_t i = 0; i < graph_compiler_info.device_contexts_.size(); ++i) {
+    const auto &device_context = graph_compiler_info.device_contexts_[i];
+    if ((device_context != first_device_context) && (!device_context->SyncStream())) {
+      MS_LOG(EXCEPTION) << "Sync stream failed:" << device_context->device_context_key().ToString();
+    }
   }
 
   // Fetch outputs.

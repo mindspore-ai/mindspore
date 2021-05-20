@@ -198,6 +198,7 @@ bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
 
 void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_context_);
   auto input_size = input_datas_num_ + branch_device_tensor_store_keys_.size();
   input_device_tensors_.resize(input_size);
   auto data_iter = input_op_datas_.find(context->sequential_num_);
@@ -210,8 +211,14 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   data_iter->second.clear();
 
   for (auto &device_tensor_store_key : branch_device_tensor_store_keys_) {
-    auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second);
-    input_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
+    input_device_tensors_[device_tensor_store_key.first] =
+      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
+    if (input_device_tensors_[device_tensor_store_key.first] == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
+        ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 }
 
@@ -229,7 +236,7 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
 }
 
 void SwitchActor::FreeMemory(OpContext<DeviceTensor> *context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_device_tensors_, device_contexts_, context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_device_tensors_, device_context_, context);
 }
 
 }  // namespace runtime

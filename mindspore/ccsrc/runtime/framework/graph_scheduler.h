@@ -38,9 +38,16 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::session::KernelWithIndex;
-using KernelMapActor = std::unordered_map<std::string, KernelActorPtr>;
 using KernelMapPosition = std::map<KernelWithIndex, size_t, session::KernelWithIndexCmp>;
 using ActorInfo = std::string;
+
+// The second element of pair represents the output index of op actor corresponding to the graph output node.
+using GraphOutputPair = std::pair<OpActor<DeviceTensor> *, size_t>;
+
+// OpArrowPair represent data edge between from actor and to actor.
+// The first element of pair is the AID of from actor, and
+// second element is op arrow between actors.
+using OpArrowPair = std::pair<AID, OpArrowPtr>;
 
 enum class GraphExecutionStrategy {
   kPipeline,  // The actor running is triggered only by data.
@@ -101,11 +108,6 @@ struct ActorSet {
   ActorInfo name_;
 };
 using ActorSetPtr = std::shared_ptr<ActorSet>;
-
-// OpArrowPair represent data edge between from actor and to actor.
-// The first element of pair is the AID of from actor, and
-// second element is op arrow between actors.
-using OpArrowPair = std::pair<AID, OpArrowPtr>;
 
 class GraphScheduler {
  public:
@@ -187,6 +189,7 @@ class GraphScheduler {
   void LinkControlArrowForLoopCountActor(const ActorSet *actor_set, GraphExecutionStrategy strategy);
   void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node);
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
+  void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 
   // The processing of actors link dynamically.
   // Analyze necessary input data of current actor, generate and cache op arrow
@@ -212,22 +215,25 @@ class GraphScheduler {
   OpActor<DeviceTensor> *FetchActor(const std::string actor_name) const;
 
   // Display the actor information of corresponding kernel graph.
-  void DumpActor(const ActorSet *actor_set) const;
+  void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
+  void DumpBaseActor(const OpActor<DeviceTensor> *actor, std::ofstream &ofs) const;
   void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const;
   void DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const;
   void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const;
   void DumpOutputActor(const OutputActor *actor, std::ofstream &ofs) const;
+  void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const;
+  void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
 
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
   std::unordered_map<ActorInfo, HostTensorQueuePtr> actor_to_host_queue_;
   // The second element of pair represents the output index of op actor corresponding to the device tensor.
-  std::unordered_map<DeviceTensorPtr, std::pair<OpActor<DeviceTensor> *, size_t>> device_tensor_to_actor_;
+  std::unordered_map<DeviceTensorPtr, GraphOutputPair> device_tensor_to_actor_;
 
   // The local maps and vectors, will be cleared at the beginning of each graph transform.
   std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;
   // The second element of pair represents the output index of op actor corresponding to the graph output front node.
-  std::map<KernelWithIndex, std::pair<OpActor<DeviceTensor> *, size_t>, session::KernelWithIndexCmp> output_to_actor_;
+  std::map<KernelWithIndex, GraphOutputPair, session::KernelWithIndexCmp> graph_output_to_actor_;
   // Beaceuse the copy actors are built in the link, so need record the all copy actors in the link process to push into
   // the actor set after link.
   std::vector<CopyActorPtr> copy_actors_;

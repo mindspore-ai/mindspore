@@ -39,20 +39,16 @@ using mindspore::device::DeviceContext;
 // -> OnMemoryAllocFinish -> FreeMemory -> SendOutput.
 class DataSourceActor : public MemoryInterfaceActor {
  public:
-  DataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
-                  const AID memory_manager_aid)
-      : MemoryInterfaceActor(name),
-        buffer_capacity_(buffer_capacity),
-        device_context_(device_context),
-        memory_manager_aid_(memory_manager_aid) {}
+  DataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid)
+      : MemoryInterfaceActor(name), buffer_capacity_(buffer_capacity), memory_manager_aid_(memory_manager_aid) {}
   virtual ~DataSourceActor() = default;
 
   // The process entry of data processing.
   void FetchData(OpContext<DeviceTensor> *context);
 
   // The memory related operation interface.
-  void AllocateMemory(OpContext<DeviceTensor> *context) override;
-  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  void AllocateMemory(OpContext<DeviceTensor> *context) override{};
+  void FreeMemory(OpContext<DeviceTensor> *context) override{};
   // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override{};
 
@@ -71,15 +67,9 @@ class DataSourceActor : public MemoryInterfaceActor {
   // The output result arrows of graph output.
   std::vector<OpArrowPtr> output_result_arrows_;
 
-  // To trigger kernel actors running by op arrows.
-  std::vector<OpArrowPtr> output_op_arrows_;
-
   // The buffers store the device tensors.
   std::queue<std::vector<DeviceTensor *>> buffers_;
   size_t buffer_capacity_;
-
-  // The device interface of data copy.
-  const DeviceContext *device_context_;
 
   // The id of memory manager actor. Send message to it for alloc and free memory during the data processing.
   const AID memory_manager_aid_;
@@ -90,9 +80,11 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
  public:
   DeviceQueueDataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
                              const AID memory_manager_aid)
-      : DataSourceActor(name, buffer_capacity, device_context, memory_manager_aid) {}
+      : DataSourceActor(name, buffer_capacity, memory_manager_aid), device_context_(device_context) {}
   ~DeviceQueueDataSourceActor() override = default;
 
+  void AllocateMemory(OpContext<DeviceTensor> *context) override;
+  void FreeMemory(OpContext<DeviceTensor> *context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 
  protected:
@@ -104,17 +96,23 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
   // Input data kernel(for example GetNext) fetches data from device queue.
   CNodePtr data_kernel_;
+
+  const DeviceContext *device_context_;
 };
 
 // The class represents that the data source is host queue.
 class HostQueueDataSourceActor : public DataSourceActor {
  public:
-  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
-                           const AID memory_manager_aid, HostTensorQueuePtr host_queue)
-      : DataSourceActor(name, buffer_capacity, device_context, memory_manager_aid), host_queue_(host_queue) {}
+  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid,
+                           HostTensorQueuePtr host_queue)
+      : DataSourceActor(name, buffer_capacity, memory_manager_aid), host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
+  void AllocateMemory(OpContext<DeviceTensor> *context) override;
+  void FreeMemory(OpContext<DeviceTensor> *context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+
+  size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
 
  protected:
   void FillDataBuffer() override;
@@ -123,9 +121,14 @@ class HostQueueDataSourceActor : public DataSourceActor {
  private:
   friend class GraphScheduler;
 
+  bool IsSameDeviceType() const;
+
   HostTensorQueuePtr host_queue_;
   // Input data nodes fetch data from host queue.
   std::vector<AnfNodePtr> data_nodes_;
+  // The device contexts corresponding to the data nodes.
+  std::vector<const DeviceContext *> device_contexts_;
+
   // The location of the data node in the data source actor.
   std::unordered_map<AnfNodePtr, size_t> data_node_position_map_;
 };

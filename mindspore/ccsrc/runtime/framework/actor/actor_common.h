@@ -45,7 +45,7 @@ constexpr int kFailure = 1;
 int64_t GetMaxThreadNum();
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node);
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph);
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr);
 bool IsKernelActor(const AnfNodePtr &node);
 
 // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is

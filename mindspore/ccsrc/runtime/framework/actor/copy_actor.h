@@ -42,7 +42,7 @@ class CopyActor : public MemoryInterfaceActor {
         input_datas_num_(0),
         input_controls_num_(0),
         input_device_tensor_(nullptr),
-        output_device_tensor_(nullptr) {}
+        output_(nullptr) {}
   ~CopyActor() override = default;
 
   // The copy actor run when receive the input data.
@@ -61,8 +61,8 @@ class CopyActor : public MemoryInterfaceActor {
 
   // Check whether satisfy the condition for copy.
   bool CheckCopyCondition(OpContext<DeviceTensor> *context) const;
-  // Fetch the input device tensor for copy.
-  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
+  // Fetch the device tensor for copy.
+  void FetchDeviceTensor(OpContext<DeviceTensor> *context);
 
   // Copy data from src_device_tensor to dst_device_tensor.
   bool Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
@@ -80,16 +80,19 @@ class CopyActor : public MemoryInterfaceActor {
   size_t input_controls_num_;
 
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, void *>> device_tensor_store_keys_;
+  std::pair<size_t, AnfNode *> device_tensor_store_key_;
 
   // The device interface for copy.
   const DeviceContext *input_device_context_;
   const DeviceContext *output_device_context_;
 
-  // The input device tensor is saved from the input data.
+  // The input device tensor is saved from the input data or fetched by device_tensor_store_key_.
   DeviceTensor *input_device_tensor_;
-  // The output device tensor is created in the copy actor build, so can't be the raw pointer.
-  DeviceTensorPtr output_device_tensor_;
+  // The output device tensor is saved from the output or fetched by device_tensor_store_key_.
+  DeviceTensor *output_device_tensor_;
+
+  // The output is created in the copy actor build, so can't be the raw pointer.
+  DeviceTensorPtr output_;
 };
 
 using CopyActorPtr = std::shared_ptr<CopyActor>;
