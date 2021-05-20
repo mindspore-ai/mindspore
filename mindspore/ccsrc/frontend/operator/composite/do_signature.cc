@@ -199,7 +199,7 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
 
 void DoAutoCast(const std::string &func_name, const std::vector<Signature> &signature,
                 const std::vector<TypePtr> &input_types, const FuncGraphPtr &graph,
-                std::vector<AnfNodePtr> *const op_inputs, const std::set<size_t> &write_indices) {
+                const std::set<size_t> &write_indices, std::vector<AnfNodePtr> *const op_inputs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
@@ -244,12 +244,8 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
   }
 }
 
-AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
-                         const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
-  // args: original inputs
-  auto &signature = GetSignature(function);
-  std::size_t sig_size = signature.size();
-  auto has_var = (sig_size > 0 && signature[sig_size - 1].kind == SignatureEnumKind::kKindVarPositional);
+void CheckSigSize(const size_t &sig_size, const bool &has_var, const AbstractBasePtrList &args_spec_list,
+                  const std::string &func_name) {
   if (sig_size > 0) {
     if (has_var) {
       if (sig_size - 1 > args_spec_list.size()) {
@@ -260,6 +256,15 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       MS_LOG(EXCEPTION) << "Function " << func_name << "'s input length is not equal to Signature length.";
     }
   }
+}
+
+AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
+                         const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
+  // args: original inputs
+  auto &signature = GetSignature(function);
+  std::size_t sig_size = signature.size();
+  auto has_var = (sig_size > 0 && signature[sig_size - 1].kind == SignatureEnumKind::kKindVarPositional);
+  CheckSigSize(sig_size, has_var, args_spec_list, func_name);
   std::vector<AnfNodePtr> op_inputs;
   std::set<size_t> write_indices;
   std::vector<TypePtr> input_types;
@@ -308,7 +313,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   }
   // process default
   ProcessDefault(func_name, args_spec_list.size(), signature, has_var, &op_inputs);
-  DoAutoCast(func_name, signature, input_types, func_graph, &op_inputs, write_indices);
+  DoAutoCast(func_name, signature, input_types, func_graph, write_indices, &op_inputs);
   return func_graph->NewCNodeInOrder(op_inputs);
 }
 }  // namespace

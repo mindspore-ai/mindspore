@@ -138,8 +138,8 @@ class NoneOf(NoneOf_):
     def __init__(self, patterns=None):
         r"""
         Args:
-            patterns(Union[list[:class:`mindspore.graph_utils.graph_pattern`]]: list of forbidden patterns, each element
-                should be one of the exposed Pattern instance.
+            patterns(Union[list[:class:`mindspore.graph_utils.graph_pattern`]]: list of forbidden patterns, each
+            element should be one of the exposed Pattern instance.
 
         Raises:
             TypeError: raise type error for invalid argument.
