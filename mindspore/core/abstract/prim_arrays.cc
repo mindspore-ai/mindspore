@@ -22,6 +22,7 @@
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -1140,5 +1141,59 @@ AbstractBasePtr InferImplMaskedSelect(const AnalysisEnginePtr &, const Primitive
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(y_shape, min_shape, max_shape));
 }
 
+AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input number", args_spec_list.size(), kEqual, 2, prim_name);
+  for (const auto &item : args_spec_list) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
+  // input0: indices
+  auto input_tuple = args_spec_list[0]->cast<abstract::AbstractSequeuePtr>();
+  MS_EXCEPTION_IF_NULL(input_tuple);
+  auto indices = input_tuple->elements();
+  auto indices0 = indices[0]->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(indices0);
+  auto indices0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices0->BuildShape())[kShape];
+
+  // input1: data
+  auto input_tuple_1 = args_spec_list[1]->cast<abstract::AbstractSequeuePtr>();
+  MS_EXCEPTION_IF_NULL(input_tuple_1);
+  auto data = input_tuple_1->elements();
+  auto data0 = data[0]->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(data0);
+  auto data0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data0->BuildShape())[kShape];
+  if (indices.size() != data.size()) {
+    MS_LOG(EXCEPTION) << "The number of input[0] must be the same as input[0]!";
+  }
+
+  int indices_total_size = 0;
+  std::map<std::string, TypePtr> types;
+  types.emplace("data0", data0->BuildType());
+  for (size_t i = 1; i < data.size(); ++i) {
+    auto indicesi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices[i]->BuildShape())[kShape];
+    auto datai_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data[i]->BuildShape())[kShape];
+    if (indicesi_shape.size() >= datai_shape.size()) {
+      MS_LOG(EXCEPTION) << "The rank of indices[i] must be < rank of data[i]!";
+    }
+    indices_total_size += indicesi_shape.size();
+  }
+  std::set<TypePtr> valid_types = ops::common_valid_types;
+  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+
+  ShapeVector out_shape = {abstract::Shape::SHP_ANY};
+  for (size_t i = indices0_shape.size(); i < data0_shape.size(); ++i) {
+    out_shape.push_back(data0_shape[i]);
+  }
+  const size_t EXPAND_MAX = 10;
+  ShapeVector min_shape = out_shape;
+  ShapeVector max_shape = out_shape;
+  min_shape[0] = 1;
+  max_shape[0] = indices_total_size * EXPAND_MAX;
+  return std::make_shared<AbstractTensor>(infer_type,
+                                          std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape));
+}
 }  // namespace abstract
 }  // namespace mindspore

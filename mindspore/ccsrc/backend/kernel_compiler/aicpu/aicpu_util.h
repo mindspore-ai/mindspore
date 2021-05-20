@@ -60,7 +60,10 @@ constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
 constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
-const std::set<std::string> kCustAiCpuKernelOps{kIdentity, kMaskedSelect, kMaskedSelectGrad};
+constexpr auto kDynamicStitch = "DynamicStitch";
+constexpr auto kSearchSorted = "SearchSorted";
+const std::set<std::string> kCustAiCpuKernelOps{kIdentity, kMaskedSelect, kMaskedSelectGrad, kDynamicStitch,
+                                                kSearchSorted};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
                                             kPadAndShift, kDropout3D,      kDropout2D};
 
