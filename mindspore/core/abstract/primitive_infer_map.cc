@@ -195,7 +195,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimMinimum, {InferImplMinimum, nullptr, true}},
     {prim::kPrimDivNoNan, {InferImplDivNoNan, nullptr, true}},
     {prim::kPrimLinSpace, {InferImplLinSpace, nullptr, true}},
-    {prim::kPrimAddN, {InferImplAddN, nullptr, true}},
 
     {prim::kPrimLess, {InferImplLess, nullptr, true}},
     {prim::kPrimStack, {InferImplStack, nullptr, true}},

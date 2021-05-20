@@ -1373,17 +1373,6 @@ class Conv2D(PrimitiveWithCheck):
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('groups', self.group)
 
-    def check_shape(self, x_shape, w_shape, b_shape=None):
-        x_shape_norm = x_shape if self.format == "NCHW" else (x_shape[0], x_shape[3], x_shape[1], x_shape[2])
-        w_shape_norm = w_shape if self.format == "NCHW" else (w_shape[0], w_shape[3], w_shape[1], w_shape[2])
-        validator.check_equal_int(len(w_shape_norm), 4, "weight rank", self.name)
-        validator.check_equal_int(len(x_shape_norm), 4, "x rank", self.name)
-
-    def check_dtype(self, x_dtype, w_dtype, b_dtype=None):
-        args = {'x': x_dtype, 'w': w_dtype}
-        valid_dtypes = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-
 
 class DepthwiseConv2dNative(PrimitiveWithInfer):
     r"""
