@@ -422,7 +422,7 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
   FuncGraphManagerPtr manager_ptr = graph->manager();
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MapPrimTypeFuncGraph prim_graphs;
-  auto get_prim_graph = [&](const PrimitivePtr &prim, const AbstractFunctionPtr &type) {
+  auto get_prim_graph = [&prim_graphs](const PrimitivePtr &prim, const AbstractFunctionPtr &type) {
     PrimTypePair prim_type = std::make_pair(prim, type);
     if (prim_graphs.end() == prim_graphs.find(prim_type)) {
       FuncGraphPtr g = std::make_shared<FuncGraph>();

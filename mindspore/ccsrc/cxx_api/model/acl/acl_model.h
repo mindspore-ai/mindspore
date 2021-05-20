@@ -40,13 +40,10 @@ class AclModel : public ModelImpl {
   Status Build() override;
   Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
-  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
-
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 
  private:
-  std::shared_ptr<GraphCell> graph_cell_;
   ModelConverter model_converter_;
   std::unique_ptr<AclModelOptions> options_;
   std::map<std::string, std::shared_ptr<Graph>> dynamic_size_graph_map_;
