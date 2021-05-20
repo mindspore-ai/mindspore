@@ -46,10 +46,13 @@ if __name__ == '__main__':
     else:
         network = net_factory.nets_map['deeplab_v3_s8'](args.num_classes, 8)
     network = BuildEvalNetwork(network, args.input_format)
-    network.set_trace(False)
+    network.set_train(False)
     param_dict = load_checkpoint(args.ckpt_file)
 
     # load the parameter into net
     load_param_into_net(network, param_dict)
-    input_data = Tensor(np.ones([args.batch_size, 3, args.input_size, args.input_size]).astype(np.float32))
+    if args.input_format == "NHWC":
+        input_data = Tensor(np.ones([args.batch_size, args.input_size, args.input_size, 3]).astype(np.float32))
+    else:
+        input_data = Tensor(np.ones([args.batch_size, 3, args.input_size, args.input_size]).astype(np.float32))
     export(network, input_data, file_name=args.file_name, file_format=args.file_format)
