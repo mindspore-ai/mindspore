@@ -241,7 +241,9 @@ def ms_function(fn=None, obj=None, input_signature=None):
         equal to the case when `fn` is not None.
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import ms_function
         ...
         >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
         >>> y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))

@@ -135,7 +135,7 @@ class DynamicLossScaleManager(LossScaleManager):
         Update loss scale value.
 
         Args:
-            overflow: Boolean. Whether it overflows.
+            overflow (bool): Whether it overflows.
         """
         if overflow:
             self.loss_scale = max(self.loss_scale * self.decrease_ratio, 1)

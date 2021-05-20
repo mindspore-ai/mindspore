@@ -1813,6 +1813,7 @@ class RowTensor:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
+        >>> from mindspore import RowTensor
         >>> class Net(nn.Cell):
         ...     def __init__(self, dense_shape):
         ...         super(Net, self).__init__()
@@ -1877,6 +1878,7 @@ class SparseTensor:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
+        >>> from mindspore import SparseTensor
         >>> class Net(nn.Cell):
         ...     def __init__(self, dense_shape):
         ...         super(Net, self).__init__()
