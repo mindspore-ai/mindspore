@@ -651,7 +651,7 @@ void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graph
   ChangeFileMode(real_filename, S_IRUSR);
 }
 #else
-void ExportIR(const std::string &, const std::string &, const FuncGraphPtr &) {
+void ExportIR(const std::string &, const FuncGraphPtr &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
