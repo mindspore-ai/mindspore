@@ -23,9 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class GatherV2CPUKernel : public CPUKernel {
  public:
-  GatherV2CPUKernel() : axis_(0) {}
+  GatherV2CPUKernel() = default;
   ~GatherV2CPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -40,13 +41,44 @@ class GatherV2CPUKernel : public CPUKernel {
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;
   int *indices_data_ = nullptr;
-  int64_t axis_;
+  int64_t axis_{0};
 };
 
-MS_REG_CPU_KERNEL(
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  GatherV2CPUKernel, bool);
+MS_REG_CPU_KERNEL_T(
   Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  GatherV2CPUKernel);
+  GatherV2CPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  Gather,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+  GatherV2CPUKernel, double);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+  GatherV2CPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+  GatherV2CPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  GatherV2CPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  GatherV2CPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+  GatherV2CPUKernel, uint8_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+  GatherV2CPUKernel, uint16_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+  GatherV2CPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(
+  Gather, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
+  GatherV2CPUKernel, uint64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

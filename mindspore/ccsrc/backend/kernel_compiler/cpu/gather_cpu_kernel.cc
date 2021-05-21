@@ -20,7 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-void GatherV2CPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -34,7 +35,8 @@ void GatherV2CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
 
-int GatherV2CPUKernel::GatherLaunch(int8_t *input_data, int8_t *output_data, size_t size) {
+template <typename T>
+int GatherV2CPUKernel<T>::GatherLaunch(int8_t *input_data, int8_t *output_data, size_t size) {
   int in_rank = input_shape_.size();
   int indices_element_size = 1;
   const int limit = input_shape_.at(axis_);
@@ -64,7 +66,7 @@ int GatherV2CPUKernel::GatherLaunch(int8_t *input_data, int8_t *output_data, siz
       int8_in += thread_stride * limit * inner_size * data_size;
       int8_out += thread_stride * indices_element_size * inner_size * data_size;
       auto error_code =
-        Gather(int8_in, count, inner_size, limit, indices_data_, indices_element_size, int8_out, sizeof(float));
+        Gather(int8_in, count, inner_size, limit, indices_data_, indices_element_size, int8_out, sizeof(T));
       if (error_code != 0) {
         MS_LOG(ERROR) << "GatherRun error task_id[" << i << "] error_code[" << error_code << "]";
       }
@@ -75,9 +77,10 @@ int GatherV2CPUKernel::GatherLaunch(int8_t *input_data, int8_t *output_data, siz
   return 0;
 }
 
-bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> & /*workspace*/,
-                               const std::vector<kernel::AddressPtr> &outputs) {
+template <typename T>
+bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   int8_t *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   indices_data_ = reinterpret_cast<int32_t *>(inputs[1]->addr);
   int8_t *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
@@ -87,7 +90,8 @@ bool GatherV2CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void GatherV2CPUKernel::CheckParam(const CNodePtr &kernel_node) {
+template <typename T>
+void GatherV2CPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > 4) {
     MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but GatherV2CPUKernel olny support 4d or lower.";
