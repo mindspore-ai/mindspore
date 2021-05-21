@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 #include <random>
 #include <thread>
-#include "common/thread_pool.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "backend/kernel_compiler/cpu/random_cpu_kernel.h"
 
@@ -40,25 +39,33 @@ void LaunchStandardNormal(int seed, int seed2, const std::vector<AddressPtr> &ou
   }
 
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
-  std::normal_distribution<float> distribution;
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  const float block_size = 128.0;
-  size_t thread_num = lens < block_size * max_thread_num ? std::ceil(lens / block_size) : max_thread_num;
-  std::vector<common::Task> tasks;
+  auto max_thread_num = std::thread::hardware_concurrency();
+  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
+  if (thread_num < 1) {
+    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
+    return;
+  }
+  std::vector<std::thread> threads;
+  threads.reserve(thread_num);
   size_t start = 0;
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  if (once_compute_size < 1) {
+    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
+    return;
+  }
+  std::normal_distribution<float> distribution;
   while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
+    // avoid different threads using the same seed to generate the same random number
     std::default_random_engine random_generator(++RNG_seed);
-    auto block = [&, start, end]() {
-      StandardNormal(output, distribution, random_generator, start, end);
-      return common::SUCCESS;
-    };
-    tasks.emplace_back(block);
+    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
+    threads.emplace_back(std::thread(StandardNormal, output, distribution, random_generator, start, end));
     start += once_compute_size;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
 }
 
 void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
