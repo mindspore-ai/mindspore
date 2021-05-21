@@ -61,11 +61,12 @@ def sample(read_path, out_path, threshold=1.0, max_items=0xFFFFFFF):
             line = r.readline()
 
 
-def clip_article(input_path, out_path, hint, max_length):
+def clip_article(input_path, out_path, hint, max_length, tokenizer_file_path):
     """
     clip article that the sample (article + summary) exceed max_length
     """
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(vocab_file=tokenizer_file_path + 'gpt2-vocab.json',
+                          merge_file=tokenizer_file_path + 'gpt2-merges.txt')
     cnt = 0
     with open(input_path, "r") as r, open(out_path, "a+") as a:
         line = r.readline()
@@ -102,8 +103,10 @@ def sampler_dataset():
                         help="sample rate")
     parser.add_argument("--max_items", type=int, default=10000,
                         help="max number of document")
-    parser.add_argument("--hint", type=str, default="TL:DR;",
+    parser.add_argument("--hint", type=str, default="TL;DR:",
                         help="hint text")
+    parser.add_argument("--tokenizer_file_path", type=str, default="",
+                        help="tokenizer helper file path")
     args = parser.parse_args()
 
     # temp_files, one for storing inputs in every stage, the other for storing middle results.
@@ -116,10 +119,15 @@ def sampler_dataset():
     max_items = args.max_items
     hint = args.hint
     max_length = args.max_length
+    tokenizer_file_path = args.tokenizer_file_path
     split_str = '\t'
 
     shutil.copyfile(read_path, temp_file_input)
-    clip_article(temp_file_input, temp_file_proc, hint=split_str, max_length=max_length)
+    clip_article(input_path=temp_file_input,
+                 out_path=temp_file_proc,
+                 hint=split_str,
+                 max_length=max_length,
+                 tokenizer_file_path=tokenizer_file_path)
     shutil.copyfile(temp_file_proc, temp_file_input)
     os.remove(temp_file_proc)
 

@@ -52,7 +52,6 @@ class GenerateForSummarization():
                                 topk_num=topk,
                                 topp_prob=topp,
                                 min_tokens_to_keep=1,
-                                demo_mode=False,
                                 temperature=temperature)
         self.generate_length = generate_length
 
@@ -260,7 +259,7 @@ class GenerateForTranslation():
                                 topp_prob=topp_prob,
                                 temperature=temperature,
                                 min_tokens_to_keep=1,
-                                early_stop=False)
+                                early_stop=True)
 
     def generate_for_translation(self, input_ids):
         """generation function for translation task"""

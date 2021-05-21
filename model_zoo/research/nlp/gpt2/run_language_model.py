@@ -112,7 +112,7 @@ def do_eval(dataset=None, network=None, metric=None, load_checkpoint_path="", ev
         network:  the network with loss.
         metric: the evaluation method.
         load_checkpoint_path: the file path which saved finetuned model checkpoint.
-        eval_type:
+        eval_type: option for "zero-shot" or "finetuned"
     """
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")

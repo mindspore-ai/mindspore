@@ -44,7 +44,7 @@ export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 python ${PROJECT_DIR}/../run_CBT_task.py  \
     --device_target="Ascend" \
-    --device_id=4 \
+    --device_id=3 \
     --num_choice=10 \
     --metric_method="Accuracy" \
     --do_train="false" \

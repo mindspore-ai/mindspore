@@ -51,9 +51,9 @@ def calculate_f1(pred_answer, gold_answer):
     common = Counter(pred_answer) & Counter(gold_answer)
     num_same = sum(common.values())
     # the number of same tokens between pred_answer and gold_answer
-    precision = 1.0 * num_same / len(pred_answer) if pred_answer.strip() == "" else 0
-    recall = 1.0 * num_same / len(gold_answer) if gold_answer.strip() == "" else 0
-    if pred_answer.strip() == "" and gold_answer.strip() == "":
+    precision = 1.0 * num_same / len(pred_answer) if "".join(pred_answer).strip() != "" else 0
+    recall = 1.0 * num_same / len(gold_answer) if "".join(gold_answer).strip() != "" else 0
+    if "".join(pred_answer).strip() == "" and "".join(gold_answer).strip() == "":
         f1_score = 1
     else:
         f1_score = 2 * precision * recall / float(precision + recall) if (precision + recall) != 0 else 0.0
