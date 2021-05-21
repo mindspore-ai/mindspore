@@ -40,7 +40,8 @@ namespace mindspore {
 namespace ad {
 KPrim g_k_prims;
 
-FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
+FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const std::unordered_map<std::string, ValuePtr> &primal_attrs,
+                             const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
   // and add "Gradients" to the front.
   static const std::string gradients_scope = "Gradients/";
@@ -49,6 +50,9 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
+  PrimalAttrGuard primal_attr_guard(primal_attrs);
+  PrimalDebugInfoGuard primal_debug_info_guard(primal_debug_infos);
+
   py::function fn;
   if (prim->is_base()) {
     fn = GetBpropFunction(prim->name());
@@ -83,7 +87,7 @@ FuncGraphPtr KPrim::GetPossibleBprop(const PrimitivePtr &prim) {
   }
 
   if (bprop_fg == nullptr) {
-    bprop_fg = GetBprop(prim);
+    bprop_fg = GetBprop(prim, {}, {});
     if (bprop_fg != nullptr) {
       // Set bprop_g graph cache
       bprop_registry_[prim] = bprop_fg;
@@ -186,23 +190,26 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     }
 
     if (bprop_fg == nullptr) {
-      bprop_fg = GetBprop(prim);
+      std::unordered_map<std::string, ValuePtr> primal_attrs;
+      std::vector<NodeDebugInfoPtr> primal_debug_infos;
+      if (resources != nullptr) {
+        auto manager = resources->manager();
+        auto &users = manager->node_users()[value_node];
+        for (auto user_iter = users.begin(); user_iter != users.end(); user_iter++) {
+          primal_debug_infos.push_back(user_iter->first->debug_info());
+        }
+      }
+      if (cnode != nullptr) {
+        const auto forward_node_primal_attr = prim->name() + "_" + cnode->UniqueId();
+        primal_attrs[kPrimalAttrForwardNodeName] = MakeValue(forward_node_primal_attr);
+      }
+      bprop_fg = GetBprop(prim, primal_attrs, primal_debug_infos);
       if (bprop_fg != nullptr) {
         // Set bprop_g graph cache
         bprop_registry_[prim] = bprop_fg;
       } else {
         bprop_fg = FakeBprop(value_node, resources);
       }
-    }
-  }
-
-  if (cnode != nullptr) {
-    Manage({cnode->func_graph(), bprop_fg}, false);
-    const auto &bprop_fg_cnodes = bprop_fg->GetOrderedCnodes();
-    const auto forward_node_primal_attr = prim->name() + "_" + cnode->UniqueId();
-    for (auto &bprop_fg_cnode : bprop_fg_cnodes) {
-      bprop_fg_cnode->set_primal_attrs(cnode->primal_attrs());
-      bprop_fg_cnode->AddPrimalAttr(kPrimalAttrForwardNodeName, MakeValue(forward_node_primal_attr));
     }
   }
 

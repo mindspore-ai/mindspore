@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "ir/graph_utils.h"
 
 namespace mindspore {
-// namespace to support debug trace infomation
+// namespace to support debug trace information
 namespace trace {
 std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, bool is_debug = false) {
   std::vector<DebugInfoPtr> debug_with_loc_vec;
@@ -134,6 +134,30 @@ std::string DumpSourceLines(AnfNode *node) {
     std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
     oss << loc_str << "\n";
   }
+
+  auto cnode = dynamic_cast<CNode *>(node);
+  if (cnode == nullptr) {
+    return oss.str();
+  }
+  auto primal_debug_infos = cnode->primal_debug_infos();
+  if (primal_debug_infos.empty()) {
+    return oss.str();
+  }
+  oss << "Corresponding forward node candidate:\n";
+  for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
+    info_vec = GetSourceCodeDebugInfoVec(*iter);
+    for (auto info : info_vec) {
+      MS_EXCEPTION_IF_NULL(info);
+      auto loc = info->location();
+      if (loc == nullptr) {
+        continue;
+      }
+      auto loc_str = loc->ToString(kSourceLineTipDiscard);
+      std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
+      std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
+      oss << loc_str << "\n";
+    }
+  }
   return oss.str();
 }
 
@@ -154,6 +178,29 @@ std::vector<std::string> GetSourceLineList(const AnfNodePtr &node) {
     std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
     std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
     result.push_back(loc_str + "\n");
+  }
+  if (!node->isa<CNode>()) {
+    return result;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto primal_debug_infos = cnode->primal_debug_infos();
+  if (primal_debug_infos.empty()) {
+    return result;
+  }
+  result.push_back("Corresponding forward node candidate:\n");
+  for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
+    info_vec = GetSourceCodeDebugInfoVec(*iter);
+    for (auto info : info_vec) {
+      MS_EXCEPTION_IF_NULL(info);
+      auto loc = info->location();
+      if (loc == nullptr) {
+        continue;
+      }
+      auto loc_str = loc->ToString(kSourceLineTipDiscard);
+      std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
+      std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
+      result.push_back(loc_str + "\n");
+    }
   }
   return result;
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef IR_SCOPE_H_
-#define IR_SCOPE_H_
+#ifndef MINDSPORE_CORE_IR_SCOPE_H_
+#define MINDSPORE_CORE_IR_SCOPE_H_
 #include <string>
 #include <memory>
 #include <stack>
@@ -65,4 +65,4 @@ class ScopeGuard {
   ScopePtr scope_;
 };
 }  // namespace mindspore
-#endif  // IR_SCOPE_H_
+#endif  // MINDSPORE_CORE_IR_SCOPE_H_

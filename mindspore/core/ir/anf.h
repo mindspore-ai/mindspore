@@ -32,6 +32,8 @@
 #include "base/effect_info.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
+#include "ir/primal_attr.h"
+#include "ir/primal_debug_info.h"
 #include "utils/info.h"
 
 // A MindSpore ANF IR defined here.
@@ -237,7 +239,10 @@ class CNode : public AnfNode, public EffectInfoHolder {
         inputs_(inputs),
         func_graph_as_var_(func_graph_as_var),
         stop_gradient_(false),
-        input_tensor_num_(-1) {}
+        input_tensor_num_(-1) {
+    primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
+    primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
+  }
 
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
@@ -305,6 +310,17 @@ class CNode : public AnfNode, public EffectInfoHolder {
   }
   bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != attrs_.cend(); }
 
+  std::vector<NodeDebugInfoPtr> primal_debug_infos() { return primal_debug_infos_; }
+
+  void set_primal_debug_infos(const std::vector<NodeDebugInfoPtr> &debug_infos) { primal_debug_infos_ = debug_infos; }
+
+  void AddPrimalDebugInfo(const NodeDebugInfoPtr debug_info) {
+    if (std::find(primal_debug_infos_.begin(), primal_debug_infos_.end(), debug_info) != primal_debug_infos_.end()) {
+      MS_LOG(EXCEPTION) << "Debug_info already in primal_debug_infos_ vector";
+    }
+    primal_debug_infos_.push_back(debug_info);
+  }
+
   void CloneCNodeInfo(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     set_abstract(node->abstract());
@@ -315,6 +331,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
     set_load_flag(node->get_load_flag());
     CloneUserData(node);
     set_kernel_info(node->kernel_info_ptr());
+    set_primal_debug_infos(node->primal_debug_infos());
   }
 
   void set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
@@ -338,6 +355,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
   std::pair<ValuePtr, std::string> output_value_;
   std::unordered_map<std::string, ValuePtr> attrs_;
   std::unordered_map<std::string, ValuePtr> primal_attrs_;
+  std::vector<NodeDebugInfoPtr> primal_debug_infos_;
   ssize_t input_tensor_num_ = -1;
 };
 
