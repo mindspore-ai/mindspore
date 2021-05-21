@@ -45,6 +45,7 @@
 #include "backend/optimizer/gpu/relu_v2_pass.h"
 #include "backend/optimizer/gpu/add_relu_v2_fusion.h"
 #include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
+#include "backend/optimizer/gpu/matmul_biasadd_fusion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
@@ -132,6 +133,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());

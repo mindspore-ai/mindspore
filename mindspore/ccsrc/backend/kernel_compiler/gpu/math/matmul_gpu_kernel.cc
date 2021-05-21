@@ -18,29 +18,52 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
+MS_REG_GPU_KERNEL_TWO(
   MatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatMulGpuKernel, double)
-MS_REG_GPU_KERNEL_ONE(
+  MatMulGpuKernel, double, double)
+MS_REG_GPU_KERNEL_TWO(
   MatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatMulGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
+  MatMulGpuKernel, float, float)
+MS_REG_GPU_KERNEL_TWO(
   MatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  MatMulGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(
+  MatMulGpuKernel, half, float)
+MS_REG_GPU_KERNEL_TWO(
   BatchMatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MatMulGpuKernel, double)
-MS_REG_GPU_KERNEL_ONE(
+  MatMulGpuKernel, double, double)
+MS_REG_GPU_KERNEL_TWO(
   BatchMatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MatMulGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
+  MatMulGpuKernel, float, float)
+MS_REG_GPU_KERNEL_TWO(
   BatchMatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  MatMulGpuKernel, half)
+  MatMulGpuKernel, half, float)
+
+// FusedMatMulBiasAdd
+MS_REG_GPU_KERNEL_TWO(FusedMatMulBiasAdd,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      MatMulGpuKernel, double, double)
+MS_REG_GPU_KERNEL_TWO(FusedMatMulBiasAdd,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      MatMulGpuKernel, float, float)
+MS_REG_GPU_KERNEL_TWO(FusedMatMulBiasAdd,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      MatMulGpuKernel, half, float)
 }  // namespace kernel
 }  // namespace mindspore

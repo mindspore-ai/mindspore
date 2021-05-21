@@ -20,14 +20,16 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/fill_impl.cuh"
 #include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S>
 class MatMulGpuKernel : public GpuKernel {
  public:
   MatMulGpuKernel() { ResetResource(); }
@@ -47,8 +49,10 @@ class MatMulGpuKernel : public GpuKernel {
     auto input2_addr = GetDeviceAddress<T>(inputs, 1);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    T alpha = static_cast<T>(1.0f);
-    T beta = static_cast<T>(0.0f);
+    // The alpha & beta should be float if the inputs are half, else should keep the same type with inputs.
+    // The kernel registration is responsible for types consistency.
+    S alpha = static_cast<S>(1.0f);
+    S beta = static_cast<S>(0.0f);
     cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
 
     const int lda = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
@@ -60,44 +64,27 @@ class MatMulGpuKernel : public GpuKernel {
     auto stride_c = SizeToInt(m_ * n_);
 
     try {
-      if (dtype_a_ == CUDA_R_16F) {
-        const float alphaf = 1.0f;
-        const float betaf = 0.0f;
-        // Use cublasGemmEx to get high performance when batch_ is 1
-        if (batch_ == 1) {
-          CHECK_CUBLAS_RET_WITH_EXCEPT(
-            kernel_node_,
-            cublasGemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alphaf,
-                         input2_addr, dtype_b_, ldb, input1_addr, dtype_a_, lda, &betaf, output_addr, dtype_c_, ldc,
-                         compute_type, algo_),
-            "cublasGemmEx failed");
-        } else {
-          CHECK_CUBLAS_RET_WITH_EXCEPT(
-            kernel_node_,
-            cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_),
-                                       SizeToInt(k_), &alphaf, input2_addr, dtype_b_, ldb, stride_b, input1_addr,
-                                       dtype_a_, lda, stride_a, &betaf, output_addr, dtype_c_, ldc, stride_c, batch_,
-                                       compute_type, algo_),
-            "cublasGemmStridedBatchedEx failed");
-        }
+      if (is_fused_matmul_biasadd_) {
+        auto input3_addr = GetDeviceAddress<T>(inputs, 2);
+        Fill(m_, n_, input3_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+        beta = static_cast<S>(1.0f);
+      }
+
+      // Use cublasGemmEx to get high performance when batch_ is 1
+      if (batch_ == 1) {
+        CHECK_CUBLAS_RET_WITH_EXCEPT(
+          kernel_node_,
+          cublasGemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha,
+                       input2_addr, dtype_b_, ldb, input1_addr, dtype_a_, lda, &beta, output_addr, dtype_c_, ldc,
+                       compute_type, algo_),
+          "cublasGemmEx failed");
       } else {
-        // Use cublasGemmEx to get high performance when batch_ is 1
-        if (batch_ == 1) {
-          CHECK_CUBLAS_RET_WITH_EXCEPT(
-            kernel_node_,
-            cublasGemmEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_), &alpha,
-                         input2_addr, dtype_b_, ldb, input1_addr, dtype_a_, lda, &beta, output_addr, dtype_c_, ldc,
-                         compute_type, algo_),
-            "cublasGemmEx failed");
-        } else {
-          CHECK_CUBLAS_RET_WITH_EXCEPT(
-            kernel_node_,
-            cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_),
-                                       SizeToInt(k_), &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr,
-                                       dtype_a_, lda, stride_a, &beta, output_addr, dtype_c_, ldc, stride_c, batch_,
-                                       compute_type, algo_),
-            "cublasGemmStridedBatchedEx failed");
-        }
+        CHECK_CUBLAS_RET_WITH_EXCEPT(
+          kernel_node_,
+          cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
+                                     &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
+                                     &beta, output_addr, dtype_c_, ldc, stride_c, batch_, compute_type, algo_),
+          "cublasGemmStridedBatchedEx failed");
       }
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cublas "
@@ -105,6 +92,7 @@ class MatMulGpuKernel : public GpuKernel {
     }
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
@@ -146,6 +134,10 @@ class MatMulGpuKernel : public GpuKernel {
     transpose = GetAttr<bool>(kernel_node, "transpose_x2");
     transpose_x2_ = transpose ? CUBLAS_OP_T : CUBLAS_OP_N;
 
+    const std::string &kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    if (kernel_name == kFusedMatMulBiasAddName) {
+      is_fused_matmul_biasadd_ = true;
+    }
     InitSizeLists();
     return true;
   }
@@ -163,6 +155,7 @@ class MatMulGpuKernel : public GpuKernel {
     dtype_b_ = CUDA_R_32F;
     dtype_c_ = CUDA_R_32F;
     algo_ = CUBLAS_GEMM_DEFAULT;
+    is_fused_matmul_biasadd_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -200,6 +193,8 @@ class MatMulGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+
+  bool is_fused_matmul_biasadd_;
 };
 }  // namespace kernel
 }  // namespace mindspore
