@@ -46,12 +46,12 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
       return std::nullopt;
     }
 #if defined(SYSTEM_ENV_POSIX)
-    if (nullptr == realpath(prefix_path.c_str(), real_path)) {
+    if (realpath(prefix_path.c_str(), real_path) == nullptr) {
       MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
       return std::nullopt;
     }
 #elif defined(SYSTEM_ENV_WINDOWS)
-    if (nullptr == _fullpath(real_path, prefix_path.c_str(), PATH_MAX)) {
+    if (_fullpath(real_path, prefix_path.c_str(), PATH_MAX) == nullptr) {
       MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
       return std::nullopt;
     }
@@ -273,12 +273,13 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   static size_t g_id = 0;
   std::ostringstream s;
   auto i = filename.rfind(suffix);
+  int spaces = 4;
   if (i >= filename.size()) {
     s << filename;
-    s << "_" << std::setfill('0') << std::setw(4) << g_id;
+    s << "_" << std::setfill('0') << std::setw(spaces) << g_id;
   } else {
     s << filename.substr(0, i);
-    s << "_" << std::setfill('0') << std::setw(4) << g_id;
+    s << "_" << std::setfill('0') << std::setw(spaces) << g_id;
     if (i + 1 < filename.size()) {
       s << filename.substr(i);
     }

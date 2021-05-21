@@ -101,7 +101,8 @@ std::unordered_map<abstract::AbstractBasePtrList, int64_t, abstract::AbstractBas
 namespace {
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
-  oss << std::setfill('0') << std::setw(2) << stage_idx << "_" << action_name;
+  int spaces = 2;
+  oss << std::setfill('0') << std::setw(spaces) << stage_idx << "_" << action_name;
   return oss.str();
 }
 

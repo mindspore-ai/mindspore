@@ -48,7 +48,28 @@ DataType InferType(const AnyPtrList &list) {
   return DataType::kUnknown;
 }
 
-enum OpType { ADD, SUB, MUL, DIV, MOD };
+template <typename T>
+bool IsAddOverflow(const T &x, const T &y, const T &max, const T &min) {
+  return (y > 0 && (max - y) < x) || (y < 0 && (min - y) > x);
+}
+
+template <typename T>
+bool IsSubOverflow(const T &x, const T &y, const T &max, const T &min) {
+  return (y < 0 && (max + y) < x) || (y > 0 && (min + y) > x);
+}
+
+template <typename T>
+bool IsMulOverflow(const T &x, const T &y, const T &max, const T &min) {
+  return (x > 0 && y > 0 && (max / y) < x) || (x < 0 && y < 0 && (max / y) > x) || (x > 0 && y < 0 && (min / y) < x) ||
+         (x < 0 && y > 0 && (min / y) > x);
+}
+
+template <typename T>
+bool IsDivOverflow(const T &x, const T &y, const T &max, const T &min) {
+  return (x == min && static_cast<int64_t>(y) == -1);
+}
+
+enum class OpType { ADD, SUB, MUL, DIV, MOD };
 
 template <typename T>
 bool IsSignedIntOverflow(T x, T y, OpType opType) {
@@ -56,20 +77,19 @@ bool IsSignedIntOverflow(T x, T y, OpType opType) {
   auto min = std::numeric_limits<T>::min();
 
   if (opType == OpType::ADD) {
-    return (y > 0 && (max - y) < x) || (y < 0 && (min - y) > x);
+    return IsAddOverflow<T>(x, y, max, min);
   }
 
   if (opType == OpType::SUB) {
-    return (y < 0 && (max + y) < x) || (y > 0 && (min + y) > x);
+    return IsSubOverflow<T>(x, y, max, min);
   }
 
   if (opType == OpType::MUL) {
-    return (x > 0 && y > 0 && (max / y) < x) || (x < 0 && y < 0 && (max / y) > x) ||
-           (x > 0 && y < 0 && (min / y) < x) || (x < 0 && y > 0 && (min / y) > x);
+    return IsMulOverflow<T>(x, y, max, min);
   }
 
   if (opType == OpType::DIV || opType == OpType::MOD) {
-    return x == min && static_cast<int64_t>(y) == -1;
+    return IsDivOverflow<T>(x, y, max, min);
   }
 
   MS_LOG(EXCEPTION) << "Unsupported operation type.";
