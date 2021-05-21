@@ -27,6 +27,10 @@
     - [预训练](#预训练)
     - [微调](#微调)
     - [推理](#推理)
+    - [Mindir推理](#Mindir推理)
+        - [导出模型](#导出模型)
+        - [在Ascend310执行推理](#在Ascend310执行推理)
+        - [结果](#结果)
 - [性能](#性能)
     - [结果](#结果)
         - [文本摘要微调](#文本摘要微调)
@@ -585,6 +589,33 @@ sh run_ascend.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
 ```gpu
 sh run_gpu.sh -t i -n 1 -i 1 -c config/config.json -o {outputfile}
 ```
+
+## Mindir推理
+
+### [导出模型](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+
+```shell
+# Ascend310推理
+bash run_infer_310.sh [MINDIR_PATH] [CONFIG] [VOCAB] [OUTPUT] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `NEED_PREPROCESS` 表示数据是否需要预处理，取值范围为：'y' 或者 'n'。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，精度计算结果可以在acc.log中看到。
 
 # 性能
 
