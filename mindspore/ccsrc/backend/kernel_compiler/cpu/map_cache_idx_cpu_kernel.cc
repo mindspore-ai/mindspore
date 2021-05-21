@@ -69,7 +69,7 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                  const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);

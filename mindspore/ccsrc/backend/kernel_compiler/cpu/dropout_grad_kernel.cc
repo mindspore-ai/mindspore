@@ -39,8 +39,7 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> & /*workspace*/,
+bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     DropoutBackwardKernel<float16>(inputs, outputs, num_count_, keep_prob_);

@@ -94,14 +94,10 @@ void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
-  switch (random_op_type_) {
-    case RANDOM_OP_NORMAL: {
-      LaunchStandardNormal(seed_, seed2_, outputs);
-      break;
-    }
-    default: {
-      MS_LOG(EXCEPTION) << "Random operation " << random_op_type_ << " is not supported.";
-    }
+  if (random_op_type_ == RANDOM_OP_NORMAL) {
+    LaunchStandardNormal(seed_, seed2_, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Random operation " << random_op_type_ << " is not supported.";
   }
   return true;
 }

@@ -20,11 +20,10 @@
 
 namespace mindspore {
 namespace kernel {
-void ApplyMomentumCPUKernel::InitKernel(const CNodePtr & /*kernel_node*/) {}
+void ApplyMomentumCPUKernel::InitKernel(const CNodePtr &) {}
 
 bool ApplyMomentumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                    const std::vector<kernel::AddressPtr> & /*outputs*/) {
+                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &) {
   if (inputs.size() < 5) {
     MS_LOG(EXCEPTION) << "error input output size!";
   }

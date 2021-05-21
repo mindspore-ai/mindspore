@@ -126,8 +126,7 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   }
 }
 
-bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool LstmCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
   using dt = dnnl::memory::data_type;
   using tag = dnnl::memory::format_tag;

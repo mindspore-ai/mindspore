@@ -68,8 +68,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_WORKSPACE, prim_desc.workspace_desc());
 }
 
-bool PoolingCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool PoolingCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "error input output size!";

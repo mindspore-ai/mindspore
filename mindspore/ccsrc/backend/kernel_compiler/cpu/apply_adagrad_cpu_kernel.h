@@ -30,7 +30,7 @@ class ApplyAdagradCPUKernel : public CPUKernel {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
  private:

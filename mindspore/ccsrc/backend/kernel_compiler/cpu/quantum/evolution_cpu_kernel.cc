@@ -62,8 +62,7 @@ void EvolutionCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool EvolutionCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool EvolutionCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "evolution error input output size!";

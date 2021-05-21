@@ -92,8 +92,7 @@ void SliceCPUKernel::ExpandAllMemberDims() {
   }
 }
 
-bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   bool ret{true};
   if (dtype_ == kNumberTypeInt32) {
