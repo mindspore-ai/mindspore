@@ -15,8 +15,6 @@
 
 """Operators for math."""
 
-import copy
-
 import numpy as np
 from ... import context
 from .. import signature as sig
@@ -978,7 +976,7 @@ class CumSum(PrimitiveWithInfer):
                 'value': None}
 
 
-class AddN(PrimitiveWithInfer):
+class AddN(Primitive):
     """
     Computes addition of all input tensors element-wise.
 
@@ -1024,43 +1022,6 @@ class AddN(PrimitiveWithInfer):
         if isinstance(inputs[0], Tensor):
             return (True, inputs[0])
         raise TypeError("Expecting Tensor, got : {}".format(type(inputs[0])))
-
-    def infer_shape(self, inputs):
-        cls_name = self.name
-        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
-        self.add_prim_attr('n', len(inputs))
-        shp0 = inputs[0]
-        for i, shp in enumerate(inputs):
-            validator.check(f"shape of inputs[{i}]", shp, 'shape of inputs[0]', shp0, Rel.EQ, cls_name)
-        return shp0
-
-    def infer_dtype(self, inputs):
-        cls_name = self.name
-        validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
-        validator.check_int(len(inputs), 1, Rel.GE, "inputs", cls_name)
-        args = {}
-        contains_undetermined = False
-        for i, dtype in enumerate(inputs):
-            args[f"inputs[{i}]"] = dtype
-            if dtype == mstype.undetermined:
-                contains_undetermined = True
-        if not contains_undetermined:
-            validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type + (mstype.bool_,), cls_name)
-        return inputs[0]
-
-    def infer_value(self, inputs):
-        if inputs is None:
-            return None
-
-        for x in inputs:
-            if x is None:
-                return None
-
-        added = copy.deepcopy(inputs[0].asnumpy())
-        for x in inputs[1:]:
-            added += x.asnumpy()
-        out = np.array(added, inputs[0].asnumpy().dtype)
-        return Tensor(out)
 
 
 class AccumulateNV2(PrimitiveWithInfer):

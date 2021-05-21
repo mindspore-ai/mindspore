@@ -35,7 +35,15 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
   CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, primitive->name());
   primitive->AddAttr("n", MakeValue(SizeToLong(elements.size())));
-  auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape());
+  auto shape_0 = elements[0]->BuildShape();
+  auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
+  for (size_t i = 0; i < elements.size(); ++i) {
+    auto shape = elements[i]->BuildShape();
+    if (*shape != *shape_0) {
+      MS_LOG(EXCEPTION) << primitive->name() << "Shape of input[" << i << "]: " << shape->ToString()
+                        << " are not consistent with the shape of input[0]" << shape_0->ToString();
+    }
+  }
   auto in_shape = element0_shape_map[kShape];
   auto min_shape = element0_shape_map[kMinShape];
   auto max_shape = element0_shape_map[kMaxShape];
@@ -52,20 +60,14 @@ TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
   CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, prim->name());
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->BuildShape())[kShape];
   std::map<std::string, TypePtr> types;
-  types.emplace("element0", elements[0]->BuildType());
+  types.emplace("element_0", elements[0]->BuildType());
   for (size_t i = 1; i < elements.size(); ++i) {
-    std::string elementi = "element" + std::to_string(i);
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
-    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", elementi_shape.size(), kEqual, element0_shape.size(),
-                                       prim_name);
-    for (size_t j = 0; j < element0_shape.size(); ++j) {
-      if (elementi_shape[j] != element0_shape[j]) {
-        MS_EXCEPTION(ValueError) << "element " << i << " shape in input can not concat with first element.";
-      }
+    if (elements[i]->BuildType()->type_id() == kObjectTypeUndeterminedType) {
+      return elements[0]->BuildType();
     }
-    types.emplace(elementi, elements[i]->BuildType());
+    std::string element_i = "element_" + std::to_string(i);
+    types.emplace(element_i, elements[i]->BuildType());
   }
   std::set<TypePtr> valid_types = common_valid_types;
   valid_types.insert(kBool);
@@ -76,7 +78,7 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kGreaterEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
