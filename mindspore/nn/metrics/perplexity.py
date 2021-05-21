@@ -34,6 +34,9 @@ class Perplexity(Metric):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
+    Note:
+        The method `update` must be called with the form `update(preds, labels)`.
+
     Examples:
         >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
         >>> y = Tensor(np.array([1, 0, 1]))
@@ -71,6 +74,8 @@ class Perplexity(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
+            RuntimeError: If preds and labels should have different length.
+            RuntimeError: If label shape should not be equal to pred shape.
         """
         if len(inputs) != 2:
             raise ValueError('Perplexity needs 2 inputs (preds, labels), but got {}.'.format(len(inputs)))

@@ -178,6 +178,10 @@ class ROC(Metric):
             - **tps** (np.array) - np.array with true positive rates. If multiclass, this is a list of such np.array,
               one for each class.
             - **thresholds** (np.array) - thresholds used for computing false- and true positive rates.
+
+        Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
+
         """
         if self._is_update is False:
             raise RuntimeError('Call the update method before calling eval.')
