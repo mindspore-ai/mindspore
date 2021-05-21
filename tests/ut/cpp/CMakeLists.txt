@@ -181,7 +181,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/
 add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})
 add_dependencies(_ut_mindspore_obj graph)
-add_dependencies(_ut_ut_obj engine-cache-server)
+add_dependencies(_ut_ut_obj engine-cache-server graph)
 add_executable(ut_tests $<TARGET_OBJECTS:_ut_ut_obj>
         $<TARGET_OBJECTS:_ut_mindspore_obj>)
 
