@@ -1126,6 +1126,10 @@ AbstractBasePtr InferImplSort(const AnalysisEnginePtr &, const PrimitivePtr &pri
   ValuePtr axis_ptr = primitive->GetAttr("axis");
   int64_t axis = GetValue<int64_t>(axis_ptr);
   int64_t input_rank = input->shape()->shape().size();
+  if (input_rank == 0) {
+    MS_LOG(EXCEPTION) << "input must be a Tensor with dimension > 0.";
+  }
+
   if (!(axis >= -input_rank && axis < input_rank)) {
     MS_LOG(EXCEPTION) << "axis is not in the valid range [" << -input_rank << ", " << input_rank << ").";
   }
