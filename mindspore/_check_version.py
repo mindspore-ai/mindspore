@@ -205,7 +205,7 @@ class AscendEnvChecker(EnvChecker):
     """ascend environment check"""
 
     def __init__(self):
-        self.version = ["1.78.T10.0.B100"]
+        self.version = ["1.78.T13.0.B130"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/fwkacllib/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
         hisi_fwk_version = "/usr/local/Ascend/fwkacllib/version.info"
