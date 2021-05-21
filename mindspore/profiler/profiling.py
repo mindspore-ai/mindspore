@@ -36,6 +36,7 @@ from mindspore.profiler.parser.integrator import Integrator
 from mindspore.profiler.parser.integrator import GpuTimelineGenerator, AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
+from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
 from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
@@ -248,6 +249,14 @@ class Profiler:
         except ProfilerException as err:
             logger.warning(err.message)
 
+        # Analyze minddata information
+        try:
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._device_target, self._dev_id,
+                                                    self._output_path)
+            md_analyzer.analyze()
+        except ProfilerException as err:
+            logger.warning(err.message)
+
         # analyse op compute time info
         try:
             self._analyser_op_info()
@@ -288,6 +297,14 @@ class Profiler:
         try:
             pipeline_parser = MinddataPipelineParser(self._output_path, self._dev_id, self._output_path)
             pipeline_parser.parse()
+        except ProfilerException as err:
+            logger.warning(err.message)
+
+        # Analyze minddata information
+        try:
+            md_analyzer = MinddataProfilingAnalyzer(self._output_path, self._device_target, self._dev_id,
+                                                    self._output_path)
+            md_analyzer.analyze()
         except ProfilerException as err:
             logger.warning(err.message)
 
