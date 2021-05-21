@@ -70,17 +70,18 @@ python src/preprocess.py --input_glob  data/*.txt
 
 ## Run Training
 
-After installing MindSpore via the official website, you can start training as follows:
+After installing MindSpore via the official website, you can start training 2.6B model
+on 8 cards as follows:
 
 ```bash
 
 # run distributed training example
 
-bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8
+bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8 fp32
 
 ```
 
-We recommend to run the code on 32 Ascend cards.
+We recommend to run the code on 32 Ascend cards for training 13B models.
 
 For distributed training, an hccl configuration file with JSON format needs to be created in advance.
 Please follow the instructions in the link below:
@@ -96,12 +97,41 @@ Please refer to the [website](https://git.openi.org.cn/PCL-Platform.Intelligence
 - checkpint file: \*.part\[0-4\] and *.npy under the same parameter size
 - strategy file: a file described how the parameters are sliced across different devices.
 
-### Run Prediction
+Here we suppose the downloaded checkpoint, tokenizer and strategy file is organized as follows:
+
+```shell
+ckpts
+├── checkpoint_file
+│   ├── filtered_*.ckpt
+│   ├── word_embedding.npy
+│   ├── top_query_embedding.npy
+│   └── position_embedding.npy
+├── strategy_load_ckpt
+│   └── strategy.ckpt
+└── tokenizer
+    ├── vocab10.model
+    └── vocab10.vocab
+```
+
+### Run Prediction on Distributed mode
+
+The following script will run prediction on 8 Ascend cards.
 
 ```bash
-$FILE_PATH=/home/your_path
+$FILE_PATH=/home/your_path/ckpts
 bash scripts/run_distribute_predict.sh 8 /home/config/rank_table_8p.json ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt \
-${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B
+${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp32
+```
+
+### Run Prediction Using One Device
+
+The following script will run prediction on 1 Ascend cards. The difference is the net is initialized with float16 type.
+And the rank_table should be configured to one device.
+
+```bash
+$FILE_PATH=/home/your_path/ckpts
+bash scripts/run_distribute_predict.sh 1 /home/config/rank_table_1p.json ${FILE_PATH}/strategy_load_ckpt/strategy.ckpt \
+${FILE_PATH}/tokenizer/  ${FILE_PATH}/checkpoint_file filitered 2.6B fp16
 ```
 
 ### Run Serving

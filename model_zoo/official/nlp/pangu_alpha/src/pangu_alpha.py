@@ -126,11 +126,11 @@ class Mapping(nn.Cell):
         self.output_size = output_size
         self.input_size = input_size
         self.weight = Parameter(initializer(Normal(sigma=0.02 * scale),
-                                            [input_size, output_size]),
+                                            [input_size, output_size], config.param_init_type),
                                 name="mapping_weight")
         self.bias = Parameter(initializer("zeros", [
             output_size,
-        ]),
+        ], config.param_init_type),
                               name="mapping_bias",
                               parallel_optimizer=False)
         self.dtype = config.compute_dtype
@@ -167,11 +167,12 @@ class Mapping_output(nn.Cell):
         self.output_size = output_size
         self.input_size = input_size
         self.weight = Parameter(initializer(Normal(sigma=0.02 * scale),
-                                            [input_size, output_size]),
+                                            [input_size, output_size],
+                                            config.param_init_type),
                                 name="mapping_weight")
         self.bias = Parameter(initializer("zeros", [
             output_size,
-        ]),
+        ], config.param_init_type),
                               name="mapping_bias")
         self.dtype = config.compute_dtype
         self.cast = P.Cast()
@@ -358,22 +359,38 @@ class Attention(nn.Cell):
         self.softmax.softmax.shard(((config.dp, config.mp, 1),))
         self.expand_dims = P.ExpandDims().shard(((config.dp, 1, 1),))
 
+
+        dense_shape = [config.embedding_size, config.embedding_size]
+        bias_shape = [config.embedding_size]
         # Query
         self.dense1 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal', shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros', shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense1.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense1.bias_add.shard(((config.dp, config.mp), (config.mp,)))
         # Key
         self.dense2 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal',
+                                                       shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros',
+                                                     shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense2.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense2.bias_add.shard(((config.dp, config.mp), (config.mp,)))
         # Value
         self.dense3 = nn.Dense(config.embedding_size,
-                               config.embedding_size).to_float(
-                                   config.compute_dtype)
+                               config.embedding_size,
+                               weight_init=initializer(init='normal',
+                                                       shape=dense_shape,
+                                                       dtype=config.param_init_type),
+                               bias_init=initializer(init='zeros',
+                                                     shape=bias_shape,
+                                                     dtype=config.param_init_type)).to_float(config.compute_dtype)
         self.dense3.matmul.shard(((config.dp, 1), (config.mp, 1)))
         self.dense3.bias_add.shard(((config.dp, config.mp), (config.mp,)))
 
@@ -723,13 +740,19 @@ class PanguAlpha_Model(nn.Cell):
             per_block = Block(config, i + 1).set_comm_fusion(int(i / fusion_group_size) + 2)
             # Each layer will be remoputed in the backward process. The output activation of each layer will be saved,
             # in other words, in backward process each block will be almosttotally recomputed.
-            per_block.recompute()
-            # Dropout will not be recomputed to ensure the consistency between forward and the corresponding backward.
-            per_block.attention.dropout.dropout_gen_mask.recompute(False)
-            per_block.attention.prob_dropout.dropout_gen_mask.recompute(False)
-            per_block.output.dropout.dropout_gen_mask.recompute(False)
+            if config.use_recompute:
+                per_block.recompute()
+                # Dropout will not be recomputed to ensure the consistency between forward and the corresponding backward.
+                per_block.attention.dropout.dropout_gen_mask.recompute(False)
+                per_block.attention.prob_dropout.dropout_gen_mask.recompute(False)
+                per_block.output.dropout.dropout_gen_mask.recompute(False)
+            if config.param_init_type == mstype.float16:
+                # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+                # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+                # so we fuse communications of layernorm to a large value(+100)
+                per_block.layernorm1.set_comm_fusion(int(int(i / fusion_group_size) + 100))
+                per_block.layernorm2.set_comm_fusion(int(int(i / fusion_group_size) + 100))
             self.blocks.append(per_block)
-
         if config.self_layernorm:
             self.layernorm = LayerNorm((config.embedding_size,), config.dp).to_float(
                 mstype.float32).set_comm_fusion(
@@ -741,6 +764,11 @@ class PanguAlpha_Model(nn.Cell):
             self.layernorm.layer_norm.shard(((config.dp, 1, 1), (1,), (1,)))
         self.layernorm.gamma.parallel_optimizer = False
         self.layernorm.beta.parallel_optimizer = False
+        if config.param_init_type == mstype.float16:
+            # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+            # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+            # so we fuse communications of layernorm to a large value(+100)
+            self.layernorm.set_comm_fusion(int(num_layers / fusion_group_size + 100))
         self.use_past = config.use_past
         self.past = tuple([None] * config.num_layers)
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
@@ -768,19 +796,24 @@ class PanguAlpha_Model(nn.Cell):
 
             self.top_query_embedding = nn.Embedding(config.seq_length, config.embedding_size,
                                                     embedding_table=top_query_table_param)
-            self.top_query_embedding.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 2)
+            # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
+            # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
+            # so we fuse communications of embedding to a large value(+100)
+            self.top_query_embedding.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 200)
             self.top_query_embedding.embedding_table.parallel_optimizer = False
             self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
             self.top_query_embedding.expand.shard(((config.dp, 1),))
             self.top_query_layer = QueryLayer(config)
             if config.use_recompute:
                 self.top_query_layer.recompute()
-
                 self.top_query_layer.output.dropout.dropout_gen_mask.recompute(False)
                 self.top_query_layer.attention.dropout.dropout_gen_mask.recompute(False)
                 self.top_query_layer.attention.prob_dropout.dropout_gen_mask.recompute(False)
 
             self.top_query_layer.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 2)
+            self.top_query_layer.layernorm1.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
+            self.top_query_layer.layernorm2.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
+
         self.use_top_query_attention = config.use_top_query_attention
 
 

@@ -115,7 +115,7 @@ def create_group(group, rank_num, rank_ids):
         c_group = c_str(group)
         ret = HCCL_LIB_CTYPES.HcomCreateGroup(c_group, c_rank_num, c_array_rank_ids)
         if ret != 0:
-            raise RuntimeError('Create group error, the error code is ', ret)
+            raise RuntimeError('Create group error, the error code is ' + str(ret))
     else:
         raise TypeError('Rank ids must be a python list.')
 

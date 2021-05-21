@@ -9,6 +9,7 @@ export TOKENIZER=$4
 export CKPT_PATH=$5
 export CKPT_NAME=$6
 export MODE=$7
+export PARAM_INIT_TYPE=$8
 
 for((i=0;i<$RANK_SIZE;i++));
 do
@@ -18,5 +19,5 @@ do
   export RANK_ID=$i
   export DEVICE_ID=$i
   python -s ${self_path}/../predict.py --strategy_load_ckpt_path=$STRATEGY --tokenizer_path=$TOKENIZER --load_ckpt_path=$CKPT_PATH \
-                  --load_ckpt_name=$CKPT_NAME --mode=$MODE --run_type=predict >train_deep$i.log 2>&1 &
+                  --load_ckpt_name=$CKPT_NAME --mode=$MODE --run_type=predict --param_init_type=$PARAM_INIT_TYPE >log$i.log 2>&1 &
 done

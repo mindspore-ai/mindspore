@@ -53,6 +53,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
     Returns:
         Tensor, the new value of v after updating.
     """
+    op_cast = P.Cast()
     if optim_filter:
         op_mul = P.Mul()
         op_square = P.Square()
@@ -60,7 +61,6 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
         op_cast = P.Cast()
         op_reshape = P.Reshape()
         op_shape = P.Shape()
-
         param_fp32 = op_cast(param, mstype.float32)
         m_fp32 = op_cast(m, mstype.float32)
         v_fp32 = op_cast(v, mstype.float32)
@@ -84,7 +84,7 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay, param, m, v, gradient, d
         next_param = F.depend(next_param, F.assign(v, op_cast(next_v, F.dtype(v))))
 
         return op_cast(next_param, F.dtype(param))
-    return gradient
+    return op_cast(gradient, F.dtype(param))
 
 
 @_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",

@@ -97,7 +97,8 @@ def run_predict(args_opt):
         micro_size=args_opt.micro_size,
         eod_reset=False,
         word_emb_dp=True,
-        load_ckpt_path=args_opt.load_ckpt_path)
+        load_ckpt_path=args_opt.load_ckpt_path,
+        param_init_type=mstype.float32 if args_opt.param_init_type == 'fp32' else mstype.float16)
     print("===config is: ", config, flush=True)
     print("=====args_opt is: ", args_opt, flush=True)
 

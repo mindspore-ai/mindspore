@@ -25,6 +25,7 @@ ROOT_PATH=`pwd`
 DATA_DIR=$1
 export RANK_TABLE_FILE=$2
 RANK_SIZE=$3
+PARAM_INIT_TYPE=$4
 
 
 for((i=0;i<${RANK_SIZE};i++));
@@ -34,5 +35,6 @@ do
     cd ${ROOT_PATH}/device$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
-    python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --run_type=train >log$i.log 2>&1 &
+    python ${ROOT_PATH}/train.py --distribute=true --device_num=$RANK_SIZE --data_url=$DATA_DIR --run_type=train \
+    --param_init_type=$PARAM_INIT_TYPE > log$i.log 2>&1 &
 done

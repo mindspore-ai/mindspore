@@ -27,6 +27,45 @@ from mindspore.nn.learning_rate_schedule import LearningRateSchedule, Polynomial
 
 from mindspore.parallel._utils import _get_global_rank
 from mindspore.communication.management import get_group_size
+from mindspore.nn import AdamWeightDecay
+from mindspore.common import Parameter, ParameterTuple
+from mindspore.common.initializer import initializer
+
+
+class FP32StateAdamWeightDecay(AdamWeightDecay):
+    r"""
+        This class is almost same with the mindspore's AdamWeightDecay implements, the
+        only difference is the optimizer's state will be always initialized with float32,
+        where the original AdamWeightDecay will initialize the optimizer's state with float16,
+        if the parameters are initialized with fp16.
+        This setting will avoid overflow in training PanGu-Alpha model using fp16.
+    """
+
+    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
+        super(FP32StateAdamWeightDecay, self).__init__(params, learning_rate=learning_rate,
+                                                       beta1=beta1,
+                                                       beta2=beta2,
+                                                       eps=eps,
+                                                       weight_decay=weight_decay)
+
+        self.moments1 = self.clone_state(self.parameters, prefix='adam_m', init='zeros')
+        self.moments2 = self.clone_state(self.parameters, prefix='adam_v', init='zeros')
+
+    def clone_state(self, parameter_tuple, prefix, init):
+        r"""
+            parameter_tuple: ParameterTuple. The parameters of the network
+            prefix: str. The prefix name of the parameters
+            init: str. The initialization method
+        """
+        new = []
+        for old_param in parameter_tuple:
+            new_state = Parameter(initializer(init, shape=old_param.shape, dtype=mstype.float32))
+            new_state.param_info = old_param.param_info.clone()
+            new_state.is_init = False
+            new_state.set_data(initializer(init, shape=old_param.shape, dtype=mstype.float32))
+            new_state.name = prefix + '.' + new_state.name
+            new.append(new_state)
+        return ParameterTuple(new)
 
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 
@@ -256,6 +295,10 @@ def get_args():
                         type=str,
                         default="./tokenizer_path",
                         help="The path where stores vocab and vocab model file")
+    parser.add_argument("--param_init_type",
+                        type=str,
+                        default="fp32",
+                        help="The initialization type for parameters. Default fp32.")
 
     add_training_params(parser)
     args_opt = parser.parse_args()
