@@ -5056,7 +5056,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
         ValueError: If length of shape of `input_params` is greater than 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
