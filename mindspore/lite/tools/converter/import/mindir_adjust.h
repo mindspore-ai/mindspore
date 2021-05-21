@@ -18,21 +18,20 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
 
 #include <string>
-#include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType;
 using mindspore::schema::QuantType;
-namespace mindspore::opt {
-class MindirAdjustPass : public Pass {
+namespace mindspore::lite {
+class MindirAdjust {
  public:
-  MindirAdjustPass() : Pass("mindir_adjust_pass") {}
-  ~MindirAdjustPass() override = default;
+  MindirAdjust() {}
+  ~MindirAdjust() = default;
   void SetQuantType(QuantType quant_type) { quant_type_ = quant_type; }
   void SetFmkType(FmkType fmk_type) { fmk_type_ = fmk_type; }
   void SetTrainFlag(bool train_flag) { train_flag_ = train_flag; }
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &graph);
 
  protected:
   int ValueNodeInt64Convert(AnfNodePtr anf_node);
@@ -41,7 +40,6 @@ class MindirAdjustPass : public Pass {
   QuantType quant_type_ = QuantType::QuantType_QUANT_NONE;
   FmkType fmk_type_ = FmkType::FmkType_MS;
   bool train_flag_ = false;
-  FuncGraphPtr graph_;
 };
-}  // namespace mindspore::opt
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_

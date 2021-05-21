@@ -39,7 +39,6 @@ class Converter {
   FuncGraphPtr BuildFuncGraph(const converter::Flags &flag);
 
  protected:
-  STATUS AdjustForMindir(const FuncGraphPtr &func_graph, const converter::Flags &flag);
   ModelParser *model_parser_ = nullptr;
   std::unique_ptr<GraphDefTransform> metagraph_transform_ = std::make_unique<GraphDefTransform>();
   std::unique_ptr<AnfTransform> funcgraph_transform_ = std::make_unique<AnfTransform>();

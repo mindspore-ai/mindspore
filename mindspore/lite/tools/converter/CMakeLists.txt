@@ -35,6 +35,9 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/conv1d_inout_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/inputs_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/import/mindspore_importer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
