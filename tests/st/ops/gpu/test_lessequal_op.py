@@ -36,29 +36,46 @@ class Net(Cell):
 @pytest.mark.env_onecard
 def test_lessequal():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
-    y = Tensor(np.array([[2]]).astype(np.float32))
-    expect = [[True, True, False]]
+    y = Tensor(np.array([[2, 2, 2]]).astype(np.float32))
+    expect = np.array([[True, True, False]])
     x1 = Tensor(np.array([[1, 2, 3]]).astype(np.int16))
     y1 = Tensor(np.array([[2]]).astype(np.int16))
-    expect = [[True, True, False]]
+    expect1 = np.array([[True, True, False]])
     x2 = Tensor(np.array([[1, 2, 3]]).astype(np.uint8))
     y2 = Tensor(np.array([[2]]).astype(np.uint8))
-    expect = [[True, True, False]]
+    expect2 = np.array([[True, True, False]])
+    x3 = Tensor(np.array([[1, 2, 3]]).astype(np.float64))
+    y3 = Tensor(np.array([[2]]).astype(np.float64))
+    expect3 = np.array([[True, True, False]])
+    x4 = Tensor(np.array([[1, 2, 3]]).astype(np.float16))
+    y4 = Tensor(np.array([[2]]).astype(np.float16))
+    expect4 = np.array([[True, True, False]])
+    x5 = Tensor(np.array([[1, 2, 3]]).astype(np.int64))
+    y5 = Tensor(np.array([[2]]).astype(np.int64))
+    expect5 = np.array([[True, True, False]])
+    x6 = Tensor(np.array([[1, 2, 3]]).astype(np.int32))
+    y6 = Tensor(np.array([[2, 2, 2]]).astype(np.int32))
+    expect6 = np.array([[True, True, False]])
+    x7 = Tensor(np.array([[1, 2, 3]]).astype(np.int8))
+    y7 = Tensor(np.array([[2]]).astype(np.int8))
+    expect7 = np.array([[True, True, False]])
+
+    x = [x, x1, x2, x3, x4, x5, x6, x7]
+    y = [y, y1, y2, y3, y4, y5, y6, y7]
+    expect = [expect, expect1, expect2, expect3, expect4, expect5, expect6, expect7]
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     lessequal = Net()
-    output = lessequal(x, y)
-    assert np.all(output.asnumpy() == expect)
-    output = lessequal(x1, y1)
-    assert np.all(output.asnumpy() == expect)
-    output = lessequal(x2, y2)
-    assert np.all(output.asnumpy() == expect)
+    for i, xi in enumerate(x):
+        output = lessequal(xi, y[i])
+        assert np.all(output.asnumpy() == expect[i])
+        assert output.shape == expect[i].shape
+        print('test [%d/%d] passed!' % (i, len(x)))
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     lessequal = Net()
-    output = lessequal(x, y)
-    assert np.all(output.asnumpy() == expect)
-    output = lessequal(x1, y1)
-    assert np.all(output.asnumpy() == expect)
-    output = lessequal(x2, y2)
-    assert np.all(output.asnumpy() == expect)
+    for i, xi in enumerate(x):
+        output = lessequal(xi, y[i])
+        assert np.all(output.asnumpy() == expect[i])
+        assert output.shape == expect[i].shape
+        print('test [%d/%d] passed!' % (i, len(x)))
