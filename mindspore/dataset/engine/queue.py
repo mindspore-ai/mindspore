@@ -23,7 +23,6 @@ import multiprocessing
 import numpy as np
 from mindspore import log as logger
 
-
 class _SharedQueue(multiprocessing.queues.Queue):
     """
     Class to implement a queue using shared memory for better performance.
@@ -33,6 +32,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                   copied before returning, then this can be set to False.
         max_rowsize: Maximum size of any element in the Queue in MB.
     """
+
     def __init__(self, size, copy_out=False, max_rowsize=6):
         super().__init__(size, ctx=multiprocessing.get_context())
 
@@ -53,18 +53,23 @@ class _SharedQueue(multiprocessing.queues.Queue):
 
         try:
             for _ in range(self.num_seg):
-                a = multiprocessing.Array('b', self.seg_size)
+                a = multiprocessing.Array("b", self.seg_size)
                 self.shm_list.append(a)
         except:
-            raise "_SharedQueue: Error allocating " + str(self.seg_size) + "bytes, " + str(self.num_seg) + " elements."
-
+            raise RuntimeError(
+                "_SharedQueue: Error allocating "
+                + str(self.seg_size)
+                + "bytes, "
+                + str(self.num_seg)
+                + " elements."
+            )
     def put(self, data, timeout=None):
         name_list = []
         count = 0
         start_bytes = 0
         for r in data:
-            if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem and
-                    start_bytes + r.nbytes < self.seg_size):
+            if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
+                    and start_bytes + r.nbytes < self.seg_size):
                 ##need to convert start_bytes to offset in array
                 start_offset = start_bytes
                 dest = np.ndarray(r.shape, r.dtype, buffer=self.shm_list[self.seg_pos].get_obj(), offset=start_offset)
@@ -78,9 +83,13 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 if isinstance(r, np.ndarray) and r.size >= self.min_shared_mem:
                     ## Only print out error the first time it happens
                     if self.print_error:
-                        logger.warning("Using shared memory queue, but rowsize is larger than allocated memory " +
-                                       "max_rowsize " + str(self.seg_size) + " current rowwize " +
-                                       str(start_bytes + r.nbytes))
+                        logger.warning(
+                            "Using shared memory queue, but rowsize is larger than allocated memory "
+                            + "max_rowsize "
+                            + str(self.seg_size)
+                            + " current rowwize "
+                            + str(start_bytes + r.nbytes)
+                        )
                         self.print_error = False
                 name_list.append((self.data_immediate, r))
 
@@ -89,8 +98,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
         ## only increment seg_pos after successfully adding to metadata queue
 
         if start_bytes > 0:
-            self.seg_pos = (self.seg_pos +1) % self.num_seg
-
+            self.seg_pos = (self.seg_pos + 1) % self.num_seg
     def get(self, timeout=None):
         result = super().get(timeout=timeout)
         r = []
@@ -113,5 +121,5 @@ class _SharedQueue(multiprocessing.queues.Queue):
             elif x[0] == self.data_immediate:
                 r.append(x[1])
             else:
-                raise "SharedQueue, invalid entry in metadata."
+                raise RuntimeError("SharedQueue, invalid entry in metadata.")
         return tuple(r)
