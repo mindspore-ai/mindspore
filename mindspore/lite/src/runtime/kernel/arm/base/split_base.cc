@@ -50,6 +50,15 @@ int SplitBaseCPUKernel::ReSize() {
     param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);
   }
 
+  if (input_shape.at(param->split_dim_) == 0) {
+    MS_LOG(ERROR) << "input_shape[" << param->split_dim_ << "] must not be zero!";
+    return RET_ERROR;
+  }
+  if (param->strides_[param->split_dim_] == 0) {
+    MS_LOG(ERROR) << "param->strides_[" << param->split_dim_ << "] must not be zero!";
+    return RET_ERROR;
+  }
+
   MS_ASSERT(static_cast<size_t>(param->split_dim_) < input_shape.size());
   param->split_count_ =
     param->strides_[0] * input_shape.at(0) / (input_shape.at(param->split_dim_) * param->strides_[param->split_dim_]);

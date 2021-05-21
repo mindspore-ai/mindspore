@@ -117,6 +117,10 @@ int ReduceCPUKernel::Run() {
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
     axis_size_ = axis_sizes_.at(i);
+    if (axis_size_ == 0) {
+      MS_LOG(ERROR) << "axis_size_ is must not be zero!";
+      return RET_ERROR;
+    }
     auto error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ReduceImpl,
                                      this, context_->thread_num_);
     if (error_code != RET_OK) {
