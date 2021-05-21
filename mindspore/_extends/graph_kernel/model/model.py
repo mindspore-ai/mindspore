@@ -190,6 +190,7 @@ class PrimLib:
         'BatchMatMul': Prim(OPAQUE),
         'UnPadAkg': Prim(OPAQUE),
         'PadAkg': Prim(OPAQUE),
+        'Conv2D': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
