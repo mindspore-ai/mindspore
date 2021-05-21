@@ -469,6 +469,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         For finite values, isclose uses the following equation to test whether two
         floating point values are equivalent.
         :math:`absolute(a - b) <= (atol + rtol * absolute(b))`
+        On Ascend, input arrays containing inf or NaN are not supported.
 
     Args:
         a (Union[Tensor, list, tuple]): Input first tensor to compare.
@@ -485,7 +486,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         TypeError: If inputs have types not specified above.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = np.array([0,1,2,float('inf'),float('inf'),float('nan')])

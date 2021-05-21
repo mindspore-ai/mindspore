@@ -17,7 +17,8 @@ from ..common import Tensor
 from ..ops import functional as F
 from ..common import dtype as mstype
 
-from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert
+from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
+    _check_is_float, _get_device
 
 
 def _deep_list(array_like):
@@ -152,5 +153,6 @@ def _get_dtype_from_scalar(*input_numbers):
 
 
 def _isnan(x):
-    """Computes isnan."""
-    return F.not_equal(x, x)
+    if _get_device() == 'Ascend' or not _check_is_float(F.dtype(x)):
+        return F.fill(mstype.bool_, F.shape(x), False)
+    return F.isnan(x)
