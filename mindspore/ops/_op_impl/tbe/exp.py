@@ -23,6 +23,9 @@ exp_op_info = TBERegOp("Exp") \
     .compute_cost(10) \
     .kernel_name("exp") \
     .partial_flag(True) \
+    .attr("base", "optional", "float", "all", "-1.0") \
+    .attr("scale", "optional", "float", "all", "1.0") \
+    .attr("shift", "optional", "float", "all", "0.0") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("formatAgnostic") \
