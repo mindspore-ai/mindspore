@@ -30,7 +30,7 @@ from .utils_const import _check_axes_range, _check_start_normalize, \
     _check_is_float, _check_axis_in_range, _check_axis_type, _canonicalize_axis, \
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
     _tuple_slice, _expanded_shape, _seq_prod, _tuple_setitem, _iota, \
-    _raise_unimplemented_error, _cumprod, _get_device
+    _raise_unimplemented_error, _cumprod, _get_device, _check_is_int
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -2164,6 +2164,8 @@ def choose(a, choices, mode='clip'):
         [ 10 -10  10]]
     """
     a = _to_tensor(a)
+    if not _check_is_int(F.dtype(a)):
+        _raise_value_error('`a` should be an int array')
     if isinstance(choices, (tuple, list)):
         # broadcasts choices to the same shape if choices is a sequence
         choices = _to_tensor(*choices)
@@ -2183,14 +2185,10 @@ def choose(a, choices, mode='clip'):
     if F.rank(a) == 0 or F.rank(choices) == 0:
         _raise_value_error('input cannot be scalars')
     a = broadcast_to(a, shape_choice)
-    dtype = F.dtype(choices)
-    # adjusts dtype for F.tensor_mul and F.gather_nd
-    a = a.astype(mstype.int32)
-    choices = choices.astype(mstype.int32)
     a = _check_indices(F.shape(choices)[0], a, mode, allow_negative_index=False)
     grid = _get_grid(F.shape(a))
     indices = concatenate((a.reshape(F.shape(a) + (1,)), grid), -1)
-    return F.gather_nd(choices, indices).astype(dtype)
+    return F.gather_nd(choices, indices)
 
 
 def size(a, axis=None):

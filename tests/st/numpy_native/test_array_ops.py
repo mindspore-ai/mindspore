@@ -1256,8 +1256,8 @@ def test_select():
 def test_choose():
     x = rand_int(2, 1, 4).astype(onp.int32)
     y = rand_int(3, 2, 5, 4).astype(onp.int32)
-    match_res(mnp.choose, onp.choose, x, y, mode='wrap')
-    match_res(mnp.choose, onp.choose, x, y, mode='clip')
+    match_res(mnp.choose, onp.choose, x, y, mode='wrap', dtype=mnp.int32)
+    match_res(mnp.choose, onp.choose, x, y, mode='clip', dtype=mnp.int32)
 
     x = rand_int(5, 3, 1, 7).astype(onp.int32)
     y1 = rand_int(7).astype(onp.int32)
