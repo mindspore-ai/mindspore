@@ -14,19 +14,13 @@
 # ============================================================================
 
 """Evaluation for Deeptext"""
-import argparse
 import os
 from PIL import Image
 import numpy as np
 import mmcv
-from src.config import config
-from src.utils import metrics
 
-parser = argparse.ArgumentParser(description="Deeptext evaluation")
-parser.add_argument("--result_path", type=str, required=True, help="result file path")
-parser.add_argument("--label_path", type=str, required=True, help="label path")
-parser.add_argument("--img_path", type=str, required=True, help="img path")
-args_opt = parser.parse_args()
+from src.utils import metrics
+from model_utils.config import config
 
 config.test_batch_size = 1
 
@@ -70,8 +64,8 @@ def get_gt_bboxes_labels(label_file, img_file):
 def deeptext_eval_test(result_path='', label_path='', img_path=''):
     eval_iter = 0
 
-    print("\n========================================\n")
-    print("Processing, please wait a moment.")
+    print("\n========================================\n", flush=True)
+    print("Processing, please wait a moment.", flush=True)
     max_num = 32
 
     pred_data = []
@@ -109,14 +103,14 @@ def deeptext_eval_test(result_path='', label_path='', img_path=''):
                               "gt_labels": gt_labels})
 
     precisions, recalls = metrics(pred_data)
-    print("\n========================================\n")
+    print("\n========================================\n", flush=True)
     for i in range(config.num_classes - 1):
         j = i + 1
         f1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
         print("class {} precision is {:.2f}%, recall is {:.2f}%,"
-              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100))
+              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100), flush=True)
         if config.use_ambigous_sample:
             break
 
 if __name__ == '__main__':
-    deeptext_eval_test(args_opt.result_path, args_opt.label_path, args_opt.img_path)
+    deeptext_eval_test(config.result_path, config.label_path, config.img_path)

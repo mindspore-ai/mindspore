@@ -120,7 +120,7 @@ class Deeptext_VGG16(nn.Cell):
                                           stds=self.target_stds)
 
         # Rcnn
-        self.rcnn = Rcnn(config, config.rcnn_in_channels * config.roi_layer['out_size'] * config.roi_layer['out_size'],
+        self.rcnn = Rcnn(config, config.rcnn_in_channels * config.roi_layer.out_size * config.roi_layer.out_size,
                          self.train_batch_size, self.num_classes)
 
         # Op declare

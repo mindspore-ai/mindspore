@@ -86,8 +86,8 @@ class SingleRoIExtractor(nn.Cell):
         self.out_channels = out_channels
         self.featmap_strides = featmap_strides
         self.num_levels = len(self.featmap_strides)
-        self.out_size = roi_layer['out_size']
-        self.sample_num = roi_layer['sample_num']
+        self.out_size = roi_layer.out_size
+        self.sample_num = roi_layer.sample_num
         self.roi_layers = self.build_roi_layers(self.featmap_strides)
         self.roi_layers = L.CellList(self.roi_layers)
 

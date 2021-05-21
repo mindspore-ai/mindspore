@@ -14,15 +14,17 @@
 # ============================================================================
 
 """Evaluation for Deeptext"""
-import argparse
 import os
 import time
 
 import numpy as np
 from src.Deeptext.deeptext_vgg16 import Deeptext_VGG16
-from src.config import config
 from src.dataset import data_to_mindrecord_byte_image, create_deeptext_dataset
 from src.utils import metrics
+
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
 
 from mindspore import context
 from mindspore.common import set_seed
@@ -30,17 +32,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 set_seed(1)
 
-parser = argparse.ArgumentParser(description="Deeptext evaluation")
-parser.add_argument("--checkpoint_path", type=str, default='test', help="Checkpoint file path.")
-parser.add_argument("--imgs_path", type=str, required=True,
-                    help="Test images files paths, multiple paths can be separated by ','.")
-parser.add_argument("--annos_path", type=str, required=True,
-                    help="Annotations files paths of test images, multiple paths can be separated by ','.")
-parser.add_argument("--device_id", type=int, default=7, help="Device id, default is 7.")
-parser.add_argument("--mindrecord_prefix", type=str, default='Deeptext-TEST', help="Prefix of mindrecord.")
-args_opt = parser.parse_args()
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
 
 
 def deeptext_eval_test(dataset_path='', ckpt_path=''):
@@ -55,8 +47,8 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
     net.set_train(False)
     eval_iter = 0
 
-    print("\n========================================\n")
-    print("Processing, please wait a moment.")
+    print("\n========================================\n", flush=True)
+    print("Processing, please wait a moment.", flush=True)
     max_num = 32
 
     pred_data = []
@@ -75,12 +67,12 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
         gt_bboxes = gt_bboxes.asnumpy()
 
         gt_bboxes = gt_bboxes[gt_num.asnumpy().astype(bool), :]
-        print(gt_bboxes)
+        print(gt_bboxes, flush=True)
         gt_labels = gt_labels.asnumpy()
         gt_labels = gt_labels[gt_num.asnumpy().astype(bool)]
-        print(gt_labels)
+        print(gt_labels, flush=True)
         end = time.time()
-        print("Iter {} cost time {}".format(eval_iter, end - start))
+        print("Iter {} cost time {}".format(eval_iter, end - start), flush=True)
 
         # output
         all_bbox = output[0]
@@ -108,33 +100,91 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
 
             percent = round(eval_iter / total * 100, 2)
 
-            print('    %s [%d/%d]' % (str(percent) + '%', eval_iter, total), end='\r')
+            print('    %s [%d/%d]' % (str(percent) + '%', eval_iter, total), end='\r', flush=True)
 
     precisions, recalls = metrics(pred_data)
-    print("\n========================================\n")
+    print("\n========================================\n", flush=True)
     for i in range(config.num_classes - 1):
         j = i + 1
         f1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
         print("class {} precision is {:.2f}%, recall is {:.2f}%,"
-              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100))
+              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100), flush=True)
         if config.use_ambigous_sample:
             break
 
 
-if __name__ == '__main__':
-    prefix = args_opt.mindrecord_prefix
-    config.test_images = args_opt.imgs_path
-    config.test_txts = args_opt.annos_path
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...", flush=True)
+                print("unzip file num: {}".format(data_num), flush=True)
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)), flush=True)
+                print("Extract Done.", flush=True)
+            else:
+                print("This is not zip.", flush=True)
+        else:
+            print("Zip has been extracted.", flush=True)
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1, flush=True)
+            print("Unzip file save dir: ", save_dir_1, flush=True)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===", flush=True)
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}."
+              .format(get_device_id(), zip_file_1, save_dir_1), flush=True)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    prefix = config.eval_mindrecord_prefix
+    config.test_images = config.imgs_path
+    config.test_txts = config.annos_path
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix)
-    print("CHECKING MINDRECORD FILES ...")
+    print("CHECKING MINDRECORD FILES ...", flush=True)
     if not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
-        print("Create Mindrecord. It may take some time.")
+        print("Create Mindrecord. It may take some time.", flush=True)
         data_to_mindrecord_byte_image(False, prefix, file_num=1)
-        print("Create Mindrecord Done, at {}".format(mindrecord_dir))
+        print("Create Mindrecord Done, at {}".format(mindrecord_dir), flush=True)
 
-    print("CHECKING MINDRECORD FILES DONE!")
-    print("Start Eval!")
-    deeptext_eval_test(mindrecord_file, args_opt.checkpoint_path)
+    print("CHECKING MINDRECORD FILES DONE!", flush=True)
+    print("Start Eval!", flush=True)
+    deeptext_eval_test(mindrecord_file, config.checkpoint_path)
+
+
+if __name__ == '__main__':
+    run_eval()
