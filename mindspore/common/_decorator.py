@@ -16,6 +16,7 @@
 
 from mindspore import log
 
+
 def deprecated(version, substitute, use_substitute_name=False):
     """deprecated warning
 

@@ -850,7 +850,6 @@ class GatherV2(PrimitiveWithCheck):
     Please use Gather instead.
     """
 
-    # deprecate_new_name = "Gather"
 
     @deprecated("1.1", "Gather", True)
     @prim_attr_register
