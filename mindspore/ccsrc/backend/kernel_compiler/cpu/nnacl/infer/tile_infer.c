@@ -63,6 +63,9 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     return NNACL_INPUT_TENSOR_ERROR;
   }
   multiples_size = data_num;
+  if (inputs[1]->data_type_ != kNumberTypeInt && inputs[1]->data_type_ != kNumberTypeInt32) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
   int *input1_data = inputs[1]->data_;
   if (input1_data == NULL) {
     return NNACL_INFER_INVALID;
