@@ -35,11 +35,11 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   auto prim_type = GetPrimitiveType(primitive);
   std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
   if (prim_type == schema::PrimitiveType_Custom) {
-    kernel_interface = kernel::RegisterKernelInterface::Instance()->GetKernelInterface(
-      "", static_cast<const schema::Primitive *>(primitive));
+    kernel_interface =
+      kernel::RegisterKernelInterface::GetKernelInterface("", static_cast<const schema::Primitive *>(primitive));
   } else {
     for (auto &&provider : providers) {
-      kernel_interface = kernel::RegisterKernelInterface::Instance()->GetKernelInterface(
+      kernel_interface = kernel::RegisterKernelInterface::GetKernelInterface(
         provider, static_cast<const schema::Primitive *>(primitive));
       if (kernel_interface != nullptr) {
         break;

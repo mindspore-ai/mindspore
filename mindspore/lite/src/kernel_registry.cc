@@ -149,8 +149,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
   } else {
     kernel::KernelDesc desc;
     KernelKeyToKernelDesc(key, &desc);
-    auto creator =
-      kernel::RegisterKernel::GetInstance()->GetCreator(desc, static_cast<const schema::Primitive *>(primitive));
+    auto creator = kernel::RegisterKernel::GetCreator(desc, static_cast<const schema::Primitive *>(primitive));
     if (creator == nullptr) {
       return RET_NOT_SUPPORT;
     }
