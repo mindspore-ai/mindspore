@@ -34,6 +34,7 @@ def get_bprop_fakequant_with_minmax(self):
 
     return bprop
 
+
 @bprop_getters.register(Q.FakeQuantWithMinMaxVars)
 def get_bprop_fakequant_with_minmax_vars(self):
     """Generate bprop for FakeQuantWithMinMaxVars for Ascend"""
@@ -184,6 +185,7 @@ def get_bprop_acts_ulq(self):
     op = Q.ActsULQInputGrad()
     op1 = Q.ActULQClampMinGrad()
     op2 = Q.ActULQClampMaxGrad()
+
     def bprop(x, clamp_min, clamp_max, out, dout):
         dx = op(dout[0], out[1], out[2])
         dx1 = op1(dout[0], out[1], out[3])

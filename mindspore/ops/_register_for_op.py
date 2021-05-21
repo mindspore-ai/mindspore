@@ -23,6 +23,7 @@ class Registry(UserDict):
     """Registry class for registry functions for grad and vm_impl on Primitive."""
 
     def register(self, prim):
+        """register the function."""
         def deco(fn):
             """Decorate the function."""
             if isinstance(prim, str):

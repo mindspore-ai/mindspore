@@ -148,7 +148,8 @@ class RsqrtGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32, mstype.int32, mstype.int8],
+        validator.check_tensors_dtypes_same_and_valid(args,
+                                                      [mstype.float16, mstype.float32, mstype.int32, mstype.int8],
                                                       self.name)
         return x_dtype
 
@@ -962,6 +963,7 @@ def _get_max_pool3d_grad_pads_by_pad_mode(input_shape, kernel_size, strides, pad
         pads = pads_d + pads_h + pads_w
     return pads
 
+
 class MaxPool3DGrad(PrimitiveWithInfer):
     """Gradients of the max pool3d operation."""
 
@@ -972,7 +974,8 @@ class MaxPool3DGrad(PrimitiveWithInfer):
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
-        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name, allow_five=True, ret_five=True)
+        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
+                                                  allow_five=True, ret_five=True)
         self.add_prim_attr("kernel_size", self.kernel_size)
         self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr("strides", self.strides)
@@ -997,7 +1000,8 @@ class MaxPool3DGradGrad(PrimitiveWithInfer):
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
-        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name, allow_five=True, ret_five=True)
+        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
+                                                  allow_five=True, ret_five=True)
         self.add_prim_attr("kernel_size", self.kernel_size)
         self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr("strides", self.strides)
@@ -1239,12 +1243,10 @@ class LSTMGradData(PrimitiveWithInfer):
         validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
         validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
 
-        # dy: (seq_len, batch_size, hidden_size * num_directions)
         validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
         validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
         validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
 
-        # (seq_len, batch_size, input_size)
         dx_shape = (y_shape[0], y_shape[1], self.input_size)
         dhx_shape = dhy_shape
         dcx_shape = dcy_shape
@@ -1323,12 +1325,10 @@ class LSTMGrad(PrimitiveWithInfer):
         validator.check_int(dhy_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h_shape[0]", self.name)
         validator.check_equal_int(dhy_shape[2], self.hidden_size, "h_shape[2]", self.name)
 
-        # dy: (seq_len, batch_size, hidden_size * num_directions)
         validator.check_equal_int(len(dy_shape), 3, "dy_shape", self.name)
         validator.check_equal_int(dy_shape[1], dhy_shape[1], "dy[1]", self.name)
         validator.check_int(dy_shape[2], self.hidden_size * self.num_directions, Rel.EQ, "dy[2]", self.name)
 
-        # (seq_len, batch_size, input_size)
         dx_shape = (y_shape[0], y_shape[1], self.input_size)
         dhx_shape = dhy_shape
         dcx_shape = dcy_shape
@@ -1552,16 +1552,16 @@ class PReLUGrad(PrimitiveWithInfer):
     def __init__(self):
         pass
 
-    def infer_shape(self, y_backprop_shape, A_shape, w_shape):
-        if len(A_shape) == 1:
+    def infer_shape(self, y_backprop_shape, a_shape, w_shape):
+        if len(a_shape) == 1:
             raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
         return y_backprop_shape, w_shape
 
-    def infer_dtype(self, y_backprop_dtype, A_dtype, w_dtype):
+    def infer_dtype(self, y_backprop_dtype, a_dtype, w_dtype):
         tuple(map(partial(validator.check_tensor_dtype_valid,
                           valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
                   ('y_backprop', "input_x", "weight"),
-                  (y_backprop_dtype, A_dtype, w_dtype)))
+                  (y_backprop_dtype, a_dtype, w_dtype)))
         return y_backprop_dtype, w_dtype
 
 
@@ -1736,8 +1736,8 @@ class SigmoidGrad(PrimitiveWithInfer):
         return out
 
 
-class HSigmoidGrad(PrimitiveWithInfer):
-    """Gets the gradient of HSigmoid operation."""
+class _ActivationGrad(PrimitiveWithInfer):
+    """_ActivationGrad base class."""
 
     @prim_attr_register
     def __init__(self):
@@ -1753,21 +1753,12 @@ class HSigmoidGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class HSwishGrad(PrimitiveWithInfer):
+class HSwishGrad(_ActivationGrad):
     """Gets the gradient of HSwish operation."""
 
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
-    def infer_shape(self, y_grad_shape, x_shape):
-        return x_shape
-
-    def infer_dtype(self, y_grad_dtype, x_dtype):
-        valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        return x_dtype
+class HSigmoidGrad(_ActivationGrad):
+    """Gets the gradient of HSigmoid operation."""
 
 
 class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):

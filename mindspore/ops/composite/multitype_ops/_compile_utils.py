@@ -92,8 +92,10 @@ def _transform_indexing_tensor(broadcast_shape, final_shape, new_shape, x):
 
 
 def _transform_ellipsis_to_slice(data, tuple_index, op_name):
-    """Check if the tuple index len is longer than the data's dims and transform ellipsis in the indices
-    to several slice"""
+    """
+    Check if the tuple index len is longer than the data's dims and transform ellipsis in the indices
+    to several slice.
+    """
     data_shape = F.shape(data)
     data_rank = len(data_shape)
     indexes_types = hyper_map(F.typeof, tuple_index)

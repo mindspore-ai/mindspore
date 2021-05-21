@@ -36,6 +36,7 @@ def _greater_equal_scala(x, y):
    """
     return F.scalar_ge(x, y)
 
+
 @greater_equal.register("Tensor", "Number")
 @greater_equal.register("Number", "Tensor")
 @greater_equal.register("Tensor", "Tensor")

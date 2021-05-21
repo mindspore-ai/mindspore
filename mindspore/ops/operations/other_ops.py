@@ -121,6 +121,7 @@ class InplaceAssign(PrimitiveWithInfer):
     def infer_dtype(self, x, y, z):
         return z
 
+
 class Load(PrimitiveWithCheck):
     """
     Load `Parameter` to a value.
@@ -143,6 +144,7 @@ class Load(PrimitiveWithCheck):
     def check_dtype(self, variable):
         if variable != mstype.type_refkey:
             validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
+
 
 class BoundingBoxEncode(PrimitiveWithInfer):
     """
@@ -478,6 +480,7 @@ class Depend(Primitive):
     def __call__(self, value, expr):
         return value
 
+
 class UpdateState(Primitive):
     """
     UpdateState is used for update side-effect state.
@@ -496,6 +499,7 @@ class UpdateState(Primitive):
 
     def __call__(self, state, expr):
         return state
+
 
 class CheckBprop(PrimitiveWithInfer):
     """

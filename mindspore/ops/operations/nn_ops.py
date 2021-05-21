@@ -1008,8 +1008,8 @@ class BNTrainingUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A 4-D Tensor with float16 or float32 data type. Tensor of shape :math:`(N, C, A, B)`.
-        - **sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator BNTrainingReduce.
-          Tensor of shape :math:`(C,)`.
+        - **sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator
+          BNTrainingReduce. Tensor of shape :math:`(C,)`.
         - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator
           BNTrainingReduce. Tensor of shape :math:`(C,)`.
         - **scale** (Tensor) - A 1-D Tensor with float16 or float32, for the scaling factor.
@@ -2739,7 +2739,8 @@ class SGD(PrimitiveWithCheck):
         >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
         >>> output = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
         >>> print(output)
-        (Tensor(shape=[4], dtype=Float32, value= [ 1.98989999e+00, -4.90300000e-01,  1.69520009e+00,  3.98009992e+00]),)
+        (Tensor(shape=[4], dtype=Float32,
+         value= [ 1.98989999e+00, -4.90300000e-01,  1.69520009e+00,  3.98009992e+00]),)
     """
 
     @prim_attr_register
@@ -3279,14 +3280,15 @@ class OneHot(PrimitiveWithInfer):
         If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
 
     Args:
-        axis (int): Position to insert the value. e.g. If `indices` shape is [n, c], and `axis` is `-1` the output shape
-            will be [n, c, depth], If `axis` is `0` the output shape will be [depth, n, c]. Default: -1.
+        axis (int): Position to insert the value. e.g. If `indices` shape is [n, c], and `axis` is `-1` the output
+            shape will be [n, c, depth], If `axis` is `0` the output shape will be [depth, n, c]. Default: -1.
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
           Data type must be int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one hot dimension.
-        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`. With data type of float16 or float32.
+        - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
+          With data type of float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
           Has the same data type with as `on_value`.
 
@@ -3691,7 +3693,6 @@ class LSTM(PrimitiveWithInfer):
             self.num_directions = 1
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape):
-        # (seq, batch_size, feature)
         validator.check_equal_int(len(x_shape), 3, "x rank", self.name)
         validator.check_equal_int(x_shape[2], self.input_size, "x[2]", self.name)
 
@@ -3699,7 +3700,6 @@ class LSTM(PrimitiveWithInfer):
         validator.check_equal_int(len(h_shape), 3, "h rank", self.name)
         validator.check("h_shape", h_shape, "c_shape", c_shape, Rel.EQ, self.name)
 
-        # (num_layers * num_directions, batch, hidden_size)
         validator.check_int(h_shape[0], self.num_layers * self.num_directions, Rel.EQ, "h[0]", self.name)
         validator.check_equal_int(h_shape[1], x_shape[1], "h[1]", self.name)
         validator.check_int(h_shape[2], self.hidden_size, Rel.EQ, "h[2]", self.name)
@@ -4299,8 +4299,10 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. The data type must be float32.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. The data type must be float32.
         - **lr** (Tensor) - :math:`l` in the updating formula. The data type must be float32.
-        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. The data type must be float32.
-        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. The data type must be float32.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations.
+          The data type must be float32.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations.
+          The data type must be float32.
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. The data type must be
           float32.
         - **gradient** (Tensor) - Gradient, the shape must be the same as `m`, the data type must be float32.
@@ -4311,8 +4313,8 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
 
     Raises:
         TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
-        TypeError: If `m`,  `v`, `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a
-                   Tensor.
+        TypeError: If `m`,  `v`, `beta1_power`, `beta2_power1`, `lr`, `beta1`, `beta2`, `epsilon` or `gradient`
+                   is not a Tensor.
 
     Supported Platforms:
         ``CPU``
@@ -4409,8 +4411,8 @@ class FusedSparseAdam(PrimitiveWithInfer):
         - **var** (Parameter) - Parameters to be updated with float32 data type.
         - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
           float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients, has the same type as
-          `var` with float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula.
+          Mean square gradients, has the same type as `var` with float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula. With float32 data type.
@@ -4556,8 +4558,8 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         - **var** (Parameter) - Parameters to be updated with float32 data type.
         - **m** (Parameter) - The 1st moment vector in the updating formula, has the same type as `var` with
           float32 data type.
-        - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients, has the same type as
-          `var` with float32 data type.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula.
+          Mean square gradients, has the same type as `var` with float32 data type.
         - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula with float32 data type.
         - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula with float32 data type.
         - **lr** (Tensor) - :math:`l` in the updating formula with float32 data type.
@@ -5053,7 +5055,8 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         valid_dtypes = (mstype.float16, mstype.float32)
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
         if weight_type:
-            validator.check_tensors_dtypes_same_and_valid({'x': x_type, 'weight': weight_type}, valid_dtypes, self.name)
+            validator.check_tensors_dtypes_same_and_valid({'x': x_type, 'weight': weight_type}, valid_dtypes,
+                                                          self.name)
         return x_type
 
 
@@ -7011,8 +7014,8 @@ class CTCLoss(PrimitiveWithInfer):
           (`max_time`, `batch_size`, `num_classes`). `num_classes` must be `num_labels + 1` classes, `num_labels`
           indicates the number of actual labels. Blank labels are reserved. Default blank label is `num_classes - 1`.
           Data type must be float16, float32 or float64.
-        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
-          stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
+        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means
+          `labels_values[i]` stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
         - **labels_values** (Tensor) - A `1-D` input tensor. The values are associated with the given batch and time.
           The type must be int32. `labels_values[i]` must in the range of `[0, num_classes)`.
         - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of (`batch_size`).
@@ -7024,8 +7027,8 @@ class CTCLoss(PrimitiveWithInfer):
         - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
 
     Raises:
-        TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs` is not
-                   a bool.
+        TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs`
+                   is not a bool.
         TypeError: If `inputs`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
         TypeError: If dtype of `inputs` is not one of the following: float16, float32 or float64.
         TypeError: If dtype of `labels_indices` is not int64.
@@ -7251,8 +7254,6 @@ class BasicLSTMCell(PrimitiveWithInfer):
          [[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[0.0000e+00, 0.0000e+00]]))
     """
-
-    # deprecate_new_name = "BasicLSTMCell"
 
     @prim_attr_register
     def __init__(self, keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh'):
@@ -7492,8 +7493,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
           The data type must be float16.
         - **bias_input** (Tensor) - Input-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
           Has the same data type with input `init_h`.
-        - **bias_hidden** (Tensor) - Hidden-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
-          Has the same data type with input `init_h`.
+        - **bias_hidden** (Tensor) - Hidden-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`,
+          or None. Has the same data type with input `init_h`.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(\text{batch_size})`.
           Only `None` is currently supported.
         - **init_h** (Tensor) - Hidden state of initial time.
@@ -7636,7 +7637,8 @@ class InTopK(PrimitiveWithInfer):
         k (int): Specifies the number of top elements to be used for computing precision.
 
     Inputs:
-        - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32 data type.
+        - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32
+          data type.
         - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of x2
           must be equal to x1's first dimension. The values of `x2` can not be negative and
           must be equal to or less than index of x1's second dimension.
@@ -7768,10 +7770,10 @@ class Conv3D(PrimitiveWithInfer):
 
     Args:
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and the width
-            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
-            width of the kernel.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth,
+            height and width of the 3D convolution window. Single int means the value is for the depth, height
+            and the width of the kernel. A tuple of 3 ints means the first value is for the depth, height and
+            the other is for the width of the kernel.
         mode (int): Modes for different convolutions. Not currently used.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
@@ -7811,7 +7813,8 @@ class Conv3D(PrimitiveWithInfer):
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
           Currently input data type only support float16 and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}//groups, k_d, K_h, K_w)`. Currently weight data type only support float16 and float32.
+          :math:`(C_{out}, C_{in}//groups, k_d, K_h, K_w)`.
+          Currently weight data type only support float16 and float32.
         - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
 
     Outputs:
@@ -8241,7 +8244,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For `conv3d` attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For `Conv3DTranspose` attr 'pad' should be an positive int number or a tuple of "
                              f"six positive int numbers, but got `{len(pad)}`.")
         self.pad_list = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)

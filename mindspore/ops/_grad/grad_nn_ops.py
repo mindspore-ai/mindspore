@@ -17,7 +17,6 @@
 import os
 from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
-from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import nn_ops as nps
 from .grad_base import bprop_getters
 from .. import functional as F
@@ -27,6 +26,7 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ... import context
+from .._utils.utils import range_op, get_1d_shape
 
 env_force_bprop_seq = os.getenv("ENV_FORCE_BPROP_SEQ")
 
@@ -649,6 +649,7 @@ def get_bprop_fast_gelu_2(self):
 
     return bprop
 
+
 @bprop_getters.register(P.InstanceNorm)
 def get_bprop_instance_norm(self):
     """Grad definition for `InstanceNorm` operation."""
@@ -795,22 +796,6 @@ def get_bprop_onehot(self):
     return bprop
 
 
-@constexpr
-def _range_op(start, limit, delta, dtype):
-    """helper function for Grad TopK"""
-    output_tensor = Tensor(list(range(start, limit, delta)), dtype)
-    return output_tensor
-
-
-@constexpr
-def _get_1d_shape(in_shape):
-    """helper function for Grad TopK"""
-    out_shape = 1
-    for i in in_shape:
-        out_shape *= i
-    return (out_shape,)
-
-
 @bprop_getters.register(P.TopK)
 def get_bprop_top_kv2(self):
     """Grad definition for `TopK` operation."""
@@ -833,11 +818,11 @@ def get_bprop_top_kv2(self):
 
         # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
         indices_dtype = dtype(indices)
-        range_flatten_index = _range_op(0, outerdim * in_lastdim, in_lastdim, indices_dtype)
+        range_flatten_index = range_op(0, outerdim * in_lastdim, in_lastdim, indices_dtype)
 
         # expand_dims to (k, 1), then broadcast
         ind = reshape_op(ind_2d + expand_dims(range_flatten_index, -1), (-1,))
-        in_shape_1d = _get_1d_shape(in_shape)
+        in_shape_1d = get_1d_shape(in_shape)
 
         out_grad = reshape_op(
             scatter(

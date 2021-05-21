@@ -2402,16 +2402,16 @@ def _get_stack_shape(x_shape, x_type, axis, prim_name):
     validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
     rank_base = len(x_shape[0])
-    N = len(x_shape)
+    n = len(x_shape)
     out_shape = x_shape[0]
     validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
-    for i in range(1, N):
+    for i in range(1, n):
         validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
         if x_shape[i] != x_shape[0]:
             raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
-    out_shape.insert(axis, N)
+    out_shape.insert(axis, n)
     return out_shape
 
 
@@ -2446,7 +2446,8 @@ class Stack(PrimitiveWithInfer):
     Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
     Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
-    If :math:`0 \le axis`, the shape of the output tensor is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
+    If :math:`0 \le axis`, the shape of the output tensor is
+    :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
         axis (int): Dimension to stack. Default: 0.
@@ -2888,11 +2889,9 @@ def _compute_slicing_length(begin, end, stride, x_shape, i):
             if 0 <= end < x_dim:
                 end += -x_dim
             if end < -x_dim - 1:
-                # When slicing backward, if end < -x_dim - 1, set end = -x_dim - 1, which means
-                # slicing to the 0th element.
+                # Slicing to the 0th element.
                 end = -x_dim - 1
             if begin <= end:
-                # When slicing backward, if begin <= end, the length of the slicing is 0.
                 slicing_length = 0
             else:
                 slicing_length = 1 + (end + 1 - begin) // stride
@@ -3290,7 +3289,8 @@ class ScatterNd(PrimitiveWithInfer):
     r"""
     Scatters a tensor into a new tensor depending on the specified indices.
 
-    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor depending on indices.
+    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
+    depending on indices.
 
     The empty tensor has rank P and `indices` has rank Q where `Q >= 2`.
 
@@ -3682,7 +3682,8 @@ class ScatterMax(_ScatterOp):
         ``Ascend``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32),
+        ...                     name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
         >>> scatter_max = ops.ScatterMax()
@@ -3731,7 +3732,8 @@ class ScatterMin(_ScatterOp):
         ``Ascend``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="input_x")
+        >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32),
+        ...                     name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> scatter_min = ops.ScatterMin()
@@ -4182,7 +4184,8 @@ class DepthToSpace(PrimitiveWithInfer):
         - **x** (Tensor) - The target tensor. It must be a 4-D tensor with shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size}, W_{in} * \text{block_size})`.
+        Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size},
+        W_{in} * \text{block_size})`.
 
     Raises:
         TypeError: If `block_size` is not an int.
@@ -4315,8 +4318,8 @@ class BatchToSpace(PrimitiveWithInfer):
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_size, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
-    dimension and block_size with given amount to crop from dimension, respectively.
+    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of
+    original H, W dimension and block_size with given amount to crop from dimension, respectively.
 
     Args:
         block_size (int): The block size of division, has the value not less than 2.
@@ -4506,8 +4509,8 @@ class BatchToSpaceND(PrimitiveWithInfer):
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
-    dimension and block_shape with given amount to crop from dimension, respectively.
+    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of
+    original H, W dimension and block_shape with given amount to crop from dimension, respectively.
 
     Args:
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
@@ -4618,8 +4621,8 @@ class BroadcastTo(PrimitiveWithInfer):
             where it will be substituted by the input tensor's shape in that position, see example.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The data type should be one of the following types: float16, float32,
-          int32, int8, uint8.
+        - **input_x** (Tensor) - The input tensor. The data type should be one of the following types:
+          float16, float32, int32, int8, uint8.
 
     Outputs:
         Tensor, with the given `shape` and the same data type as `input_x`.
