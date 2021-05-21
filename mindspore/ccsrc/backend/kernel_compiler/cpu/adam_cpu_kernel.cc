@@ -61,8 +61,7 @@ void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
 }
 
-bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 10) {
     MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but Adam needs 10 inputs.";

@@ -28,8 +28,7 @@ void MapUniformCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
-bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);

@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 template <typename S, typename T>
 void Cast(const S *in, T *out, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(in[i]);
     }

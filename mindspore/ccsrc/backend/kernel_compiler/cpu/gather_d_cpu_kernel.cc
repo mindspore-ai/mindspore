@@ -74,7 +74,7 @@ void GatherDCPUKernel<T, I>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T, typename I>
 bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                    const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_size = get_element_num(input_shape_) * sizeof(T);
   size_t index_size = get_element_num(index_shape_) * sizeof(I);

@@ -50,8 +50,7 @@ void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, dst_mem_desc);
 }
 
-bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);

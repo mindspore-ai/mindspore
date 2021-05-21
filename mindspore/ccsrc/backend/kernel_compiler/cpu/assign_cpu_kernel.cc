@@ -44,7 +44,7 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_x_dtype_size_ = input_x_dtype_size_map[input_x_dtype_];
 }
 
-bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                              const std::vector<AddressPtr> &outputs) {
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;

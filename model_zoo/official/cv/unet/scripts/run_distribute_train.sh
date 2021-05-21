@@ -37,7 +37,8 @@ export HCCL_CONNECT_TIMEOUT=600
 export RANK_SIZE=8
 DATASET=$(get_real_path $2)
 CONFIG_PATH=$(get_real_path $3)
-export RANK_TABLE_FILE=$(get_real_path $1)
+RANK_TABLE=$(get_real_path $1)
+export RANK_TABLE_FILE=$RANK_TABLE
 for((i=0;i<RANK_SIZE;i++))
 do
     rm -rf LOG$i
@@ -51,7 +52,7 @@ do
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
 
-    python3 ${PROJECT_DIR}/../train.py \
+    python ${PROJECT_DIR}/../train.py \
     --run_distribute=True \
     --data_path=$DATASET \
     --config_path=$CONFIG_PATH \

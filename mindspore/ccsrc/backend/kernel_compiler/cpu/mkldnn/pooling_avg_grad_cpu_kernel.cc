@@ -75,7 +75,7 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool AvgPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 3 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Pooling avg grad error input output size!";

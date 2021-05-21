@@ -37,8 +37,7 @@ void Expm1CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool Expm1CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool Expm1CPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);

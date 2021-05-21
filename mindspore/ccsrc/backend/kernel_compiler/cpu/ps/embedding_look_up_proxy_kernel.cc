@@ -59,7 +59,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                        const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but EmbeddingLookUpProxyKernel needs 2.";

@@ -31,7 +31,7 @@ void SmoothL1LossCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool SmoothL1LossCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                      const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   auto predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto target_addr = reinterpret_cast<T *>(inputs[1]->addr);

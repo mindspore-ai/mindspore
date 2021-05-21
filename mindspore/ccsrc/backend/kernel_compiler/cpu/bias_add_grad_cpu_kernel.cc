@@ -27,7 +27,7 @@ void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1 || outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "input output size not support";

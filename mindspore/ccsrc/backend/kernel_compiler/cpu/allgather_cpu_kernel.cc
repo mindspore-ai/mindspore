@@ -39,8 +39,7 @@ void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);

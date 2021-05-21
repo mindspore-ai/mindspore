@@ -26,13 +26,13 @@
 
 MobileNetV2 is tuned to mobile phone CPUs through a combination of hardware- aware network architecture search (NAS) complemented by the NetAdapt algorithm and then subsequently improved through novel architecture advances.Nov 20, 2019.
 
-[Paper](https://arxiv.org/pdf/1905.02244) Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al. "Searching for MobileNetV2." In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324. 2019.
+[Paper](https://arxiv.org/pdf/1801.04381.pdf) Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al. "Searching for MobileNetV2." In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324. 2019.
 
 # [Model architecture](#contents)
 
 The overall network architecture of MobileNetV2 is show below:
 
-[Link](https://arxiv.org/pdf/1905.02244)
+[Link](https://arxiv.org/pdf/1801.04381.pdf)
 
 # [Dataset](#contents)
 

@@ -103,7 +103,7 @@ void MaxPoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float
 }
 
 bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 3 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "pooling grad error input output size!";

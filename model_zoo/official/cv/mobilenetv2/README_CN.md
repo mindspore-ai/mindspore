@@ -32,13 +32,13 @@
 
 MobileNetV2结合硬件感知神经网络架构搜索（NAS）和NetAdapt算法，已经可以移植到手机CPU上运行，后续随新架构进一步优化改进。（2019年11月20日）
 
-[论文](https://arxiv.org/pdf/1905.02244)：Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al."Searching for MobileNetV2."In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324.2019.
+[论文](https://arxiv.org/pdf/1801.04381.pdf) ：Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al."Searching for MobileNetV2."In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324.2019.
 
 # 模型架构
 
 MobileNetV2总体网络架构如下：
 
-[链接](https://arxiv.org/pdf/1905.02244)
+[链接](https://arxiv.org/pdf/1801.04381.pdf)
 
 # 数据集
 

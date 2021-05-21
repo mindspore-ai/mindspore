@@ -25,8 +25,7 @@ void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   type_size_ = GetTypeByte(TypeIdToType(x_data_type_));
 }
 
-bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   auto node_ = node_wpt_.lock();
   if (!node_) {

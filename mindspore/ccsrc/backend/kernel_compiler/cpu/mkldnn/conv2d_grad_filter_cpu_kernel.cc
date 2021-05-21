@@ -89,7 +89,7 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool Conv2dGradFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                       const std::vector<kernel::AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "error input output size!";

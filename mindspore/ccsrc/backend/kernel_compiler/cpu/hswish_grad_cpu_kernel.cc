@@ -31,7 +31,7 @@ void HSwishGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool HSwishGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                    const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   auto dy = reinterpret_cast<T *>(inputs[0]->addr);
   auto x = reinterpret_cast<T *>(inputs[1]->addr);
