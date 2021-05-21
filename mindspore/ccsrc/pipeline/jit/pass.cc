@@ -56,13 +56,8 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
-
-bool SimplifyDataStructuresPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-
-  FuncGraphPtr func_graph = res->func_graph();
-  bool changed = opt::SimplifyDataStructures(func_graph, res->manager());
-
+namespace {
+void DoRenormalize(const bool &changed, const FuncGraphPtr &func_graph, const ResourcePtr &res) {
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
@@ -72,6 +67,15 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
     res->set_func_graph(new_fg);
   }
   res->set_args_spec(args_spec);
+}
+}  // namespace
+
+bool SimplifyDataStructuresPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res->func_graph());
+
+  FuncGraphPtr func_graph = res->func_graph();
+  bool changed = opt::SimplifyDataStructures(func_graph, res->manager());
+  DoRenormalize(changed, func_graph, res);
   return true;
 }
 
@@ -80,16 +84,7 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 
   FuncGraphPtr func_graph = res->func_graph();
   bool changed = opt::CleanAfterOptA(func_graph, res->manager());
-
-  abstract::AbstractBasePtrList args_spec;
-  auto parameters = func_graph->parameters();
-  (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
-                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-  if (changed) {
-    FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
-    res->set_func_graph(new_fg);
-  }
-  res->set_args_spec(args_spec);
+  DoRenormalize(changed, func_graph, res);
   return true;
 }
 

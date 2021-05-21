@@ -22,7 +22,7 @@ namespace irpass {
 #define UPPER_FLT_LIMIT (FLT_MAX / 2.0)
 #define LOWER_FLT_LIMIT (-FLT_MAX / 2.0)
 // Define the checking mode
-enum ScalarCheckingMode : int64_t { GREATER_EQUAL = 0, LESS };
+enum class ScalarCheckingMode : int64_t { GREATER_EQUAL = 0, LESS };
 
 bool IsNodeScalarTrueWith(const AnfNodePtr &node, const ScalarCheckingMode &checking_mode, const float &check_value) {
   auto value_node = node->cast<ValueNodePtr>();
@@ -38,7 +38,7 @@ bool IsNodeScalarTrueWith(const AnfNodePtr &node, const ScalarCheckingMode &chec
   auto scalar = value->cast<ScalarPtr>();
   if (scalar != nullptr) {
     if (scalar->isa<FloatImm>()) {
-      if (checking_mode == GREATER_EQUAL) {
+      if (checking_mode == ScalarCheckingMode::GREATER_EQUAL) {
         return GetValue<float>(scalar) >= check_value;
       }
       return GetValue<float>(scalar) < check_value;
@@ -56,7 +56,7 @@ bool IsNodeScalarTrueWith(const AnfNodePtr &node, const ScalarCheckingMode &chec
   TypeId tensor_type = tensor_ptr->Dtype()->type_id();
   if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
     float *data = reinterpret_cast<float *>(tensor_ptr->data_c());
-    if (checking_mode == GREATER_EQUAL) {
+    if (checking_mode == ScalarCheckingMode::GREATER_EQUAL) {
       return data[0] >= check_value;
     }
     return data[0] < check_value;
@@ -66,7 +66,9 @@ bool IsNodeScalarTrueWith(const AnfNodePtr &node, const ScalarCheckingMode &chec
 }
 
 // check if a value is greater or equal 0.0
-bool IsNodeScalarPositive(const AnfNodePtr &node) { return IsNodeScalarTrueWith(node, GREATER_EQUAL, 0.0); }
+bool IsNodeScalarPositive(const AnfNodePtr &node) {
+  return IsNodeScalarTrueWith(node, ScalarCheckingMode::GREATER_EQUAL, 0.0);
+}
 
 bool IsCNodePositive(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimReduceSum) || IsPrimitiveCNode(node, prim::kPrimSqueeze)) {
@@ -87,10 +89,14 @@ bool IsCNodePositive(const AnfNodePtr &node) {
 }
 
 // check if a value is greater or equal UPPER_FLT_LIMIT
-bool IsNodeScalarMaxFLT(const AnfNodePtr &node) { return IsNodeScalarTrueWith(node, GREATER_EQUAL, UPPER_FLT_LIMIT); }
+bool IsNodeScalarMaxFLT(const AnfNodePtr &node) {
+  return IsNodeScalarTrueWith(node, ScalarCheckingMode::GREATER_EQUAL, UPPER_FLT_LIMIT);
+}
 
 // check if a value is smaller than LOWER_FLT_LIMIT
-bool IsNodeScalarMinFLT(const AnfNodePtr &node) { return IsNodeScalarTrueWith(node, LESS, LOWER_FLT_LIMIT); }
+bool IsNodeScalarMinFLT(const AnfNodePtr &node) {
+  return IsNodeScalarTrueWith(node, ScalarCheckingMode::LESS, LOWER_FLT_LIMIT);
+}
 
 AnfNodePtr ValueBasedEliminate::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   PatternNode x, y, z;
