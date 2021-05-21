@@ -49,25 +49,31 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
     Args:
         quant_observer (Union[Observer, list, tuple]): The observer type to do quantization. The first element
             represents weights and second element represents data flow.
-            Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver)
-        quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized during
-            eval. The first element represents weights and second element represents data flow. Default: (0, 0)
+            Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver).
+        quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized
+            during train and eval. The first element represents weights and second element represents data flow.
+            Default: (0, 0).
         quant_dtype (Union[QuantDtype, list, tuple]): Datatype to use for quantize weights and activations. The first
             element represents weights and second element represents data flow.
-            Default: (QuantDtype.INT8, QuantDtype.INT8)
+            Default: (QuantDtype.INT8, QuantDtype.INT8).
         per_channel (Union[bool, list, tuple]):  Quantization granularity based on layer or on channel. If `True`
             then base on per channel otherwise base on per layer. The first element represents weights
-            and second element represents data flow, and second element must be `False` now. Default: (False, False)
+            and second element represents data flow, and second element must be `False` now.
+            Default: (False, False).
         symmetric (Union[bool, list, tuple]): Whether the quantization algorithm is symmetric or not. If `True` then
             base on symmetric otherwise base on asymmetric. The first element represents weights and second
-            element represents data flow. Default: (False, False)
+            element represents data flow. Default: (False, False).
         narrow_range (Union[bool, list, tuple]): Whether the quantization algorithm uses narrow range or not.
-            The first element represents weights and the second element represents data flow. Default: (False, False)
+            The first element represents weights and the second element represents data flow.
+            Default: (False, False).
         mode (String): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
-            Default: ("DEFAULT")
+            Default: ("DEFAULT").
 
     Returns:
-        QuantConfig, Contains the observer type of weight and activation.
+        QuantConfig, contains the observer type of weight and activation.
+
+    Raises:
+        ValueError: If the second element of `per_channel` is not `False`.
     """
     if per_channel[-1]:
         raise ValueError("Arg 'per_channel' second element must be 'False'.")
@@ -136,31 +142,47 @@ class QuantizationAwareTraining(Quantizer):
     Quantizer for quantization aware training.
 
     Args:
-        bn_fold (bool): Flag to used bn fold ops for simulation inference operation. Default: True.
-        freeze_bn (int): Number of steps after which BatchNorm OP parameters used total mean and variance. Default: 1e7.
-        quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized during
-            eval. The first element represents weights and second element represents data flow. Default: (0, 0)
+        bn_fold (bool): Whether to use bn fold ops for simulation inference operation. Default: True.
+        freeze_bn (int): Number of steps after which BatchNorm OP parameters fixed to global mean and variance.
+            Default: 1e7.
+        quant_delay (Union[int, list, tuple]): Number of steps after which weights and activations are quantized
+            during train and eval. The first element represents weights and second element represents data flow.
+            Default: (0, 0).
         quant_dtype (Union[QuantDtype, list, tuple]): Datatype to use for quantize weights and activations. The first
             element represents weights and second element represents data flow. It is necessary to consider the
             precision support of hardware devices in the practical quantization infer scenario.
-            Default: (QuantDtype.INT8, QuantDtype.INT8)
+            Default: (QuantDtype.INT8, QuantDtype.INT8).
         per_channel (Union[bool, list, tuple]):  Quantization granularity based on layer or on channel. If `True`
-            then base on per channel otherwise base on per layer. The first element represents weights
-            and second element represents data flow, and second element must be `False` now. Default: (False, False)
+            then base on per channel otherwise base on per layer. The first element represents weights and second
+            element represents data flow, and second element must be `False` now. Default: (False, False).
         symmetric (Union[bool, list, tuple]): Whether the quantization algorithm is symmetric or not. If `True` then
             base on symmetric otherwise base on asymmetric. The first element represents weights and second
-            element represents data flow. Default: (False, False)
+            element represents data flow. Default: (False, False).
         narrow_range (Union[bool, list, tuple]): Whether the quantization algorithm uses narrow range or not.
-            The first element represents weights and the second element represents data flow. Default: (False, False)
-        optimize_option (Union[OptimizeOption, list, tuple]): Specifies the quant algorithm and options, currently only
-            support QAT and LEARNED_SCALE (Note that, if both QAT and LEARNED_SCALE are configured, LEARNED_SCALE has
-            a higher priority. LEARNED_SCALE currently only work under some constraints, which includes: freeze_bn=0,
-            quant_delay=0, symmetric=Ture, narrow_range=True, More specifically, for operators such as ReLu and ReLu6,
-            which only have positive values, we add a negative truncation to optimize this scenario, and narrow_range
-            will automatically match to False). Default: OptimizeOption.QAT
-        one_conv_fold (bool): Flag to used one conv bn fold ops for simulation inference operation. Default: True.
+            The first element represents weights and the second element represents data flow.
+            Default: (False, False).
+        optimize_option (Union[OptimizeOption, list, tuple]): Specifies the quant algorithm and options, currently
+            only support `QAT` and `LEARNED_SCALE` (Note that, if both `QAT` and `LEARNED_SCALE` are configured,
+            `LEARNED_SCALE` has a higher priority. `LEARNED_SCALE` currently only work under some constraints, which
+            includes: freeze_bn=0, quant_delay=0, symmetric=Ture, narrow_range=True, More specifically, for operators
+            such as ReLu and ReLu6, which only have positive values, we add a negative truncation to optimize this
+            scenario, and narrow_range will automatically match to False). Default: OptimizeOption.QAT.
+        one_conv_fold (bool): Whether to use one conv bn fold ops for simulation inference operation. Default: True.
+
+    Raises:
+        TypeError: If the element of `quant_delay` or `freeze_bn` is not int.
+        TypeError: If `bn_fold`, `one_conv_fold` or the element of `per_channel`, `symmetric`, `narrow_range`
+            is not bool.
+        TypeError: If the element of `quant_dtype` is not `QuantDtype`.
+        ValueError: If the length of `quant_delay`, `quant_dtype`, `per_channel`, `symmetric` or `narrow_range` is
+            not less than 2.
+        ValueError: If the `optimize_option` is `LEARNED_SCALE` and `freeze_bn` is not equal to 0.
+        ValueError: If the `optimize_option` is `LEARNED_SCALE` and `symmetric` is not (True, True).
+        ValueError: If the `optimize_option` is `LEARNED_SCALE` and `narrow_range` is not (True, True).
+        ValueError: If the `optimize_option` is `LEARNED_SCALE` and `quant_delay` is not (0, 0).
 
     Examples:
+        >>> from mindspore.compression.quant import QuantizationAwareTraining
         >>> class LeNet5(nn.Cell):
         ...     def __init__(self, num_class=10, channel=1):
         ...         super(LeNet5, self).__init__()
@@ -267,15 +289,19 @@ class QuantizationAwareTraining(Quantizer):
 
     def quantize(self, network):
         """
-        Quant API to convert input network to a quantization aware training network
+        Quant API to convert input network to a quantization aware training network.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.compression.quant.QuantizationAwareTraining`.
 
         Args:
             network (Cell): network to be quantized.
 
-        Examples:
-            >>> net = Net()
-            >>> quantizer = QuantizationAwareTraining()
-            >>> net_qat = quantizer.quantize(net)
+        Returns:
+            Cell, a quantization aware training network.
+
+        Raises:
+            KeyError: If the `device_target` set in context is not in `support_device`.
         """
         support_device = ["Ascend", "GPU"]
         if context.get_context('device_target') not in support_device:
@@ -532,14 +558,17 @@ class QuantizationAwareTraining(Quantizer):
         Set network's quantization strategy, this function is currently only valid for `LEARNED_SCALE`
         optimize_option.
 
-        Inputs:
-            network (Cell): input network
-            strategy (List): the quantization strategy for layers that need to be quantified (eg. [[8], [8],
-            ..., [6], [4], [8]]), currently only the quant_dtype for weights of the dense layer and the
-            convolution layer is supported.
+        Args:
+            network (Cell): Input network.
+            strategy (list): The quantization strategy for layers that need to be quantified (eg. [[8], [8],
+                ..., [6], [4], [8]]), currently only the quant_dtype for weights of the dense layer and the
+                convolution layer is supported.
 
-        Outputs:
-            network (Cell)
+        Returns:
+            Cell, a network with mixed bit strategy configured.
+
+        Raises:
+            ValueError: If `OptimizeOption.LEARNED_SCALE` is not in `self.optimize_option`.
         """
         if OptimizeOption.LEARNED_SCALE not in self.optimize_option:
             raise ValueError("The `set_mixed_bits` function is currently only valid for `LEARNED_SCALE` "

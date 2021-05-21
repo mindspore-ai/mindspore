@@ -345,17 +345,22 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     Raises:
         TypeError: If `min_init` or `max_init` is not int, float or list.
         TypeError: If `quant_delay` is not an int.
-        TypeError: If `min_init` is not less than `max_init`.
-        TypeError: If `quant_delay` is not greater than or equal to 0.
+        ValueError: If `quant_delay` is less than 0.
+        ValueError: If `min_init` is not less than `max_init`.
+        ValueError: If `mode` is neither `DEFAULT` nor `LEARNED_SCALE`.
+        ValueError: If `mode` is `LEARNED_SCALE` and `symmetric` is not `True`.
+        ValueError: If `mode` is `LEARNED_SCALE`, and `narrow_range` is not `True` unless when `neg_trunc` is `True`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
-        >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> output = fake_quant(input)
-        >>> print(output)
+        >>> input_data = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = fake_quant(input_data)
+        >>> print(result)
         [[ 0.9882355  1.9764705  0.9882355]
          [-1.9764705  0.        -0.9882355]]
     """
@@ -434,7 +439,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
                 self.fake_quant_infer = quant_fun(training=False)
         elif self.mode == "LEARNED_SCALE":
             if not self.symmetric:
-                raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, please set symmetric to True.")
+                raise ValueError("The 'LEARNED_SCALE' mode only support symmetric quant, "
+                                 "please set symmetric to True.")
             if self.neg_trunc:
                 min_array = self._get_init_array(0)
                 if self.narrow_range:
@@ -555,21 +561,33 @@ class Conv2dBnFoldQuantOneConv(Cell):
     operation folded construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+
+    .. math::
+        w_{q}=quant(\frac{w}{\sqrt{var_{G}+\epsilon}}*\gamma )
+
+        b=\frac{-\mu _{G} }{\sqrt{var_{G}+\epsilon }}*\gamma +\beta
+
+        y=w_{q}\times x+b
+
+    where :math:`quant` is the continuous execution of quant and dequant, you can refer to the implementation of
+    subclass of class:`_Observer`, for example, class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    `mu _{G}` and `var_{G}` represent the global mean and variance respectively.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
-        stride (int): Specifies stride for all spatial dimensions with the same value.
+        kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
+        stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
-        has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
+        has_bias (bool): Specifies whether the layer uses a bias vector, which is temporarily invalid. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
             convolution kernel. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
@@ -595,23 +613,29 @@ class Conv2dBnFoldQuantOneConv(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
-        TypeError: If `has_bias` is not a bool.
-        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: If `has_bias` or `fake` is not a bool.
+        TypeError: If `data_format` is not a string.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> conv2d_bnfold = nn.Conv2dBnFoldQuantOneConv(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        ...                                             quant_config=qconfig)
-        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
-        >>> result = conv2d_bnfold(input)
-        >>> output = result.shape
-        >>> print(output)
-        (2, 6, 2, 2)
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
+        >>> conv2d_bnfold = nn.Conv2dBnFoldQuantOneConv(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        ...                                             weight_init="ones", quant_config=qconfig)
+        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_bnfold(input_data)
+        >>> print(result)
+        [[[[5.9296875, 13.8359375]
+           [11.859375, 17.78125]]]]
     """
 
     def __init__(self,
@@ -641,14 +665,31 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
-        self.pad_mode = pad_mode
-        self.padding = padding
         self.dilation = twice(dilation)
-        self.group = group
+        for kernel_size_elem in self.kernel_size:
+            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
+        for stride_elem in self.stride:
+            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
+        for dilation_elem in self.dilation:
+            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
+        if pad_mode not in ('valid', 'same', 'pad'):
+            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnFoldQuant\' Op passed '
+                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+        self.pad_mode = pad_mode
+        if isinstance(padding, int):
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
+            self.padding = padding
+        elif isinstance(padding, tuple):
+            for pad in padding:
+                Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
+            self.padding = padding
+        else:
+            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+        self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = 1 - momentum
         self.has_bias = has_bias
-        self.fake = fake
+        self.fake = Validator.check_bool(fake)
         self.quant_config = quant_config
         self.quant_dtype = quant_dtype
         data_format = 'NCHW'
@@ -757,18 +798,31 @@ class Conv2dBnFoldQuant(Cell):
     2D convolution with Batch Normalization operation folded construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+
+    .. math::
+        y = x\times w+  b
+
+        w_{q}=quant(\frac{w}{\sqrt{Var[y]+\epsilon}}*\gamma )
+
+        y_{out}= w_{q}\times x+\frac{b-E[y]}{\sqrt{Var[y]+\epsilon}}*\gamma +\beta
+
+    where :math:`quant` is the continuous execution of quant and dequant, you can refer to the implementation of
+    subclass of class:`_Observer`, for example, class:`mindspore.nn.FakeQuantWithMinMaxObserver`. Two convolution
+    and Batch Normalization operation are used here, the purpose of the first convolution and Batch Normalization
+    is to count the mean `E[y]` and variance `Var[y]` of current batch output for quantization.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
-        stride (int): Specifies stride for all spatial dimensions with the same value.
+        kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
+        stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -799,22 +853,29 @@ class Conv2dBnFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
-        TypeError: If `has_bias` is not a bool.
-        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: If `has_bias` or `fake` is not a bool.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `device_target` in context is neither `Ascend` nor `GPU`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        ...                                      quant_config=qconfig)
-        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
-        >>> output = conv2d_bnfold(input)
-        >>> print(output.shape)
-        (2, 6, 2, 2)
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
+        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        ...                                      weight_init="ones", quant_config=qconfig)
+        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_bnfold(input_data)
+        >>> print(result)
+        [[[[5.9296875, 13.8359375]
+           [11.859375, 17.78125]]]]
     """
 
     def __init__(self,
@@ -845,15 +906,32 @@ class Conv2dBnFoldQuant(Cell):
         self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
-        self.pad_mode = pad_mode
-        self.padding = padding
         self.dilation = twice(dilation)
-        self.group = group
+        for kernel_size_elem in self.kernel_size:
+            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
+        for stride_elem in self.stride:
+            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
+        for dilation_elem in self.dilation:
+            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
+        if pad_mode not in ('valid', 'same', 'pad'):
+            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnFoldQuant\' Op passed '
+                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+        self.pad_mode = pad_mode
+        if isinstance(padding, int):
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
+            self.padding = padding
+        elif isinstance(padding, tuple):
+            for pad in padding:
+                Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
+            self.padding = padding
+        else:
+            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+        self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = momentum
         self.has_bias = has_bias
         self.freeze_bn = freeze_bn
-        self.fake = fake
+        self.fake = Validator.check_bool(fake)
         self.quant_config = quant_config
         self.quant_dtype = quant_dtype
         self.is_gpu = context.get_context('device_target') == "GPU"
@@ -951,16 +1029,25 @@ class Conv2dBnWithoutFoldQuant(Cell):
     2D convolution and batchnorm without fold with fake quantized construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+
+    .. math::
+        y =x\times quant(w)+  b
+
+        y_{bn} =\frac{y-E[y] }{\sqrt{Var[y]+  \epsilon  } } *\gamma +  \beta
+
+    where :math:`quant` is the continuous execution of quant and dequant, you can refer to the implementation of
+    subclass of class:`_Observer`, for example, class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
-        stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
+        kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
+        stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -983,14 +1070,26 @@ class Conv2dBnWithoutFoldQuant(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU``
 
+    Raises:
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: If `has_bias` is not a bool.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        ...                                                quant_config=qconfig)
-        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mstype.float32)
-        >>> output = conv2d_no_bnfold(input)
-        >>> print(output.shape)
-        (2, 6, 2, 2)
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
+        >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        ...                                                weight_init='ones', quant_config=qconfig)
+        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_no_bnfold(input_data)
+        >>> print(result)
+        [[[[5.929658  13.835868]
+           [11.859316  17.78116]]]]
     """
 
     def __init__(self,
@@ -1016,9 +1115,26 @@ class Conv2dBnWithoutFoldQuant(Cell):
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
+        for kernel_size_elem in self.kernel_size:
+            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
+        for stride_elem in self.stride:
+            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
+        for dilation_elem in self.dilation:
+            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
+        if pad_mode not in ('valid', 'same', 'pad'):
+            raise ValueError('Attr \'pad_mode\' of \'Conv2dBnWithoutFoldQuant\' Op passed '
+                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
         self.pad_mode = pad_mode
-        self.padding = padding
-        self.group = group
+        if isinstance(padding, int):
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
+            self.padding = padding
+        elif isinstance(padding, tuple):
+            for pad in padding:
+                Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
+            self.padding = padding
+        else:
+            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+        self.group = Validator.check_positive_int(group)
 
         self.bias_add = P.BiasAdd()
         if Validator.check_bool(has_bias):
@@ -1065,16 +1181,17 @@ class Conv2dQuant(Cell):
     2D convolution with fake quantized operation layer.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): Specifies the height and width of the 2D convolution window.
-        stride (int): Specifies stride for all spatial dimensions with the same value. Default: 1.
+        kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution window.
+        stride (Union[int, tuple[int]]): Specifies stride for all spatial dimensions with the same value. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
-        padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. Default: 0.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -1093,22 +1210,28 @@ class Conv2dQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: If `has_bias` is not a bool.
-        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        ...                               quant_config=qconfig)
-        >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
-        >>> output = conv2d_quant(input)
-        >>> print(output.shape)
-        (2, 6, 2, 2)
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
+        >>> conv2d_quant = nn.Conv2dQuant(1, 1, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        ...                               weight_init='ones', quant_config=qconfig)
+        >>> input_data = Tensor(np.array([[[[1, 0, 3], [1, 4, 7], [2, 5, 2]]]]), mindspore.float32)
+        >>> result = conv2d_quant(input_data)
+        >>> print(result)
+        [[[[5.9296875  13.8359375]
+           [11.859375  17.78125]]]]
     """
 
     def __init__(self,
@@ -1132,9 +1255,26 @@ class Conv2dQuant(Cell):
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
+        for kernel_size_elem in self.kernel_size:
+            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
+        for stride_elem in self.stride:
+            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
+        for dilation_elem in self.dilation:
+            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
+        if pad_mode not in ('valid', 'same', 'pad'):
+            raise ValueError('Attr \'pad_mode\' of \'Conv2dQuant\' Op passed '
+                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
         self.pad_mode = pad_mode
-        self.padding = padding
-        self.group = group
+        if isinstance(padding, int):
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
+            self.padding = padding
+        elif isinstance(padding, tuple):
+            for pad in padding:
+                Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
+            self.padding = padding
+        else:
+            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+        self.group = Validator.check_positive_int(group)
 
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
@@ -1180,7 +1320,8 @@ class DenseQuant(Cell):
     The fully connected layer with fake quantized operation.
 
     This part is a more detailed overview of Dense operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The dimension of the input space.
@@ -1206,19 +1347,27 @@ class DenseQuant(Cell):
     Raises:
         TypeError: If `in_channels`, `out_channels` is not an int.
         TypeError: If `has_bias` is not a bool.
+        TypeError: If `activation` is not str, Cell and Primitive.
         ValueError: If `in_channels` or `out_channels` is less than 1.
+        ValueError: If the dims of `weight_init` is not equal to 2 or the first element of `weight_init` is not equal
+            to `out_channels` or the second element of `weight_init` is not equal to `in_channels`.
+        ValueError: If the dims of `bias_init` is not equal to 1 or the element of `bias_init` is not equal
+            to `out_channels`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> dense_quant = nn.DenseQuant(3, 6, quant_config=qconfig)
-        >>> input = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
-        >>> result = dense_quant(input)
-        >>> output = result.shape
-        >>> print(output)
-        (2, 6)
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
+        >>> dense_quant = nn.DenseQuant(2, 1, weight_init='ones', quant_config=qconfig)
+        >>> input_data = Tensor(np.array([[1, 5], [3, 4]]), mindspore.float32)
+        >>> result = dense_quant(input_data)
+        >>> print(result)
+        [[5.929413]
+         [6.9176483]]
     """
 
     def __init__(self,
@@ -1298,9 +1447,9 @@ class ActQuant(_QuantActivation):
     r"""
     Quantization aware training activation function.
 
-    Add the fake quantized operation to the end of activation operation, by which the output of activation operation
-    will be truncated. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    Add the fake quantized operation to the end of activation operation, by which the output of activation
+    operation will be truncated. For more detials about Quantilization, please refer to the implementation
+    of subclass of class:`_Observer`, for example, class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         activation (Cell): Activation cell.
@@ -1326,11 +1475,14 @@ class ActQuant(_QuantActivation):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
         >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
-        >>> input = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
-        >>> output = act_quant(input)
-        >>> print(output)
+        >>> input_data = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = act_quant(input_data)
+        >>> print(result)
         [[0.9882355 1.9764705 0.       ]
          [0.        0.        0.       ]]
     """
@@ -1373,7 +1525,8 @@ class TensorAddQuant(Cell):
     Adds fake quantized operation after TensorAdd operation.
 
     This part is a more detailed overview of TensorAdd operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
@@ -1396,7 +1549,10 @@ class TensorAddQuant(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
         >>> add_quant = nn.TensorAddQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
@@ -1429,12 +1585,13 @@ class MulQuant(Cell):
     Adds fake quantized operation after `Mul` operation.
 
     This part is a more detailed overview of `Mul` operation. For more detials about Quantilization,
-    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to the implementation of subclass of class:`_Observer`, for example,
+    class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         quant_config (QuantConfig): Configures the oberser types and quant settings of weight and activation. Can be
-            generated by compression.quant.create_quant_config method.
+            generated by `compression.quant.create_quant_config` method.
             Default: both set to default :class:`FakeQuantWithMinMaxObserver`.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
@@ -1452,7 +1609,10 @@ class MulQuant(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> qconfig = compression.quant.create_quant_config()
+        >>> import mindspore
+        >>> from mindspore.compression import quant
+        >>> from mindspore import Tensor
+        >>> qconfig = quant.create_quant_config()
         >>> mul_quant = nn.MulQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)

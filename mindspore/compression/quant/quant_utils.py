@@ -350,12 +350,14 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     Load fp32 model parameters into quantization model.
 
     Args:
-        quant_model(Cell): quantization model.
-        params_dict(dict): parameter dict that stores fp32 parameters.
-        quant_new_params(list): parameters that exist in quantitative network but not in unquantitative network.
+        quant_model(Cell): Quantization model.
+        params_dict(dict): Parameter dict that stores fp32 parameters.
+        quant_new_params(list): Parameters that exist in quantization network but not in non-quantization network.
 
-    Returns:
-        None
+    Raises:
+        TypeError: If `quant_new_params` is not None and is not list.
+        ValueError: If there are parameters in the `quant_model` that are neither in `params_dict`
+            nor in `quant_new_params`.
     """
     if quant_new_params is not None and not isinstance(quant_new_params, list):
         raise TypeError("quant_new_params must be list or None.")
