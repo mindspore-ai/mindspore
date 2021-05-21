@@ -39,7 +39,6 @@ class L2NormalizeInfo : public Activation {
 
  protected:
   Status GetAttrs() override;
-  Status InferMirrorOps() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
 
  private:

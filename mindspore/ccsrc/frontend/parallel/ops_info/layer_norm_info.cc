@@ -22,6 +22,13 @@
 
 namespace mindspore {
 namespace parallel {
+// the layernorm has three outputs
+// if the shape of input is [A, B, C, D], the shape of first output is [A, B, C, D]
+// if the begin-norm-axis is 0, the shape of second output is: [1, 1, 1, 1]
+// if the begin-norm-axis is 1, the shape of second output is: [A, 1, 1, 1]
+// if the begin-norm-axis is 2, the shape of second output is: [A, B, 1, 1]
+// if the begin-norm-axis is 3, the shape of second output is: [A, B, C, 1]
+// the shape of third output is the same as the shape of second output
 Status LayerNormInfo::GetAttrs() {
   auto iter = attrs_.find(BEGIN_NORM_AXIS);
   if (iter == attrs_.end()) {
@@ -113,7 +120,7 @@ Status LayerNormInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status LayerNormInfo::CreateTensorMap(size_t input_index) {
+Status LayerNormInfo::CreateInputTensorMap(size_t input_index) {
   if (inputs_shape_.size() <= input_index) {
     MS_LOG(ERROR) << name_ << ": Invalid index" << input_index;
     return FAILED;
@@ -124,74 +131,27 @@ Status LayerNormInfo::CreateTensorMap(size_t input_index) {
     tensor_map.push_back(SizeToLong(shape.size() - i - 1));
   }
   inputs_tensor_map_.push_back(tensor_map);
-  outputs_tensor_map_.push_back(tensor_map);
   return SUCCESS;
 }
 
 Status LayerNormInfo::InferTensorMap() {
-  if ((CreateTensorMap(LAYER_NORM_INPUT_INDEX) != SUCCESS) || (CreateTensorMap(LAYER_NORM_GAMMA_INDEX) != SUCCESS) ||
-      (CreateTensorMap(LAYER_NORM_BETA_INDEX) != SUCCESS)) {
-    MS_LOG(ERROR) << name_ << ": Create tensor map failed";
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-Status LayerNormInfo::CreateMirrorOp(size_t input_index) {
-  if (inputs_tensor_map_.size() <= input_index) {
-    MS_LOG(ERROR) << name_ << ": Invalid index " << input_index;
-    return FAILED;
-  }
-  Shape tensor_map = inputs_tensor_map_[input_index];
-  std::vector<Group> group;
-  if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group for input " << input_index << " failed";
-    return FAILED;
-  }
-  OperatorVector mirror_op;
-  if (!group.empty()) {
-    mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
-    MS_LOG(INFO) << name_ << " : Create the mirror ops for input " << input_index << " success, group is "
-                 << group[0].name();
-  }
-  mirror_ops_.push_back(mirror_op);
-  return SUCCESS;
-}
-
-Status LayerNormInfo::InferMirrorOps() {
-  if ((CreateMirrorOp(LAYER_NORM_INPUT_INDEX) != SUCCESS) || (CreateMirrorOp(LAYER_NORM_GAMMA_INDEX) != SUCCESS) ||
-      (CreateMirrorOp(LAYER_NORM_BETA_INDEX) != SUCCESS)) {
-    MS_LOG(ERROR) << name_ << ": Create mirror op failed";
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-Status LayerNormInfo::CreateTensorInfo(size_t input_index) {
-  if ((inputs_shape_.size() <= input_index) || (inputs_tensor_map_.size() <= input_index)) {
-    MS_LOG(ERROR) << name_ << ": Invalid input index" << input_index;
-    return FAILED;
-  }
-  Shape tensor_map = inputs_tensor_map_[input_index];
-  Shape shape = inputs_shape_[input_index];
-  TensorLayout tensor_layout;
-  if (tensor_layout.InitFromVector(dev_matrix_shape_, tensor_map, shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout for input " << input_index << " failed";
+  if ((CreateInputTensorMap(LAYER_NORM_INPUT_INDEX) != SUCCESS) ||
+      (CreateInputTensorMap(LAYER_NORM_GAMMA_INDEX) != SUCCESS) ||
+      (CreateInputTensorMap(LAYER_NORM_BETA_INDEX) != SUCCESS)) {
+    MS_LOG(ERROR) << name_ << ": Create input tensor map failed";
     return FAILED;
   }
 
-  TensorInfo tensor_info(tensor_layout);
-  inputs_tensor_info_.push_back(tensor_info);
-  outputs_tensor_info_.push_back(tensor_info);
-  return SUCCESS;
-}
-
-Status LayerNormInfo::InferTensorInfo() {
-  if ((CreateTensorInfo(LAYER_NORM_INPUT_INDEX) != SUCCESS) || (CreateTensorInfo(LAYER_NORM_GAMMA_INDEX) != SUCCESS) ||
-      (CreateTensorInfo(LAYER_NORM_BETA_INDEX) != SUCCESS)) {
-    MS_LOG(ERROR) << name_ << ": Create tensor info failed";
-    return FAILED;
+  Shape first_output_tensor_map = inputs_tensor_map_[0];
+  Shape second_output_tensor_map = first_output_tensor_map;
+  for (size_t i = begin_norm_axis_; i < second_output_tensor_map.size(); ++i) {
+    second_output_tensor_map[i] = MAP_NONE;
   }
+  Shape third_output_tensor_map = second_output_tensor_map;
+
+  outputs_tensor_map_.push_back(first_output_tensor_map);
+  outputs_tensor_map_.push_back(second_output_tensor_map);
+  outputs_tensor_map_.push_back(third_output_tensor_map);
   return SUCCESS;
 }
 

@@ -167,29 +167,6 @@ Status UnsortedSegmentOpInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status UnsortedSegmentOpInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
-  Shape input_index_shape = inputs_shape_.at(1);
-  Shape output_shape = outputs_shape_.at(0);
-
-  TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
-  if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(0), input_shape) != SUCCESS) ||
-      (input_index_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(1), input_index_shape) != SUCCESS) ||
-      (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_.at(0), output_shape) != SUCCESS)) {
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo input_index_info(input_index_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(input_index_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
 Status UnsortedSegmentOpInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";

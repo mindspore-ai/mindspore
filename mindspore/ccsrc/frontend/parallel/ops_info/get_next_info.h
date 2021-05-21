@@ -45,7 +45,7 @@ class GetNextInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *outputs_layout);
-  Status InferTensorInfo() override;
+  Status InferTensorInfo() override;  // The GetNext() has not input, so need override the InferTensorInfo().
   Status InferDevMatrixShape() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }

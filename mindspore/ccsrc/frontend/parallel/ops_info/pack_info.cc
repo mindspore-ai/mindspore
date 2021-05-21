@@ -119,60 +119,6 @@ Status StackInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status StackInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-  if (inputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
-    return FAILED;
-  }
-
-  Shape input_tensor_map = inputs_tensor_map_[0];
-  std::vector<Group> group;
-  if (CreateGroupByTensorMap(input_tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group for input failed.";
-    return FAILED;
-  }
-
-  if (group.empty()) {
-    MS_LOG(INFO) << name_ << ": The mirror group is empty.";
-    return SUCCESS;
-  }
-
-  OperatorVector input_op;
-  input_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    mirror_ops_.push_back(input_op);
-  }
-
-  return SUCCESS;
-}
-
-Status StackInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-
-  TensorLayout input_layout, output_layout;
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    // infer tensor layout
-    if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-      return FAILED;
-    }
-    TensorInfo input_tensor_info(input_layout);
-    inputs_tensor_info_.push_back(input_tensor_info);
-  }
-
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo output_tensor_info(output_layout);
-  outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
 void StackInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = true;

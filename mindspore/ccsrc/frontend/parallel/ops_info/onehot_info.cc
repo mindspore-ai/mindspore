@@ -112,26 +112,6 @@ Status OneHotInfo::InferTensorMap() {
 // (0, (8,2),(),()）16 devices two machines，model parallel among devices in the same machine，data parallel between
 // machines dev_matrix=(2,8)  map_in=(1) map_out=(0,1) （0，（4,2）,(),()）16 devices dev_matrix=(2,4,2)  map_in=(1)
 // map_out=(0,1)
-Status OneHotInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
-  Shape output_shape = outputs_shape_.at(0);
-
-  TensorLayout input_tensor_layout, output_tensor_layout;
-  if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) ||
-      (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS)) {
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
-
-  return SUCCESS;
-}
-
 Status OneHotInfo::ExtractInputInfo() {
   CheckGlobalDeviceManager();
   rank_ = g_device_manager->rank_index_in_stage();

@@ -61,8 +61,6 @@ Status PReLUInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status PReLUInfo::InferForwardCommunication() { return SUCCESS; }
-
 /*
  * the output tensor map is the same as the input tensor map
  */
@@ -82,64 +80,6 @@ Status PReLUInfo::InferTensorMap() {
   inputs_tensor_map_.push_back(input_tensor_map);
   inputs_tensor_map_.push_back(param_tensor_map);
   outputs_tensor_map_.push_back(input_tensor_map);
-  return SUCCESS;
-}
-
-Dimensions PReLUInfo::GetOutputStrategy() {
-  Dimensions output_strategy = input_strategy_;
-  return output_strategy;
-}
-
-Status PReLUInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
-  if (inputs_layout == nullptr || outputs_layout == nullptr) {
-    MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
-    return FAILED;
-  }
-  TensorLayout input_layout, param_layout, output_layout;
-  if ((input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) ||
-      (param_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[1], inputs_shape_[1]) != SUCCESS) ||
-      (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS)) {
-    return FAILED;
-  }
-  inputs_layout->push_back(input_layout);
-  inputs_layout->push_back(param_layout);
-  outputs_layout->push_back(output_layout);
-  return SUCCESS;
-}
-
-Status PReLUInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
-  Shape param_shape = inputs_shape_.at(1);
-  Shape output_shape = outputs_shape_.at(0);
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Dimensions output_strategy = GetOutputStrategy();
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Strategys outputs_strategy = {output_strategy};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  Shape param_slice_shape = inputs_slice_shape.at(1);
-  Shape output_slice_shape = outputs_slice_shape.at(0);
-
-  // infer tensor layout
-  TensorLayouts inputs_layout, outputs_layout;
-  if (InferTensorLayout(&inputs_layout, &outputs_layout) != SUCCESS) {
-    return FAILED;
-  }
-
-  TensorLayout input_layout = inputs_layout.at(0);
-  TensorLayout param_layout = inputs_layout.at(1);
-  TensorLayout output_layout = outputs_layout.at(0);
-  TensorInfo input_tensor_info(input_layout, input_shape, input_slice_shape);
-  TensorInfo param_tensor_info(param_layout, param_shape, param_slice_shape);
-  TensorInfo output_tensor_info(output_layout, output_shape, output_slice_shape);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(param_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
   return SUCCESS;
 }
 

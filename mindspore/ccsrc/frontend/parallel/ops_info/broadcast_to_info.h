@@ -48,9 +48,7 @@ class BroadcastToInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);

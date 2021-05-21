@@ -190,9 +190,9 @@ class OperatorInfo {
   virtual Status InferTensorMap() = 0;
   virtual Status InferForwardCommunication() = 0;
   virtual Status GetAttrs() = 0;
-  virtual Status InferTensorInfo() = 0;
   virtual Status InferDevMatrixShape() = 0;
   virtual Status InferMirrorOps();
+  virtual Status InferTensorInfo();
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
