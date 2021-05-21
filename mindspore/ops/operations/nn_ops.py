@@ -2941,13 +2941,17 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
         >>> centered_rms_prop = ops.ApplyCenteredRMSProp()
-        >>> input_x = Tensor(np.arange(-2, 2).astype(np.float32).reshape(2, 2), mindspore.float32)
-        >>> mean_grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
-        >>> mean_square = Tensor(np.arange(-3, 1).astype(np.float32).reshape(2, 2), mindspore.float32)
-        >>> moment = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
-        >>> grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
-        >>> learning_rate = Tensor(0.9, mindspore.float32)
+        >>> input_x = Tensor(np.arange(-2, 2).astype(np.float32).reshape(2, 2), mstype.float32)
+        >>> mean_grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
+        >>> mean_square = Tensor(np.arange(-3, 1).astype(np.float32).reshape(2, 2), mstype.float32)
+        >>> moment = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
+        >>> grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mstype.float32)
+        >>> learning_rate = Tensor(0.9, mstype.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.05
@@ -4171,8 +4175,9 @@ class Adam(PrimitiveWithInfer):
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
-    `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`, :math:`\epsilon` represents
+    :math:`t` represents updating step while :math:`beta_1^t(\beta_1^{t})` and :math:`beta_2^t(\beta_2^{t})`
+    represent `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `var`,
+    :math:`\epsilon` represents
     `epsilon`.
 
     Args:
@@ -4184,24 +4189,29 @@ class Adam(PrimitiveWithInfer):
             If false, update the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be updated.
-        - **m** (Tensor) - The 1st moment vector in the updating formula, has the same type as `var`.
-        - **v** (Tensor) - the 2nd moment vector in the updating formula.
-          Mean square gradients with the same type as `var`.
-        - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
-        - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
-        - **lr** (float) - :math:`l` in the updating formula.
-        - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
-        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
+        - **var** (Tensor) - Weights to be updated. the data type can be float16 or float32.
+        - **m** (Tensor) - The 1st moment vector in the updating formula,
+          the data type value should be the same as `var`.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula,
+          the data type value should be the same as `var`. Mean square gradients with the same type as `var`.
+        - **beta1_power** (float) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
+          the data type value should be the same as `var`.
+        - **beta2_power** (float) - :math:`beta_2^t(\beta_2^{t})` in the updating formula.
+        - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
+          the data type value should be the same as `var`.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
+          the data type value should be the same as `var`. The paper suggested value is :math:`0.9`
+        - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
+          the data type value should be the same as `var`. The paper suggested value is :math:`0.999`
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
         - **gradient** (Tensor) - Gradient, has the same type as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
 
-        - **var** (Tensor) - The same shape and data type as `var`.
-        - **m** (Tensor) - The same shape and data type as `m`.
-        - **v** (Tensor) - The same shape and data type as `v`.
+        - **var** (Tensor) - The same shape and data type as Inputs `var`.
+        - **m** (Tensor) - The same shape and data type as Inputs `m`.
+        - **v** (Tensor) - The same shape and data type as Inputs `v`.
 
     Raises:
         TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
@@ -4279,9 +4289,9 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
 
     :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
     `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
-    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
-    `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents the parameter to be updated,
-    :math:`\epsilon`represents `epsilon`.
+    :math:`t` represents updating step while :math:`beta_1^t(\beta_1^{t})` and :math:`beta_2^t(\beta_2^{t})`
+    represent `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`,
+    :math:`w` represents the parameter to be updated, :math:`\epsilon`represents `epsilon`.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -4295,17 +4305,22 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         - **m** (Tensor) - The 1st moment vector in the updating formula. The data type must be float32.
         - **v** (Tensor) - the 2nd moment vector in the updating formula. The shape must be the same as `m`.
           The data type must be float32.
-        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. The data type must be float32.
-        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. The data type must be float32.
+        - **beta1_power** (Tensor) - :math:`beta_1^t(\beta_1^{t})` in the updating formula.
+          The data type must be float32.
+        - **beta2_power** (Tensor) - :math:`beta_2^t(\beta_1^{t})` in the updating formula.
+          The data type must be float32.
         - **lr** (Tensor) - :math:`l` in the updating formula. The data type must be float32.
+          The paper suggested value is :math:`10^{-8}`
         - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. The data type must be float32.
+          The paper suggested value is :math:`0.9`
         - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. The data type must be float32.
+          The paper suggested value is :math:`0.999`
         - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. The data type must be
           float32.
         - **gradient** (Tensor) - Gradient, the shape must be the same as `m`, the data type must be float32.
 
     Outputs:
-        Tensor, whose shape and data type are the same with `gradient`, is a value that should be added to the
+        Tensor, whose shape and data type are the same with Inputs `gradient`, is a value that should be added to the
         parameter to be updated.
 
     Raises:
@@ -5351,8 +5366,8 @@ class ApplyAdagrad(PrimitiveWithInfer):
     .. math::
             var -= lr * grad * \frac{1}{\sqrt{accum}}
 
-    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
-    to make the data types consistent..
+    Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
+    to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
     RuntimeError exception will be thrown when the data type conversion of Parameter is required.
@@ -5998,7 +6013,7 @@ class ApplyAddSign(PrimitiveWithInfer):
     :math:`t` represents updating step while :math:`m` represents the 1st moment vector, :math:`m_{t}`
     is the last momentent of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`.
 
-    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.

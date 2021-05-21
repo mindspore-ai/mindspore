@@ -2643,7 +2643,7 @@ class Xlogy(_MathBinaryOp):
 
 class Acosh(PrimitiveWithInfer):
     """
-    Computes inverse hyperbolic cosine of the input element-wise.
+    Computes inverse hyperbolic cosine of the inputs element-wise.
 
     .. math::
 
@@ -2663,8 +2663,12 @@ class Acosh(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
         >>> acosh = ops.Acosh()
-        >>> input_x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
+        >>> input_x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mstype.float32)
         >>> output = acosh(input_x)
         >>> print(output)
         [0. 0.9624236 1.7627472 5.298292]
