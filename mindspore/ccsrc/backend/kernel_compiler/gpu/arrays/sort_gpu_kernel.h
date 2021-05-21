@@ -71,7 +71,7 @@ class SortGpuKernel : public GpuKernel {
     T *intermediate_input_device = input_device;
     T *intermediate_output_device = output_device;
 
-    // if sort in descending order, negate input and negate back after sorting
+    // if sort not in descending order, negate input and negate back after sorting
     if (!descending_) {
       Negative(intermediate_input_device, intermediate_output_device, input_size_,
                reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -116,7 +116,7 @@ class SortGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(ERROR) << input_count << " inputs were provided, but SortGpuKernel expects 2.";
+      MS_LOG(ERROR) << input_count << " inputs were provided, but SortGpuKernel expects 1.";
       return false;
     }
 

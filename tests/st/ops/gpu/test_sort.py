@@ -32,7 +32,7 @@ class SortNet(nn.Cell):
 def sort_1d(descending, nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-    x_numpy = np.array([1, -2, 3, 4]).astype(np.float16)
+    x_numpy = np.array([1, -2, 3, 4]).astype(nptype)
     x = Tensor(x_numpy)
     sort_net = SortNet(0, descending)
     output, indices = sort_net(x)

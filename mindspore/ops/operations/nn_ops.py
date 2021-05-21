@@ -7547,7 +7547,7 @@ class InTopK(PrimitiveWithInfer):
         TypeError: If dtype of `x1` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
@@ -7563,6 +7563,7 @@ class InTopK(PrimitiveWithInfer):
         """Initialize InTopK"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'k'], outputs=['y'])
         validator.check_value_type("k", k, [int], self.name)
+        validator.check("k", k, "", 0, Rel.GT, self.name)
 
     def infer_dtype(self, x1_dtype, x2_dtype):
         validator.check_tensor_dtype_valid("x1", x1_dtype, (mstype.float16, mstype.float32,), self.name)
