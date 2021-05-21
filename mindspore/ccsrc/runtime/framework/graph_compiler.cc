@@ -225,6 +225,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->InitAllBucket(graph, device_context_);
+
   return graph->graph_id();
 }
 
@@ -312,7 +315,8 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
 void GraphCompiler::RecoverGraphOutput(
   const AnfNodePtr &kernel, const VectorRef &op_outputs,
   const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
-  std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs) {
+  std::map<KernelWithIndex, TensorPtr> *op_output_map, VectorRef *outputs,
+  std::vector<TensorPtr> *runop_output_tensors) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(outputs);
@@ -349,8 +353,19 @@ void GraphCompiler::RecoverGraphOutput(
 
       BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
       tensor_ref = output_tensor;
+      runop_output_tensors->emplace_back(output_tensor);
     }
   }
+}
+
+void GraphCompiler::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->AddGradAddrToBucket(graph_id, grad_tensor);
+}
+
+void GraphCompiler::ClearAllBucket(const GraphId &graph_id) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->ClearAllBucket(graph_id);
 }
 }  // namespace runtime
 }  // namespace mindspore

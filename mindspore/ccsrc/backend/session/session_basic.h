@@ -36,6 +36,7 @@
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "debug/debugger/debugger.h"
 #endif
+#include "runtime/hardware/device_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -255,7 +256,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph);
   void UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs);
   virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
-  void InitAllBucket(const KernelGraphPtr &graph);
+  void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
   void ClearAllBucket(const GraphId &graph_id);
   std::vector<uint32_t> GetAllReduceSplitIndex();

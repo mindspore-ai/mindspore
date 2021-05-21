@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUCKET_H_
 
 #include <memory>
+#include <vector>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::gpu {
@@ -26,7 +27,7 @@ class GPUBucket : public Bucket {
   GPUBucket(uint32_t id, uint32_t bucket_size);
   ~GPUBucket() override = default;
 
-  void Init() override;
+  void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;
 
  private:
   void AllocateAllReduceAddr() override;

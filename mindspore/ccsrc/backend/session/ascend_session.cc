@@ -1590,7 +1590,18 @@ void AscendSession::SyncStream() {
 }
 
 std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
-  return std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size);
+  auto bucket = std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size);
+
+  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
+  MS_EXCEPTION_IF_NULL(kernel_runtime);
+  auto compute_stream = kernel_runtime->compute_stream();
+  auto communication_stream = kernel_runtime->communication_stream();
+  MS_EXCEPTION_IF_NULL(compute_stream);
+  MS_EXCEPTION_IF_NULL(communication_stream);
+
+  MS_EXCEPTION_IF_NULL(bucket);
+  bucket->Init({compute_stream}, {communication_stream});
+  return bucket;
 }
 }  // namespace session
 }  // namespace mindspore

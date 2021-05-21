@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_
 
 #include <memory>
+#include <vector>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::ascend {
@@ -26,7 +27,7 @@ class AscendBucket : public Bucket {
   AscendBucket(uint32_t id, uint32_t bucket_size) : Bucket(id, bucket_size) {}
   ~AscendBucket() override = default;
 
-  void Init() override;
+  void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;
 
  private:
   void AllocateAllReduceAddr() override;

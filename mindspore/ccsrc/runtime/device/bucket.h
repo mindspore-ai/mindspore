@@ -50,7 +50,7 @@ class Bucket {
   void Launch();
   void Release();
   void AddGradTensor(const tensor::TensorPtr &tensor);
-  virtual void Init() = 0;
+  virtual void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) = 0;
 
  protected:
   uint32_t id_;

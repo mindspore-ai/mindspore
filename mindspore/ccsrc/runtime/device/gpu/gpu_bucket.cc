@@ -165,14 +165,18 @@ std::shared_ptr<LaunchKernel> GPUBucket::CreateLaunchMul() {
   return launch_mul;
 }
 
-void GPUBucket::Init() {
+void GPUBucket::Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) {
   pre_event_ = std::make_shared<GpuEvent>();
   post_event_ = std::make_shared<GpuEvent>();
 
-  auto kernel_runtime = KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-  MS_EXCEPTION_IF_NULL(kernel_runtime);
-  stream_ = kernel_runtime->communication_stream();
-  compute_stream_ = kernel_runtime->compute_stream();
+  if (!compute_streams.empty()) {
+    compute_stream_ = compute_streams.front();
+  }
+  if (!communication_streams.empty()) {
+    stream_ = communication_streams.front();
+  }
+  MS_EXCEPTION_IF_NULL(compute_stream_);
+  MS_EXCEPTION_IF_NULL(stream_);
 
   MS_EXCEPTION_IF_NULL(pre_event_);
   MS_EXCEPTION_IF_NULL(post_event_);
