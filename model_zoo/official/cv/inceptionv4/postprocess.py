@@ -52,7 +52,7 @@ def cal_acc(result_path, label_file):
     print("========step:{}========".format(step))
     print("========sum:{}========".format(sum_a))
     accuracy = sum_a * 100.0 / step
-    print("========accuraty:{}========".format(accuracy))
+    print("========accuracy:{}========".format(accuracy))
 
 if __name__ == "__main__":
     cal_acc(args.result_path, args.label_file)
