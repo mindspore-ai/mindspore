@@ -98,7 +98,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(input_shape);
+    CheckTensorSize({input_shape, output_shape});
     auto dim = input_shape.size();
     if (dim == 4) {
       SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);

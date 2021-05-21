@@ -201,19 +201,6 @@ inline bool CheckNullInput(const std::vector<size_t> &input_shape) {
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
 
-// The tensor size is limited to 2G by cudnn.
-inline void CheckTensorSize(const std::vector<size_t> &shape) {
-  size_t total_size = 1;
-  for (auto i : shape) {
-    total_size *= i;
-  }
-  if (total_size >= 2147483648) {
-    MS_EXCEPTION(ValueError) << "The total size of the tensor exceeds the max_limit of 2 Giga-elements, which is "
-                             << total_size << "elements (" << shape << ").";
-  }
-}
-#define CHECK_TENSOR_SIZE(shape) mindspore::device::gpu::CheckTensorSize(shape)
-
 #define CHECK_CURAND_RET_WITH_EXCEPT(expression, message)                                     \
   {                                                                                           \
     curandStatus_t status = (expression);                                                     \

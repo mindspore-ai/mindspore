@@ -92,7 +92,7 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     std::vector<size_t> input_shape;
     GetInputShape(kernel_node, &input_shape);
     compute_format_ = CUDNN_TENSOR_NCHW;
-    CHECK_TENSOR_SIZE(input_shape);
+    CheckTensorSize({input_shape});
     n_ = SizeToInt(input_shape[0]);
     c_ = SizeToInt(input_shape[1]);
     old_depth_ = SizeToInt(input_shape[2]);

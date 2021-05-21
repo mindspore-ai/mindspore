@@ -76,7 +76,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(input_shape);
+    CheckTensorSize({input_shape});
     std::vector<size_t> shape;
     double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
     if (mode_ == CUDNN_ACTIVATION_ELU) {

@@ -118,7 +118,6 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(in_shape);
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     format_attr_ = GetAttr<std::string>(kernel_node, "format");
     if (format_attr_ == kOpFormat_NHWC) {
@@ -126,6 +125,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     }
     std::vector<size_t> filter_shape;
     GetFilterShape(kernel_node, &filter_shape);
+    CheckTensorSize({in_shape, dy_shape, filter_shape});
     if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
     }

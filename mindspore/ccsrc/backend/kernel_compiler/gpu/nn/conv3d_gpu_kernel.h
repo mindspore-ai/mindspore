@@ -89,7 +89,7 @@ class Conv3dGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(in_shape);
+    CheckTensorSize({in_shape});
     n_ = SizeToInt(in_shape[0]);
     c_ = SizeToInt(in_shape[1]);
     old_depth_ = SizeToInt(in_shape[2]);

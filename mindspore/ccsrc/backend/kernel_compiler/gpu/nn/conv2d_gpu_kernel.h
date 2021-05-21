@@ -99,7 +99,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(in_shape);
+    CheckTensorSize({in_shape, filter_shape, output_shape});
     SetNCHW(in_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;

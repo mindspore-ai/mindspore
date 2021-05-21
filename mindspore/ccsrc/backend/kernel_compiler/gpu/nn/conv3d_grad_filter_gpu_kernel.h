@@ -102,7 +102,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    CHECK_TENSOR_SIZE(in_shape);
+    CheckTensorSize({in_shape});
     data_format_ = kOpFormat_NCDHW;
 
     std::vector<size_t> filter_shape;
