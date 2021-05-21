@@ -54,7 +54,7 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   for (size_t i = 0; i < values_size_; ++i) {
     const int row = adj_st_ ? a_indices[i * 2 + 1] : a_indices[i * 2];
     const int col = adj_st_ ? a_indices[i * 2] : a_indices[i * 2 + 1];
-    if (row > SizeToInt(out_dim_0) || row < 0 || col > SizeToInt(same_dim) || col < 0) {
+    if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
       MS_LOG(ERROR) << "The indices including out of bounds index, row range: [0, " << out_dim_0 << "), col range: [0, "
                     << same_dim << "), but got row: " << row << ", col: " << col;
       return false;
