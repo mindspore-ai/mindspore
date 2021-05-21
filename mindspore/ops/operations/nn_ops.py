@@ -1194,7 +1194,7 @@ class BatchNorm(PrimitiveWithInfer):
         TypeError: If dtype of `epsilon` or `momentum` is not float.
         TypeError: If `data_format` is not a str.
         TypeError: If `input_x`, `scale`, `bias`, `mean` or `variance` is not a Tensor.
-        TypeError: If dtype of `input_x`, `scale` or `mean` is neither float16 nor float32.
+        TypeError: If dtype of `input_x`, `scale` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
