@@ -71,6 +71,9 @@ class LambApplyOptimizerAssign(Expander):
         do_use_weight_decay = graph_builder.emit('Mul', [do_use_weight_mul, do_use_weight])
         update = graph_builder.emit('Add', [do_use_weight_decay, update])
 
+        next_v = graph_builder.emit('Assign', [inputv, next_v])
+        next_m = graph_builder.emit('Assign', [inputm, next_m])
+
         res = [update, next_v, next_m]
 
         return res

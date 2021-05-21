@@ -19,22 +19,25 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
+from mindspore.common.parameter import Parameter
 
 
 class Net(nn.Cell):
-    def __init__(self):
+    def __init__(self, param):
         super(Net, self).__init__()
         self.lamb_apply_weight_assign = P.LambApplyWeightAssign()
+        self.param = Parameter(param, name='param')
 
-    def construct(self, w_norm, g_norm, lr, update, param):
-        return self.lamb_apply_weight_assign(w_norm, g_norm, lr, update, param)
+    def construct(self, w_norm, g_norm, lr, update):
+        return self.lamb_apply_weight_assign(w_norm, g_norm, lr, update, self.param)
+
 
 def get_output(w_norm, g_norm, lr, update, param, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
-    opt = Net()
-    output = opt(Tensor(w_norm), Tensor(g_norm), Tensor(lr), Tensor(update), Tensor(param))
-    return output
+    opt = Net(Tensor(param))
+    _ = opt(Tensor(w_norm), Tensor(g_norm), Tensor(lr), Tensor(update))
+    return opt.param.data.asnumpy()
+
 
 def lamb_apply_weight_assign():
 
@@ -47,7 +50,8 @@ def lamb_apply_weight_assign():
     expect = get_output(w_norm, g_norm, lr, update, param, False)
     output = get_output(w_norm, g_norm, lr, update, param, True)
 
-    assert np.allclose(output.asnumpy(), expect.asnumpy())
+    assert np.allclose(output, expect)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

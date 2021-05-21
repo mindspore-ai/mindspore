@@ -19,27 +19,32 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
+from mindspore.common.parameter import Parameter
 
 
 class Net(nn.Cell):
-    def __init__(self):
+    def __init__(self, v, m):
         super(Net, self).__init__()
         self.lamb_apply_optimizer_assign = P.LambApplyOptimizerAssign()
+        self.m = Parameter(m, name='m')
+        self.v = Parameter(v, name='v')
 
-    def construct(self, grad, inputv, inputm, input_param, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, epsilon,
+    def construct(self, grad, input_param, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, epsilon,
                   steps, do_use_weight, weight_decay_rate):
-        return self.lamb_apply_optimizer_assign(grad, inputv, inputm, input_param, beta_1, one_minus_beta_1, beta_2,
+        return self.lamb_apply_optimizer_assign(grad, self.v, self.m, input_param, beta_1, one_minus_beta_1, beta_2,
                                                 one_minus_beta_2, epsilon, steps, do_use_weight, weight_decay_rate)
+
 
 def get_output(grad, inputv, inputm, input_param, beta_1, one_minus_beta_1, beta_2, one_minus_beta_2, epsilon, steps,
                do_use_weight, weight_decay_rate, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
-    opt = Net()
-    output = opt(Tensor(grad), Tensor(inputv), Tensor(inputm), Tensor(input_param), Tensor(beta_1),
+    opt = Net(Tensor(inputv), Tensor(inputm))
+    output = opt(Tensor(grad), Tensor(input_param), Tensor(beta_1),
                  Tensor(one_minus_beta_1), Tensor(beta_2), Tensor(one_minus_beta_2), Tensor(epsilon), Tensor(steps),
                  Tensor(do_use_weight), Tensor(weight_decay_rate))
-    return output
+
+    return [output[0].asnumpy(), opt.v.data.asnumpy(), opt.m.data.asnumpy()]
+
 
 def lamb_apply_optimizer_assign():
 
@@ -64,9 +69,10 @@ def lamb_apply_optimizer_assign():
     e1, e2, e3 = list(expect)
     o1, o2, o3 = list(output)
 
-    assert np.allclose(o1.asnumpy(), e1.asnumpy())
-    assert np.allclose(o2.asnumpy(), e2.asnumpy())
-    assert np.allclose(o3.asnumpy(), e3.asnumpy())
+    assert np.allclose(o1, e1)
+    assert np.allclose(o2, e2)
+    assert np.allclose(o3, e3)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
