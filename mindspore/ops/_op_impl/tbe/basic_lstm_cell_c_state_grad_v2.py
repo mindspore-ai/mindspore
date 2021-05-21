@@ -22,8 +22,8 @@ basic_lstm_cell_c_state_grad_op_info_v2 = TBERegOp("BasicLSTMCellCStateGradV2") 
     .binfile_name("basic_lstm_cell_c_state_grad.so") \
     .compute_cost(10) \
     .kernel_name("basic_lstm_cell_c_state_grad_v2") \
-    .attr("forget_bias", "optional", "float", "all") \
-    .attr("activation", "optional", "str", "all") \
+    .attr("forget_bias", "optional", "float", "all", "1") \
+    .attr("activation", "optional", "str", "all", "None") \
     .partial_flag(True) \
     .input(0, "c", False, "required", "all") \
     .input(1, "dy", False, "required", "all") \

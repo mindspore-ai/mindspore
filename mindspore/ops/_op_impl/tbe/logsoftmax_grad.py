@@ -23,7 +23,7 @@ log_softmax_grad_op_info = TBERegOp("LogSoftmaxGrad") \
     .compute_cost(10) \
     .kernel_name("log_softmax_grad") \
     .partial_flag(True) \
-    .attr("axis", "optional", "listInt", "all") \
+    .attr("axis", "optional", "listInt", "all", "-1") \
     .input(0, "x", False, "required", "all") \
     .input(1, "grad", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

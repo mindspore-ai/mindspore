@@ -24,7 +24,7 @@ space_to_depth_op_info = TBERegOp("SpaceToDepth") \
     .kernel_name("space_to_depth") \
     .partial_flag(True) \
     .attr("block_size", "required", "int", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("data_format", "optional", "str", "all", "NHWC") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
