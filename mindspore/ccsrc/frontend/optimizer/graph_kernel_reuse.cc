@@ -45,6 +45,48 @@ bool GraphKernelReuse::CompareNode(const AnfNodePtr a, const AnfNodePtr b) {
   return false;
 }
 
+bool GraphKernelReuse::IsReusable(const FuncGraphPtr &fg, const FuncGraphPtr &cfg) {
+  // Two graphs should have the same size
+  auto fg_topos = TopoSort(fg->get_return());
+  auto cfg_topos = TopoSort(cfg->get_return());
+  if (fg_topos.size() != cfg_topos.size()) {
+    return false;
+  }
+
+  // Compare const tensor
+  for (size_t i = 0; i < fg_topos.size(); ++i) {
+    if (IsValueNode<tensor::Tensor>(fg_topos[i])) {
+      if (!IsValueNode<tensor::Tensor>(cfg_topos[i])) {
+        return false;
+      }
+
+      auto tensor1 = GetValueNode<tensor::TensorPtr>(fg_topos[i]);
+      auto tensor2 = GetValueNode<tensor::TensorPtr>(cfg_topos[i]);
+      if (!tensor1->ValueEqual(*tensor2)) {
+        return false;
+      }
+    }
+  }
+
+  auto fg_input = fg->parameters();
+  auto cfg_input = cfg->parameters();
+  if (fg_input.size() != cfg_input.size()) {
+    return false;
+  }
+  // Compare input
+  for (size_t i = 0; i < fg_input.size(); ++i) {
+    if (!CompareNode(fg_input[i], cfg_input[i])) {
+      return false;
+    }
+  }
+
+  // Compare output
+  if (!CompareNode(fg->output(), cfg->output())) {
+    return false;
+  }
+  return true;
+}
+
 bool GraphKernelReuse::DoReplace(const FuncGraphManagerPtr manager) {
   bool changed = false;
   auto fgs = manager->func_graphs();
@@ -57,56 +99,9 @@ bool GraphKernelReuse::DoReplace(const FuncGraphManagerPtr manager) {
       if (find(graph_kernel_ops[key].begin(), graph_kernel_ops[key].end(), fg) == graph_kernel_ops[key].end()) {
         FuncGraphPtr new_fg = nullptr;
         for (auto &cfg : graph_kernel_ops[key]) {
-          // If two graphs have different size then continue
-          auto fg_topos = TopoSort(fg->get_return());
-          auto cfg_topos = TopoSort(cfg->get_return());
-          if (fg_topos.size() != cfg_topos.size()) {
+          if (!IsReusable(fg, cfg)) {
             continue;
           }
-
-          // Compare const tensor
-          bool has_same = true;
-          for (size_t i = 0; i < fg_topos.size(); ++i) {
-            if (IsValueNode<tensor::Tensor>(fg_topos[i])) {
-              if (!IsValueNode<tensor::Tensor>(cfg_topos[i])) {
-                has_same = false;
-                break;
-              }
-
-              auto tensor1 = GetValueNode<tensor::TensorPtr>(fg_topos[i]);
-              auto tensor2 = GetValueNode<tensor::TensorPtr>(cfg_topos[i]);
-              if (!tensor1->ValueEqual(*tensor2)) {
-                has_same = false;
-                break;
-              }
-            }
-          }
-
-          if (!has_same) {
-            continue;
-          }
-
-          auto fg_input = fg->parameters();
-          auto cfg_input = cfg->parameters();
-          if (fg_input.size() != cfg_input.size()) {
-            continue;
-          }
-          // Compare input
-          for (size_t i = 0; i < fg_input.size(); ++i) {
-            if (!CompareNode(fg_input[i], cfg_input[i])) {
-              has_same = false;
-              break;
-            }
-          }
-          if (!has_same) {
-            continue;
-          }
-
-          // Compare output
-          if (!CompareNode(fg->output(), cfg->output())) {
-            continue;
-          }
-
           // Find reusable fg
           new_fg = cfg;
           break;

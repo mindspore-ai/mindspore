@@ -37,6 +37,7 @@ class GraphKernelReuse {
   }
 
   bool CompareNode(const AnfNodePtr a, const AnfNodePtr other);
+  bool IsReusable(const FuncGraphPtr &fg, const FuncGraphPtr &cfg);
   bool DoReplace(const FuncGraphManagerPtr manager);
 
   bool ReuseGraphKernel(const FuncGraphPtr root, const FuncGraphManagerPtr manager);

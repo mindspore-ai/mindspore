@@ -115,19 +115,7 @@ class InlinerBase : public AnfVisitor {
     // 'criterions_': {criterion_group_1:{criterion1, criterion2, ...}, criterion_group_2:{...}, ...}
     // All the criterions of 'criterion group' are true would set 'criterion group' as 'true'. As [AND].
     // Anyone of 'criterion group' in 'criterions_' is 'true' would be matched. As [OR].
-    bool is_match = false;
-    for (auto &criterions : criterions_) {  // Each 'criterion group' in criterions_.
-      is_match = true;
-      for (auto &criterion : criterions) {  // Each criterion in 'criterion group'.
-        if (!criterion(this, fg, node)) {
-          is_match = false;
-          break;
-        }
-      }
-      if (is_match) {
-        break;
-      }
-    }
+    bool is_match = ApplyCriterions(node, fg);
     if (!is_match) {
       return nullptr;
     }
@@ -175,6 +163,23 @@ class InlinerBase : public AnfVisitor {
     }
     // Or, just make a clone for not single used fg.
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
+  }
+
+  bool ApplyCriterions(const AnfNodePtr &node, const FuncGraphPtr &fg) {
+    bool is_match = false;
+    for (auto &criterions : criterions_) {  // Each 'criterion group' in criterions_.
+      is_match = true;
+      for (auto &criterion : criterions) {  // Each criterion in 'criterion group'.
+        if (!criterion(this, fg, node)) {
+          is_match = false;
+          break;
+        }
+      }
+      if (is_match) {
+        break;
+      }
+    }
+    return is_match;
   }
 
   void ReplaceParams(const FuncGraphManagerPtr &mng, const std::vector<AnfNodePtr> &new_params,

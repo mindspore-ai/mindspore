@@ -54,7 +54,7 @@ def _list_setitem_with_number(data, number_index, value):
 
 
 @setitem.register("List", "Number", "Tensor")
-def _list_setitem_with_Tensor(data, number_index, value):
+def _list_setitem_with_tensor(data, number_index, value):
     """
     Assigns value to list.
 
@@ -70,7 +70,7 @@ def _list_setitem_with_Tensor(data, number_index, value):
 
 
 @setitem.register("List", "Number", "List")
-def _list_setitem_with_List(data, number_index, value):
+def _list_setitem_with_list(data, number_index, value):
     """
     Assigns value to list.
 
@@ -86,7 +86,7 @@ def _list_setitem_with_List(data, number_index, value):
 
 
 @setitem.register("List", "Number", "Tuple")
-def _list_setitem_with_Tuple(data, number_index, value):
+def _list_setitem_with_tuple(data, number_index, value):
     """
     Assigns value to list.
 
