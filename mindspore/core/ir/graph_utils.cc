@@ -37,12 +37,12 @@
 namespace mindspore {
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
   std::vector<AnfNodePtr> res;
+  res.reserve(1024);
   if (root == nullptr) {
     return res;
   }
   size_t seen = NewSeenGeneration();
-  std::vector<AnfNodePtr> todo;
-  todo.reserve(1024);
+  std::deque<AnfNodePtr> todo;
   todo.push_back(root);
 
   while (!todo.empty()) {
@@ -98,13 +98,11 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &s
   std::vector<CNodePtr> todo;
   todo.reserve(1024);
   todo.insert(todo.end(), starts.begin(), starts.end());
-  std::vector<CNodePtr> sorted_nodes;
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
   while (top_idx < todo.size()) {
     CNodePtr top = todo[top_idx];
     top_idx++;
-    sorted_nodes.push_back(top);
     auto inputs = top->inputs();
     for (auto &item : inputs) {
       if (item->seen_ == seen) {
@@ -117,19 +115,17 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &s
       item->seen_ = seen;
     }
   }
-  return sorted_nodes;
+  return todo;
 }
 
 // search the cnode match the predicate inside this graph only
 CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate) {
-  std::vector<CNodePtr> todo;
-  todo.reserve(1024);
+  std::deque<CNodePtr> todo;
   todo.insert(todo.end(), starts.begin(), starts.end());
   auto seen = NewSeenGeneration();
-  size_t top_idx = 0;
-  while (top_idx < todo.size()) {
-    CNodePtr top = todo[top_idx];
-    top_idx++;
+  while (!todo.empty()) {
+    CNodePtr top = todo.front();
+    todo.pop_front();
     if (match_predicate(top)) {
       return top;
     }
@@ -152,14 +148,11 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
   std::vector<FuncGraphPtr> todo;
   todo.reserve(128);
   todo.push_back(root);
-  std::vector<FuncGraphPtr> sorted;
-  sorted.reserve(128);
   auto seen = NewSeenGeneration();
   size_t top_idx = 0;
   while (top_idx < todo.size()) {
     FuncGraphPtr top = todo[top_idx];
     top_idx++;
-    sorted.push_back(top);
     auto used = top->func_graphs_used();
     for (auto &item : used) {
       if (item.first->seen_ == seen) {
@@ -169,7 +162,7 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
       item.first->seen_ = seen;
     }
   }
-  return sorted;
+  return todo;
 }
 
 // PushSuccessors push cnode inputs to a vector as successors for topo sort.
@@ -243,6 +236,7 @@ std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
 
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
+  vecs.reserve(128);
   if (node == nullptr) {
     return vecs;
   }
