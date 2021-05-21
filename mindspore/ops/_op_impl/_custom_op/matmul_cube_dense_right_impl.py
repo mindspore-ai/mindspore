@@ -30,6 +30,8 @@ matmul_cube_dense_right_op_info = TBERegOp("CusMatMulCubeDenseRight") \
     .compute_cost(10) \
     .kernel_name("CusMatMulCubeDenseRight") \
     .partial_flag(True) \
+    .attr("trans_a", "optional", "bool", "all", "false") \
+    .attr("trans_b", "optional", "bool", "all", "false") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "x3", False, "required", "all") \

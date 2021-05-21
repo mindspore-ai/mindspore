@@ -23,7 +23,7 @@ apply_adagrad_d_op_info = TBERegOp("ApplyAdagrad") \
     .compute_cost(10) \
     .kernel_name("apply_adagrad_d") \
     .partial_flag(True) \
-    .attr("update_slots", "optional", "bool", "true,false", "false") \
+    .attr("update_slots", "optional", "bool", "true,false", "true") \
     .input(0, "var", False, "required", "all") \
     .input(1, "accum", False, "required", "all") \
     .input(2, "lr", False, "required", "all") \

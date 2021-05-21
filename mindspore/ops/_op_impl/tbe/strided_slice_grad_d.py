@@ -23,15 +23,15 @@ strided_slice_grad_d_op_info = TBERegOp("StridedSliceGrad") \
     .compute_cost(10) \
     .kernel_name("strided_slice_grad_d") \
     .partial_flag(True) \
-    .attr("shapex", "optional", "listInt", "all") \
-    .attr("begin", "optional", "listInt", "all") \
-    .attr("end", "optional", "listInt", "all") \
-    .attr("strides", "optional", "listInt", "all") \
-    .attr("begin_mask", "optional", "int", "all") \
-    .attr("end_mask", "optional", "int", "all") \
-    .attr("ellipsis_mask", "optional", "int", "all") \
-    .attr("new_axis_mask", "optional", "int", "all") \
-    .attr("shrink_axis_mask", "optional", "int", "all") \
+    .attr("shapex", "required", "listInt", "all") \
+    .attr("begin", "required", "listInt", "all") \
+    .attr("end", "required", "listInt", "all") \
+    .attr("strides", "required", "listInt", "all") \
+    .attr("begin_mask", "optional", "int", "all", "0") \
+    .attr("end_mask", "optional", "int", "all", "0") \
+    .attr("ellipsis_mask", "optional", "int", "all", "0") \
+    .attr("new_axis_mask", "optional", "int", "all", "0") \
+    .attr("shrink_axis_mask", "optional", "int", "all", "0") \
     .input(0, "dy", False, "required", "all") \
     .output(0, "output", False, "required", "all") \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \

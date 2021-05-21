@@ -23,8 +23,8 @@ minimum_grad_op_info = TBERegOp("MinimumGrad") \
     .compute_cost(10) \
     .kernel_name("minimum_grad") \
     .partial_flag(True) \
-    .attr("grad_x", "optional", "bool", "all") \
-    .attr("grad_y", "optional", "bool", "all") \
+    .attr("grad_x", "optional", "bool", "all", "true") \
+    .attr("grad_y", "optional", "bool", "all", "true") \
     .input(0, "grads", False, "required", "all") \
     .input(1, "x1", False, "required", "all") \
     .input(2, "x2", False, "required", "all") \

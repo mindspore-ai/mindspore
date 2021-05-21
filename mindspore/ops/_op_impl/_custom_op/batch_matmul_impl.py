@@ -26,6 +26,8 @@ cus_batchmatmul_op_info = TBERegOp("CusBatchMatMul") \
     .compute_cost(10) \
     .kernel_name("CusBatchMatMul") \
     .partial_flag(True) \
+    .attr("transpose_a", "optional", "bool", "all", "false") \
+    .attr("transpose_b", "optional", "bool", "all", "true") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

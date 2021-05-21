@@ -23,7 +23,7 @@ scatter_nd_sub_op_info = TBERegOp("ScatterNdSub") \
     .compute_cost(10) \
     .kernel_name("scatter_nd_sub") \
     .partial_flag(True) \
-    .attr("use_locking", "optional", "bool", "all") \
+    .attr("use_locking", "optional", "bool", "all", "false") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "updates", False, "required", "all") \

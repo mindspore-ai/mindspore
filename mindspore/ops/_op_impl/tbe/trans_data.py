@@ -25,6 +25,7 @@ trans_data_op_info = TBERegOp("TransData") \
     .partial_flag(True) \
     .attr("src_format", "required", "str", "DefaultFormat, NC1HWC0, FracZ, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
     .attr("dst_format", "required", "str", "DefaultFormat, NC1HWC0, FracZ, FRACTAL_NZ, HWCN, C1HWNCoC0, NDHWC, NHWC") \
+    .attr("groups", "optional", "int", "all", "1") \
     .input(0, "src", False, "required", "all") \
     .output(0, "dst", False, "required", "all") \
     .dtype_format(DataType.F32_NHWC, DataType.F32_5HD) \

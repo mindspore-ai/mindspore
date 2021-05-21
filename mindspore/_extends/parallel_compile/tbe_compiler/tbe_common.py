@@ -91,7 +91,6 @@ def get_input_output(io_info, args):
                 else:
                     if info['param_type'] == 'dynamic':
                         arg.append(info)
-                        args.append(arg)
                     else:
                         args.append(info)
             else:
@@ -99,8 +98,8 @@ def get_input_output(io_info, args):
                     arg.append(None)
                 else:
                     args.append(None)
-        if len(item) > 1:
-            args.append(arg)
+        if arg:
+            args.append(tuple(arg))
 
 
 def get_attr(attr_info, args):

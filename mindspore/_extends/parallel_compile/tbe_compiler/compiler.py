@@ -93,13 +93,14 @@ def build_op(build_type, json_str, tune_mode=None):
             _replace_range(outputs_args)
 
         if custom_flag:
-            op_module = __import__(op_name)
+            # op_module = __import__(op_name)
+            op_module_name = op_name
         else:
             if is_dynamic_shape:
                 op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
                 op_module_name = "impl.dynamic." + op_name
             else:
-                op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
+                # op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
                 op_module_name = "impl." + op_name
         # get function
         if build_type == op_build:
@@ -109,12 +110,12 @@ def build_op(build_type, json_str, tune_mode=None):
                 py_fn_name = op_name
         else:
             raise ValueError("function {} is not supported by Tbe op {}.".format(build_type, op_name))
-        op_func = getattr(op_module, py_fn_name, None)
-        if op_func is None:
-            raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
 
         # call function
         if is_dynamic_shape:
+            op_func = getattr(op_module, py_fn_name, None)
+            if op_func is None:
+                raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
             import tbe.common.context.op_context as op_context
             with op_context.OpContext("dynamic"):
                 op_info = operator_info.OpInfo(op_type, op_type)
@@ -125,7 +126,20 @@ def build_op(build_type, json_str, tune_mode=None):
                     return compile_info, (inputs_args, outputs_args, attrs_args), op_module_name
                 return compile_info
         else:
-            res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+            attrs_args.append(kernel_name)
+            import te_fusion.fusion_manager as fusion_manager
+            res = fusion_manager.build_single_op(op_module_name, py_fn_name, op_type, "build",
+                                                 inputs=inputs_args,
+                                                 outputs=outputs_args,
+                                                 attrs=attrs_args,
+                                                 unknown_shape=False,
+                                                 int64_mode=False,
+                                                 dynamic_compile_static=False,
+                                                 op_pattern=None,
+                                                 auto_tiling_mode=None,
+                                                 device_id=None,
+                                                 fuzz_build_info=None,
+                                                 reset_op_info=None)
             if tune_mode is not None:
                 return None, (inputs_args, outputs_args, attrs_args), op_module_name
             return res

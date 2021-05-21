@@ -25,7 +25,8 @@ resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
     .partial_flag(True) \
     .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
-    .attr("align_corners", "optional", "bool", "all") \
+    .attr("align_corners", "optional", "bool", "all", "false") \
+    .attr("half_pixel_centers", "optional", "bool", "all", "false") \
     .input(0, "images", False, "required", "all") \
     .output(0, "y", True, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \

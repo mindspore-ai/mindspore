@@ -23,7 +23,7 @@ bn_training_update_grad_op_info = TBERegOp("BNTrainingUpdateGrad") \
     .compute_cost(10) \
     .kernel_name("bn_training_update_grad") \
     .partial_flag(True) \
-    .attr("epsilon", "optional", "float", "all") \
+    .attr("epsilon", "optional", "float", "all", "0.0001") \
     .input(0, "grads", False, "required", "all", reshape_type="NC") \
     .input(1, "x", False, "required", "all", reshape_type="NC") \
     .input(2, "batch_mean", False, "required", "all") \

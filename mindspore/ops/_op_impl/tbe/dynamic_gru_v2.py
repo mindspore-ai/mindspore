@@ -24,8 +24,8 @@ dynamic_gru_v2_op_info = TBERegOp("DynamicGRUV2") \
     .kernel_name("dynamic_gru_v2") \
     .attr("direction", "optional", "str", "all", "UNIDIRECTIONAL") \
     .attr("cell_depth", "optional", "int", "all", "1") \
-    .attr("keep_prob", "optional", "float", "all", "1") \
-    .attr("cell_clip", "optional", "float", "all", "-1") \
+    .attr("keep_prob", "optional", "float", "all", "1.0") \
+    .attr("cell_clip", "optional", "float", "all", "-1.0") \
     .attr("num_proj", "optional", "int", "all", "0") \
     .attr("time_major", "optional", "bool", "all", "true") \
     .attr("activation", "optional", "str", "all", "tanh") \

@@ -23,7 +23,7 @@ scatter_update_op_info = TBERegOp("ScatterUpdate") \
     .compute_cost(10) \
     .kernel_name("scatter_update") \
     .partial_flag(True) \
-    .attr("use_locking", "optional", "bool", "all") \
+    .attr("use_locking", "optional", "bool", "true,false", "false") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "updates", False, "required", "all") \

@@ -111,6 +111,8 @@ def _check_supported(kernel_info):
         outputs_args = get_args(kernel_info['op_info'], 'outputs')
         attrs_args = get_args(kernel_info['op_info'], 'attrs')
         kernel_name = kernel_info['op_info']['kernel_name']
+        if op_name in ("resize_nearest_neighbor_v2_grad_d", "resize_bilinear_v2_grad"):
+            attrs_args.pop(-1)
         ret = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
 
     except Exception as e:

@@ -25,8 +25,8 @@ resize_bilinear_op_info = TBERegOp("ResizeBilinear") \
     .partial_flag(True) \
     .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
-    .attr("align_corners", "optional", "bool", "all") \
-    .attr("half_pixel_centers", "optional", "bool", "all") \
+    .attr("align_corners", "optional", "bool", "all", "false") \
+    .attr("half_pixel_centers", "optional", "bool", "all", "false") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD) \
