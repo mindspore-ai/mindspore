@@ -3,7 +3,7 @@
 basepath=$(pwd)
 echo ${basepath}
 
-# Example:sh run_benchmark_nets.sh -r /home/temp_test -d "8KE5T19620002408"
+# Example:sh run_ut_gpu.sh -r /home/temp_test -d "8KE5T19620002408"
 while getopts "r:d:" opt; do
     case ${opt} in
         r)

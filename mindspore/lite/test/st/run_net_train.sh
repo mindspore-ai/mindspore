@@ -29,7 +29,7 @@ function Run_Export(){
         else
             export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
         fi
-    done < ${models_mindspore_train_config}
+    done < ${modes_ms_train_config}
 }
 
 # Run converter on x86 platform:
@@ -67,7 +67,7 @@ function Run_Converter() {
             converter_result='converter mindspore '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
             fail=1
         fi
-    done < ${models_mindspore_train_config}
+    done < ${modes_ms_train_config}
     return ${fail}
 }
 
@@ -106,7 +106,7 @@ function Run_x86() {
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
             fail=1
         fi
-    done < ${models_mindspore_train_config}
+    done < ${modes_ms_train_config}
     return ${fail}
 }
 
@@ -222,7 +222,7 @@ ENDM
             fail=1
         fi
         
-    done < ${models_mindspore_train_config}
+    done < ${modes_ms_train_config}
     return ${fail}
 }
 
@@ -252,7 +252,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Set default models config filepath
-models_mindspore_train_config=${basepath}/models_ms_train.cfg
+modes_ms_train_config=${basepath}/../config/models_ms_train.cfg
 
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
@@ -274,8 +274,8 @@ while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
             echo "models_path is ${models_path}"
             ;;
         c)
-            models_mindspore_train_config=${OPTARG}
-            echo "models_mindspore_train_config is ${models_mindspore_train_config}"
+            modes_ms_train_config=${OPTARG}
+            echo "modes_ms_train_config is ${modes_ms_train_config}"
             ;;
         i)
             train_io_path=${OPTARG}
