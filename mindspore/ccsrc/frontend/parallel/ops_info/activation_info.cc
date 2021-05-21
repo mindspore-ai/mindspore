@@ -34,23 +34,6 @@ Status Activation::SetCostUnderStrategy(const StrategyPtr &strategy) { return Se
 
 Status Activation::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
-Status DropoutInfo::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
-    return FAILED;
-  }
-
-  // dropout don't support repeated calculation
-  auto input_strategy = strategy->GetInputDim().at(0);
-  auto product_p = std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int64_t>());
-  if (product_p != stage_device_size_) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy. Don't support repeated calc.";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
 Status ActivationInfo::GetAttrs() {
   if (attrs_.size() < ACTIVATION_ATTR_SIZE) {
     MS_LOG(ERROR) << name_ << " : The size of attrs small than 1.";
@@ -116,15 +99,6 @@ Status Activation::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
-bool DropoutInfo::IsRepeatedStrategy(const StrategyPtr &sp) {
-  auto input_strategy = sp->GetInputDim().at(0);
-  auto product_p = std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int64_t>());
-  if (product_p != stage_device_size_) {
-    return true;
-  }
-  return false;
-}
-
 Status DropoutInfo::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
@@ -136,9 +110,6 @@ Status DropoutInfo::GenerateStrategies(int64_t stage_id) {
   }
   size_t success = 0;
   for (auto &sp : sp_vector) {
-    if (IsRepeatedStrategy(sp)) {
-      continue;
-    }
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
@@ -333,6 +304,30 @@ Status ActivationBase::InferTensorInfo() {
   return SUCCESS;
 }
 
+Status DropoutInfo::GetAttrs() {
+  auto iter0 = attrs_.find(SEED0);
+  if (iter0 != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter0->second);
+    if (iter0->second->isa<Int64Imm>()) {
+      seed0_ = iter0->second->cast<Int64ImmPtr>()->value();
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of seed0 is not int64_t.";
+      return FAILED;
+    }
+  }
+  auto iter1 = attrs_.find(SEED1);
+  if (iter1 != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter1->second);
+    if (iter1->second->isa<Int64Imm>()) {
+      seed1_ = iter1->second->cast<Int64ImmPtr>()->value();
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of seed1 is not int64_t.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
 Status DropoutInfo::InferTensorInfo() {
   // infer tensor shape
   Shape input_shape = inputs_shape_.at(0);
@@ -356,6 +351,36 @@ Status DropoutInfo::InferTensorInfo() {
   outputs_tensor_info_.push_back(input_tensor_info);
   outputs_tensor_info_.push_back(input_tensor_info);
 
+  return SUCCESS;
+}
+
+Status DropoutInfo::InferReplaceOps(const StrategyPtr &) {
+  if ((seed0_ != 0) || (seed1_ != 0) || (repeated_calc_num_ == 1)) {
+    return SUCCESS;
+  }
+  int64_t seed = get_seed();
+  ValuePtr new_seed0 = MakeValue(seed);
+  ValuePtr new_seed1 = MakeValue(seed);
+  Attr attr_seed0 = std::make_pair(SEED0, new_seed0);
+  Attr attr_seed1 = std::make_pair(SEED1, new_seed1);
+  Attr attr_keep_probs = std::make_pair(KEEP_PROB, attrs_[KEEP_PROB]);
+  OperatorAttrs attrs = {attr_keep_probs, attr_seed0, attr_seed1};
+  OperatorParams params;
+  OperatorArgs args = std::make_pair(attrs, params);
+  replace_op_ = {std::make_pair(DROPOUT, args)};
+  return SUCCESS;
+}
+
+Status DropoutInfo::Init(const StrategyPtr &strategy) {
+  if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Init failed";
+    return FAILED;
+  }
+  if (InferReplaceOps(strategy) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Infer replace Ops failed";
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << " : Init success";
   return SUCCESS;
 }
 
