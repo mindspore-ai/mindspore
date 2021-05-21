@@ -25,7 +25,7 @@ strided_slice_d_op_info = TBERegOp("StridedSlice") \
     .partial_flag(True) \
     .attr("begin", "optional", "listInt", "all") \
     .attr("end", "optional", "listInt", "all") \
-    .attr("strides", "optional", "listInt", "all") \
+    .attr("strides", "optional", "listInt", "all", "None") \
     .attr("begin_mask", "required", "int", "all") \
     .attr("end_mask", "required", "int", "all") \
     .attr("ellipsis_mask", "required", "int", "all") \

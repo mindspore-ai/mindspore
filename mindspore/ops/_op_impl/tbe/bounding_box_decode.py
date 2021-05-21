@@ -25,8 +25,8 @@ bounding_box_decode_op_info = TBERegOp("BoundingBoxDecode") \
     .partial_flag(True) \
     .attr("means", "optional", "listFloat", "all") \
     .attr("stds", "optional", "listFloat", "all") \
-    .attr("max_shape", "optional", "listInt", "all") \
-    .attr("wh_ratio_clip", "optional", "float", "all") \
+    .attr("max_shape", "optional", "listInt", "all", "None") \
+    .attr("wh_ratio_clip", "optional", "float", "all", "0.016") \
     .input(0, "rois", False, "required", "all") \
     .input(1, "deltas", False, "required", "all") \
     .output(0, "bboxes", False, "required", "all") \

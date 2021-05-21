@@ -32,6 +32,7 @@ dynamic_rnn_op_info = TBERegOp("DynamicRNN") \
     .attr("time_major", "optional", "bool", "all", "true") \
     .attr("activation", "optional", "str", "all", "tanh") \
     .attr("forget_bias", "optional", "float", "all", "0") \
+    .attr("gate_order", "optional", "str", "all", "ijfo") \
     .attr("is_training", "optional", "bool", "all", "true") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \

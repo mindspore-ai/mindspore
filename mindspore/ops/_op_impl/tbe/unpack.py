@@ -23,7 +23,7 @@ unstack_op_info = TBERegOp("Unstack") \
     .compute_cost(10) \
     .kernel_name("unpack") \
     .partial_flag(True) \
-    .attr("num", "optional", "int", "all") \
+    .attr("num", "optional", "int", "all", "None") \
     .attr("axis", "required", "int", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "dynamic", "all") \
