@@ -54,10 +54,8 @@ if __name__ == '__main__':
     cnt = 0
 
     for l in lines:
-        img_name = l.strip('\n')
-
-        img_path = 'img/' + str(img_name) + '.jpg'
-        label_path = 'cls_png/' + str(img_name) + '.png'
+        img_path = l.split(' ')[0].strip('\n')
+        label_path = l.split(' ')[1].strip('\n')
 
         sample_ = {"file_name": img_path.split('/')[-1]}
 

@@ -16,7 +16,7 @@
 
 if [ $# != 2 ]
 then
-    echo "Usage: sh run_train.sh [device_num][RANK_TABLE_FILE]"
+    echo "Usage: sh scripts/run_train.sh [device_num][RANK_TABLE_FILE]"
 exit 1
 fi
 
@@ -44,9 +44,10 @@ do
     mkdir ./train_parallel$i
     cp -r ./src ./train_parallel$i
     cp ./train.py ./train_parallel$i
+    cp ./*.yaml ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     cd ./train_parallel$i ||exit
     env > env.log
-    python train.py --device_id=$i  > log 2>&1 &
+    python train.py > log 2>&1 &
     cd ..
 done
