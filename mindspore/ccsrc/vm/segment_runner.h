@@ -40,13 +40,8 @@ struct LinConvertResult {
 };
 
 using LinkFuncType = std::function<LinConvertResult(const GraphSegmentPtr &, const std::string &)>;
-using ConvertCache = std::unordered_map<GraphSegmentPtr, LinConvertResult>;
 extern LinkFuncType MsVmConvert;
-extern ConvertCache g_ConvertCache;
 extern std::set<std::string> backend_list;
-
-void ClearConvertCache();
-
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
 }  // namespace compile
 }  // namespace mindspore

@@ -36,9 +36,6 @@
 
 namespace mindspore {
 namespace compile {
-// cached conversion
-ConvertCache g_ConvertCache;
-void ClearConvertCache() { g_ConvertCache.clear(); }
 
 namespace {
 // Return the list of nodes whose values are required beyond this segment.
@@ -178,11 +175,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
 template <typename T>
 LinConvertResult Convert(const GraphSegmentPtr &segment, const std::string &) {
   MS_EXCEPTION_IF_NULL(segment);
-  auto cached = g_ConvertCache.find(segment);
-  if (cached != g_ConvertCache.end()) {
-    return cached->second;
-  }
-
   LinConvertResult result;
 
   FuncGraphPtr fg = nullptr;
@@ -202,7 +194,6 @@ LinConvertResult Convert(const GraphSegmentPtr &segment, const std::string &) {
   result.outputs = outputs;
   result.graph_id = UINT32_MAX;
 
-  (void)g_ConvertCache.emplace(segment, result);
   return result;
 }
 

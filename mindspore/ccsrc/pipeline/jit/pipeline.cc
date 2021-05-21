@@ -1172,7 +1172,6 @@ void ClearResAtexit() {
   PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 
   abstract::ClearPrimEvaluatorMap();
-  compile::ClearConvertCache();
   pipeline::GetMethodMap().clear();
   pipeline::GetAttrMap().clear();
   pipeline::ExecutorPy::ClearRes();
