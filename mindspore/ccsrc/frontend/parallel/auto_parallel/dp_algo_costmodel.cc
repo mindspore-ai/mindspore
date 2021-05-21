@@ -39,17 +39,17 @@ Status GetStrategy(const CostGraphPtr &graph) {
       auto l_edge = node->GetAlivePrevEdges()[0];
       auto r_edge = node->GetAliveSuccEdges()[0];
       auto n_edge = graph->EliminationOp(node);
-      auto elimi = std::make_shared<OpElimination>(n_edge, l_edge, node, r_edge);
-      eliminations.emplace_back(std::move(elimi));
+      auto elimi_op = std::make_shared<OpElimination>(n_edge, l_edge, node, r_edge);
+      eliminations.emplace_back(std::move(elimi_op));
     }
     if (!flag) {
       auto edges = graph->CheckEdgeElimination();
       if (!edges.empty()) {
         // Applying the Edge Elimination
         flag = true;
-        auto n_edge = graph->EliminationEdges(edges);
-        auto elimi = std::make_shared<EdgeElimination>(n_edge, edges);
-        eliminations.emplace_back(std::move(elimi));
+        auto new_edge = graph->EliminationEdges(edges);
+        auto elimi_edge = std::make_shared<EdgeElimination>(new_edge, edges);
+        eliminations.emplace_back(std::move(elimi_edge));
       }
     }
     if (!flag) {
@@ -59,8 +59,8 @@ Status GetStrategy(const CostGraphPtr &graph) {
         flag = true;
         auto succ_edge = merge_node->GetAliveSuccEdges()[0];
         auto target_node = graph->EliminationMerge(merge_node);
-        auto elimi = std::make_shared<MergeElimination>(merge_node, succ_edge, target_node);
-        eliminations.emplace_back(std::move(elimi));
+        auto elimi_merge = std::make_shared<MergeElimination>(merge_node, succ_edge, target_node);
+        eliminations.emplace_back(std::move(elimi_merge));
       }
     }
     if (!flag) {
@@ -70,8 +70,8 @@ Status GetStrategy(const CostGraphPtr &graph) {
         flag = true;
         auto prev_edge = contracted_node->GetAlivePrevEdges()[0];
         auto target_node = graph->EliminationContract(contracted_node);
-        auto elimi = std::make_shared<ContractElimination>(target_node, prev_edge, contracted_node);
-        eliminations.emplace_back(std::move(elimi));
+        auto elimi_contract = std::make_shared<ContractElimination>(target_node, prev_edge, contracted_node);
+        eliminations.emplace_back(std::move(elimi_contract));
       }
     }
     if (!flag) {
@@ -93,9 +93,9 @@ Status GetStrategy(const CostGraphPtr &graph) {
         }
         auto left_node_cpy = graph->EliminationTriangle(eliminated_node, l_r_edge);
         auto right_node = l_r_edge->next_operator();
-        auto elimi =
+        auto elimi_tri =
           std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge, right_node);
-        eliminations.emplace_back(std::move(elimi));
+        eliminations.emplace_back(std::move(elimi_tri));
       }
     }
     if (!flag) {
@@ -109,8 +109,8 @@ Status GetStrategy(const CostGraphPtr &graph) {
           MS_EXCEPTION_IF_NULL(succ_edges[i]);
           succ_nodes.push_back(succ_edges[i]->next_operator());
         }
-        auto elimi = std::make_shared<StarElimination>(star_center, succ_edges, succ_nodes);
-        eliminations.emplace_back(std::move(elimi));
+        auto elimi_star = std::make_shared<StarElimination>(star_center, succ_edges, succ_nodes);
+        eliminations.emplace_back(std::move(elimi_star));
       }
     }
   }
