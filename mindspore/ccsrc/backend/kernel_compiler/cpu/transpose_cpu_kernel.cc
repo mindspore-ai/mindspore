@@ -35,7 +35,7 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   if (dtype_ == kTypeUnknown) {
     dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   }
-  if (axes_.size() > MAX_SHAPE_SIZE) {
+  if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
     MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_SHAPE_SIZE << "D, but got " << axes_.size()
                       << "D.";
   }
@@ -90,7 +90,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
 
-  if (axes_.size() <= MAX_TRANSPOSE_DIM_SIZE) {
+  if (axes_.size() <= DIMENSION_6D) {
     int res = NNACL_OK;
     if constexpr (std::is_same_v<T, int8_t>) {
       res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
@@ -113,10 +113,8 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     } else if constexpr (std::is_same_v<T, bool>) {
       res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
     }
-    if (res == NNACL_ERR) {
-      MS_LOG(EXCEPTION) << "Transpose input addr or output addr is null";
-    } else if (res == NNACL_PARAM_INVALID) {
-      MS_LOG(EXCEPTION) << "Transpose parameters are invalid.";
+    if (res != NNACL_OK) {
+      MS_LOG(ERROR) << "Transpose run failed";
     }
   } else {
     size_t data_count = (inputs[0]->size) / sizeof(T);
