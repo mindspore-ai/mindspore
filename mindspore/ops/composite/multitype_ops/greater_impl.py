@@ -36,6 +36,7 @@ def _greater_scalar(x, y):
    """
     return F.scalar_gt(x, y)
 
+
 @greater.register("Tensor", "Number")
 @greater.register("Number", "Tensor")
 @greater.register("Tensor", "Tensor")

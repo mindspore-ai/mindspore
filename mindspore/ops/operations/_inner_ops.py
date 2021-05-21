@@ -65,9 +65,9 @@ class ExtractImagePatches(PrimitiveWithInfer):
                 raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s should be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
             if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be an "
-                                 f"positive integer number, but got {arg_name}_row is {arg_val[2]}, {arg_name}_col "
-                                 f"is {arg_val[3]}")
+                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be "
+                                 f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
+                                 f"{arg_name}_col is {arg_val[3]}")
 
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)

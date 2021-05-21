@@ -382,7 +382,8 @@ class TBERegOp(RegOp):
 
     def compute_cost(self, compute_cost):
         """
-        Define the calculation efficiency of operator, which refers to the value of the cost model in the tiling module.
+        Define the calculation efficiency of operator, which refers to the value of the cost model
+        in the tiling module.
 
         Args:
             compute_cost (int): Value of compute cost. Default: 10.

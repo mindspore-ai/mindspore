@@ -23,6 +23,7 @@ from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 from ...common.api import context
 
+
 class ReduceOp:
     """
     Operation options for reducing tensors.
@@ -45,11 +46,13 @@ class ReduceOp:
 
 target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
 
+
 def check_hcom_group_valid(group):
     if context.get_context("mode") == context.PYNATIVE_MODE and \
             context.get_context("device_target") == "Ascend" and \
             group != GlobalComm.WORLD_COMM_GROUP:
         raise RuntimeError("Only hccl_world_group is supported in Pynative mode, but got {}".format(group))
+
 
 class AllReduce(PrimitiveWithInfer):
     """
@@ -149,7 +152,7 @@ class AllGather(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import numpy as np
         >>> import mindspore.ops.operations as ops
         >>> import mindspore.nn as nn
@@ -304,7 +307,7 @@ class ReduceScatter(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> from mindspore import Tensor, context
         >>> from mindspore.communication import init
         >>> from mindspore.ops.operations.comm_ops import ReduceOp

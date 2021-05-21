@@ -20,6 +20,7 @@ from mindspore.ops.composite import base
 # using ".register" decorator
 uadd = base.MultitypeFuncGraph("uadd", True)
 
+
 @uadd.register("Tensor")
 @uadd.register("Number")
 def _uadd_scala(x):

@@ -15,9 +15,11 @@
 
 """utils for operator"""
 
+from mindspore.common.tensor import Tensor
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
+from ..primitive import constexpr
 
 
 def get_broadcast_shape(x_shape, y_shape, prim_name):
@@ -89,3 +91,19 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
         else:
             all_shp += v[axis]
     return offset, all_shp, axis
+
+
+@constexpr
+def range_op(start, limit, delta, dtype):
+    """helper function to get tensor in specified range."""
+    output_tensor = Tensor(list(range(start, limit, delta)), dtype)
+    return output_tensor
+
+
+@constexpr
+def get_1d_shape(in_shape):
+    """helper function to get 1d shape."""
+    out_shape = 1
+    for i in in_shape:
+        out_shape *= i
+    return (out_shape,)

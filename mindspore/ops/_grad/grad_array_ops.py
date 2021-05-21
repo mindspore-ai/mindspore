@@ -18,7 +18,6 @@
 import numpy as np
 import mindspore as ms
 from mindspore.ops import composite as C
-from mindspore.common.tensor import Tensor
 from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
@@ -30,6 +29,7 @@ from ..primitive import constexpr
 from ... import context
 from ...common import dtype as mstype
 from ...common.tensor import RowTensor
+from .._utils.utils import range_op, get_1d_shape
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -496,22 +496,6 @@ def get_bprop_sparse_gather_v2(self):
 
 
 @constexpr
-def _range_op(start, limit, delta, dtype):
-    """helper function for grad of Sort"""
-    output_tensor = Tensor(list(range(start, limit, delta)), dtype)
-    return output_tensor
-
-
-@constexpr
-def _get_1d_shape(in_shape):
-    """helper function for grad of Sort"""
-    out_shape = 1
-    for i in in_shape:
-        out_shape *= i
-    return (out_shape,)
-
-
-@constexpr
 def _get_transposition(axis, rank):
     """helper function for grad of Sort"""
     if axis < 0:
@@ -557,13 +541,12 @@ def get_bprop_sort(self):
         ind_2d = reshape_op(indices, (-1, ind_lastdim))
         outer_dim = ind_2d.shape[0]
 
-        # [0, outterdim, 2*outerdim, ..., (k-1)*outerdim]
         indices_dtype = dtype(indices)
-        range_flatten_index = _range_op(0, outer_dim * in_lastdim, in_lastdim, indices_dtype)
+        range_flatten_index = range_op(0, outer_dim * in_lastdim, in_lastdim, indices_dtype)
 
         # expand_dims to (k, 1), then broadcast
         ind = reshape_op(ind_2d + expand_dims(range_flatten_index, -1), (-1,))
-        x_shape_1d = _get_1d_shape(top_k_input_shape)
+        x_shape_1d = get_1d_shape(top_k_input_shape)
 
         if transposition is not None:
             dvalue = tranpose(dvalue, invert_permutation(transposition))
