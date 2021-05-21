@@ -109,13 +109,13 @@ VGG 16网络主要由几个基本模块（包括卷积层和池化层）和三�
 
 ```python
 # 训练示例
-python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] > output.train.log 2>&1 &
+python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
+sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
-python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
 ```
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -129,7 +129,7 @@ python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eva
 python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train_gpu.sh [DATA_PATH]
+sh run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
 python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
