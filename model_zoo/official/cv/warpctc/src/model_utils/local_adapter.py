@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Network parameters."""
-from easydict import EasyDict
 
-config = EasyDict({
-    "max_captcha_digits": 4,
-    "captcha_width": 160,
-    "captcha_height": 64,
-    "batch_size": 64,
-    "epoch_size": 30,
-    "hidden_size": 512,
-    "learning_rate": 0.01,
-    "momentum": 0.9,
-    "save_checkpoint": True,
-    "save_checkpoint_steps": 97,
-    "keep_checkpoint_max": 30,
-    "save_checkpoint_path": "./",
-})
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

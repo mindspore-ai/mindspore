@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.vision.c_transforms as vc
-from src.config import config as cf
+from src.model_utils.config import config
 
 
 class _CaptchaDataset:
@@ -79,18 +79,18 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
         device_target(str): platform of training, support Ascend and GPU
      """
 
-    dataset = _CaptchaDataset(dataset_path, cf.max_captcha_digits, device_target)
+    dataset = _CaptchaDataset(dataset_path, config.max_captcha_digits, device_target)
     data_set = ds.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
     image_trans = [
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),
-        vc.Resize((m.ceil(cf.captcha_height / 16) * 16, cf.captcha_width)),
+        vc.Resize((m.ceil(config.captcha_height / 16) * 16, config.captcha_width)),
         c.TypeCast(mstype.float16)
     ]
     image_trans_gpu = [
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),
-        vc.Resize((m.ceil(cf.captcha_height / 16) * 16, cf.captcha_width)),
+        vc.Resize((m.ceil(config.captcha_height / 16) * 16, config.captcha_width)),
         vc.HWC2CHW()
     ]
     label_trans = [

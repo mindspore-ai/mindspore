@@ -108,13 +108,59 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
     # CPU训练示例
     $ bash run_standalone_train.sh ../data/train CPU
     或者
-    python train.py --dataset_path=./data/train --platform=CPU
+    python train.py --train_data_dir=./data/train --device_target=CPU
 
     # CPU评估示例
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt CPU
     或者
-    python eval.py --dataset_path=./data/test --checkpoint_path=warpctc-30-97.ckpt --platform=CPU
+    python eval.py --test_data_dir=./data/test --checkpoint_path=warpctc-30-97.ckpt --device_target=CPU
     ```
+
+    - 在ModelArts上运行
+      如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+        - 在ModelArt上使用8卡训练
+
+          ```python
+          # (1) 上传你的代码到 s3 桶上
+          # (2) 在ModelArts上创建训练任务
+          # (3) 选择代码目录 /{path}/warpctc
+          # (4) 选择启动文件 /{path}/warpctc/train.py
+          # (5) 执行a或b
+          #     a. 在 /{path}/warpctc/default_config.yaml 文件中设置参数
+          #         1. 设置 ”run_distributed=True“
+          #         2. 设置 ”enable_modelarts=True“
+          #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name={filenmae}"
+          #     b. 在 网页上设置
+          #         1. 添加 ”run_distributed=True“
+          #         2. 添加 ”enable_modelarts=True“
+          #         3. 如果数据采用zip格式压缩包的形式上传，添加 ”modelarts_dataset_unzip_name={filenmae}"
+          # (6) 上传你的 数据/数据zip压缩包 到 s3 桶上
+          # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径（该路径下仅有 数据/数据zip压缩包）
+          # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+          # (9) 创建训练作业
+          ```
+
+        - 在ModelArts上使用单卡验证
+
+          ```python
+          # (1) 上传你的代码到 s3 桶上
+          # (2) 在ModelArts上创建训练任务
+          # (3) 选择代码目录 /{path}/warpctc
+          # (4) 选择启动文件 /{path}/warpctc/eval.py
+          # (5) 执行a或b
+          #     a. 在 /path/warpctc 下的default_config.yaml 文件中设置参数
+          #         1. 设置 ”enable_modelarts=True“
+          #         2. 设置 “checkpoint_path={checkpoint_path}”({checkpoint_path}表示待评估的 权重文件 相对于 eval.py 的路径,权重文件须包含在代码目录下。)
+          #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name={filenmae}"
+          #     b. 在 网页上设置
+          #         1. 设置 ”enable_modelarts=True“
+          #         2. 设置 “checkpoint_path={checkpoint_path}”({checkpoint_path}表示待评估的 权重文件 相对于 eval.py 的路径,权重文件须包含在代码目录下。)
+          #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name={filenmae}"
+          # (6) 上传你的 数据/数据zip压缩包 到 s3 桶上
+          # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径（该路径下仅有 数据/数据zip压缩包）
+          # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+          # (9) 创建训练作业
+          ```
 
 ## 脚本说明
 
@@ -123,7 +169,8 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 ```text
 .
 └──warpctc
-  ├── README.md
+  ├── README.md                         # warpctc文档说明
+  ├── README_CN.md                      # warpctc中文文档说明
   ├── script
     ├── run_distribute_train.sh         # 启动Ascend分布式训练（8卡）
     ├── run_distribute_train_for_gpu.sh # 启动GPU分布式训练
@@ -131,13 +178,19 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
     ├── run_process_data.sh             # 启动数据集生成
     └── run_standalone_train.sh         # 启动单机训练（1卡）
   ├── src
-    ├── config.py                       # 参数配置
+    ├── model_utils
+      ├── config.py                     # 解析 *.yaml参数配置文件
+      ├── devcie_adapter.py             # 区分本地/ModelArts训练
+      ├── local_adapter.py              # 本地训练获取相关环境变量
+      └── moxing_adapter.py             # ModelArts训练获取相关环境变量、交换数据
     ├── dataset.py                      # 数据预处理
     ├── loss.py                         # CTC损失定义
     ├── lr_generator.py                 # 生成每个步骤的学习率
     ├── metric.py                       # warpctc网络准确指标
     ├── warpctc.py                      # warpctc网络定义
     └── warpctc_for_train.py            # 带梯度、损失和梯度剪裁的warpctc网络
+  ├── default_config.yaml               # 参数配置
+  ├── export.py                         # 推理
   ├── mindspore_hub_conf.py             # Mindspore Hub接口
   ├── eval.py                           # 评估网络
   ├── process_data.py                   # 数据集生成脚本
@@ -150,32 +203,32 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 
 ```bash
 # Ascend分布式训练
-用法: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+用法: bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
 # GPU分布式训练
-用法： bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
+用法： bash run_distribute_train_for_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 
 # 单机训练
-用法： bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+用法： bash run_standalone_train.sh [TRAIN_DATA_DIR] [DEVICE_TARGET]
 ```
 
 ### 参数配置
 
-在config.py中可以同时配置训练参数和评估参数。
+在default_config.yaml中可以同时配置训练参数和评估参数。
 
 ```text
-"max_captcha_digits": 4,                    # 每张图像的数字个数上限。
-"captcha_width": 160,                       # captcha图片宽度。
-"captcha_height": 64,                       # capthca图片高度。
-"batch_size": 64,                           # 输入张量批次大小。
-"epoch_size": 30,                           # 只对训练有效，推理固定值为1。
-"hidden_size": 512,                         # LSTM层隐藏大小。
-"learning_rate": 0.01,                      # 初始学习率。
-"momentum": 0.9                             # SGD优化器动量。
-"save_checkpoint": True,                    # 是否保存检查点。
-"save_checkpoint_steps": 97,                # 两个检查点之间的迭代间隙。默认情况下，最后一个检查点将在最后一步迭代结束后保存。
-"keep_checkpoint_max": 30,                  # 只保留最后一个keep_checkpoint_max检查点。
-"save_checkpoint_path": "./checkpoint",     # 检查点保存路径。
+max_captcha_digits: 4                       # 每张图像的数字个数上限。
+captcha_width: 160                          # captcha图片宽度。
+captcha_height: 64                          # capthca图片高度。
+batch_size: 64                              # 输入张量批次大小。
+epoch_size: 30                              # 只对训练有效，推理固定值为1。
+hidden_size: 512                            # LSTM层隐藏大小。
+learning_rate: 0.01                         # 初始学习率。
+momentum: 0.9                               # SGD优化器动量。
+save_checkpoint: True                       # 是否保存检查点。
+save_checkpoint_steps: 97                   # 两个检查点之间的迭代间隙。默认情况下，最后一个检查点将在最后一步迭代结束后保存。
+keep_checkpoint_max: 30                     # 只保留最后一个keep_checkpoint_max检查点。
+save_checkpoint_path: "./checkpoints"       # 检查点保存路径，相对于train.py。
 ```
 
 ## 数据集准备
@@ -184,14 +237,14 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 
 ## 训练过程
 
-- 在`config.py`中设置选项，包括学习率和网络超参数。单击[MindSpore加载数据集教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)，了解更多信息。
+- 在`default_config.yaml`中设置选项，包括学习率和网络超参数。单击[MindSpore加载数据集教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html)，了解更多信息。
 
 ### 训练
 
 - 在Ascend或GPU上运行`run_standalone_train.sh`进行WarpCTC模型的非分布式训练。
 
 ``` bash
-bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+bash run_standalone_train.sh [TRAIN_DATA_DIR] [DEVICE_TARGET]
 ```
 
 ### 分布式训练
@@ -199,13 +252,13 @@ bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 - 在Ascend上运行`run_distribute_train.sh`进行WarpCTC模型的分布式训练。
 
 ``` bash
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 ```
 
 - 在GPU上运行`run_distribute_train_gpu.sh`进行WarpCTC模型的分布式训练。
 
 ``` bash
-bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
+bash run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 ```
 
 ## 评估过程
@@ -215,7 +268,7 @@ bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
 - 运行`run_eval.sh`进行评估。
 
 ``` bash
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 ```
 
 ## 模型描述

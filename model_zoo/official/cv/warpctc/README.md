@@ -104,13 +104,59 @@ The dataset is self-generated using a third-party library called [captcha](https
     # training example on CPU
     $ bash run_standalone_train.sh ../data/train CPU
     or
-    python train.py --dataset_path=./data/train --platform=CPU
+    python train.py --train_data_dir=./data/train --device_target=CPU
 
     # evaluation example on CPU
     $ bash run_eval.sh ../data/test warpctc-30-97.ckpt CPU
     or
-    python eval.py --dataset_path=./data/test --checkpoint_path=warpctc-30-97.ckpt --platform=CPU
+    python eval.py --test_data_dir=./data/test --checkpoint_path=warpctc-30-97.ckpt --device_target=CPU
     ```
+
+    - running on ModelArts
+      If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
+        - 在ModelArt上使用8卡训练
+
+          ```python
+          # (1) Upload the code folder to S3 bucket.
+          # (2) Click to "create training task" on the website UI interface.
+          # (3) Set the code directory to "/{path}/warpctc" on the website UI interface.
+          # (4) Set the startup file to /{path}/warpctc/train.py" on the website UI interface.
+          # (5) Perform a or b.
+          #     a. setting parameters in /{path}/warpctc/default_config.yaml.
+          #         1. Set ”run_distributed=True“
+          #         2. Set ”enable_modelarts=True“
+          #         3. Set ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+          #     b. adding on the website UI interface.
+          #         1. Add ”run_distributed=True“
+          #         2. Add ”enable_modelarts=True“
+          #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+          # (6) Upload the dataset or the zip package of dataset to S3 bucket.
+          # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+          # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+          # (9) Create your job.
+          ```
+
+        - 在ModelArts上使用单卡验证
+
+          ```python
+          # (1) Upload the code folder to S3 bucket.
+          # (2)  Click to "create training task" on the website UI interface.
+          # (3) Set the code directory to "/{path}/warpctc" on the website UI interface.
+          # (4) Set the startup file to /{path}/warpctc/eval.py" on the website UI interface.
+          # (5) Perform a or b.
+          #     a. 在 /path/warpctc 下的default_config.yaml 文件中设置参数
+          #         1. Set ”enable_modelarts=True“
+          #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+          #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+          #     b. 在 网页上设置
+          #         1. Set ”enable_modelarts=True“
+          #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+          #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+          # (6)  Upload the dataset or the zip package of dataset to S3 bucket.
+          # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+          # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+          # (9) Create your job.
+          ```
 
 ## [Script Description](#contents)
 
@@ -119,7 +165,8 @@ The dataset is self-generated using a third-party library called [captcha](https
 ```shell
 .
 └──warpctc
-  ├── README.md
+  ├── README.md                         # descriptions of warpctc
+  ├── README_CN.md                      # chinese descriptions of warpctc
   ├── script
     ├── run_distribute_train.sh         # launch distributed training in Ascend(8 pcs)
     ├── run_distribute_train_for_gpu.sh # launch distributed training in GPU
@@ -127,13 +174,19 @@ The dataset is self-generated using a third-party library called [captcha](https
     ├── run_process_data.sh             # launch dataset generation
     └── run_standalone_train.sh         # launch standalone training(1 pcs)
   ├── src
-    ├── config.py                       # parameter configuration
+    ├── model_utils
+      ├── config.py                     # parsing parameter configuration file of "*.yaml"
+      ├── devcie_adapter.py             # local or ModelArts training
+      ├── local_adapter.py              # get related environment variables in local training
+      └── moxing_adapter.py             # get related environment variables in ModelArts training
     ├── dataset.py                      # data preprocessing
     ├── loss.py                         # ctcloss definition
     ├── lr_generator.py                 # generate learning rate for each step
     ├── metric.py                       # accuracy metric for warpctc network
     ├── warpctc.py                      # warpctc network definition
     └── warpctc_for_train.py            # warpctc network with grad, loss and gradient clip
+  ├── default_config.yaml               # parameter configuration
+  ├── export.py                         # inference
   ├── mindspore_hub_conf.py             # mindspore hub interface
   ├── eval.py                           # eval net
   ├── process_data.py                   # dataset generation script
@@ -146,13 +199,13 @@ The dataset is self-generated using a third-party library called [captcha](https
 
 ```bash
 # distributed training in Ascend
-Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
 # distributed training in GPU
-Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [DATASET_PATH]
+Usage: bash run_distribute_train_for_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 
 # standalone training
-Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+Usage: bash run_standalone_train.sh [TRAIN_DATA_DIR] [DEVICE_TARGET]
 ```
 
 #### Parameters Configuration
@@ -160,18 +213,18 @@ Usage: bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 Parameters for both training and evaluation can be set in config.py.
 
 ```bash
-"max_captcha_digits": 4,                    # max number of digits in each
-"captcha_width": 160,                       # width of captcha images
-"captcha_height": 64,                       # height of capthca images
-"batch_size": 64,                           # batch size of input tensor
-"epoch_size": 30,                           # only valid for taining, which is always 1 for inference
-"hidden_size": 512,                         # hidden size in LSTM layers
-"learning_rate": 0.01,                      # initial learning rate
-"momentum": 0.9                             # momentum of SGD optimizer
-"save_checkpoint": True,                    # whether save checkpoint or not
-"save_checkpoint_steps": 97,                # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
-"keep_checkpoint_max": 30,                  # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./checkpoint",     # path to save checkpoint
+max_captcha_digits: 4                       # max number of digits in each
+captcha_width: 160                          # width of captcha images
+captcha_height: 64                          # height of capthca images
+batch_size: 64                              # batch size of input tensor
+epoch_size: 30                              # only valid for taining, which is always 1 for inference
+hidden_size: 512                            # hidden size in LSTM layers
+learning_rate: 0.01                         # initial learning rate
+momentum: 0.9                               # momentum of SGD optimizer
+save_checkpoint: True                       # whether save checkpoint or not
+save_checkpoint_steps: 97                   # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
+keep_checkpoint_max: 30                     # only keep the last keep_checkpoint_max checkpoint
+save_checkpoint_path: "./checkpoint"        # path to save checkpoint
 ```
 
 ## [Dataset Preparation](#contents)
@@ -180,14 +233,14 @@ Parameters for both training and evaluation can be set in config.py.
 
 ### [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `default_config.yaml`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
 #### [Training](#contents)
 
 - Run `run_standalone_train.sh` for non-distributed training of WarpCTC model, either on Ascend or on GPU.
 
 ``` bash
-bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
+bash run_standalone_train.sh [TRAIN_DATA_DIR] [DEVICE_TARGET]
 ```
 
 ##### [Distributed Training](#contents)
@@ -195,13 +248,13 @@ bash run_standalone_train.sh [DATASET_PATH] [PLATFORM]
 - Run `run_distribute_train.sh` for distributed training of WarpCTC model on Ascend.
 
 ``` bash
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 ```
 
 - Run `run_distribute_train_gpu.sh` for distributed training of WarpCTC model on GPU.
 
 ``` bash
-bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
+bash run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 ```
 
 ### [Evaluation Process](#contents)
@@ -211,7 +264,7 @@ bash run_distribute_train_gpu.sh [RANK_SIZE] [DATASET_PATH]
 - Run `run_eval.sh` for evaluation.
 
 ``` bash
-bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 ```
 
 ## [Model Description](#contents)
