@@ -115,8 +115,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Copy data from device queue by data kernel launching.
   std::vector<AddressPtr> empty_address;
-  auto kernel_mod = AnfAlgo::GetKernelMod(data_kernel_);
-  auto ret = device_context_->LaunchKernel(kernel_mod, empty_address, empty_address, kernel_outputs);
+  auto ret = device_context_->LaunchKernel(data_kernel_, empty_address, empty_address, kernel_outputs);
   if (!ret) {
     std::string error_info = "Launch kernel failed: " + data_kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

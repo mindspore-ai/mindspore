@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <mutex>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/memory_manager.h"
@@ -46,7 +47,7 @@ class CPUDeviceContext : public DeviceContext {
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
-  bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
  private:
@@ -57,6 +58,16 @@ class CPUDeviceContext : public DeviceContext {
 
   void OptimizeGraphImpl(const KernelGraphPtr &graph) const;
 
+  // Launch a kernel and record the elapsed time end to end.
+  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                 const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) const;
+
+  // Launch a kernel by 'KernelMod' of the kernel.
+  bool DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
+
+  mutable std::mutex launch_mutex_;
   uint32_t device_id_;
   std::shared_ptr<MemoryManager> mem_manager_;
   bool initialized_;

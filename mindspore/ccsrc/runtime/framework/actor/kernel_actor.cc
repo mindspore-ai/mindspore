@@ -80,13 +80,12 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
   std::vector<AddressPtr> kernel_inputs;
   std::vector<AddressPtr> kernel_outputs;
   std::vector<AddressPtr> kernel_workspaces;
   FetchLaunchArgs(&kernel_inputs, &kernel_outputs, &kernel_workspaces);
   MS_EXCEPTION_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(kernel_mod, kernel_inputs, kernel_workspaces, kernel_outputs);
+  auto ret = device_context_->LaunchKernel(kernel_, kernel_inputs, kernel_workspaces, kernel_outputs);
   if (!ret) {
     std::string error_info = "Launch kernel failed: " + kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

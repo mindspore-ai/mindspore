@@ -20,6 +20,7 @@
 #include <windows.h>
 #endif
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/framework/device_tensor_store.h"
 
 namespace mindspore {
 namespace runtime {
@@ -43,9 +44,15 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
   return false;
 }
 
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+    // There is device address in tensor, indicating the input tensor is certain kernel's output,
+    // so it's unnecessary to put the input node to host queue data source actor.
+    if (tensor != nullptr && std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
+      return false;
+    }
+
     if (graph == nullptr) {
       return true;
     }

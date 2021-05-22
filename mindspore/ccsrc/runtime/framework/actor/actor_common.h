@@ -21,9 +21,12 @@
 #include "mindrt/include/actor/op_actor.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace runtime {
+using tensor::TensorPtr;
+
 // The execution result of actor.
 constexpr int kSuccess = 0;
 constexpr int kFailure = 1;
@@ -45,7 +48,8 @@ constexpr int kFailure = 1;
 int64_t GetMaxThreadNum();
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node);
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr);
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
+                        const TensorPtr &tensor = nullptr);
 bool IsKernelActor(const AnfNodePtr &node);
 
 // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is

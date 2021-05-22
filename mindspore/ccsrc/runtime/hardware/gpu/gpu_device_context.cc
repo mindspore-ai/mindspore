@@ -31,10 +31,15 @@
 #include "common/trans.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "runtime/device/gpu/gpu_bucket.h"
+#include "profiler/device/gpu/gpu_profiling.h"
+#include "profiler/device/gpu/gpu_profiling_utils.h"
+#include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
+using KernelGraph = mindspore::session::KernelGraph;
+
 static thread_local bool cur_thread_device_inited{false};
 
 bool GPUDeviceContext::Initialize() {
@@ -273,14 +278,61 @@ void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const
 
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
 
-bool GPUDeviceContext::LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                     const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) const {
-  MS_EXCEPTION_IF_NULL(kernel_mod);
+  MS_EXCEPTION_IF_NULL(kernel);
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
+
   std::lock_guard<std::mutex> locker(launch_mutex_);
+
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  if (profiler_inst->GetEnableFlag()) {
+    return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+  }
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+}
+
+bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &workspace,
+                                                 const std::vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  if (profiler::gpu::ProfilingUtils::IsFirstStep(kernel_graph->graph_id())) {
+    profiler::gpu::ProfilingTraceInfo profiling_trace =
+      profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(kernel_graph.get()));
+    profiler_inst->SetStepTraceOpName(profiling_trace);
+  }
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), streams_.front());
+  bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  profiler_inst->OpDataProducerEnd();
+
+  if (profiler_inst->GetSyncEnableFlag()) {
+    CHECK_RET_WITH_RETURN_ERROR(SyncStream(), "Profiler SyncStream failed.");
+  }
+
+  return ret;
+}
+
+bool GPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+                                      const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
 }
 

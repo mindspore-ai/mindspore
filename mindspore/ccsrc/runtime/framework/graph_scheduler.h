@@ -186,7 +186,8 @@ class GraphScheduler {
                                    KernelWithIndex to_kernel_with_input_idx);
   void LinkControlArrowForKernelActor(std::vector<KernelActorPtr> *from_actors, LoopCountActor *to_actor,
                                       GraphExecutionStrategy strategy);
-  void LinkControlArrowForLoopCountActor(const ActorSet *actor_set, GraphExecutionStrategy strategy);
+  void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
+                                         GraphExecutionStrategy strategy);
   void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node);
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
@@ -226,12 +227,12 @@ class GraphScheduler {
 
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
+  std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;
   std::unordered_map<ActorInfo, HostTensorQueuePtr> actor_to_host_queue_;
   // The second element of pair represents the output index of op actor corresponding to the device tensor.
   std::unordered_map<DeviceTensorPtr, GraphOutputPair> device_tensor_to_actor_;
 
   // The local maps and vectors, will be cleared at the beginning of each graph transform.
-  std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;
   // The second element of pair represents the output index of op actor corresponding to the graph output front node.
   std::map<KernelWithIndex, GraphOutputPair, session::KernelWithIndexCmp> graph_output_to_actor_;
   // Beaceuse the copy actors are built in the link, so need record the all copy actors in the link process to push into

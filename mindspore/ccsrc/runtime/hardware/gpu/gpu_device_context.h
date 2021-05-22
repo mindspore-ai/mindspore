@@ -55,7 +55,7 @@ class GPUDeviceContext : public DeviceContext {
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
-  bool LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+  bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
   bool SyncStream(size_t stream_id = 0) const override;
@@ -80,6 +80,15 @@ class GPUDeviceContext : public DeviceContext {
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
 
   bool BindDeviceToCurrentThread() const;
+
+  // Launch a kernel and record the elapsed time end to end.
+  bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                 const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) const;
+
+  // Launch a kernel by 'KernelMod' of the kernel.
+  bool DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
