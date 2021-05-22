@@ -179,6 +179,23 @@ def _tensor_add_list(x, y):
     return F.tensor_add(x, y)
 
 
+@add.register("List", "List")
+def _list_add_list(x, y):
+    """
+        list is added to list.
+
+        Args:
+            x (list): x
+            y (list): y.
+
+        Returns:
+            list, has the same dtype as x.
+    """
+    for i in y:
+        x.append(i)
+    return x
+
+
 @add.register("Tensor", "Tensor")
 def _tensor_add_tensor(x, y):
     """
