@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""".. MindSpore package."""
+""".. run_check package."""
 
 from .run_check import run_check
-from . import common, train, log
-from .common import *
-from .ops import _op_impl
-from .train import *
-from .log import *
-from .version import __version__
+from ._check_version import check_version_and_env_config
 
-all = ["run_check"]
-__all__ = []
-__all__.extend(__version__)
-__all__.extend(run_check.__all__)
-__all__.extend(common.__all__)
-__all__.extend(train.__all__)
-__all__.extend(log.__all__)
+__all__ = ['run_check']

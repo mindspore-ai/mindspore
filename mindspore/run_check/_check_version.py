@@ -20,9 +20,9 @@ from pathlib import Path
 from abc import abstractmethod, ABCMeta
 import numpy as np
 from packaging import version
-from . import log as logger
-from .version import __version__
-from .default_config import __package_name__
+from mindspore import log as logger
+from ..version import __version__
+from ..default_config import __package_name__
 
 
 class EnvChecker(metaclass=ABCMeta):
@@ -282,7 +282,8 @@ class AscendEnvChecker(EnvChecker):
         input_args = ["--mindspore_version=" + __version__]
         for v in self.version:
             input_args.append("--supported_version=" + v)
-        deps_version_checker = os.path.join(os.path.split(os.path.realpath(__file__))[0], "_check_deps_version.py")
+        deps_version_checker = os.path.join(os.path.split(os.path.realpath(__file__))[0],
+                                            "_check_deps_version.py")
         call_cmd = [sys.executable, deps_version_checker] + input_args
         try:
             process = subprocess.run(call_cmd, timeout=3, text=True, capture_output=True, check=False)
@@ -390,7 +391,7 @@ def check_version_and_env_config():
     try:
         # check version of ascend site or cuda
         env_checker.check_version()
-        from . import _c_expression
+        from .. import _c_expression
         env_checker.set_env()
     except ImportError as e:
         env_checker.check_env(e)
