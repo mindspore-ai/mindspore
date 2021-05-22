@@ -28,6 +28,9 @@
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
+#ifdef ENABLE_MODEL_OBF
+#include "tools/obfuscator/include/deobfuscator.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -63,7 +66,30 @@ class LiteModel : public Model {
         return false;
       }
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
+#ifdef ENABLE_MODEL_OBF
+      auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
+      auto src_prim_type = src_prim->value_type();
+      unsigned char *dst_prim = nullptr;
+      if (src_prim_type == schema::PrimitiveType_GenOP) {
+        auto src_node_stat = this->all_nodes_stat_[i];
+        auto dst_prim_type = this->all_prims_type_[i];
+        auto ret = DeObfuscatePrimitive(src_prim, src_node_stat, &dst_prim, schema::PrimitiveType(dst_prim_type));
+        if (!ret) {
+          MS_LOG(ERROR) << "Deobfuscate primitive failed!";
+          delete node;
+          return false;
+        }
+        if (dst_prim == nullptr) {
+          this->all_nodes_.push_back(node);
+          continue;
+        }
+        this->deobf_prims_.push_back(dst_prim);
+        src_prim = reinterpret_cast<const schema::Primitive *>(flatbuffers::GetRoot<schema::Primitive>(dst_prim));
+      }
+      node->primitive_ = const_cast<schema::Primitive *>(src_prim);
+#else
       node->primitive_ = c_node->primitive();
+#endif
       node->quant_type_ = c_node->quantType();
       if (node->quant_type_ == schema::QuantType_PostTraining || node->quant_type_ == schema::QuantType_AwareTraining) {
         node->quant_type_ = schema::QuantType_QUANT_ALL;

@@ -163,8 +163,11 @@
 
 #ifdef GEN_SCHEMA_DEF
 #define OP_ATTR_ONLY(key, type) op_def.append("    ").append(#key).append(": ").append(#type).append(";\n");
+#define OP_ATTR_ONLY_WITH_VALUE(key, type, value) \
+  op_def.append("    ").append(#key).append(": ").append(#type).append(" = ").append(#value).append(";\n");
 #else
 #define OP_ATTR_ONLY(key, type)
+#define OP_ATTR_ONLY_WITH_VALUE(key, type, value)
 #endif
 
 #ifdef GEN_SCHEMA_DEF
