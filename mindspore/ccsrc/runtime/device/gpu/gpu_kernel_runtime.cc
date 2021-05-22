@@ -1210,26 +1210,24 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   }
 
   auto &addr_cache = visit_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
-  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>>::iterator addr_iter;
+  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, session::KernelWithIndex>>::iterator addr_iter;
   if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
-    addr_iter = addr_cache.insert({node, {AnfAlgo::GetInputTensorNum(node), nullptr}}).first;
+    addr_iter = addr_cache.insert({node, std::unordered_map<size_t, session::KernelWithIndex>{}}).first;
   } else {
     addr_iter = iter;
   }
 
-  auto &now_addr = addr_iter->second[i];
-  if (now_addr == nullptr) {
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
-    now_addr = device_address;
-  } else {
-    auto addr_state_iter = addr_state_.find(now_addr);
-    if (addr_state_iter != addr_state_.end() && addr_state_iter->second == false) {
-      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
-      now_addr = device_address;
-    }
+  if (auto valueiter = addr_iter->second.find(i); valueiter == addr_iter->second.end()) {
+    session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, i, visit_nop_node);
+    addr_iter->second[i] = kernel_with_index;
   }
 
-  return now_addr;
+  session::KernelWithIndex prev_node_with_index = addr_iter->second[i];
+  auto kernel_info = static_cast<device::KernelInfo *>(prev_node_with_index.first->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto addr = kernel_info->GetMutableOutputAddr(prev_node_with_index.second);
+
+  return addr;
 }
 
 DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
