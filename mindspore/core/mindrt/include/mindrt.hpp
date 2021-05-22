@@ -43,7 +43,7 @@ AID Spawn(ActorReference actor, bool sharedThread = true, bool start = true);
 void Await(const ActorReference &actor);
 
 // brief get actor with aid
-ActorReference GetActor(const AID &actor);
+ActorBase *GetActor(const AID &actor);
 
 // brief wait for the actor process to exit
 void Await(const AID &actor);

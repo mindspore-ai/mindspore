@@ -31,7 +31,7 @@ namespace mindspore {
 
 using MessageHandler = std::function<void(ActorBase *)>;
 
-void Async(const AID &aid, std::unique_ptr<MessageHandler> handler);
+void Async(const AID &aid, std::unique_ptr<MessageHandler> &&handler);
 
 namespace internal {
 

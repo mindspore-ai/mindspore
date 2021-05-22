@@ -119,21 +119,21 @@ void ActorMgr::Finalize() {
   MS_LOG(INFO) << "mindrt IOMGRS finish exiting.";
 }
 
-ActorReference ActorMgr::GetActor(const AID &id) {
-  ActorReference result;
-  actorsMutex.lock();
-  auto actorIt = actors.find(id.Name());
+ActorBase *ActorMgr::GetActor(const AID &id) {
+  actorsMutex.lock_shared();
+  const auto &actorIt = actors.find(id.Name());
   if (actorIt != actors.end()) {
-    result = actorIt->second;
+    auto &result = actorIt->second;
+    actorsMutex.unlock_shared();
+    return result.get();
   } else {
+    actorsMutex.unlock_shared();
     MS_LOG(DEBUG) << "can't find ACTOR with name=" << id.Name().c_str();
-    result = nullptr;
+    return nullptr;
   }
-  // find the
-  actorsMutex.unlock();
-  return result;
 }
-int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteLink, bool isExactNotRemote) {
+
+int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> &&msg, bool remoteLink, bool isExactNotRemote) {
   // The destination is local
   if (IsLocalAddres(to)) {
     auto actor = GetActor(to);
@@ -145,7 +145,6 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
     } else {
       return ACTOR_NOT_FIND;
     }
-
   } else {
     // send to remote actor
     if (msg->GetType() != MessageBase::Type::KMSG) {
@@ -155,7 +154,7 @@ int ActorMgr::Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteL
       // null
     }
     msg->SetTo(to);
-    auto io = ActorMgr::GetIOMgrRef(to);
+    auto &io = ActorMgr::GetIOMgrRef(to);
     if (io != nullptr) {
       return io->Send(std::move(msg), remoteLink, isExactNotRemote);
     } else {

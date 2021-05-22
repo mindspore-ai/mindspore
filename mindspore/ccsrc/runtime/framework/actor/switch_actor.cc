@@ -34,7 +34,21 @@ constexpr size_t kSwitchFalseBranchPos = 3;
 constexpr size_t kPartialFuncGraphPos = 1;
 constexpr size_t kPartialInputStartPos = 2;
 
-void SwitchActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) {
+void SwitchActor::Init() {
+  // Init output data.
+  output_data_.resize(output_branch_arrows_.size());
+  for (size_t i = 0; i < output_branch_arrows_.size(); ++i) {
+    auto &output_branch_arrow = output_branch_arrows_[i];
+    auto &output_data = output_data_[i];
+    for (auto &data_arrow : output_branch_arrow) {
+      MS_EXCEPTION_IF_NULL(data_arrow);
+      auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+      output_data.emplace_back(std::move(data));
+    }
+  }
+}
+
+void SwitchActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
@@ -228,15 +242,21 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
   if (index >= output_branch_arrows_.size()) {
     MS_LOG(EXCEPTION) << "Switch actor invalid index:" << index;
   }
-  for (const auto &arrow : output_branch_arrows_[index]) {
-    auto device_address = input_device_tensors_[arrow->from_output_index_];
-    auto data = std::make_shared<OpData<DeviceTensor>>(arrow->to_op_id_, device_address, arrow->to_input_index_);
-    Async(arrow->to_op_id_, &OpActor::RunOpData, data, context);
+
+  auto &output_branch_arrow = output_branch_arrows_[index];
+  auto &output_data = output_data_[index];
+  for (size_t i = 0; i < output_branch_arrow.size(); ++i) {
+    auto &data_arrow = output_branch_arrow[i];
+    auto &data = output_data[i];
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    MS_EXCEPTION_IF_NULL(data);
+    data->data_ = input_device_tensors_[data_arrow->from_output_index_];
+    Async(data_arrow->to_op_id_, &OpActor::RunOpData, data.get(), context);
   }
 }
 
 void SwitchActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_device_tensors_, device_context_, context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensors_, device_context_, context);
 }
 
 }  // namespace runtime

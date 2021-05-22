@@ -18,6 +18,8 @@
 #define MINDSPORE_CORE_MINDRT_SRC_ACTOR_ACTORPOLICY_H
 #include <list>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "actor/actorpolicyinterface.h"
 
@@ -30,7 +32,7 @@ class ShardedThread : public ActorPolicy {
 
  protected:
   virtual void Terminate(const ActorBase *actor);
-  virtual int EnqueMessage(std::unique_ptr<MessageBase> &msg);
+  virtual int EnqueMessage(std::unique_ptr<MessageBase> &&msg);
   virtual std::list<std::unique_ptr<MessageBase>> *GetMsgs();
   virtual void Notify();
 
@@ -47,7 +49,7 @@ class SingleThread : public ActorPolicy {
 
  protected:
   virtual void Terminate(const ActorBase *actor);
-  virtual int EnqueMessage(std::unique_ptr<MessageBase> &msg);
+  virtual int EnqueMessage(std::unique_ptr<MessageBase> &&msg);
   virtual std::list<std::unique_ptr<MessageBase>> *GetMsgs();
   virtual void Notify();
 

@@ -36,11 +36,18 @@ class MemoryManagerActor : public ActorBase {
   ~MemoryManagerActor() override = default;
 
   // The process entry of memory alloc.
-  void AllocateMemory(std::vector<DeviceTensor *> alloc_list, const DeviceContext *device_context,
+  void AllocateMemory(std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context,
                       OpContext<DeviceTensor> *op_context, const AID from_aid);
+  // device_contexts is from different device, the size of device_contexts must be equal to the alloc_list.
+  void AllocateBatchMemory(std::vector<DeviceTensor *> *alloc_list, std::vector<const DeviceContext *> *device_contexts,
+                           OpContext<DeviceTensor> *op_context, const AID from_aid);
+
   // The process entry of memory free.
-  void FreeMemory(std::vector<DeviceTensor *> free_list, const DeviceContext *device_context,
+  void FreeMemory(std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
                   OpContext<DeviceTensor> *op_context);
+  // device_contexts is from different device, the size of device_contexts must be equal to the free_list.
+  void FreeBatchMemory(std::vector<DeviceTensor *> *free_list, std::vector<const DeviceContext *> *device_contexts,
+                       OpContext<DeviceTensor> *op_context);
 };
 }  // namespace runtime
 }  // namespace mindspore

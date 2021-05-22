@@ -24,18 +24,21 @@
 
 namespace mindspore {
 namespace runtime {
+void DataSourceActor::Init() {
+  // Init output data.
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+    output_data_.emplace_back(std::move(data));
+  }
+}
+
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
-  if (buffers_.size() == buffer_capacity_) {
-    // Note that SendMemoryFreeReq must be before SendOutput, because SendOutput will trigger SendMemoryAllocReq of the
-    // next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-    // current actor is before SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the other
-    // is to ensure the execution order and avoid the illegal memory timing problem.
-    SendMemoryFreeReq(context);
-    SendOutput(context);
+  // Pop the data of last time.
+  if (!buffers_.empty()) {
     buffers_.pop();
-    return;
   }
 
   // Construct device tensors and fill to the buffers from member nodes.
@@ -52,7 +55,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
   // No output.
-  if ((output_op_arrows_.size() == 0) && (output_result_arrows_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_result_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
@@ -65,37 +68,39 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
 
   // Send output data.
   const auto &output_device_tensors = buffers_.front();
-  for (const auto &op_arrow : output_op_arrows_) {
-    MS_EXCEPTION_IF_NULL(op_arrow);
-    if (IntToSize(op_arrow->from_output_index_) >= output_device_tensors.size()) {
+  for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
+    auto &data_arrow = output_data_arrows_[i];
+    auto &output_data = output_data_[i];
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    MS_EXCEPTION_IF_NULL(output_data);
+    if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors.size()) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
     }
-    auto &device_address = output_device_tensors[op_arrow->from_output_index_];
-    auto data = std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, device_address, op_arrow->to_input_index_);
-    Async(op_arrow->to_op_id_, &KernelActor::RunOpData, data, context);
+    output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
+    Async(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
   }
 }
 
 void DeviceQueueDataSourceActor::FillDataBuffer() {
+  MS_EXCEPTION_IF_NULL(kernel_info_);
   // Construct device tensors.
   std::vector<DeviceTensor *> device_tensors;
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(data_kernel_); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(data_kernel_, i, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    device_tensors.emplace_back(device_address.get());
+  for (auto &device_tensor : kernel_info_->output_address_list()) {
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    device_tensors.emplace_back(device_tensor.get());
   }
 
   buffers_.push(device_tensors);
 }
 
 void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.back();
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_context_, context, GetAID());
+  auto &device_tensors = buffers_.back();
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_context_, context, GetAID());
 }
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.front();
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_context_, context);
+  auto &device_tensors = buffers_.front();
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_context_, context);
 }
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
@@ -106,7 +111,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   }
 
   // Construct outputs of data kernel launching.
-  auto device_tensors = buffers_.back();
+  auto &device_tensors = buffers_.back();
   std::vector<AddressPtr> kernel_outputs;
   for (auto &device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -122,12 +127,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   }
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
-  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
+  // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
+  // the other is to ensure the execution order and avoid the illegal memory timing problem.
   SendMemoryFreeReq(context);
   SendOutput(context);
-  buffers_.pop();
 }
 
 void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
@@ -151,28 +155,22 @@ void HostQueueDataSourceActor::FillDataBuffer() {
 }
 
 void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.back();
+  auto &device_tensors = buffers_.back();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, device_tensors, device_contexts_[0], context,
+    Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0], context,
           GetAID());
   } else {
-    for (size_t i = 0; i < device_tensors.size(); ++i) {
-      std::vector<DeviceTensor *> alloc_list({device_tensors[i]});
-      Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, device_contexts_[i], context,
-            GetAID());
-    }
+    Async(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors, &device_contexts_, context,
+          GetAID());
   }
 }
 
 void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  auto device_tensors = buffers_.front();
+  auto &device_tensors = buffers_.front();
   if (IsSameDeviceType()) {
-    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, device_tensors, device_contexts_[0], context);
+    Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &device_tensors, device_contexts_[0], context);
   } else {
-    for (size_t i = 0; i < device_tensors.size(); ++i) {
-      std::vector<DeviceTensor *> free_list({device_tensors[i]});
-      Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, free_list, device_contexts_[i], context);
-    }
+    Async(memory_manager_aid_, &MemoryManagerActor::FreeBatchMemory, &device_tensors, &device_contexts_, context);
   }
 }
 
@@ -184,8 +182,11 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
 
   // Get host tensors from host queue and get device tensors from buffers.
   MS_EXCEPTION_IF_NULL(host_queue_);
-  auto host_tensors = host_queue_->PullData();
-  auto device_tensors = buffers_.back();
+  if (host_queue_->IsEmpty()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Host data queue is empty.");
+  }
+  auto &host_tensors = host_queue_->PullData();
+  auto &device_tensors = buffers_.back();
   if (host_tensors.size() != device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context),
                                       "The length of host tensors is not equal to the length of device tensors.");
@@ -193,8 +194,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
 
   // Copy data from host tensor to device tensor.
   for (size_t i = 0; i < host_tensors.size(); ++i) {
-    auto host_tensor = host_tensors[i];
-    auto device_tensor = device_tensors[i];
+    auto &host_tensor = host_tensors[i];
+    auto &device_tensor = device_tensors[i];
     MS_EXCEPTION_IF_NULL(host_tensor);
     MS_EXCEPTION_IF_NULL(device_tensor);
     if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(data_nodes_[i], 0),
@@ -203,14 +204,14 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   }
+  host_queue_->PopData();
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
-  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
+  // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
+  // the other is to ensure the execution order and avoid the illegal memory timing problem.
   SendMemoryFreeReq(context);
   SendOutput(context);
-  buffers_.pop();
 }
 
 void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {

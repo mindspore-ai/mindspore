@@ -59,7 +59,7 @@ void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
                     << ",m=" << msg->Name().c_str();
   }
 }
-int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> msg) { return actorThread->EnqueMessage(msg); }
+int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> &&msg) { return actorThread->EnqueMessage(std::move(msg)); }
 
 void ActorBase::Quit() {
   Finalize();

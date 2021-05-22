@@ -33,17 +33,13 @@ class HostTensorQueue {
   HostTensorQueue() = default;
   virtual ~HostTensorQueue() = default;
 
-  void PushData(std::vector<TensorPtr> tensors) { buffers_.push(tensors); }
+  void PushData(const std::vector<TensorPtr> &tensors) { buffers_.push(tensors); }
 
-  std::vector<TensorPtr> PullData() {
-    if (buffers_.empty()) {
-      std::vector<TensorPtr> empty_tensor;
-      return empty_tensor;
-    }
-    auto tensors = buffers_.front();
-    buffers_.pop();
-    return tensors;
-  }
+  const std::vector<TensorPtr> &PullData() { return buffers_.front(); }
+
+  bool IsEmpty() const { return buffers_.empty(); }
+
+  void PopData() { buffers_.pop(); }
 
  private:
   std::queue<std::vector<TensorPtr>> buffers_;

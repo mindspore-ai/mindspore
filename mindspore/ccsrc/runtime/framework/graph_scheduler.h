@@ -44,10 +44,10 @@ using ActorInfo = std::string;
 // The second element of pair represents the output index of op actor corresponding to the graph output node.
 using GraphOutputPair = std::pair<OpActor<DeviceTensor> *, size_t>;
 
-// OpArrowPair represent data edge between from actor and to actor.
+// DataArrowPair represent data edge between from actor and to actor.
 // The first element of pair is the AID of from actor, and
 // second element is op arrow between actors.
-using OpArrowPair = std::pair<AID, OpArrowPtr>;
+using DataArrowPair = std::pair<AID, DataArrowPtr>;
 
 enum class GraphExecutionStrategy {
   kPipeline,  // The actor running is triggered only by data.
@@ -198,7 +198,7 @@ class GraphScheduler {
   void PrepareForDynamiclyLink(ActorSet *actor_set, const CNodePtr &kernel, const AID &aid,
                                const std::vector<TensorPtr> *input_tensors);
   // Link to prev actor dynamically, and send message to prev actor to add the
-  // new OpArrow and send output data back, the method must execute after calling Schedule.
+  // new DataArrow and send output data back, the method must execute after calling Schedule.
   void LinkDataArrowForKernelActorDynamicly(const ActorSet *actor_set);
 
   // Check whether the actor set is valid.

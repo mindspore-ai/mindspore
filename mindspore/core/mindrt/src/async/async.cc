@@ -21,7 +21,7 @@ namespace mindspore {
 
 class MessageAsync : public MessageBase {
  public:
-  explicit MessageAsync(std::unique_ptr<MessageHandler> h)
+  explicit MessageAsync(std::unique_ptr<MessageHandler> &&h)
       : MessageBase("Async", Type::KASYNC), handler(std::move(h)) {}
 
   ~MessageAsync() override {}
@@ -32,7 +32,7 @@ class MessageAsync : public MessageBase {
   std::unique_ptr<MessageHandler> handler;
 };
 
-void Async(const AID &aid, std::unique_ptr<std::function<void(ActorBase *)>> handler) {
+void Async(const AID &aid, std::unique_ptr<std::function<void(ActorBase *)>> &&handler) {
   std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
