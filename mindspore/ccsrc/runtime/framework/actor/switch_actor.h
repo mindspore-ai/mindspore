@@ -68,7 +68,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // Fetch the args of switch branch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   void SendOutput(OpContext<DeviceTensor> *context);
-  void FreeMemory(OpContext<DeviceTensor> *context);
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context);
 
   // All inputs of the switch actor, excluding weight and tensor.
   // Used to receive input data, the first input is the condition of switch.

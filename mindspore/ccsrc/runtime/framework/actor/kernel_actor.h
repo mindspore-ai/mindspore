@@ -23,7 +23,7 @@
 #include <utility>
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/memory_interface_actor.h"
+#include "runtime/framework/actor/memory_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -38,12 +38,12 @@ using mindspore::kernel::AddressPtr;
 using mindspore::tensor::TensorPtr;
 
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
-// The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> AllocateMemory
-// -> OnMemoryAllocFinish -> LaunchKernel -> FreeMemory -> SendOutput.
-class KernelActor : public MemoryInterfaceActor {
+// The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> SendMemoryAllocReq
+// -> OnMemoryAllocFinish -> LaunchKernel -> SendMemoryFreeReq -> SendOutput.
+class KernelActor : public MemoryAwareActor {
  public:
   KernelActor(std::string name, CNodePtr kernel, const DeviceContext *device_context, const AID memory_manager_aid)
-      : MemoryInterfaceActor(name),
+      : MemoryAwareActor(name),
         kernel_(kernel),
         device_context_(device_context),
         memory_manager_aid_(memory_manager_aid),
@@ -60,8 +60,8 @@ class KernelActor : public MemoryInterfaceActor {
                                    const std::vector<TensorPtr> *input_tensors);
 
   // The memory related operation interface.
-  void AllocateMemory(OpContext<DeviceTensor> *context) override;
-  void FreeMemory(OpContext<DeviceTensor> *context) override;
+  void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
+  void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
   // The real kernel launch processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 

@@ -1579,8 +1579,10 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
         continue;
       }
-      ofs << "\t\tdevcie tensor key:" << value_node->fullname_with_scope() << "\n";
-      const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(value_node.get());
+      const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+      const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
+      ofs << "\t\tdevcie tensor key:" << front_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
+          << "\n";
       for (const auto &device_tensor : device_tensors) {
         ofs << "\t\t\tdevcie tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
@@ -1594,8 +1596,9 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         continue;
       }
       const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
-      ofs << "\t\tdevcie tensor key:" << front_node->fullname_with_scope() << "\n";
       const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
+      ofs << "\t\tdevcie tensor key:" << front_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
+          << "\n";
       for (const auto &device_tensor : device_tensors) {
         ofs << "\t\t\tdevcie tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()

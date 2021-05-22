@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_INTERFACE_ACTOR_H_
-#define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_INTERFACE_ACTOR_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_AWARE_ACTOR_H_
+#define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_AWARE_ACTOR_H_
 
 #include <utility>
 #include <string>
@@ -25,15 +25,15 @@
 namespace mindspore {
 namespace runtime {
 // The actor represents a set of common memory related operations of actor.
-class MemoryInterfaceActor : public OpActor<DeviceTensor> {
+class MemoryAwareActor : public OpActor<DeviceTensor> {
  public:
-  explicit MemoryInterfaceActor(std::string name) : OpActor(name) {}
-  virtual ~MemoryInterfaceActor() = default;
-  virtual void AllocateMemory(OpContext<DeviceTensor> *context) = 0;
-  virtual void FreeMemory(OpContext<DeviceTensor> *context) = 0;
+  explicit MemoryAwareActor(std::string name) : OpActor(name) {}
+  virtual ~MemoryAwareActor() = default;
+  virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *context) = 0;
+  virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *context) = 0;
   virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) = 0;
 };
 }  // namespace runtime
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_INTERFACE_ACTOR_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_MEMORY_AWARE_ACTOR_H_
