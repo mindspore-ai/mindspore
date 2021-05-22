@@ -73,7 +73,6 @@ dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
 python ${dirname_path}/${SCRIPT_NAME} \
     --run_platform=$PLATFORM \
-    --world_size=1 \
     --mindrecord_path=$MINDRECORD_FILE \
     --pretrained=$PRETRAINED_BACKBONE > train.log  2>&1 &
 

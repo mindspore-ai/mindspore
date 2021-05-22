@@ -88,7 +88,7 @@ YOLOv3使用DarkNet53执行特征提取，这是YOLOv2中的Darknet-19和残差�
     - 使用src路径下的convert_weight.py脚本将darknet53.conv.74转换成mindspore ckpt格式。
 
       ```command
-      python convert_weight.py --input_file ./darknet53.conv.74
+      python src/convert_weight.py --input_file ./darknet53.conv.74
       ```
 
       可以从网站[下载](https://pjreddie.com/media/files/darknet53.conv.74) darknet53.conv.74文件。

@@ -28,9 +28,9 @@ def test_FaceDetection_WIDER():
     model_name = "FaceDetection"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
-    old_list = ["'max_epoch': 2500,"]
-    new_list = ["'max_epoch': 1,"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config.py"))
+    old_list = ["max_epoch: 2500"]
+    new_list = ["max_epoch: 1"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "default_config.yaml"))
     dataset_path = os.path.join(utils.data_root, "widerface/mindrecord_train/data.mindrecord")
     device_id = int(os.environ.get("DEVICE_ID", "0"))
     model_train_command = "cd {}/scripts;sh run_standalone_train.sh Ascend {} {}"\

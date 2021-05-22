@@ -84,7 +84,7 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
     - Pretrained_backbone can use src/convert_weight.py, convert darknet53.conv.74 to mindspore ckpt.
 
       ```
-      python convert_weight.py --input_file ./darknet53.conv.74
+      python src/convert_weight.py --input_file ./darknet53.conv.74
       ```
 
       darknet53.conv.74 can get from [download](https://pjreddie.com/media/files/darknet53.conv.74) .
