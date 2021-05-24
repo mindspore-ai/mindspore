@@ -40,11 +40,11 @@ namespace text {
 
 #ifndef _WIN32
 /// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
-/// \notes BasicTokenizer is not supported on Windows platform yet.
+/// \note BasicTokenizer is not supported on Windows platform yet.
 class BasicTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation on input text to
+  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode), RegexReplace operation on input text to
   ///   fold the text to lower case and strip accents characters. If false, only apply
   ///   NormalizeUTF8('normalization_form' mode) operation on input text (default=false).
   /// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
@@ -71,7 +71,7 @@ class BasicTokenizer final : public TensorTransform {
 };
 
 /// \brief Tokenizer used for Bert text process.
-/// \notes BertTokenizer is not supported on Windows platform yet.
+/// \note BertTokenizer is not supported on Windows platform yet.
 class BertTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -80,7 +80,7 @@ class BertTokenizer final : public TensorTransform {
   /// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
   /// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
   ///   string, else return the string specified(default='[UNK]').
-  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation on input text to
+  /// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8 (NFD mode), RegexReplace operation on input text to
   ///   fold the text to lower case and strip accents characters. If false, only apply
   ///   NormalizeUTF8('normalization_form' mode) operation on input text (default=false).
   /// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
@@ -127,13 +127,13 @@ class CaseFold final : public TensorTransform {
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  //// \return Shared pointer to TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 #endif
 
 /// \brief Tokenize Chinese string into words based on dictionary.
-/// \notes The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
+/// \note The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
 class JiebaTokenizer final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -161,10 +161,12 @@ class JiebaTokenizer final : public TensorTransform {
   ///   The added word will not be written into the built-in dictionary on disk.
   /// \param[in] freq The frequency of the word to be added. The higher the frequency,
   ///   the better chance the word will be tokenized (default=None, use default frequency).
+  /// \return Status error code, returns OK if no error encountered.
   Status AddWord(const std::string &word, int64_t freq = 0) { return AddWordChar(StringToChar(word), freq); }
 
   /// \brief Add user defined dictionary of word-freq pairs to JiebaTokenizer's dictionary.
   /// \param[in] user_dict Vector of word-freq pairs to be added to JiebaTokenizer's dictionary.
+  /// \return Status error code, returns OK if no error encountered.
   Status AddDict(const std::vector<std::pair<std::string, int64_t>> &user_dict) {
     return AddDictChar(PairStringInt64ToPairCharInt64(user_dict));
   }
@@ -173,6 +175,7 @@ class JiebaTokenizer final : public TensorTransform {
   ///   Only valid word-freq pairs in user provided file will be added into the dictionary.
   ///   Rows containing invalid input will be ignored, no error nor warning Status is returned.
   /// \param[in] file_path Path to the dictionary which includes user defined word-freq pairs.
+  /// \return Status error code, returns OK if no error encountered.
   Status AddDict(const std::string &file_path) { return AddDictChar(StringToChar(file_path)); }
 
  protected:
@@ -322,7 +325,7 @@ class RegexTokenizer final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] delim_pattern The pattern of regex delimiters.
   /// \param[in] keep_delim_pattern The string matched by 'delim_pattern' can be kept as a token if it can be
-  ///   matched by 'keep_delim_pattern'. The default value is an empty string ("")
+  ///   matched by 'keep_delim_pattern'. The default value is an empty string ("").
   ///   which means that delimiters will not be kept as an output token (default="").
   /// \param[in] with_offsets Whether or not output offsets of tokens (default=false).
   explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false)

@@ -67,19 +67,19 @@ class Sampler : std::enable_shared_from_this<Sampler> {
 };
 
 /// \brief A class to represent a Distributed Sampler in the data pipeline.
-/// \notes A Sampler that accesses a shard of the dataset.
+/// \note A Sampler that accesses a shard of the dataset.
 class DistributedSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] num_shards - Number of shards to divide the dataset into.
-  /// \param[in] shard_id - Shard ID of the current shard within num_shards.
-  /// \param[in] shuffle - If true, the indices are shuffled.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
-  /// \param[in] seed - The seed in use when shuffle is true.
-  /// \param[in] offset - The starting position where access to elements in the dataset begins.
-  /// \param[in] even_dist - If true, each shard would return the same number of rows (default to true).
+  /// \param[in] num_shards Number of shards to divide the dataset into.
+  /// \param[in] shard_id Shard ID of the current shard within num_shards.
+  /// \param[in] shuffle If true, the indices are shuffled (default=true).
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \param[in] seed The seed in use when shuffle is true (default=1).
+  /// \param[in] offset The starting position where access to elements in the dataset begins (default=-1).
+  /// \param[in] even_dist If true, each shard would return the same number of rows (default=true).
   ///     If false the total rows returned by all the shards would not have overlap.
   explicit DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true, int64_t num_samples = 0,
                               uint32_t seed = 1, int64_t offset = -1, bool even_dist = true);
@@ -102,16 +102,16 @@ class DistributedSampler final : public Sampler {
 };
 
 /// \brief A class to represent a PK Sampler in the data pipeline.
-/// \notes Samples K elements for each P class in the dataset.
+/// \note Samples K elements for each P class in the dataset.
 ///        This will sample all classes.
 class PKSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] num_val - Number of elements to sample for each class.
-  /// \param[in] shuffle - If true, the class IDs are shuffled.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] num_val Number of elements to sample for each class.
+  /// \param[in] shuffle If true, the class IDs are shuffled (default=false).
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   explicit PKSampler(int64_t num_val, bool shuffle = false, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -129,14 +129,14 @@ class PKSampler final : public Sampler {
 };
 
 /// \brief A class to represent a Random Sampler in the data pipeline.
-/// \notes Samples the elements randomly.
+/// \note Samples the elements randomly.
 class RandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] replacement - If true, put the sample ID back for the next draw.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] replacement If true, put the sample ID back for the next draw (default=false).
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   explicit RandomSampler(bool replacement = false, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -153,14 +153,14 @@ class RandomSampler final : public Sampler {
 };
 
 /// \brief A class to represent a Sequential Sampler in the data pipeline.
-/// \notes Samples the dataset elements sequentially, same as not having a sampler.
+/// \note Samples the dataset elements sequentially, same as not having a sampler.
 class SequentialSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] start_index - Index to start sampling at (default to start at first id).
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] start_index Index to start sampling at (default=0, start at first id).
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   explicit SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -177,14 +177,14 @@ class SequentialSampler final : public Sampler {
 };
 
 /// \brief A class to represent a Subset Sampler in the data pipeline.
-/// \notes Samples the elements from a sequence of indices.
+/// \note Samples the elements from a sequence of indices.
 class SubsetSampler : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] indices - A vector sequence of indices.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] indices A vector sequence of indices.
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   explicit SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -200,14 +200,14 @@ class SubsetSampler : public Sampler {
 };
 
 /// \brief A class to represent a Subset Random Sampler in the data pipeline.
-/// \notes Samples the elements randomly from a sequence of indices.
+/// \note Samples the elements randomly from a sequence of indices.
 class SubsetRandomSampler final : public SubsetSampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] indices - A vector sequence of indices.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] indices A vector sequence of indices.
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   explicit SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -220,16 +220,16 @@ class SubsetRandomSampler final : public SubsetSampler {
 };
 
 /// \brief A class to represent a Weighted Random Sampler in the data pipeline.
-/// \notes Samples the elements from [0, len(weights) - 1] randomly with the given
+/// \note Samples the elements from [0, len(weights) - 1] randomly with the given
 ///        weights (probabilities).
 class WeightedRandomSampler final : public Sampler {
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
  public:
   /// \brief Constructor
-  /// \param[in] weights - A vector sequence of weights, not necessarily summing up to 1.
-  /// \param[in] num_samples - The number of samples to draw (default to all elements).
-  /// \param[in] replacement - If true, put the sample ID back for the next draw.
+  /// \param[in] weights A vector sequence of weights, not necessarily summing up to 1.
+  /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \param[in] replacement If true, put the sample ID back for the next draw (default=true).
   explicit WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
   /// \brief Destructor.

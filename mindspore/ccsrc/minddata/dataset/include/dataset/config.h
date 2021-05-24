@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ int32_t get_callback_timeout();
 
 /// \brief Function to load configuration from a file.
 /// \param[in] file path of the configuration file to be loaded.
-/// \note This api exists because std::string will constrained by ABI compile macro but char don't.
+/// \note This API exists because std::string will constrained by ABI compile option while char don't.
 bool load(const std::vector<char> &file);
 
 /// \brief Function to load configuration from a file.

@@ -56,13 +56,13 @@ class Iterator {
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ops - a vector of DatasetOp in the data pipeline.
   /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode, default -1, infinite epochs
-  /// \return - a Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error encountered.
   Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
-  /// \return - a Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error encountered.
   Status GetNextRow(MSTensorMap *row) {
     MSTensorMapChar row_;
     row_.clear();
@@ -73,13 +73,13 @@ class Iterator {
   }
 
   // Char interface(CharIF) of GetNextRow
-  // This api exists because std::string will constrained by ABI compile macro but char don't.
+  // This This API exists because std::string will constrained by ABI compile option while char don't.
   Status GetNextRowCharIF(MSTensorMapChar *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
-  /// \return - a Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error encountered.
   virtual Status GetNextRow(MSTensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
@@ -127,22 +127,22 @@ class PullIterator : public Iterator {
 
   /// \brief Function to get next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
-  /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
+  /// \param[out] row The output tensor row.
+  /// \return Status error code, returns OK if no error encountered else false.
   Status GetNextRow(MSTensorVec *const row) override;
 
   /// \brief Function to get specified rows from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \note This behavior is subject to change
-  /// \param[in] num_rows - the number of rows to fetch.
-  /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
+  /// \param[in] num_rows The number of rows to fetch.
+  /// \param[out] row The output tensor row.
+  /// \return Status error code, returns OK if no error encountered else false.
   Status GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row);
 
   /// \brief Method for building and launching the pipeline.
   /// \note Consider making this function protected.
   /// \param[in] ds - The root node that calls the function
-  /// \return - a Status error code, returns OK if no error encountered.
+  /// \return Status error code, returns OK if no error encountered.
   Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
 
  private:

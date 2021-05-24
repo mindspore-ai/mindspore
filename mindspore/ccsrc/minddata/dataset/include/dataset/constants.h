@@ -26,43 +26,43 @@ namespace dataset {
 using uchar = unsigned char;
 using dsize_t = int64_t;
 
-// Target devices to perform map operation
+/// \brief Target devices to perform map operation
 enum class MapTargetDevice { kCpu, kGpu, kAscend310 };
 
-// Possible dataset types for holding the data and client type
+/// \brief Possible dataset types for holding the data and client type
 enum class DatasetType { kUnknown, kArrow, kTf };
 
-// Possible flavours of Tensor implementations
+/// \brief Possible flavours of Tensor implementations
 enum class TensorImpl { kNone, kFlexible, kCv, kNP };
 
-// Possible values for shuffle
+/// \brief Possible values for shuffle
 enum class ShuffleMode { kFalse = 0, kFiles = 1, kGlobal = 2, kInfile = 3 };
 
-// Possible values for Border types
+/// \brief Possible values for Border types
 enum class BorderType { kConstant = 0, kEdge = 1, kReflect = 2, kSymmetric = 3 };
 
-// Possible values for Image format types in a batch
+/// \brief Possible values for Image format types in a batch
 enum class ImageBatchFormat { kNHWC = 0, kNCHW = 1 };
 
-// Possible values for Image format types
+/// \brief Possible values for Image format types
 enum class ImageFormat { HWC = 0, CHW = 1, HW = 2 };
 
-// Possible interpolation modes
+/// \brief Possible interpolation modes
 enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3, kCubicPil = 4 };
 
-// Possible JiebaMode modes
+/// \brief Possible JiebaMode modes
 enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };
 
-// Possible values for SPieceTokenizerOutType
+/// \brief Possible values for SPieceTokenizerOutType
 enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
 
-// Possible values for SPieceTokenizerLoadType
+/// \brief Possible values for SPieceTokenizerLoadType
 enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
 
-// Possible values for SentencePieceModel
+/// \brief Possible values for SentencePieceModel
 enum class SentencePieceModel { kUnigram = 0, kBpe = 1, kChar = 2, kWord = 3 };
 
-// Possible values for NormalizeForm
+/// \brief Possible values for NormalizeForm
 enum class NormalizeForm {
   kNone = 0,
   kNfc,
@@ -71,7 +71,7 @@ enum class NormalizeForm {
   kNfkd,
 };
 
-// Possible values for Mask
+/// \brief Possible values for Mask
 enum class RelationalOp {
   kEqual = 0,     // ==
   kNotEqual,      // !=
@@ -81,7 +81,7 @@ enum class RelationalOp {
   kGreaterEqual,  // >=
 };
 
-// Possible values for SamplingStrategy
+/// \brief Possible values for SamplingStrategy
 enum class SamplingStrategy { kRandom = 0, kEdgeWeight = 1 };
 
 // convenience functions for 32bit int bitmask

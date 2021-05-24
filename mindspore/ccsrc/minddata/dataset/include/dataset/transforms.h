@@ -128,7 +128,7 @@ class SliceOption {
 namespace transforms {
 
 /// \brief Compose Op.
-/// \notes Compose a list of transforms into a single transform.
+/// \note Compose a list of transforms into a single transform.
 class Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -155,7 +155,7 @@ class Compose final : public TensorTransform {
 };
 
 /// \brief Concatenate Op.
-/// \notes Tensor operation that concatenates all columns into a single tensor.
+/// \note Tensor operation that concatenates all columns into a single tensor.
 class Concatenate final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -178,7 +178,7 @@ class Concatenate final : public TensorTransform {
 };
 
 /// \brief Duplicate Op.
-/// \notes Duplicate the input tensor to a new output tensor.
+/// \note Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
 class Duplicate final : public TensorTransform {
  public:
@@ -195,7 +195,7 @@ class Duplicate final : public TensorTransform {
 };
 
 /// \brief Fill Op.
-/// \notes Tensor operation to fill all elements in the tensor with the specified value.
+/// \note Tensor operation to fill all elements in the tensor with the specified value.
 ///    The output tensor will have the same shape and type as the input tensor.
 class Fill final : public TensorTransform {
  public:
@@ -219,7 +219,7 @@ class Fill final : public TensorTransform {
 };
 
 /// \brief Mask Op.
-/// \notes Mask content of the input tensor with the given predicate.
+/// \note Mask content of the input tensor with the given predicate.
 ///     Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
 class Mask final : public TensorTransform {
  public:
@@ -246,7 +246,7 @@ class Mask final : public TensorTransform {
 };
 
 /// \brief OneHot Op.
-/// \notes Convert the labels into OneHot format.
+/// \note Convert the labels into OneHot format.
 class OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -267,7 +267,7 @@ class OneHot final : public TensorTransform {
 };
 
 /// \brief PadEnd Op.
-/// \notes Pad input tensor according to pad_shape, need to have same rank.
+/// \note Pad input tensor according to pad_shape, need to have same rank.
 class PadEnd final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -291,20 +291,20 @@ class PadEnd final : public TensorTransform {
 };
 
 /// \brief RandomApply Op.
-/// \notes Randomly perform a series of transforms with a given probability.
+/// \note Randomly perform a series of transforms with a given probability.
 class RandomApply final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
-  /// \param[in] prob The probability to apply the transformation list (default=0.5)
+  /// \param[in] prob The probability to apply the transformation list (default=0.5).
   explicit RandomApply(const std::vector<TensorTransform *> &transforms, double prob = 0.5);
   /// \brief Constructor.
   /// \param[in] transforms A vector of shared pointers to TensorTransform objects to be applied.
-  /// \param[in] prob The probability to apply the transformation list (default=0.5)
+  /// \param[in] prob The probability to apply the transformation list (default=0.5).
   explicit RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob = 0.5);
   /// \brief Constructor.
   /// \param[in] transforms A vector of TensorTransform objects to be applied.
-  /// \param[in] prob The probability to apply the transformation list (default=0.5)
+  /// \param[in] prob The probability to apply the transformation list (default=0.5).
   explicit RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob = 0.5);
 
   /// \brief Destructor
@@ -321,7 +321,7 @@ class RandomApply final : public TensorTransform {
 };
 
 /// \brief RandomChoice Op.
-/// \notes Randomly selects one transform from a list of transforms to perform operation.
+/// \note Randomly selects one transform from a list of transforms to perform operation.
 class RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -348,7 +348,7 @@ class RandomChoice final : public TensorTransform {
 };
 
 /// \brief Slice Op.
-/// \notes Slice operation to extract a tensor out using the given n slices.
+/// \note Slice operation to extract a tensor out using the given n slices.
 ///     The functionality of Slice is similar to NumPy's indexing feature.
 ///     (Currently only rank-1 tensors are supported).
 class Slice final : public TensorTransform {
@@ -371,7 +371,7 @@ class Slice final : public TensorTransform {
 };
 
 /// \brief TypeCast Op.
-/// \notes Tensor operation to cast to a given MindSpore data type.
+/// \note Tensor operation to cast to a given MindSpore data type.
 class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
@@ -392,7 +392,7 @@ class TypeCast final : public TensorTransform {
 };
 
 /// \brief Unique Op.
-/// \notes Return an output tensor containing all the unique elements of the input tensor in
+/// \note Return an output tensor containing all the unique elements of the input tensor in
 ///     the same order that they occur in the input tensor.
 class Unique final : public TensorTransform {
  public:
