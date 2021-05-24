@@ -167,7 +167,7 @@ void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
 
 bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> & /*outputs*/) {
+                                      const std::vector<kernel::AddressPtr> &) {
   if (inputs.size() < kSparseApplyFtrlInputSize) {
     MS_LOG(EXCEPTION) << "error input output size!";
   }

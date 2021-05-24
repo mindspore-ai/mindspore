@@ -52,7 +52,7 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   for (int64_t i = 0; i < split_num_; i++) {
     MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group, input_split_lens);
   }
-  constexpr uint64_t kUSecondInSecond = 1000000;
+  const uint64_t kUSecondInSecond = 1000000;
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();
   std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;

@@ -166,7 +166,7 @@ void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, string name) {
 }
 
 bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace /*workspace*/,
+                               const std::vector<kernel::AddressPtr> &workspace,
                                const std::vector<kernel::AddressPtr> &outputs) {
   using dt = dnnl::memory::data_type;
   using tag = dnnl::memory::format_tag;
