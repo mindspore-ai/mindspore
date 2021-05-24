@@ -238,8 +238,8 @@ std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr &op_exec_info,
 
     for (size_t i = 0; i < len; i++) {
       if (arg_tuple->elements()[i]->isa<abstract::AbstractTensor>()) {
-        auto arg_tensor = dyn_cast<abstract::AbstractTensor>(arg_tuple->elements()[i]);
-        shapes.emplace_back(arg_tensor->shape()->shape());
+        auto tensor = dyn_cast<abstract::AbstractTensor>(arg_tuple->elements()[i]);
+        shapes.emplace_back(tensor->shape()->shape());
       }
     }
     outputs = transform::TransformUtil::ConvertGeTensors(ge_tensors, shapes);
