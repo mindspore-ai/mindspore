@@ -111,6 +111,10 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   auto weight_shape = weight_tensor->shape;
   prim->set_kernel_size({weight_shape[1], weight_shape[2]});
   prim->set_in_channel(weight_shape[3]);
+  if (tflite_attr->depth_multiplier == 0) {
+    MS_LOG(ERROR) << "depth_multiplier must not be zero!";
+    return nullptr;
+  }
   prim->set_group(weight_shape[3] / tflite_attr->depth_multiplier);
 
   // get data tensor
