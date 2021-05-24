@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "ir/dtype/type_id.h"
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/constant_of_shape_parameter.h"

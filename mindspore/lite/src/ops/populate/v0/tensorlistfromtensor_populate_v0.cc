@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "schema/model_v0_generated.h"
 #include "nnacl/tensorlist_parameter.h"
 #include "src/ops/populate/populate_register.h"
@@ -36,8 +35,8 @@ OpParameter *PopulateTensorListFromTensorParameter(const void *prim) {
   }
   memset(TensorList_param, 0, sizeof(TensorListParameter));
   TensorList_param->op_parameter_.type_ = schema::PrimitiveType_TensorListFromTensor;
-  TensorList_param->shape_type_ = (TypeId)(tensorList->shapeType());
-  TensorList_param->element_dtype_ = (TypeId)(tensorList->elementDType());
+  TensorList_param->shape_type_ = tensorList->shapeType();
+  TensorList_param->element_dtype_ = tensorList->elementDType();
   return reinterpret_cast<OpParameter *>(TensorList_param);
 }
 }  // namespace

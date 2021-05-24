@@ -24,6 +24,7 @@
 #include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
+#include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"

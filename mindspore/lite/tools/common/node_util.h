@@ -24,6 +24,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
+#include "src/tensor.h"
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
 #include "tools/optimizer/common/gllo_utils.h"

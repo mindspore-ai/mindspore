@@ -23,6 +23,7 @@
 #include <string>
 #include "src/common/prim_util.h"
 #include "src/common/common.h"
+#include "src/tensor.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/infer/infer.h"
 

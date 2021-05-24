@@ -21,6 +21,7 @@
 #include "schema/model_generated.h"
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
+#include "src/common/log_adapter.h"
 #include "src/common/prim_util.h"
 #include "src/common/version_manager.h"
 

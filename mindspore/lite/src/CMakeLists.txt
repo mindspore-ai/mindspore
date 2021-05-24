@@ -150,7 +150,6 @@ add_subdirectory(runtime/kernel/arm)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)
-set_target_properties(lite_src_mid PROPERTIES POSITION_INDEPENDENT_CODE 1)
 
 add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
@@ -168,21 +167,15 @@ endif()
 
 if(SUPPORT_GPU STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
-    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid
-                          -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid
-                          -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
 elseif(SUPPORT_GPU STREQUAL cuda)
         add_subdirectory(runtime/kernel/cuda)
-        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid
-                              -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
-        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid
-                              -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
+        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
+        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
 else()
-    target_link_libraries(mindspore-lite cpu_kernel_mid -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive
-                          cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive
-                          cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
 endif()
 if(SUPPORT_NPU)
     add_subdirectory(runtime/agent/npu)
