@@ -161,6 +161,34 @@ config.py：
 
 The above python command will run in the background, you can view the results through the file output.eval.log. You will get the accuracy as following:
 
+## Inference Process
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+`NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result in acc.log file.
+
 ## performance
 
 ### Training performance
