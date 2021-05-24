@@ -30,8 +30,7 @@ class AdamDeltaCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                   const std::vector<AddressPtr> &outputs) const;
+  void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   bool use_nesterov_{false};
   size_t elem_num_{0};
 };

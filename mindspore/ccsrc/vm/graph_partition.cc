@@ -119,8 +119,7 @@ void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
       MS_EXCEPTION_IF_NULL(second_node);
       auto iter = control_edges->find(second_node);
       if (iter == control_edges->end()) {
-        (void)control_edges->insert(
-          std::pair<AnfNodePtr, std::vector<AnfNodePtr>>(second_node, std::vector<AnfNodePtr>{first_node}));
+        (void)control_edges->emplace(second_node, std::vector<AnfNodePtr>{first_node});
       } else {
         iter->second.emplace_back(first_node);
       }
@@ -128,7 +127,7 @@ void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
       if (ref_iter != nodes_ref->end()) {
         ref_iter->second++;
       } else {
-        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(first_node, 1));
+        (void)nodes_ref->emplace(first_node, 1UL);
       }
     }
   }
@@ -156,7 +155,7 @@ void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *n
       if (iter != nodes_ref->end()) {
         iter->second++;
       } else {
-        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(input, 1));
+        (void)nodes_ref->emplace(input, 1UL);
       }
       if (visited.find(input) != visited.end()) {
         continue;
@@ -187,8 +186,7 @@ std::vector<AnfNodePtr> OptimizeGetItemOrder(const std::vector<AnfNodePtr> &node
         if (iter_nodes != insert_positions.end()) {
           iter_nodes->second.push_back(node);
         } else {
-          (void)insert_positions.insert(
-            std::pair<size_t, std::vector<AnfNodePtr>>(position, std::vector<AnfNodePtr>{node}));
+          (void)insert_positions.emplace(position, std::vector<AnfNodePtr>{node});
         }
         continue;
       }
@@ -199,7 +197,7 @@ std::vector<AnfNodePtr> OptimizeGetItemOrder(const std::vector<AnfNodePtr> &node
 
   size_t insert_num = 0;
   for (auto &item : insert_positions) {
-    size_t position = item.first + insert_num;
+    auto position = SizeToLong(item.first + insert_num);
     (void)result.insert(result.begin() + position, item.second.begin(), item.second.end());
     insert_num += item.second.size();
   }
@@ -457,8 +455,7 @@ std::vector<AnfNodePtr> ParallelSort(const FuncGraphPtr &graph, const std::strin
   return result;
 }
 
-void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_target,
-                          const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
+void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
   std::stack<AnfNodePtr> to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
   std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
@@ -778,7 +775,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   }
   MS_LOG(DEBUG) << "Segment size:" << segments.size();
   if (contain_multi_target) {
-    AddSegmentDependency(graph, default_target, node_to_segment);
+    AddSegmentDependency(graph, node_to_segment);
   }
   return segments;
 }
