@@ -300,9 +300,12 @@ def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True):
         return True
 
     type_str = ""
-    if type_int: type_str += "int, "
-    if type_tuple: type_str += "tuple, "
-    if type_list: type_str += "list, "
+    if type_int:
+        type_str += "int, "
+    if type_tuple:
+        type_str += "tuple, "
+    if type_list:
+        type_str += "list, "
     raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
 
 
@@ -449,7 +452,7 @@ def _tuple_setitem(tup, idx, value):
 @constexpr
 def _iota(dtype, num, increasing=True):
     """Creates a 1-D tensor with value: [0,1,...num-1] and dtype."""
-    # TODO: Change to P.Linspace when the kernel is implemented on CPU.
+    # Change to P.Linspace when the kernel is implemented on CPU.
     if num <= 0:
         raise ValueError("zero shape Tensor is not currently supported.")
     if increasing:

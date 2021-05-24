@@ -44,7 +44,7 @@ ZERO_TENSOR = asarray_const(0)
 
 _mean_keepdims = P.ReduceMean(True)
 _matmul = P.MatMul(False, False)
-_matmul_T = P.MatMul(False, True)
+_matmul_t = P.MatMul(False, True)
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _reduce_min_default = P.ReduceMin()
@@ -53,6 +53,7 @@ _reduce_max_default = P.ReduceMax()
 _reduce_max_keepdims = P.ReduceMax(True)
 _cumsum_default = P.CumSum()
 _concat = P.Concat(-1)
+
 
 def absolute(x, dtype=None):
     """
@@ -660,7 +661,7 @@ def inner(a, b):
     a_aligned = F.reshape(a, aligned_shape_a)
     b_aligned = F.reshape(b, aligned_shape_b)
 
-    res = _matmul_T(a_aligned, b_aligned)
+    res = _matmul_t(a_aligned, b_aligned)
     res = F.reshape(res, F.shape(a)[:-1] + F.shape(b)[:-1])
     return res
 
@@ -1031,21 +1032,10 @@ def average(x, axis=None, weights=None, returned=False):
 
     x_avg = full((), nan, F.dtype(x))
     sum_of_weights = None
+
     if weights is None:
         x_avg = mean(x, axis)
-        if axis is None:
-            sum_of_weights = full((), x.size, F.dtype(x))
-        else:
-            fill_value = 1
-            if isinstance(axis, int) or (isinstance(axis, tuple) and F.tuple_len(axis) == 1):
-                fill_value = x.shape[axis] if isinstance(axis, int) else x.shape[axis[0]]
-            elif axis is None:
-                for sh in x.shape:
-                    fill_value *= sh
-            else:
-                for ax in axis:
-                    fill_value *= x.shape[ax]
-            sum_of_weights = full_like(x_avg, fill_value, F.dtype(x))
+        sum_of_weights = compute_weights_for_mean(x, x_avg, axis)
     else:
         _check_input_tensor(weights)
         if x.shape == weights.shape:
@@ -1064,6 +1054,24 @@ def average(x, axis=None, weights=None, returned=False):
             sum_of_weights = _broadcast_to(sum_of_weights, sum_of_weights.shape, x_avg.shape, x_avg.ndim)
         return (x_avg, sum_of_weights)
     return x_avg
+
+
+def compute_weights_for_mean(x, x_avg, axis):
+    """Computes weights for np.average."""
+    if axis is None:
+        sum_of_weights = full((), x.size, F.dtype(x))
+    else:
+        fill_value = 1
+        if isinstance(axis, int) or (isinstance(axis, tuple) and F.tuple_len(axis) == 1):
+            fill_value = x.shape[axis] if isinstance(axis, int) else x.shape[axis[0]]
+        elif axis is None:
+            for sh in x.shape:
+                fill_value *= sh
+        else:
+            for ax in axis:
+                fill_value *= x.shape[ax]
+        sum_of_weights = full_like(x_avg, fill_value, F.dtype(x))
+    return sum_of_weights
 
 
 def comput_avg(x, axis, weights):
@@ -1605,7 +1613,7 @@ def floor_divide(x1, x2, dtype=None):
     return _apply_tensor_op(F.tensor_floordiv, x1, x2, dtype=dtype)
 
 
-def _remainder(x1, x2, C_style=False):
+def _remainder(x1, x2, c_style=False):
     """Computes remainder without applying keyword arguments."""
     dtype = _promote(F.dtype(x1), F.dtype(x2))
     if not _check_is_float(dtype):
@@ -1613,7 +1621,7 @@ def _remainder(x1, x2, C_style=False):
         x2 = F.cast(x2, mstype.float32)
 
     quotient = F.tensor_div(x1, x2)
-    if C_style:
+    if c_style:
         quotient = fix(quotient)
     else:
         quotient = F.floor(quotient)
@@ -1698,7 +1706,7 @@ def fix(x):
     if not _check_is_float(F.dtype(x)):
         x = F.cast(x, mstype.float32)
     floored = F.floor(x)
-    # TODO change to F.ceil once supported on CPU.
+    # change to F.ceil once supported on CPU.
     ceiled = F.neg_tensor(F.floor(F.neg_tensor(x)))
     is_neg = F.tensor_lt(x, zeros(F.shape(x), F.dtype(x)))
     return F.select(is_neg, ceiled, floored)
@@ -1735,7 +1743,7 @@ def fmod(x1, x2, dtype=None):
         >>> print(output)
         [-1  0 -1  1  0  1]
     """
-    return _apply_tensor_op(lambda x1, x2: _remainder(x1, x2, C_style=True), x1, x2, dtype=dtype)
+    return _apply_tensor_op(lambda x1, x2: _remainder(x1, x2, c_style=True), x1, x2, dtype=dtype)
 
 
 def trunc(x, dtype=None):
@@ -1872,6 +1880,19 @@ def divmod_(x1, x2, dtype=None):
     return (q, r)
 
 
+def _handle_prepend_append(combined, tensor, additional_tensor, axis):
+    """Concatenates prepend or append to tensor."""
+    if isinstance(additional_tensor, (int, float, bool)):
+        additional_tensor = asarray_const(additional_tensor)
+    elif not isinstance(additional_tensor, Tensor):
+        _raise_type_error("prepend must be scalar or Tensor, but got ", additional_tensor)
+    additional_shape = tensor.shape
+    additional_shape = _tuple_setitem(additional_shape, axis, 1)
+    additional_tensor = _broadcast_to_shape(additional_tensor, additional_shape)
+    combined += (additional_tensor,)
+    return combined
+
+
 def diff(a, n=1, axis=-1, prepend=None, append=None):
     """
     Calculates the n-th discrete difference along the given axis.
@@ -1922,26 +1943,12 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
 
     combined = ()
     if prepend is not None:
-        if isinstance(prepend, (int, float, bool)):
-            prepend = asarray_const(prepend)
-            prepend_shape = a.shape
-            prepend_shape = _tuple_setitem(prepend_shape, axis, 1)
-            prepend = _broadcast_to_shape(prepend, prepend_shape)
-        elif not isinstance(prepend, Tensor):
-            _raise_type_error("prepend must be scalar or Tensor, but got ", prepend)
-        combined += (prepend,)
+        combined = _handle_prepend_append(combined, a, prepend, axis)
 
     combined += (a,)
 
     if append is not None:
-        if isinstance(append, (int, float, bool)):
-            append = asarray_const(append)
-            append_shape = a.shape
-            append_shape = _tuple_setitem(append_shape, axis, 1)
-            append = _broadcast_to_shape(append, append_shape)
-        elif not isinstance(append, Tensor):
-            _raise_type_error("append must be scalar or Tensor, but got ", append)
-        combined += (append,)
+        combined = _handle_prepend_append(combined, a, append, axis)
 
     if combined:
         a = concatenate(combined, axis)
@@ -2274,6 +2281,22 @@ def _handle_inputs(cov_input, rowvar):
     return cov_input
 
 
+def _handle_facts(w, m, ddof, aweights):
+    """Computes facts for np.cov"""
+    fact = None
+    if w is None:
+        fact = m.shape[1] - ddof
+    else:
+        w_sum = _reduce_sum_default(w, -1)
+        if ddof == 0:
+            fact = w_sum
+        elif aweights is None:
+            fact = w_sum - ddof
+        else:
+            fact = w_sum - ddof * F.reduce_sum(w * aweights) / w_sum
+    return fact
+
+
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=None, dtype=None):
     """
     Estimates a covariance matrix, given data and weights.
@@ -2363,23 +2386,14 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
     avg = average(m, axis=1, weights=w)
 
     # Determine the Normalization
-    if w is None:
-        fact = m.shape[1] - ddof
-    else:
-        w_sum = _reduce_sum_default(w, -1)
-        if ddof == 0:
-            fact = w_sum
-        elif aweights is None:
-            fact = w_sum - ddof
-        else:
-            fact = w_sum - ddof * F.reduce_sum(w * aweights) / w_sum
+    fact = _handle_facts(w, m, ddof, aweights)
 
     m = m - F.expand_dims(avg, -1)
     if w is None:
-        m_T = m.T
+        m_t = m.T
     else:
-        m_T = (m * w).T
-    res = true_divide(dot(m, m_T), fact).squeeze()
+        m_t = (m * w).T
+    res = true_divide(dot(m, m_t), fact).squeeze()
     if dtype is not None:
         return res.astype(dtype)
     return res
@@ -2452,7 +2466,7 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
             if cmp_fn is None:
                 initial = nan
             else:
-                return _raise_value_error('initial value must be provided for zero-size arrays')
+                _raise_value_error('initial value must be provided for zero-size arrays')
         return full(shape_out, initial, dtype)
 
     if initial is not None:
@@ -2462,7 +2476,7 @@ def _reduce(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
         return a.astype(dtype)
     if isinstance(where, Tensor):
         if initial is None:
-            return _raise_value_error('initial value must be provided for where masks')
+            _raise_value_error('initial value must be provided for where masks')
         ndim_orig = F.rank(a)
         a = where_(where, a, initial)
         axes = _real_axes(ndim_orig, F.rank(a), axes)
@@ -3224,8 +3238,10 @@ def log2(x, dtype=None):
         [1. 2. 3.]
     """
     tensor_2 = _make_tensor(2, x.dtype)
+
     def _log2(x):
         return F.log(x) / F.log(tensor_2)
+
     return _apply_tensor_op(_log2, x, dtype=dtype)
 
 
