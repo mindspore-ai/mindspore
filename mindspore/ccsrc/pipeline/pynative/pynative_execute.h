@@ -53,6 +53,7 @@ struct PrimAbsInfo {
 
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+using MsFunctionGradCache = std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>>;
 using OpInfoWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
 using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
 
@@ -114,6 +115,11 @@ class TopCellInfo {
   void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
     k_pynative_cell_ptr_ = k_pynative_cell_ptr;
   }
+  const MsFunctionGradCache &ms_function_grad_cache() const { return ms_function_grad_cache_; }
+  void set_ms_function_grad_cache(const std::string &graph_phase, const FuncGraphPtr &func_graph,
+                                  const FuncGraphPtr &grad_graph) {
+    ms_function_grad_cache_[graph_phase] = std::make_pair(func_graph, grad_graph);
+  }
   void clear();
 
  private:
@@ -136,6 +142,7 @@ class TopCellInfo {
   std::unordered_set<std::string> sub_cell_list_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
+  MsFunctionGradCache ms_function_grad_cache_;
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 

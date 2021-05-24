@@ -701,6 +701,7 @@ void TopCellInfo::clear() {
   k_pynative_cell_ptr_ = nullptr;
   graph_info_map_.clear();
   sub_cell_list_.clear();
+  ms_function_grad_cache_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
 }
@@ -2724,21 +2725,30 @@ void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &arg
     MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain backend graph which is complied by ms_function";
   }
   MS_LOG(DEBUG) << "Ms_function graph phase: " << graph_phase();
-  // Get ms_function graph
+  // Get fprop graph of ms_function
   auto executor = pipeline::ExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
-  auto ms_func_graph = executor->GetFuncGraph(graph_phase());
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  FuncGraphPtr fprop_g = nullptr;
+  FuncGraphPtr ms_func_graph = nullptr;
+  const auto &ms_function_grad_cache = grad_executor()->top_cell()->ms_function_grad_cache();
+  auto iter = ms_function_grad_cache.find(graph_phase());
+  if (iter == ms_function_grad_cache.end()) {
+    ms_func_graph = BasicClone(executor->GetFuncGraph(graph_phase()));
+    MS_EXCEPTION_IF_NULL(ms_func_graph);
+    ResourcePtr res = std::make_shared<pipeline::Resource>();
+    res->set_func_graph(ms_func_graph);
+    res->manager()->AddFuncGraph(ms_func_graph, true);
+    fprop_g = ad::Grad(ms_func_graph, res, true);
+    MS_EXCEPTION_IF_NULL(fprop_g);
+    grad_executor()->top_cell()->set_ms_function_grad_cache(graph_phase(), ms_func_graph, fprop_g);
+  } else {
+    ms_func_graph = iter->second.first;
+    MS_EXCEPTION_IF_NULL(ms_func_graph);
+    fprop_g = iter->second.second;
+    MS_EXCEPTION_IF_NULL(fprop_g);
+  }
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("before_grad_ms_function.ir", ms_func_graph);
-  }
-  // Get fprop graph of ms_function
-  ResourcePtr res = std::make_shared<pipeline::Resource>();
-  res->set_func_graph(ms_func_graph);
-  res->manager()->AddFuncGraph(ms_func_graph, true);
-  auto fprop_g = ad::Grad(ms_func_graph, res, true);
-  MS_EXCEPTION_IF_NULL(fprop_g);
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     DumpIR("after_grad_ms_function.ir", fprop_g);
   }
   // Make adjoint for fprop graph of ms function graph
