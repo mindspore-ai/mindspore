@@ -981,6 +981,70 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &
   return addr;
 }
 
+abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx == 0) {
+      return base_shape;
+    }
+    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
+                      << "."
+                      << " trace: " << trace::DumpSourceLines(node);
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
+                        << " node:" << node->DebugString() << "."
+                        << " trace: " << trace::DumpSourceLines(node);
+    }
+    auto b_shp = (*tuple_shape)[output_idx];
+    if (b_shp->isa<abstract::Shape>() || b_shp->isa<abstract::NoShape>()) {
+      return b_shp;
+    } else {
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->DebugString() << "."
+                        << " trace: " << trace::DumpSourceLines(node);
+    }
+  } else if (base_shape->isa<abstract::NoShape>()) {
+    return base_shape;
+  }
+  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
+                    << base_shape->ToString() << " node : " << node->DebugString()
+                    << " trace: " << trace::DumpSourceLines(node);
+}
+
+// set infer shapes and types of anf node
+void AnfRuntimeAlgorithm::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
+                                                      const std::vector<abstract::BaseShapePtr> &shapes,
+                                                      AnfNode *node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_ptr = node->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(node_ptr);
+  if (types.size() != shapes.size()) {
+    MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  if (shapes.empty()) {
+    node->set_abstract(std::make_shared<abstract::AbstractNone>());
+  } else if (shapes.size() == 1) {
+    // single output handle
+    auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
+    node->set_abstract(abstract);
+  } else {
+    // multiple output handle
+    std::vector<AbstractBasePtr> abstract_list;
+    for (size_t i = 0; i < types.size(); ++i) {
+      auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shapes[i]);
+      abstract_list.emplace_back(abstract);
+    }
+    auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
+    node->set_abstract(abstract_tuple);
+  }
+}
+
 // set infer shapes and types of anf node
 void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                                      const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {

@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_LAYER_NORM_H_
 #define MINDSPORE_CORE_OPS_LAYER_NORM_H_
 #include <string>
+#include <vector>
+#include <memory>
 
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -24,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLayerNorm = "LayerNorm";
+constexpr auto kNameLayerNorm = prim::kLayerNorm;
 class LayerNorm : public PrimitiveC {
  public:
   LayerNorm() : PrimitiveC(kNameLayerNorm) {}
@@ -39,6 +41,11 @@ class LayerNorm : public PrimitiveC {
   int64_t get_begin_params_axis() const;
   float get_epsilon() const;
 };
+
+AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args);
+using PrimLayerNormPtr = std::shared_ptr<LayerNorm>;
+
 }  // namespace ops
 }  // namespace mindspore
 

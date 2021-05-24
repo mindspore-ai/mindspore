@@ -124,8 +124,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBiasAdd, {InferImplBiasAdd, nullptr, true}},
     {prim::kPrimZerosLike, {InferImplZerosLike, nullptr, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, nullptr, true}},
-    {prim::kPrimLayerNorm, {InferImplLayerNorm, nullptr, true}},
-    {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, nullptr, true}},
     {prim::kPrimDropout, {InferImplDropout, nullptr, true}},
     {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, nullptr, true}},
     {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, nullptr, true}},

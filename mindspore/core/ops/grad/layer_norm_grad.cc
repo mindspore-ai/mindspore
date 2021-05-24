@@ -20,6 +20,21 @@
 
 namespace mindspore {
 namespace ops {
+AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) {
+  // Inputs: five tensors(y_backprob, x, variance, mean, gamma).
+  // Outputs: x_backprob, gamma_backprob, beta_backprob
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 5, op_name);
+  auto x_backprob = input_args[0]->Broaden();
+  auto gamma_backprob = input_args[4]->Broaden();
+  auto beta_backprob = input_args[4]->Broaden();
+
+  AbstractBasePtrList args_list({x_backprob, gamma_backprob, beta_backprob});
+  return std::make_shared<abstract::AbstractTuple>(args_list);
+}
+
 void LayerNormGrad::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis) {
   this->set_begin_norm_axis(begin_norm_axis);
   this->set_begin_params_axis(begin_params_axis);
@@ -38,6 +53,6 @@ int64_t LayerNormGrad::get_begin_params_axis() const {
   auto value_ptr = this->GetAttr(kBeginParamsAxis);
   return GetValue<int64_t>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameLayerNormGrad, LayerNormGrad);
+REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormGrad, prim::kPrimLayerNormGrad, LayerNormGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
