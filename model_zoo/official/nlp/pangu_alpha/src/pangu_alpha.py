@@ -565,10 +565,7 @@ class Block(nn.Cell):
         self.output = Output(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
-        self.last_add = P.TensorAdd().shard(
-            ((config.dp, 1, 1), (config.dp, 1, 1)))
         # Last activation of this layer will be saved for recompute in backward process
-        self.last_add.recompute(False)
         self.dtype = config.compute_dtype
 
     def construct(self, x, input_mask, layer_past=None):
@@ -591,9 +588,9 @@ class Block(nn.Cell):
         output_x = F.cast(output_x, self.dtype)
         mlp_logit = self.output(output_x)
         if self.post_layernorm_residual:
-            output = self.last_add(output_x, mlp_logit)
+            output = self.add(output_x, mlp_logit)
         else:
-            output = self.last_add(x, mlp_logit)
+            output = self.add(x, mlp_logit)
         return output, layer_present
 
 
@@ -653,10 +650,6 @@ class QueryLayer(nn.Cell):
         self.output = Output(config, scale)
         self.post_layernorm_residual = config.post_layernorm_residual
         self.add = P.TensorAdd().shard(((config.dp, 1, 1), (config.dp, 1, 1)))
-
-        self.last_add = P.TensorAdd().shard(
-            ((config.dp, 1, 1), (config.dp, 1,
-                                 1))).add_prim_attr("recompute", False)
         self.dtype = config.compute_dtype
 
     def construct(self, x, query_hidden_state, input_mask, layer_past=None):
@@ -679,9 +672,9 @@ class QueryLayer(nn.Cell):
         output_x = F.cast(output_x, self.dtype)
         mlp_logit = self.output(output_x)
         if self.post_layernorm_residual:
-            output = self.last_add(output_x, mlp_logit)
+            output = self.add(output_x, mlp_logit)
         else:
-            output = self.last_add(x, mlp_logit)
+            output = self.add(x, mlp_logit)
         return output, layer_present
 
 class PanguAlpha_Model(nn.Cell):

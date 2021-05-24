@@ -279,7 +279,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     auto base_graph = cloner->cloned_func_graph()[fg];
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
-    if (fg->used_global_parameters().empty() || graphs.size() <= 1) {
+    if (fg->used_global_parameters().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       continue;
     }
     auto &cloned_nodes = *cloner->cloned_node();

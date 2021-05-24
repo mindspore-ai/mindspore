@@ -45,6 +45,10 @@ class ReplaceApplicator : public AnfVisitor {
         *(fg->switch_layer_input())) {
       return nullptr;
     }
+    // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
+    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+      return nullptr;
+    }
 
     auto out = fg->output();
     MS_EXCEPTION_IF_NULL(out);
@@ -98,6 +102,10 @@ class InlinerBase : public AnfVisitor {
     // G
     auto fg = GetValueNode<FuncGraphPtr>(inputs[0]);
     if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->stage() != -1 || fg->stub()) {
+      return nullptr;
+    }
+    // Defer inlining to get the output nodes of the recomputed cell whose output is non-recomputed.
+    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       return nullptr;
     }
 
