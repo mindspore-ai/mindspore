@@ -29,6 +29,16 @@
 namespace mindspore {
 namespace kernel {
 namespace tbe {
+constexpr size_t INPUT0 = 0;
+constexpr size_t INPUT1 = 1;
+constexpr size_t INPUT2 = 2;
+constexpr size_t INPUT3 = 3;
+constexpr size_t INPUT4 = 4;
+constexpr size_t INPUT5 = 5;
+constexpr size_t INPUT6 = 6;
+constexpr size_t INPUT7 = 7;
+constexpr size_t INPUT8 = 8;
+
 std::unordered_set<std::string> input_order_adjusted_ops = {
   "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
   "LayerNormBetaGammaBackprop", "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};
@@ -40,24 +50,24 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
     (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
-      inputs_json->push_back(inputs_list[2]);
-      inputs_json->push_back(inputs_list[0]);
-      inputs_json->push_back(inputs_list[1]);
+      inputs_json->push_back(inputs_list[INPUT2]);
+      inputs_json->push_back(inputs_list[INPUT0]);
+      inputs_json->push_back(inputs_list[INPUT1]);
       for (size_t i = 3; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
       }
     } else if (op_name == "ApplyCenteredRMSProp") {
       // Parameter order of ApplyCenteredRMSProp's TBE implementation is different from python API, so map
       // TBE parameter to correspond python API parameter by latter's index using hardcode
-      inputs_json->push_back(inputs_list[0]);
-      inputs_json->push_back(inputs_list[1]);
-      inputs_json->push_back(inputs_list[2]);
-      inputs_json->push_back(inputs_list[3]);
-      inputs_json->push_back(inputs_list[5]);
-      inputs_json->push_back(inputs_list[6]);
-      inputs_json->push_back(inputs_list[7]);
-      inputs_json->push_back(inputs_list[8]);
-      inputs_json->push_back(inputs_list[4]);
+      inputs_json->push_back(inputs_list[INPUT0]);
+      inputs_json->push_back(inputs_list[INPUT1]);
+      inputs_json->push_back(inputs_list[INPUT2]);
+      inputs_json->push_back(inputs_list[INPUT3]);
+      inputs_json->push_back(inputs_list[INPUT5]);
+      inputs_json->push_back(inputs_list[INPUT6]);
+      inputs_json->push_back(inputs_list[INPUT7]);
+      inputs_json->push_back(inputs_list[INPUT8]);
+      inputs_json->push_back(inputs_list[INPUT4]);
     } else {
       inputs_json->push_back(inputs_list[1]);
       inputs_json->push_back(inputs_list[0]);
@@ -98,15 +108,15 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
     (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
-      reorder_data_layer->emplace_back(data_layer[2]);
-      reorder_data_layer->emplace_back(data_layer[0]);
-      reorder_data_layer->emplace_back(data_layer[1]);
+      reorder_data_layer->emplace_back(data_layer[INPUT2]);
+      reorder_data_layer->emplace_back(data_layer[INPUT0]);
+      reorder_data_layer->emplace_back(data_layer[INPUT1]);
       for (size_t i = 3; i < data_layer.size(); ++i) {
         reorder_data_layer->emplace_back(data_layer[i]);
       }
     } else {
-      reorder_data_layer->emplace_back(data_layer[1]);
-      reorder_data_layer->emplace_back(data_layer[0]);
+      reorder_data_layer->emplace_back(data_layer[INPUT1]);
+      reorder_data_layer->emplace_back(data_layer[INPUT0]);
       for (size_t i = 2; i < data_layer.size(); ++i) {
         reorder_data_layer->emplace_back(data_layer[i]);
       }
@@ -115,8 +125,8 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
 }
 
 std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
-  {"MaximumGrad", TbeAdapter::MaximumGradAttrJsonPass},
-  {"MinimumGrad", TbeAdapter::MinimumGradAttrJsonPass},
+  {"MaximumGrad", TbeAdapter::MaxiOrMinimumGradAttrJsonPass},
+  {"MinimumGrad", TbeAdapter::MaxiOrMinimumGradAttrJsonPass},
   {"Cast", TbeAdapter::CastAttrJsonPass}};
 
 bool TbeAdapter::RunAttrPass(const mindspore::AnfNodePtr &anf_node,
@@ -132,9 +142,9 @@ bool TbeAdapter::RunAttrPass(const mindspore::AnfNodePtr &anf_node,
   return false;
 }
 
-void TbeAdapter::MaximumGradAttrJsonPass(const mindspore::AnfNodePtr &anf_node,
-                                         const std::vector<std::shared_ptr<mindspore::kernel::OpAttr>> &op_info_attrs,
-                                         nlohmann::json *attrs_json) {
+void TbeAdapter::MaxiOrMinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
+                                               const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
+                                               nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(attrs_json);
   auto attr_num = op_info_attrs.size();
@@ -155,55 +165,28 @@ void TbeAdapter::MaximumGradAttrJsonPass(const mindspore::AnfNodePtr &anf_node,
     attr_obj["name"] = attr_name;
     attrs_json->push_back(attr_obj);
   }
-  MS_LOG(INFO) << "MaximumGradAttrJsonPass done.";
-}
-
-void TbeAdapter::MinimumGradAttrJsonPass(const mindspore::AnfNodePtr &anf_node,
-                                         const std::vector<std::shared_ptr<mindspore::kernel::OpAttr>> &op_info_attrs,
-                                         nlohmann::json *attrs_json) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(attrs_json);
-  auto attr_num = op_info_attrs.size();
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (size_t i = 0; i < attr_num; i++) {
-    nlohmann::json attr_obj;
-    MS_EXCEPTION_IF_NULL(op_info_attrs[i]);
-    std::string attr_name = op_info_attrs[i]->name();
-    auto value = primitive->GetAttr(attr_name);
-    if (value != nullptr) {
-      bool attr_value = GetValue<bool>(value);
-      attr_obj["value"] = attr_value;
-      attr_obj["valid"] = true;
-    } else {
-      attr_obj["valid"] = false;
-    }
-    attr_obj["name"] = attr_name;
-    attrs_json->push_back(attr_obj);
-  }
-  MS_LOG(INFO) << "MinimumGradAttrJsonPass done.";
+  MS_LOG(INFO) << "MaxiOrMinimumGradAttrJsonPass done.";
 }
 
 static int TypeStrToDstType(const std::string &type_str) {
-  int ret = -1;
   if (type_str == "Float" || type_str == "Float32") {
-    ret = 0;
+    return 0;
   } else if (type_str == "Float16") {
-    ret = 1;
+    return 1;
   } else if (type_str == "Int8") {
-    ret = 2;
+    return 2;
   } else if (type_str == "Int32") {
-    ret = 3;
+    return 3;
   } else if (type_str == "UInt8") {
-    ret = 4;
+    return 4;
   } else if (type_str == "UInt64") {
-    ret = 10;
+    return 10;
   } else if (type_str == "Bool") {
-    ret = 12;
+    return 12;
   } else {
     MS_LOG(INFO) << "Error type str is invailed: " << type_str;
   }
-  return ret;
+  return -1;
 }
 
 void TbeAdapter::CastAttrJsonPass(const mindspore::AnfNodePtr &anf_node,

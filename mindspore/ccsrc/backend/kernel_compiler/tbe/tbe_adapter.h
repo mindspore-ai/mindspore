@@ -49,13 +49,9 @@ class TbeAdapter {
                                   std::vector<AnfNodePtr> *reorder_data_layer);
 
  private:
-  static void MaximumGradAttrJsonPass(const AnfNodePtr &anf_node,
-                                      const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                      nlohmann::json *attrs_json);
-  static void MinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
-                                      const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                      nlohmann::json *attrs_json);
-
+  static void MaxiOrMinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
+                                            const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
+                                            nlohmann::json *attrs_json);
   static void CastAttrJsonPass(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
                                nlohmann::json *attrs_json);
 

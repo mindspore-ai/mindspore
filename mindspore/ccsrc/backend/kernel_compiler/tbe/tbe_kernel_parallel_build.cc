@@ -170,9 +170,9 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
       MS_EXCEPTION(ArgumentError) << "build kernel name:" << task_iter->second.json_name << " failed.";
     } else {
       MS_LOG(INFO) << "fusion build kernel name:" << task_iter->second.json_name << "failed.";
-      auto ret = std::make_pair(task_iter->second.scope_id, nullptr);
+      auto fusion_kernel_mod = std::make_pair(task_iter->second.scope_id, nullptr);
       (void)task_map_.erase(task_iter);
-      return ret;
+      return fusion_kernel_mod;
     }
   }
   auto kernel_mod = GenKernelMod(json_name, processor, task_iter->second.input_size_list,

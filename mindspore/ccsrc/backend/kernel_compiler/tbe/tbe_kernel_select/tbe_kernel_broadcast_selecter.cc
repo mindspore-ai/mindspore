@@ -35,7 +35,8 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
   output_shapes_.clear();
   if (AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode_ptr_)) {
     auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kAttrDynInputSizes);
-    if (dynamic_size_vec.empty() || dynamic_size_vec[0] < 2) {
+    constexpr int64_t DYNAMIC_INPUT_NUM = 2;
+    if (dynamic_size_vec.empty() || dynamic_size_vec[0] < DYNAMIC_INPUT_NUM) {
       MS_LOG(EXCEPTION) << "dynamic attr set error, please check.";
     }
     auto dynamic_input_shape0_ = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
@@ -212,7 +213,8 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
         if (shape.size() < kShape2dDims) {
           return false;
         }
-        if (shape[shape.size() - 1] % kAlignmented16 != 0 || shape[shape.size() - 2] % kAlignmented16 != 0) {
+        constexpr size_t SECOND_LAST = 2;
+        if (shape[shape.size() - 1] % kAlignmented16 != 0 || shape[shape.size() - SECOND_LAST] % kAlignmented16 != 0) {
           return false;
         }
         input_support_format.emplace_back(kOpFormat_FRAC_NZ);
