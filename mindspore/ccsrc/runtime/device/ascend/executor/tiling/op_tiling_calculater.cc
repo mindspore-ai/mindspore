@@ -150,6 +150,7 @@ std::string GetRealOpType(const std::string &op_type) {
     {"SparseGatherV2", "Gather"},
     {"Pad", "PadD"},
     {"Concat", "ConcatD"},
+    {"Softmax", "SoftmaxV2"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

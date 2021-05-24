@@ -74,7 +74,7 @@ TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(OneHotInferType(primitive, input_args),
-                                                    OneHotInferShape(primitive, input_args)->shape());
+                                                    OneHotInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(OneHot, prim::kPrimOneHot, OneHotInfer, nullptr, true);
 }  // namespace ops

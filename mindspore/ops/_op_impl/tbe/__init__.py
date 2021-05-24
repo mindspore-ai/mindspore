@@ -129,6 +129,7 @@ from .npu_clear_float_status import _npu_clear_float_status_tbe
 from .npu_get_float_status import _npu_get_float_status_tbe
 from .npu_alloc_float_status import _npu_alloc_float_status_tbe
 from .one_hot import _one_hot_tbe
+from .one_hot_ds import _one_hot_ds_tbe
 from .equal import _equal_tbe
 from .equal_ds import _equal_ds_tbe
 from .less import _less_tbe
@@ -143,6 +144,7 @@ from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_grad import _tanh_grad_tbe
 from .softmax import _softmax_tbe
+from .softmax_ds import _softmax_ds_tbe
 from .softsign import _softsign_tbe
 from .softplus import _softplus_tbe
 from .softplus_grad import _softplus_grad_tbe

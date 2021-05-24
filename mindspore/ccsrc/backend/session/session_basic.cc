@@ -156,6 +156,10 @@ BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_outpu
   return nullptr;
 }
 
+int64_t ShapeSize(const std::vector<int64_t> &shape) {
+  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+}
+
 BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
@@ -175,6 +179,10 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   std::vector<int64_t> temp_shape;
   auto shape = AnfAlgo::GetOutputInferShape(node, output_index);
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+  if (AnfAlgo::IsDynamicShape(node)) {
+    auto max_shape = AnfAlgo::GetOutputMaxShape(node, output_index);
+    temp_shape = ShapeSize(max_shape) > ShapeSize(temp_shape) ? max_shape : temp_shape;
+  }
   tensor::TensorPtr tensor;
   bool is_internal_output = graph->IsInternalOutput(node, output_index);
   if (is_internal_output) {
@@ -1534,6 +1542,12 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     tensor->SetNeedWait(false);
     MS_LOG(DEBUG) << "Debug address: Output tensor obj " << tensor.get() << ", tensor id " << tensor->id()
                   << ", device address " << tensor->device_address().get();
+    if (AnfAlgo::IsDynamicShape(node)) {
+      const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+      ShapeVector int_shape;
+      std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
+      tensor->set_shape(int_shape);
+    }
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
       tensor->set_sync_status(kNeedSyncHostToDevice);
