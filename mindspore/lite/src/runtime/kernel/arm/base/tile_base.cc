@@ -50,6 +50,11 @@ int TileCPUKernel::ReSize() {
       MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
       return false;
     }
+    if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
+      MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type()
+                    << " must be kNumberTypeInt32 or kNumberTypeInt!";
+      return RET_ERROR;
+    }
     auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data_c());
     for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
       tile_parameter_->dims_[i] = i;
