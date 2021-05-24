@@ -16,7 +16,7 @@
 import os
 from functools import reduce
 from mindspore import log as logger
-from .model import PrimLib, Graph, Tensor
+from .model import PrimLib, Graph, Tensor, Operator
 from .model import DataFormat as DF
 
 
@@ -65,13 +65,16 @@ class GraphSplitByPattern:
                 self.stitch_ops = set()
                 self.stitch_atomic_ops = set()
 
-        def __init__(self, init_op, is_output, unique_id, reach_tab):
-            self.pattern = PrimLib.iter_type(init_op)
-            self.ops = [init_op]
+        def __init__(self, init_op, is_output, unique_id, reach_tab, recompute_ops=None):
+            self.pattern = PrimLib.iter_type(init_op) if init_op is not None else PrimLib.UNKNOWN
+            self.ops = [] if init_op is None else [init_op]
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.mode = None
             self.stitch_info = self.StitchInfo()
+            self.recompute_ops = [] if recompute_ops is None else recompute_ops
+            self.ori_op_map = {}
+            self.is_recompute = False
             self.is_output = is_output
             self.output_excluded = set()
             if self.pattern == PrimLib.REDUCE:
@@ -143,6 +146,8 @@ class GraphSplitByPattern:
                     r = rels.pop(area)
                     _update_relation(rels, self, r)
 
+            if area.is_recompute:
+                self.cp_ops(area)
             if self.pattern >= area.pattern:
                 self.ops.extend(area.ops)
             else:
@@ -161,7 +166,9 @@ class GraphSplitByPattern:
             if area.output_excluded:
                 self.output_excluded.update(area.output_excluded)
             self.update_stitch_info(area.stitch_info)
-            self.reach_tab.fuse(self.unique_id, area.unique_id)
+            if not area.is_recompute:
+                self.reach_tab.fuse(self.unique_id, area.unique_id)
+            self.recompute_ops.extend(area.recompute_ops)
 
         def check_acyclic(self, to):
             """Check circle. It returns false if circle exists"""
@@ -180,25 +187,73 @@ class GraphSplitByPattern:
                         return True
             return False
 
+        def cp_ops(self, area):
+            """copy recompute_ops in area to ops, self is area's user"""
+            tail_tensor = area.recompute_ops[-1].output
+            #copy tensors, all copied are Tensor.PARA_NONE
+            tensor_map = {}
+            tensor_map[area.recompute_ops[0].inputs[0]] = area.recompute_ops[0].inputs[0]
+            for op in area.recompute_ops:
+                orig_tensor = op.output
+                cp_tensor = Tensor(orig_tensor.name, orig_tensor.shape, orig_tensor.dtype, orig_tensor.data_format)
+                tensor_map[orig_tensor] = cp_tensor
+            #copy ops
+            cp_ops = []
+            for op in area.recompute_ops:
+                cp_op = Operator(op.prim, [tensor_map[op.inputs[0]]], tensor_map[op.output], op.attrs)
+                cp_op.all_inputs = cp_op.inputs
+                cp_ops.append(cp_op)
+                area.ori_op_map[cp_op] = op
+            #connect copied ops
+            for op in self.ops:
+                if tail_tensor in op.inputs:
+                    op.inputs.remove(tail_tensor)
+                    op.inputs.append(tensor_map[tail_tensor])
+                    tail_tensor.to_ops.remove(op)
+                    tensor_map[tail_tensor].to_ops.append(op)
+            #fill cp_ops in self.recompute_area
+            cp_dom_op = None
+            for cp, ori in area.ori_op_map.items():
+                if ori == area.dom_op():
+                    cp_dom_op = cp
+            area.ops.clear()
+            area.ops.append(cp_dom_op)
+            area.ops.extend([op for op in cp_ops if op != cp_dom_op])
+
     def __init__(self, graph, flags):
         self.graph = graph
         self.areas = []
         self.flags = flags
-        self.reach_tab = self.ReachTable(len(graph.ops))
-        area_map = {}
+        self.enable_recompute = self.flags.get("enable_recompute_fusion", False)
+        self.reach_tab = self.ReachTable(len(graph.ops) + 1 if self.enable_recompute else len(graph.ops))
+        self.area_map = {}
         _, outputs = graph.deduce_parameters()
-        idx = 0
+        self.idx = 0
         for op in graph.ops:
             is_output = op.output in outputs
-            a = self.Area(op, is_output, idx, self.reach_tab)
-            idx += 1
+            a = self.Area(op, is_output, self.idx, self.reach_tab)
+            self.idx += 1
             self.set_default_mode(a)
             self.areas.append(a)
-            area_map[op] = a
+            self.set_area_map([op], a)
         for a in self.areas:
-            a.link_input(area_map)
+            a.link_input(self.area_map)
         for i in range(len(self.areas)-1, -1, -1):
             self.areas[i].link_output()
+        if self.enable_recompute:
+            self.recom_area = self.Area(None, False, self.idx, self.reach_tab)
+            self.recom_area.is_recompute = True
+            self.recom_pre = None
+            self.recom_user = None
+            self.recom_dom = None
+            self.dom_user_r = PrimLib.UNKNOWN
+            self.recom_res = False
+            self.orig_op_map = {}
+
+    def set_area_map(self, ops, area):
+        """update area_map after op fused to area"""
+        for op in ops:
+            self.area_map[op] = area
 
     def set_default_mode(self, area):
         area.mode = self.get_default_mode(area.ops[0])
@@ -234,11 +289,13 @@ class GraphSplitByPattern:
                     if is_forward:
                         for area in fuse_areas:
                             dominant.fuse(area)
+                            self.set_area_map(area.ops, dominant)
                             self.areas.remove(area)
                     else:
                         forward_area = dominant
                         for area in fuse_areas:
                             area.fuse(forward_area)
+                            self.set_area_map(forward_area.ops, area)
                             self.areas.remove(forward_area)
                             forward_area = area
                     changed = True
@@ -246,16 +303,39 @@ class GraphSplitByPattern:
             else:
                 return changed
 
-    def to_subgraphs(self):
-        """Transform op groups to subgraphs"""
+    def fuse_recom(self, selector):
+        """Fuse recompute area to its user"""
+        for dominant in [self.recom_area, self.recom_user]:
+            result = selector(dominant)
+            if result is not None and result[0]:
+                fuse_areas, _ = result
+                fuse_areas = self.limit_area_size(dominant, fuse_areas)
+                if not fuse_areas:
+                    continue
+                if fuse_areas[0] in [self.recom_area, self.recom_user]:
+                    self.recom_user.fuse(self.recom_area)
+                    self.recom_res = True
+                    return True
+        return False
+
+    def index_op(self):
+        """index op by order, the copied op share id with original op, for topo-sort"""
         ids = {}
         for i, op in enumerate(self.graph.ops):
             ids[op] = i
+        if hasattr(self, 'orig_op_map'):
+            for k, v in self.orig_op_map.items():
+                ids[k] = ids[v]
+        return ids
+
+    def to_subgraphs(self):
+        """Transform op groups to subgraphs"""
+        ids = self.index_op()
         subgraphs = []
         graphmodes = []
         for i, area in enumerate(self.areas):
             area.ops.sort(key=lambda op: ids[op])
-            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), area.ops, area.stitch_info))
+            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), area.ops, area.stitch_info, area.recompute_ops))
             graphmodes.append("basic" if area.mode == self.Area.MODE_BASIC else "composite")
         return subgraphs, graphmodes
 
@@ -274,13 +354,14 @@ class GraphSplitByPattern:
             with os.fdopen(os.open(filename, os.O_RDWR | os.O_CREAT), 'w+') as f:
                 f.write(subgraphs_str)
 
-    def do_split(self):
-        """Split graph by pattern"""
-        raise Exception("do_split() is not implemented in {}".format(self.__class__.__name__))
+    def pattern_fuse(self, select=None):
+        """fuse Areas by pattern repeatedly"""
+        raise Exception("pattern_fuse() is not implemented in {}".format(self.__class__.__name__))
 
     def split(self):
         """Split graph by pattern"""
-        self.do_split()
+        self.pattern_fuse()
+        self.recompute_fuse()
         # The reshape should not be output node
         # Note: after this function, the input output relation is not maintained.
         self.split_output_reshapes()
@@ -316,6 +397,159 @@ class GraphSplitByPattern:
         if new_areas:
             self.areas += new_areas
 
+    def set_recompute(self, dom_area, ops, user_area):
+        """set the recompute area and connect with other areas"""
+        self.recom_area.recompute_ops.extend(ops)
+        #recom_area: set dom_op and correct ops length
+        patterns = [PrimLib.iter_type(op) for op in ops]
+        self.recom_area.pattern = max(patterns)
+        for i, pat in enumerate(patterns):
+            if pat == self.recom_area.pattern:
+                self.recom_area.ops = [ops[i]] * len(ops)
+                break
+        #disconnect dom_area and user_area
+        self.dom_user_r = dom_area.out_relations[user_area]
+        dom_area.out_relations.pop(user_area)
+        user_area.in_relations.pop(dom_area)
+        #connect recom_area and user_area
+        user_area.in_relations[self.recom_area] = self.dom_user_r
+        self.recom_area.out_relations[user_area] = self.dom_user_r
+        #connect recom_pre and recom_area
+        self.recom_pre = self.area_map[ops[0].inputs[0].op] if ops[0].inputs[0].op else None
+        if self.recom_pre is not None:
+            self.recom_area.in_relations[self.recom_pre] = dom_area.in_relations[self.recom_pre]
+            self.recom_pre.out_relations[self.recom_area] = dom_area.in_relations[self.recom_pre]
+        #set related areas
+        self.recom_user = user_area
+        self.recom_dom = dom_area
+        self.recom_res = False
+
+    def clear_recompute(self):
+        """disconnect recom_area from other areas, and clear recom_area"""
+        self.recom_area.out_relations.clear()
+        self.recom_area.in_relations.clear()
+        if not self.recom_res:
+            self.recom_user.in_relations.pop(self.recom_area)
+            self.recom_user.in_relations[self.recom_dom] = self.dom_user_r
+            self.recom_dom.out_relations[self.recom_user] = self.dom_user_r
+            if self.recom_pre:
+                self.recom_pre.out_relations.pop(self.recom_area)
+        self.recom_area.ops.clear()
+        self.recom_area.recompute_ops.clear()
+        self.orig_op_map.update(self.recom_area.ori_op_map)
+        self.recom_area.ori_op_map.clear()
+
+
+    def to_subgraph(self, dom):
+        """Transform area to subgraphs"""
+        ids = self.index_op()
+        dom_ops = list()
+        dom_ops.extend(dom.ops)
+        dom_ops.sort(key=lambda op: ids[op])
+        subgraph = []
+        subgraph = Graph('{}_area'.format(self.graph.name), dom_ops)
+        return subgraph
+
+    def find_cheap_regions(self, dom):
+        """extract all the cheap regions in dom area, toposort each region before return"""
+        def _grow_region(region_ops, op, weight, inputs):
+            """include op to region_ops if region grow"""
+            # region successfully ends at input
+            if op.inputs[0] in inputs and len(op.inputs) == 1 and \
+                PrimLib.iter_type(op) <= PrimLib.BROADCAST:
+                region_ops.append(op)
+                return False, None, weight
+            #region fails to grow
+            MAX_WEIGHT = 20
+            if weight > MAX_WEIGHT or len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
+                return False, None, weight
+            #region grows successfully
+            weight = weight + 1
+            region_ops.append(op)
+            return True, op.inputs[0].op, weight
+
+        def _find_cheap_regions(dom):
+            sub = self.to_subgraph(dom)
+            inputs, outputs = sub.deduce_parameters()
+            cheap_regions = []
+            for output in outputs:
+                #  tensor should have user other than user_area to be fused
+                if output.para_type != Tensor.PARA_OUTPUT and len(output.to_ops) < 2:
+                    continue
+                region_ops = []
+                grow = True
+                candidate_op = output.op
+                weight = 1
+                while grow:
+                    grow, candidate_op, weight = _grow_region(region_ops, candidate_op, weight, inputs)
+                # region ends at input and not empty
+                if region_ops and region_ops[-1].inputs[0] in inputs:
+                    region_ops.reverse()
+                    # tensor size should equal or becomes larger(cast up, broadcast)
+                    if region_ops[0].inputs[0].get_size() > region_ops[-1].output.get_size():
+                        continue
+                    cheap_regions.append(region_ops)
+            return cheap_regions
+
+        return _find_cheap_regions(dom)
+
+    def select_user_area(self, tail_tensor):
+        """select the user area has only one edge to dom area"""
+        def _get_edge_num(dom_area, user_area):
+            """get edge num between two areas"""
+            dom_graph = self.to_subgraph(dom_area)
+            _, dom_outputs = dom_graph.deduce_parameters()
+            user_graph = self.to_subgraph(user_area)
+            user_inputs, _ = user_graph.deduce_parameters()
+            edge = [t for t in dom_outputs if t in user_inputs]
+            return len(edge)
+
+        def _select_user_area(tail_tensor):
+            user_areas = []
+            for user_op in tail_tensor.to_ops:
+                user_area = self.area_map[user_op]
+                if len(user_area.ops) == 1 and user_area.pattern == PrimLib.RESHAPE:
+                    continue
+                edge_num = _get_edge_num(self.area_map[tail_tensor.op], user_area)
+                if edge_num == 1 and not user_area in user_areas:
+                    user_areas.append(user_area)
+            return user_areas
+
+        return _select_user_area(tail_tensor)
+
+    def recompute_fuse(self):
+        """find recompute regions and copy them out to new Areas"""
+        def do_recompute_fuse():
+            """split the unfusing pattern by add recompute area"""
+            recompute_suc = False
+            orig_areas = []
+            orig_areas.extend(self.areas)
+            for dom in orig_areas:
+                if dom not in self.areas or not dom.out_relations:
+                    continue
+                cheap_regions = self.find_cheap_regions(dom)
+                dom_changed = False
+                for cheap_region in cheap_regions:
+                    user_areas = self.select_user_area(cheap_region[-1].output)
+                    if not user_areas:
+                        continue
+                    for user_area in user_areas:
+                        self.set_recompute(dom, cheap_region, user_area)
+                        self.pattern_fuse(self.fuse_recom)
+                        self.clear_recompute()
+                        if self.recom_res:
+                            recompute_suc = True
+                            #Copy region at most once for this dom
+                            dom_changed = True
+                            break
+                    if dom_changed:
+                        break
+            return recompute_suc
+
+        if self.enable_recompute:
+            while do_recompute_fuse():
+                self.pattern_fuse()
+
 use_poly_reduce = True
 
 
@@ -331,8 +565,8 @@ class GraphSplitGpu(GraphSplitByPattern):
         pattern = PrimLib.iter_type(op)
         return self.Area.MODE_BASIC if pattern == PrimLib.RESHAPE else self.Area.MODE_COMPOSITE
 
-    def do_split(self):
-        """Split graph by pattern"""
+    def pattern_fuse(self, fuse_func=None):
+        """fuse Areas by pattern"""
         def _reshape(dom):
             if dom.pattern != PrimLib.RESHAPE:
                 return None
@@ -551,21 +785,38 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
-        enable_stitch_fusion = self.flags.get("enable_stitch_fusion", False)
-        changed = True
-        while changed:
-            changed = self.fuse(_reshape)
-            changed = self.fuse(_elemwise_depth) or changed
-            changed = self.fuse(_elemwise_width) or changed
-            changed = self.fuse(_reduce_depth) or changed
-            changed = self.fuse(_reduce_width) or changed
-            changed = self.fuse(_broadcast_depth) or changed
-            changed = self.fuse(_broadcast_width) or changed
+        def _fuse_loop():
+            changed = True
+            while changed:
+                changed = self.fuse(_reshape)
+                changed = self.fuse(_elemwise_depth) or changed
+                changed = self.fuse(_elemwise_width) or changed
+                changed = self.fuse(_reduce_depth) or changed
+                changed = self.fuse(_reduce_width) or changed
+                changed = self.fuse(_broadcast_depth) or changed
+                changed = self.fuse(_broadcast_width) or changed
+                if use_poly_reduce:
+                    changed = self.fuse(_reduce_output) or changed
+                    if enable_stitch_fusion:
+                        changed = self.fuse(_reduce_stitch) or changed
+            self.fuse(_transpose)
+
+        def _fuse_once(fuse_func):
+            if fuse_func(_reshape) or fuse_func(_elemwise_depth) or fuse_func(_elemwise_width) or \
+                fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
+                fuse_func(_broadcast_width):
+                return
             if use_poly_reduce:
-                changed = self.fuse(_reduce_output) or changed
-                if enable_stitch_fusion:
-                    changed = self.fuse(_reduce_stitch) or changed
-        self.fuse(_transpose)
+                if fuse_func(_reduce_output) or (enable_stitch_fusion and fuse_func(_reduce_stitch)):
+                    return
+            fuse_func(_transpose)
+            return
+
+        enable_stitch_fusion = self.flags.get("enable_stitch_fusion", False)
+        if fuse_func is None:
+            _fuse_loop()
+        else:
+            _fuse_once(fuse_func)
 
 
 class GraphSplitAscend(GraphSplitByPattern):
@@ -580,8 +831,8 @@ class GraphSplitAscend(GraphSplitByPattern):
             return self.Area.MODE_COMPOSITE
         return self.Area.MODE_BASIC
 
-    def do_split(self):
-        """Split graph by pattern"""
+    def pattern_fuse(self, fuse_func=None):
+        """fuse Areas by pattern"""
         def _tensor_size(tensor):
             size = 1
             for i in tensor.shape:
@@ -685,6 +936,19 @@ class GraphSplitAscend(GraphSplitByPattern):
                     fused.append(a)
             return fused, False
 
+        def _reduce_output(dom):
+            if dom.pattern != PrimLib.REDUCE:
+                return None
+            op_attrs = dom.dom_op().attrs
+            if not op_attrs.get('reduce_output_fuse'):
+                return None
+            fused = []
+            for a, r in dom.out_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.BROADCAST and \
+                        dom.check_acyclic(a):
+                    fused.append(a)
+            return fused, False
+
         def _transdata_pattern_support(dom, a):
             transdata_op = dom.dom_op()
 
@@ -733,32 +997,31 @@ class GraphSplitAscend(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
-        def _reduce_output(dom):
-            if dom.pattern != PrimLib.REDUCE:
-                return None
-            op_attrs = dom.dom_op().attrs
-            if not op_attrs.get('reduce_output_fuse'):
-                return None
-            fused = []
-            for a, r in dom.out_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.BROADCAST and \
-                        dom.check_acyclic(a):
-                    fused.append(a)
-            return fused, False
+        def _fuse_loop():
+            changed = True
+            while changed:
+                changed = self.fuse(_reshape)
+                changed = self.fuse(_elemwise_depth) or changed
+                changed = self.fuse(_elemwise_width) or changed
+                changed = self.fuse(_reduce_depth) or changed
+                changed = self.fuse(_reduce_width) or changed
+                changed = self.fuse(_broadcast_depth) or changed
+                changed = self.fuse(_broadcast_width) or changed
+                changed = self.fuse(_matmul_depth) or changed
+                changed = self.fuse(_reduce_output) or changed
+            self.fuse(_transdata)
 
-        changed = True
-        while changed:
-            changed = self.fuse(_reshape)
-            changed = self.fuse(_elemwise_depth) or changed
-            changed = self.fuse(_elemwise_width) or changed
-            changed = self.fuse(_reduce_depth) or changed
-            changed = self.fuse(_reduce_width) or changed
-            changed = self.fuse(_broadcast_depth) or changed
-            changed = self.fuse(_broadcast_width) or changed
-            changed = self.fuse(_matmul_depth) or changed
-            changed = self.fuse(_reduce_output) or changed
-        self.fuse(_transdata)
+        def _fuse_once(fuse_func):
+            if fuse_func(_reshape) or fuse_func(_elemwise_depth) or fuse_func(_elemwise_width) or \
+                fuse_func(_reduce_depth) or fuse_func(_reduce_width) or fuse_func(_broadcast_depth) or \
+                fuse_func(_broadcast_width) or fuse_func(_matmul_depth) or fuse_func(_reduce_output) or \
+                fuse_func(_transdata):
+                pass
 
+        if fuse_func is None:
+            _fuse_loop()
+        else:
+            _fuse_once(fuse_func)
 
 
 def split(graph, target, flags):

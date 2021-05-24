@@ -320,8 +320,8 @@ class Operator:
 
     def __str__(self):
         args = ', '.join([str(t) for t in self.all_inputs])
-        expr = "%s = %s.%s(%s)" % (
-            str(self.output), self.prim, self.output.dtype, args)
+        expr = "%s = %s.%s(%s) id:%s" % (
+            str(self.output), self.prim, self.output.dtype, args, id(self))
         return expr if not self.attrs else '%s // %s' % (expr, str(self.attrs))
 
     def __repr__(self):
@@ -331,12 +331,13 @@ class Operator:
 class Graph:
     """Graph"""
 
-    def __init__(self, name, ops, stitch_info=None):
+    def __init__(self, name, ops, stitch_info=None, recompute_ops=None):
         self.name = name
         self.ops = ops  # in topo order, can not use set
         self.inputs = []
         self.outputs = []
         self.stitch_info = stitch_info
+        self.recompute_ops = recompute_ops
 
     def set_processor(self, processor):
         """Set processor"""

@@ -15,11 +15,31 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
+#include <vector>
+#include <nlohmann/json.hpp>
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/pass.h"
 
 namespace mindspore {
+namespace kernel {
+struct StitchInfo {
+  std::vector<std::string> stitch_ops;
+  std::vector<std::string> stitch_atomic_ops;
+};
+
+class SplitNodesDecoder {
+ public:
+  SplitNodesDecoder() {}
+  ~SplitNodesDecoder() = default;
+  static bool DecodeSplitNodes(const nlohmann::json &kernel_json,
+                               const std::map<std::string, AnfNodePtr> &address_node_map, AnfNodePtrList *res_graphs);
+};
+}  // namespace kernel
+
 namespace opt {
 class GraphKernelSplitter : public Pass {
  public:
