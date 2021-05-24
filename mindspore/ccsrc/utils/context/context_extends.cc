@@ -87,14 +87,11 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle = ms_context_ptr->CreateAclTdtChannelHandle();
-  if (acl_handle == nullptr) {
-    MS_LOG(EXCEPTION) << "Get acltdt handle failed";
-  }
-  ms_context_ptr->acl_tdt_print = std::thread(TensorPrint(acl_handle));
+  auto thread_crt = [](std::string &path, acltdtChannelHandle *acl_handle) {
+    return std::thread(TensorPrint(path, acl_handle));
+  };
+  ms_context_ptr->CreateTensorPrintThread(thread_crt);
 #endif
-  MS_LOG(INFO) << "Get the acltdt handle successful, tsd reference = "
-               << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   return true;
 }
 
@@ -110,16 +107,8 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
 
 #ifdef ENABLE_TDTQUE
-    ms_context_ptr->DestroyAclTdtChannelHandle();
     py::gil_scoped_release gil_release;
-    try {
-      if (ms_context_ptr->acl_tdt_print.joinable()) {
-        MS_LOG(INFO) << "join acl tdt host receive process";
-        ms_context_ptr->acl_tdt_print.join();
-      }
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
-    }
+    ms_context_ptr->DestroyTensorPrintThread();
 #endif
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(device_id);

@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #ifdef ENABLE_TDTQUE
@@ -143,13 +144,12 @@ class MsContext {
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *CreateAclTdtChannelHandle();
-  void DestroyAclTdtChannelHandle();
+  using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
+  void CreateTensorPrintThread(PrintThreadCrt ctr);
+  void DestroyTensorPrintThread();
 #endif
   static void device_seter(DeviceSeter device) { seter_ = device; }
   static void device_type_seter(DeviceTypeSeter device_type) { device_type_seter_ = device_type; }
-
-  std::thread acl_tdt_print;
 
   template <typename T>
   void set_param(MsCtxParam param, const T &value) {
@@ -185,6 +185,7 @@ class MsContext {
   MsBackendPolicy backend_policy_;
 #ifdef ENABLE_TDTQUE
   acltdtChannelHandle *acl_handle_ = nullptr;
+  std::thread acl_tdt_print_;
 #endif
 };
 
