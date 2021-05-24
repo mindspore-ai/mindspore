@@ -13,44 +13,41 @@
 # limitations under the License.
 # ============================================================================
 """Test train gat"""
-import argparse
 import os
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.dataset import load_and_process
+from src.gat import GAT
+from src.utils import LossAccuracyWrapper, TrainGAT
 
 import numpy as np
 import mindspore.context as context
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore import Tensor
 
-from src.config import GatConfig
-from src.dataset import load_and_process
-from src.gat import GAT
-from src.utils import LossAccuracyWrapper, TrainGAT
 
+def modelarts_pre_process():
+    config.data_dir = os.path.join(config.data_dir, config.dataset)
 
-def train():
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def gnn_train():
     """Train GAT model."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='./data/cora/cora_mr', help='Data dir')
-    parser.add_argument('--train_nodes_num', type=int, default=140, help='Nodes numbers for training')
-    parser.add_argument('--eval_nodes_num', type=int, default=500, help='Nodes numbers for evaluation')
-    parser.add_argument('--test_nodes_num', type=int, default=1000, help='Nodes numbers for test')
-    args = parser.parse_args()
+
     if not os.path.exists("ckpts"):
         os.mkdir("ckpts")
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         save_graphs=False)
     # train parameters
-    hid_units = GatConfig.hid_units
-    n_heads = GatConfig.n_heads
-    early_stopping = GatConfig.early_stopping
-    lr = GatConfig.lr
-    l2_coeff = GatConfig.l2_coeff
-    num_epochs = GatConfig.num_epochs
-    feature, biases, y_train, train_mask, y_val, eval_mask, y_test, test_mask = load_and_process(args.data_dir,
-                                                                                                 args.train_nodes_num,
-                                                                                                 args.eval_nodes_num,
-                                                                                                 args.test_nodes_num)
+    hid_units = config.hid_units
+    n_heads = config.n_heads
+    early_stopping = config.early_stopping
+    lr = config.lr
+    l2_coeff = config.l2_coeff
+    num_epochs = config.num_epochs
+    feature, biases, y_train, train_mask, y_val, eval_mask, y_test, test_mask = \
+        load_and_process(config.data_dir, config.train_nodes_num, \
+            config.eval_nodes_num, config.test_nodes_num)
     feature_size = feature.shape[2]
     num_nodes = feature.shape[1]
     num_class = y_train.shape[2]
@@ -60,8 +57,8 @@ def train():
                   num_nodes,
                   hid_units,
                   n_heads,
-                  attn_drop=GatConfig.attn_dropout,
-                  ftr_drop=GatConfig.feature_dropout)
+                  attn_drop=config.attn_dropout,
+                  ftr_drop=config.feature_dropout)
     gat_net.add_flags_recursive(fp16=True)
 
     feature = Tensor(feature)
@@ -130,4 +127,4 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    gnn_train()

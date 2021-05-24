@@ -14,13 +14,14 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then 
-    echo "Usage: sh run_train_ascend.sh [DATASET_NAME]"
+    echo "Usage: sh run_train_ascend.sh [DATASET_NAME] [DATA_DIR]"
 exit 1
 fi
 
 DATASET_NAME=$1
+DATA_DIR=$2
 echo $DATASET_NAME
 
 ulimit -u unlimited
@@ -35,6 +36,7 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
@@ -44,11 +46,11 @@ echo "start training for device $DEVICE_ID"
 
 if [ $DATASET_NAME == cora ]
 then
-    python train.py --data_dir=../data_mr/$DATASET_NAME &> log &
+    python train.py --data_dir=$DATA_DIR/$DATASET_NAME &> log &
 fi
 
 if [ $DATASET_NAME == citeseer ]
 then
-    python train.py --data_dir=../data_mr/$DATASET_NAME --train_nodes_num=120 &> log &
+    python train.py --data_dir=$DATA_DIR/$DATASET_NAME --train_nodes_num=120 &> log &
 fi
 cd ..
