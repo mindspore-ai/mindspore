@@ -55,14 +55,15 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       if (pass->Run(func_graph)) {
         changed = true;
       }
+      constexpr auto kMicroSendUnit = 1000000;
 #if defined(_WIN32) || defined(_WIN64)
       auto end_time = std::chrono::steady_clock::now();
-      std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+      std::chrono::duration<double, std::ratio<1, kMicroSendUnit>> cost = end_time - start_time;
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
 #else
       (void)gettimeofday(&end_time, nullptr);
       // time unit: us
-      uint64_t cost = 1000000 * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+      uint64_t cost = kMicroSendUnit * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
       cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
 #endif
