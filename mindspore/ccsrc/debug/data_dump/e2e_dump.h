@@ -33,26 +33,26 @@ class E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;
-  static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger = nullptr);
+  static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger = nullptr);
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                            std::string *kernel_name, Debugger *debugger);
+                            std::string *kernel_name, const Debugger *debugger);
   static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                             std::string *kernel_name, Debugger *debugger);
+                             std::string *kernel_name, const Debugger *debugger);
 
  private:
-  static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger);
-  static void DumpInput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger);
+  static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
+  static void DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
   static void DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
-                                     Debugger *debugger);
+                                     const Debugger *debugger);
 
   static void DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
                                NotNull<const device::DeviceAddress *> addr, const ShapeVector &int_shapes,
                                const TypeId &type, bool trans_flag, size_t slot, const Debugger *debugger);
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                bool trans_flag, std::map<std::string, size_t> *const_map, Debugger *debugger);
+                                bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_UTIL_H_
