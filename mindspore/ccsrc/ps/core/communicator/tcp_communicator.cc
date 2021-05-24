@@ -56,7 +56,7 @@ bool TcpCommunicator::Start() {
 
   // Set event callback. For example, event of scaling out/in, etc.
   event_callback_ = std::bind(
-    [&](const core::NodeEvent &event) -> void {
+    [&](const core::ClusterEvent &event) -> void {
       MS_LOG(INFO) << "Server receives event of " << event;
       certain_event_to_callback_[event]();
     },
@@ -86,7 +86,7 @@ void TcpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Mes
   return;
 }
 
-void TcpCommunicator::RegisterEventCallback(const core::NodeEvent &event, const CertainEventCallback &event_cb) {
+void TcpCommunicator::RegisterEventCallback(const core::ClusterEvent &event, const CertainEventCallback &event_cb) {
   certain_event_to_callback_.try_emplace(event, event_cb);
   return;
 }

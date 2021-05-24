@@ -136,7 +136,7 @@ class AbstractNode : public Node {
   std::unordered_map<NodeCommand, ResponseHandler> handlers_;
   std::unordered_map<NodeCommand, ServerHandler> server_handler_;
 
-  std::unordered_map<NodeEvent, bool> is_event_send_;
+  std::unordered_map<ClusterEvent, bool> is_event_send_;
   std::mutex is_event_send_mutex_;
 
   std::shared_ptr<TcpServer> server_;

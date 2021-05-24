@@ -59,7 +59,7 @@ class Node {
         current_cluster_state_(ClusterState::ClUSTER_STARTING) {}
   virtual ~Node() = default;
 
-  using OnNodeEventMessage = std::function<void(const NodeEvent &event)>;
+  using OnNodeEventMessage = std::function<void(const ClusterEvent &event)>;
 
   using MessageCallback = std::function<void()>;
 
