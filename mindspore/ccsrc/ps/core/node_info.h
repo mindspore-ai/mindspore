@@ -25,7 +25,8 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-enum class NodeEvent {
+// Events reported to the business layer, include cluster event and node event.
+enum class ClusterEvent {
   CLUSTER_TIMEOUT = 0,
   NODE_TIMEOUT = 1,
   SCHEDULER_TIMEOUT = 2,

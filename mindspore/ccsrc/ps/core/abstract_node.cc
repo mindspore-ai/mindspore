@@ -281,7 +281,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
                           << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
           is_finish_ = true;
           wait_finish_cond_.notify_all();
-          on_node_event_message_(NodeEvent::SCHEDULER_TIMEOUT);
+          on_node_event_message_(ClusterEvent::SCHEDULER_TIMEOUT);
         }
       } else {
         UpdateSchedulerTime();
@@ -338,7 +338,7 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
   if (current_cluster_state_ == ClusterState::CLUSTER_TIMEOUT && on_node_event_message_) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
-    on_node_event_message_(NodeEvent::CLUSTER_TIMEOUT);
+    on_node_event_message_(ClusterEvent::CLUSTER_TIMEOUT);
   }
 }
 

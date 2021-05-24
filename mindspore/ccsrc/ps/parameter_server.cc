@@ -48,9 +48,9 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
 
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
-  server_node_->set_event_callback([&](const core::NodeEvent &event) {
-    if ((event == core::NodeEvent::CLUSTER_TIMEOUT) ||
-        (event == core::NodeEvent::SCHEDULER_TIMEOUT || (event == core::NodeEvent::NODE_TIMEOUT))) {
+  server_node_->set_event_callback([&](const core::ClusterEvent &event) {
+    if ((event == core::ClusterEvent::CLUSTER_TIMEOUT) ||
+        (event == core::ClusterEvent::SCHEDULER_TIMEOUT || (event == core::ClusterEvent::NODE_TIMEOUT))) {
       MS_LOG(ERROR) << "Trigger timeout event:" << event << " begin to exit the system!";
       Finalize();
     }

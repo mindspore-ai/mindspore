@@ -73,7 +73,7 @@ class TcpCommunicator : public CommunicatorBase {
   bool Stop() override;
 
   void RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) override;
-  void RegisterEventCallback(const core::NodeEvent &event, const CertainEventCallback &event_cb);
+  void RegisterEventCallback(const core::ClusterEvent &event, const CertainEventCallback &event_cb);
 
   ServerNode *server_node();
 
@@ -109,8 +109,8 @@ class TcpCommunicator : public CommunicatorBase {
 
   TcpMsgCallback tcp_msg_callback_;
   OnNodeEventCallback event_callback_;
-  // Each NodeEvent corresponds to a CertainEventCallback to process the event.
-  std::map<core::NodeEvent, CertainEventCallback> certain_event_to_callback_;
+  // Each ClusterEvent corresponds to a CertainEventCallback to process the event.
+  std::map<core::ClusterEvent, CertainEventCallback> certain_event_to_callback_;
 
   uint32_t server_num_;
   uint32_t worker_num_;
