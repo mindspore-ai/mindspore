@@ -328,20 +328,9 @@ class _AutoParallelContext:
         if sorted(indices) != indices:
             raise ValueError('elements in indices must be sorted in ascending order')
 
-        if isinstance(group, (str)):
-            group_len = len(group)
-            if group_len > _MAX_GROUP_NAME_LEN:
-                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
-        else:
-            raise TypeError('Group must be a python str')
+        new_group = self._check_and_default_group(group)
 
-        if group == "":
-            if context.get_context("device_target") == "Ascend":
-                group = _DEFAULT_HCCL_FUSION_GROUP_NAME
-            else:
-                group = _DEFAULT_NCCL_FUSION_GROUP_NAME
-
-        self._context_handle.set_all_reduce_fusion_split_indices(indices, group)
+        self._context_handle.set_all_reduce_fusion_split_indices(indices, new_group)
         if context.get_context("device_target") == "Ascend" and context.get_context("enable_ge"):
             _set_fusion_strategy_by_idx(indices)
 
@@ -359,19 +348,8 @@ class _AutoParallelContext:
             TypeError: If group is not a python str.
         """
         self.check_context_handle()
-        if isinstance(group, (str)):
-            group_len = len(group)
-            if group_len > _MAX_GROUP_NAME_LEN:
-                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
-        else:
-            raise TypeError('Group must be a python str')
-
-        if group == "":
-            if context.get_context("device_target") == "Ascend":
-                group = _DEFAULT_HCCL_FUSION_GROUP_NAME
-            else:
-                group = _DEFAULT_NCCL_FUSION_GROUP_NAME
-        return self._context_handle.get_all_reduce_fusion_split_indices(group)
+        new_group = self._check_and_default_group(group)
+        return self._context_handle.get_all_reduce_fusion_split_indices(new_group)
 
     def set_all_reduce_fusion_split_sizes(self, sizes, group=""):
         """
@@ -393,20 +371,8 @@ class _AutoParallelContext:
         else:
             raise TypeError('sizes must be a python list')
 
-        if isinstance(group, (str)):
-            group_len = len(group)
-            if group_len > _MAX_GROUP_NAME_LEN:
-                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
-        else:
-            raise TypeError('Group must be a python str')
-
-        if group == "":
-            if context.get_context("device_target") == "Ascend":
-                group = _DEFAULT_HCCL_FUSION_GROUP_NAME
-            else:
-                group = _DEFAULT_NCCL_FUSION_GROUP_NAME
-
-        self._context_handle.set_all_reduce_fusion_split_sizes(sizes, group)
+        new_group = self._check_and_default_group(group)
+        self._context_handle.set_all_reduce_fusion_split_sizes(sizes, new_group)
         if context.get_context("device_target") == "Ascend":
             _set_fusion_strategy_by_size(sizes)
 
@@ -424,19 +390,8 @@ class _AutoParallelContext:
             TypeError: If group is not a python str.
         """
         self.check_context_handle()
-        if isinstance(group, (str)):
-            group_len = len(group)
-            if group_len > _MAX_GROUP_NAME_LEN:
-                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
-        else:
-            raise TypeError('Group must be a python str')
-
-        if group == "":
-            if context.get_context("device_target") == "Ascend":
-                group = _DEFAULT_HCCL_FUSION_GROUP_NAME
-            else:
-                group = _DEFAULT_NCCL_FUSION_GROUP_NAME
-        return self._context_handle.get_all_reduce_fusion_split_sizes(group)
+        new_group = self._check_and_default_group(group)
+        return self._context_handle.get_all_reduce_fusion_split_sizes(new_group)
 
     def set_enable_all_reduce_fusion(self, enable_all_reduce_fusion):
         """
@@ -548,6 +503,23 @@ class _AutoParallelContext:
         """Reset all settings."""
         self.check_context_handle()
         self._context_handle.reset()
+
+
+    def _check_and_default_group(self, group):
+        """Validate the given group, if group is empty, returns a default fusion group"""
+        if isinstance(group, (str)):
+            group_len = len(group)
+            if group_len > _MAX_GROUP_NAME_LEN:
+                raise ValueError('Group name len is out of range {_MAX_GROUP_NAME_LEN}')
+        else:
+            raise TypeError('Group must be a python str')
+
+        if group == "":
+            if context.get_context("device_target") == "Ascend":
+                group = _DEFAULT_HCCL_FUSION_GROUP_NAME
+            else:
+                group = _DEFAULT_NCCL_FUSION_GROUP_NAME
+        return group
 
 
 _auto_parallel_context = None
@@ -705,6 +677,7 @@ def _get_auto_parallel_context(attr_key):
         raise ValueError("Get context keyword %s is not recognized!" % attr_key)
     get_func = _get_auto_parallel_context_func_map[attr_key]
     return get_func()
+
 
 def _reset_auto_parallel_context():
     """

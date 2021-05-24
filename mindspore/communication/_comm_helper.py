@@ -45,6 +45,7 @@ else:
 HCCL_WORLD_COMM_GROUP = "hccl_world_group"
 NCCL_WORLD_COMM_GROUP = "nccl_world_group"
 
+
 class Backend:
     """
     Class for available backends.
@@ -79,12 +80,14 @@ class Backend:
 
 DEFAULT_BACKEND = Backend("hccl")
 
+
 class GlobalComm:
     """World communication information."""
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
     INITED = False
     CHECK_ENVS = True
+
 
 def is_hccl_available():
     """

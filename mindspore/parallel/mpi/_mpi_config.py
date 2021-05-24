@@ -19,6 +19,7 @@ import threading
 from mindspore._c_expression import MpiConfig
 from mindspore._checkparam import args_type_check
 
+
 class _MpiConfig:
     """
     _MpiConfig is the config tool for controlling MPI
@@ -55,6 +56,8 @@ class _MpiConfig:
         self._mpiconfig_handle.set_enable_mpi(enable_mpi)
 
 _k_mpi_config = None
+
+
 def _mpi_config():
     """
     Get the global mpi config, if mpi config is not created, create a new one.
@@ -67,13 +70,14 @@ def _mpi_config():
         _k_mpi_config = _MpiConfig()
     return _k_mpi_config
 
+
 @args_type_check(enable_mpi=bool)
 def _set_mpi_config(**kwargs):
     """
     Sets mpi config for running environment.
 
     mpi config should be configured before running your program. If there is no configuration,
-    mpi moudle will be disabled by default.
+    mpi module will be disabled by default.
 
     Note:
         Attribute name is required for setting attributes.
