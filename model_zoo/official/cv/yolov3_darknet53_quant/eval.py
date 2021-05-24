@@ -37,7 +37,7 @@ from src.yolo_dataset import create_yolo_dataset
 from src.config import ConfigYOLOV3DarkNet53
 
 devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=devid)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
 
 class Redirct:

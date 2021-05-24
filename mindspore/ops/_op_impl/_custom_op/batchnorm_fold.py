@@ -28,11 +28,11 @@ batch_norm_op_info = TBERegOp("BatchNormFoldD") \
     .compute_cost(10) \
     .kernel_name("batchnorm_fold") \
     .partial_flag(True) \
-    .attr("momentum", "optional", "float", "all") \
-    .attr("epsilon", "optional", "float", "all") \
-    .attr("is_training", "optional", "bool", "all") \
-    .attr("freeze_bn", "optional", "int", "all") \
-    .attr("format", "optional", "str", "all") \
+    .attr("momentum", "optional", "float", "all", "0.9") \
+    .attr("epsilon", "optional", "float", "all", "0.00001") \
+    .attr("is_training", "optional", "bool", "all", "true") \
+    .attr("freeze_bn", "optional", "int", "all", "0") \
+    .attr("format", "optional", "str", "all", "NCHW") \
     .input(0, "x", False, "required", "all") \
     .input(1, "x_sum", False, "required", "all") \
     .input(2, "x_square_sum", False, "required", "all") \
