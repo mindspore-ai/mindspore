@@ -98,6 +98,9 @@ class RootMeanSquareDistance(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 3.
+            TypeError: If the data type of label_idx not be int or float.
+            ValueError: If the value of label_idx is not in y_pred or y.
+            ValueError: If y_pred and y should have different shape.
         """
         if len(inputs) != 3:
             raise ValueError('MeanSurfaceDistance need 3 inputs (y_pred, y, label), but got {}.'.format(len(inputs)))
@@ -126,6 +129,13 @@ class RootMeanSquareDistance(Metric):
     def eval(self):
         """
         Calculate residual mean square surface distance.
+
+        Returns:
+             A float with residual mean square surface distance.
+
+        Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
+
         """
         if self._is_update is False:
             raise RuntimeError('Call the update method before calling eval.')

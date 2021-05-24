@@ -21,7 +21,7 @@ import mindspore.dataset as de
 import mindspore.dataset.vision.py_transforms as F
 import mindspore.dataset.transforms.py_transforms as F2
 
-from utils.config import config
+from model_utils.config import config
 from src.custom_dataset import DistributedCustomSampler, CustomDataset
 
 __all__ = ['get_de_dataset']

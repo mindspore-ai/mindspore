@@ -27,6 +27,9 @@ class BleuScore(Metric):
         n_gram (int): The n_gram value ranged from 1 to 4. Default: 4.
         smooth (bool): Whether or not to apply smoothing. Default: False.
 
+    Raises:
+        ValueError: If the value range of n_gram is not 1 to 4.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -133,6 +136,9 @@ class BleuScore(Metric):
 
          Returns:
              A numpy with bleu score.
+
+         Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
 
         """
         if self._is_update is False:

@@ -85,6 +85,9 @@ class CosineSimilarity(Metric):
          Returns:
              A square matrix.
 
+         Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
+
         """
         if not self._is_update:
             raise RuntimeError('Call the update method before calling eval.')

@@ -70,6 +70,7 @@ class Dice(Metric):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
+            RuntimeError: If y_pred and y should have different the dimension.
         """
         if len(inputs) != 2:
             raise ValueError('Dice need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))

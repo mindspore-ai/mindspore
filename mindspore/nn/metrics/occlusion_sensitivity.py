@@ -130,6 +130,8 @@ class OcclusionSensitivity(Metric):
 
         Raises:
             ValueError: If the number of input is not 3.
+            RuntimeError: If the batch size is not 1.
+            RuntimeError: If the number of labels is different from the number of batches.
         """
         if len(inputs) != 3:
             raise ValueError('occlusion_sensitivity need 3 inputs (model, y_pred, y), but got {}'.format(len(inputs)))
@@ -190,6 +192,9 @@ class OcclusionSensitivity(Metric):
 
          Returns:
              A numpy ndarray.
+
+         Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
 
         """
         if not self._is_update:

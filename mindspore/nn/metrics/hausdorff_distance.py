@@ -288,6 +288,12 @@ class HausdorffDistance(Metric):
     def eval(self):
         """
         Calculate the no-directed or directed Hausdorff distance.
+
+        Returns:
+             A float with hausdorff_distance.
+
+        Raises:
+            RuntimeError: If the update method is not called first, an error will be reported.
         """
         if self._is_update is False:
             raise RuntimeError('Call the update method before calling eval.')

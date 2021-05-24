@@ -21,7 +21,7 @@ from collections import defaultdict
 import numpy as np
 
 from PIL import Image, ImageFile
-from utils.config import config
+from model_utils.config import config
 from mindspore.communication.management import get_group_size, get_rank
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
