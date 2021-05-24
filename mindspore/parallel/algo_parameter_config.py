@@ -157,7 +157,8 @@ def set_algo_parameters(**kwargs):
         tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
             Default: 16
-        fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices. Default: True
+        fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices.
+            Default: True
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
             subsequent operators. Default: False
         enable_algo_approxi (bool): Whether to enable the approximation in the DP algorithms.
