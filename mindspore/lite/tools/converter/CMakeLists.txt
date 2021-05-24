@@ -206,7 +206,6 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::json
         mindspore::eigen
         -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
-        mslite_kernel_reg
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers

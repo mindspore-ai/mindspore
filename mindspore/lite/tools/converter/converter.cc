@@ -24,7 +24,7 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
 #include "src/train/train_populate_parameter.h"
-#include "tools/converter/registry/model_parser_registry.h"
+#include "include/registry/model_parser_registry.h"
 #include "src/common/dynamic_library_loader.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/mindspore_importer.h"

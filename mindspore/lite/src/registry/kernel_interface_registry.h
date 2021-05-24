@@ -22,7 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include "src/registry/kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "include/model.h"
 
 namespace mindspore {

@@ -30,7 +30,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
-#include "tools/converter/registry/model_parser_registry.h"
+#include "include/registry/model_parser_registry.h"
 #include "ops/primitive_c.h"
 
 namespace mindspore {

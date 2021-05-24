@@ -58,7 +58,7 @@
 #include "tools/optimizer/fisson/iter_node_outputs.h"
 #include "tools/optimizer/fisson/node_out_shapes.h"
 #include "tools/optimizer/parallel/parallel_pass.h"
-#include "tools/converter/registry/pass_registry.h"
+#include "include/registry/pass_registry.h"
 #include "tools/optimizer/fisson/multi_conv_split_pass.h"
 
 using std::string;

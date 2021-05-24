@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/registry/kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include <set>
 #include <utility>
 #include "src/registry/kernel_interface_registry.h"

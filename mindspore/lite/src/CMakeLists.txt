@@ -47,6 +47,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
@@ -75,6 +76,8 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
+file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
+set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
 if(SUPPORT_GPU STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/opencl/*.cc
@@ -181,6 +184,10 @@ if(SUPPORT_NPU)
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+    target_link_libraries(mindspore-lite log)
+    target_link_libraries(mindspore-lite_static log)
+endif()
 if(BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
@@ -191,9 +198,6 @@ if(SUPPORT_TRAIN)
     target_link_libraries(mindspore-lite minddata-lite)
     target_link_libraries(mindspore-lite_static minddata-lite)
 endif()
-
-target_link_libraries(mindspore-lite mslite_kernel_reg)
-target_link_libraries(mindspore-lite_static mslite_kernel_reg)
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     if(NOT APPLE AND PLATFORM_ARM)

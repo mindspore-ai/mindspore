@@ -725,8 +725,6 @@ build_lite_java_arm64() {
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/native/libs/arm64-v8a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/arm64-v8a/
 
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
@@ -736,8 +734,6 @@ build_lite_java_arm64() {
     else
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/arm64-v8a/
     fi
     [ -n "${local_pkg_name}" ] && rm -rf ${local_pkg_name}
 }
@@ -761,8 +757,6 @@ build_lite_java_arm32() {
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/native/libs/armeabi-v7a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/armeabi-v7a/
 
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
@@ -772,8 +766,6 @@ build_lite_java_arm32() {
     else
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/armeabi-v7a/
     fi
     [ -n "${local_pkg_name}" ] && rm -rf ${local_pkg_name}
 }
@@ -798,8 +790,6 @@ build_lite_java_x86() {
     if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/java/linux_x86/libs/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmindspore-lite-train.so ${JAVA_PATH}/native/libs/linux_x86/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/linux_x86/libs/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/linux_x86/
 
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/java/linux_x86/libs/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/train/lib/libminddata-lite.so ${JAVA_PATH}/native/libs/linux_x86/
@@ -809,8 +799,6 @@ build_lite_java_x86() {
     else
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/linux_x86/libs/
       cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/linux_x86/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/java/linux_x86/libs/
-      cp ${BASEPATH}/mindspore/lite/build/java/${local_pkg_name}/inference/lib/libmslite_kernel_reg.so ${JAVA_PATH}/native/libs/linux_x86/
     fi
     [ -n "${local_pkg_name}" ] && rm -rf ${local_pkg_name}
 }

@@ -31,7 +31,6 @@ function Run_cropper() {
     cp -a ./inference/third_party/hiai_ddk/lib/libhiai_ir_build.so "${cropper_test_path}"/libhiai_ir_build.so || exit 1
 
     cp -a ./inference/lib/libmindspore-lite.a "${cropper_test_path}"/libmindspore-lite.a || exit 1
-    cp -a ./inference/lib/libmslite_kernel_reg.so "${cropper_test_path}"/libmslite_kernel_reg.so || exit 1
     cp -a ./tools/benchmark/benchmark "${cropper_test_path}"/benchmark || exit 1
 
     cp -r "${x86_path}"/mindspore-lite-${version}-inference-linux-x64/tools/cropper/ "${cropper_test_path}" || exit 1
@@ -75,7 +74,7 @@ function Run_cropper() {
        -fno-addrsig -Wa,--noexecstack -Wformat -Werror=format-security   -O0 -std=c++17 -DARM64=1 -O2 -DNDEBUG  -s \
        -Wl,--exclude-libs,libgcc.a -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,--warn-shared-textrel \
        -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments -Wl,-z,noexecstack -Wl,--no-whole-archive -llog -latomic -lm \
-       -L "${cropper_test_path}" -lmslite_kernel_reg -lhiai -lhiai_ir -lhiai_ir_build \
+       -L "${cropper_test_path}" -lhiai -lhiai_ir -lhiai_ir_build \
        -shared -o libmindspore-lite.so -Wl,-soname,libmindspore-lite.so
         
         if [ $? = 0 ]; then
