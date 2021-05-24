@@ -20,7 +20,9 @@
 #include <arm_neon.h>
 #endif
 #include <memory.h>
+#include <mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/resize_parameter.h>
 #include "nnacl/op_base.h"
+#include "nnacl/crop_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,10 +49,11 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
                                  const int *output_shape, int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights,
                                  float *y_bottom_weights, float *x_left_weights);
 
-int CropAndResizeBilinear(const float *input_data, float *output_data, const int *box_idx, const int *input_shape,
-                          const int *output_shape, const int *y_bottoms, const int *y_tops, const int *x_lefts,
-                          const int *x_rights, const float *y_bottom_weights, const float *x_left_weights, float *line0,
-                          float *line1, const int h_begin, const int h_end);
+int CropAndResizeBilinear(const float *input_data, float *output_data, const int *box_idx, const float *boxes,
+                          const CropAndResizeParameter *param, const int *input_shape, const int *output_shape,
+                          const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+                          const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
+                          const int h_begin, const int h_end);
 
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
