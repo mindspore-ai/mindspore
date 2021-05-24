@@ -23,7 +23,7 @@ cumprop_op_info = TBERegOp("CumProd") \
     .compute_cost(10) \
     .kernel_name("cumprod_d") \
     .partial_flag(True) \
-    .attr("axis", "optional", "int", "all") \
+    .attr("axis", "optional", "int", "all", "0") \
     .attr("exclusive", "optional", "bool", "all") \
     .attr("reverse", "optional", "bool", "all") \
     .input(0, "x", False, "required", "all") \

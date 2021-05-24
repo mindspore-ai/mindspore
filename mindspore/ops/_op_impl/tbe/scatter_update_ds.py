@@ -24,7 +24,7 @@ scatter_update_op_info = TBERegOp("ScatterUpdate") \
     .kernel_name("scatter_update") \
     .partial_flag(True) \
     .dynamic_shape(True) \
-    .attr("use_locking", "optional", "bool", "all") \
+    .attr("use_locking", "optional", "bool", "all", "false") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(1, "updates", False, "required", "all") \

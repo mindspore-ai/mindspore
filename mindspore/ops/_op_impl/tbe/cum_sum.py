@@ -24,7 +24,7 @@ cum_sum_op_info = TBERegOp("CumSum") \
     .kernel_name("cumsum_d") \
     .partial_flag(True) \
     .attr("axis", "optional", "int", "all", "0") \
-    .attr("exclusive", "optional", "bool", "true,false", "fales") \
+    .attr("exclusive", "optional", "bool", "true,false", "false") \
     .attr("reverse", "optional", "bool", "true,false", "false") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

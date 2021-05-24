@@ -23,8 +23,8 @@ wts_arq_op_info = TBERegOp("WtsARQ") \
     .compute_cost(10) \
     .kernel_name("wts_arq") \
     .partial_flag(True) \
-    .attr("num_bits", "optional", "int", "all") \
-    .attr("offset_flag", "optional", "bool", "all") \
+    .attr("num_bits", "optional", "int", "all", "8") \
+    .attr("offset_flag", "optional", "bool", "all", "false") \
     .input(0, "w", False, "required", "all") \
     .input(1, "w_min", False, "required", "all") \
     .input(2, "w_max", False, "required", "all") \

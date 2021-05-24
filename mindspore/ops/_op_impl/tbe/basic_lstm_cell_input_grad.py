@@ -22,7 +22,7 @@ basic_lstm_cell_input_grad_op_info = TBERegOp("BasicLSTMCellInputGrad") \
     .binfile_name("basic_lstm_cell_input_grad.so") \
     .compute_cost(10) \
     .kernel_name("basic_lstm_cell_input_grad") \
-    .attr("keep_prob", "optional", "float", "all") \
+    .attr("keep_prob", "optional", "float", "all", "1.0") \
     .partial_flag(True) \
     .input(0, "dgate", False, "required", "all") \
     .input(1, "w", False, "required", "all", reshape_type="NC") \
