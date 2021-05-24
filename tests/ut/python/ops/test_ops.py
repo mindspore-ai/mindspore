@@ -1709,6 +1709,14 @@ test_case_nn_ops = [
         'block': P.AvgPool(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
+    ('AvgPool3D_1', {
+        'block': P.AvgPool3D(kernel_size=2, strides=2, pad_mode="VALID"),
+        'desc_inputs': [[10, 3, 28, 28, 28]],
+        'desc_bprop': [[10, 3, 14, 14, 14]]}),
+    ('AvgPool3D_2', {
+        'block': P.AvgPool3D(kernel_size=3, strides=2, pad_mode="PAD", pad=1),
+        'desc_inputs': [[10, 3, 28, 31, 24]],
+        'desc_bprop': [[10, 3, 14, 16, 12]]}),
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(kernel_size=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],

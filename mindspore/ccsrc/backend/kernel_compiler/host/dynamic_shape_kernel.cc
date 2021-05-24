@@ -43,7 +43,8 @@ void DynamicShapeKernel::Execute() {
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
   output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
-                                output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c());
+                                output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
+                                output_tensor_for_sync->device_info().host_format_);
   MS_LOG(INFO) << "Execute DynamicShapeKernel End";
 }
 

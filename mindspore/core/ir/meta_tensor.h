@@ -41,12 +41,14 @@ namespace mindspore {
 namespace tensor {
 // brief Device info of Tensor
 //
-// Includes the format and data type of a tensor.
+// Includes the format, data type and host format of a tensor.
 struct DeviceInfo {
-  explicit DeviceInfo(std::string format = "DefaultFormat", TypePtr data_type = nullptr)
-      : format_(std::move(format)), data_type_(std::move(data_type)) {}
+  explicit DeviceInfo(std::string format = "DefaultFormat", TypePtr data_type = nullptr,
+                      std::string host_format = "DefaultFormat")
+      : format_(std::move(format)), data_type_(std::move(data_type)), host_format_(std::move(host_format)) {}
   std::string format_ = "DefaultFormat";
   TypePtr data_type_ = nullptr;
+  std::string host_format_ = "DefaultFormat";
 };
 
 // brief Metadata of Tensor
@@ -138,7 +140,8 @@ class MetaTensor : public Value {
   // Set tensor's device info.
   void set_device_info(const DeviceInfo &device_info) { device_info_ = device_info; }
 
-  void SetDeviceInfo(const std::string &format, const TypePtr &data_type);
+  void SetDeviceInfo(const std::string &format, const TypePtr &data_type,
+                     const std::string &host_format = "DefaultFormat");
 
   // Get the size of a given dimension by its index number.
   int DimensionSize(size_t index) const;

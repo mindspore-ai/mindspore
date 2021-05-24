@@ -235,6 +235,7 @@ inline const PrimitivePtr kPrimApplyCenteredRMSProp = std::make_shared<Primitive
 inline const PrimitivePtr kPrimAvgPool = std::make_shared<Primitive>("AvgPool");
 inline const PrimitivePtr kPrimAvgPool3D = std::make_shared<Primitive>("AvgPool3D");
 inline const PrimitivePtr kPrimAvgPoolGrad = std::make_shared<Primitive>("AvgPoolGrad");
+inline const PrimitivePtr kPrimAvgPool3DGrad = std::make_shared<Primitive>("AvgPool3DGrad");
 inline const PrimitivePtr kPrimAvgPoolGradVm = std::make_shared<Primitive>("AvgPoolGradVm");
 inline const PrimitivePtr kPrimFusedSparseAdam = std::make_shared<Primitive>("FusedSparseAdam");
 inline const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("FusedBatchNorm");

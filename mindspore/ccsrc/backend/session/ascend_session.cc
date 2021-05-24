@@ -429,8 +429,9 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
 #endif
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
-      if (size != 0 && !device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), size,
-                                                         tensor->data_type(), tensor->data_c())) {
+      if (size != 0 &&
+          !device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), size, tensor->data_type(),
+                                            tensor->data_c(), tensor->device_info().host_format_)) {
         MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
       }
       if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
@@ -1400,7 +1401,8 @@ void AscendSession::SyncInitialTenosrToDevice() {
     auto addr = AnfAlgo::GetOutputAddr(backend_parameter, 0);
     MS_EXCEPTION_IF_NULL(addr);
     if (!addr->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_parameter, 0), tensor_size,
-                                front_tensor->data_type(), front_tensor->data_c())) {
+                                front_tensor->data_type(), front_tensor->data_c(),
+                                front_tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "Tensor SyncHostToDevice fail!";
     }
   }

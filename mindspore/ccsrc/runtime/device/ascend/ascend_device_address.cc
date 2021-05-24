@@ -551,9 +551,10 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
 }
 
 bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, mindspore::TypeId type,
-                                           const void *host_ptr) const {
+                                           const void *host_ptr, const std::string &format) const {
   MS_LOG(INFO) << "SyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-               << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+               << ", size:" << size_ << "), Host(format:" << format << ", type_id:" << TypeIdLabel(type)
+               << ", size:" << size << ")";
   if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
     return true;
   }
@@ -564,7 +565,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW || format_ == format) {
     if (type_id_ == type) {
       SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
       sync_ok = true;

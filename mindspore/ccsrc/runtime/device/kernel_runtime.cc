@@ -702,7 +702,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     }
     AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
     if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
-                                   tensor->data_c())) {
+                                   tensor->data_c(), tensor->device_info().host_format_)) {
       MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString()
                                    << "node format is" << AnfAlgo::GetOutputFormat(value_node, output_idx)
                                    << "node dtype is " << AnfAlgo::GetOutputInferDataType(value_node, output_idx);
