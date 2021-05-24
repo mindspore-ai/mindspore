@@ -2141,7 +2141,7 @@ def choose(a, choices, mode='clip'):
         Tensor, the merged result.
 
     Raises:
-        ValueError: if ``len(condlist) != len(choicelist)``.
+        ValueError: if `a` and any of the `choices` cannot be broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
