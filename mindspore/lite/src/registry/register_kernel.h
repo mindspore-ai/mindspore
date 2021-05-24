@@ -47,16 +47,17 @@ struct MS_API KernelDesc {
   }
 };
 
-typedef std::shared_ptr<kernel::Kernel> (*CreateKernel)(const std::vector<tensor::MSTensor *> &inputs,
-                                                        const std::vector<tensor::MSTensor *> &outputs,
-                                                        const schema::Primitive *primitive, const lite::Context *ctx);
+using CreateKernel MS_API = std::function<std::shared_ptr<kernel::Kernel>(
+  const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
+  const schema::Primitive *primitive, const lite::Context *ctx)>;
+
 class MS_API RegisterKernel {
  public:
-  static RegisterKernel *GetInstance();
-  int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type, CreateKernel creator);
-  int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &type,
-                      CreateKernel creator);
-  CreateKernel GetCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive);
+  static int RegKernel(const std::string &arch, const std::string &provider, TypeId data_type, int type,
+                       CreateKernel creator);
+  static int RegCustomKernel(const std::string &arch, const std::string &provider, TypeId data_type,
+                             const std::string &type, CreateKernel creator);
+  static CreateKernel GetCreator(const kernel::KernelDesc &desc, const schema::Primitive *primitive);
 };
 
 class MS_API KernelReg {
@@ -64,20 +65,24 @@ class MS_API KernelReg {
   ~KernelReg() = default;
 
   KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, int op_type, CreateKernel creator) {
-    RegisterKernel::GetInstance()->RegKernel(arch, provider, data_type, op_type, creator);
+    RegisterKernel::RegKernel(arch, provider, data_type, op_type, creator);
   }
 
   KernelReg(const std::string &arch, const std::string &provider, TypeId data_type, const std::string &op_type,
             CreateKernel creator) {
-    RegisterKernel::GetInstance()->RegCustomKernel(arch, provider, data_type, op_type, creator);
+    RegisterKernel::RegCustomKernel(arch, provider, data_type, op_type, creator);
   }
 };
 
-#define REGISTER_KERNEL(arch, provider, data_type, op_type, creator) \
-  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, op_type, creator);
+#define REGISTER_KERNEL(arch, provider, data_type, op_type, creator)                                                 \
+  namespace {                                                                                                        \
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, op_type, creator); \
+  }  // namespace
 
-#define REGISTER_CUSTOM_KERNEL(arch, provider, data_type, op_type, creator) \
-  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, #op_type, creator);
+#define REGISTER_CUSTOM_KERNEL(arch, provider, data_type, op_type, creator)                                           \
+  namespace {                                                                                                         \
+  static KernelReg g_##arch##provider##data_type##op_type##kernelReg(#arch, #provider, data_type, #op_type, creator); \
+  }  // namespace
 }  // namespace kernel
 }  // namespace mindspore
 

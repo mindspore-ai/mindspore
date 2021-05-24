@@ -20,11 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-RegisterKernelInterface *RegisterKernelInterface::Instance() {
-  static RegisterKernelInterface instance;
-  return &instance;
-}
-
 int RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
   return lite::KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 }

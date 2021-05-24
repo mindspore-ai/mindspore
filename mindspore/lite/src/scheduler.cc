@@ -133,7 +133,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  if (kernel::RegisterKernelInterface::Instance()->CheckReg(node, context_->GetProviders())) {
+  if (kernel::RegisterKernelInterface::CheckReg(node, context_->GetProviders())) {
     return KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
   }
 
