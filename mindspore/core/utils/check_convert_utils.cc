@@ -643,4 +643,19 @@ int64_t CheckAndConvertUtils::GetAndCheckFormat(const ValuePtr &value) {
   }
   return data_format;
 }
+int64_t CheckAndConvertUtils::GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list) {
+  int64_t remove_monad_count = abs_list.size();
+  for (const auto &item : abs_list) {
+    if (item->isa<abstract::AbstractMonad>()) {
+      --remove_monad_count;
+    }
+  }
+
+  for (int64_t i = 0; i < remove_monad_count; ++i) {
+    if (abs_list[i]->isa<abstract::AbstractMonad>()) {
+      MS_EXCEPTION(UnknownError) << "The monad inputs of the node must at last of the node inputs.";
+    }
+  }
+  return remove_monad_count;
+}
 }  // namespace mindspore
