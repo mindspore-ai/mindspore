@@ -570,7 +570,11 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
+  BindThreads(context_->thread_pool_, true,
+              context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
   ret = InitGPURuntime();
+  BindThreads(context_->thread_pool_, false,
+              context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
     is_running_.store(false);

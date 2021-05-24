@@ -228,6 +228,9 @@ int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
   }
   MS_ASSERT(tensor->data_c() != nullptr);
   Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
+  if (tensor->allocator() != nullptr) {
+    tensor->allocator()->SetRefCount(tensor->data_c(), tensor->allocator()->RefCount(float32_data));
+  }
   auto *data_store =
     DataStore::CreateDataStore(float32_data, own_data, tensor->allocator(), this->Context()->allocator.get());
   if (data_store == nullptr) {
@@ -259,6 +262,7 @@ int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
   MS_ASSERT(tensor->data_c() != nullptr);
   Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum());
   if (tensor->allocator() != nullptr) {
+    tensor->allocator()->SetRefCount(tensor->data_c(), tensor->allocator()->RefCount(float16_data));
     tensor->allocator()->Free(float16_data);
   } else {
     free(float16_data);

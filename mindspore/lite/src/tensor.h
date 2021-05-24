@@ -137,19 +137,26 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   schema::Format format() const { return this->format_; }
 
-  size_t ref_count() const { return this->ref_count_; }
+  virtual int ref_count() const { return ref_count_; }
 
-  size_t init_ref_count() const { return this->init_ref_count_; }
+  virtual int init_ref_count() const { return this->init_ref_count_; }
 
-  void set_ref_count(size_t ref_count) { this->ref_count_ = ref_count; }
+  virtual void set_ref_count(int ref_count) {
+    ref_count_ = ref_count;
+    if (allocator_ == nullptr) {
+      return;
+    }
+    allocator_->SetRefCount(data_, ref_count);
+    return;
+  }
 
-  void set_init_ref_count(size_t ref_count) { this->init_ref_count_ = ref_count; }
+  void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
 
-  void ResetRefCount() { this->ref_count_ = this->init_ref_count_; }
+  void ResetRefCount() { set_ref_count(this->init_ref_count_); }
 
-  void IncRefCount();
+  virtual void IncRefCount();
 
-  void DecRefCount();
+  virtual void DecRefCount();
 
   std::string ToString() const;
 
@@ -182,7 +189,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   Tensor *root_tensor() const { return this->root_tensor_; }
 
   bool IsReady() const {
-    return this->IsConst() || (this->IsGraphInput() && this->data_ != nullptr) || this->ref_count_ >= 1;
+    return this->IsConst() || (this->IsGraphInput() && this->data_ != nullptr) || ref_count() >= 1;
   }
 
   bool own_data() const { return this->own_data_; }
@@ -211,7 +218,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   schema::Format format_;
   Category category_;
   std::atomic_int ref_count_ = 0;
-  size_t init_ref_count_ = 0;
+  int init_ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
   mindspore::Allocator *allocator_ = nullptr;

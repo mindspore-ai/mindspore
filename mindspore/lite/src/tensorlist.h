@@ -111,6 +111,37 @@ class TensorList : public Tensor {
 
   void set_root_tensor(Tensor *tensor) override;
 
+  void set_ref_count(int ref_count) override {
+    ref_count_ = ref_count;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->set_ref_count(ref_count);
+      }
+    }
+    return;
+  }
+
+  void IncRefCount() override {
+    ++ref_count_;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->IncRefCount();
+      }
+    }
+  }
+
+  void DecRefCount() override {
+    if (this->IsConst() || this->IsGraphInput()) {
+      return;
+    }
+    --ref_count_;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->DecRefCount();
+      }
+    }
+  }
+
  protected:
   // The following functions must be masked.
   void *data_c() const override { return nullptr; }

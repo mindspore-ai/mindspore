@@ -62,6 +62,7 @@ void *DefaultAllocator::Malloc(size_t size) {
   auto iter = freeList_.lower_bound(size);
   if (iter != freeList_.end() && ReuseMemory(iter->second->size, size)) {
     auto membuf = iter->second;
+    membuf->ref_count_ = 0;
     freeList_.erase(iter);
     allocatedList_[membuf->buf] = membuf;
     UnLock();
@@ -75,6 +76,7 @@ void *DefaultAllocator::Malloc(size_t size) {
     return nullptr;
   }
   this->total_size_ += size;
+  membuf->ref_count_ = 0;
   membuf->size = size;
   membuf->buf = reinterpret_cast<char *>(membuf.get()) + sizeof(MemBuf);
   auto bufPtr = membuf->buf;
@@ -91,6 +93,7 @@ void DefaultAllocator::Free(void *buf) {
   auto iter = allocatedList_.find(buf);
   if (iter != allocatedList_.end()) {
     auto membuf = iter->second;
+    membuf->ref_count_ = 0;
     allocatedList_.erase(iter);
     freeList_.insert(std::make_pair(membuf->size, membuf));
     UnLock();
@@ -101,6 +104,66 @@ void DefaultAllocator::Free(void *buf) {
   buf = nullptr;
 }
 
+int DefaultAllocator::RefCount(void *buf) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocatedList_.find(buf);
+  if (iter != allocatedList_.end()) {
+    auto membuf = iter->second;
+    int ref_count = std::atomic_load(&membuf->ref_count_);
+    UnLock();
+    return ref_count;
+  }
+  UnLock();
+  return -1;
+}
+int DefaultAllocator::SetRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocatedList_.find(buf);
+  if (iter != allocatedList_.end()) {
+    auto membuf = iter->second;
+    std::atomic_store(&membuf->ref_count_, ref_count);
+    UnLock();
+    return ref_count;
+  }
+  UnLock();
+  return -1;
+}
+int DefaultAllocator::IncRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocatedList_.find(buf);
+  if (iter != allocatedList_.end()) {
+    auto membuf = iter->second;
+    auto ref = std::atomic_fetch_add(&membuf->ref_count_, ref_count);
+    UnLock();
+    return (ref + ref_count);
+  }
+  UnLock();
+  return -1;
+}
+int DefaultAllocator::DecRefCount(void *buf, int ref_count) {
+  if (buf == nullptr) {
+    return -1;
+  }
+  Lock();
+  auto iter = allocatedList_.find(buf);
+  if (iter != allocatedList_.end()) {
+    auto membuf = iter->second;
+    auto ref = std::atomic_fetch_sub(&membuf->ref_count_, ref_count);
+    UnLock();
+    return (ref - ref_count);
+  }
+  UnLock();
+  return -1;
+}
 void DefaultAllocator::Clear() {
   Lock();
 

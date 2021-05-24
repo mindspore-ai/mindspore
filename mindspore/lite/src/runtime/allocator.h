@@ -24,6 +24,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <atomic>
 
 namespace mindspore {
 
@@ -38,6 +39,10 @@ class Allocator {
   virtual ~Allocator() = default;
   virtual void *Malloc(size_t size) = 0;
   virtual void Free(void *ptr) = 0;
+  virtual int RefCount(void *ptr) = 0;
+  virtual int SetRefCount(void *ptr, int ref_count) = 0;
+  virtual int DecRefCount(void *ptr, int ref_count) = 0;
+  virtual int IncRefCount(void *ptr, int ref_count) = 0;
   virtual void SetContext(const AllocatorContext &ctx) {}
   virtual size_t total_size() = 0;
   static std::shared_ptr<Allocator> Create();
@@ -52,6 +57,10 @@ class DefaultAllocator : public Allocator {
   void SetContext(const AllocatorContext &ctx) override;
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
+  int RefCount(void *ptr) override;
+  int SetRefCount(void *ptr, int ref_count) override;
+  int DecRefCount(void *ptr, int ref_count) override;
+  int IncRefCount(void *ptr, int ref_count) override;
   size_t total_size() override { return this->total_size_; }
   void Clear();
 
@@ -60,6 +69,7 @@ class DefaultAllocator : public Allocator {
   void UnLock();
   bool ReuseMemory(size_t free_size, size_t size);
   struct MemBuf {
+    std::atomic_int ref_count_ = 0;
     size_t size;
     void *buf;
   };
