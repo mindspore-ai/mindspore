@@ -217,10 +217,10 @@ void KernelGraph::EnqueueActiveNodes(const AnfNodePtr &node, std::queue<AnfNodeP
     }
   }
 
-  for (auto &node : active_nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(DEBUG) << "Visit node:" << node->DebugString();
-    visit_queue->push(node);
+  for (auto &active_node : active_nodes) {
+    MS_EXCEPTION_IF_NULL(active_node);
+    MS_LOG(DEBUG) << "Visit node:" << active_node->DebugString();
+    visit_queue->push(active_node);
   }
 }
 
@@ -1027,7 +1027,7 @@ void KernelGraph::PrintGraphExecuteOrder() const {
   }
 }
 
-void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx,
+void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, size_t output_idx,
                                     bool unique_target) {
   if (front_node == nullptr || node == nullptr) {
     MS_LOG(INFO) << "Front node or node is nullptr";
@@ -1041,14 +1041,14 @@ void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodeP
   internal_outputs_to_front_map_[node][output_idx] = std::pair<AnfNodePtr, bool>(front_node, unique_target);
 }
 
-void KernelGraph::AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor) {
+void KernelGraph::AddInternalOutputTensor(const AnfNodePtr &node, size_t output_idx, const tensor::TensorPtr &tensor) {
   if (node == nullptr) {
     return;
   }
   internal_outputs_tensor_map_[node][output_idx] = tensor;
 }
 
-tensor::TensorPtr KernelGraph::GetInternalOutputTensor(const AnfNodePtr &node, int output_idx) {
+tensor::TensorPtr KernelGraph::GetInternalOutputTensor(const AnfNodePtr &node, size_t output_idx) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -1063,8 +1063,7 @@ tensor::TensorPtr KernelGraph::GetInternalOutputTensor(const AnfNodePtr &node, i
   return idx_iter->second;
 }
 
-void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx,
-                                        int dst_output_idx) {
+void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node) {
   if (new_node == nullptr || node == nullptr) {
     MS_LOG(INFO) << "New node or node is nullptr";
     return;
@@ -1081,14 +1080,30 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
   auto &front_nodes = iter->second;
   // Move all front nodes to new node mapping
-  if (src_output_idx == -1) {
-    internal_outputs_to_front_map_[new_node] = front_nodes;
-    for (const auto &front_node_iter : front_nodes) {
-      front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
-    }
-    internal_outputs_to_front_map_.erase(iter);
+  internal_outputs_to_front_map_[new_node] = front_nodes;
+  for (const auto &front_node_iter : front_nodes) {
+    front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
+  }
+  internal_outputs_to_front_map_.erase(iter);
+}
+
+void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
+                                        size_t dst_output_idx) {
+  if (new_node == nullptr || node == nullptr) {
+    MS_LOG(INFO) << "New node or node is nullptr";
     return;
   }
+  if (node == new_node) {
+    MS_LOG(INFO) << "New node and node is the same";
+    return;
+  }
+  auto iter = internal_outputs_to_front_map_.find(node);
+  if (iter == internal_outputs_to_front_map_.end()) {
+    MS_LOG(INFO) << "Node is not internal output";
+    return;
+  }
+  MS_LOG(INFO) << "Replace internal node " << node->DebugString() << " To " << new_node->DebugString();
+  auto &front_nodes = iter->second;
   // Move specified front node to new node mapping
   auto front_node_iter = front_nodes.find(src_output_idx);
   if (front_node_iter == front_nodes.end()) {
@@ -1128,13 +1143,18 @@ AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_nod
   return nullptr;
 }
 
-bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, int output_idx) const {
+bool KernelGraph::IsInternalOutput(const AnfNodePtr &node) const {
   auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
   if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
     return false;
   }
-  if (output_idx == -1) {
-    return true;
+  return true;
+}
+
+bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, size_t output_idx) const {
+  auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
+  if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
+    return false;
   }
   auto &front_nodes = front_nodes_iter->second;
   if (front_nodes.find(output_idx) == front_nodes.end()) {
@@ -1143,7 +1163,7 @@ bool KernelGraph::IsInternalOutput(const AnfNodePtr &node, int output_idx) const
   return true;
 }
 
-bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const {
+bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const {
   auto front_nodes_iter = internal_outputs_to_front_map_.find(node);
   if (front_nodes_iter == internal_outputs_to_front_map_.end()) {
     return false;

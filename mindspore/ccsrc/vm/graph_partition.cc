@@ -52,8 +52,7 @@ std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   return "";
 }
 
-void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref,
-                      std::map<AnfNodePtr, std::vector<AnfNodePtr>> *control_edges) {
+void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *nodes_ref) {
   std::queue<AnfNodePtr> queue;
   queue.push(graph->get_return());
   std::set<AnfNodePtr> visited;
@@ -71,7 +70,7 @@ void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *n
       if (iter != nodes_ref->end()) {
         iter->second++;
       } else {
-        (void)nodes_ref->insert(std::pair<AnfNodePtr, size_t>(input, 1));
+        (void)nodes_ref->emplace(input, 1UL);
       }
       if (visited.find(input) != visited.end()) {
         continue;
@@ -102,8 +101,7 @@ std::vector<AnfNodePtr> OptimizeGetItemOrder(const std::vector<AnfNodePtr> &node
         if (iter_nodes != insert_positions.end()) {
           iter_nodes->second.push_back(node);
         } else {
-          (void)insert_positions.insert(
-            std::pair<size_t, std::vector<AnfNodePtr>>(position, std::vector<AnfNodePtr>{node}));
+          (void)insert_positions.emplace(position, std::vector<AnfNodePtr>{node});
         }
         continue;
       }
@@ -114,7 +112,7 @@ std::vector<AnfNodePtr> OptimizeGetItemOrder(const std::vector<AnfNodePtr> &node
 
   size_t insert_num = 0;
   for (auto &item : insert_positions) {
-    size_t position = item.first + insert_num;
+    auto position = SizeToLong(item.first + insert_num);
     (void)result.insert(result.begin() + position, item.second.begin(), item.second.end());
     insert_num += item.second.size();
   }
@@ -126,8 +124,7 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   std::stack<AnfNodePtr> to_visit;
   std::stack<AnfNodePtr> next_to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
-  std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
-  CalcNodeRefCount(graph, &nodes_ref, &control_edges);
+  CalcNodeRefCount(graph, &nodes_ref);
   std::string handle_target = default_target;
   std::string next_target;
   to_visit.push(graph->get_return());
@@ -148,10 +145,6 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
     auto node_inputs = cnode->inputs();
     if (!IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
       std::reverse(node_inputs.begin(), node_inputs.end());
-    }
-    auto ctrl_inputs = control_edges.find(node);
-    if (ctrl_inputs != control_edges.end()) {
-      node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
     }
     for (auto &input : node_inputs) {
       auto iter = nodes_ref.find(input);
@@ -191,8 +184,7 @@ GraphNodesDependencyInfo GetNodesDependencyInfo(const FuncGraphPtr &graph) {
   GraphNodesDependencyInfo info;
   std::stack<AnfNodePtr> to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
-  std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
-  CalcNodeRefCount(graph, &nodes_ref, &control_edges);
+  CalcNodeRefCount(graph, &nodes_ref);
   to_visit.push(graph->get_return());
   while (!to_visit.empty()) {
     auto node = to_visit.top();
@@ -203,10 +195,6 @@ GraphNodesDependencyInfo GetNodesDependencyInfo(const FuncGraphPtr &graph) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_inputs = cnode->inputs();
-    auto ctrl_inputs = control_edges.find(node);
-    if (ctrl_inputs != control_edges.end()) {
-      node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
-    }
     bool independent = true;
     for (auto &input : node_inputs) {
       if (input->isa<CNode>()) {
@@ -372,12 +360,10 @@ std::vector<AnfNodePtr> ParallelSort(const FuncGraphPtr &graph, const std::strin
   return result;
 }
 
-void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_target,
-                          const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
+void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
   std::stack<AnfNodePtr> to_visit;
   std::map<AnfNodePtr, size_t> nodes_ref;
-  std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
-  CalcNodeRefCount(graph, &nodes_ref, &control_edges);
+  CalcNodeRefCount(graph, &nodes_ref);
   to_visit.push(graph->get_return());
   while (!to_visit.empty()) {
     auto &node = to_visit.top();
@@ -389,10 +375,6 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_inputs = cnode->inputs();
-    auto ctrl_inputs = control_edges.find(node);
-    if (ctrl_inputs != control_edges.end()) {
-      node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
-    }
     GraphSegmentPtr node_segment{nullptr};
     auto node_iter = node_to_segment.find(node);
     if (node_iter != node_to_segment.end()) {
@@ -681,7 +663,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   }
   MS_LOG(DEBUG) << "Segment size:" << segments.size();
   if (contain_multi_target) {
-    AddSegmentDependency(graph, default_target, node_to_segment);
+    AddSegmentDependency(graph, node_to_segment);
   }
   return segments;
 }
