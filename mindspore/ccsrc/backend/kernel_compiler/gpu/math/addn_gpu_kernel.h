@@ -30,17 +30,8 @@ namespace kernel {
 template <typename T>
 class AddNGpuFwdKernel : public GpuKernel {
  public:
-  AddNGpuFwdKernel()
-      : cudnn_handle_(nullptr),
-        input_descriptor_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        is_int64_(false),
-        input_size_(0),
-        output_size_(0),
-        workspace_size_(0),
-        is_null_input_(false),
-        num_input_(0) {}
-  ~AddNGpuFwdKernel() override { DestroyResource(); }
+  AddNGpuFwdKernel() : input_size_(0), output_size_(0), workspace_size_(0), is_null_input_(false), num_input_(0) {}
+  ~AddNGpuFwdKernel() override {}
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -58,30 +49,12 @@ class AddNGpuFwdKernel : public GpuKernel {
         break;
       }
     }
-    if (cudnn_data_type_ == CUDNN_DATA_INT32 || is_int64_) {
-      FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
-      FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    }
-    const float alpha = 1;
-    const float beta = 0;
-    const double dalpha = static_cast<double>(1.0f);
-    const double dbeta = static_cast<double>(0.0f);
+    FillDeviceArray(outputs[0]->size / sizeof(T), output_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
+    FillDeviceArray(outputs[0]->size / sizeof(T), work_addr, 0.0f, reinterpret_cast<cudaStream_t>(stream_ptr));
     for (size_t i = 0; i < num_input_; i++) {
       T *input_addr = GetDeviceAddress<T>(inputs, i);
-      if (cudnn_data_type_ == CUDNN_DATA_INT32 || is_int64_) {
-        ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
-      } else if (cudnn_data_type_ == CUDNN_DATA_DOUBLE) {
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                    cudnnAddTensor(cudnn_handle_, &dalpha, input_descriptor_, input_addr,
-                                                   &(i > 0 ? dalpha : dbeta), input_descriptor_, work_addr),
-                                    "cudnnAddTensor failed");
-      } else {
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                    cudnnAddTensor(cudnn_handle_, &alpha, input_descriptor_, input_addr,
-                                                   &(i > 0 ? alpha : beta), input_descriptor_, work_addr),
-                                    "cudnnAddTensor failed");
-      }
+      ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     if (work_addr != output_addr) {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
@@ -93,12 +66,6 @@ class AddNGpuFwdKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    // because int64 is not supported in cudnn, so we go separate path
-    is_int64_ = (AnfAlgo::GetInputDeviceDataType(kernel_node, 0) == kNumberTypeInt64) ? true : false;
-    InitResource();
-    if (!is_int64_) {
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     num_input_ = GetAttr<int64_t>(kernel_node, "n");
     if (num_input_ != input_num) {
@@ -117,52 +84,16 @@ class AddNGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (is_int64_) {
-      input_size_ = sizeof(T);
-      for (size_t i = 0; i < input_shape.size(); i++) {
-        input_size_ *= input_shape[i];
-      }
-    } else {
-      for (size_t i = input_shape.size(); i < 4; i++) {
-        (void)input_shape.insert(input_shape.begin(), 1);
-      }
-      std::vector<int> dimA;
-      for (size_t i = 0; i < input_shape.size(); i++) {
-        dimA.push_back(SizeToInt(input_shape[i]));
-      }
-      auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
-      if (input_format == kOpFormat_NHWC) {
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                    cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
-                                                                 SizeToInt(input_shape.size()), dimA.data()),
-                                    "cudnnSetTensorNdDescriptor failed");
-      } else {
-        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                    cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                                 SizeToInt(input_shape.size()), dimA.data()),
-                                    "cudnnSetTensorNdDescriptor failed");
-      }
+    input_size_ = sizeof(T);
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      input_size_ *= input_shape[i];
     }
     InitSizeLists();
     return true;
   }
 
-  void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(input_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed");
-  }
-
  protected:
-  void InitResource() override {
-    cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&input_descriptor_),
-                                "cudnnCreateTensorDescriptor failed");
-  }
   void InitSizeLists() override {
-    if (!is_null_input_ && !is_int64_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(input_descriptor_, &input_size_),
-                                  "cudnnGetTensorSizeInBytes failed");
-    }
     for (size_t i = 0; i < num_input_; i++) {
       input_size_list_.push_back(input_size_);
     }
@@ -171,15 +102,9 @@ class AddNGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  cudnnHandle_t cudnn_handle_;
-  cudnnTensorDescriptor_t input_descriptor_;
-  cudnnDataType_t cudnn_data_type_;
-
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-
-  bool is_int64_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
