@@ -30,7 +30,7 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("infer_shape", input_args.size(), kGreaterEqual, 1, op_name);
-  return CheckAndConvertUtils::GetInputShapePtr(input_args, 0, op_name);
+  return CheckAndConvertUtils::GetTensorInputShape(input_args, 0, op_name);
 }
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
