@@ -49,6 +49,19 @@ The FM and deep component share the same input raw feature vector, which enables
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
+- preprocess dataset
+
+  '''bash
+  #download dataset
+  #Please refer to [1] to obtain the download link
+  mkdir -p data/origin_data && cd data/origin_data
+  wget DATA_LINK
+  tar -zxvf dac.tar.gz
+
+  #preprocess dataset
+  python src/preprocess_data.py  --data_path=./data/ --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
+  '''
+
 - running on Ascend
 
   ```shell

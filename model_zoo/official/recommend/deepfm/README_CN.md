@@ -54,6 +54,18 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
+- 数据集预处理
+  '''bash
+  #下载数据集
+  #请参考[1]获得下载链接
+  mkdir -p data/origin_data && cd data/origin_data
+  wget DATA_LINK
+  tar -zxvf dac.tar.gz
+
+  #数据集预处理脚步执行
+  python src/preprocess_data.py  --data_path=./data/ --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
+  '''
+
 - Ascend处理器环境运行
 
   ```训练示例
