@@ -214,6 +214,8 @@ class AnfRuntimeAlgorithm {
   static bool IsGraphKernel(const AnfNodePtr &node);
   // checkout whether the anf node is an inner node of graph kernel.
   static bool IsNodeInGraphKernel(const AnfNodePtr &node);
+  // get the real output of GraphKernel.
+  static AnfNodePtr GetOutputOfGraphkernel(const KernelWithIndex &kernel_with_index);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
   // checkout whether the anf node is include the label_index.
