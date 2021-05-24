@@ -17,9 +17,9 @@
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn import Cell
 
-class DiceLoss(_Loss):
+class DiceLoss(Cell):
     def __init__(self, batch_size=4):
         super(DiceLoss, self).__init__()
 
