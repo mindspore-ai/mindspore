@@ -52,7 +52,7 @@ void PSContext::SetPSEnable(bool enabled) {
     server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
     scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
     scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, 10);
-    cluster_config_.Init(worker_num_, server_num_, scheduler_host_, scheduler_port_);
+    cluster_config_ = std::make_unique<core::ClusterConfig>(worker_num_, server_num_, scheduler_host_, scheduler_port_);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
@@ -312,6 +312,11 @@ bool PSContext::enable_ssl() const { return enable_ssl_; }
 
 void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
 
-core::ClusterConfig &PSContext::cluster_config() { return cluster_config_; }
+core::ClusterConfig &PSContext::cluster_config() {
+  if (cluster_config_ == nullptr) {
+    MS_LOG(EXCEPTION) << "The cluster config is empty.";
+  }
+  return *cluster_config_;
+}
 }  // namespace ps
 }  // namespace mindspore

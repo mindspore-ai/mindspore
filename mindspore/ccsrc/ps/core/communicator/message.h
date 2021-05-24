@@ -30,7 +30,7 @@ enum class Command {
   REGISTER = 1,
   HEARTBEAT = 2,
   SEND_DATA = 3,
-  FETCH_SERVER = 4,
+  FETCH_METADATA = 4,
   FINISH = 5,
   COLLECTIVE_SEND_DATA = 6
 };

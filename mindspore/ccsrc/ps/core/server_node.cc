@@ -32,11 +32,6 @@ bool ServerNode::Start(const uint32_t &timeout) {
   }
   MS_LOG(INFO) << "The cluster is ready to use!";
 
-  // If the cluster is ready to use, then Get the address of all the servers
-  if (!is_timeout_.load()) {
-    FetchServers(client_to_scheduler_);
-    MS_LOG(INFO) << "Server node get all the servers address successful!";
-  }
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "Start the node is successful!";
   return true;
@@ -63,34 +58,32 @@ void ServerNode::CreateTcpServer() {
   server_ = std::make_shared<TcpServer>(server_ip, 0);
   server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                   const Protos &protos, const void *data, size_t size) {
-    switch (meta->cmd()) {
-      case NodeCommand::SEND_DATA:
-        ProcessSendData(conn, meta, protos, data, size);
-        break;
-      case NodeCommand::COLLECTIVE_SEND_DATA:
-        ProcessCollectiveSendData(conn, meta, data, size);
-        RunReceiveCallback(meta, protos, data, size);
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+    if (server_handler_.count(meta->cmd()) == 0) {
+      MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+    }
+
+    if (meta->cmd() == NodeCommand::COLLECTIVE_SEND_DATA) {
+      ProcessCollectiveSendData(conn, meta, data, size);
+      RunReceiveCallback(meta, protos, data, size);
+    } else if (meta->cmd() == NodeCommand::SEND_DATA) {
+      ProcessSendData(conn, meta, protos, data, size);
+    } else {
+      const auto &handler_ptr = server_handler_[meta->cmd()];
+      (this->*handler_ptr)(conn, meta, protos, data, size);
     }
   });
   server_->Init();
-  server_thread_ = std::make_unique<std::thread>([&]() {
+  server_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The server node start a tcp server!";
-    server_->Start();
+    this->server_->Start();
   });
 }
 
 void ServerNode::Initialize() {
+  InitServerHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
-  node_info_.node_id_ = CommUtil::GenerateUUID();
-  node_info_.node_role_ = NodeRole::SERVER;
-  node_info_.ip_ = server_->BoundIp();
-  node_info_.port_ = server_->BoundPort();
-  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " is generate uuid is:" << node_info_.node_id_;
+  InitNode(NodeRole::SERVER);
   InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node init client timeout!";

@@ -52,14 +52,6 @@ TEST_F(TestCommUtil, GetAvailableInterfaceAndIP) {
   EXPECT_TRUE(!ip.empty());
 }
 
-TEST_F(TestCommUtil, ValidateRankId) {
-  PSContext::instance()->cluster_config().Init(3, 2, "127.0.0.1", 9999);
-  EXPECT_TRUE(CommUtil::ValidateRankId(NodeRole::WORKER, 2));
-  EXPECT_FALSE(CommUtil::ValidateRankId(NodeRole::WORKER, 3));
-  EXPECT_TRUE(CommUtil::ValidateRankId(NodeRole::SERVER, 1));
-  EXPECT_FALSE(CommUtil::ValidateRankId(NodeRole::SERVER, 2));
-}
-
 TEST_F(TestCommUtil, Retry) {
   bool const ret = CommUtil::Retry([]() -> bool { return false; }, 5, 100);
   EXPECT_FALSE(ret);

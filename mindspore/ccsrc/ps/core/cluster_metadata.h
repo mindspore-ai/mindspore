@@ -31,15 +31,10 @@ namespace core {
  * The metadata information of the cluster, stored in the scheduler, is generally used for scale out and scale in.
  */
 struct ClusterMetadata {
-  ClusterMetadata() : worker_num_(0), server_num_(0) {}
+  ClusterMetadata(const uint32_t &worker, const uint32_t &server) : worker_num(worker), server_num(server) {}
 
-  void Init(const uint32_t &worker_num, const uint32_t &server_num) {
-    worker_num_ = worker_num;
-    server_num_ = server_num;
-  }
-
-  uint32_t worker_num_;
-  uint32_t server_num_;
+  uint32_t worker_num;
+  uint32_t server_num;
 };
 }  // namespace core
 }  // namespace ps

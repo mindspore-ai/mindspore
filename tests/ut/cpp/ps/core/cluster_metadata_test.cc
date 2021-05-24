@@ -18,9 +18,9 @@
 #include <string>
 
 #include "common/common_test.h"
-#include "ps/core/cluster_metadata.h"
 #include "ps/core/cluster_config.h"
 #include "ps/ps_context.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace ps {
@@ -29,14 +29,21 @@ class TestClusterConfig : public UT::Common {
  public:
   TestClusterConfig() = default;
   virtual ~TestClusterConfig() = default;
-
   void SetUp() override {}
   void TearDown() override {}
 };
 
 TEST_F(TestClusterConfig, HeartbeatInterval) {
-  PSContext::instance()->cluster_config().Init(2, 2, "127.0.0.1", 8080);
-  PSContext::instance()->cluster_config().heartbeat_interval = 100;
+  std::string worker_num = "1";
+  std::string server_num = "1";
+  std::string host = "127.0.0.1";
+  std::string port = "9999";
+  common::SetEnv(kEnvWorkerNum, worker_num.c_str());
+  common::SetEnv(kEnvPServerNum, server_num.c_str());
+  common::SetEnv(kEnvSchedulerHost, host.c_str());
+  common::SetEnv(kEnvSchedulerPort, port.c_str());
+  PSContext::instance()->SetPSEnable(true);
+  EXPECT_EQ(300, PSContext::instance()->cluster_config().cluster_available_timeout);
 }
 }  // namespace core
 }  // namespace ps

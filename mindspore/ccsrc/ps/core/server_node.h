@@ -43,7 +43,7 @@ constexpr char kHttpCommunicator[] = "HTTP";
 
 class ServerNode : public AbstractNode {
  public:
-  ServerNode() : server_(nullptr), server_thread_(nullptr) {}
+  ServerNode() = default;
 
   ~ServerNode() override = default;
 
@@ -71,8 +71,6 @@ class ServerNode : public AbstractNode {
   void ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                  const void *data, size_t size);
 
-  std::shared_ptr<TcpServer> server_;
-  std::unique_ptr<std::thread> server_thread_;
   RequestHandler request_handler_;
   std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
   std::mutex communicator_mutex_;

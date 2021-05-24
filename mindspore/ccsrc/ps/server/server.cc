@@ -127,7 +127,7 @@ bool Server::InitCommunicatorWithServer() {
   auto tcp_comm = std::dynamic_pointer_cast<core::TcpCommunicator>(communicator_with_server_);
   MS_EXCEPTION_IF_NULL(tcp_comm);
 
-  tcp_comm->RegisterEventCallback(core::CLUSTER_TIMEOUT, [&]() {
+  tcp_comm->RegisterEventCallback(core::NodeEvent::CLUSTER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event CLUSTER_TIMEOUT is captured. This is because some nodes(Scheduler/Server/Worker) are not "
                      "started during network building phase.";
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
@@ -135,14 +135,14 @@ bool Server::InitCommunicatorWithServer() {
     communicator_with_server_->Stop();
   });
 
-  tcp_comm->RegisterEventCallback(core::SCHEDULER_TIMEOUT, [&]() {
+  tcp_comm->RegisterEventCallback(core::NodeEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                   [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
     communicator_with_server_->Stop();
   });
 
-  tcp_comm->RegisterEventCallback(core::NODE_TIMEOUT, [&]() {
+  tcp_comm->RegisterEventCallback(core::NodeEvent::NODE_TIMEOUT, [&]() {
     MS_LOG(ERROR)
       << "Event NODE_TIMEOUT is captured. This is because some server nodes are finalized or crashed after the "
          "network building phase.";

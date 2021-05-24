@@ -36,6 +36,72 @@ bool Node::WaitForStart(const uint32_t &timeout) {
   });
   return res;
 }
+
+bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
+                           const uint32_t &timeout) {
+  uint64_t request_id = AddMessageTrack(1);
+  const_cast<CommMessage &>(message).mutable_pb_meta()->set_request_id(request_id);
+  client->SendMessage(message);
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  return Wait(request_id, timeout);
+}
+
+uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+                                const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  uint64_t request_id = AddMessageTrack(1);
+  meta->set_request_id(request_id);
+  client->SendMessage(meta, protos, data, size);
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  return request_id;
+}
+
+bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+                           const Protos &protos, const void *data, size_t size, const uint32_t &timeout) {
+  MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  uint64_t request_id = AddMessageTrack(1);
+  meta->set_request_id(request_id);
+  client->SendMessage(meta, protos, data, size);
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  return Wait(request_id, timeout);
+}
+
+bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
+  std::unique_lock<std::mutex> lock(message_tracker_mutex_);
+  bool res = message_tracker_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
+    bool ret = message_tracker_[request_id].first == message_tracker_[request_id].second;
+    return ret;
+  });
+  message_tracker_.erase(request_id);
+  return res;
+}
+
+uint64_t Node::AddMessageTrack(const uint32_t &expected_response) {
+  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
+  uint64_t request_id = ++next_request_id_;
+  message_tracker_[request_id] = std::make_pair(expected_response, 0);
+  return request_id;
+}
+
+bool Node::CheckMessageTrack(const uint64_t &request_id) {
+  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
+  return message_tracker_[request_id].first == message_tracker_[request_id].second + 1;
+}
+
+void Node::NotifyMessageArrival(std::shared_ptr<MessageMeta> meta) {
+  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
+  uint64_t request_id = meta->request_id();
+
+  message_tracker_[request_id].second++;
+  message_tracker_cond_.notify_all();
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
