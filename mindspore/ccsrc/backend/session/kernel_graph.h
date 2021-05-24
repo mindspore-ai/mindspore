@@ -98,6 +98,9 @@ class KernelGraph : public FuncGraph {
 
   const std::vector<AnfNodePtr> &inputs() const;
   std::vector<AnfNodePtr> *MutableInputs() const { return inputs_.get(); }
+  void SetGraphInputs(const std::vector<AnfNodePtr> &inputs) {
+    inputs_ = std::make_shared<std::vector<AnfNodePtr>>(inputs);
+  }
   void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
   std::vector<AnfNodePtr> outputs() const;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;

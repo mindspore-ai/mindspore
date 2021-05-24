@@ -23,6 +23,7 @@
 #include "backend/session/session_factory.h"
 #include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/device/gpu/cuda_driver.h"
 
 namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, GPU, GPUGraphImpl);
@@ -36,7 +37,8 @@ GPUGraphImpl::GPUGraphImpl()
       input_names_(),
       output_names_(),
       init_flag_(false),
-      load_flag_(false) {}
+      load_flag_(false),
+      set_device_id_flag_(false) {}
 
 Status GPUGraphImpl::InitEnv() {
   if (init_flag_) {
@@ -54,6 +56,13 @@ Status GPUGraphImpl::InitEnv() {
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kGPUDevice);
+
+  // Set device id for sync data to host as cudaSetDevice is thread level config.
+  bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id_));
+  if (!ret) {
+    MS_LOG(ERROR) << "Failed to set device id:" << device_id_;
+    return kMCDeviceError;
+  }
 
   auto &device_infos = graph_context_->MutableDeviceInfo();
   if (device_infos.size() != 1) {
@@ -192,6 +201,17 @@ Status GPUGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTens
       MS_LOG(ERROR) << "PrepareModel failed.";
       return ret;
     }
+  }
+
+  // The `Load()` and `Run()` running in two threads. `Run()` always running in same thread.
+  // It should set device id once.
+  if (!set_device_id_flag_) {
+    bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id_));
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed to set device id:" << device_id_;
+      return kMCDeviceError;
+    }
+    set_device_id_flag_ = true;
   }
 
   if (inputs.size() != inputs_info_.size()) {

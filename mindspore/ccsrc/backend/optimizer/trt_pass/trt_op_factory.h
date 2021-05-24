@@ -50,7 +50,8 @@ class TrtOpFactory {
   ConvertFunc GetConvertFunc(const std::string &op_name) const {
     auto iter = op_convert_map_.find(op_name);
     if (iter == op_convert_map_.end()) {
-      MS_LOG(EXCEPTION) << "Operator: " << op_name << " not support.";
+      MS_LOG(WARNING) << "Operator: " << op_name << " not support.";
+      return nullptr;
     }
     return iter->second;
   }

@@ -30,7 +30,6 @@ TrtLoader::TrtLoader()
   if (nvinfer_handle_ == nullptr) {
     MS_LOG(WARNING) << "Can not open libnvinfer.so. " << dlerror()
                     << ". Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH.";
-    MS_LOG(WARNING) << "Inference with native backend.";
     return;
   }
 
