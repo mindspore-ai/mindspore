@@ -453,8 +453,9 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     return GetAttrTarget(primitive, att_target, attr_input, primitive_target, default_target);
   }
   if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    const size_t depend_node_inputs_num = 3;
     auto &inputs = cnode->inputs();
-    if (inputs.size() >= 3) {
+    if (inputs.size() >= depend_node_inputs_num) {
       size_t use_index = 1;
       if (!inputs[use_index]->isa<CNode>()) {
         use_index = 2;
@@ -464,8 +465,9 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
       }
     }
   } else if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+    const size_t update_state_node_inputs_num = 3;
     auto &inputs = cnode->inputs();
-    if (inputs.size() >= 3 && !IsPrimitiveCNode(inputs[2], prim::kPrimMakeTuple)) {
+    if (inputs.size() >= update_state_node_inputs_num && !IsPrimitiveCNode(inputs[2], prim::kPrimMakeTuple)) {
       return GetCNodeTarget(inputs[2]);
     }
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {

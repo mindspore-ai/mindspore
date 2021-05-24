@@ -47,7 +47,7 @@ using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
-constexpr int CHUNK_SIZE = 1024 * 1024 * 3;
+static constexpr auto g_chunk_size = 1024 * 1024 * 3;
 
 namespace mindspore {
 
@@ -576,7 +576,7 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
   for (auto graph : graph_proto_list) {
     std::string str = graph.SerializeAsString();
     auto graph_size = graph.ByteSize();
-    if (graph_size > CHUNK_SIZE) {
+    if (graph_size > g_chunk_size) {
       auto sub_graph_str = grpc_client_->ChunkString(str, graph_size);
       for (unsigned int i = 0; i < sub_graph_str.size(); i++) {
         chunk.set_buffer(sub_graph_str[i]);
@@ -813,10 +813,10 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
     }
     ssize_t tensor_size = data_size[result_index];
     while (size_iter < tensor_size) {
-      ssize_t chunk_size = CHUNK_SIZE;
+      ssize_t chunk_size = g_chunk_size;
       TensorProto tensor_item;
       tensor_item.set_finished(false);
-      if (tensor_size - size_iter <= CHUNK_SIZE) {
+      if (tensor_size - size_iter <= g_chunk_size) {
         chunk_size = tensor_size - size_iter;
         tensor_item.set_finished(true);
       }
@@ -831,7 +831,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
       }
       // add tensor to result list and increment result_index to check next item in ret_name
       tensor_list.push_back(tensor_item);
-      size_iter += CHUNK_SIZE;
+      size_iter += g_chunk_size;
     }
     result_index++;
   }

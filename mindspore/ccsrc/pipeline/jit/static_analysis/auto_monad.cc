@@ -327,7 +327,7 @@ class SideEffectFinder {
     HandleSwitchLayerCalls();
   }
 
-  void UpdateOrderLists() {
+  void UpdateOrderLists() const {
     // Some cnodes used in current func graph but belong to other func graph, we have to
     // insert them into order list so that we can handle side effects for them.
     UpdateOrderList(root_);
@@ -434,7 +434,7 @@ class SideEffectFinder {
       // Setup branches according the merged effect info.
       SetupEffectBranches(info, branches);
       // Save the switch_layer call, so that we can add monad argument for it if need.
-      auto &call = switch_layer_calls.emplace_back();
+      auto &call = switch_layer_calls_.emplace_back();
       call.caller = caller_;
       call.effect_info = info;
       call.branches = move(branches);
@@ -443,7 +443,7 @@ class SideEffectFinder {
   }
 
   void HandleSwitchLayerCalls() {
-    for (auto &call : switch_layer_calls) {
+    for (auto &call : switch_layer_calls_) {
       const auto &info = call.effect_info;
       const auto &branches = call.branches;
       auto new_info = MergeEffectInfo(branches);
@@ -882,7 +882,7 @@ class SideEffectFinder {
   }
 
   // Set effect info for all member graphs in the SCC.
-  void SetSccEffectInfo(const SccPtr &scc, const EffectInfo &info) {
+  void SetSccEffectInfo(const SccPtr &scc, const EffectInfo &info) const {
     for (auto &g : *scc) {
       g->SetEffectInfo(info);
     }
@@ -1019,7 +1019,7 @@ class SideEffectFinder {
 
   // switch_layer_calls save all switch_layer calls, so that
   // we can check whether monad argument should be added for them.
-  std::vector<SwitchLayerCall> switch_layer_calls;
+  std::vector<SwitchLayerCall> switch_layer_calls_;
 };  // class SideEffectFinder
 
 // --------------------------------------------------------------------
@@ -1067,7 +1067,7 @@ class AutoMonadConverter {
   }
 
   // Gets effect info for a cnode.
-  const EffectInfo &GetEffectInfo(const CNodePtr &cnode) {
+  const EffectInfo &GetEffectInfo(const CNodePtr &cnode) const {
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
       // Effect info should have been set by SideEffectFinder.
@@ -1116,7 +1116,7 @@ class AutoMonadConverter {
   //          return output
   //
   //   To:    return output
-  void ClearIsolatedNodes() {
+  void ClearIsolatedNodes() const {
     auto output = GetGraphOutput();
     if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
         IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
@@ -1284,7 +1284,7 @@ class AutoMonadConverter {
     manager_->AddEdge(cnode, monad);
   }
 
-  void InsertStateDepends() {
+  void InsertStateDepends() const {
     if (u_) {
       // Insert Depend node for UMonad,
       // Gradient is required for memory side effects.
@@ -1296,7 +1296,7 @@ class AutoMonadConverter {
     }
   }
 
-  void InsertStateDepend(const AnfNodePtr &state) {
+  void InsertStateDepend(const AnfNodePtr &state) const {
     auto output = GetGraphOutput();
     auto depend = NewValueNode(prim::kPrimDepend);
     // If isolated nodes dependencies exist.
@@ -1316,7 +1316,7 @@ class AutoMonadConverter {
     func_graph_->set_output(depend_cnode);
   }
 
-  AnfNodePtr GetGraphOutput() {
+  AnfNodePtr GetGraphOutput() const {
     auto output = func_graph_->output();
     if (output != nullptr) {
       return output;
@@ -1368,7 +1368,7 @@ class AutoMonadConverter {
   //   def side_effect_tail_call(args):
   //       a = pure_func(args)
   //       return side_effect_call(a)
-  bool NeedUpdateState() {
+  bool NeedUpdateState() const {
     // Search for the only one side effect cnode.
     CNodePtr side_effect_cnode = nullptr;
     for (auto &cnode : func_graph_->order_list()) {
@@ -1392,7 +1392,7 @@ class AutoMonadConverter {
     return func_graph_->output() != side_effect_cnode;
   }
 
-  bool HasSideEffect(const CNodePtr &cnode) {
+  bool HasSideEffect(const CNodePtr &cnode) const {
     const auto &info = GetEffectInfo(cnode);
     return (info.memory || info.load || info.io);
   }

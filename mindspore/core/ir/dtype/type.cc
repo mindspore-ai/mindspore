@@ -21,182 +21,123 @@
 #include <algorithm>
 #include <cstdlib>
 #include <string>
+#include <climits>
 
 #include "ir/dtype/number.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
+#define MS_TYPE2LABLE(type_id) #type_id
+static std::unordered_map<TypeId, std::string> g_type_2_lable{
+  {kTypeUnknown, MS_TYPE2LABLE(kTypeUnknown)},
+  {kMetaTypeType, MS_TYPE2LABLE(kMetaTypeType)},
+  {kMetaTypeAnything, MS_TYPE2LABLE(kMetaTypeAnything)},
+  {kMetaTypeObject, MS_TYPE2LABLE(kMetaTypeObject)},
+  {kMetaTypeTypeType, MS_TYPE2LABLE(kMetaTypeTypeType)},
+  {kMetaTypeProblem, MS_TYPE2LABLE(kMetaTypeProblem)},
+  {kMetaTypeExternal, MS_TYPE2LABLE(kMetaTypeExternal)},
+  {kMetaTypeNone, MS_TYPE2LABLE(kMetaTypeNone)},
+  {kMetaTypeNull, MS_TYPE2LABLE(kMetaTypeNull)},
+  {kMetaTypeEllipsis, MS_TYPE2LABLE(kMetaTypeEllipsis)},
+  {kMetaTypeEnd, MS_TYPE2LABLE(kMetaTypeEnd)},
+  {kObjectTypeNumber, MS_TYPE2LABLE(kObjectTypeNumber)},
+  {kObjectTypeString, MS_TYPE2LABLE(kObjectTypeString)},
+  {kObjectTypeList, MS_TYPE2LABLE(kObjectTypeList)},
+  {kObjectTypeTuple, MS_TYPE2LABLE(kObjectTypeTuple)},
+  {kObjectTypeSlice, MS_TYPE2LABLE(kObjectTypeSlice)},
+  {kObjectTypeKeyword, MS_TYPE2LABLE(kObjectTypeKeyword)},
+  {kObjectTypeTensorType, MS_TYPE2LABLE(kObjectTypeTensorType)},
+  {kObjectTypeRowTensorType, MS_TYPE2LABLE(kObjectTypeRowTensorType)},
+  {kObjectTypeSparseTensorType, MS_TYPE2LABLE(kObjectTypeSparseTensorType)},
+  {kObjectTypeUndeterminedType, MS_TYPE2LABLE(kObjectTypeUndeterminedType)},
+  {kObjectTypeClass, MS_TYPE2LABLE(kObjectTypeClass)},
+  {kObjectTypeDictionary, MS_TYPE2LABLE(kObjectTypeDictionary)},
+  {kObjectTypeFunction, MS_TYPE2LABLE(kObjectTypeFunction)},
+  {kObjectTypeJTagged, MS_TYPE2LABLE(kObjectTypeJTagged)},
+  {kObjectTypeSymbolicKeyType, MS_TYPE2LABLE(kObjectTypeSymbolicKeyType)},
+  {kObjectTypeEnvType, MS_TYPE2LABLE(kObjectTypeEnvType)},
+  {kObjectTypeRefKey, MS_TYPE2LABLE(kObjectTypeRefKey)},
+  {kObjectTypeRef, MS_TYPE2LABLE(kObjectTypeRef)},
+  {kObjectTypeEnd, MS_TYPE2LABLE(kObjectTypeEnd)},
+  {kNumberTypeBool, MS_TYPE2LABLE(kNumberTypeBool)},
+  {kNumberTypeInt, MS_TYPE2LABLE(kNumberTypeInt)},
+  {kNumberTypeInt8, MS_TYPE2LABLE(kNumberTypeInt8)},
+  {kNumberTypeInt16, MS_TYPE2LABLE(kNumberTypeInt16)},
+  {kNumberTypeInt32, MS_TYPE2LABLE(kNumberTypeInt32)},
+  {kNumberTypeInt64, MS_TYPE2LABLE(kNumberTypeInt64)},
+  {kNumberTypeUInt, MS_TYPE2LABLE(kNumberTypeUInt)},
+  {kNumberTypeUInt8, MS_TYPE2LABLE(kNumberTypeUInt8)},
+  {kNumberTypeUInt16, MS_TYPE2LABLE(kNumberTypeUInt16)},
+  {kNumberTypeUInt32, MS_TYPE2LABLE(kNumberTypeUInt32)},
+  {kNumberTypeUInt64, MS_TYPE2LABLE(kNumberTypeUInt64)},
+  {kNumberTypeFloat, MS_TYPE2LABLE(kNumberTypeFloat)},
+  {kNumberTypeFloat16, MS_TYPE2LABLE(kNumberTypeFloat16)},
+  {kNumberTypeFloat32, MS_TYPE2LABLE(kNumberTypeFloat32)},
+  {kNumberTypeFloat64, MS_TYPE2LABLE(kNumberTypeFloat64)},
+  {kNumberTypeComplex64, MS_TYPE2LABLE(kNumberTypeComplex64)},
+  {kNumberTypeEnd, MS_TYPE2LABLE(kNumberTypeEnd)},
+  {kObjectTypeMonad, MS_TYPE2LABLE(kObjectTypeMonad)},
+  {kObjectTypeUMonad, MS_TYPE2LABLE(kObjectTypeUMonad)},
+  {kObjectTypeIOMonad, MS_TYPE2LABLE(kObjectTypeIOMonad)},
+  {kMonadTypeEnd, MS_TYPE2LABLE(kMonadTypeEnd)}};
+
+enum BitsNum : int {
+  eBits8 = 8,
+  eBits16 = 16,
+  eBits32 = 32,
+  eBits64 = 64,
+};
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case 8:
+    case eBits8:
       return kNumberTypeInt8;
-    case 16:
+    case eBits16:
       return kNumberTypeInt16;
-    case 32:
+    case eBits32:
       return kNumberTypeInt32;
-    case 64:
+    case eBits64:
       return kNumberTypeInt64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
   }
 }
 
 TypeId UIntBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case 8:
+    case eBits8:
       return kNumberTypeUInt8;
-    case 16:
+    case eBits16:
       return kNumberTypeUInt16;
-    case 32:
+    case eBits32:
       return kNumberTypeUInt32;
-    case 64:
+    case eBits64:
       return kNumberTypeUInt64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
   }
 }
 
 TypeId FloatBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case 16:
+    case eBits16:
       return kNumberTypeFloat16;
-    case 32:
+    case eBits32:
       return kNumberTypeFloat32;
-    case 64:
+    case eBits64:
       return kNumberTypeFloat64;
     default:
-      MS_LOG(EXCEPTION) << "Wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits:" << nbits;
   }
 }
 
-const char *MetaIdLabel(const TypeId &v) {
-  switch (v) {
-    case kTypeUnknown:
-      return "kTypeUnknown";
-    case kMetaTypeType:
-      return "kMetaTypeType";
-    case kMetaTypeAnything:
-      return "kMetaTypeAnything";
-    case kMetaTypeObject:
-      return "kMetaTypeObject";
-    case kMetaTypeTypeType:
-      return "kMetaTypeTypeType";
-    case kMetaTypeProblem:
-      return "kMetaTypeProblem";
-    case kMetaTypeExternal:
-      return "kMetaTypeExternal";
-    case kMetaTypeNone:
-      return "kMetaTypeNone";
-    case kMetaTypeNull:
-      return "kMetaTypeNull";
-    case kMetaTypeEllipsis:
-      return "kMetaTypeEllipsis";
-    case kMetaTypeEnd:
-      return "kMetaTypeEnd";
-    default:
-      return "[Unknown Type Id]";
-  }
-}
-
-const char *ObjectIdLabel(const TypeId &v) {
-  switch (v) {
-    case kObjectTypeNumber:
-      return "kObjectTypeNumber";
-    case kObjectTypeString:
-      return "kObjectTypeString";
-    case kObjectTypeList:
-      return "kObjectTypeList";
-    case kObjectTypeTuple:
-      return "kObjectTypeTuple";
-    case kObjectTypeSlice:
-      return "kObjectTypeSlice";
-    case kObjectTypeKeyword:
-      return "kObjectTypeKeyword";
-    case kObjectTypeTensorType:
-      return "kObjectTypeTensorType";
-    case kObjectTypeRowTensorType:
-      return "kObjectTypeRowTensorType";
-    case kObjectTypeSparseTensorType:
-      return "kObjectTypeSparseTensorType";
-    case kObjectTypeUndeterminedType:
-      return "kObjectTypeUndeterminedType";
-    case kObjectTypeDictionary:
-      return "kObjectTypeDictionary";
-    case kObjectTypeClass:
-      return "kObjectTypeClass";
-    case kObjectTypeFunction:
-      return "kObjectTypeFunction";
-    case kObjectTypeJTagged:
-      return "kObjectTypeJTagged";
-    case kObjectTypeSymbolicKeyType:
-      return "kObjectTypeSymbolicKeyType";
-    case kObjectTypeEnvType:
-      return "kObjectTypeEnvType";
-    case kObjectTypeRefKey:
-      return "kObjectTypeRefKey";
-    case kObjectTypeRef:
-      return "kObjectTypeRef";
-    case kObjectTypeMonad:
-      return "kObjectTypeMonad";
-    case kObjectTypeUMonad:
-      return "kObjectTypeUMonad";
-    case kObjectTypeIOMonad:
-      return "kObjectTypeIOMonad";
-    default:
-      return "[Unknown Type Id]";
-  }
-}
-
-const char *NumberIdLabel(const TypeId &v) {
-  switch (v) {
-    case kNumberTypeBool:
-      return "kNumberTypeBool";
-    case kNumberTypeInt:
-      return "kNumberTypeInt";
-    case kNumberTypeInt8:
-      return "kNumberTypeInt8";
-    case kNumberTypeInt16:
-      return "kNumberTypeInt16";
-    case kNumberTypeInt32:
-      return "kNumberTypeInt32";
-    case kNumberTypeInt64:
-      return "kNumberTypeInt64";
-    case kNumberTypeUInt:
-      return "kNumberTypeUInt";
-    case kNumberTypeUInt8:
-      return "kNumberTypeUInt8";
-    case kNumberTypeUInt16:
-      return "kNumberTypeUInt16";
-    case kNumberTypeUInt32:
-      return "kNumberTypeUInt32";
-    case kNumberTypeUInt64:
-      return "kNumberTypeUInt64";
-    case kNumberTypeFloat:
-      return "kNumberTypeFloat";
-    case kNumberTypeFloat16:
-      return "kNumberTypeFloat16";
-    case kNumberTypeFloat32:
-      return "kNumberTypeFloat32";
-    case kNumberTypeFloat64:
-      return "kNumberTypeFloat64";
-    default:
-      return "[Unknown Type Id]";
-  }
-}
-
-const char *TypeIdLabel(const TypeId &v) {
-  if (v < kMetaTypeEnd) {
-    return MetaIdLabel(v);
+const std::string &TypeIdLabel(const TypeId &v) {
+  static std::string unknown("[Unknown Type Id]");
+  auto iter = g_type_2_lable.find(v);
+  if (iter != g_type_2_lable.end()) {
+    return iter->second;
   } else {
-    if (v < kObjectTypeEnd) {
-      return ObjectIdLabel(v);
-    } else if (v > kMonadTypeBegin && v < kMonadTypeEnd) {
-      // Monad Types is ObjectType
-      return ObjectIdLabel(v);
-    } else {
-      return NumberIdLabel(v);
-    }
+    return unknown;
   }
 }
 
@@ -226,7 +167,7 @@ size_t GetTypeByte(const TypePtr &type_ptr) {
       MS_LOG(DEBUG) << "Invalid TypePtr got from ApplyKernel.";
       return 0;
     } else {
-      return IntToSize(number->nbits() / 8);
+      return IntToSize(number->nbits() / CHAR_BIT);
     }
   } else {
     MS_LOG(DEBUG) << "Invalid TypePtr got from ApplyKernel.";
