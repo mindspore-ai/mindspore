@@ -302,7 +302,7 @@ int ShapeInsert(int *shape, size_t *shape_size, int index, int value) {
 }
 
 int ShapeErase(int *shape, size_t *shape_size, int index) {
-  if (index < 0 && index >= *shape_size) {
+  if (index < 0 || index >= *shape_size) {
     return NNACL_ERR;
   }
 
