@@ -155,7 +155,7 @@ void SparseApplyProximalAdagradCPUKernel::LaunchKernel(const std::vector<kernel:
 
 bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &workspace,
-                                                 const std::vector<kernel::AddressPtr> & /*outputs*/) {
+                                                 const std::vector<kernel::AddressPtr> &) {
   if (inputs.size() < kSparseApplyProximalAdagradInputSize) {
     MS_LOG(EXCEPTION) << "Wrong input size!";
   }

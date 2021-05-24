@@ -74,8 +74,7 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> & /*workspaces*/,
+bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   size_t input_size = inputs[0]->size / sizeof(T);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);

@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 void EqualCountCPUKernel::InitKernel(const CNodePtr &) {}
 
 bool EqualCountCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
