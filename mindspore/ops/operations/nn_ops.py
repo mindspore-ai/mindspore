@@ -556,7 +556,7 @@ class ReLU6(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid('input_x', input_x, (mstype.float16, mstype.float32), self.name)
 
 
-class ReLUV2(PrimitiveWithInfer):
+class ReLUV2(Primitive):
     r"""
     Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
 
@@ -597,36 +597,6 @@ class ReLUV2(PrimitiveWithInfer):
     def __init__(self):
         """Initialize ReLUV2"""
         self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
-
-    def __infer__(self, input_x):
-        input_shape = list(input_x['shape'])
-        input_dtype = input_x['dtype']
-        mask_shape = []
-        if len(input_shape) != 4:
-            raise ValueError("The `input_x` should be a 4-D tensor, "
-                             f"but got a {len(input_shape)}-D tensor whose shape is {input_shape}")
-        for i in enumerate(input_shape):
-            if i[0] == 1:
-                if input_dtype in (mstype.uint8, mstype.int8):
-                    mask_shape.append((input_shape[1] + 31) // 32)
-                else:
-                    mask_shape.append((input_shape[1] + 15) // 16)
-            else:
-                mask_shape.append(i[1])
-        if input_dtype in (mstype.uint8, mstype.int8):
-            mask_shape.append(4)
-        else:
-            mask_shape.append(2)
-
-        output_shape = (input_x['shape'], mask_shape)
-        validator.check_subclass("input_x", input_dtype, mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid('input_x', input_dtype, mstype.number_type, self.name)
-        mask_dtype = mstype.uint8
-        output_dtype = (input_dtype, mask_dtype)
-
-        return {'shape': output_shape,
-                'dtype': output_dtype,
-                'value': None}
 
 
 class Elu(PrimitiveWithInfer):
