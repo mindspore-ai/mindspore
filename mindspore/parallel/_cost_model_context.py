@@ -614,6 +614,7 @@ def reset_cost_model_context():
     """Reset cost model context attributes."""
     cost_model_context().reset_cost_model()
 
+
 def _set_multi_subgraphs(multi_subgraph=True):
     """
     Set the flag of ANF graph containing multiple subgraphs.
@@ -623,11 +624,13 @@ def _set_multi_subgraphs(multi_subgraph=True):
     """
     cost_model_context().set_multi_subgraphs(multi_subgraph)
 
+
 def _get_multi_subgraphs():
     """
         Get the flag of ANF graph containing multiple subgraphs.
     """
     return cost_model_context().get_multi_subgraphs()
+
 
 def _set_algo_single_loop(single_loop=True):
     """
@@ -637,6 +640,7 @@ def _set_algo_single_loop(single_loop=True):
         single_loop (bool): The parameter for the single loop flag.
     """
     cost_model_context().set_dp_algo_single_loop(single_loop)
+
 
 def _get_algo_single_loop():
     """
