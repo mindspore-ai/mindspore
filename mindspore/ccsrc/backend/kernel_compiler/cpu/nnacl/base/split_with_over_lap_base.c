@@ -20,7 +20,7 @@
 #include "nnacl/errorcode.h"
 
 int DoSplitWithOverlap(char *in_data, char **out_data, int num_split, int split_dim_size, int element_bytes,
-                       int outer_total_dim, int inner_stride, int *start_indices, int *end_indices) {
+                       int outer_total_dim, int inner_stride, const int *start_indices, const int *end_indices) {
   int input_stride = split_dim_size * inner_stride * element_bytes;
   for (int slice_idx = 0; slice_idx < num_split; slice_idx++) {
     int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
@@ -34,7 +34,8 @@ int DoSplitWithOverlap(char *in_data, char **out_data, int num_split, int split_
 }
 
 int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, int split_dim_size, int element_bytes,
-                               int outer_total_dim, int inner_stride, int *start_indices, int *end_indices) {
+                               int outer_total_dim, int inner_stride, const int *start_indices,
+                               const int *end_indices) {
   int input_stride = split_dim_size * inner_stride * element_bytes;
   int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
   char *src_ptr = in_data + start_indices[slice_idx] * inner_stride * element_bytes;
