@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/optimizer/graph/primitive_adjust_pass.h"
+#include "tools/converter/import/primitive_adjust.h"
 #include <map>
 #include <memory>
 #include <set>
@@ -72,7 +72,7 @@
 #include "ops/tanh.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/grad/resize_grad.h"
-
+#include "tools/converter/parser/parser_utils.h"
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
 using mindspore::ops::kNameArgMax;
@@ -118,7 +118,7 @@ using mindspore::ops::kNameTile;
 using mindspore::ops::kNameTopK;
 
 namespace mindspore {
-namespace opt {
+namespace lite {
 namespace {
 constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
@@ -180,7 +180,7 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
     MS_LOG(ERROR) << "the func is to adjust attr which is array, please check the attr.";
     return lite::RET_ERROR;
   }
-  auto origin_value = CastToInt(prim->GetAttr(name));
+  auto origin_value = opt::CastToInt(prim->GetAttr(name));
   std::vector<int64_t> new_value;
   if (name == ops::kKernelSize && origin_value.size() == 1) {
     new_value.push_back(origin_value[0]);
@@ -518,37 +518,41 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 }
 }  // namespace
 
-bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
+bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
   if (this->fmk_type_ != lite::converter::FmkType_MS) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }
   MS_ASSERT(graph != nullptr);
-  auto node_list = TopoSort(func_graph->get_return());
-  int status = lite::RET_OK;
-  for (auto &node : node_list) {
-    if (!utils::isa<CNodePtr>(node)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    MS_ASSERT(cnode->size() > 0);
-    auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-    if (value_node == nullptr) {
-      MS_LOG(ERROR) << "cnode first input is invalid.";
-      return false;
-    }
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_ASSERT(prim != nullptr);
-    auto name = prim->name();
-    auto adjust_func = PrimitiveAdjustRegistry::GetInstance()->GetPrimitiveCreator(name);
-    if (adjust_func == nullptr) {
-      MS_LOG(DEBUG) << "don't need to adjust.";
-      continue;
-    }
-    status = adjust_func(cnode);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "convert primitive failed.";
-      return false;
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  lite::GetAllFuncGraph(func_graphs, &all_func_graphs);
+  for (auto func_graph : all_func_graphs) {
+    auto node_list = TopoSort(func_graph->get_return());
+    int status = lite::RET_OK;
+    for (auto &node : node_list) {
+      if (!utils::isa<CNodePtr>(node)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      MS_ASSERT(cnode->size() > 0);
+      auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+      if (value_node == nullptr) {
+        MS_LOG(ERROR) << "cnode first input is invalid.";
+        return false;
+      }
+      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+      MS_ASSERT(prim != nullptr);
+      auto name = prim->name();
+      auto adjust_func = PrimitiveAdjustRegistry::GetInstance()->GetPrimitiveCreator(name);
+      if (adjust_func == nullptr) {
+        MS_LOG(DEBUG) << "don't need to adjust.";
+        continue;
+      }
+      status = adjust_func(cnode);
+      if (status != lite::RET_OK) {
+        MS_LOG(ERROR) << "convert primitive failed.";
+        return false;
+      }
     }
   }
   return true;
@@ -619,5 +623,5 @@ REGIST_PRIMITIVE_ADJUST(kNameSparseSoftmaxCrossEntropyWithLogits,
                         MoveAttrMapCommon<ops::SparseSoftmaxCrossEntropyWithLogits>)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinearGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighborGrad, MoveAttrMapResizeGrad)
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/optimizer/graph/mindir_adjust_pass.h"
+#include "tools/converter/import/mindir_adjust.h"
 #include <vector>
 #include <memory>
-
+#include <set>
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/node_util.h"
+#include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore {
-namespace opt {
+namespace lite {
 namespace {
 int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
@@ -144,7 +145,7 @@ int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &i
 }
 }  // namespace
 
-int MindirAdjustPass::ValueNodeInt64Convert(AnfNodePtr anf_node) {
+int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   if (!utils::isa<ValueNodePtr>(anf_node)) {
     return lite::RET_NO_CHANGE;
   }
@@ -182,7 +183,7 @@ int MindirAdjustPass::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   return lite::RET_NO_CHANGE;
 }
 
-int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
+int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(INFO) << "only cnode need to convert primitive.";
     return lite::RET_NO_CHANGE;
@@ -216,32 +217,35 @@ int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   return lite::RET_OK;
 }
 
-bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
+bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != lite::converter::FmkType_MS) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
   }
   MS_ASSERT(graph != nullptr);
-  graph_ = graph;
-  auto node_list = TopoSort(graph->get_return());
-  int status = lite::RET_OK;
-  bool success_flag = true;
-  for (auto &node : node_list) {
-    if (utils::isa<CNodePtr>(node)) {
-      status = ComputeQuantParams(node);
-    } else if (utils::isa<ValueNodePtr>(node)) {
-      status = ValueNodeInt64Convert(node);
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraph(func_graph, &all_func_graphs);
+  for (auto &graph : all_func_graphs) {
+    auto node_list = TopoSort(graph->get_return());
+    int status = lite::RET_OK;
+    bool success_flag = true;
+    for (auto &node : node_list) {
+      if (utils::isa<CNodePtr>(node)) {
+        status = ComputeQuantParams(node);
+      } else if (utils::isa<ValueNodePtr>(node)) {
+        status = ValueNodeInt64Convert(node);
+      }
+      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+        success_flag = false;
+      }
     }
-    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      success_flag = false;
+    if (!success_flag) {
+      MS_LOG(ERROR) << "Adjust mindir failed.";
+      return false;
     }
-  }
-  if (!success_flag) {
-    MS_LOG(ERROR) << "Adjust mindir failed.";
-    return false;
   }
   return true;
 }
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore

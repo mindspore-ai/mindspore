@@ -26,7 +26,7 @@
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore {
-namespace opt {
+namespace lite {
 typedef int (*PrimitiveAdjustCreator)(const CNodePtr &value_node);
 class PrimitiveAdjustRegistry {
  public:
@@ -63,15 +63,17 @@ class RegistryPrimitiveAdjust {
 #define REGIST_PRIMITIVE_ADJUST(type, primitive_adjust_func) \
   RegistryPrimitiveAdjust g_##type##_primitive_adjust(type, primitive_adjust_func);
 
-class PrimitiveAdjustPass : public Pass {
+class PrimitiveAdjust {
  public:
+  PrimitiveAdjust() = default;
+  ~PrimitiveAdjust() = default;
   void SetFmkType(FmkType fmk_type) { fmk_type_ = fmk_type; }
-  bool Run(const FuncGraphPtr &func_graph) override;
+  bool Run(const FuncGraphPtr &func_graph);
 
  protected:
   FmkType fmk_type_ = FmkType::FmkType_MS;
 };
-}  // namespace opt
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_PRIMITIVE_ADJUST_PASS_H

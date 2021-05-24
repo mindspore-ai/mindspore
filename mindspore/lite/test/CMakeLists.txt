@@ -215,10 +215,8 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/redundant_op_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/primitive_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unify_format_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/node_infershape.cc
             ${LITE_DIR}/tools/optimizer/graph/transpose_strategy.cc
@@ -243,6 +241,9 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/parser/unused_node_remove_pass.cc
             ${LITE_DIR}/tools/converter/parser/conv1d_inout_adjust.cc
             ${LITE_DIR}/tools/converter/parser/tf_bidirection_gru_cf_fusion.cc
+            ${LITE_DIR}/tools/converter/import/mindspore_importer.cc
+            ${LITE_DIR}/tools/converter/import/primitive_adjust.cc
+            ${LITE_DIR}/tools/converter/import/mindir_adjust.cc
             )
 endif()
 ### train
