@@ -17,6 +17,11 @@
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
         - [Evaluation Result](#evaluation-result)
+    - [Export Process](#Export-process)
+        - [Export](#Export)
+    - [Inference Process](#Inference-process)
+        - [Inference](#Inference)
+        - [Inference Result](#Inference-result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
@@ -121,6 +126,18 @@ pip install mmcv=0.2.14
    Note:
    1. VALIDATION_JSON_FILE is a label json file for evaluation.
 
+5. Execute inference script.
+   After training, you can start inference as follows:
+
+   ```shell
+   # inference
+   bash run_infer_310.sh [MODEL_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   ```
+
+   Note:
+   1. MODEL_PATH is a model file, exported by export script file.
+   2. ANN_FILE_PATH is a annotation file for inference.
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -129,9 +146,11 @@ pip install mmcv=0.2.14
 .
 └─MaskRcnn
   ├─README.md                             # README
+  ├─ascend310_infer                       #application for 310 inference
   ├─scripts                               # shell script
     ├─run_standalone_train.sh             # training in standalone mode(1pcs)
     ├─run_distribute_train.sh             # training in parallel mode(8 pcs)
+    ├─run_infer_310.sh                    #shell script for 310 inference
     └─run_eval.sh                         # evaluation
   ├─src
     ├─maskrcnn_mobilenetv1
@@ -153,7 +172,9 @@ pip install mmcv=0.2.14
     ├─network_define.py                   # network define for maskrcnn
     └─util.py                             # routine operation
   ├─mindspore_hub_conf.py                 # mindspore hub interface
+  ├─export.py                             #script to export AIR,MINDIR model
   ├─eval.py                               # evaluation scripts
+  ├─postprogress.py                       #post process for 310 inference
   └─train.py                              # training scripts
 ```
 
@@ -370,6 +391,64 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ### [Evaluation result](#content)
 
 Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
+
+```bash
+Evaluate annotation type *bbox*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.227
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.398
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.232
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.145
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.240
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.283
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.239
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.390
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.411
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.270
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.440
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.501
+
+Evaluate annotation type *segm*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.176
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.339
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.166
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.089
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.185
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.254
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.193
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.292
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.302
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.179
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.320
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.388
+```
+
+## [Export Process](#contents)
+
+### [Export](#content)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### [Inference](#content)
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+Current batch_ Size can only be set to 1. The inference process needs about 600G hard disk space to save the reasoning results.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE] [DEVICE_ID]
+```
+
+### [Inference result](#content)
+
+Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```bash
 Evaluate annotation type *bbox*
