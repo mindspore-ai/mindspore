@@ -331,7 +331,7 @@ class ForwardExecutor {
 
  private:
   GradExecutorWeakPtr grad_executor_;
-  std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
+  std::unordered_map<PrimitivePtr, AbstractListMap, PrimitiveHasher, PrimitiveTotalEqual> prim_abs_list_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   // Used to cache cast struct
   std::unordered_map<std::string, OpExecInfoPtr> cast_struct_map_;

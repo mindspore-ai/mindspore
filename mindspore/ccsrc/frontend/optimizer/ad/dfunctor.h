@@ -36,14 +36,6 @@
 
 namespace mindspore {
 namespace ad {
-struct PrimitiveTotalEqual {
-  bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
-    MS_EXCEPTION_IF_NULL(t1);
-    MS_EXCEPTION_IF_NULL(t2);
-    return *t1 == *t2;
-  }
-};
-
 using Registry = std::unordered_map<PrimitivePtr, FuncGraphPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 class KPrim;
 extern KPrim g_k_prims;

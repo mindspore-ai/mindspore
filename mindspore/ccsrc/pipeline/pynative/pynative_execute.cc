@@ -878,7 +878,7 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   auto prim = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(prim);
 
-  auto temp = prim_abs_list_.find(prim->id());
+  auto temp = prim_abs_list_.find(prim);
   if (temp != prim_abs_list_.end()) {
     MS_LOG(DEBUG) << "Match prim input args " << op_name << mindspore::ToString(args_spec_list);
     auto iter = temp->second.find(args_spec_list);
@@ -924,7 +924,7 @@ py::object ForwardExecutor::GetOpOutputObject(const OpExecInfoPtr &op_exec_info,
 
   // Add output abstract info into cache, the const value needs to infer evert step
   if (!out_abstract_existed && !op_exec_info->is_dynamic_shape) {
-    auto &out = prim_abs_list_[prim->id()];
+    auto &out = prim_abs_list_[prim];
     out[args_spec_list].abs = op_exec_info->abstract;
     out[args_spec_list].attrs = prim->evaluate_added_attrs();
   }

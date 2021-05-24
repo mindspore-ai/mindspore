@@ -156,5 +156,13 @@ struct PrimitiveHasher {
     return prim->Hash();
   }
 };
+
+struct PrimitiveTotalEqual {
+  bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
+    MS_EXCEPTION_IF_NULL(t1);
+    MS_EXCEPTION_IF_NULL(t2);
+    return *t1 == *t2;
+  }
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PRIMITIVE_H_
