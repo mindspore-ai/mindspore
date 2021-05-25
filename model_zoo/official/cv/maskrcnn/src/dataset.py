@@ -17,15 +17,25 @@
 from __future__ import division
 
 import os
+import re
 import numpy as np
 from numpy import random
 import cv2
 import mmcv
-
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
-from src.config import config
+
+from model_utils.config import config
+
+
+config.mask_shape = (28, 28)
+
+if config.enable_modelarts and config.need_modelarts_dataset_unzip:
+    config.coco_root = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+else:
+    config.coco_root = config.data_path
+config.mindrecord_dir = os.path.join(config.coco_root, config.mindrecord_dir)
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
@@ -385,8 +395,12 @@ def create_coco_label(is_training):
     if is_training:
         data_type = config.train_data_type
 
-    #Classes need to train or test.
-    train_cls = config.coco_classes
+    # Classes need to train or test.
+    # train_cls = config.coco_classes
+    train_cls = [i for i in re.findall(r'[a-zA-Z\s]+', config.coco_classes) if i != ' ']
+    train_cls = np.array(train_cls)
+    print(train_cls)
+
     train_cls_dict = {}
     for i, cls in enumerate(train_cls):
         train_cls_dict[cls] = i

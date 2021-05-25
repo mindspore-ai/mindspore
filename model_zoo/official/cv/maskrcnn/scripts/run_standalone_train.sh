@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then 
-    echo "Usage: bash run_standalone_train.sh [PRETRAINED_PATH]"
+    echo "Usage: bash run_standalone_train.sh [PRETRAINED_PATH] [DATA_PATH]"
 exit 1
 fi
 
@@ -28,7 +28,9 @@ get_real_path(){
   fi
 }
 PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
 echo $PATH1
+echo $PATH2
 
 if [ ! -f $PATH1 ]
 then 
@@ -48,10 +50,11 @@ then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
+python ./train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 --data_path=$PATH2 &> log.txt &
 cd ..

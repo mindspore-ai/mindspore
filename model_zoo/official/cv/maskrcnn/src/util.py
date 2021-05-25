@@ -20,7 +20,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
 
-from src.config import config
+from model_utils.config import config
 
 _init_value = np.array(0.0)
 summary_init = {

@@ -14,22 +14,15 @@
 # ============================================================================
 """post process for 310 inference"""
 import os
-import argparse
 import numpy as np
 from PIL import Image
 from pycocotools.coco import COCO
 
-from src.config import config
+from src.model_utils.config import config
 from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
 
 dst_width = 1280
 dst_height = 768
-
-parser = argparse.ArgumentParser(description="maskrcnn inference")
-parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
-parser.add_argument("--img_path", type=str, required=True, help="image file path.")
-parser.add_argument("--result_path", type=str, required=True, help="result file path.")
-args = parser.parse_args()
 
 def get_img_size(file_name):
     img = Image.open(file_name)
@@ -96,4 +89,4 @@ def get_eval_result(ann_file, img_path, result_path):
     coco_eval(result_files, eval_types, dataset_coco, single_result=False)
 
 if __name__ == '__main__':
-    get_eval_result(args.ann_file, args.img_path, args.result_path)
+    get_eval_result(config.ann_file, config.img_path, config.result_path)
