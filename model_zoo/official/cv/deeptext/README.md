@@ -199,7 +199,7 @@ class 1 precision is 88.01%, recall is 82.77%
 | MindSpore Version   | 1.1.0              |
 | Dataset             | 229 images                  |
 | Batch_size          | 2                         |
-| Accuracy            | precision=0.8801, recall=0.8277 |
+| Accuracy            | F1 score is 84.50% |
 | Total time          | 1 min                      |
 | Model for inference | 3492M (.ckpt file)   |
 
