@@ -1257,7 +1257,7 @@ class BatchNorm(PrimitiveWithInfer):
         return (input_x, mstype.float32, mstype.float32, mstype.float32, mstype.float32)
 
 
-class Conv2D(PrimitiveWithCheck):
+class Conv2D(Primitive):
     r"""
     2D convolution layer.
 
@@ -1918,7 +1918,7 @@ class AvgPool(_Pool):
         super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
-class Conv2DBackpropInput(PrimitiveWithInfer):
+class Conv2DBackpropInput(Primitive):
     """
     Computes the gradients of convolution with respect to the input.
 
@@ -2025,48 +2025,6 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
             for x in pad_list:
                 validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
-
-    def __infer__(self, doutput, w, x_size):
-        x_size_v = x_size['value']
-        validator.check_value_type('x_size', x_size_v, [tuple], self.name)
-        for i, dim_len in enumerate(x_size_v):
-            validator.check_value_type("x_size[%d]" % i, dim_len, [int], self.name)
-        args = {'doutput': doutput['dtype'], 'w': w['dtype']}
-        valid_dtypes = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-
-        # infer shape
-        dout_shape = doutput['shape']
-        dout_shape_norm = dout_shape if self.format == "NCHW" else \
-            [dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]]
-        kernel_h = self.kernel_size[0]
-        kernel_w = self.kernel_size[1]
-        stride_h = self.stride[2]
-        stride_w = self.stride[3]
-        dilation_h = self.dilation[2]
-        dilation_w = self.dilation[3]
-        # default pad mode is valid
-        pad_list = (0, 0, 0, 0)
-        if self.pad_list:
-            pad_list = tuple(self.pad_list)
-        elif self.pad_mode == "SAME":
-            pad_needed_h = max(0, (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2])
-            pad_top = math.floor(pad_needed_h / 2)
-            pad_bottom = pad_needed_h - pad_top
-
-            pad_needed_w = max(0, (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3])
-            pad_left = math.floor(pad_needed_w / 2)
-            pad_right = pad_needed_w - pad_left
-            pad_list = (pad_top, pad_bottom, pad_left, pad_right)
-        elif self.pad_mode == 'PAD':
-            pad_list = self.padding
-        self.add_prim_attr('pad_list', pad_list)
-        out = {
-            'value': None,
-            'shape': x_size_v,
-            'dtype': doutput['dtype'],
-        }
-        return out
 
 
 class BiasAdd(PrimitiveWithCheck):
