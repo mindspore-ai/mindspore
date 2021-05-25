@@ -48,6 +48,8 @@ class AicpuOpKernelMod : public AscendKernelMod {
    */
   void CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  void CheckCache();
+
   void SetInputSizeList(const std::vector<size_t> &size_list);
   void SetOutputSizeList(const std::vector<size_t> &size_list);
   void SetWorkspaceSizeList(const std::vector<size_t> &size_list);

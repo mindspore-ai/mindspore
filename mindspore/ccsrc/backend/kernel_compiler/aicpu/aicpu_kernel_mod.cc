@@ -68,10 +68,7 @@ void AicpuOpKernelMod::SetAnfNode(const mindspore::AnfNodePtr &anf_node) {
   anf_node_ = anf_node;
 }
 
-void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "CreateCpuKernelInfoOffline start";
-
+void AicpuOpKernelMod::CheckCache() {
   if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
     node_so_ = CUST_AICPU_OPS_SO_NAME;
     node_name_ = kCustRunApi;
@@ -83,6 +80,13 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
       node_so_ = AICPU_OPS_SO_NAME;
     }
   }
+}
+
+void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &outputs) {
+  MS_LOG(INFO) << "CreateCpuKernelInfoOffline start";
+
+  CheckCache();
   // InputOutputAddr
   vector<void *> io_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(io_addrs),
@@ -166,17 +170,7 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
 
   stream_id_ = stream_id;
-  if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
-    node_so_ = CUST_AICPU_OPS_SO_NAME;
-    node_name_ = kCustRunApi;
-  } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
-    node_so_ = AICPU_OPS_SO_NAME;
-    node_name_ = kCustRunApi;
-  } else {
-    if (node_so_ != CUST_AICPU_OPS_SO_NAME) {
-      node_so_ = AICPU_OPS_SO_NAME;
-    }
-  }
+  CheckCache();
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
                        [](const AddressPtr &input) -> void * { return input->addr; });
