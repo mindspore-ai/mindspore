@@ -29,6 +29,12 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
+constexpr size_t kIndex4 = 4;
+constexpr size_t kIndex5 = 5;
 void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
                                std::vector<AnfNodePtr> *bn_update_grad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -36,8 +42,8 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   auto bn_grad_inputs = bn_grad_node->inputs();
   CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   std::vector<AnfNodePtr> bn_update_grad_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[1], bn_grad_inputs[2],
-    bn_grad_inputs[4], bn_grad_inputs[5]};
+    NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[kIndex1],
+    bn_grad_inputs[kIndex2], bn_grad_inputs[kIndex4], bn_grad_inputs[kIndex5]};
   auto bn_update_grad = graph->NewCNode(bn_update_grad_inputs);
   MS_EXCEPTION_IF_NULL(bn_update_grad);
   bn_update_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -63,13 +69,13 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   }
   std::vector<AnfNodePtr> bn_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceGradOpName)),
-    bn_grad_inputs[1],
-    bn_grad_inputs[2],
-    bn_update_grad_outputs[0],
-    bn_update_grad_outputs[1],
-    bn_grad_inputs[3],
-    bn_grad_inputs[4],
-    bn_grad_inputs[5]};
+    bn_grad_inputs[kIndex1],
+    bn_grad_inputs[kIndex2],
+    bn_update_grad_outputs[kIndex0],
+    bn_update_grad_outputs[kIndex1],
+    bn_grad_inputs[kIndex3],
+    bn_grad_inputs[kIndex4],
+    bn_grad_inputs[kIndex5]};
   auto bn_reduce_grad = graph->NewCNode(bn_reduce_grad_inputs);
   MS_EXCEPTION_IF_NULL(bn_reduce_grad);
   bn_reduce_grad->set_kernel_info(std::make_shared<device::KernelInfo>());

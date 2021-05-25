@@ -31,6 +31,8 @@ namespace opt {
 namespace {
 constexpr size_t kEltwiseInputSize = 2;
 constexpr size_t kEltwiseOutputSize = 2;
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
 bool CheckEltwiseInputAndOutputSize(const AnfNodePtr &node) {
   if (AnfAlgo::GetInputTensorNum(node) == kEltwiseInputSize) {
     return true;
@@ -60,7 +62,7 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
   if (tuple_getitem->isa<CNode>() && AnfAlgo::GetCNodeName(tuple_getitem) == prim::kPrimTupleGetItem->name()) {
     auto getitem = tuple_getitem->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(getitem);
-    auto bnupdate = getitem->input(1);
+    auto bnupdate = getitem->input(kInputIndex1);
     MS_EXCEPTION_IF_NULL(bnupdate);
     if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
       std::vector<int64_t> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
@@ -71,7 +73,7 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
         }
         auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(out_getitem_ptr);
-        auto input2 = out_getitem_ptr->input(2);
+        auto input2 = out_getitem_ptr->input(kInputIndex2);
         auto output_idx = GetValue<int64_t>(GetValueNode(input2));
         output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
       }

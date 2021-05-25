@@ -32,6 +32,14 @@ namespace opt {
 namespace {
 constexpr auto kReduceOpSum = "sum";
 constexpr auto kDeviceNum = "device_num";
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
+constexpr size_t kIndex4 = 4;
+constexpr size_t kIndex5 = 5;
+constexpr size_t kPositionOffset = 3;
+constexpr int64_t kFusionNumThreshold = 2;
 
 bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
                                      std::vector<AnfNodePtr> *bn_training_reduce_outputs) {
@@ -77,13 +85,13 @@ AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNod
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
   std::vector<AnfNodePtr> bn_training_update_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateOpName))};
-  bn_training_update_inputs.push_back(bn_cnode->input(1));
-  bn_training_update_inputs.push_back(bn_training_reduce_outputs[0]);
-  bn_training_update_inputs.push_back(bn_training_reduce_outputs[1]);
-  bn_training_update_inputs.push_back(bn_cnode->input(2));
-  bn_training_update_inputs.push_back(bn_cnode->input(3));
-  bn_training_update_inputs.push_back(bn_cnode->input(4));
-  bn_training_update_inputs.push_back(bn_cnode->input(5));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIndex1));
+  bn_training_update_inputs.push_back(bn_training_reduce_outputs[kIndex0]);
+  bn_training_update_inputs.push_back(bn_training_reduce_outputs[kIndex1]);
+  bn_training_update_inputs.push_back(bn_cnode->input(kIndex2));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIndex3));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIndex4));
+  bn_training_update_inputs.push_back(bn_cnode->input(kIndex5));
   auto bn_training_update = graph->NewCNode(bn_training_update_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_update);
   auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -216,14 +224,14 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   // use SyncBatchNorm's opid as AllReduce's fusion attr
   auto sync_bn_opname = sync_bn_cnode->fullname_with_scope();
   auto opid_pos = sync_bn_opname.rfind("-op");
-  if (opid_pos == std::string::npos || opid_pos + 3 >= sync_bn_opname.size()) {
+  if (opid_pos == std::string::npos || opid_pos + kPositionOffset >= sync_bn_opname.size()) {
     MS_LOG(EXCEPTION) << "op[" << sync_bn_cnode->DebugString() << "] has no opid.";
     return nullptr;
   }
-  int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + 3));
+  int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + kPositionOffset));
   // user defined fusion should be greater than 1
-  if (opid < 2) {
-    opid = opid - 2 + std::numeric_limits<int64_t>::max();
+  if (opid < kFusionNumThreshold) {
+    opid = opid - kFusionNumThreshold + std::numeric_limits<int64_t>::max();
   }
   AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
 

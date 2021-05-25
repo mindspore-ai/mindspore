@@ -24,6 +24,11 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kShapeSize = 2;
+constexpr size_t kShapeValue5 = 5;
+constexpr size_t kShapeValue8 = 8;
+}  // namespace
 const BaseRef InsertPadForNMSWithMask::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimNMSWithMask, Xs});
@@ -61,10 +66,10 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_idx);
     auto origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
     auto origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_idx);
-    if (!(origin_shape.size() == 2 && origin_shape[1] == 5)) {
+    if (!(origin_shape.size() == kShapeSize && origin_shape[1] == kShapeValue5)) {
       return nullptr;
     }
-    origin_shape[1] = 8;
+    origin_shape[1] = kShapeValue8;
     auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, origin_shape);
     MS_EXCEPTION_IF_NULL(pad);
     pad->set_scope(cnode->scope());
