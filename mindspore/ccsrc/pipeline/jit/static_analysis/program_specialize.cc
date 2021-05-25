@@ -402,8 +402,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AnfNodePtr &nod
     return BuildValueNode(real_func->prim(), abs);
   }
 
-  EvaluatorPtr eval;
-  eval = engine_->GetEvaluatorFor(func);
+  EvaluatorPtr eval = engine_->GetEvaluatorFor(func);
   MS_EXCEPTION_IF_NULL(eval);
   AbstractBasePtrList argvals = eval->NormalizeArgs(args);
 

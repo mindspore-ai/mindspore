@@ -951,7 +951,8 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   // slice a tuple
   // args: tuple, start index, end index, step
   const std::string op_name("TupleSlice");
-  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t arg_size = 2;
+  abstract::CheckArgsSize(op_name, args_spec_list, arg_size);
   AbstractTuplePtr tuple = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>(op_name, args_spec_list, 1);
 
