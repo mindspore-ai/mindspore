@@ -253,7 +253,7 @@ class Conv2d(_Conv):
                                dilation=self.dilation,
                                group=self.group,
                                data_format=self.format)
-        self.bias_add = P.BiasAdd()
+        self.bias_add = P.BiasAdd(data_format=self.format)
 
     def construct(self, x):
         output = self.conv2d(x, self.weight)
