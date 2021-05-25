@@ -95,6 +95,121 @@ YOLOv3整体网络架构如下：
     sh run_eval.sh [DEVICE_ID] [CKPT_PATH] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH]
     ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='coco'"
+    #          在 default_config.yaml 文件中设置 "lr=0.005"
+    #          在 default_config.yaml 文件中设置 "mindrecord_dir='/cache/data/coco/Mindrecord_train'"
+    #          在 default_config.yaml 文件中设置 "image_dir='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=160"
+    #          (可选)在 default_config.yaml 文件中设置 "pre_trained_epoch_size=YOUR_SIZE"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          (可选)在 default_config.yaml 文件中设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='coco'"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "lr=0.005"
+    #          在网页上设置 "mindrecord_dir=/cache/data/coco/Mindrecord_train"
+    #          在网页上设置 "image_dir=/cache/data"
+    #          在网页上设置 "anno_path=/cache/data/coco/train_Person+Face-coco-20190118.txt"
+    #          在网页上设置 "epoch_size=160"
+    #          (可选)在网页上设置 "pre_trained_epoch_size=YOUR_SIZE"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          (可选)在网页上设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+    #          在网页上设置 其他参数
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "train.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR --anno_path=$ANNO_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/yolov3_resnet18"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='coco'"
+    #          在 default_config.yaml 文件中设置 "mindrecord_dir='/cache/data/coco/Mindrecord_train'"
+    #          在 default_config.yaml 文件中设置 "image_dir='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=160"
+    #          (可选)在 default_config.yaml 文件中设置 "pre_trained_epoch_size=YOUR_SIZE"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          (可选)在 default_config.yaml 文件中设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='coco'"
+    #          在网页上设置 "mindrecord_dir='/cache/data/coco/Mindrecord_train'"
+    #          在网页上设置 "image_dir='/cache/data'"
+    #          在网页上设置 "anno_path='/cache/data/coco/train_Person+Face-coco-20190118.txt'"
+    #          在网页上设置 "epoch_size=160"
+    #          (可选)在网页上设置 "pre_trained_epoch_size=YOUR_SIZE"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          (可选)在网页上设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+    #          在网页上设置 其他参数
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "train.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR --anno_path=$ANNO_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/yolov3_resnet18"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='coco'"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/checkpoint_path/yolov3-160_156.ckpt'"
+    #          在 default_config.yaml 文件中设置 "eval_mindrecord_dir='/cache/data/coco/Mindrecord_eval'"
+    #          在 default_config.yaml 文件中设置 "image_dir='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "anno_path='/cache/data/coco/test_Person+Face-coco-20190118.txt'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='coco'"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "ckpt_path='/cache/checkpoint_path/yolov3-160_156.ckpt'"
+    #          在网页上设置 "eval_mindrecord_dir='/cache/data/coco/Mindrecord_eval'"
+    #          在网页上设置 "image_dir='/cache/data'"
+    #          在网页上设置 "anno_path='/cache/data/coco/test_Person+Face-coco-20190118.txt'"
+    #          在网页上设置 其他参数
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "train.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR --anno_path=$ANNO_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/yolov3_resnet18"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -102,9 +217,16 @@ YOLOv3整体网络架构如下：
 ```text
 └── cv
     ├── README.md                           // 所有模型相关说明
+    ├── README_CN.md                        // 所有模型相关中文说明
     ├── mindspore_hub_conf.md               // Mindspore Hub配置
     └── yolov3_resnet18
         ├── README.md                       // yolov3_resnet18相关说明
+        ├── model_utils
+            ├── __init__.py                 // 初始化文件
+            ├── config.py                   // 参数配置
+            ├── device_adapter.py           // ModelArts的设备适配器
+            ├── local_adapter.py            // 本地适配器
+            └── moxing_adapter.py           // ModelArts的模型适配器
         ├── scripts
             ├── run_distribute_train.sh     // Ascend上分布式shell脚本
             ├── run_standalone_train.sh     // Ascend上分布式shell脚本
@@ -112,10 +234,14 @@ YOLOv3整体网络架构如下：
         ├── src
             ├── dataset.py                  // 创建数据集
             ├── yolov3.py                   // yolov3架构
-            ├── config.py                   // 参数配置
+            ├── config.py                   // 网络结构的默认参数配置
             └── utils.py                    // 工具函数
-        ├── train.py                        // 训练脚本
-        └── eval.py                         // 评估脚本  
+        ├── default_config.yaml             // 参数配置
+        ├── eval.py                         // 验证脚本
+        ├── export.py                       // 导出脚本
+        ├── mindspore_hub_conf.py           // hub配置
+        ├── postprocess.py                  // 后处理脚本
+        └── train.py                        // 训练脚本
 ```
 
 ## 脚本参数

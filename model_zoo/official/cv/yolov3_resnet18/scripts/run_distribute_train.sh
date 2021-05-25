@@ -17,7 +17,7 @@
 echo "======================================================================================================================================================="
 echo "Please run the script as: "
 echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH RANK_TABLE_FILE PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
-echo "For example: sh run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json /opt/yolov3-150.ckpt(optional) 100(optional)"
+echo "For example: sh run_distribute_train.sh 8 160 /data/Mindrecord_train /data /data/train.txt /data/hccl.json /opt/yolov3-150.ckpt(optional) 100(optional)"
 echo "It is better to use absolute path."
 echo "The learning rate is 0.005 as default, if you want other lr, please change the value in this script."
 echo "======================================================================================================================================================="
@@ -63,7 +63,9 @@ do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp  *.py ./LOG$i
+    cp  *.yaml ./LOG$i
     cp -r ./src ./LOG$i
+    cp -r ./model_utils ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
@@ -74,8 +76,6 @@ do
         taskset -c $cmdopt python train.py  \
         --distribute=True  \
         --lr=0.005 \
-        --device_num=$RANK_SIZE  \
-        --device_id=$DEVICE_ID  \
         --mindrecord_dir=$MINDRECORD_DIR  \
         --image_dir=$IMAGE_DIR  \
         --epoch_size=$EPOCH_SIZE  \
@@ -87,8 +87,6 @@ do
         taskset -c $cmdopt python train.py  \
         --distribute=True  \
         --lr=0.005 \
-        --device_num=$RANK_SIZE  \
-        --device_id=$DEVICE_ID  \
         --mindrecord_dir=$MINDRECORD_DIR  \
         --image_dir=$IMAGE_DIR  \
         --epoch_size=$EPOCH_SIZE  \
