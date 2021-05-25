@@ -160,6 +160,8 @@ void GraphKernelFlags::Refresh() {
       opt_level = 0;
     }
   }
+  // Dump flags so that people can check the setting.
+  MS_LOG(INFO) << "GraphKernelFlags info: " << DumpAllFlags();
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
@@ -182,7 +184,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_cluster_ops", &enable_cluster_ops);
   reg.AddFlag("enable_cluster_ops_only", &enable_cluster_ops_only);
   reg.AddFlag("disable_cluster_ops", &disable_cluster_ops);
-  reg.AddFlag("enable_pass_only", &enable_pass_only);
+  reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
 }
 
@@ -203,7 +205,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_cluster_ops"] = enable_cluster_ops;
   json["enable_cluster_ops_only"] = enable_cluster_ops_only;
   json["disable_cluster_ops"] = disable_cluster_ops;
-  json["enable_pass_only"] = enable_pass_only;
+  json["enable_pass"] = enable_pass;
   json["disable_pass"] = disable_pass;
 
   return json.dump();

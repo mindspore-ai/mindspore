@@ -66,13 +66,14 @@ class GraphKernelFlags {
 
   /**
    * Optimization level, value from 0 to 3.
-   * 0: GraphKernel disabled
-   * 1: GraphKernel enabled
-   * 2 and 3 are not supported now.
-   * the default value is controlled by context `enable_graph_kernel`,
-   * but if it's also set in `graph_kernel_flags`, then the flag will prevail.
+   * 0: Disable GraphKernel
+   * 1: Enable GraphKernel with basic features only.
+   * 2: Enable GraphKernel with all stable features.
+   * 3: Enable GraphKernel with all experimental features.
+   * The default value is level 2 when the context "enable_graph_kernel" is set,
+   * but if it's also changed in "graph_kernel_flags", then the "graph_kernel_flags" will prevail.
    */
-  unsigned int opt_level{0};
+  unsigned int opt_level;  // defaults 0 or 2
 
   /**
    * auto_tune, unsupported now.
@@ -82,7 +83,7 @@ class GraphKernelFlags {
   /**
    * cluster_limit, unsupported now.
    */
-  unsigned int cluster_limit{30};
+  unsigned int cluster_limit{0};
 
   /**
    * Additional expanding operators (case sensitive).
@@ -123,19 +124,26 @@ class GraphKernelFlags {
   std::vector<std::string> disable_cluster_ops;
 
   /**
-   * enable_pass_only, unsupported now.
+   * Passes to be enabled.
+   * By default, the passes is controlled by "opt_level" and target device,
+   * user can manually enable some passes by setting this flag.
+   * The format is "stage_id.pass_id" or "stage_name.pass_name", which corresponds to the ir filename.
    */
-  std::vector<std::string> enable_pass_only;
+  std::vector<std::string> enable_pass;
 
   /**
-   * disable_pass, unsupported now.
+   * Passes to be disabled.
+   * By default, the passes is controlled by "opt_level" and target device,
+   * user can manually disable some passes by setting this flag.
+   * The format is "stage_id.pass_id" or "stage_name.pass_name", which corresponds to the ir filename.
    */
   std::vector<std::string> disable_pass;
 
  private:
   GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)
       : flags_cache_(graph_kernel_flags), enable_cache_(enable_graph_kernel) {
-    opt_level = enable_graph_kernel ? 1 : 0;
+    // Default optimization level is level 2 when enable graphkernel
+    opt_level = enable_graph_kernel ? 2 : 0;
   }
 
   // get the `graph_kernel_flags` and `enable_graph_kernel`

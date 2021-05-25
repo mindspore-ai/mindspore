@@ -34,47 +34,58 @@ void PassManager::AddPass(const PassPtr &pass) {
   }
 }
 
+bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const {
+#if defined(_WIN32) || defined(_WIN64)
+  auto start_time = std::chrono::steady_clock::now();
+#else
+  struct timeval start_time {};
+  struct timeval end_time {};
+  (void)gettimeofday(&start_time, nullptr);
+#endif
+  bool changed = pass->Run(func_graph);
+  constexpr auto kMicroSendUnit = 1000000;
+#if defined(_WIN32) || defined(_WIN64)
+  auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1, kMicroSendUnit>> cost = end_time - start_time;
+  MS_LOG(INFO) << "Run pass " + GetPassFullname(pass_id, pass) + " in " << cost.count() << " us";
+#else
+  (void)gettimeofday(&end_time, nullptr);
+  // time unit: us
+  uint64_t cost = kMicroSendUnit * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Run pass " + GetPassFullname(pass_id, pass) + " in " << cost << " us";
+#endif
+  return changed;
+}
+
+std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
+  return std::string("hwopt_") + name() + "_" + std::to_string(pass_id) + "_" + pass->name();
+}
+
+void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  static const auto enable_dump = (common::GetEnv("ENV_NO_DUMP_BE_PASS_IR") != "1");
+  if (save_graphs && enable_dump) {
+    std::ostringstream oss;
+    oss << "verbose_ir_files"
+        << "/";
+    oss << pass_fullname + ".ir";
+    DumpIR(oss.str(), func_graph, true);
+  }
+}
+
 bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
   if (func_graph == nullptr) {
     return false;
   }
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   bool changed = false;
   size_t num = 0;
   for (const auto &pass : passes) {
     if (pass != nullptr) {
-#if defined(_WIN32) || defined(_WIN64)
-      auto start_time = std::chrono::steady_clock::now();
-#else
-      struct timeval start_time {};
-      struct timeval end_time {};
-      (void)gettimeofday(&start_time, nullptr);
-#endif
-      if (pass->Run(func_graph)) {
-        changed = true;
-      }
-      constexpr auto kMicroSendUnit = 1000000;
-#if defined(_WIN32) || defined(_WIN64)
-      auto end_time = std::chrono::steady_clock::now();
-      std::chrono::duration<double, std::ratio<1, kMicroSendUnit>> cost = end_time - start_time;
-      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
-#else
-      (void)gettimeofday(&end_time, nullptr);
-      // time unit: us
-      uint64_t cost = kMicroSendUnit * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-      cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
-#endif
-      static const auto enable_dump = (common::GetEnv("ENV_NO_DUMP_BE_PASS_IR") != "1");
-      if (save_graphs && enable_dump) {
-        std::ostringstream oss;
-        oss << "verbose_ir_files"
-            << "/";
-        oss << "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
-        DumpIR(oss.str(), func_graph, true);
-      }
+      changed = RunPass(func_graph, num, pass) || changed;
+      DumpPassIR(func_graph, GetPassFullname(num, pass));
       num++;
     }
   }
