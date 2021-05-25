@@ -131,12 +131,12 @@ void Debugger::EnableDebugger() {
 
   if (debugger_enabled_) {
     // configure grpc host
-    const char *env_host_str = std::getenv("MS_DEBUGGER_HOST");
+    const std::string env_host_str = std::getenv("MS_DEBUGGER_HOST");
     std::string host;
-    if (env_host_str != nullptr) {
+    if (!env_host_str.empty()) {
       if (CheckIp(env_host_str)) {
         MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
-        host = std::string(env_host_str);
+        host = env_host_str;
       } else {
         debugger_enabled_ = false;
         MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
@@ -147,12 +147,12 @@ void Debugger::EnableDebugger() {
       host = "localhost";
     }
     // configure grpc port
-    const char *env_port_str = std::getenv("MS_DEBUGGER_PORT");
+    const std::string env_port_str = std::getenv("MS_DEBUGGER_PORT");
     std::string port;
-    if (env_port_str != nullptr) {
+    if (!env_port_str.empty()) {
       if (CheckPort(env_port_str)) {
         MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
-        port = std::string(env_port_str);
+        port = env_port_str;
       } else {
         debugger_enabled_ = false;
         MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to "
@@ -178,8 +178,7 @@ void Debugger::SetOpOverflowBinPath(uint32_t graph_id) {
     graph_id, DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_id, device_id_)));
   // new overflow dump files will have a timestamp greater than last_overflow_bin_
   auto overflow_bin_path = overflow_bin_path_.find(graph_id)->second;
-  DIR *d;
-  d = opendir(overflow_bin_path.c_str());
+  DIR *d = opendir(overflow_bin_path.c_str());
   if (d != nullptr) {
     struct dirent *dir;
     while ((dir = readdir(d)) != nullptr) {
@@ -596,7 +595,7 @@ void Debugger::CommandLoop() {
       } else {
         MS_LOG(ERROR) << "Number of consecutive WaitForCommand fail:" << num_wait_fail << "; Retry after "
                       << num_wait_fail << "s";
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 * num_wait_fail));
+        std::this_thread::sleep_for(std::chrono::seconds(num_wait_fail));
       }
       continue;
     }
@@ -1026,8 +1025,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
   std::vector<double> bin_list;
   std::vector<std::string> op_names;
   for (const auto &[graph_id, overflow_bin_path] : overflow_bin_path_) {
-    DIR *d;
-    d = opendir(overflow_bin_path.c_str());
+    DIR *d = opendir(overflow_bin_path.c_str());
     MS_LOG(INFO) << "processing bin file path " << overflow_bin_path << ", graph id " << graph_id;
     if (d != nullptr) {
       struct dirent *dir = nullptr;
@@ -1052,12 +1050,15 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
             MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name;
             continue;
           }
-          infile.seekg(313, std::ios::beg);
+          const uint32_t offset = 313;
+          infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
           buffer.resize(BUF_SIZ);
           infile.read(buffer.data(), BUF_SIZ);
-          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + 8, buffer.end()));
-          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + 16, buffer.end()));
+          const uint8_t stream_id_offset = 8;
+          const uint8_t task_id_offset = 16;
+          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
+          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
           MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
           auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
           if (op != debugger_->stream_task_to_opname_.end()) {
@@ -1098,15 +1099,15 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
 
-bool Debugger::CheckPort(const char *port) const {
+bool Debugger::CheckPort(const std::string &port) const {
   int num = 0;
   const int min_port_num = 1;
   const int max_port_num = 65535;
-  if (*port == '0' && *(port + 1) != '\0') return false;
+  if (port[0] == '0' && port[1] != '\0') return false;
   int i = 0;
-  while (*(port + i) != '\0') {
-    if (*(port + i) < '0' || *(port + i) > '9') return false;
-    num = num * 10 + (*(port + i)) - '0';
+  while (port[i] != '\0') {
+    if (port[i] < '0' || port[i] > '9') return false;
+    num = num * 10 + (port[i] - '0');
     if (num > max_port_num) return false;
     i++;
   }
@@ -1114,14 +1115,14 @@ bool Debugger::CheckPort(const char *port) const {
   return true;
 }
 
-bool Debugger::CheckIp(const char *host) const {
+bool Debugger::CheckIp(const std::string &host) const {
   std::regex reg_ip(
     "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
     "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
     "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
     "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
   std::smatch smat;
-  std::string host_str = std::string(host);
+  std::string host_str = host;
   return std::regex_match(host_str, smat, reg_ip);
 }
 

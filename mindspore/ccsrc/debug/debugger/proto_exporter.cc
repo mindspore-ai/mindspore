@@ -569,7 +569,7 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
 #else
   real_path_ret = realpath(file_path.c_str(), real_path);
 #endif
-  if (nullptr == real_path_ret) {
+  if (real_path_ret == nullptr) {
     MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
   } else {
     std::string path_string = real_path;
