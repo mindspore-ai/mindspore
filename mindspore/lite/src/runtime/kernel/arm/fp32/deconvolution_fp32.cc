@@ -227,8 +227,8 @@ int DeConvolutionCPUKernel::Run() {
     RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
 #endif
 
-    error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, DeConvFp32Run,
-                                this, thread_count_);
+    error_code = static_cast<const lite::InnerContext *>(this->context_)
+                   ->thread_pool_->ParallelLaunch(DeConvFp32Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
       FreeRunBuf();

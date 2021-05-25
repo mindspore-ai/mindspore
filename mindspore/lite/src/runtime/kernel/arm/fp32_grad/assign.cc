@@ -59,8 +59,8 @@ int AssignRun(void *cdata, int task_id) {
 }
 
 int AssignCPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, AssignRun,
-                                  this, thread_count_);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(AssignRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Assign function error error_code[" << error_code << "]";
     return RET_ERROR;

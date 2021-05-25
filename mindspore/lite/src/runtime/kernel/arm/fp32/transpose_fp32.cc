@@ -156,8 +156,8 @@ int TransposeCPUKernel::Run() {
   thread_count_ = op_parameter_->thread_num_;
   GetNHNCTransposeFunc(in_tensor, out_tensor, param_);
   if (NHNCTransposeFunc_ != nullptr) {
-    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, TransposeImpl,
-                              this, thread_count_);
+    auto ret = static_cast<const lite::InnerContext *>(this->context_)
+                 ->thread_pool_->ParallelLaunch(TransposeImpl, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "NHNCTransposeFunc_ is error!";
     }
@@ -185,8 +185,8 @@ int TransposeCPUKernel::Run() {
   }
   int ret;
   if (dims_ > DIMENSION_6D) {
-    ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, TransposeImpl, this,
-                         thread_count_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(TransposeImpl, this, thread_count_);
   } else {
     ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
   }

@@ -71,8 +71,8 @@ int TanhInt8CPUKernel::Run() {
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
-  ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, TanhInt8Run, this,
-                 thread_count_);
+  static_cast<const lite::InnerContext *>(this->context_)
+    ->thread_pool_->ParallelLaunch(TanhInt8Run, this, thread_count_);
   return RET_OK;
 }
 }  // namespace mindspore::kernel

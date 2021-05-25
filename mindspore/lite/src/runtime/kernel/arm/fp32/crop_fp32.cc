@@ -62,8 +62,8 @@ int CropCPUKernel::Run() {
     return RET_OK;
   }
 
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, CropLaunch, this,
-                            crop_para_->thread_count_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(CropLaunch, this, crop_para_->thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;

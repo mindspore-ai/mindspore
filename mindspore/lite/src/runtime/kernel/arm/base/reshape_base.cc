@@ -66,8 +66,8 @@ int ReshapeRun(void *cdata, int task_id) {
 int ReshapeBaseCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(kInputIndex)->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(kOutputIndex)->data_c());
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ReshapeRun, this,
-                            context_->thread_num_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(ReshapeRun, this, context_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Reshape run error error_code[" << ret << "]";
     return ret;

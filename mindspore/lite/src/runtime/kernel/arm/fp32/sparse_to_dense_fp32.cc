@@ -175,8 +175,8 @@ int SparseToDenseCPUKernel::Run() {
   }
   output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   count_unit_ = thread_count_ > 1 ? UP_DIV(index_num, thread_count_) : index_num;
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SparseToDenseRun, this,
-                       s2d_param->thread_num_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(SparseToDenseRun, this, s2d_param->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SparseToDenseRun error: error_code[" << ret << "]";
     return RET_ERROR;

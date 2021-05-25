@@ -116,7 +116,6 @@ set(LITE_SRC
         ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
-        ${SRC_DIR}/runtime/thread_pool.c
         ${SRC_DIR}/runtime/infer_manager.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
@@ -140,23 +139,25 @@ set(LITE_SRC
         ${SRC_DIR}/train/train_populate_parameter.cc
         )
 
-set(ENABLE_MINDRT "off")
 if(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt/)
+    include_directories(${CORE_DIR}/mindrt/include/)
     include_directories(${CORE_DIR}/mindrt/src/)
     set(MINDRT_SRC
         ${SRC_DIR}/lite_mindrt.cc
         ${SRC_DIR}/mindrt_executor.cc
-        ${CORE_DIR}/mindrt/src/litebus.cc
+        ${CORE_DIR}/mindrt/src/mindrt.cc
         ${CORE_DIR}/mindrt/src/actor/actor.cc
         ${CORE_DIR}/mindrt/src/actor/actormgr.cc
         ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
-        ${CORE_DIR}/mindrt/src/actor/actorthread.cc
         ${CORE_DIR}/mindrt/src/actor/aid.cc
         ${CORE_DIR}/mindrt/src/async/async.cc
         ${CORE_DIR}/mindrt/src/async/future.cc
         ${CORE_DIR}/mindrt/src/async/uuid_base.cc
         ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
+        ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+        ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+        ${CORE_DIR}/mindrt/src/thread/inter_threadpool.cc
         )
 endif()
 

@@ -118,8 +118,8 @@ int SplitWithOverlapBaseCPUKernel::Run() {
     inner_stride_ *= input_shape[i];
   }
 
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SplitWithOverlapRun,
-                            this, param_->num_split_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(SplitWithOverlapRun, this, param_->num_split_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;

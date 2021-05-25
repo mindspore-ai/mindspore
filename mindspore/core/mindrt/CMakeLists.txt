@@ -8,6 +8,7 @@ file(GLOB MINDRT_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/async/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/evloop/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/thread/*.cc
     )
 
 add_library(mindrt_mid OBJECT ${MINDRT_SRC})

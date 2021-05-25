@@ -18,28 +18,41 @@
 #define MINDSPORE_CORE_MINDRT_RUNTIME_CORE_AFFINITY_H_
 
 #include <vector>
-#include "thread/threadpool.h"
-#ifdef BIND_CORE
+#include <thread>
+
+#ifdef __ANDROID__
+#define BIND_CORE
+#include <sched.h>
+#endif
 
 namespace mindspore {
+
+enum BindMode {
+  Power_NoBind = 0,  // free schedule
+  Power_Higher = 1,
+  Power_Middle = 2,
+};
+
+struct Worker;
 class CoreAffinity {
  public:
-  static CoreAffinity *GetInstance() {
-    static CoreAffinity affinity;
-    return &affinity;
-  }
+  CoreAffinity() = default;
+  ~CoreAffinity() = default;
+
   int InitBindCoreId(size_t thread_num, BindMode bind_mode);
 
   int BindThreads(const std::vector<Worker *> &workers, const std::vector<int> &core_list);
   int BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode) const;
+  int BindProcess(BindMode bind_mode) const;
 
  private:
-  CoreAffinity() = default;
-  ~CoreAffinity() = default;
+#ifdef BIND_CORE
+  int SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) const;
+#endif  // BIND_CORE
 
   int BindThreadsToCoreList(const std::vector<Worker *> &workers) const;
   int FreeScheduleThreads(const std::vector<Worker *> &workers) const;
-  int SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) const;
+
   int SortCPUProcessors();
 
   // bind_id contains the CPU cores to bind
@@ -52,7 +65,7 @@ class CoreAffinity {
   size_t higher_num_{0};
   size_t thread_num_{0};
 };
+
 }  // namespace mindspore
 
-#endif  // BIND_CORE
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_CORE_AFFINITY_H_

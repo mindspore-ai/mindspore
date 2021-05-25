@@ -213,8 +213,8 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                       ConvolutionWinogradFp16Impl, this, thread_count_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(ConvolutionWinogradFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
   }

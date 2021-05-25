@@ -41,8 +41,8 @@ int PowerImpl(void *cdata, int task_id) {
 }
 
 int PowerCPUKernel::Run() {
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, PowerImpl, this,
-                            thread_count_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(PowerImpl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PowerCPUKernel error: " << ret;
     return RET_ERROR;

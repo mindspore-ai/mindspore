@@ -524,8 +524,8 @@ int Convolution1x1Int8CPUKernel::Run() {
     if (parallel_by_oc_) {
       /* input transpose and input sum */
       if (support_optimize_) {
-        ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                       Convolution1x1Int8OcOptPre, this, thread_count_hw_);
+        static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(Convolution1x1Int8OcOptPre, this, thread_count_hw_);
       } else {
         RowMajor2Row16x4MajorInt8(input_ptr_, packed_input_, matmul_param_->row_, matmul_param_->deep_);
         if (filter_peroc_) {
@@ -536,12 +536,12 @@ int Convolution1x1Int8CPUKernel::Run() {
         }
       }
       /* matmul parallel by oc */
-      error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  Convolution1x1Int8OcRun, this, thread_count_oc_);
+      error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(Convolution1x1Int8OcRun, this, thread_count_oc_);
     } else {
       /* matmul parallel by hw */
-      error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  Convolution1x1Int8HwRun, this, thread_count_hw_);
+      error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(Convolution1x1Int8HwRun, this, thread_count_hw_);
     }
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "ParallelLaunch run error error_code[" << error_code << "]";

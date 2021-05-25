@@ -93,7 +93,7 @@ int ResizeGradCPUKernel::Run() {
   size_t elem_number = out_tensors_.at(0)->ElementsNum();
   std::fill(out_addr, out_addr + elem_number, 0.f);
   int error_code =
-    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ResizeGradRun, this, 1);
+    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(ResizeGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ResizeGradCPUKernel function error error_code[" << error_code << "]";
     return RET_ERROR;

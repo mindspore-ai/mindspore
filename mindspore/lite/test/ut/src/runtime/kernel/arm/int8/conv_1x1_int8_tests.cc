@@ -133,6 +133,7 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 70));
 
   delete conv1x1;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
@@ -202,6 +203,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 
   delete conv1x1;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
@@ -279,6 +281,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 
   delete conv1x1;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);

@@ -24,12 +24,11 @@ namespace mindspore {
 constexpr int kDefaultSpinCount = 30000;
 
 ThreadPool::~ThreadPool() {
-  alive_ = false;
+  alive_.store(false);
   DestructThreads();
 }
 
 void ThreadPool::DestructThreads() {
-  std::lock_guard<std::mutex> lock(pool_mutex_);
   for (auto &worker : workers_) {
     sem_post(&worker->sem);
     if (worker->thread.joinable()) {
@@ -39,12 +38,15 @@ void ThreadPool::DestructThreads() {
     delete worker;
     worker = nullptr;
   }
-  THREAD_INFO("deconstruct threads success");
   workers_.clear();
+  if (affinity_ != nullptr) {
+    delete affinity_;
+    affinity_ = nullptr;
+  }
+  THREAD_INFO("deconstruct threads success");
 }
 
 int ThreadPool::CreateThreads(size_t thread_num) {
-  std::lock_guard<std::mutex> lock(pool_mutex_);
   size_t core_num = std::thread::hardware_concurrency();
   thread_num_ = std::min(thread_num, core_num);
   if (thread_num_ <= 0) {
@@ -54,14 +56,17 @@ int ThreadPool::CreateThreads(size_t thread_num) {
   for (size_t i = 0; i < thread_num_; ++i) {
     Worker *worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-    worker->type = i < inter_thread_num_ ? kActorThread : kKernelThread;
-    worker->thread = std::thread(&ThreadPool::ThreadAsyncRun, this, i);
     sem_init(&worker->sem, 0, 0);
+    sem_init(&worker->init, 0, 0);
+    worker->type = i < inter_thread_num_ ? kActorThread : kKernelThread;
+    if (worker->type == kKernelThread) {
+      freelist_.push_back(worker);
+    }
+    worker->thread = std::thread(&ThreadPool::ThreadAsyncRun, this, worker);
+    sem_wait(&worker->init);
     workers_.push_back(worker);
     THREAD_INFO("create thread[%zu]", i);
   }
-  freelist_.insert(freelist_.begin(), workers_.begin() + inter_thread_num_, workers_.end());
-  start_cond_.notify_all();
   return THREAD_OK;
 }
 
@@ -89,20 +94,16 @@ void ThreadPool::KernelThreadRun(Worker *worker) {
   }
 }
 
-void ThreadPool::ThreadAsyncRun(size_t thread_id) {
-  {
-    // wait for all threads to be created
-    std::unique_lock<std::mutex> _l(pool_mutex_);
-    start_cond_.wait(_l, [this]() { return workers_.size() == thread_num_; });
-  }
-  Worker *worker = workers_[thread_id];
+void ThreadPool::ThreadAsyncRun(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
+  sem_post(&worker->init);
   while (alive_) {
     KernelThreadRun(worker);
   }
 }
 
 int ThreadPool::ParallelLaunch(const Func &func, Contend contend, int task_num) {
+  THREAD_INFO("parallel launch, task num: %d", task_num);
   // distribute task to the KernelThread and the free ActorThread,
   // if the task num is greater than the KernelThread num
   Task task = Task(func, contend);
@@ -136,12 +137,25 @@ void ThreadPool::DistributeTask(Task *task, int task_num) {
   }
 }
 
+int ThreadPool::InitAffinityInfo(BindMode bind_mode) {
+  affinity_ = new (std::nothrow) CoreAffinity();
+  THREAD_ERROR_IF_NULL(affinity_);
+  int ret = affinity_->InitBindCoreId(thread_num_, bind_mode);
+  if (ret != THREAD_OK) {
+    delete affinity_;
+    affinity_ = nullptr;
+    return THREAD_ERROR;
+  }
+  return THREAD_OK;
+}
+
 int ThreadPool::SetCpuAffinity(BindMode bind_mode) {
   if (workers_.empty()) {
     return THREAD_ERROR;
   }
 #ifdef BIND_CORE
-  return CoreAffinity::GetInstance()->BindThreads(workers_, bind_mode);
+  THREAD_ERROR_IF_NULL(affinity_);
+  return affinity_->BindThreads(workers_, bind_mode);
 #else
   return THREAD_OK;
 #endif  // BIND_CORE
@@ -152,7 +166,17 @@ int ThreadPool::SetCpuAffinity(const std::vector<int> &core_list) {
     return THREAD_ERROR;
   }
 #ifdef BIND_CORE
-  return CoreAffinity::GetInstance()->BindThreads(workers_, core_list);
+  THREAD_ERROR_IF_NULL(affinity_);
+  return affinity_->BindThreads(workers_, core_list);
+#else
+  return THREAD_OK;
+#endif  // BIND_CORE
+}
+
+int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
+#ifdef BIND_CORE
+  THREAD_ERROR_IF_NULL(affinity_);
+  return affinity_->BindProcess(bind_mode);
 #else
   return THREAD_OK;
 #endif  // BIND_CORE
@@ -169,7 +193,7 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, BindMode bind_mode) 
     return nullptr;
   }
 #ifdef BIND_CORE
-  ret = CoreAffinity::GetInstance()->InitBindCoreId(thread_num, bind_mode);
+  ret = pool->InitAffinityInfo(bind_mode);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

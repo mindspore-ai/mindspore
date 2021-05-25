@@ -76,7 +76,6 @@ set(TEST_LITE_SRC
         ${KERNEL_OP_SRC}
         ${LITE_DIR}/src/runtime/allocator.cc
         ${LITE_DIR}/src/runtime/runtime_api.cc
-        ${LITE_DIR}/src/runtime/thread_pool.c
         ${LITE_DIR}/src/runtime/parallel_executor.cc
         ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/tensor.cc
@@ -150,12 +149,14 @@ if(ENABLE_MINDRT)
             ${CORE_DIR}/mindrt/src/actor/actor.cc
             ${CORE_DIR}/mindrt/src/actor/actormgr.cc
             ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
-            ${CORE_DIR}/mindrt/src/actor/actorthread.cc
             ${CORE_DIR}/mindrt/src/actor/aid.cc
             ${CORE_DIR}/mindrt/src/async/async.cc
             ${CORE_DIR}/mindrt/src/async/future.cc
             ${CORE_DIR}/mindrt/src/async/uuid_base.cc
             ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
+            ${CORE_DIR}/mindrt/src/thread/threadpool.cc
+            ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
+            ${CORE_DIR}/mindrt/src/thread/inter_threadpool.cc
             )
 endif()
 

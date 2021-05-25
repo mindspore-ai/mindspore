@@ -163,8 +163,8 @@ int TransposeInt8CPUKernel::Run() {
     MS_LOG(ERROR) << "MallocTmpBuf error_code[" << ret << "]";
   }
   if (extra_dims_) {
-    ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, TransposeInt8Run, this,
-                         op_parameter_->thread_num_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(TransposeInt8Run, this, op_parameter_->thread_num_);
   } else {
     ret = DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_);
   }

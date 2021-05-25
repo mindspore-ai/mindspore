@@ -236,8 +236,8 @@ int DetectionPostProcessBaseCPUKernel::Run() {
       return status;
     }
   } else {
-    status = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                            NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
+    status = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "NmsMultiClassesFastCoreRun error error_code[" << status << "]";
       FreeAllocatedBuffer();

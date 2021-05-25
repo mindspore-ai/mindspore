@@ -73,8 +73,8 @@ int ArithmeticSelfGradFp16Run(void *cdata, int task_id) {
 }
 
 int ArithmeticSelfGradFp16CPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  ArithmeticSelfGradFp16Run, this, thread_count_);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(ArithmeticSelfGradFp16Run, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation Grad function error error_code[" << error_code << "]";
     return RET_ERROR;

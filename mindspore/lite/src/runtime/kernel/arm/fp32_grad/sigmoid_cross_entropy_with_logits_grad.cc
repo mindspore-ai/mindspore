@@ -61,8 +61,8 @@ int SigmoidCrossEntropyWithLogitsGradRun(void *cdata, int task_id) {
 }
 
 int SigmoidCrossEntropyWithLogitsGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  SigmoidCrossEntropyWithLogitsGradRun, this, 1);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(SigmoidCrossEntropyWithLogitsGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidCrossEntropyWithLogitsGrad function error error_code[" << error_code << "]";
     return RET_ERROR;

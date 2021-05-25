@@ -73,8 +73,8 @@ int SmoothL1LossRun(void *cdata, int task_id) {
 }
 
 int SmoothL1LossCPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  SmoothL1LossRun, this, thread_count_);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(SmoothL1LossRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1Loss function error error_code[" << error_code << "]";
     return RET_ERROR;

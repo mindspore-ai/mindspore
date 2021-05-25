@@ -115,8 +115,8 @@ int ScaleFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ScaleFp16Run, this,
-                       op_parameter_->thread_num_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(ScaleFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     FreeTmpBuffer();

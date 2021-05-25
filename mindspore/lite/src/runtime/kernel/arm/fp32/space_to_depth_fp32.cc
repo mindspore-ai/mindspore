@@ -93,8 +93,8 @@ int SpaceToDepthCPUKernel::Run() {
   input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   if (in_tensors_.at(0)->format() == schema::Format::Format_NHWC) {
-    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SpaceToDepthRun,
-                              this, thread_h_num_);
+    auto ret = static_cast<const lite::InnerContext *>(this->context_)
+                 ->thread_pool_->ParallelLaunch(SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;

@@ -33,6 +33,7 @@
 #include "runtime/framework/actor/copy_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/kernel_graph.h"
+#include "thread/inter_threadpool.h"
 
 namespace mindspore {
 namespace runtime {
@@ -241,6 +242,8 @@ class GraphScheduler {
 
   // The id of memory manager actor.
   AID memory_manager_aid_;
+
+  InterThreadPool *thread_pool_{nullptr};
 
   bool init_{false};
 };

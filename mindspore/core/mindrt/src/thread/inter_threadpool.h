@@ -39,12 +39,13 @@ class InterThreadPool : public ThreadPool {
  private:
   explicit InterThreadPool(size_t inter_thread_num) { inter_thread_num_ = inter_thread_num; }
 
-  void ThreadAsyncRun(size_t thread_id) override;
+  void ThreadAsyncRun(Worker *worker) override;
 
   void ActorThreadRun();
 
   std::mutex actor_mutex_;
   std::condition_variable actor_cond_var_;
+  std::condition_variable finish_cond_var_;
   std::queue<ActorReference> actor_queue_;
 
   std::atomic_bool exit_{false};

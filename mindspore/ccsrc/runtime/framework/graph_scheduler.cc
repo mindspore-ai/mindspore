@@ -312,6 +312,8 @@ GraphScheduler::~GraphScheduler() {
   // Local maps clear.
   actor_name_to_actor_.clear();
   graph_output_to_actor_.clear();
+  delete thread_pool_;
+  thread_pool_ = nullptr;
 }
 
 void GraphScheduler::Initialize() {
@@ -326,11 +328,13 @@ void GraphScheduler::Initialize() {
 
   auto actorMgr = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actorMgr);
+  actorMgr->Initialize();
 
   // Create the thread pool of actor runtime.
   auto max_thread_num = GetMaxThreadNum();
   MS_LOG(INFO) << "Max available thread number: " << max_thread_num;
-  actorMgr->Initialize(max_thread_num);
+  thread_pool_ = InterThreadPool::CreateThreadPool(max_thread_num);
+  MS_EXCEPTION_IF_NULL(thread_pool_);
 
   // Create memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
@@ -338,6 +342,7 @@ void GraphScheduler::Initialize() {
   memory_manager_aid_ = memory_manager_actor->GetAID();
   // Schedule memory manager actor, bind single thread to response to memory alloc and free quickly.
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
+  base_actor->set_thread_pool(thread_pool_);
   (void)actorMgr->Spawn(base_actor, false);
 }
 
@@ -400,6 +405,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   auto actorMgr = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actorMgr);
   for (auto actor : actors) {
+    actor->set_thread_pool(thread_pool_);
     (void)actorMgr->Spawn(actor);
   }
 }

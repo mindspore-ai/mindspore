@@ -74,8 +74,8 @@ int LocalResponseNormRun(void *cdata, int task_id) {
 }
 
 int LocalResponseNormCPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  LocalResponseNormRun, this, thread_count_);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(LocalResponseNormRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LocalResponseNorm function error error_code[" << error_code << "]";
     return RET_ERROR;

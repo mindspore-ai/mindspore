@@ -19,9 +19,6 @@
 #include <stdlib.h>
 #include <string>
 #include <algorithm>
-#ifdef __ANDROID__
-#include <sched.h>
-#endif
 #ifdef MS_COMPILE_IOS
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -29,7 +26,6 @@
 #endif  // MS_COMPILE_IOS
 #include "thread/threadpool.h"
 
-#ifdef BIND_CORE
 namespace mindspore {
 
 #define MAX_PATH_SIZE (256)
@@ -240,6 +236,8 @@ int CoreAffinity::SortCPUProcessors() {
       }
     }
   }
+  higher_num_ = 0;
+  sorted_id_.clear();
   int max_freq = freq_set.front().max_freq;
   for (const auto &info : freq_set) {
     THREAD_INFO("sorted core id: %d, max frequency: %d, arch: %d", info.core_id, info.max_freq, info.arch);
@@ -274,14 +272,15 @@ int CoreAffinity::InitBindCoreId(size_t thread_num, BindMode bind_mode) {
   return THREAD_OK;
 }
 
-int CoreAffinity::SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) const {
+#ifdef BIND_CORE
+int CoreAffinity::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) const {
 #ifdef __ANDROID__
 #if __ANDROID_API__ >= 21
-  THREAD_INFO("thread: %d, mask: %lu", pthread_gettid_np(thread_id), cpuSet->__bits[0]);
-  int ret = sched_setaffinity(pthread_gettid_np(thread_id), sizeof(cpu_set_t), cpuSet);
+  THREAD_INFO("thread: %d, mask: %lu", pthread_gettid_np(thread_id), cpu_set->__bits[0]);
+  int ret = sched_setaffinity(pthread_gettid_np(thread_id), sizeof(cpu_set_t), cpu_set);
   if (ret != THREAD_OK) {
     THREAD_ERROR("bind thread %d to cpu failed. ERROR %d", pthread_gettid_np(thread_id), ret);
-    return THREAD_OK;
+    return THREAD_ERROR;
   }
 #endif
 #else
@@ -289,7 +288,7 @@ int CoreAffinity::SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) const {
   THREAD_ERROR("not bind thread to apple's cpu.");
   return THREAD_ERROR;
 #else
-  int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), cpuSet);
+  int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), cpu_set);
   if (ret != THREAD_OK) {
     THREAD_ERROR("set thread: %lu to cpu failed", thread_id);
     return THREAD_ERROR;
@@ -298,8 +297,10 @@ int CoreAffinity::SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) const {
 #endif
   return THREAD_OK;
 }
+#endif  // BIND_CORE
 
 int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) const {
+#ifdef BIND_CORE
   if (thread_num_ != workers.size()) {
     return THREAD_ERROR;
   }
@@ -315,11 +316,13 @@ int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) cons
       return THREAD_ERROR;
     }
   }
+#endif  // BIND_CORE
   return THREAD_OK;
 }
 
 int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) const {
-  if (bind_id_.size() != thread_num_) {
+#ifdef BIND_CORE
+  if (thread_num_ != workers.size()) {
     THREAD_ERROR("invalid core list");
     return THREAD_ERROR;
   }
@@ -330,12 +333,30 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) co
     // affinity mask determines the CPU core which it is eligible to run
     int ret = SetAffinity(workers[i]->thread.native_handle(), &mask);
     if (ret != THREAD_OK) {
-      THREAD_ERROR("set thread[%zu] affinity failed", i);
+      THREAD_ERROR("set thread[%zu] affinity to core[%d] failed", i, bind_id_[i]);
       return THREAD_ERROR;
     }
-    THREAD_INFO("bind thread[%zu] success", i);
+    THREAD_ERROR("set thread[%zu] affinity to core[%d] success", i, bind_id_[i]);
   }
+#endif  // BIND_CORE
   return THREAD_OK;
+}
+
+int CoreAffinity::BindProcess(BindMode bind_mode) const {
+#ifdef BIND_CORE
+  cpu_set_t mask;
+  CPU_ZERO(&mask);
+  if (bind_mode != Power_NoBind) {
+    CPU_SET(bind_id_.front(), &mask);
+  } else {
+    for (int id : bind_id_) {
+      CPU_SET(id, &mask);
+    }
+  }
+  return SetAffinity(pthread_self(), &mask);
+#else
+  return THREAD_OK;
+#endif  // BIND_CORE
 }
 
 int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode) const {
@@ -351,5 +372,3 @@ int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, const std::v
   return BindThreadsToCoreList(workers);
 }
 }  // namespace mindspore
-
-#endif  // BIND_CORE

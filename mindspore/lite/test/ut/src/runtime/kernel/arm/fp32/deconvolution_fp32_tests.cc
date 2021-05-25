@@ -491,6 +491,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete deconv_param;
   delete deconv;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
@@ -558,6 +559,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
   delete deconv;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
@@ -636,6 +638,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
   delete deconv;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
@@ -721,6 +724,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest4) {
   printf("deconv fp32 average time : %f ms\n", time_avg / 1000.0f);
 
   delete deconv;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);
