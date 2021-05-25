@@ -112,7 +112,7 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
     auto task = [input_addr, indices_addr, output_addr, task_offset, task_proc_lens, this]() {
       LookUpTableTask<T>(input_addr, indices_addr + task_offset, output_addr + task_offset * outer_dim_size_,
-                         task_proc_lens, outer_dim_size_, offset_, first_dim_size_);
+                         task_proc_lens, outer_dim_size_, static_cast<T>(offset_), first_dim_size_);
       return common::SUCCESS;
     };
     tasks.emplace_back(task);

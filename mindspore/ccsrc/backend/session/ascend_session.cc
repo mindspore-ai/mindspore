@@ -79,7 +79,6 @@
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::MemoryProfiling;
 
-static constexpr uint32_t kLabelSwitchLabelId = 2;
 namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
@@ -289,8 +288,8 @@ void ReorderSend(std::vector<CNodePtr> *execution_order, std::vector<CNodePtr> o
     if (node == last_node) {
       continue;
     }
-    auto node_iter = std::find(execution_order->begin(), execution_order->end(), node);
-    (void)execution_order->erase(node_iter);
+    auto iter = std::find(execution_order->begin(), execution_order->end(), node);
+    (void)execution_order->erase(iter);
   }
   std::sort(op_v.begin(), op_v.end(), comp);
   auto last_node_iter = std::find(execution_order->begin(), execution_order->end(), last_node);
@@ -306,8 +305,8 @@ void ReorderRecv(std::vector<CNodePtr> *execution_order, std::vector<CNodePtr> o
     if (node == begin_node) {
       continue;
     }
-    auto node_iter = std::find(execution_order->begin(), execution_order->end(), node);
-    (void)execution_order->erase(node_iter);
+    auto iter = std::find(execution_order->begin(), execution_order->end(), node);
+    (void)execution_order->erase(iter);
   }
   std::sort(op_v.begin(), op_v.end(), comp);
   auto begin_node_iter = std::find(execution_order->begin(), execution_order->end(), begin_node);
@@ -735,8 +734,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
     if (single_op_graph_iter != run_op_graphs_.end()) {
       // if graph of same single op exists, the output tensor of current op should be generated
-      const auto &single_op_graph = single_op_graph_iter->second;
-      GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
+      GenOpOutputStubTensor(single_op_graph_iter->second, kernel, cnode_refcount, &op_output_info);
       continue;
     }
     const auto &single_op_graph =
@@ -755,17 +753,17 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   BuildKernel(kernels);
   // Some new kernel may be added after KernelBuildPreprocess, so collect and build kernels again
   kernels.clear();
-  for (const auto &single_op_graph : single_op_graphs) {
-    device::ascend::KernelBuildPreprocess(single_op_graph.first.get());
-    const auto &execution_order = single_op_graph.first->execution_order();
+  for (const auto &graph_item : single_op_graphs) {
+    device::ascend::KernelBuildPreprocess(graph_item.first.get());
+    const auto &execution_order = graph_item.first->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
   }
   BuildKernel(kernels);
   // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
-  for (const auto &single_op_graph : single_op_graphs) {
-    RunOpMemoryClear(single_op_graph.first.get());
-    for (const auto &graph_info : single_op_graph.second) {
-      run_op_graphs_[graph_info] = single_op_graph.first;
+  for (const auto &graph_item : single_op_graphs) {
+    RunOpMemoryClear(graph_item.first.get());
+    for (const auto &graph_info : graph_item.second) {
+      run_op_graphs_[graph_info] = graph_item.first;
       MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_info;
     }
   }

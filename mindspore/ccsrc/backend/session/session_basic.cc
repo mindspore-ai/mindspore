@@ -95,6 +95,25 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   return false;
 }
 
+void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(manager);
+  auto input_nodes = graph->input_nodes();
+  for (auto input_node : input_nodes) {
+    if (input_node->isa<Parameter>()) {
+      auto node_ptr = input_node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(node_ptr);
+      if (!IsUsedByRealKernel(manager, input_node)) {
+        node_ptr->set_used_by_real_kernel(false);
+      }
+      auto shape = node_ptr->Shape();
+      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
+        node_ptr->set_used_by_dynamic_kernel(true);
+      }
+    }
+  }
+}
+
 bool CheckIfNeedCreateOutputTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>()) {
@@ -962,8 +981,8 @@ void SessionBasic::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph,
   }
 
   // new call node inputs
-  for (auto real_input : real_inputs) {
-    auto parameter_for_input = CreateNewParameterFromCNode(real_input, graph);
+  for (auto input_node : real_inputs) {
+    auto parameter_for_input = CreateNewParameterFromCNode(input_node, graph);
     call_inputs.emplace_back(parameter_for_input);
   }
 
@@ -1154,10 +1173,8 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
   }
   // handle inputs of cnode except primitive
   CreateCNodeInputs(cnode, graph, &cnode_inputs);
-
   TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNode(cnode_inputs);
-
   // if the cnode is call switch, remove call
   if (new_cnode->inputs().size() > 1) {
     auto first_input = new_cnode->input(kFirstDataInputIndex);
@@ -1173,7 +1190,6 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
       new_cnode->set_abstract(abstract);
     }
   }
-
   return new_cnode;
 }
 
@@ -1273,20 +1289,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   UnifyMindIR(graph);
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
-  auto input_nodes = graph->input_nodes();
-  for (auto input_node : input_nodes) {
-    if (input_node->isa<Parameter>()) {
-      auto node_ptr = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(node_ptr);
-      if (!IsUsedByRealKernel(manager, input_node)) {
-        node_ptr->set_used_by_real_kernel(false);
-      }
-      auto shape = node_ptr->Shape();
-      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
-        node_ptr->set_used_by_dynamic_kernel(true);
-      }
-    }
-  }
+  SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();
   return graph;
 }
@@ -1520,20 +1523,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
 
   AddParameterToGraphInputs(func_graph->parameters(), graph.get());
   FuncGraphManagerPtr manager = MakeManager({graph});
-  auto input_nodes = graph->inputs();
-  for (auto input_node : input_nodes) {
-    if (input_node->isa<Parameter>()) {
-      auto node_ptr = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(node_ptr);
-      if (!IsUsedByRealKernel(manager, input_node)) {
-        node_ptr->set_used_by_real_kernel(false);
-      }
-      auto shape = node_ptr->Shape();
-      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
-        node_ptr->set_used_by_dynamic_kernel(true);
-      }
-    }
-  }
+  graph->SetInputNodes();
+  SetInputNodeUsage(graph, manager);
   graph->SetExecOrderByDefault();
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
@@ -2611,7 +2602,7 @@ void DumpGraphExeOrder(const std::string &file_name, const std::string &target_d
 #else
   real_path_ret = realpath(file_path.c_str(), real_path);
 #endif
-  if (nullptr == real_path_ret) {
+  if (real_path_ret == nullptr) {
     MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
   } else {
     std::string path_string = real_path;
