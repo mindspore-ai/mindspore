@@ -161,8 +161,6 @@ Status GatherPInfo::GetAttrs() {
     dynamic_shape_indices_ = true;
   }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   bool enable_sparse = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_SPARSE);
   if (ps::PsDataPrefetch::GetInstance().cache_enable() && enable_sparse) {
