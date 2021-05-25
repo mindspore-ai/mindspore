@@ -53,9 +53,15 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
+  constexpr size_t kFirstIndex = 1;
+  constexpr size_t kSecondIndex = 2;
+  constexpr size_t kThirdIndex = 3;
+  constexpr size_t kFourthIndex = 4;
+  constexpr size_t kFifthIndex = 5;
+  constexpr size_t kSixthIndex = 6;
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kApplyMomentumInputTensorNum);
-  AnfNodePtr mul = cnode->input(4);
+  AnfNodePtr mul = cnode->input(kFourthIndex);
   MS_EXCEPTION_IF_NULL(mul);
   auto mul_cnode = mul->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(mul_cnode);
@@ -74,13 +80,14 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   }
   auto new_prim = std::make_shared<Primitive>(kFusedMulApplyMomentumOpName);
   auto depend_prim = NewValueNode(prim::kPrimDepend);
-  auto depend = func_graph->NewCNode({depend_prim, cnode->input(5), cnode->input(6)});  // depend on monad
-  depend->set_abstract(cnode->input(5)->abstract());
-  depend->set_scope(cnode->input(5)->scope());
+  auto depend =
+    func_graph->NewCNode({depend_prim, cnode->input(kFifthIndex), cnode->input(kSixthIndex)});  // depend on monad
+  depend->set_abstract(cnode->input(kFifthIndex)->abstract());
+  depend->set_scope(cnode->input(kFifthIndex)->scope());
   std::vector<AnfNodePtr> new_node_inputs{NewValueNode(new_prim),
-                                          cnode->input(1),
-                                          cnode->input(2),
-                                          cnode->input(3),
+                                          cnode->input(kFirstIndex),
+                                          cnode->input(kSecondIndex),
+                                          cnode->input(kThirdIndex),
                                           mul_cnode->input(kMulInputTensorNum + 1 - value_node_index),
                                           depend,
                                           mul_cnode->input(value_node_index)};
@@ -88,7 +95,7 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(new_node);
   AnfAlgo::CopyNodeAttrs(node, new_node);
   auto input_names_value = AnfAlgo::GetNodeAttr<std::vector<std::string>>(new_node, kAttrInputNames);
-  input_names_value[3] = "x1";
+  input_names_value[kThirdIndex] = "x1";
   input_names_value.emplace_back("x2");
   AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_value), new_node);
   new_node->set_abstract(node->abstract());
