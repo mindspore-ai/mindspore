@@ -53,7 +53,7 @@ void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &
 #endif
 }
 
-void E2eDump::DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger) {
+void E2eDump::DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.OutputNeedDump()) {
@@ -74,7 +74,7 @@ void E2eDump::DumpOutput(const session::KernelGraph *graph, const std::string &d
 }
 
 void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                             std::string *kernel_name, Debugger *debugger) {
+                             std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
   auto output_size = AnfAlgo::GetOutputTensorNum(node);
@@ -96,7 +96,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
   }
 }
 
-void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger) {
+void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.InputNeedDump()) {
@@ -117,7 +117,7 @@ void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &du
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                            std::string *kernel_name, Debugger *debugger) {
+                            std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
   auto input_size = AnfAlgo::GetInputTensorNum(node);
@@ -155,7 +155,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
 }
 
 void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
-                                bool trans_flag, std::map<std::string, size_t> *const_map, Debugger *debugger) {
+                                bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
@@ -195,7 +195,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
 }
 
 void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const std::string &dump_path,
-                                     Debugger *debugger) {
+                                     const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   MS_LOG(INFO) << "Start e2e dump parameters and Const values";
@@ -215,7 +215,7 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
   }
 }
 
-bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger) {
+bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   dump_json_parser.UpdateDumpIter();
