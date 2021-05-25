@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into air, onnx, mindir models#################
+##############export checkpoint file into air, mindir models#################
 python export.py
 """
 import numpy as np

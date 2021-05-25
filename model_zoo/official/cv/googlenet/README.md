@@ -17,6 +17,10 @@
         - [Distributed Training](#distributed-training)  
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export Process](#Export-process)
+        - [Export](#Export)
+    - [Inference Process](#Inference-process)
+        - [Inference](#Inference)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
@@ -92,6 +96,9 @@ After installing MindSpore via the official website, you can start training and 
   python eval.py > eval.log 2>&1 &
   OR
   sh run_eval.sh
+
+  # run inferenct example
+  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -221,10 +228,12 @@ We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the sc
     ├── README.md                          // descriptions about all the models
     ├── googlenet
         ├── README.md                    // descriptions about googlenet
+        ├── ascend310_infer              // application for 310 inference
         ├── scripts
         │   ├──run_train.sh             // shell script for distributed on Ascend
         │   ├──run_train_gpu.sh         // shell script for distributed on GPU
         │   ├──run_eval.sh              // shell script for evaluation on Ascend
+        │   ├──run_infer_310.sh         // shell script for 310 inference
         │   ├──run_eval_gpu.sh          // shell script for evaluation on GPU
         ├── src
         │   ├──dataset.py             // creating dataset
@@ -232,7 +241,8 @@ We use CIFAR-10 dataset by default. Your can also pass `$dataset_type` to the sc
         │   ├──config.py            // parameter configuration
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
-        ├── export.py            // export checkpoint files into air/onnx
+        ├── postprogress.py       // post process for 310 inference
+        ├── export.py             // export checkpoint files into air/mindir
 ```
 
 ## [Script Parameters](#contents)
@@ -411,6 +421,36 @@ For more configuration details, please refer the script `config.py`.
   ```bash
   # grep "accuracy: " eval/eval.log
   accuracy: {'acc': 0.930}
+  ```
+
+## [Export Process](#contents)
+
+### [Export](#content)
+
+Before export model, you must modify the config file, Cifar10 config file is cifar10_config.yaml and imagenet config file is imagenet_config.yaml.
+The config items you should modify are batch_size and ckpt_file.
+
+```shell
+python export.py --config_path [CONFIG_PATH]
+```
+
+## [Inference Process](#contents)
+
+### [Inference](#content)
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+Current batch_ Size can only be set to 1.
+
+- inference on CIFAR-10 dataset when running on Ascend
+
+  Before running the command below, you should modify the cifar10 config file. The items you should modify are batch_size and val_data_path. LABEL_FILE is only useful for imagenet,you can set any value.
+
+  Inference result will be stored in the example path, you can find result like the followings in acc.log.
+
+  ```shell
+  # Ascend310 inference
+  sh run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+  after allreduce eval: top1_correct=9252, tot=10000, acc=92.52%
   ```
 
 # [Model Description](#contents)
