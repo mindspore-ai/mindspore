@@ -30,14 +30,6 @@
 #include "runtime/device/ascend/ascend_launch_atomic_clean.h"
 #include "utils/profile.h"
 
-#define CHECK_ASCEND_RT_WITH_EXCEPTION(expression, message)    \
-  {                                                            \
-    rtError_t ret = (expression);                              \
-    if (ret != RT_ERROR_NONE) {                                \
-      MS_LOG(EXCEPTION) << message << ", error code: " << ret; \
-    }                                                          \
-  }
-
 namespace mindspore::device::ascend {
 void AscendBucket::AllocateAllReduceAddr() {
   // Check bucket is full
@@ -112,10 +104,11 @@ void AscendBucket::CopyTensorToContiguousMemory() {
       MS_LOG(EXCEPTION) << "rtMemcpyAsync dst size < src size";
     }
 
-    CHECK_ASCEND_RT_WITH_EXCEPTION(
-      rtMemcpyAsync(memcpy_output_addrs_[i]->addr, memcpy_output_addrs_[i]->size, memcpy_input_addrs_[i]->addr,
-                    memcpy_input_addrs_[i]->size, RT_MEMCPY_DEVICE_TO_DEVICE, compute_stream_),
-      "Call rtMemcpyAsync failed");
+    auto ret = rtMemcpyAsync(memcpy_output_addrs_[i]->addr, memcpy_output_addrs_[i]->size, memcpy_input_addrs_[i]->addr,
+                             memcpy_input_addrs_[i]->size, RT_MEMCPY_DEVICE_TO_DEVICE, compute_stream_);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rtMemcpyAsync failed, error code:" << ret;
+    }
   }
 }
 
