@@ -197,19 +197,6 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTuple>(rets);
 }
 
-AbstractBasePtr InferImplReluGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_spec_list) {
-  // Inputs: two tensors(y_backprop, x).
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
-  auto dout = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto out = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  (void)CheckDtypeSame(op_name, out, dout);
-  (void)CheckShapeSame(op_name, out, dout);
-
-  return out->Broaden();
-}
-
 AbstractBasePtr InferImplFusedSparseAdam(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   // the output is useless, so we dont have to focus on the output shape
