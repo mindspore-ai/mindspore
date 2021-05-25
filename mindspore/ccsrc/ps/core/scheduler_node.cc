@@ -186,7 +186,8 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
         wait_start_cond_.notify_all();
       }
       if (node_manager_.is_cluster_finish()) {
-        std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval() * 2));
+        std::this_thread::sleep_for(
+          std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval() * kHeartbeatTimes));
         is_finish_ = true;
         wait_finish_cond_.notify_all();
       }
