@@ -1076,7 +1076,6 @@ def get_bprop_roi_align(self):
     return bprop
 
 
-@bprop_getters.register(P.Conv2DTranspose)
 @bprop_getters.register(P.Conv2DBackpropInput)
 def get_bprop_conv2d_backprop_input(self):
     """Grad definition for `Conv2DBackpropInput` operation."""
