@@ -1240,12 +1240,11 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                     int32_t kernel_y, float sigma_x, float sigma_y) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-    RETURN_UNEXPECTED_IF_NULL(output_cv);
-
-    cv::GaussianBlur(input_cv->mat(), output_cv->mat(), cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
+    cv::Mat output_cv_mat;
+    cv::GaussianBlur(input_cv->mat(), output_cv_mat, cv::Size(kernel_x, kernel_y), static_cast<double>(sigma_x),
                      static_cast<double>(sigma_y));
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(output_cv_mat, &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {

@@ -12,6 +12,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         decode_ir.cc
         equalize_ir.cc
         gaussian_blur_ir.cc
+        horizontal_flip_ir.cc
         hwc_to_chw_ir.cc
         invert_ir.cc
         mixup_batch_ir.cc
@@ -49,6 +50,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         softdvpp_decode_resize_jpeg_ir.cc
         swap_red_blue_ir.cc
         uniform_aug_ir.cc
+        vertical_flip_ir.cc
         )
 
 if(ENABLE_ACL)

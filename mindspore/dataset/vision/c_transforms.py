@@ -330,6 +330,20 @@ class GaussianBlur(ImageTensorOperation):
         return cde.GaussianBlurOperation(self.kernel_size, self.sigma)
 
 
+class HorizontalFlip(ImageTensorOperation):
+    """
+    Flip the input image horizontally.
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.HorizontalFlip()]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    def parse(self):
+        return cde.HorizontalFlipOperation()
+
+
 class HWC2CHW(ImageTensorOperation):
     """
     Transpose the input image; shape (H, W, C) to shape (C, H, W).
@@ -1531,3 +1545,17 @@ class UniformAugment(ImageTensorOperation):
             else:
                 transforms.append(op)
         return cde.UniformAugOperation(transforms, self.num_ops)
+
+
+class VerticalFlip(ImageTensorOperation):
+    """
+    Flip the input image vertically.
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.VerticalFlip()]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    def parse(self):
+        return cde.VerticalFlipOperation()

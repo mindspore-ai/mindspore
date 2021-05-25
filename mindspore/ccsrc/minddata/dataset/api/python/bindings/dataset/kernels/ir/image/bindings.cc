@@ -26,6 +26,7 @@
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
+#include "minddata/dataset/kernels/ir/vision/horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 #include "minddata/dataset/kernels/ir/vision/invert_ir.h"
 #include "minddata/dataset/kernels/ir/vision/mixup_batch_ir.h"
@@ -57,6 +58,7 @@
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
+#include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -153,6 +155,16 @@ PYBIND_REGISTER(
         return gaussian_blur;
       }));
   }));
+
+PYBIND_REGISTER(HorizontalFlipOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::HorizontalFlipOperation, TensorOperation,
+                                   std::shared_ptr<vision::HorizontalFlipOperation>>(*m, "HorizontalFlipOperation")
+                    .def(py::init([]() {
+                      auto horizontal_flip = std::make_shared<vision::HorizontalFlipOperation>();
+                      THROW_IF_ERROR(horizontal_flip->ValidateParams());
+                      return horizontal_flip;
+                    }));
+                }));
 
 PYBIND_REGISTER(HwcToChwOperation, 1, ([](const py::module *m) {
                   (void)
@@ -537,6 +549,17 @@ PYBIND_REGISTER(
           std::make_shared<vision::UniformAugOperation>(std::move(toTensorOperations(transforms)), num_ops);
         THROW_IF_ERROR(uniform_aug->ValidateParams());
         return uniform_aug;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  VerticalFlipOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::VerticalFlipOperation, TensorOperation, std::shared_ptr<vision::VerticalFlipOperation>>(
+      *m, "VerticalFlipOperation")
+      .def(py::init([]() {
+        auto vertical_flip = std::make_shared<vision::VerticalFlipOperation>();
+        THROW_IF_ERROR(vertical_flip->ValidateParams());
+        return vertical_flip;
       }));
   }));
 }  // namespace dataset
