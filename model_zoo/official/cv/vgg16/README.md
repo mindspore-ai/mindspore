@@ -106,13 +106,13 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # run training example
-python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] > output.train.log 2>&1 &
+python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
 
 # run distributed training example
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH]
+sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # run evaluation example
-python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
 ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -126,7 +126,7 @@ Please follow the instructions in the link below:
 python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
 
 # run distributed training example
-sh run_distribute_train_gpu.sh [DATA_PATH]
+sh run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # run evaluation example
 python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
