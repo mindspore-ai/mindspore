@@ -47,7 +47,7 @@ class MemSwapManager {
 
   ~MemSwapManager() = default;
 
-  bool Init(const mindspore::session::KernelGraph *kernel_graph, size_t swap_mem_size = 0);
+  bool Init(const mindspore::session::KernelGraph *kernel_graph);
 
   void AddMemSwapTask(SwapKind swap_kind, const DeviceAddressPtr &device_address, const HostAddress &host_address,
                       bool mock, bool profiling = false, float *cost_time = nullptr) const;
