@@ -70,17 +70,17 @@ def _special_process_par(par, new_par):
     """
     par_shape_len = len(par.data.shape)
     new_par_shape_len = len(new_par.data.shape)
-    delta_len = new_par_shape_len - par_shape_len
-    delta_i = 0
-    for delta_i in range(delta_len):
-        if new_par.data.shape[par_shape_len + delta_i] != 1:
-            break
-    if delta_i == delta_len - 1:
-        new_val = new_par.data.asnumpy()
-        new_val = new_val.reshape(par.data.shape)
-        par.set_data(Tensor(new_val, par.data.dtype))
-        return True
-    return False
+    if new_par_shape_len <= par_shape_len:
+        return False
+
+    for i in range(new_par_shape_len - par_shape_len):
+        if new_par.data.shape[par_shape_len + i] != 1:
+            return False
+
+    new_val = new_par.data.asnumpy()
+    new_val = new_val.reshape(par.data.shape)
+    par.set_data(Tensor(new_val, par.data.dtype))
+    return True
 
 
 def _update_param(param, new_param, strict_load):
@@ -208,6 +208,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
     Raises:
         TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter
                    `integrated_save` and `async_save` are not bool type.
+
+    Examples:
+        >>> from mindspore import save_checkpoint
+        >>>
+        >>> net = Net()
+        >>> save_checkpoint(net, "lenet.ckpt")
     """
 
     if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
@@ -660,6 +666,14 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev: The variance of input data after preprocessing, used for quantizing the first layer of network.
               Default: 127.5.
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import export, Tensor
+        >>>
+        >>> net = LeNet()
+        >>> input = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
+        >>> export(net, Tensor(input), file_name='lenet', file_format='MINDIR')
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
