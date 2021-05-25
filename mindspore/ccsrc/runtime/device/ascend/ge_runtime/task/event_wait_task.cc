@@ -45,12 +45,12 @@ void EventWaitTask::Distribute() {
 
   rtError_t rt_ret = rtStreamWaitEvent(stream_, event_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamWaitEvent failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtStreamWaitEvent failed, ret: " << rt_ret;
   }
 
   rt_ret = rtEventReset(event_, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventReset failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtEventReset failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "Distribute end.";
 }

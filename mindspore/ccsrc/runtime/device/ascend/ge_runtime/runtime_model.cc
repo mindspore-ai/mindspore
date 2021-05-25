@@ -73,7 +73,7 @@ void RuntimeModel::InitStream(const std::shared_ptr<DavinciModel> &davinci_model
 
     rtError_t rt_ret = rtStreamCreateWithFlags(&stream, davinci_model->GetPriority(), flag);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtStreamCreate failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtStreamCreate failed, ret: " << rt_ret;
     }
 
     MS_LOG(INFO) << "rtStreamCreateWithFlags end.";
@@ -84,9 +84,9 @@ void RuntimeModel::InitStream(const std::shared_ptr<DavinciModel> &davinci_model
                                                                       : (static_cast<uint32_t>(RT_HEAD_STREAM));
     rt_ret = rtModelBindStream(rt_model_handle_, stream, flag);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtModelBindStream failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtModelBindStream failed, ret: " << rt_ret;
     }
-    MS_LOG(INFO) << "stream index: " << i << ", stream: " << std::hex << stream;
+    MS_LOG(INFO) << "stream index: " << i << ", stream: " << stream;
   }
 }
 
@@ -96,7 +96,7 @@ void RuntimeModel::InitEvent(uint32_t event_num) {
     rtEvent_t rt_event;
     rtError_t rt_ret = rtEventCreate(&rt_event);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtEventCreate failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtEventCreate failed, ret: " << rt_ret;
     }
     event_list_.push_back(rt_event);
   }
@@ -121,7 +121,7 @@ void RuntimeModel::InitLabel(const std::shared_ptr<DavinciModel> &davinci_model)
     rtLabel_t rt_label = nullptr;
     rtError_t rt_ret = rtLabelCreateEx(&rt_label, stream_list_[label_set_task_info->stream_id()]);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtLabelCreate failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtLabelCreate failed, ret: " << rt_ret;
     }
     label_list_[label_set_task_info->label_id()] = rt_label;
   }
@@ -133,13 +133,13 @@ void RuntimeModel::InitResource(const std::shared_ptr<DavinciModel> &davinci_mod
 
   rtError_t rt_ret = rtModelCreate(&rt_model_handle_, 0);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtModelCreate failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtModelCreate failed, ret: " << rt_ret;
   }
 
   // Create rtStream for rt_model_handle_
   rt_ret = rtStreamCreate(&rt_model_stream_, davinci_model->GetPriority());
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamCreate failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtStreamCreate failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "rtStreamCreate end";
 
@@ -169,14 +169,14 @@ void RuntimeModel::LoadComplete() {
   uint32_t stream_id = 0;
   auto rt_ret = rtModelGetTaskId(rt_model_handle_, &task_id, &stream_id);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtModelGetTaskId failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtModelGetTaskId failed, ret: " << rt_ret;
   }
   task_id_list_.push_back(task_id);
   stream_id_list_.push_back(stream_id);
 
   rt_ret = rtModelLoadComplete(rt_model_handle_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << rt_ret;
   }
 }
 
@@ -195,7 +195,7 @@ void RuntimeModel::DistributeTask() {
     uint32_t stream_id = 0;
     rtError_t rt_ret = rtModelGetTaskId(rt_model_handle_, &task_id, &stream_id);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtModelGetTaskId failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtModelGetTaskId failed, ret: " << rt_ret;
     }
     task_id_list_.push_back(task_id);
     stream_id_list_.push_back(stream_id);
@@ -218,7 +218,7 @@ void RuntimeModel::Run() {
   MS_LOG(INFO) << "Davinci task run start.";
   rtError_t ret = rtModelExecute(rt_model_handle_, rt_model_stream_, 0);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << std::hex << ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtModelLoadComplete failed, ret: " << ret;
   }
 
   MS_LOG(INFO) << "Run rtModelExecute success, start to rtStreamSynchronize.";
@@ -228,7 +228,7 @@ void RuntimeModel::Run() {
       MS_LOG(INFO) << "Model stream ACL_ERROR_RT_END_OF_SEQUENCE signal received.";
       return;
     }
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamSynchronize failed, ret: " << std::hex << ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtStreamSynchronize failed, ret: " << ret;
   }
 
   MS_LOG(INFO) << "Davinci task run success.";
@@ -272,7 +272,7 @@ void RuntimeModel::RtLabelDestory() noexcept {
 void RuntimeModel::RtModelDestory() noexcept {
   rtError_t ret = rtModelDestroy(rt_model_handle_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rt api rtModelDestroy failed, ret: " << std::hex << ret;
+    MS_LOG(ERROR) << "Call rt api rtModelDestroy failed, ret: " << ret;
     return;
   }
 }

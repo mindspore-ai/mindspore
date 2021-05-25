@@ -38,7 +38,7 @@ void ProfilerTask::Distribute() {
                << ", flat = " << task_info_->flat();
   rtError_t rt_ret = rtProfilerTrace(task_info_->log_id(), task_info_->notify(), task_info_->flat(), stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtProfilerTrace failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtProfilerTrace failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "DistributeTask end.";
 }

@@ -46,7 +46,7 @@ void LabelSetTask::Distribute() {
 
   rtError_t rt_ret = rtLabelSet(label_, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtLabelSet failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtLabelSet failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "DistributeTask end.";

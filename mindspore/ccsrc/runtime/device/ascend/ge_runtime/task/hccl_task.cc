@@ -169,12 +169,12 @@ void HcclTask::CreateStream(rtModel_t model, rtStream_t *stream) const {
 
   rtError_t rt_ret = rtStreamCreateWithFlags(stream, priority_, RT_STREAM_PERSISTENT | RT_STREAM_FORCE_COPY);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << rt_ret;
   }
   // Create secondary stream, inactive by default, activated by hccl
   rt_ret = rtModelBindStream(model, *stream, RT_MODEL_WAIT_ACTIVE_STREAM);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << rt_ret;
   }
 }
 
@@ -190,13 +190,13 @@ void HcclTask::SaveHcclSecondaryStream(int64_t master_stream_id, const std::shar
 HcclTask::StreamGuard::~StreamGuard() {
   rtError_t rt_ret = rtModelUnbindStream(model_, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rt api rtModelUnbindStream failed, ret: " << std::hex << rt_ret;
+    MS_LOG(ERROR) << "Call rt api rtModelUnbindStream failed, ret: " << rt_ret;
     return;
   }
 
   rt_ret = rtStreamDestroy(stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rt api rtStreamDestroy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(ERROR) << "Call rt api rtStreamDestroy failed, ret: " << rt_ret;
     return;
   }
 }

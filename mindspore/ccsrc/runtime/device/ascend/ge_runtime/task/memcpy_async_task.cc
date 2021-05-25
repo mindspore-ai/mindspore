@@ -42,7 +42,7 @@ void MemcpyAsyncTask::Distribute() {
   rtError_t rt_ret = rtMemcpyAsync(task_info_->dst(), task_info_->dst_max(), task_info_->src(), task_info_->count(),
                                    static_cast<rtMemcpyKind_t>(task_info_->kind()), stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpyAsync failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMemcpyAsync failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "DistributeTask end";
 }

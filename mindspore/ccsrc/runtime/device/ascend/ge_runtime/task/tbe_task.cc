@@ -43,7 +43,7 @@ TbeTask::~TbeTask() {
   if (args_ != nullptr) {
     rtError_t rt_ret = rtFree(args_);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rt api rtFree failed, ret: " << std::hex << rt_ret;
+      MS_LOG(ERROR) << "Call rt api rtFree failed, ret: " << rt_ret;
     }
     args_ = nullptr;
   }
@@ -59,7 +59,7 @@ void TbeTask::Distribute() {
 
   rtError_t rt_ret = rtGetFunctionByName(const_cast<char *>(task_info_->stub_func().c_str()), &stub_func_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtGetFunctionByName failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtGetFunctionByName failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "TbeTask: stub_func = " << task_info_->stub_func();
 
@@ -75,20 +75,20 @@ void TbeTask::Distribute() {
 
   rt_ret = rtMalloc(&args_, args_size, RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << std::hex << rt_ret << " mem size " << args_size;
+    MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret << " mem size " << args_size;
   }
 
   rt_ret = rtMemcpy(args_, args_size, reinterpret_cast<void *>(tensor_device_addrs.data()), args_size,
                     RT_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "DistributeTbeTask start.";
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
   rt_ret = rtKernelLaunchWithFlag(stub_func_, task_info_->block_dim(), args_, args_size, nullptr, stream_, dump_flag);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtKernelLaunch failed, ret: " << std::hex << rt_ret << " mem size " << args_size;
+    MS_LOG(EXCEPTION) << "Call rt api rtKernelLaunch failed, ret: " << rt_ret << " mem size " << args_size;
   }
   MS_LOG(INFO) << "[DataDump] task name: " << task_info_->op_name() << " dump_flag: " << dump_flag;
 }

@@ -45,7 +45,7 @@ void EventRecordTask::Distribute() {
                << ", stream_id: " << task_info_->stream_id() << ", event_id: " << task_info_->event_id();
   rtError_t rt_ret = rtEventRecord(event_, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtEventRecord failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "Distribute end.";
 }
