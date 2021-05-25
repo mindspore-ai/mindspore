@@ -38,16 +38,14 @@ int32_t ByteToint(const Byte *byteArray) {
 }
 
 bool IsCipherFile(std::string file_path) {
-  char *int_buf = new char[4];
-  int flag = 0;
   std::ifstream fid(file_path, std::ios::in | std::ios::binary);
   if (!fid) {
-    MS_LOG(ERROR) << "Open file failed";
-    exit(-1);
+    return false;
   }
+  char *int_buf = new char[4];
   fid.read(int_buf, sizeof(int32_t));
   fid.close();
-  flag = ByteToint(reinterpret_cast<Byte *>(int_buf));
+  auto flag = ByteToint(reinterpret_cast<Byte *>(int_buf));
   delete[] int_buf;
   return flag == MAGIC_NUM;
 }
@@ -302,8 +300,7 @@ Byte *Decrypt(int64_t *decrypt_len, const std::string &encrypt_data_path, Byte *
 
   std::ifstream fid(encrypt_data_path, std::ios::in | std::ios::binary);
   if (!fid) {
-    MS_LOG(ERROR) << "Open file failed";
-    exit(-1);
+    MS_EXCEPTION(ValueError) << "Open file '" << encrypt_data_path << "' failed, please check the correct of the file.";
   }
   fid.seekg(0, std::ios_base::end);
   int64_t file_size = fid.tellg();
