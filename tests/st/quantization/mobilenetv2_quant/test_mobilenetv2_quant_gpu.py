@@ -54,7 +54,7 @@ config_ascend_quant = ed({
 
 dataset_path = "/home/workspace/mindspore_dataset/cifar-10-batches-bin/"
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_mobilenetv2_quant():
