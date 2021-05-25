@@ -23,7 +23,7 @@ bn_infer_grad_op_info = TBERegOp("BNInferGrad") \
     .compute_cost(10) \
     .kernel_name("bn_infer_grad") \
     .partial_flag(True) \
-    .attr("epsilon", "optional", "float", "all") \
+    .attr("epsilon", "optional", "float", "all", "0.0001") \
     .input(0, "grads", False, "required", "all", reshape_type="NC") \
     .input(1, "scale", False, "required", "all") \
     .input(2, "batch_variance", False, "required", "all") \

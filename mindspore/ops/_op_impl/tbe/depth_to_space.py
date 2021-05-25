@@ -24,7 +24,7 @@ depth_to_space_op_info = TBERegOp("DepthToSpace") \
     .kernel_name("depth_to_space") \
     .partial_flag(True) \
     .attr("block_size", "required", "int", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("data_format", "optional", "str", "all", "NHWC") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \

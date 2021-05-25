@@ -24,7 +24,7 @@ square_sum_v2_op_info = TBERegOp("SquareSumV2") \
     .kernel_name("square_sum_v2") \
     .partial_flag(True) \
     .attr("axis", "optional", "listInt", "all") \
-    .attr("keep_dims", "optional", "bool", "all") \
+    .attr("keep_dims", "optional", "bool", "all", "true") \
     .input(0, "input_x", False, "required", "all") \
     .output(0, "output1", False, "required", "all") \
     .output(1, "output2", False, "required", "all") \

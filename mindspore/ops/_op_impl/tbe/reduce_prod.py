@@ -25,7 +25,7 @@ reduce_prod_op_info = TBERegOp("ReduceProd") \
     .partial_flag(True) \
     .need_check_supported(True) \
     .attr("axis", "required", "listInt", "all") \
-    .attr("keep_dims", "optional", "bool", "all") \
+    .attr("keep_dims", "optional", "bool", "all", "false") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("reduce") \

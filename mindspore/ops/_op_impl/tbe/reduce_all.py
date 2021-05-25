@@ -24,7 +24,7 @@ reduce_all_op_info = TBERegOp("ReduceAll") \
     .kernel_name("reduce_all_d") \
     .partial_flag(True) \
     .attr("axis", "required", "listInt", "all") \
-    .attr("keep_dims", "optional", "bool", "all") \
+    .attr("keep_dims", "optional", "bool", "all", "false") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("reduce") \

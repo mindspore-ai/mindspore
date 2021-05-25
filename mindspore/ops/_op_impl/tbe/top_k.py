@@ -24,10 +24,10 @@ top_k_op_info = TBERegOp("TopK") \
     .kernel_name("top_k_d") \
     .partial_flag(True) \
     .need_check_supported(True) \
-    .attr("dim", "optional", "int", "all") \
+    .attr("dim", "optional", "int", "all", "-1") \
     .attr("k", "required", "int", "all") \
-    .attr("largest", "optional", "bool", "all") \
-    .attr("sorted", "optional", "bool", "true")\
+    .attr("largest", "optional", "bool", "all", "true") \
+    .attr("sorted", "optional", "bool", "all", "true")\
     .input(0, "x", False, "required", "all") \
     .input(1, "assist_seq", False, "required", "all") \
     .output(0, "values", False, "required", "all") \

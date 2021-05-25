@@ -23,7 +23,7 @@ sparse_gather_v2_op_info = TBERegOp("SparseGatherV2") \
     .compute_cost(10) \
     .kernel_name("gather_v2_d") \
     .partial_flag(True) \
-    .attr("axis", "optional", "int", "all") \
+    .attr("axis", "optional", "int", "all", "0") \
     .input(0, "x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
