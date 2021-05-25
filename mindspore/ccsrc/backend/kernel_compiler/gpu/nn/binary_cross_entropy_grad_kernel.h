@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
  public:
-  BinaryCrossEntropyGradGpuKernel() : input_size_(1), reduction_(1) {}
+  BinaryCrossEntropyGradGpuKernel() : input_size_(1), reduction_(1), weight_defined_(false) {}
   ~BinaryCrossEntropyGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,7 +40,10 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
     T *input_x = GetDeviceAddress<T>(inputs, 0);
     T *input_y = GetDeviceAddress<T>(inputs, 1);
     T *dloss = GetDeviceAddress<T>(inputs, 2);
-    T *weight = GetDeviceAddress<T>(inputs, 3);
+    T *weight = nullptr;
+    if (weight_defined_) {
+      weight = GetDeviceAddress<T>(inputs, 3);
+    }
     T *dx = GetDeviceAddress<T>(outputs, 0);
     if (input_size_ > 0) {
       BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
@@ -51,6 +54,8 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    weight_defined_ = (input_num == 4);
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
@@ -73,14 +78,16 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
     } else {
       input_size_list_.push_back(sizeof(T));
     }
-    input_size_list_.push_back(input_size_ * sizeof(T));
+    if (weight_defined_) {
+      input_size_list_.push_back(input_size_ * sizeof(T));
+    }
     output_size_list_.push_back(input_size_ * sizeof(T));
   }
 
  private:
   size_t input_size_;
   int reduction_;
-
+  bool weight_defined_;  // true: there are 4 inputs, false: there are 3 inputs(no [weight])
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

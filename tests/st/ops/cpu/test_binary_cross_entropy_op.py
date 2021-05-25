@@ -24,12 +24,13 @@ from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
+
 class Net(nn.Cell):
     def __init__(self, reduction="none"):
         super(Net, self).__init__()
         self.BinaryCrossEntropy = P.BinaryCrossEntropy(reduction)
 
-    def construct(self, x, y, weight):
+    def construct(self, x, y, weight=None):
         return self.BinaryCrossEntropy(x, y, weight)
 
 
@@ -50,6 +51,7 @@ def test_binary_cross_entropy_loss():
               0.03405444, 0.23934692]
     assert np.allclose(loss.asnumpy(), expect)
 
+
 def test_binary_cross_entropy_loss_mean():
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
@@ -61,6 +63,7 @@ def test_binary_cross_entropy_loss_mean():
     expect = [0.7447324991226196]
     assert loss.asnumpy() == expect
 
+
 def test_binary_cross_entropy_loss_sum():
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
@@ -71,6 +74,18 @@ def test_binary_cross_entropy_loss_sum():
     loss = net(Tensor(prediction), Tensor(target), Tensor(weight))
     expect = [14.894649505615234]
     assert loss.asnumpy() == expect
+
+
+def test_binary_cross_entropy_loss_sum_without_weight():
+    np.random.seed(42)
+    prediction = np.random.rand(20).astype(np.float32)
+    target = np.random.rand(20).astype(np.float32)
+    reduction = "sum"
+    net = Net(reduction)
+    loss = net(Tensor(prediction), Tensor(target))
+    expect = [25.48195216753522]
+    assert np.allclose(loss.asnumpy(), expect)
+
 
 def test_binary_cross_entropy_loss_16():
     np.random.seed(42)
@@ -86,6 +101,7 @@ def test_binary_cross_entropy_loss_16():
               0.0340576, 0.239258]
     assert np.allclose(loss.asnumpy(), expect)
 
+
 def test_binary_cross_entropy_loss_mean_16():
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float16)
@@ -96,6 +112,7 @@ def test_binary_cross_entropy_loss_mean_16():
     loss = net(Tensor(prediction), Tensor(target), Tensor(weight))
     expect = [0.74462890625]
     assert loss.asnumpy() == expect
+
 
 def test_binary_cross_entropy_loss_sum_16():
     np.random.seed(42)
@@ -108,13 +125,14 @@ def test_binary_cross_entropy_loss_sum_16():
     expect = [14.890625]
     assert loss.asnumpy() == expect
 
+
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
         self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    def construct(self, x1, x2, sens, weight):
+    def construct(self, x1, x2, sens, weight=None):
         gout = self.grad(self.network)(x1, x2, sens, weight)
         return gout
 

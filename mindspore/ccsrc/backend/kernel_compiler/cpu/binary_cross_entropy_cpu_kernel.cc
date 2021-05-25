@@ -17,6 +17,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kBceInputNumWithWeight = 3;
+
 template <typename T>
 void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss) {
   if (input_size % 2 == 1) {
@@ -44,22 +46,35 @@ void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y = reinterpret_cast<T *>(inputs[1]->addr);
-  T *weight = reinterpret_cast<T *>(inputs[2]->addr);
+  T *weight = nullptr;
+  if (weight_defined_) {
+    weight = reinterpret_cast<T *>(inputs[2]->addr);
+  }
   T *loss = reinterpret_cast<T *>(outputs[0]->addr);
   std::vector<T> tmp_loss(input_size_);
 
   T epsilon = static_cast<T>(1e-12);
   T one = static_cast<T>(1);
-  if (reduction_ == 0) {
+  if (reduction_ == 0 && weight_defined_) {
     for (size_t i = 0; i < input_size_; i++) {
       T value =
         -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
       loss[i] = value;
     }
-  } else {
+  } else if (reduction_ == 0 && (!weight_defined_)) {
+    for (size_t i = 0; i < input_size_; i++) {
+      T value = -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+      loss[i] = value;
+    }
+  } else if ((reduction_ != 0) && weight_defined_) {
     for (size_t i = 0; i < input_size_; i++) {
       T value =
         -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+      tmp_loss[i] = value;
+    }
+  } else {
+    for (size_t i = 0; i < input_size_; i++) {
+      T value = -(input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
       tmp_loss[i] = value;
     }
   }
@@ -93,7 +108,8 @@ void BinaryCrossEntropyCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   } else if (reduction == "sum") {
     reduction_ = 2;
   }
-
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  weight_defined_ = (input_num == kBceInputNumWithWeight);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 }  // namespace kernel

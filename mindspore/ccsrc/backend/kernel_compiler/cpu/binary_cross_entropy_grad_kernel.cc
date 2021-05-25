@@ -17,32 +17,54 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kBceGradInputNumWithWeight = 4;
+
 template <typename T>
 void BinaryCrossEntropyGradCpuKernel::Launchkernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y = reinterpret_cast<T *>(inputs[1]->addr);
   T *dloss = reinterpret_cast<T *>(inputs[2]->addr);
-  T *weight = reinterpret_cast<T *>(inputs[3]->addr);
+  T *weight = nullptr;
+  if (weight_defined_) {
+    weight = reinterpret_cast<T *>(inputs[3]->addr);
+  }
+
   T *dx = reinterpret_cast<T *>(outputs[0]->addr);
 
   T epsilon = static_cast<T>(1e-12);
   T one = static_cast<T>(1);
   if (reduction_ == 0) {
-    for (size_t i = 0; i < input_size_; i++) {
-      T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-      T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss[i];
+    if (weight_defined_) {
+      for (size_t i = 0; i < input_size_; i++) {
+        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
+    } else {
+      for (size_t i = 0; i < input_size_; i++) {
+        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+        T value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
     }
   } else {
     T dloss1 = dloss[0];
     if (reduction_ == 1) {
       dloss1 = dloss[0] / static_cast<T>(input_size_);
     }
-    for (size_t i = 0; i < input_size_; i++) {
-      T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
-      T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss1;
+    if (weight_defined_) {
+      for (size_t i = 0; i < input_size_; i++) {
+        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      }
+    } else {
+      for (size_t i = 0; i < input_size_; i++) {
+        T denominator = ((input_x[i] * (one - input_x[i])) > epsilon) ? (input_x[i] * (one - input_x[i])) : epsilon;
+        T value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      }
     }
   }
 }
@@ -72,6 +94,8 @@ void BinaryCrossEntropyGradCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     reduction_ = 2;
   }
 
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  weight_defined_ = (input_num == kBceGradInputNumWithWeight);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 }  // namespace kernel

@@ -124,16 +124,26 @@ __global__ void BinaryCrossEntropyLossKernel(const int input_size, const int red
                                              const T *input_y, const T *weight, T *loss, T *tmp_loss) {
   T epsilon = 1e-12;
   T one = static_cast<T>(1);
-  if (reduction == 0) {
+  if (reduction == 0 && weight != nullptr) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T value =
         -weight[i] * (input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       loss[i] = value;
     }
-  } else {
+  } else if (reduction == 0 && weight == nullptr) {
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      T value = -(input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
+      loss[i] = value;
+    }
+  } else if (reduction != 0 && weight != nullptr) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T value =
         -weight[i] * (input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
+      tmp_loss[i] = value;
+    }
+  } else {
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+      T value = -(input_y[i] * logT(input_x[i] + epsilon) + (one - input_y[i]) * logT(one - input_x[i] + epsilon));
       tmp_loss[i] = value;
     }
   }
@@ -165,20 +175,36 @@ __global__ void BinaryCrossEntropyLossGradKernel(const int input_size, const int
   T epsilon = 1e-12;
   T one = static_cast<T>(1);
   if (reduction == 0) {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-      T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
-      T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss[i];
+    if (weight != nullptr) {
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+        T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
+        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
+    } else {
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+        T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
+        T value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss[i];
+      }
     }
   } else {
     T dloss1 = dloss[0];
     if (reduction == 1) {
       dloss1 = dloss[0] / castT(dloss[0], input_size);
     }
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-      T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
-      T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
-      dx[i] = value * dloss1;
+    if (weight != nullptr) {
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+        T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
+        T value = weight[i] * (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      }
+    } else {
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
+        T denominator = maxT(input_x[i] * (one - input_x[i]), epsilon);
+        T value = (input_x[i] - input_y[i]) / denominator;
+        dx[i] = value * dloss1;
+      }
     }
   }
 }
