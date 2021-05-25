@@ -16,9 +16,9 @@
 
 #include "profiler/device/cpu/cpu_profiling.h"
 
-#include <time.h>
 #include <cxxabi.h>
 #include <cmath>
+#include <ctime>
 #include "profiler/device/cpu/cpu_data_saver.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
@@ -27,8 +27,7 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ =
-  std::shared_ptr<CPUProfiler>(new (std::nothrow) CPUProfiler());
+std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ = std::make_shared<CPUProfiler>();
 
 std::shared_ptr<CPUProfiler> &CPUProfiler::GetInstance() { return profiler_inst_; }
 

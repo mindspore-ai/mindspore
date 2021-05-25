@@ -37,7 +37,7 @@ class CpuDataSaver : public DataSaver {
 
   CpuDataSaver &operator=(const CpuDataSaver &) = delete;
 
-  void WriteFile(std::string out_path);
+  void WriteFile(const std::string out_path);
 };
 }  // namespace cpu
 }  // namespace profiler

@@ -43,23 +43,23 @@ inline void *GetCUPTIFunc(const char *name) {
   return func;
 }
 
-typedef CUptiResult (*CuptiSubscribeFunc)(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback,
-                                          void *userdata);
-typedef CUptiResult (*CuptiEnableDomainFunc)(uint32_t enable, CUpti_SubscriberHandle subscriber,
-                                             CUpti_CallbackDomain domain);
-typedef CUptiResult (*CuptiActivityEnableFunc)(CUpti_ActivityKind kind);
-typedef CUptiResult (*CuptiActivityRegisterCallbacksFunc)(CUpti_BuffersCallbackRequestFunc funcBufferRequested,
-                                                          CUpti_BuffersCallbackCompleteFunc funcBufferCompleted);
-typedef CUptiResult (*CuptiUnsubscribeFunc)(CUpti_SubscriberHandle subscriber);
-typedef CUptiResult (*CuptiActivityFlushAllFunc)(uint32_t flag);
-typedef CUptiResult (*CuptiActivityDisableFunc)(CUpti_ActivityKind kind);
-typedef CUptiResult (*CuptiActivityGetNextRecordFunc)(uint8_t *buffer, size_t validBufferSizeBytes,
-                                                      CUpti_Activity **record);
-typedef CUptiResult (*CuptiActivityGetNumDroppedRecordsFunc)(CUcontext context, uint32_t streamId, size_t *dropped);
-typedef CUptiResult (*CuptiGetTimestampFunc)(uint64_t *timestamp);
-typedef CUptiResult (*CuptiGetResultStringFunc)(CUptiResult result, const char **str);
-typedef CUptiResult (*CuptiGetStreamIdFunc)(CUcontext context, CUstream stream, uint32_t *streamId);
-typedef CUptiResult (*CuptiGetDeviceIdFunc)(CUcontext context, uint32_t *deviceId);
+using CuptiSubscribeFunc = CUptiResult (*)(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback,
+                                           void *userdata);
+using CuptiEnableDomainFunc = CUptiResult (*)(uint32_t enable, CUpti_SubscriberHandle subscriber,
+                                              CUpti_CallbackDomain domain);
+using CuptiActivityEnableFunc = CUptiResult (*)(CUpti_ActivityKind kind);
+using CuptiActivityRegisterCallbacksFunc = CUptiResult (*)(CUpti_BuffersCallbackRequestFunc funcBufferRequested,
+                                                           CUpti_BuffersCallbackCompleteFunc funcBufferCompleted);
+using CuptiUnsubscribeFunc = CUptiResult (*)(CUpti_SubscriberHandle subscriber);
+using CuptiActivityFlushAllFunc = CUptiResult (*)(uint32_t flag);
+using CuptiActivityDisableFunc = CUptiResult (*)(CUpti_ActivityKind kind);
+using CuptiActivityGetNextRecordFunc = CUptiResult (*)(uint8_t *buffer, size_t validBufferSizeBytes,
+                                                       CUpti_Activity **record);
+using CuptiActivityGetNumDroppedRecordsFunc = CUptiResult (*)(CUcontext context, uint32_t streamId, size_t *dropped);
+using CuptiGetTimestampFunc = CUptiResult (*)(uint64_t *timestamp);
+using CuptiGetResultStringFunc = CUptiResult (*)(CUptiResult result, const char **str);
+using CuptiGetStreamIdFunc = CUptiResult (*)(CUcontext context, CUstream stream, uint32_t *streamId);
+using CuptiGetDeviceIdFunc = CUptiResult (*)(CUcontext context, uint32_t *deviceId);
 
 CUptiResult CuptiSubscribe(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback, void *userdata) {
   static auto func_ptr = reinterpret_cast<CuptiSubscribeFunc>(GetCUPTIFunc("cuptiSubscribe"));

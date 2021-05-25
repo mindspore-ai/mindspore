@@ -111,6 +111,7 @@ class ProfilingOp {
 class GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> &GetInstance();
+  GPUProfiler() = default;
   ~GPUProfiler() { StopCUPTI(); }
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;
@@ -134,7 +135,6 @@ class GPUProfiler : public Profiler {
   std::string ProfileDataPath() const { return profile_data_path_; }
 
  private:
-  GPUProfiler() = default;
   void OpsParser();
   void EventLog(const Event &event);
   void ClearInst() override;
