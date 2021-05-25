@@ -30,7 +30,7 @@ Graph::GraphData::GraphData(const FuncGraphPtr &func_graph, enum ModelType model
 }
 
 Graph::GraphData::GraphData(Buffer om_data, enum ModelType model_type)
-    : func_graph_(nullptr), om_data_(), model_type_(ModelType::kUnknownType) {
+    : func_graph_(nullptr), om_data_(om_data), model_type_(model_type) {
   if (model_type != ModelType::kOM) {
     MS_LOG(EXCEPTION) << "Invalid ModelType " << model_type;
   }
@@ -46,8 +46,6 @@ Graph::GraphData::GraphData(Buffer om_data, enum ModelType model_type)
     MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
   }
 
-  om_data_ = om_data;
-  model_type_ = model_type;
 #else
   MS_LOG(EXCEPTION) << "Unsupported ModelType OM.";
 #endif

@@ -69,6 +69,8 @@ class TaskGenerator {
   bool LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
                        uint32_t graph_id);
   void DumpTaskInfo(const string &real_filename);
+  static void SaveTaskDebugInfoToFile(const std::string &real_filename,
+                                      const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 };
 }  // namespace tasksink
 }  // namespace ascend

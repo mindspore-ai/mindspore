@@ -21,9 +21,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> & /*workspace*/,
-                                    const std::vector<AddressPtr> & /*outputs*/, void *stream_ptr) {
+bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                    const std::vector<AddressPtr> &, void *stream_ptr) {
   if (inputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "BroadCast param is empty";
     return false;

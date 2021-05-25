@@ -86,7 +86,7 @@ class PythonEnvGuard {
   ~PythonEnvGuard();
 
  private:
-  bool PythonIsInited();
+  bool PythonIsInited() const;
   void InitPython();
   void FinalizePython();
   bool origin_init_status_;

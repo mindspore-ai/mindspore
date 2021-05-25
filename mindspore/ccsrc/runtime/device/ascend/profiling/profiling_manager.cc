@@ -15,7 +15,7 @@
  */
 
 #include "runtime/device/ascend/profiling/profiling_manager.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
@@ -45,8 +45,9 @@ ProfilingManager &ProfilingManager::GetInstance() {
 ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
 
 uint64_t ProfilingManager::GetJobId() const {
+  constexpr int kDecimal = 10;
   const char *job_id = std::getenv("JOB_ID");
-  return ((job_id != nullptr) ? std::strtoul(job_id, nullptr, 10) : 0);
+  return ((job_id != nullptr) ? std::strtoul(job_id, nullptr, kDecimal) : 0);
 }
 
 bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const {
@@ -283,7 +284,7 @@ Status RegProfReporterCallback(MsprofReporterCallback func) {
   return PROF_SUCCESS;
 }
 
-Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len) {
+Status ProfCommandHandle(ProfCommandHandleType type, void *, uint32_t) {
   MS_LOG(INFO) << "ProfCommandHandle start, type:" << type;
   if (type == kProfCommandhandleInit) {
     auto cb_ret = ProfilingManager::GetInstance().PluginInit();
@@ -304,7 +305,7 @@ Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len) {
   return PROF_SUCCESS;
 }
 
-bool DoRegiste() {
+bool DoRegiste() noexcept {
   MS_LOG(INFO) << "VM profiling register start";
   return VMCallbackRegister::GetInstance().Register(RegProfCtrlCallback, RegProfSetDeviceCallback,
                                                     RegProfReporterCallback, ProfCommandHandle);
