@@ -20,7 +20,7 @@
 #include <cuda_runtime_api.h>
 #include <vector>
 #include <algorithm>
-#include "backend/kernel_compiler/gpu/cuda_impl/identity_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/eye_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/matrix_split_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -149,7 +149,7 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
       h_array[i] = d_batch_input_addr + i * lda_ * m_;
       h_identity[i] = output_addr + i * ldb_ * m_;
     }
-    Identity(batch_ * split_dim * split_dim, split_dim, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    Eye(batch_ * split_dim * split_dim, split_dim, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     MatrixSplit(batch_ * split_dim * split_dim, split_dim, width, input1_addr, d_batch_input_addr,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,

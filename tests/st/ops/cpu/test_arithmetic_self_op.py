@@ -68,6 +68,15 @@ class RintNet(nn.Cell):
         return self.rint(x)
 
 
+class IdentityNet(nn.Cell):
+    def __init__(self):
+        super(IdentityNet, self).__init__()
+        self.identity = P.Identity()
+
+    def construct(self, x):
+        return self.identity(x)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -189,3 +198,163 @@ def test_reciprocal():
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * 1.0e-5
     assert np.all(np.abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_identity_pynative():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    net = IdentityNet()
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int8)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.bool)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_identity_graph():
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    net = IdentityNet()
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int64)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int32)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int16)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.int8)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.bool)
+    input_tensor = Tensor(x)
+    output = net(input_tensor)
+    np.testing.assert_almost_equal(output.asnumpy(), input_tensor.asnumpy())
+    assert id(input_tensor) != id(output)
