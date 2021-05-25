@@ -53,7 +53,7 @@ def eval_alexnet():
         network = AlexNet(config.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         opt = nn.Momentum(network.trainable_params(), config.learning_rate, config.momentum)
-        ds_eval = create_dataset_cifar10(config.data_path, config.batch_size, status="test", \
+        ds_eval = create_dataset_cifar10(config, config.data_path, config.batch_size, status="test", \
             target=config.device_target)
         param_dict = load_checkpoint(config.ckpt_path)
         print("load checkpoint from [{}].".format(config.ckpt_path))
@@ -64,7 +64,7 @@ def eval_alexnet():
     elif config.dataset_name == 'imagenet':
         network = AlexNet(config.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        ds_eval = create_dataset_imagenet(config.data_path, config.batch_size, training=False)
+        ds_eval = create_dataset_imagenet(config, config.data_path, config.batch_size, training=False)
         param_dict = load_checkpoint(config.ckpt_path)
         print("load checkpoint from [{}].".format(config.ckpt_path))
         load_param_into_net(network, param_dict)

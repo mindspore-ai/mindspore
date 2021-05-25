@@ -88,7 +88,13 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         ├── src
         │   ├──dataset.py             // 创建数据集
         │   ├──alexnet.py              // AlexNet架构
-        │   ├──config.py            // 参数配置
+        |   └──model_utils
+        |      ├──config.py          // 训练配置
+        |      ├──device_adapter.py  // 获取云上id
+        |      ├──local_adapter.py   // 获取本地id
+        |      └──moxing_adapter.py  // 参数处理
+        ├── default_config.yaml     // 训练参数配置文件
+        ├── config_imagenet.yaml     // 训练参数配置文件
         ├── train.py               // 训练脚本
         ├── eval.py               //  评估脚本
 ```

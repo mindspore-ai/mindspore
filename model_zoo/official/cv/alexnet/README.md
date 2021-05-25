@@ -84,9 +84,15 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         ├── src
         │   ├──dataset.py             // creating dataset
         │   ├──alexnet.py              // alexnet architecture
-        │   ├──config.py            // parameter configuration
+        │   └──model_utils
+        │       ├──config.py               // Processing configuration parameters
+        │       ├──device_adapter.py       // Get cloud ID
+        │       ├──local_adapter.py        // Get local ID
+        │       └──moxing_adapter.py       // Parameter processing
+        ├── default_config.yaml            // Training parameter profile(cifar10)
+        ├── config_imagenet.yaml           // Training parameter profile(imagenet)
         ├── train.py               // training script
-        ├── eval.py               //  evaluation script
+        ├── eval.py                // evaluation script
 ```
 
 ### [Script Parameters](#contents)
