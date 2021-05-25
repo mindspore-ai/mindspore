@@ -84,9 +84,13 @@ class FloatEnvGetItemSwitch : public OptimizerCaller {
 namespace internal {
 FuncGraphPtr TransformGraphCondTrueBranchNodes(const FuncGraphPtr &graph, const AnfNodePtr &cond);
 FuncGraphPtr TransformGraphCondFalseBranchNodes(const FuncGraphPtr &graph, const AnfNodePtr &cond);
-AnfNodePtr TransformMergeBranches(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
-                                  const AbstractBasePtr &true_graph_output_abs,
-                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond,
+// block_nodes[0]: condition node
+// block_nodes[1]: true branch node
+// block_nodes[2]: false branch node
+// branch_output_abs[0]: true branch abstract
+// branch_output_abs[1]: false branch abstract
+AnfNodePtr TransformMergeBranches(const std::vector<AnfNodePtr> &block_nodes,
+                                  const std::vector<AbstractBasePtr> &branch_output_abs,
                                   const FuncGraphPtr &func_graph);
 }  // namespace internal
 
@@ -137,7 +141,7 @@ class ConvertSwitchReplacement : public OptimizerCaller {
       auto fg = node->func_graph();
       auto cloned_g1 = InlineClone(trans_g1, fg, params);
       auto cloned_g2 = InlineClone(trans_g2, fg, params);
-      auto nnode = internal::TransformMergeBranches(cloned_g1, cloned_g2, true_output, false_output, x_, fg);
+      auto nnode = internal::TransformMergeBranches({x_, cloned_g1, cloned_g2}, {true_output, false_output}, fg);
 
       return nnode;
     };

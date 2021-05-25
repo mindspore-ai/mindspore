@@ -2066,44 +2066,64 @@ class IrParser {
       MS_LOG(EXCEPTION) << "Unknown id " << id << " at line " << lexer_.GetLineNo();
     }
   }
+  bool ParseValueBasicBasic(const std::string &id, ValuePtr *const val_ptr, Token *ret) {
+    if (id == "Bool") {
+      *ret = ParseScalar<BoolImm, bool, Bool>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "I8") {
+      *ret = ParseScalar<Int8Imm, int8_t, Int, 8>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "I16") {
+      *ret = ParseScalar<Int16Imm, int16_t, Int, 16>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "I32") {
+      *ret = ParseScalar<Int32Imm, int32_t, Int, 32>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "I64") {
+      *ret = ParseScalar<Int64Imm, int64_t, Int, 64>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "U8") {
+      *ret = ParseScalar<UInt8Imm, uint8_t, UInt, 8>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "U16") {
+      *ret = ParseScalar<UInt16Imm, uint16_t, UInt, 16>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "U32") {
+      *ret = ParseScalar<UInt32Imm, uint32_t, UInt, 32>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "U64") {
+      *ret = ParseScalar<UInt64Imm, uint64_t, UInt, 64>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "F16") {
+      // Notice: Since there is no basic data type for storing fp16, just use float instead
+      *ret = ParseScalar<FP32Imm, float, Float, 16>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "F32") {
+      *ret = ParseScalar<FP32Imm, float, Float, 32>(val_ptr, lexer_.GetNextToken());
+      return true;
+    } else if (id == "F64") {
+      *ret = ParseScalar<FP64Imm, double, Float, 64>(val_ptr, lexer_.GetNextToken());
+      return true;
+    }
+    return false;
+  }
 
   Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *const val_ptr,
                         AnfNodePtr *const node_ptr = nullptr) {
+    Token ret;
+    if (ParseValueBasicBasic(id, val_ptr, &ret)) {
+      return ret;
+    }
     if (id == "None") {
       *val_ptr = std::make_shared<None>();
       return lexer_.GetNextToken();
-    } else if (id == "Bool") {
-      return ParseScalar<BoolImm, bool, Bool>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "I8") {
-      return ParseScalar<Int8Imm, int8_t, Int, 8>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "I16") {
-      return ParseScalar<Int16Imm, int16_t, Int, 16>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "I32") {
-      return ParseScalar<Int32Imm, int32_t, Int, 32>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "I64") {
-      return ParseScalar<Int64Imm, int64_t, Int, 64>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "U8") {
-      return ParseScalar<UInt8Imm, uint8_t, UInt, 8>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "U16") {
-      return ParseScalar<UInt16Imm, uint16_t, UInt, 16>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "U32") {
-      return ParseScalar<UInt32Imm, uint32_t, UInt, 32>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "U64") {
-      return ParseScalar<UInt64Imm, uint64_t, UInt, 64>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "F16") {
-      // Notice: Since there is no basic data type for storing fp16, just use float instead
-      return ParseScalar<FP32Imm, float, Float, 16>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "F32") {
-      return ParseScalar<FP32Imm, float, Float, 32>(val_ptr, lexer_.GetNextToken());
-    } else if (id == "F64") {
-      return ParseScalar<FP64Imm, double, Float, 64>(val_ptr, lexer_.GetNextToken());
     } else if (id == "Tensor") {
       return ParseTensor(val_ptr);
     } else if (id == "SymInst") {
       return ParseSymbolicKeyInstance(func_graph, node_ptr);
     } else if (id == "Array") {
       TypePtr type = nullptr;
-      Token ret = ParseTypeArray(func_graph, lexer_.GetNextToken(), &type);
+      ret = ParseTypeArray(func_graph, lexer_.GetNextToken(), &type);
       *val_ptr = type;
       return ret;
     } else if (Match(id, "PrimitivePy::")) {
