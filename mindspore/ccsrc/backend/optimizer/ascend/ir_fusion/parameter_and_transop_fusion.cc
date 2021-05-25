@@ -87,6 +87,7 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
   }
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   bool changed = false;
+  constexpr size_t kTransRoadSize = 3;
   for (auto node : node_list) {
     if (node == nullptr || !node->isa<CNode>()) {
       continue;
@@ -103,7 +104,8 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
       std::vector<CNodePtr> trans_road;
       bool first_flag = true;
       auto final_node = ParamTransRoad(func_graph, AnfAlgo::GetInputNode(cnode, input_index), first_flag, &trans_road);
-      if (final_node != nullptr && trans_road.size() == 3 && AnfAlgo::GetCNodeName(trans_road[0]) == kTransDataOpName &&
+      if (final_node != nullptr && trans_road.size() == kTransRoadSize &&
+          AnfAlgo::GetCNodeName(trans_road[0]) == kTransDataOpName &&
           AnfAlgo::GetCNodeName(trans_road[1]) == prim::kPrimCast->name() &&
           AnfAlgo::GetCNodeName(trans_road[2]) == kTransDataOpName) {
         auto cur_transop = trans_road[0];

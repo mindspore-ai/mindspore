@@ -25,13 +25,15 @@ namespace mindspore {
 namespace opt {
 namespace {
 bool CheckShapeDimInfo(const std::vector<size_t> &shape) {
+  constexpr size_t kShape2Dim = 2;
   if (shape.empty()) {
     return false;
   }
   if (shape.size() == 1 && shape[0] % kCubeSize != 0) {
     return false;
   }
-  return !(shape.size() >= 2 && (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - 2] % kCubeSize != 0));
+  return !(shape.size() >= kShape2Dim &&
+           (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - kShape2Dim] % kCubeSize != 0));
 }
 }  // namespace
 
