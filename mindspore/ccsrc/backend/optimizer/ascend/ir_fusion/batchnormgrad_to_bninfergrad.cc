@@ -31,9 +31,12 @@ CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormg
   MS_EXCEPTION_IF_NULL(batchnormgrad);
   auto prim = std::make_shared<Primitive>(kBNInferGradOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
-  inputs.push_back(batchnormgrad->input(1));
-  inputs.push_back(batchnormgrad->input(3));
-  inputs.push_back(batchnormgrad->input(5));
+  constexpr size_t kDBatchMean = 1;
+  constexpr size_t kInputX = 3;
+  constexpr size_t kBatchStd = 5;
+  inputs.push_back(batchnormgrad->input(kDBatchMean));
+  inputs.push_back(batchnormgrad->input(kInputX));
+  inputs.push_back(batchnormgrad->input(kBatchStd));
   auto new_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(batchnormgrad->scope());

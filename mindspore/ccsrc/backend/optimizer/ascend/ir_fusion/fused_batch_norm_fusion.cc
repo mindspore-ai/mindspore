@@ -138,8 +138,11 @@ void FusedBatchNormFusion::GetBNTrainingUpdateAbstractList(const EquivPtr &equiv
   auto variable_input1 = GetAnfNodeByVar(equiv, variable_input1_var_);
   MS_EXCEPTION_IF_NULL(variable_input0);
   MS_EXCEPTION_IF_NULL(variable_input1);
-  *abstract_list = {bn_abstract_tuple->elements()[0], variable_input0->abstract(), variable_input1->abstract(),
-                    bn_abstract_tuple->elements()[1], bn_abstract_tuple->elements()[2]};
+  constexpr size_t kElements0 = 0;
+  constexpr size_t kElements1 = 1;
+  constexpr size_t kElements2 = 2;
+  *abstract_list = {bn_abstract_tuple->elements()[kElements0], variable_input0->abstract(), variable_input1->abstract(),
+                    bn_abstract_tuple->elements()[kElements1], bn_abstract_tuple->elements()[kElements2]};
 }
 
 AnfNodePtr FusedBatchNormFusion::CreateBNTrainingUpdate(
