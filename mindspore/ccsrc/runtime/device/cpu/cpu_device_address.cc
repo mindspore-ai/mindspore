@@ -44,7 +44,8 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
   return ret;
 }
 
-bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t size, TypeId type, void *host_ptr) const {
+bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /* shape */, size_t size, TypeId type,
+                                        void *host_ptr) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
@@ -60,11 +61,11 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t si
       return false;
     }
   } else if (type == kNumberTypeFloat16 && type_id_ == kNumberTypeFloat32) {
-    FloatToHalf(host_ptr, ptr_, size / 2);
+    FloatToHalf(host_ptr, ptr_, size >> 1);
   } else if (type == kNumberTypeFloat64 && type_id_ == kNumberTypeFloat32) {
     FloatToDouble(host_ptr, ptr_, size / sizeof(double));
   } else if (type == kNumberTypeInt16 && type_id_ == kNumberTypeInt32) {
-    IntToShort(host_ptr, ptr_, size / 2);
+    IntToShort(host_ptr, ptr_, size >> 1);
   } else if (type == kNumberTypeInt64 && type_id_ == kNumberTypeInt32) {
     IntToLong(host_ptr, ptr_, size / sizeof(int64_t));
   } else {
@@ -75,7 +76,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /*shape*/, size_t si
   return true;
 }
 
-bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t size, TypeId type,
+bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId type,
                                         const void *host_ptr) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
@@ -86,11 +87,11 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector & /*shape*/, size_t si
     return true;
   }
   if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat16) {
-    HalfToFloat(ptr_, host_ptr, size / 2);
+    HalfToFloat(ptr_, host_ptr, size >> 1);
   } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
     DoubleToFloat(ptr_, host_ptr, size / sizeof(double));
   } else if (type_id_ == kNumberTypeInt32 && type == kNumberTypeInt16) {
-    ShortToInt(ptr_, host_ptr, size / 2);
+    ShortToInt(ptr_, host_ptr, size >> 1);
   } else if (type_id_ == kNumberTypeInt32 && type == kNumberTypeInt64) {
     LongToInt(ptr_, host_ptr, size / sizeof(int64_t));
   } else {
