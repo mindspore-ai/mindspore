@@ -52,7 +52,6 @@ _set_ps_context_func_map = {
     "client_epoch_num": ps_context().set_client_epoch_num,
     "client_batch_size": ps_context().set_client_batch_size,
     "client_learning_rate": ps_context().set_client_learning_rate,
-    "secure_aggregation": ps_context().set_secure_aggregation,
     "enable_ps_ssl": ps_context().set_enable_ssl
 }
 

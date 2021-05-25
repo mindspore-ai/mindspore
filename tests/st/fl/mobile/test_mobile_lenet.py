@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import ast
 import argparse
 import numpy as np
 
@@ -42,7 +41,6 @@ parser.add_argument("--fl_iteration_num", type=int, default=25)
 parser.add_argument("--client_epoch_num", type=int, default=20)
 parser.add_argument("--client_batch_size", type=int, default=32)
 parser.add_argument("--client_learning_rate", type=float, default=0.1)
-parser.add_argument("--secure_aggregation", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -62,7 +60,6 @@ fl_iteration_num = args.fl_iteration_num
 client_epoch_num = args.client_epoch_num
 client_batch_size = args.client_batch_size
 client_learning_rate = args.client_learning_rate
-secure_aggregation = args.secure_aggregation
 
 ctx = {
     "enable_fl": True,
@@ -82,7 +79,6 @@ ctx = {
     "client_epoch_num": client_epoch_num,
     "client_batch_size": client_batch_size,
     "client_learning_rate": client_learning_rate,
-    "secure_aggregation": secure_aggregation
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=False)

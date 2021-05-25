@@ -359,8 +359,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_client_batch_size", &PSContext::set_client_batch_size, "Set federated learning client batch size.")
     .def("set_client_learning_rate", &PSContext::set_client_learning_rate,
          "Set federated learning client learning rate.")
-    .def("set_secure_aggregation", &PSContext::set_secure_aggregation,
-         "Set federated learning client using secure aggregation.")
     .def("set_enable_ssl", &PSContext::enable_ssl, "Set PS SSL mode enabled or disabled.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")

@@ -144,10 +144,6 @@ class PSContext {
   void set_client_learning_rate(float client_learning_rate);
   float client_learning_rate() const;
 
-  // Set true if using secure aggregation for federated learning.
-  void set_secure_aggregation(bool secure_aggregation);
-  bool secure_aggregation() const;
-
   core::ClusterConfig &cluster_config();
 
  private:
