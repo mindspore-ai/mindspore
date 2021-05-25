@@ -452,7 +452,8 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
 LocationPtr Parser::GetLocation(const py::object &node) const {
   MS_EXCEPTION_IF_NULL(ast_);
   py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-  if (ret.size() < 5) {
+  constexpr size_t list_size = 5;
+  if (ret.size() < list_size) {
     MS_LOG(EXCEPTION) << "List size should not be less than 5.";
   }
   // Refer to Location::Location() for each member of ret: line, column, line_end, column_end.

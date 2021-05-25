@@ -96,9 +96,10 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
   const auto &inputs = node->inputs();
   // Inputs should be [getattr, data, attribute]
   MS_ASSERT(inputs.size() == 3 && "GetAttr should have three inputs.");
-
-  AnfNodePtr data = inputs[1];
-  AnfNodePtr cons = inputs[2];
+  constexpr size_t data_index = 1;
+  constexpr size_t attribute_index = 2;
+  AnfNodePtr data = inputs[data_index];
+  AnfNodePtr cons = inputs[attribute_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(cons);
 
@@ -138,9 +139,10 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
   // Inputs should be [dict_getitem, dict, item]
   const auto &inputs = node->inputs();
   MS_ASSERT(inputs.size() == 3 && "DictGetItem should have three inputs.");
-
-  AnfNodePtr data = inputs[1];
-  AnfNodePtr cons = inputs[2];
+  constexpr size_t data_index = 1;
+  constexpr size_t cons_index = 2;
+  AnfNodePtr data = inputs[data_index];
+  AnfNodePtr cons = inputs[cons_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(cons);
 
@@ -332,7 +334,8 @@ AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
   const auto &inputs = node->inputs();
   // Inputs should be [extract_keyword_arg, arg, key]
   MS_ASSERT(inputs.size() == 3 && "ExtractKeyword should have three inputs");
-  return inputs[2];
+  constexpr size_t key_index = 2;
+  return inputs[key_index];
 }
 
 ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int64_t depth) {
@@ -573,7 +576,8 @@ static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr &graph, const st
     for (auto &elem : abs_tuple->elements()) {
       auto c_node = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, NewValueNode(idx)});
       AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(idx));
-      c_node->input(2)->set_abstract(aptr);
+      constexpr size_t scalar_index = 2;
+      c_node->input(scalar_index)->set_abstract(aptr);
       c_node->set_abstract(elem);
       new_input.emplace_back(c_node);
       idx++;

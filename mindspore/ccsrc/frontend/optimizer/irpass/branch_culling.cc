@@ -371,7 +371,8 @@ void GenerateReplNodeForDependMakeTuple(
     if (IsPrimitiveCNode(depended_tuple_input_node->cast<CNodePtr>(), prim::kPrimControlDepend)) {
       // only when the control depend input is not square op (the op to use as merge output)
       auto control_inputs = depended_tuple_input_node->cast<CNodePtr>()->inputs();
-      if (control_inputs.size() != 3) {
+      constexpr size_t depend_size = 3;
+      if (control_inputs.size() != depend_size) {
         MS_LOG(EXCEPTION) << "controldepend input size != 3, got " << control_inputs.size();
       }
       // control inputs: primitive, src, dst
