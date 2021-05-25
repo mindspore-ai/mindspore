@@ -183,7 +183,7 @@ def check_2tuple(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     if not (isinstance(value, tuple) and len(value) == 2):
-        raise ValueError("Value {0}needs to be a 2-tuple.".format(arg_name))
+        raise ValueError("Value {0} needs to be a 2-tuple.".format(arg_name))
 
 
 def check_uint8(value, arg_name=""):

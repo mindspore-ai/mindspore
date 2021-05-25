@@ -291,11 +291,22 @@ class ResizePreserveAR final : public TensorTransform {
 };
 
 /// \brief Rotate TensorTransform.
-/// \note Rotate the input image using a specified angle id.
+/// \note Rotate the input image according to parameters.
 class Rotate final : public TensorTransform {
  public:
   /// \brief Constructor.
   Rotate();
+
+  /// \brief Constructor.
+  /// \param[in] degrees A float value, representing the rotation degrees.
+  /// \param[in] resample An enum for the mode of interpolation.
+  /// \param[in] expand A boolean representing whether the image is expanded after rotation.
+  /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform.
+  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
+         std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
 
   /// \brief Destructor.
   ~Rotate() = default;
@@ -307,6 +318,8 @@ class Rotate final : public TensorTransform {
 
  private:
   std::shared_ptr<RotateOperation> op_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 }  // namespace vision

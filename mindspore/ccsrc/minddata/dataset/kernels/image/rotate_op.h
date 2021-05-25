@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,25 @@ namespace mindspore {
 namespace dataset {
 class RotateOp : public TensorOp {
  public:
+  // Default values, also used by python_bindings.cc
+  static const float kDefCenterX;
+  static const float kDefCenterY;
+  static const InterpolationMode kDefInterpolation;
+  static const bool kDefExpand;
+  static const uint8_t kDefFillR;
+  static const uint8_t kDefFillG;
+  static const uint8_t kDefFillB;
+
   /// Constructor
   explicit RotateOp(int angle_id);
 
+  explicit RotateOp(float degrees, InterpolationMode resample = kDefInterpolation, bool expand = kDefExpand,
+                    float center_x = kDefCenterX, float center_y = kDefCenterY, uint8_t fill_r = kDefFillR,
+                    uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
+
   ~RotateOp() override = default;
+
+  Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   std::string Name() const override { return kRotateOp; }
 
@@ -42,11 +57,18 @@ class RotateOp : public TensorOp {
 
   /// Member variables
  protected:
-  std::string kRotateOp = "RotateOp";
   uint64_t angle_id_;
-};
 
+ private:
+  float degrees_;
+  float center_x_;
+  float center_y_;
+  InterpolationMode interpolation_;
+  bool expand_;
+  uint8_t fill_r_;
+  uint8_t fill_g_;
+  uint8_t fill_b_;
+};
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_ROTATE_OP_H_

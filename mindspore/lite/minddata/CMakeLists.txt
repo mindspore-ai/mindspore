@@ -482,7 +482,6 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
         "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
         "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/gaussian_blur.cc"
         "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
         "${MINDDATA_DIR}/kernels/image/image_utils.cc"
         "${MINDDATA_DIR}/kernels/image/invert_op.cc"

@@ -231,3 +231,84 @@ TEST_F(MindDataTestPipeline, TestRGB2GRAYSucess) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestRotateParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRotateParamCheck with invalid parameters.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Size of center is not 2
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> rotate1(new vision::Rotate(90.0, InterpolationMode::kNearestNeighbour, false, {0.}));
+  auto ds2 = ds->Map({rotate1});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid center for Rotate
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 2: Size of fill_value is not 1 or 3
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> rotate2(
+    new vision::Rotate(-30, InterpolationMode::kNearestNeighbour, false, {1.0, 1.0}, {2, 2}));
+  auto ds3 = ds->Map({rotate2});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid fill_value for Rotate
+  EXPECT_EQ(iter3, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRotatePass) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRotatePass.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> resize(new vision::Resize({50, 25}));
+
+  std::shared_ptr<TensorTransform> rotate(
+    new vision::Rotate(90, InterpolationMode::kLinear, true, {-1, -1}, {255, 255, 255}));
+
+  // Resize the image to 50 * 25
+  ds = ds->Map({resize});
+  EXPECT_NE(ds, nullptr);
+
+  // Rotate the image 90 degrees
+  ds = ds->Map({rotate});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    // After rotation with expanding, the image size comes to 25 * 50
+    EXPECT_EQ(image.Shape()[1], 25);
+    EXPECT_EQ(image.Shape()[2], 50);
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}

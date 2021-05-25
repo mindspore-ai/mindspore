@@ -39,6 +39,9 @@ class RotateOperation : public TensorOperation {
  public:
   RotateOperation();
 
+  RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
+                  std::vector<uint8_t> fill_value);
+
   ~RotateOperation();
 
   std::shared_ptr<TensorOp> Build() override;
@@ -47,10 +50,18 @@ class RotateOperation : public TensorOperation {
 
   std::string Name() const override;
 
+  Status to_json(nlohmann::json *out_json) override;
+
   void setAngle(uint64_t angle_id);
 
  private:
-  std::shared_ptr<TensorOp> rotate_op;
+  std::shared_ptr<TensorOp> rotate_op_;
+  uint64_t angle_id_;
+  float degrees_;
+  InterpolationMode interpolation_mode_;
+  std::vector<float> center_;
+  bool expand_;
+  std::vector<uint8_t> fill_value_;
 };
 
 }  // namespace vision

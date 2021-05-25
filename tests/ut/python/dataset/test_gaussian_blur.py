@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing GaussianBlur op in DE
+Testing GaussianBlur Python API
 """
 import cv2
 
@@ -26,8 +26,6 @@ from util import visualize_image, diff_mse
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 IMAGE_FILE = "../data/dataset/apple.jpg"
-
-GENERATE_GOLDEN = False
 
 
 def test_gaussian_blur_pipeline(plot=False):
@@ -78,7 +76,7 @@ def test_gaussian_blur_eager():
 
 def test_gaussian_blur_exception():
     """
-    Test GsianBlur with invalid parameters
+    Test GaussianBlur with invalid parameters
     """
     logger.info("test_gaussian_blur_exception")
     try:
@@ -104,6 +102,6 @@ def test_gaussian_blur_exception():
 
 
 if __name__ == "__main__":
-    test_gaussian_blur_pipeline(plot=True)
+    test_gaussian_blur_pipeline(plot=False)
     test_gaussian_blur_eager()
     test_gaussian_blur_exception()

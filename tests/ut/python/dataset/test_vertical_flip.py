@@ -54,7 +54,7 @@ def test_vertical_flip_pipeline(plot=False):
         original = data2["image"]
         vertical_flip_cv = cv2.flip(original, 0)
         mse = diff_mse(vertical_flip_ms, vertical_flip_cv)
-        logger.info("gaussian_blur_{}, mse: {}".format(num_iter + 1, mse))
+        logger.info("vertical_flip_{}, mse: {}".format(num_iter + 1, mse))
         assert mse == 0
         num_iter += 1
         if plot:
@@ -75,5 +75,5 @@ def test_vertical_flip_eager():
 
 
 if __name__ == "__main__":
-    test_vertical_flip_pipeline(plot=True)
+    test_vertical_flip_pipeline(plot=False)
     test_vertical_flip_eager()

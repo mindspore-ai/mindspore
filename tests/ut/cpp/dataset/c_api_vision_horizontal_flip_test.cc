@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/kernels/image/horizontal_flip_op.h"
-
 #include "common/common.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/execute.h"

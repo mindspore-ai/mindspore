@@ -820,12 +820,32 @@ std::shared_ptr<TensorOperation> ResizePreserveAR::Parse() {
   return std::make_shared<ResizePreserveAROperation>(data_->height_, data_->width_, data_->img_orientation_);
 }
 
-#ifdef ENABLE_ANDROID
 // Rotate Transform Operation.
+#ifdef ENABLE_ANDROID
 Rotate::Rotate() {}
 
 std::shared_ptr<TensorOperation> Rotate::Parse() { return std::make_shared<RotateOperation>(); }
-#endif  // ENABLE_ANDROID
+#else
+struct Rotate::Data {
+  Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
+       const std::vector<uint8_t> &fill_value)
+      : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
+  float degrees_;
+  InterpolationMode interpolation_mode_;
+  std::vector<float> center_;
+  bool expand_;
+  std::vector<uint8_t> fill_value_;
+};
+
+Rotate::Rotate(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
+               std::vector<uint8_t> fill_value)
+    : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
+
+std::shared_ptr<TensorOperation> Rotate::Parse() {
+  return std::make_shared<RotateOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_, data_->center_,
+                                           data_->fill_value_);
+}
+#endif
 
 #ifndef ENABLE_ANDROID
 // ResizeWithBBox Transform Operation.
