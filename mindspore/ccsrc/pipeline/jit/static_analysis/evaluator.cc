@@ -155,6 +155,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
       stack_frames.push(new_stack_frame);
       current_stack_frame = new_stack_frame;
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Jump to new func graph, " << new_stack_frame;
+      continue;
     }
 
     eval_result = current_stack_frame->Step(engine);
@@ -167,7 +168,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg) {
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [&fg](const AnfNodePtr &node) -> IncludeType {
-    if (node->func_graph() != fg || node->isa<ValueNode>()) {
+    if (node->isa<ValueNode>() || node->isa<Parameter>()) {
       return EXCLUDE;
     }
     return FOLLOW;
