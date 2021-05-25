@@ -160,13 +160,15 @@ REG_ADPT_DESC(UnsortedSegmentSumD, prim::kPrimUnsortedSegmentSum->name(), ADPT_D
 
 // UnsortedSegmentProdD
 INPUT_MAP(UnsortedSegmentProdD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
-ATTR_MAP(UnsortedSegmentProdD) = {{"num_segments", ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+INPUT_ATTR_MAP(UnsortedSegmentProdD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+ATTR_MAP(UnsortedSegmentProdD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentProdD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentProdD, kNameUnsortedSegmentProdD, ADPT_DESC(UnsortedSegmentProdD))
 
 // UnsortedSegmentMaxD
 INPUT_MAP(UnsortedSegmentMaxD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
-ATTR_MAP(UnsortedSegmentMaxD) = {{"num_segments", ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+INPUT_ATTR_MAP(UnsortedSegmentMaxD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+ATTR_MAP(UnsortedSegmentMaxD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMaxD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMaxD, kNameUnsortedSegmentMaxD, ADPT_DESC(UnsortedSegmentMaxD))
 
