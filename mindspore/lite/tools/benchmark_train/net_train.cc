@@ -19,6 +19,7 @@
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS
 #include <algorithm>
+#include <cstring>
 #include <utility>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
