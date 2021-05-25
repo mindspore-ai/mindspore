@@ -1382,6 +1382,7 @@ class Tensor(Tensor_):
                 - clip: Clips to the range. `clip` mode means that all indices that are
                   too large are replaced by the index that addresses the last element
                   along that axis. Note that this disables indexing with negative numbers.
+
                 Default: `clip`.
 
         Returns:
