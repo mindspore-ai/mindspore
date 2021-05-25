@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 4 ]
-then
-    echo "Usage: sh run_eval_cpu.sh [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]"
-    exit 1
-fi
+"""Device adapter for ModelArts"""
 
-# check checkpoint file
-if [ ! -f $4 ]
-then
-    echo "error: CHECKPOINT_PATH=$4 is not a file"
-    exit 1
-fi
+from src.model_utils.config import config
 
-BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+if config.enable_modelarts:
+    from src.model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from src.model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
 
-if [ -d "../eval" ];
-then
-    rm -rf ../eval
-fi
-mkdir ../eval
-cd ../eval || exit
-
-python ${BASEPATH}/../eval.py \
-            --net=$1 \
-            --dataset=$2 \
-            --train_data_dir=$3 \
-            --device_target='CPU' \
-            --is_distributed=0 \
-            --train_pretrained=$4 > eval.log 2>&1 &
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

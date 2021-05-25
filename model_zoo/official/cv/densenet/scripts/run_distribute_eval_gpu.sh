@@ -53,15 +53,15 @@ then
     mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../eval.py \
                                              --net=$3 \
                                              --dataset=$4 \
-                                             --data_dir=$5 \
+                                             --train_data_dir=$5 \
                                              --device_target='GPU' \
-                                             --pretrained=$6 > eval.log 2>&1 &
+                                             --train_pretrained=$6 > eval.log 2>&1 &
 else
 
     python3 ${BASEPATH}/../eval.py \
             --net=$3 \
             --dataset=$4 \
-            --data_dir=$5 \
+            --train_data_dir=$5 \
             --device_target='GPU' \
-            --pretrained=$6 > eval.log 2>&1 &
+            --train_pretrained=$6 > eval.log 2>&1 &
 fi
