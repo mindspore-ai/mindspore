@@ -344,11 +344,13 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
     return;
   }
   auto cnode_output = output->cast<CNodePtr>();
-  auto &cnode_input = cnode_output->input(1);
+  const size_t forward_output_index = 1;
+  auto &cnode_input = cnode_output->input(forward_output_index);
   if (!cnode_input->isa<CNode>()) {
     return;
   }
-  auto &input_fg = cnode_output->input(2);
+  const size_t bprop_graph_index = 2;
+  auto &input_fg = cnode_output->input(bprop_graph_index);
   if (!IsValueNode<FuncGraph>(input_fg)) {
     return;
   }

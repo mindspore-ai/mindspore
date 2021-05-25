@@ -248,7 +248,8 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
   // input: x's shape and y's shape, inputs should be tuple
   // output: tuple of x and y 's reduce index, reduce index should be a tuple
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t inputs_size = 2;
+  CheckArgsSize(op_name, args_spec_list, inputs_size);
   auto arg_x = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   auto arg_y = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
 
@@ -309,7 +310,8 @@ AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const Primi
   // Inputs: a fn, a list and an object of a subclass of a AbstractBase.
   MS_EXCEPTION_IF_NULL(engine);
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  const size_t inputs_size = 3;
+  CheckArgsSize(op_name, args_spec_list, inputs_size);
   AbstractFunctionPtr fn = CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
   AbstractListPtr lst = CheckArg<AbstractList>(op_name, args_spec_list, 1);
   AbstractBasePtr dflt = args_spec_list[2];
