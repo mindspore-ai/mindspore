@@ -27,8 +27,8 @@ class GeLUGrad(Expander):
         # cal formula are:
         # gelu_grad of dy and x is dy * y'
         # y' is 0.5 * (1.0 + tanh(tanh_para)) + 0.5 * x * (1.0 - tanh(tanh_para) * tanh(para)) * mul_right
-        # tanh_para is sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)
-        # mul_right is sqrt(2.0 / pi) * (1 + 3 * 0.044715 * x * x)
+        # tanh_para is 'sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)'
+        # mul_right is 'sqrt(2.0 / pi) * (1 + 3 * 0.044715 * x * x)'
 
         input_dy, input_x, _ = self.inputs
 

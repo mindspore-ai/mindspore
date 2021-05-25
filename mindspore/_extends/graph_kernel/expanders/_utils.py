@@ -94,7 +94,7 @@ class ExpanderInfoValidator:
             inp_formats = [inp['format'] for inp in obj.inputs]
             for formats in getattr(obj, format_list_name):
                 if len(formats) != len(inp_formats):
-                    raise GKException("length of registered format doesn't match with the input of {}".format(obj.name))
+                    raise GKException("length of registered format doesn't match the input of {}".format(obj.name))
                 if all([fmt == inp for fmt, inp in zip(formats, inp_formats)]):
                     return
             raise GKException("Unregistered format ({}) for op {}".format(','.join(inp_formats), obj.name))
