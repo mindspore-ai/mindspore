@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 2 ]; then
-  echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]"
+  echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]"
   exit 1
 fi
 
@@ -36,7 +36,7 @@ if [ ! -f $PATH1 ]; then
 fi
 
 if [ ! -d $PATH2 ]; then
-  echo "error: DATASET_PATH=$PATH2 is not a directory"
+  echo "error: TRAIN_DATA_DIR=$PATH2 is not a directory"
   exit 1
 fi
 
@@ -51,11 +51,12 @@ for ((i = 0; i < ${DEVICE_NUM}; i++)); do
   rm -rf ./train_parallel$i
   mkdir ./train_parallel$i
   cp ../*.py ./train_parallel$i
+  cp ../*.yaml ./train_parallel$i
   cp *.sh ./train_parallel$i
   cp -r ../src ./train_parallel$i
   cd ./train_parallel$i || exit
   echo "start training for rank $RANK_ID, device $DEVICE_ID"
   env >env.log
-  python train.py --platform=Ascend --dataset_path=$PATH2 --run_distribute > log.txt 2>&1 &
+  python train.py --device_target=Ascend --train_data_dir=$PATH2 --run_distribute True > log.txt 2>&1 &
   cd ..
 done

@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-CUR_PATH=$(dirname $PWD/$0)
-cd $CUR_PATH/../ &&
-  python process_data.py &&
-  cd - &> /dev/null || exit
+"""Device adapter for ModelArts"""
 
+from src.model_utils.config import config
+
+if config.enable_modelarts:
+    from src.model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from src.model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

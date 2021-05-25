@@ -13,29 +13,20 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into air models"""
-import argparse
 import math as m
 import numpy as np
 
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 from src.warpctc import StackedRNN, StackedRNNForGPU, StackedRNNForCPU
-from src.config import config
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id
 
-parser = argparse.ArgumentParser(description="warpctc_export")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="warpctc ckpt file.")
-parser.add_argument("--file_name", type=str, default="warpctc", help="warpctc output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=get_device_id())
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
-
-if args.file_format == "AIR" and args.device_target != "Ascend":
+if config.file_format == "AIR" and config.device_target != "Ascend":
     raise ValueError("export AIR must on Ascend")
 
 if __name__ == "__main__":
@@ -45,14 +36,14 @@ if __name__ == "__main__":
     batch_size = config.batch_size
     hidden_size = config.hidden_size
     image = Tensor(np.zeros([batch_size, 3, captcha_height, captcha_width], np.float32))
-    if args.device_target == 'Ascend':
+    if config.device_target == 'Ascend':
         net = StackedRNN(input_size=input_size, batch_size=batch_size, hidden_size=hidden_size)
         image = Tensor(np.zeros([batch_size, 3, captcha_height, captcha_width], np.float16))
-    elif args.device_target == 'GPU':
+    elif config.device_target == 'GPU':
         net = StackedRNNForGPU(input_size=input_size, batch_size=batch_size, hidden_size=hidden_size)
     else:
         net = StackedRNNForCPU(input_size=input_size, batch_size=batch_size, hidden_size=hidden_size)
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_file)
     load_param_into_net(net, param_dict)
     net.set_train(False)
-    export(net, image, file_name=args.file_name, file_format=args.file_format)
+    export(net, image, file_name=config.file_name, file_format=config.file_format)

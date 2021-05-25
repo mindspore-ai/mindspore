@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 3 ]; then
-  echo "Usage: sh run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]"
+  echo "Usage: sh run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]"
   exit 1
 fi
 
@@ -29,10 +29,10 @@ get_real_path() {
 
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
-PLATFORM=$3
+DEVICE_TARGET=$3
 
 if [ ! -d $PATH1 ]; then
-  echo "error: DATASET_PATH=$PATH1 is not a directory"
+  echo "error: TEST_DATA_DIR=$PATH1 is not a directory"
   exit 1
 fi
 
@@ -53,11 +53,12 @@ run_ascend() {
   fi
   mkdir ./eval
   cp ../*.py ./eval
+  cp ../*.yaml ./eval
   cp -r ../src ./eval
   cd ./eval || exit
   env >env.log
   echo "start evaluation for device $DEVICE_ID"
-  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=Ascend > log.txt 2>&1 &
+  python eval.py --test_data_dir=$1 --checkpoint_path=$2 --device_target=Ascend > log.txt 2>&1 &
   cd ..
 }
 
@@ -67,16 +68,17 @@ run_gpu_cpu() {
   fi
   mkdir ./eval
   cp ../*.py ./eval
+  cp ../*.yaml ./eval
   cp -r ../src ./eval
   cd ./eval || exit
   env >env.log
-  python eval.py --dataset_path=$1 --checkpoint_path=$2 --platform=$3  > log.txt 2>&1 &
+  python eval.py --test_data_dir=$1 --checkpoint_path=$2 --device_target=$3  > log.txt 2>&1 &
   cd ..
 }
 
-if [ "Ascend" == $PLATFORM ]; then
+if [ "Ascend" == $DEVICE_TARGET ]; then
   run_ascend $PATH1 $PATH2
 else
-  run_gpu_cpu $PATH1 $PATH2 $PLATFORM
+  run_gpu_cpu $PATH1 $PATH2 $DEVICE_TARGET
 fi
 

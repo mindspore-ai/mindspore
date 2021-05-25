@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 2 ]; then
-  echo "Usage: sh run_standalone_train.sh [DATASET_PATH] [PLATFORM]"
+  echo "Usage: sh run_standalone_train.sh [TRAIN_DATA_DIR] [DEVICE_TARGET]"
   exit 1
 fi
 
@@ -28,10 +28,10 @@ get_real_path() {
 }
 
 PATH1=$(get_real_path $1)
-PLATFORM=$2
+DEVICE_TARGET=$2
 
 if [ ! -d $PATH1 ]; then
-  echo "error: DATASET_PATH=$PATH1 is not a directory"
+  echo "error: TRAIN_DATA_DIR=$PATH1 is not a directory"
   exit 1
 fi
 
@@ -44,13 +44,13 @@ run_ascend() {
 
   echo "start training for device $DEVICE_ID"
   env >env.log
-  python train.py --dataset_path=$1 --platform=Ascend > log.txt 2>&1 &
+  python train.py --train_data_dir=$1 --device_target=Ascend > log.txt 2>&1 &
   cd ..
 }
 
 run_gpu_cpu() {
   env >env.log
-  python train.py --dataset_path=$1 --platform=$2  > log.txt 2>&1 &
+  python train.py --train_data_dir=$1 --device_target=$2  > log.txt 2>&1 &
   cd ..
 }
 
@@ -59,11 +59,12 @@ if [ -d "train" ]; then
 fi
 mkdir ./train
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp -r ../src ./train
 cd ./train || exit
 
-if [ "Ascend" == $PLATFORM ]; then
+if [ "Ascend" == $DEVICE_TARGET ]; then
   run_ascend $PATH1
 else
-  run_gpu_cpu $PATH1 $PLATFORM
+  run_gpu_cpu $PATH1 $DEVICE_TARGET
 fi

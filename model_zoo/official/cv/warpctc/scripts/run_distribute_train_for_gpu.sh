@@ -15,7 +15,7 @@
 # ============================================================================
 
 if [ $# != 2 ]; then
-  echo "Usage: sh run_distribute_train.sh [RANK_SIZE] [DATASET_PATH]"
+  echo "Usage: sh run_distribute_train.sh [RANK_SIZE] [TRAIN_DATA_DIR]"
   exit 1
 fi
 
@@ -28,10 +28,10 @@ get_real_path() {
 }
 
 RANK_SIZE=$1
-DATASET_PATH=$(get_real_path $2)
+TRAIN_DATA_DIR=$(get_real_path $2)
 
-if [ ! -d $DATASET_PATH ]; then
-  echo "error: DATASET_PATH=$DATASET_PATH is not a directory"
+if [ ! -d $TRAIN_DATA_DIR ]; then
+  echo "error: TRAIN_DATA_DIR=$TRAIN_DATA_DIR is not a directory"
   exit 1
 fi
 
@@ -41,12 +41,13 @@ fi
 
 mkdir ./distribute_train
 cp ../*.py ./distribute_train
+cp ../*.yaml ./distribute_train
 cp -r ../src ./distribute_train
 cd ./distribute_train || exit
 
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
   python train.py  \
-    --dataset_path=$DATASET_PATH  \
-    --platform=GPU  \
-    --run_distribute  > log.txt 2>&1 &
+    --train_data_dir=$TRAIN_DATA_DIR  \
+    --device_target=GPU  \
+    --run_distribute=True  > log.txt 2>&1 &
 cd ..
