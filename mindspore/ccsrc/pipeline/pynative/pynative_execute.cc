@@ -2100,7 +2100,8 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
   MS_EXCEPTION_IF_NULL(graph_info);
   if (graph_info->node_map.find(out_id) == graph_info->node_map.end()) {
     if (py::isinstance<py::tuple>(out) || py::isinstance<py::list>(out)) {
-      CreateMakeTupleNodeForMultiOut(cell_id, curr_g_, out);
+      auto tuple_out = py::cast<py::tuple>(out);
+      CreateMakeTupleNodeForMultiOut(cell_id, curr_g_, tuple_out);
     } else {
       MS_LOG(DEBUG) << "Set ValueNode as output for graph, out id: " << out_id;
       MakeValueNode(out, out_id);

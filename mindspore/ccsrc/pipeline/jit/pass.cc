@@ -145,16 +145,18 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
 }
 
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
-  opt::OptPassConfig switch_simplify_ = opt::OptPassConfig({
+  opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
     irpass.reduce_eliminate_,
+    irpass.tile_eliminate_,
+    irpass.arithmetic_simplify_,
   });
 
-  opt::OptPassConfig inline_ = opt::OptPassConfig({
+  opt::OptPassConfig inline_opt = opt::OptPassConfig({
     irpass.inline_,
   });
 
-  opt::OptPassConfig zero_like_fill_zero_ = opt::OptPassConfig({
+  opt::OptPassConfig zero_like_fill_zero = opt::OptPassConfig({
     irpass.zero_like_fill_zero_,
   });
 
@@ -162,9 +164,9 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
     return ReAutoMonad(root);
   };
   OptPassGroupMap map({{"ad_renormalize", opt::OptPassConfig::Renormalize()},
-                       {"ad_inline_", inline_},
-                       {"ad_switch_simplify_", switch_simplify_},
-                       {"ad_zero_like_fill_zero_", zero_like_fill_zero_},
+                       {"ad_inline_", inline_opt},
+                       {"ad_special_op_simplify_", special_op_simplify},
+                       {"ad_zero_like_fill_zero_", zero_like_fill_zero},
                        {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", res, map);
@@ -182,7 +184,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   }
 
   opt::irpass::OptimizeIRPassLib irpass;
-  opt::OptPassConfig bg_final_opt_ = opt::OptPassConfig({
+  opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
     irpass.inline_,
     irpass.tuple_list_get_set_item_eliminator_,
     irpass.tuple_list_get_item_eliminator_,
@@ -191,7 +193,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
   });
-  OptPassGroupMap map({{"ad_final_opt_", bg_final_opt_}});
+  OptPassGroupMap map({{"ad_final_opt_", bg_final_opt}});
   if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
     map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
   }
