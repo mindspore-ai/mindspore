@@ -160,6 +160,7 @@ if __name__ == '__main__':
     config_ = None
     if args_opt.device_target == "GPU":
         config_ = config_gpu
+        context.set_context(enable_graph_kernel=True)
     elif args_opt.device_target == "CPU":
         config_ = config_cpu
     else:
