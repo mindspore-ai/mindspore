@@ -161,7 +161,7 @@ void SparseApplyLazyAdamCPUKernel::LaunchKernel(const std::vector<kernel::Addres
 
 bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> & /*outputs*/) {
+                                          const std::vector<kernel::AddressPtr> &) {
   if (inputs.size() < kSparseApplyLazyAdamInputSize) {
     MS_LOG(EXCEPTION) << "Error input size!";
   }
