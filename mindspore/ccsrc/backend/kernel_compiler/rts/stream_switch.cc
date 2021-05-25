@@ -23,7 +23,9 @@
 
 using mindspore::ge::model_runner::StreamSwitchTaskInfo;
 using StreamSwitchTaskInfoPtr = std::shared_ptr<StreamSwitchTaskInfo>;
-
+namespace {
+constexpr size_t kStreamSwitchInputSize = 2;
+}
 namespace mindspore {
 namespace kernel {
 StreamSwitchKernel::StreamSwitchKernel() {
@@ -59,7 +61,7 @@ bool StreamSwitchKernel::Init(const AnfNodePtr &anf_node) {
 bool StreamSwitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_LOG(INFO) << "stream switch op launch start";
-  if (inputs.size() != 2) {
+  if (inputs.size() != kStreamSwitchInputSize) {
     MS_LOG(EXCEPTION) << "Stream switch inputs size is " << inputs.size() << ", only support 2";
   }
 
@@ -78,7 +80,7 @@ std::vector<TaskInfoPtr> StreamSwitchKernel::GenTask(const std::vector<AddressPt
                                                      const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                                      uint32_t stream_id) {
   MS_LOG(INFO) << "StreamSwitchKernel GenTask start";
-  if (inputs.size() != 2) {
+  if (inputs.size() != kStreamSwitchInputSize) {
     MS_LOG(EXCEPTION) << "stream switch inputs size is " << inputs.size() << ", is not two";
   }
   stream_id_ = stream_id;
