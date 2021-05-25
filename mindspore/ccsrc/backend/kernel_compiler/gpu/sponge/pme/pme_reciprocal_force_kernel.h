@@ -184,7 +184,11 @@ class PMEReciprocalForceGpuKernel : public GpuKernel {
     tempc2.y = 0;
 
     tempc.x = 0;
-    tempc.y = 2 * (B_order - 1) * PI * k / NFFT;
+    if (NFFT == 0) {
+      MS_LOG(ERROR) << "Divide by zero.";
+    } else {
+      tempc.y = 2 * (B_order - 1) * PI * k / NFFT;
+    }
     res = expc(tempc);
 
     for (int kk = 0; kk < (B_order - 1); kk++) {
