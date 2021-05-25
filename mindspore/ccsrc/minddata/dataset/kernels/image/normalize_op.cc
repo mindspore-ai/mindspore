@@ -29,7 +29,7 @@ namespace mindspore {
 namespace dataset {
 NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std) : mean_(mean), std_(std) {
   // pre-calculate normalized mean to be used later in each Compute
-  for (int8_t i = 0; i < mean.size(); i++) {
+  for (int64_t i = 0; i < mean.size(); i++) {
     mean_[i] = mean_[i] / std_[i];
   }
 }
