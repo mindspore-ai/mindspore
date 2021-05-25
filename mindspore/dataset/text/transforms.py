@@ -473,7 +473,6 @@ class UnicodeCharTokenizer(TextTensorOperation):
         return cde.UnicodeCharTokenizerOperation(self.with_offsets)
 
 
-# TODO(alexyuyue): Need to decouple WordpieceTokenizerOp to WordpieceTokenizerOperation after it's supported in C++
 class WordpieceTokenizer(cde.WordpieceTokenizerOp):
     """
     Tokenize scalar token or 1-D tokens to 1-D subword tokens.

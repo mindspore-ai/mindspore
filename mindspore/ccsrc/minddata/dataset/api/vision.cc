@@ -599,10 +599,10 @@ struct RandomSelectSubpolicy::Data {
 RandomSelectSubpolicy::RandomSelectSubpolicy(
   const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy)
     : data_(std::make_shared<Data>()) {
-  for (int32_t i = 0; i < policy.size(); i++) {
+  for (uint32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
 
-    for (int32_t j = 0; j < policy[i].size(); j++) {
+    for (uint32_t j = 0; j < policy[i].size(); j++) {
       TensorTransform *op = policy[i][j].first;
       std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
       double prob = policy[i][j].second;
@@ -615,10 +615,10 @@ RandomSelectSubpolicy::RandomSelectSubpolicy(
 RandomSelectSubpolicy::RandomSelectSubpolicy(
   const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy)
     : data_(std::make_shared<Data>()) {
-  for (int32_t i = 0; i < policy.size(); i++) {
+  for (uint32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
 
-    for (int32_t j = 0; j < policy[i].size(); j++) {
+    for (uint32_t j = 0; j < policy[i].size(); j++) {
       std::shared_ptr<TensorTransform> op = policy[i][j].first;
       std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
       double prob = policy[i][j].second;
@@ -631,10 +631,10 @@ RandomSelectSubpolicy::RandomSelectSubpolicy(
 RandomSelectSubpolicy::RandomSelectSubpolicy(
   const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy)
     : data_(std::make_shared<Data>()) {
-  for (int32_t i = 0; i < policy.size(); i++) {
+  for (uint32_t i = 0; i < policy.size(); i++) {
     std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
 
-    for (int32_t j = 0; j < policy[i].size(); j++) {
+    for (uint32_t j = 0; j < policy[i].size(); j++) {
       TensorTransform &op = policy[i][j].first;
       std::shared_ptr<TensorOperation> operation = op.Parse();
       double prob = policy[i][j].second;
@@ -841,9 +841,10 @@ UniformAugment::UniformAugment(const std::vector<TensorTransform *> &transforms,
 
 UniformAugment::UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops)
     : data_(std::make_shared<Data>()) {
-  (void)std::transform(
-    transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
+                       [](const std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         return op ? op->Parse() : nullptr;
+                       });
   data_->num_ops_ = num_ops;
 }
 
