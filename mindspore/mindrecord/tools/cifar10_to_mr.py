@@ -73,7 +73,7 @@ class Cifar10ToMR:
         Execute transformation from cifar10 to MindRecord.
 
         Args:
-            fields (list[str], optional): A list of index fields, e.g.["label"] (default=None).
+            fields (list[str], optional): A list of index fields. Default: None.
 
         Returns:
             MSRStatus, whether cifar10 is successfully transformed to MindRecord.

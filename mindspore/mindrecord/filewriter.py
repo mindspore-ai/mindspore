@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@ __all__ = ['FileWriter']
 
 class FileWriter:
     """
-    Class to write user defined raw data into MindRecord File series.
+    Class to write user defined raw data into MindRecord files.
 
     Note:
         The mindrecord file may fail to be read if the file name is modified.
 
     Args:
-        file_name (str): File name of MindRecord File.
-        shard_num (int, optional): The Number of MindRecord File (default=1).
+        file_name (str): File name of MindRecord file.
+        shard_num (int, optional): The Number of MindRecord file. Default: 1.
             It should be between [1, 1000].
 
     Raises:
@@ -86,12 +86,12 @@ class FileWriter:
             file_name (str): String of MindRecord file name.
 
         Returns:
-            FileWriter, file writer for the opened MindRecord file.
+            FileWriter, file writer object for the opened MindRecord file.
 
         Raises:
             ParamValueError: If file_name is invalid.
             FileNameError: If path contains invalid characters.
-            MRMOpenError: If failed to open MindRecord File.
+            MRMOpenError: If failed to open MindRecord file.
             MRMOpenForAppendError: If failed to open file for appending data.
         """
         check_filename(file_name)
@@ -113,11 +113,11 @@ class FileWriter:
 
     def add_schema(self, content, desc=None):
         """
-        Return a schema id if schema is added successfully, or raise an exception.
+        The schema is added to describe the raw data to be written.
 
         Args:
-            content (dict): Dictionary of user defined schema.
-            desc (str, optional): String of schema description (default=None).
+            content (dict): Dictionary of schema content.
+            desc (str, optional): String of schema description, Default: None.
 
         Returns:
             int, schema id.
@@ -137,8 +137,13 @@ class FileWriter:
         """
         Select index fields from schema to accelerate reading.
 
+        Note:
+            The index fields should be primitive type. e.g. int/float/str.
+            If the function is not called, the fields of the primitive type
+            in schema are set as indexes by default.
+
         Args:
-            index_fields (list[str]): Fields would be set as index which should be primitive type.
+            index_fields (list[str]): fields from schema.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -207,28 +212,37 @@ class FileWriter:
 
     def open_and_set_header(self):
         """
-        Open writer and set header.
+        Open writer and set header. The function is only used for parallel \
+        writing and is called before the `write_raw_data`.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
+
+        Raises:
+            MRMOpenError: If failed to open MindRecord file.
+            MRMSetHeaderError: If failed to set header.
         """
         if not self._writer.is_open:
-            self._writer.open(self._paths)
+            ret = self._writer.open(self._paths)
         if not self._writer.get_shard_header():
-            self._writer.set_shard_header(self._header)
+            return self._writer.set_shard_header(self._header)
+        return ret
 
     def write_raw_data(self, raw_data, parallel_writer=False):
         """
-        Write raw data and generate sequential pair of MindRecord File and \
-        validate data based on predefined schema by default.
+        Convert raw data into a seried of consecutive MindRecord \
+        files after the raw data is verified against the schema.
 
         Args:
            raw_data (list[dict]): List of raw data.
-           parallel_writer (bool, optional): Load data parallel if it equals to True (default=False).
+           parallel_writer (bool, optional): Write raw data in parallel if it equals to True. Default: False.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
-            MRMOpenError: If failed to open MindRecord File.
+            MRMOpenError: If failed to open MindRecord file.
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
@@ -248,8 +262,8 @@ class FileWriter:
     def set_header_size(self, header_size):
         """
         Set the size of header which contains shard information, schema information, \
-        page meta information, etc. The larger the header, the more training data \
-        a single Mindrecord file can store.
+        page meta information, etc. The larger a header, the more data \
+        the MindRecord file can store.
 
         Args:
             header_size (int): Size of header, between 16KB and 128MB.
@@ -265,9 +279,9 @@ class FileWriter:
 
     def set_page_size(self, page_size):
         """
-        Set the size of page which mainly refers to the block to store training data, \
-        and the training data will be split into raw page and blob page in mindrecord. \
-        The larger the page, the more training data a single page can store.
+        Set the size of page that represents the area where data is stored, \
+        and the areas are divided into two types: raw page and blob page. \
+        The larger a page, the more data the page can store.
 
         Args:
            page_size (int): Size of page, between 32KB and 256MB.
@@ -282,13 +296,13 @@ class FileWriter:
 
     def commit(self):
         """
-        Flush data to disk and generate the corresponding database files.
+        Flush data in memory to disk and generate the corresponding database files.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
 
         Raises:
-            MRMOpenError: If failed to open MindRecord File.
+            MRMOpenError: If failed to open MindRecord file.
             MRMSetHeaderError: If failed to set header.
             MRMIndexGeneratorError: If failed to create index generator.
             MRMGenerateIndexError: If failed to write to database.
