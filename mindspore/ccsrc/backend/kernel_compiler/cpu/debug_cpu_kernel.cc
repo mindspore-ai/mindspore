@@ -26,7 +26,7 @@ bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   if (inputs.size() < 1 || outputs.empty()) {
     MS_LOG(EXCEPTION) << " input or output empty!";
   }
-  auto val = reinterpret_cast<float *>(inputs[0]->addr);
+  auto val = reinterpret_cast<int *>(inputs[0]->addr);
   MS_LOG(DEBUG) << " launch DebugCountCPUKernel val " << *val;
 
   auto output = reinterpret_cast<int *>(outputs[0]->addr);

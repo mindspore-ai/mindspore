@@ -171,8 +171,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
     auto node_name = AnfAlgo::GetCNodeName(kernel);
 
-    std::vector<int> real_outputs;
-    real_outputs = CheckRealOutput(node_name, output_size);
+    std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
 
     for (int j : real_outputs) {
       auto addr = kernel_outputs[j];
