@@ -307,7 +307,8 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
       (void)new_node_inputs.insert(new_node_inputs.end(), fvs.begin(), fvs.end());
       AnfNodePtr out = g->NewCNodeBefore(g->get_return(), new_node_inputs);
       g->set_output(out);
-      MS_LOG(DEBUG) << "Combine graph newout:" << out->DebugString(4);
+      const int recursive_level = 4;
+      MS_LOG(DEBUG) << "Combine graph newout:" << out->DebugString(recursive_level);
     }
     MS_LOG(DEBUG) << "End combine graph:" << it.first;
   }

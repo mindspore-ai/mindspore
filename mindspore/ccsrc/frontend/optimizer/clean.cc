@@ -176,9 +176,12 @@ AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
   const auto &inputs = node->inputs();
   MS_ASSERT(inputs.size() == 4 && "DictSetItem should have three inputs.");
 
-  AnfNodePtr data = inputs[1];
-  AnfNodePtr cons = inputs[2];
-  AnfNodePtr item_value = inputs[3];
+  const size_t data_index = 1;
+  const size_t cons_index = 2;
+  const size_t item_value_index = 3;
+  AnfNodePtr data = inputs[data_index];
+  AnfNodePtr cons = inputs[cons_index];
+  AnfNodePtr item_value = inputs[item_value_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(cons);
 
@@ -267,7 +270,8 @@ AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [list_getitem, list, item]
-  if (inputs.size() < 3) {
+  const size_t list_getitem_inputs_size = 3;
+  if (inputs.size() < list_getitem_inputs_size) {
     MS_LOG(EXCEPTION) << "Node's input number < 3.";
   }
 
@@ -286,13 +290,17 @@ AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [list_setitem, list, index, item]
-  if (inputs.size() < 4) {
+  const size_t list_setitem_inputs_size = 4;
+  if (inputs.size() < list_setitem_inputs_size) {
     MS_LOG(EXCEPTION) << "Node's input number < 4.";
   }
 
-  AnfNodePtr data = inputs[1];
-  AnfNodePtr cons = inputs[2];
-  AnfNodePtr value = inputs[3];
+  const size_t data_index = 1;
+  const size_t cons_index = 2;
+  const size_t value_index = 3;
+  AnfNodePtr data = inputs[data_index];
+  AnfNodePtr cons = inputs[cons_index];
+  AnfNodePtr value = inputs[value_index];
 
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, cons, value});
 }
