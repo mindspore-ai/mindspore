@@ -436,10 +436,7 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
       if (IsPersistentDeviceTensor(input_node)) {
         // Prepare the device data for weights.
         PrepareDataForWeightNode(input_node, input_tensor, device_context, graph);
-      } else if (IsHostQueueDSActor(input_node, graph)) {
-        if (std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address()) != nullptr) {
-          continue;
-        }
+      } else if (IsHostQueueDSActor(input_node, graph, input_tensor)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
         // Fill the host tensors for non weighted parameters.
         const auto &iter = host_data_source_actor->data_node_position_map_.find(input_node);
@@ -621,7 +618,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set);
 
   // Link the control arrows of loop count actor, which depends on the no input kernel actors.
-  LinkControlArrowForLoopCountActor(actor_set, strategy);
+  LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set, strategy);
 
   // Link the output result arrows for output actors.
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
@@ -641,6 +638,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     // Build host queue data source actor.
     const std::vector<AnfNodePtr> &input_nodes = graph->input_nodes();
     const std::vector<TensorPtr> *input_tensors = nullptr;
+    TensorPtr tensor = nullptr;
     std::vector<TensorPtr> tensors_without_value_node;
 
     if (graph_compiler_info.input_tensors_.size() != 0) {
@@ -657,16 +655,10 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     for (size_t j = 0; j < input_nodes.size(); j++) {
       const auto &input_node = input_nodes[j];
       MS_EXCEPTION_IF_NULL(input_node);
-      if (IsHostQueueDSActor(input_node, graph)) {
-        // There is device address in tensor, indicating the input tensor is certain kernel's output,
-        // so it's unnecessary to put the input node to host queue data source actor.
-        bool tensor_has_device_address =
-          input_tensors != nullptr &&
-          (std::dynamic_pointer_cast<DeviceTensor>((*input_tensors)[j]->device_address()) != nullptr);
-        if (tensor_has_device_address) {
-          continue;
-        }
-
+      if (input_tensors != nullptr && j < input_tensors->size()) {
+        tensor = input_tensors->at(j);
+      }
+      if (IsHostQueueDSActor(input_node, graph, tensor)) {
         if (host_queue_ds_actor == nullptr) {
           auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
           MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
@@ -1002,10 +994,6 @@ void GraphScheduler::LinkControlArrowForKernelActor(std::vector<KernelActorPtr> 
                                                     GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(from_actors);
 
-  if (strategy == GraphExecutionStrategy::kPipeline && to_actor == nullptr) {
-    MS_LOG(EXCEPTION) << "The LoopCountActor pointer is nullptr.";
-  }
-
   for (auto &from_actor : *from_actors) {
     MS_EXCEPTION_IF_NULL(from_actor);
     if (strategy == GraphExecutionStrategy::kStep) {
@@ -1014,13 +1002,15 @@ void GraphScheduler::LinkControlArrowForKernelActor(std::vector<KernelActorPtr> 
     }
 
     // If the kernel actor has no output in the pipeline mode, then adds the output control to loop count actor.
-    if ((strategy == GraphExecutionStrategy::kPipeline) && (from_actor->output_op_arrows_.size() == 0) &&
-        (from_actor->output_op_controls_.size() == 0)) {
-      MS_EXCEPTION_IF_NULL(from_actor->kernel_);
-      MS_LOG(INFO) << from_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
-      auto to_aid = to_actor->GetAID();
-      from_actor->output_op_controls_.emplace_back(to_aid);
-      to_actor->input_controls_num_++;
+    if (strategy == GraphExecutionStrategy::kPipeline) {
+      MS_EXCEPTION_IF_NULL(to_actor);
+      if ((from_actor->output_op_arrows_.size() == 0) && (from_actor->output_op_controls_.size() == 0)) {
+        MS_EXCEPTION_IF_NULL(from_actor->kernel_);
+        MS_LOG(INFO) << from_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
+        auto to_aid = to_actor->GetAID();
+        from_actor->output_op_controls_.emplace_back(to_aid);
+        to_actor->input_controls_num_++;
+      }
     }
   }
 }
@@ -1076,14 +1066,14 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
   to_actor->input_controls_num_++;
 }
 
-void GraphScheduler::LinkControlArrowForLoopCountActor(const ActorSet *actor_set, GraphExecutionStrategy strategy) {
+void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
+                                                       GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   // There is no loop count actor in step mode.
   if (strategy == GraphExecutionStrategy::kStep) {
     return;
   }
 
-  const LoopCountActorPtr &loop_count_actor = actor_set->loop_count_actor_;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
   // Set the source data actor.
   for (auto &data_source_actor : actor_set->data_source_actors_) {

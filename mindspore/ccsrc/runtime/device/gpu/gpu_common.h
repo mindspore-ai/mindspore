@@ -44,6 +44,15 @@ namespace gpu {
     }                                                                             \
   }
 
+#define CHECK_RET_WITH_RETURN_ERROR(expression, message) \
+  {                                                      \
+    bool success = (expression);                         \
+    if (!success) {                                      \
+      MS_LOG(ERROR) << message;                          \
+      return false;                                      \
+    }                                                    \
+  }
+
 #define CHECK_CUDA_RET_WITH_ERROR(node, expression, message)                                                           \
   {                                                                                                                    \
     cudaError_t status = (expression);                                                                                 \

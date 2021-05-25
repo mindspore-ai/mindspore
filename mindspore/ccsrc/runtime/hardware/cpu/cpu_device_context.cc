@@ -27,6 +27,7 @@
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
+#include "profiler/device/cpu/cpu_profiling.h"
 
 namespace mindspore {
 namespace device {
@@ -127,9 +128,45 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   }
 }
 
-bool CPUDeviceContext::LaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                     const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  if (profiler_inst->GetEnableFlag()) {
+    return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+  }
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+}
+
+bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &workspace,
+                                                 const std::vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  std::lock_guard<std::mutex> locker(launch_mutex_);
+
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  uint32_t pid = getpid();
+  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
+  bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  profiler_inst->OpDataProducerEnd();
+
+  return ret;
+}
+
+bool CPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+                                      const std::vector<AddressPtr> &workspace,
+                                      const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->Launch(inputs, workspace, outputs, nullptr);
 }
