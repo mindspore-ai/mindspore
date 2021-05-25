@@ -27,6 +27,8 @@ namespace {
 const std::vector<int64_t> kOutputIndex{0, 3, 4, 5};
 constexpr size_t kBatchNormRealOutputNum = 3;
 constexpr size_t kBatchNormRealInputNum = 3;
+constexpr size_t kInputIndex2 = 2;
+constexpr size_t kInputIndex3 = 3;
 
 bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vector<AnfNodePtr> *bn_outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -66,15 +68,15 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
+                      << (kBatchNormRealInputNum + 1) << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
   auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
-  auto bn_input1 = bn_cnode->input(2);
+  auto bn_input1 = bn_cnode->input(kInputIndex2);
   MS_EXCEPTION_IF_NULL(bn_input1);
-  auto bn_input2 = bn_cnode->input(3);
+  auto bn_input2 = bn_cnode->input(kInputIndex3);
   MS_EXCEPTION_IF_NULL(bn_input2);
   AbstractBasePtrList abstract_list{bn_input1->abstract(), bn_input2->abstract()};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -92,7 +94,7 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
+                      << (kBatchNormRealInputNum + 1) << " trace: " << trace::DumpSourceLines(bn);
   }
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
@@ -104,8 +106,8 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
     bn_cnode->input(1),
     bn_training_reduce_outputs[0],
     bn_training_reduce_outputs[1],
-    bn_cnode->input(2),
-    bn_cnode->input(3)};
+    bn_cnode->input(kInputIndex2),
+    bn_cnode->input(kInputIndex3)};
   auto bn_training_update_v2 = func_graph->NewCNode(bn_training_update_v2_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_update_v2);
 

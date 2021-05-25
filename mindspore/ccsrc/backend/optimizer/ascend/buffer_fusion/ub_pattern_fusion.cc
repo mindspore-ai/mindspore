@@ -39,6 +39,9 @@ const int8_t ELTWISE_USE = 1;
 const int8_t MULTI_ELTWISE_USE = 2;
 const int8_t MAX_MULTI_ELTWISE_SIZE = 4;
 const int8_t MAX_PURE_BUFFER_SUCC_SIZE = 3;
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
+constexpr size_t kFusionNodeNumThreshold = 2;
 constexpr auto kOpAttrFusionId = "fusion_id";
 
 #ifdef DEBUG
@@ -129,10 +132,12 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
     if (AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
       auto tuple_getitem = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(tuple_getitem);
-      outputs_format.emplace_back(AnfAlgo::GetOutputFormat(
-        tuple_getitem->input(1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(2))))));
+      outputs_format.emplace_back(
+        AnfAlgo::GetOutputFormat(tuple_getitem->input(kInputIndex1),
+                                 LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(kInputIndex2))))));
       outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(
-        tuple_getitem->input(1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(2))))));
+        tuple_getitem->input(kInputIndex1),
+        LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(kInputIndex2))))));
     } else {
       outputs_format.emplace_back(AnfAlgo::GetOutputFormat(output, 0));
       outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(output, 0));
@@ -270,8 +275,8 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
     MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
                       << getitem2->DebugString() << "]";
   }
-  auto output_idx1 = GetValue<int64_t>(GetValueNode(getitem1->input(2)));
-  auto output_idx2 = GetValue<int64_t>(GetValueNode(getitem2->input(2)));
+  auto output_idx1 = GetValue<int64_t>(GetValueNode(getitem1->input(kInputIndex2)));
+  auto output_idx2 = GetValue<int64_t>(GetValueNode(getitem2->input(kInputIndex2)));
   return output_idx1 < output_idx2;
 }
 
@@ -304,7 +309,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
         for (auto &getitem : tuple_getitem_nodes) {
           MS_EXCEPTION_IF_NULL(getitem);
           auto getitem_ptr = getitem->cast<CNodePtr>();
-          auto input2 = getitem_ptr->input(2);
+          auto input2 = getitem_ptr->input(kInputIndex2);
           auto output_idx = GetValue<int64_t>(GetValueNode(input2));
           for (int64_t stub_idx = prev_idx; stub_idx < output_idx; ++stub_idx) {
             auto stub_node = CreateTupleGetItem(node, kernel_graph, LongToSize(stub_idx));
@@ -336,7 +341,7 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
       auto real_output = AnfAlgo::VisitKernel(output, 0);
       auto output_cnode = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(output_cnode);
-      auto input2 = output_cnode->input(2);
+      auto input2 = output_cnode->input(kInputIndex2);
       auto output_idx = GetValue<int64_t>(GetValueNode(input2));
       session::AnfWithOutIndex out_pair(real_output.first, output_idx);
       if (kernel_graph->IsInRefOutputMap(out_pair)) {
@@ -444,7 +449,7 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
                                       session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];
-  if (buffer_fusion_info.anf_nodes.size() < 2) {
+  if (buffer_fusion_info.anf_nodes.size() < kFusionNodeNumThreshold) {
     return false;
   }
   TraceGuard guard(std::make_shared<TraceOpt>(buffer_fusion_info.anf_nodes[0]->debug_info()));
