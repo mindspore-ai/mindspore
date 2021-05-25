@@ -237,8 +237,8 @@ class CheckAndConvertUtils {
   }
 
   static ShapeMap ConvertShapePtrToShapeMap(const BaseShapePtr &shape);
-  static abstract::ShapePtr GetInputShapePtr(const std::vector<AbstractBasePtr> &input_args, int64_t index,
-                                             const std::string &prim_name);
+  static abstract::ShapePtr GetTensorInputShape(const std::vector<AbstractBasePtr> &input_args, int64_t index,
+                                                const std::string &prim_name);
   static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type,
                     const std::string &value_name, int64_t value, const std::string &prim_name = "",
                     ExceptionType exception_type = ValueError);

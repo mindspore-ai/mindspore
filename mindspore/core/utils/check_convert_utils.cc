@@ -398,19 +398,14 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
   return shape_map;
 }
 
-abstract::ShapePtr CheckAndConvertUtils::GetInputShapePtr(const std::vector<AbstractBasePtr> &input_args, int64_t index,
-                                                          const std::string &prim_name) {
-  int64_t input_size = input_args.size();
-  if (input_size < index + 1) {
-    MS_EXCEPTION(ValueError) << prim_name << " input args index out of bound, size " << input_args.size() << ", index "
-                             << index;
-  }
-  auto input = input_args[index];
-  MS_EXCEPTION_IF_NULL(input);
-  auto base_shape = input->BuildShape();
+abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::vector<AbstractBasePtr> &input_args,
+                                                             int64_t index, const std::string &prim_name) {
+  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, index);
+  MS_EXCEPTION_IF_NULL(abstract);
+  auto base_shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(base_shape);
   if (!base_shape->isa<abstract::Shape>()) {
-    MS_EXCEPTION(ValueError) << prim_name << " can not get shape for input " << index;
+    MS_LOG(EXCEPTION) << prim_name << " can not get shape for input " << index;
   }
   auto shape = base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
