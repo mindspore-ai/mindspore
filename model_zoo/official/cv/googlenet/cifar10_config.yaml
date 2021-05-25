@@ -36,7 +36,7 @@ ckpt_save_dir: "./ckpt/"
 # export option
 ckpt_file: ""
 file_name: "googlenet"
-file_format: "AIR"
+file_format: "MINDIR"
 #batch_size: 1
 
 ---
