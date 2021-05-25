@@ -64,10 +64,9 @@ class PSContext {
   bool is_worker() const;
   bool is_server() const;
   bool is_scheduler() const;
-  uint32_t initial_worker_num();
-  uint32_t initial_server_num();
-  std::string scheduler_host();
-  uint16_t scheduler_port();
+  uint32_t initial_worker_num() const;
+  uint32_t initial_server_num() const;
+  std::string scheduler_host() const;
   void SetPSRankId(int rank_id);
   int ps_rank_id() const;
   void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,

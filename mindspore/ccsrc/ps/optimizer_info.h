@@ -40,9 +40,9 @@ class OptimizerInfo {
   virtual const AddressPtr &gradient() = 0;
   virtual const AddressPtr &indices() = 0;
   virtual const size_t indice_size() const;
-  const std::vector<AddressPtr> &inputs();
-  const std::vector<AddressPtr> &workspaces();
-  const std::vector<AddressPtr> &outputs();
+  const std::vector<AddressPtr> &inputs() const;
+  const std::vector<AddressPtr> &workspaces() const;
+  const std::vector<AddressPtr> &outputs() const;
 
   virtual bool IsSparse() const;
   virtual size_t grad_index();
