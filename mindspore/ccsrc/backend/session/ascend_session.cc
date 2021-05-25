@@ -459,8 +459,10 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   // Update Graph Dynamic Shape Attr
   UpdateAllGraphDynamicShapeAttr(all_graphs);
-  UnifyMindIR(root_graph);
-  opt::BackendCommonOptimization(root_graph);
+  for (const auto &graph : all_graphs) {
+    UnifyMindIR(graph);
+  }
+  BackendOptimization(all_graphs);
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
     MS_LOG(INFO) << root_graph->ToString() << " is empty graph.";
