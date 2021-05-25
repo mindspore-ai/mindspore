@@ -172,6 +172,9 @@ struct CallSite {
 
   // True if this is a tail call.
   bool tail = false;
+
+  // True if this call is a disable tail-opt call.
+  bool disable_tail = false;
 };
 
 struct ReturnPoint {
@@ -408,6 +411,7 @@ class CallInfoFinder {
       auto &call_info = entry.second;
       if (call_info.recursive && !call_info.call_sites.empty()) {
         call_info.call_sites.back().tail = false;
+        call_info.call_sites.back().disable_tail = true;
       }
     }
   }
@@ -539,6 +543,10 @@ class CallInfoFinder {
         call_info.label_param = context_.CreateParameter(abs);
         // Add label index for the first call site.
         call_info.return_points.front().call_site->label_indexes.emplace(call_info.label_param, 0);
+        // Judge the last call_site whether is loop, set recursive attr if yes.
+        if (!call_info.call_sites.empty() && call_info.call_sites.back().disable_tail) {
+          SearchRecursiveCall(callee, &call_info.call_sites.back());
+        }
       }
       // Add label index for the current call site.
       auto label_index = static_cast<uint32_t>(call_info.return_points.size() - 1);
