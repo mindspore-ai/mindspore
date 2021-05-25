@@ -17,6 +17,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
+#include "src/tensor.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -98,27 +99,27 @@ int SplitWithOverlapBaseCPUKernel::Run() {
   end_indices_.clear();
   output_ptr_.clear();
 
-  for (int i = 0; i < param->num_split_; i++) {
+  for (int i = 0; i < param_->num_split_; i++) {
     output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
   }
 
-  CalculateSplitedShapes(param, input_shape);
+  CalculateSplitedShapes(param_, input_shape);
 
   outer_total_dim_ = 1;
   inner_stride_ = 1;
-  split_dim_size_ = input_shape[param->split_dim_];
-  element_bytes_ = in_tensor->Size();
+  split_dim_size_ = input_shape[param_->split_dim_];
+  element_bytes_ = static_cast<int>(lite::DataTypeSize(in_tensor->data_type()));
 
-  for (auto i = 0; i < param->split_dim_; i++) {
+  for (auto i = 0; i < param_->split_dim_; i++) {
     outer_total_dim_ *= input_shape[i];
   }
 
-  for (int i = static_cast<int>(input_shape.size()) - 1; i > param->split_dim_; i--) {
+  for (int i = static_cast<int>(input_shape.size()) - 1; i > param_->split_dim_; i--) {
     inner_stride_ *= input_shape[i];
   }
 
   auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SplitWithOverlapRun,
-                            this, param->num_split_);
+                            this, param_->num_split_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch for SplitWIthOverlapRun run fail. errorcode:[" << ret << "]";
     return RET_ERROR;
