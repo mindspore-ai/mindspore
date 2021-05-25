@@ -85,7 +85,6 @@ void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
                                      const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kAdamDeltaInputSize) {
     MS_LOG(EXCEPTION) << "Error input size!";
@@ -107,7 +106,7 @@ void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inpu
 bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  CheckParams(inputs, workspace, outputs);
+  CheckParams(inputs, outputs);
   auto m = reinterpret_cast<float *>(inputs[0]->addr);
   auto v = reinterpret_cast<float *>(inputs[1]->addr);
   auto beta1_power = reinterpret_cast<float *>(inputs[2]->addr)[0];

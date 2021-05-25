@@ -30,8 +30,7 @@ class AdamDeltaCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                   const std::vector<AddressPtr> &outputs) const;
+  void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
   template <typename T>
   void LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
                        size_t size);

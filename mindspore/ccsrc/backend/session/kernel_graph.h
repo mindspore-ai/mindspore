@@ -199,18 +199,19 @@ class KernelGraph : public FuncGraph {
   void PrintGraphExecuteOrder() const;
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
-  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, int output_idx = 0,
-                         bool unique_target = false);
-  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, int src_output_idx = -1,
-                             int dst_output_idx = -1);
+  void AddInternalOutput(const AnfNodePtr &front_node, const AnfNodePtr &node, size_t output_idx, bool unique_target);
+  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
+                             size_t dst_output_idx);
+  void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
   // Cache the internal parameter and  corresponding to front node into internal_parameter_to_front_node_map_.
   void CacheInternalParameterToFrontNode(const AnfNodePtr &parameter, const AnfWithOutIndex &front_node_with_index);
   AnfWithOutIndex GetFrontNodeByInternalParameter(const AnfNodePtr &parameter) const;
   AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
-  bool IsInternalOutput(const AnfNodePtr &node, int output_idx = -1) const;
-  bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, int output_idx) const;
-  void AddInternalOutputTensor(const AnfNodePtr &node, int output_idx, const tensor::TensorPtr &tensor);
-  tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, int output_idx);
+  bool IsInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
+  bool IsInternalOutput(const AnfNodePtr &node) const;
+  bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
+  void AddInternalOutputTensor(const AnfNodePtr &node, size_t output_idx, const tensor::TensorPtr &tensor);
+  tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, size_t output_idx);
 
   uint32_t current_epoch() const { return current_epoch_; }
   void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
@@ -365,8 +366,9 @@ class KernelGraph : public FuncGraph {
   // of unordered map is front node corresponding to the output of previous kernel graph.
   std::unordered_map<AnfNodePtr, AnfWithOutIndex> internal_parameter_to_front_node_map_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, std::pair<AnfNodePtr, bool>>>
+    internal_outputs_to_front_map_;
+  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
   uint32_t current_epoch_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
   std::set<AnfNodePtr> visited_nodes_;

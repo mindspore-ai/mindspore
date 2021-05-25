@@ -75,7 +75,7 @@ bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
   return true;
 }
 
-void WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task) {
+void WaitLockedInputs(const std::shared_ptr<RunGraphTask> &task) {
   bool need_lock = false;
   for (auto &tensor : task->input_tensors_) {
     if (tensor->NeedWait()) {
@@ -88,17 +88,17 @@ void WaitLockedInputs(const SessionPtr &session, const std::shared_ptr<RunGraphT
   }
   if (need_lock) {
     mindspore::ScopedLongRunning long_running;
-    for (auto &tensor : task->input_tensors_) {
-      if (tensor->NeedWait() && !tensor->IsGraphOutput()) {
+    for (auto &input_tensor : task->input_tensors_) {
+      if (input_tensor->NeedWait() && !input_tensor->IsGraphOutput()) {
         MsException::Instance().CheckException();
-        tensor->Wait();
+        input_tensor->Wait();
       }
     }
     MsException::Instance().CheckException();
   }
   // need lock input parameters for optimizer
-  for (auto &tensor : task->input_need_lock_tensors_) {
-    tensor->SetNeedWait(true);
+  for (auto &need_lock_tensor : task->input_need_lock_tensors_) {
+    need_lock_tensor->SetNeedWait(true);
   }
 }
 }  // namespace
@@ -212,18 +212,18 @@ void Executor::WorkerLoop() {
 }
 
 std::vector<std::shared_ptr<RunGraphTask>> Executor::GetReadyTasksFromPendingList() {
-  std::vector<std::shared_ptr<RunGraphTask>> new_ready_tasks;
+  std::vector<std::shared_ptr<RunGraphTask>> ready_tasks;
   std::lock_guard<std::mutex> lock(pending_task_mutex_);
   for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end();) {
     auto task = *iter;
     if (IsTaskReady(task)) {
-      new_ready_tasks.emplace_back(task);
+      ready_tasks.emplace_back(task);
       pending_tasks_.erase(iter++);
     } else {
-      iter++;
+      ++iter;
     }
   }
-  return new_ready_tasks;
+  return ready_tasks;
 }
 
 void Executor::OnEvent(const ExecutorEvent &event) {
@@ -242,32 +242,32 @@ void Executor::OnClear() {
 }
 
 void Executor::OnException() {
-  std::vector<std::shared_ptr<Task>> new_done_tasks;
+  std::vector<std::shared_ptr<Task>> done_tasks;
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
     while (!ready_tasks_.empty()) {
-      new_done_tasks.emplace_back(ready_tasks_.front());
+      done_tasks.emplace_back(ready_tasks_.front());
       ready_tasks_.pop();
     }
   }
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
-    std::copy(pending_tasks_.begin(), pending_tasks_.end(), std::back_inserter(new_done_tasks));
+    std::copy(pending_tasks_.begin(), pending_tasks_.end(), std::back_inserter(done_tasks));
     pending_tasks_.clear();
   }
   {
     std::lock_guard<std::mutex> lock(done_task_mutex_);
-    (void)done_tasks_.insert(done_tasks_.end(), new_done_tasks.begin(), new_done_tasks.end());
+    (void)done_tasks_.insert(done_tasks_.end(), done_tasks.begin(), done_tasks.end());
   }
 }
 
 void Executor::OnRunGraphFinished() {
-  auto new_ready_tasks = GetReadyTasksFromPendingList();
+  auto ready_tasks = GetReadyTasksFromPendingList();
   std::lock_guard<std::mutex> lock(task_mutex_);
-  for (auto &task : new_ready_tasks) {
+  for (auto &task : ready_tasks) {
     ready_tasks_.push(task);
   }
-  if (!new_ready_tasks.empty()) {
+  if (!ready_tasks.empty()) {
     task_cond_var_.notify_all();
   }
   reenter_cond_var_.notify_all();
@@ -365,7 +365,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     RunTask(task, true, true);
     return;
   }
-  WaitLockedInputs(session, task);
+  WaitLockedInputs(task);
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
     if (!IsTaskReady(task)) {
