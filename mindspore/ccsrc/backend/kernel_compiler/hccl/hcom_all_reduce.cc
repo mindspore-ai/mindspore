@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_LOG(INFO) << "HcclAllReduce launch";
   if (inputs.size() != 1 || outputs.size() != 1) {

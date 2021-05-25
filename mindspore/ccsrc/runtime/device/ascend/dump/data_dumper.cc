@@ -148,7 +148,8 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   dump_info->set_flag(kAicpuLoadFlag);
 
   const auto &input_ctrl_tensors = kernel_graph_->input_ctrl_tensors();
-  if (input_ctrl_tensors == nullptr || input_ctrl_tensors->size() < 3) {
+  constexpr size_t kLoopSinkCtrlTensorNum = 3;  // cur step, cur epoch, steps per epoch
+  if (input_ctrl_tensors == nullptr || input_ctrl_tensors->size() < kLoopSinkCtrlTensorNum) {
     MS_LOG(INFO) << "[DataDump] Not data sink mode, input_ctrl_tensor";
     return;
   }

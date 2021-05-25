@@ -361,8 +361,8 @@ Status ModelProcess::SetBatchSize(const std::vector<MSTensor> &inputs) {
 Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
-  size_t dynamic_batch_size = 1;
-  size_t dynamic_image_size = 2;
+  constexpr size_t dynamic_batch_size = 1;
+  constexpr size_t dynamic_image_size = 2;
   size_t dynamic_nums = GetDynamicDims(input_infos_);
   // check inputs
   if (inputs.size() != input_infos_.size()) {

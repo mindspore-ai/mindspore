@@ -112,12 +112,13 @@ static std::vector<size_t> CalCleanZerosSize(const CNodePtr &pre_node) {
   auto kernel_mod = AnfAlgo::GetKernelMod(pre_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   std::vector<size_t> clean_size_list;
+  constexpr size_t kAlignBytes = 32 - 1;
   // clean output
   if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
     auto output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
     auto output_men_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexs) {
-      auto clean_item = (output_men_size.at(index) + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
+      auto clean_item = (output_men_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize;
       clean_size_list.emplace_back(clean_item);
     }
   }
@@ -126,7 +127,7 @@ static std::vector<size_t> CalCleanZerosSize(const CNodePtr &pre_node) {
     auto workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
     auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
     for (const auto &index : workspace_indexs) {
-      auto clean_item = (workspace_men_sizes.at(index) + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
+      auto clean_item = (workspace_men_sizes.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize;
       clean_size_list.emplace_back(clean_item);
     }
   }
