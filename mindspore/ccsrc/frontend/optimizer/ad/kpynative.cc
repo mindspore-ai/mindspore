@@ -298,6 +298,7 @@ class KPynativeCellImpl : public KPynativeCell {
   void BuildAdjointForInput(const CNodePtr &cnode, const ValuePtrList &op_args);
   void PropagateStopGradient();
   bool AllReferencesStopped(const CNodePtr &curr_cnode);
+  OrderedMap<AnfNodePtr, PynativeAdjointPtr>::reverse_iterator GetLastNodeReverseIter();
   // Back propagate for all node;
   // if by_value is true, in bprop_app cnode, every input is value node;
   // if by_value is false, in bprop_app cnode, input is the k mapped node, so it can be grad again.
@@ -802,8 +803,21 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithFPropFuncGraph(const CNodePtr &
   return true;
 }
 
-bool KPynativeCellImpl::BackPropagate(bool by_value) {
+OrderedMap<AnfNodePtr, PynativeAdjointPtr>::reverse_iterator KPynativeCellImpl::GetLastNodeReverseIter() {
   for (auto iter = anfnode_to_adjoin_.rbegin(); iter != anfnode_to_adjoin_.rend(); ++iter) {
+    if (!iter->first->isa<CNode>()) {
+      continue;
+    }
+    if (iter->first->cast<CNodePtr>() == last_node_) {
+      return iter;
+    }
+  }
+  return anfnode_to_adjoin_.rend();
+}
+
+bool KPynativeCellImpl::BackPropagate(bool by_value) {
+  auto last_node_reverse_iter = GetLastNodeReverseIter();
+  for (auto iter = last_node_reverse_iter; iter != anfnode_to_adjoin_.rend(); ++iter) {
     if (!iter->first->isa<CNode>()) {
       continue;
     }
