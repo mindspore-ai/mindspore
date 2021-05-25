@@ -19,9 +19,9 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestCropOp : public UT::CVOP::CVOpCommon {
  protected:
@@ -42,7 +42,7 @@ TEST_F(MindDataTestCropOp, TestOp1) {
   if (s == Status::OK()) {
     actual = output_tensor_->shape()[0] * output_tensor_->shape()[1] * output_tensor_->shape()[2];
   }
-  EXPECT_EQ(crop_height, output_tensor_->shape()[1]);
+  EXPECT_EQ(crop_height, output_tensor_->shape()[0]);
   EXPECT_EQ(actual, crop_height * crop_width * 3);
   EXPECT_EQ(s, Status::OK());
 }
@@ -53,8 +53,7 @@ TEST_F(MindDataTestCropOp, TestOp2) {
   unsigned int crop_height = 10;
   unsigned int crop_width = 10;
 
-  std::unique_ptr<CropOp> op(
-    new CropOp(-10, -10, crop_height, crop_width));
+  std::unique_ptr<CropOp> op(new CropOp(-10, -10, crop_height, crop_width));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   EXPECT_EQ(false, s.IsOk());
@@ -67,11 +66,9 @@ TEST_F(MindDataTestCropOp, TestOp3) {
   unsigned int crop_height = 1200000;
   unsigned int crop_width = 1200000;
 
-  std::unique_ptr<CropOp> op(
-    new CropOp(0, 0, crop_height, crop_width));
+  std::unique_ptr<CropOp> op(new CropOp(0, 0, crop_height, crop_width));
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   EXPECT_EQ(false, s.IsOk());
   MS_LOG(INFO) << "testCrop size exception end.";
 }
-

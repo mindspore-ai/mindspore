@@ -50,6 +50,24 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
   EXPECT_EQ(30, image.Shape()[1]);
 }
 
+TEST_F(MindDataTestExecute, TestCrop) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestCrop.";
+
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto crop = vision::Crop({10, 30}, {10, 15});
+
+  auto transform = Execute({decode, crop});
+  Status rc = transform(image, &image);
+
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(image.Shape()[0], 10);
+  EXPECT_EQ(image.Shape()[1], 15);
+}
+
 TEST_F(MindDataTestExecute, TestTransformInput1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput1.";
   // Test Execute with transform op input using API constructors, with std::shared_ptr<TensorTransform pointers,

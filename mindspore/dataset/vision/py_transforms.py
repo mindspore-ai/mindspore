@@ -27,7 +27,7 @@ from PIL import Image
 
 from . import py_transforms_util as util
 from .c_transforms import parse_padding
-from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
+from .validators import check_prob, check_center_crop, check_five_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
@@ -571,7 +571,7 @@ class CenterCrop:
         ...                                                 input_columns="image")
     """
 
-    @check_crop
+    @check_center_crop
     def __init__(self, size):
         self.size = size
         self.random = False
@@ -722,7 +722,7 @@ class FiveCrop:
         ...                                                 input_columns="image")
     """
 
-    @check_crop
+    @check_five_crop
     def __init__(self, size):
         self.size = size
         self.random = False

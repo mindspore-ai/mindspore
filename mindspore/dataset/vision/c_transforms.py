@@ -48,7 +48,7 @@ from PIL import Image
 import mindspore._c_dataengine as cde
 
 from .utils import Inter, Border, ImageBatchFormat
-from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
+from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, check_random_resize_crop, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
     check_uniform_augment_cpp, \
@@ -182,7 +182,7 @@ class CenterCrop(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
-    @check_crop
+    @check_center_crop
     def __init__(self, size):
         if isinstance(size, int):
             size = (size, size)
@@ -190,6 +190,36 @@ class CenterCrop(ImageTensorOperation):
 
     def parse(self):
         return cde.CenterCropOperation(self.size)
+
+
+class Crop(ImageTensorOperation):
+    """
+    Crop the input image at a specific location.
+
+    Args:
+        coordinates(sequence): Coordinates of the upper left corner of the cropping image. Must be a sequence of two
+            values, in the form of (top, left).
+        size (Union[int, sequence]): The output size of the cropped image.
+            If size is an integer, a square crop of size (size, size) is returned.
+            If size is a sequence of length 2, it should be (height, width).
+
+    Examples:
+        >>> decode_op = c_vision.Decode()
+        >>> crop_op = c_vision.Crop((0, 0), 32)
+        >>> transforms_list = [decode_op, crop_op]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_crop
+    def __init__(self, coordinates, size):
+        if isinstance(size, int):
+            size = (size, size)
+        self.coordinates = coordinates
+        self.size = size
+
+    def parse(self):
+        return cde.CropOperation(self.coordinates, self.size)
 
 
 class CutMixBatch(ImageTensorOperation):

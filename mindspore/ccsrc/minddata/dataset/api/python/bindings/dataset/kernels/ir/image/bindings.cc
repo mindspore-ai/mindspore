@@ -21,6 +21,7 @@
 #include "minddata/dataset/kernels/ir/vision/auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/bounding_box_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/center_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
@@ -97,6 +98,19 @@ PYBIND_REGISTER(
         return center_crop;
       }));
   }));
+
+PYBIND_REGISTER(CropOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::CropOperation, TensorOperation, std::shared_ptr<vision::CropOperation>>(
+                    *m, "CropOperation", "Tensor operation to crop images")
+                    .def(py::init([](std::vector<int32_t> coordinates, std::vector<int32_t> size) {
+                      // In Python API, the order of coordinates is first top then left, which is different from
+                      // those in CropOperation. So we need to swap the coordinates.
+                      std::swap(coordinates[0], coordinates[1]);
+                      auto crop = std::make_shared<vision::CropOperation>(coordinates, size);
+                      THROW_IF_ERROR(crop->ValidateParams());
+                      return crop;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   CutMixBatchOperation, 1, ([](const py::module *m) {

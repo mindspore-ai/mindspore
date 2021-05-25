@@ -48,7 +48,7 @@ Status CropOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> CropOperation::Build() {
-  int32_t x, y, height, width;
+  int32_t y, x, height, width;
 
   x = coordinates_[0];
   y = coordinates_[1];
@@ -60,7 +60,7 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
     width = size_[1];
   }
 
-  std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(x, y, height, width);
+  std::shared_ptr<CropOp> tensor_op = std::make_shared<CropOp>(y, x, height, width);
   return tensor_op;
 }
 
