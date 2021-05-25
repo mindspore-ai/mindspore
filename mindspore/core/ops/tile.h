@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameTile = "Tile";
+constexpr auto kNameTile = prim::kTile;
 class Tile : public PrimitiveC {
  public:
   Tile() : PrimitiveC(kNameTile) { InitIOName({"x", "multiples"}, {"output"}); }
