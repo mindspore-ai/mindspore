@@ -1210,16 +1210,15 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   }
 
   auto &addr_cache = visit_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
-  std::unordered_map<AnfNodePtr, std::unordered_map<size_t, session::KernelWithIndex>>::iterator addr_iter;
+  std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>>::iterator addr_iter;
   if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
-    addr_iter = addr_cache.insert({node, std::unordered_map<size_t, session::KernelWithIndex>{}}).first;
+    addr_iter = addr_cache.insert({node, {AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
   } else {
     addr_iter = iter;
   }
 
-  if (auto valueiter = addr_iter->second.find(i); valueiter == addr_iter->second.end()) {
-    session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, i, visit_nop_node);
-    addr_iter->second[i] = kernel_with_index;
+  if (addr_iter->second[i].first == nullptr) {
+    addr_iter->second[i] = AnfAlgo::GetPrevNodeOutput(node, i, visit_nop_node);
   }
 
   session::KernelWithIndex prev_node_with_index = addr_iter->second[i];
