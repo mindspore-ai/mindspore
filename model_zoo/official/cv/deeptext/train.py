@@ -153,6 +153,10 @@ def run_train():
         param_dict = load_checkpoint(load_path)
         load_param_into_net(net, param_dict)
 
+    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
+    if device_type == "Ascend":
+        net.to_float(mstype.float16)
+
     loss = LossNet()
     lr = Tensor(dynamic_lr(config, rank_size=device_num), mstype.float32)
 

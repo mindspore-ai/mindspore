@@ -18,6 +18,11 @@ import os
 import time
 
 import numpy as np
+import mindspore.common.dtype as mstype
+from mindspore import context
+from mindspore.common import set_seed
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
 from src.Deeptext.deeptext_vgg16 import Deeptext_VGG16
 from src.dataset import data_to_mindrecord_byte_image, create_deeptext_dataset
 from src.utils import metrics
@@ -26,9 +31,6 @@ from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num
 
-from mindspore import context
-from mindspore.common import set_seed
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 set_seed(1)
 
@@ -49,6 +51,11 @@ def deeptext_eval_test(dataset_path='', ckpt_path=''):
 
     print("\n========================================\n", flush=True)
     print("Processing, please wait a moment.", flush=True)
+
+    device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
+    if device_type == "Ascend":
+        net.to_float(mstype.float16)
+
     max_num = 32
 
     pred_data = []
