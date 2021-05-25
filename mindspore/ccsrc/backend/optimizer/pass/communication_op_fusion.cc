@@ -320,9 +320,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   std::vector<std::vector<size_t>> shapes;
   for (size_t i = 0; i < IntToSize(rank_size); ++i) {
     for (size_t idx = start_index; idx <= end_index; ++idx) {
-      auto cnode = communication_op_info.communication_op_nodes[idx];
-      MS_EXCEPTION_IF_NULL(cnode);
-      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, 0);
+      auto input_cnode = communication_op_info.communication_op_nodes[idx];
+      MS_EXCEPTION_IF_NULL(input_cnode);
+      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(input_cnode, 0);
       if (!shape.empty()) {
         shape[0] /= rank_size;
       }
