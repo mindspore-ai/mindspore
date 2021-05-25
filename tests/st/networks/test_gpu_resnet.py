@@ -352,7 +352,7 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
     assert (losses[-1].asnumpy() < 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor_big_batchSize(num_classes=10, epoch=8, batch_size=338):

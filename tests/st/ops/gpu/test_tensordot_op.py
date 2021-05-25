@@ -105,7 +105,7 @@ def test_tensor_dot_fp32():
     np.allclose(ms_result_np, np_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level2
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_dot_fp16():
