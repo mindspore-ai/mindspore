@@ -16,10 +16,13 @@
 
 DATA_DIR=$1
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config_cpu.yaml"
+
 rm -rf train_standalone
 mkdir ./train_standalone
 cd ./train_standalone || exit
 env > env.log
-python -u ../train.py \
+python -u ../train.py --config_path=$CONFIG_FILE \
     --dataset_path=$DATA_DIR --platform=CPU> log.txt 2>&1 &
 cd ../

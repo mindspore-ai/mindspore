@@ -13,11 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """train imagenet"""
-import argparse
+import time
 import math
 import os
-
 import numpy as np
+
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
+from src.dataset import create_dataset_imagenet, create_dataset_cifar10
+from src.inceptionv4 import Inceptionv4
 
 from mindspore import Model
 from mindspore import Tensor
@@ -31,42 +36,19 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.model import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.config import config_ascend, config_gpu, config_cpu
-from src.dataset import create_dataset_imagenet, create_dataset_cifar10
-from src.inceptionv4 import Inceptionv4
+
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 set_seed(1)
-
-CFG_DICT = {
-    "Ascend": config_ascend,
-    "GPU": config_gpu,
-    "CPU": config_cpu,
-}
 
 DS_DICT = {
     "imagenet": create_dataset_imagenet,
     "cifar10": create_dataset_cifar10,
 }
 
-device_num = int(os.getenv('RANK_SIZE', '1'))
-
-
-def parse_args():
-    '''parse_args'''
-    arg_parser = argparse.ArgumentParser(description='InceptionV4 image classification training')
-    arg_parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
-    arg_parser.add_argument('--device_id', type=int, default=0, help='device id')
-    arg_parser.add_argument('--platform', type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
-                            help='Platform, support Ascend, GPU, CPU.')
-    arg_parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
-    args_opt = arg_parser.parse_args()
-    return args_opt
-
-
-args = parse_args()
-
-config = CFG_DICT[args.platform]
+config.device_id = get_device_id()
+config.device_num = get_device_num()
+device_num = config.device_num
 create_dataset = DS_DICT[config.ds_type]
 
 
@@ -107,21 +89,77 @@ def generate_cosine_lr(steps_per_epoch, total_epochs,
     return learning_rate
 
 
+def modelarts_pre_process():
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print('Extract Start...')
+                print('unzip file num: {}'.format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print('unzip percent: {}%'.format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print('cost time: {}min:{}s.'.format(int((time.time() - s_time) / 60),\
+                    int(int(time.time() - s_time) % 60)))
+                print('Extract Done')
+            else:
+                print('This is not zip.')
+        else:
+            print('Zip has been extracted.')
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + '.zip')
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = '/tmp/unzip_sync.lock'
+
+        # Each server contains 8 devices as most
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print('Zip file path: ', zip_file_1)
+            print('Unzip file save dir: ', save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print('===Finish extract data synchronization===')
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print('Device: {}, Finish sync unzip data from {} to {}.'.format(get_device_id(), zip_file_1, save_dir_1))
+        print('#' * 200, os.listdir(save_dir_1))
+        print('#' * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
+
+    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def inception_v4_train():
     """
     Train Inceptionv4 in data parallelism
     """
     print('epoch_size: {} batch_size: {} class_num {}'.format(config.epoch_size, config.batch_size, config.num_classes))
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.platform)
-    if args.platform == "Ascend":
-        context.set_context(device_id=args.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.platform)
+    if config.platform == "Ascend":
+        context.set_context(device_id=get_device_id())
         context.set_context(enable_graph_kernel=False)
 
     if device_num > 1:
-        if args.platform == "Ascend":
+        if config.platform == "Ascend":
             init(backend_name='hccl')
-        elif args.platform == "GPU":
+        elif config.platform == "GPU":
             init()
         else:
             raise ValueError("Unsupported device target.")
@@ -137,7 +175,7 @@ def inception_v4_train():
         config.group_size = 1
 
     # create dataset
-    train_dataset = create_dataset(dataset_path=args.dataset_path, do_train=True, cfg=config)
+    train_dataset = create_dataset(dataset_path=config.dataset_path, do_train=True, cfg=config)
     train_step_size = train_dataset.get_dataset_size()
 
     # create model
@@ -164,11 +202,11 @@ def inception_v4_train():
     opt = RMSProp(group_params, lr, decay=config.decay, epsilon=config.epsilon, weight_decay=config.weight_decay,
                   momentum=config.momentum, loss_scale=config.loss_scale)
 
-    if args.device_id == 0:
+    if get_device_id() == 0:
         print(lr)
         print(train_step_size)
-    if args.resume:
-        ckpt = load_checkpoint(args.resume)
+    if config.resume:
+        ckpt = load_checkpoint(config.resume)
         load_param_into_net(net, ckpt)
 
     loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -185,7 +223,7 @@ def inception_v4_train():
                                  directory='ckpts_rank_' + str(config.rank), config=config_ck)
     callbacks = [performance_cb, loss_cb]
     if device_num > 1 and config.is_save_on_master:
-        if args.device_id == 0:
+        if get_device_id() == 0:
             callbacks.append(ckpoint_cb)
     else:
         callbacks.append(ckpoint_cb)
@@ -195,5 +233,6 @@ def inception_v4_train():
 
 
 if __name__ == '__main__':
+    config.dataset_path = os.path.join(config.dataset_path, 'train')
     inception_v4_train()
     print('Inceptionv4 training success!')

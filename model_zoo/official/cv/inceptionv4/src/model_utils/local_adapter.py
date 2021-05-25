@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-rm -rf evaluation
-mkdir evaluation
-cp ./*.py ./evaluation
-cp ./*.yaml ./evaluation
-cp -r ./src ./evaluation
-cd ./evaluation || exit
+"""Local adapter"""
 
-DATA_DIR=$1
-CKPT_DIR=$2
-BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
-CONFIG_FILE="${BASE_PATH}/../default_config_cpu.yaml"
+import os
 
-echo "start evaluation"
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
-python eval.py --config_path=$CONFIG_FILE --dataset_path=$DATA_DIR --checkpoint_path=$CKPT_DIR --platform='CPU'  > eval.log 2>&1 &
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

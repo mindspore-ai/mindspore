@@ -19,6 +19,8 @@ export RANK_TABLE_FILE=$1
 DATA_DIR=$2
 export RANK_SIZE=8
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
 echo "the number of logical core" $cores
@@ -39,11 +41,13 @@ do
     rm -rf train_parallel$i
     mkdir ./train_parallel$i
     cp  *.py ./train_parallel$i
+    cp  *.yaml ./train_parallel$i
+    cp  -r ./src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $i, device $DEVICE_ID rank_id $RANK_ID"
 
     env > env.log
-    taskset -c $cmdopt python -u ../train.py \
+    taskset -c $cmdopt python -u ../train.py --config_path=$CONFIG_FILE \
     --device_id $i \
     --dataset_path=$DATA_DIR > log.txt 2>&1 &
     cd ../

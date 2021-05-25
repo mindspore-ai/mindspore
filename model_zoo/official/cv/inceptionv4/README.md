@@ -78,14 +78,21 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─run_infer_310.sh                  # shell script for 310 inference
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
   ├─src
-    ├─config.py                       # parameter configuration
     ├─dataset.py                      # data preprocessing
     ├─inceptionv4.py                  # network definition
-    └─callback.py                     # eval callback function
-  ├─eval.py                           # eval net
-  ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
-  ├─postprogress.py                   # post process for 310 inference
-  └─train.py                          # train net
+    ├─callback.py                     # eval callback function
+    └─model_utils
+      ├─config.py               # Processing configuration parameters
+      ├─device_adapter.py       # Get cloud ID
+      ├─local_adapter.py        # Get local ID
+      └─moxing_adapter.py       # Parameter processing
+  ├─default_config.yaml             # Training parameter profile(ascend)
+  ├─default_config_cpu.yaml         # Training parameter profile(cpu)
+  ├─default_config_gpu.yaml         # Training parameter profile(gpu)
+  ├─eval.py                         # eval net
+  ├─export.py                       # export checkpoint, surpport .onnx, .air, .mindir convert
+  ├─postprogress.py                 # post process for 310 inference
+  └─train.py                        # train net
 ```
 
 ## [Script Parameters](#contents)
