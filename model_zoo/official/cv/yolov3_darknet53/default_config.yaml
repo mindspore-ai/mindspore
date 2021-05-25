@@ -75,6 +75,10 @@ file_name: "yolov3_darknet53"
 file_format: "AIR" # ["AIR", "ONNX", "MINDIR"]
 
 
+# convert weight option
+input_file: "./darknet53.conv.74"
+output_file: "./backbone_darknet53.ckpt"
+
 # Other default config
 hue: 0.1
 saturation: 1.5
@@ -166,3 +170,7 @@ ckpt_file: "Checkpoint file path."
 file_name: "output file name."
 file_format: "file format choices in ['AIR', 'ONNX', 'MINDIR']"
 device_target: "device target. choices in ['Ascend', 'GPU'] for train. choices in ['Ascend', 'GPU', 'CPU'] for export."
+
+# convert weight option
+input_file: "input file path."
+output_file: "output file path."

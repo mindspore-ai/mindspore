@@ -83,10 +83,16 @@ We use about 13K images as training dataset and 3K as evaluating dataset in this
 
 The entire code structure is as following:
 
-```python
+```text
 .
 └─ Face Detection
   ├─ README.md
+  ├─ model_utils
+    ├─ __init__.py                          # init file
+    ├─ config.py                            # Parse arguments
+    ├─ device_adapter.py                    # Device adapter for ModelArts
+    ├─ local_adapter.py                     # Local adapter
+    └─ moxing_adapter.py                    # Moxing adapter for ModelArts
   ├─ scripts
     ├─ run_standalone_train.sh              # launch standalone training(1p) in ascend
     ├─ run_distribute_train.sh              # launch distributed training(8p) in ascend
@@ -98,7 +104,6 @@ The entire code structure is as following:
       ├─ yolo_loss.py                       # loss function
       ├─ yolo_postprocess.py                # post process
       └─ yolov3.py                          # network
-    ├─ config.py                            # parameter configuration
     ├─ data_preprocess.py                   # preprocess
     ├─ logging.py                           # log function
     ├─ lrsche_factory.py                    # generate learning rate
@@ -107,6 +112,7 @@ The entire code structure is as following:
     ├─ data_to_mindrecord_train.py          # convert dataset to mindrecord for training
     ├─ data_to_mindrecord_train_append.py   # add dataset to an existed mindrecord for training
     └─ data_to_mindrecord_eval.py           # convert dataset to mindrecord for evaluating
+  ├─ default_config.yaml                    # default configurations
   ├─ train.py                               # training scripts
   ├─ eval.py                                # evaluation scripts
   └─ export.py                              # export air model
@@ -158,20 +164,84 @@ The entire code structure is as following:
     bash run_distribute_train.sh /home/train.mindrecord ./rank_table_8p.json /home/a.ckpt
     ```
 
-*Distribute mode doesn't support running on CPU*. You will get the loss value of each step as following in "./output/[TIME]/[TIME].log" or "./scripts/device0/train.log":
+    *Distribute mode doesn't support running on CPU*. You will get the loss value of each step as following in "./scripts/device0/output/[TIME]/[TIME].log" or "./scripts/device0/train.log":
 
-```python
-rank[0], iter[0], loss[318555.8], overflow:False, loss_scale:1024.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[1], loss[95394.28], overflow:True, loss_scale:1024.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[2], loss[81332.92], overflow:True, loss_scale:512.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[3], loss[27250.805], overflow:True, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-...
+    ```python
+    rank[0], iter[0], loss[318555.8], overflow:False, loss_scale:1024.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[1], loss[95394.28], overflow:True, loss_scale:1024.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[2], loss[81332.92], overflow:True, loss_scale:512.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[3], loss[27250.805], overflow:True, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    ...
+    rank[0], iter[62496], loss[2218.6282], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[62497], loss[3788.5146], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[62498], loss[3427.5479], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    rank[0], iter[62499], loss[4294.194], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
+    ```
 
-rank[0], iter[62496], loss[2218.6282], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[62497], loss[3788.5146], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[62498], loss[3427.5479], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-rank[0], iter[62499], loss[4294.194], overflow:False, loss_scale:256.0, lr:6.24999984211172e-06, batch_images:(64, 3, 448, 768), batch_labels:(64, 200, 6)
-```
+- Train on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```python
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_train/data.mindrecord'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrain/'" on default_config.yaml file.
+    #          (optional)Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_train/data.mindrecord'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrain/'" on the website UI interface.
+    #          (optional)Add "pretrained='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) (optional) Upload or copy your pretrained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceDetection" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "run_platform='Ascend'" on default_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_train/data.mindrecord'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrain/'" on default_config.yaml file.
+    #          (optional)Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "run_platform='Ascend'" on the website UI interface.
+    #          Add "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_train/data.mindrecord'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrain/'" on the website UI interface.
+    #          (optional)Add "pretrained='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) (optional) Upload or copy your pretrained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceDetection" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on base_config.yaml file.
+    #          Set "run_platform='Ascend'" on default_config.yaml file.
+    #          Set "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_train/data.mindrecord'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_pretrain/'" on default_config.yaml file.
+    #          Set "pretrained='/cache/checkpoint_path/model.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "run_platform='Ascend'" on the website UI interface.
+    #          Add "mindrecord_path='/cache/data/face_detect_dataset/mindrecord_test/data.mindrecord'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_pretrain/'" on the website UI interface.
+    #          Add "pretrained='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket.
+    # (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+    # (5) Set the code directory to "/path/FaceDetection" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
 
 ### Evaluation
 
@@ -214,7 +284,7 @@ bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | Parameters                 | Face Detection                                              |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                          |
-| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8                |
+| Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G; OS Euler2.8 |
 | uploaded Date              | 09/30/2020 (month/day/year)                                 |
 | MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | 13K images                                                  |
@@ -231,7 +301,7 @@ bash run_export.sh [PLATFORM] [BATCH_SIZE] [USE_DEVICE_ID] [PRETRAINED_BACKBONE]
 | Parameters          | Face Detection              |
 | ------------------- | --------------------------- |
 | Model Version       | V1                          |
-| Resource            | Ascend 910; OS Euler2.8                  |
+| Resource            | Ascend 910; OS Euler2.8     |
 | Uploaded Date       | 09/30/2020 (month/day/year) |
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | 3K images                   |

@@ -60,10 +60,10 @@ echo $PRETRAINED_BACKBONE
 
 echo 'start evaluating'
 export RANK_ID=0
-rm -rf ${current_exec_path}/device$USE_DEVICE_ID
+rm -rf ${current_exec_path}/eval
 echo 'start device '$USE_DEVICE_ID
-mkdir ${current_exec_path}/device$USE_DEVICE_ID
-cd ${current_exec_path}/device$USE_DEVICE_ID  || exit
+mkdir ${current_exec_path}/eval
+cd ${current_exec_path}/eval  || exit
 dev=`expr $USE_DEVICE_ID + 0`
 export DEVICE_ID=$dev
 python ${dirname_path}/${SCRIPT_NAME} \

@@ -14,16 +14,14 @@
 # ============================================================================
 """Face detection train."""
 import os
-import ast
 import time
 import datetime
-import argparse
 import numpy as np
 
 from mindspore import context
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore import Tensor
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
@@ -31,75 +29,104 @@ from mindspore.common import dtype as mstype
 
 from src.logging import get_logger
 from src.data_preprocess import create_dataset
-from src.config import config
 from src.network_define import define_network
 
-def parse_args():
-    '''parse_args'''
-    parser = argparse.ArgumentParser('Yolov3 Face Detection')
-    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "CPU"),
-                        help="run platform, support Ascend and CPU.")
-    parser.add_argument('--mindrecord_path', type=str, default='', help='dataset path, e.g. /home/data.mindrecord')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--local_rank', type=int, default=0, help='current rank to support distributed')
-    parser.add_argument('--world_size', type=int, default=8, help='current process number to support distributed')
-    parser.add_argument("--use_loss_scale", type=ast.literal_eval, default=True,
-                        help="Whether use dynamic loss scale, default is True.")
-
-    args, _ = parser.parse_known_args()
-    args.batch_size = config.batch_size
-    args.warmup_lr = config.warmup_lr
-    args.lr_rates = config.lr_rates
-    if args.run_platform == "CPU":
-        args.use_loss_scale = False
-        args.world_size = 1
-        args.local_rank = 0
-    if args.world_size != 8:
-        args.lr_steps = [i * 8 // args.world_size for i in config.lr_steps]
-    else:
-        args.lr_steps = config.lr_steps
-    args.gamma = config.gamma
-    args.weight_decay = config.weight_decay if args.world_size != 1 else 0.
-    args.momentum = config.momentum
-    args.max_epoch = config.max_epoch
-    args.log_interval = config.log_interval
-    args.ckpt_path = config.ckpt_path
-    args.ckpt_interval = config.ckpt_interval
-    args.outputs_dir = os.path.join(args.ckpt_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    print('args.outputs_dir', args.outputs_dir)
-    args.num_classes = config.num_classes
-    args.anchors = config.anchors
-    args.anchors_mask = config.anchors_mask
-    args.num_anchors_list = [len(x) for x in args.anchors_mask]
-    return args
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
 
-def train(args):
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.ckpt_path = os.path.join(config.output_path, "output")
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
     '''train'''
+    config.world_size = get_device_num()
+    config.local_rank = get_rank_id()
+    if config.run_platform == "CPU":
+        config.use_loss_scale = False
+        config.world_size = 1
+        config.local_rank = 0
+    if config.world_size != 8:
+        config.lr_steps = [i * 8 // config.world_size for i in config.lr_steps]
+    config.weight_decay = config.weight_decay if config.world_size != 1 else 0.
+    config.outputs_dir = os.path.join(config.ckpt_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    print('config.outputs_dir', config.outputs_dir)
+    config.num_anchors_list = [len(x) for x in config.anchors_mask]
     print('=============yolov3 start trainging==================')
-    devid = int(os.getenv('DEVICE_ID', '0')) if args.run_platform != 'CPU' else 0
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.run_platform, save_graphs=False, device_id=devid)
+    devid = int(os.getenv('DEVICE_ID', '0')) if config.run_platform != 'CPU' else 0
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.run_platform, save_graphs=False, device_id=devid)
     # init distributed
-    if args.world_size != 1:
+    if config.world_size != 1:
         init()
-        args.local_rank = get_rank()
-        args.world_size = get_group_size()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, device_num=args.world_size,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, device_num=config.world_size,
                                           gradients_mean=True)
-    args.logger = get_logger(args.outputs_dir, args.local_rank)
+    config.logger = get_logger(config.outputs_dir, config.local_rank)
 
     # dataloader
-    ds = create_dataset(args)
+    ds = create_dataset(config)
 
-    args.logger.important_info('start create network')
+    config.logger.important_info('start create network')
     create_network_start = time.time()
 
-    train_net = define_network(args)
+    train_net = define_network(config)
 
     # checkpoint
-    ckpt_max_num = args.max_epoch * args.steps_per_epoch // args.ckpt_interval
-    train_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval, keep_checkpoint_max=ckpt_max_num)
-    ckpt_cb = ModelCheckpoint(config=train_config, directory=args.outputs_dir, prefix='{}'.format(args.local_rank))
+    ckpt_max_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
+    train_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval, keep_checkpoint_max=ckpt_max_num)
+    ckpt_cb = ModelCheckpoint(config=train_config, directory=config.outputs_dir, prefix='{}'.format(config.local_rank))
     cb_params = _InternalCallbackParam()
     cb_params.train_network = train_net
     cb_params.epoch_num = ckpt_max_num
@@ -112,7 +139,7 @@ def train(args):
     t_epoch = time.time()
     old_progress = -1
     i = 0
-    if args.use_loss_scale:
+    if config.use_loss_scale:
         scale_manager = DynamicLossScaleManager(init_loss_scale=2 ** 10, scale_factor=2, scale_window=2000)
     for data in ds.create_tuple_iterator(output_numpy=True):
         batch_images = data[0]
@@ -120,7 +147,7 @@ def train(args):
         input_list = [Tensor(batch_images, mstype.float32)]
         for idx in range(2, 26):
             input_list.append(Tensor(data[idx], mstype.float32))
-        if args.use_loss_scale:
+        if config.use_loss_scale:
             scaling_sens = Tensor(scale_manager.get_loss_scale(), dtype=mstype.float32)
             loss0, overflow, _ = train_net(*input_list, scaling_sens)
             overflow = np.all(overflow.asnumpy())
@@ -128,50 +155,49 @@ def train(args):
                 scale_manager.update_loss_scale(overflow)
             else:
                 scale_manager.update_loss_scale(False)
-            args.logger.info('rank[{}], iter[{}], loss[{}], overflow:{}, loss_scale:{}, lr:{}, batch_images:{}, '
-                             'batch_labels:{}'.format(args.local_rank, i, loss0, overflow, scaling_sens, args.lr[i],
-                                                      batch_images.shape, batch_labels.shape))
+            config.logger.info('rank[{:d}], iter[{}], loss[{}], overflow:{}, loss_scale:{}, lr:{}, batch_images:{}, '
+                               'batch_labels:{}'.format(config.local_rank, i, loss0, overflow, scaling_sens,
+                                                        config.lr[i], batch_images.shape, batch_labels.shape))
         else:
             loss0 = train_net(*input_list)
-            args.logger.info('rank[{}], iter[{}], loss[{}], lr:{}, batch_images:{}, '
-                             'batch_labels:{}'.format(args.local_rank, i, loss0, args.lr[i],
-                                                      batch_images.shape, batch_labels.shape))
+            config.logger.info('rank[{:d}], iter[{}], loss[{}], lr:{}, batch_images:{}, '
+                               'batch_labels:{}'.format(config.local_rank, i, loss0,
+                                                        config.lr[i], batch_images.shape, batch_labels.shape))
         # save ckpt
         cb_params.cur_step_num = i + 1  # current step number
         cb_params.batch_num = i + 2
-        if args.local_rank == 0:
+        if config.local_rank == 0:
             ckpt_cb.step_end(run_context)
 
         # save Log
         if i == 0:
             time_for_graph_compile = time.time() - create_network_start
-            args.logger.important_info('Yolov3, graph compile time={:.2f}s'.format(time_for_graph_compile))
+            config.logger.important_info('Yolov3, graph compile time={:.2f}s'.format(time_for_graph_compile))
 
-        if i % args.steps_per_epoch == 0:
+        if i % config.steps_per_epoch == 0:
             cb_params.cur_epoch_num += 1
 
-        if i % args.log_interval == 0 and args.local_rank == 0:
+        if i % config.log_interval == 0 and config.local_rank == 0:
             time_used = time.time() - t_end
-            epoch = int(i / args.steps_per_epoch)
-            fps = args.batch_size * (i - old_progress) * args.world_size / time_used
-            args.logger.info('epoch[{}], iter[{}], loss:[{}], {:.2f} imgs/sec'.format(epoch, i, loss0, fps))
+            epoch = int(i / config.steps_per_epoch)
+            fps = config.batch_size * (i - old_progress) * config.world_size / time_used
+            config.logger.info('epoch[{}], iter[{}], loss:[{}], {:.2f} imgs/sec'.format(epoch, i, loss0, fps))
             t_end = time.time()
             old_progress = i
 
-        if i % args.steps_per_epoch == 0 and args.local_rank == 0:
+        if i % config.steps_per_epoch == 0 and config.local_rank == 0:
             epoch_time_used = time.time() - t_epoch
-            epoch = int(i / args.steps_per_epoch)
-            fps = args.batch_size * args.world_size * args.steps_per_epoch / epoch_time_used
-            args.logger.info('=================================================')
-            args.logger.info('epoch time: epoch[{}], iter[{}], {:.2f} imgs/sec'.format(epoch, i, fps))
-            args.logger.info('=================================================')
+            epoch = int(i / config.steps_per_epoch)
+            fps = config.batch_size * config.world_size * config.steps_per_epoch / epoch_time_used
+            config.logger.info('=================================================')
+            config.logger.info('epoch time: epoch[{}], iter[{}], {:.2f} imgs/sec'.format(epoch, i, fps))
+            config.logger.info('=================================================')
             t_epoch = time.time()
 
         i = i + 1
 
-    args.logger.info('=============yolov3 training finished==================')
+    config.logger.info('=============yolov3 training finished==================')
 
 
 if __name__ == "__main__":
-    arg = parse_args()
-    train(arg)
+    run_train()

@@ -14,7 +14,7 @@
 # ============================================================================
 """Face detection eval."""
 import os
-import argparse
+import time
 import matplotlib.pyplot as plt
 
 from mindspore import context
@@ -24,50 +24,104 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
 import mindspore.dataset as de
 
-
-
-
 from src.data_preprocess import SingleScaleTrans
-from src.config import config
 from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
 from src.FaceDetection import voc_wrapper
 from src.network_define import BuildTestNetwork, get_bounding_boxes, tensor_to_brambox, \
     parse_gt_from_anno, parse_rets, calc_recall_precision_ap
 
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
+
+
 plt.switch_backend('agg')
 
-def parse_args():
-    '''parse_args'''
-    parser = argparse.ArgumentParser('Yolov3 Face Detection')
-    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "CPU"),
-                        help="run platform, support Ascend and CPU.")
-    parser.add_argument('--mindrecord_path', type=str, default='', help='dataset path, e.g. /home/data.mindrecord')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--local_rank', type=int, default=0, help='current rank to support distributed')
-    parser.add_argument('--world_size', type=int, default=1, help='current process number to support distributed')
+def load_pretrain(net, cfg):
+    '''load pretrain model'''
+    if os.path.isfile(cfg.pretrained):
+        param_dict = load_checkpoint(cfg.pretrained)
+        param_dict_new = {}
+        for key, values in param_dict.items():
+            if key.startswith('moments.'):
+                continue
+            elif key.startswith('network.'):
+                param_dict_new[key[8:]] = values
+            else:
+                param_dict_new[key] = values
+        load_param_into_net(net, param_dict_new)
+        print('load model {} success'.format(cfg.pretrained))
+    else:
+        print('load model {} failed, please check the path of model, evaluating end'.format(cfg.pretrained))
+        exit(0)
 
-    arg, _ = parser.parse_known_args()
+    return net
 
-    return arg
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.result_path = os.path.join(config.output_path, "results")
 
 
-if __name__ == "__main__":
-    args = parse_args()
-    devid = int(os.getenv('DEVICE_ID', '0')) if args.run_platform != 'CPU' else 0
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.run_platform, save_graphs=False, device_id=devid)
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    '''run eval'''
+    config.world_size = get_device_num()
+    config.local_rank = get_rank_id()
+    devid = get_device_id() if config.run_platform != 'CPU' else 0
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.run_platform, save_graphs=False, device_id=devid)
     print('=============yolov3 start evaluating==================')
 
-    # logger
-    args.batch_size = config.batch_size
-    args.input_shape = config.input_shape
-    args.result_path = config.result_path
-    args.conf_thresh = config.conf_thresh
-    args.nms_thresh = config.nms_thresh
-
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.STAND_ALONE, device_num=args.world_size,
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.STAND_ALONE, device_num=config.world_size,
                                       gradients_mean=True)
-    mindrecord_path = args.mindrecord_path
-    print('Loading data from {}'.format(mindrecord_path))
 
     num_classes = config.num_classes
     if num_classes > 1:
@@ -84,34 +138,18 @@ if __name__ == "__main__":
     classes = {0: 'face'}
 
     # dataloader
-    ds = de.MindDataset(mindrecord_path + "0", columns_list=["image", "annotation", "image_name", "image_size"])
+    print('Loading data from {}'.format(config.mindrecord_path))
+    ds = de.MindDataset(config.mindrecord_path + "0", columns_list=["image", "annotation", "image_name", "image_size"])
 
-    single_scale_trans = SingleScaleTrans(resize=args.input_shape)
-
-    ds = ds.batch(args.batch_size, per_batch_map=single_scale_trans,
+    single_scale_trans = SingleScaleTrans(resize=config.input_shape)
+    ds = ds.batch(config.batch_size, per_batch_map=single_scale_trans,
                   input_columns=["image", "annotation", "image_name", "image_size"], num_parallel_workers=8)
 
-    args.steps_per_epoch = ds.get_dataset_size()
+    config.steps_per_epoch = ds.get_dataset_size()
 
     # backbone
-    network = backbone_HwYolov3(num_classes, num_anchors_list, args)
-
-    # load pretrain model
-    if os.path.isfile(args.pretrained):
-        param_dict = load_checkpoint(args.pretrained)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            if key.startswith('moments.'):
-                continue
-            elif key.startswith('network.'):
-                param_dict_new[key[8:]] = values
-            else:
-                param_dict_new[key] = values
-        load_param_into_net(network, param_dict_new)
-        print('load model {} success'.format(args.pretrained))
-    else:
-        print('load model {} failed, please check the path of model, evaluating end'.format(args.pretrained))
-        exit(0)
+    network = backbone_HwYolov3(num_classes, num_anchors_list, config)
+    network = load_pretrain(network, config)
 
     ds = ds.repeat(1)
 
@@ -119,30 +157,25 @@ if __name__ == "__main__":
     img_size = {}
     img_anno = {}
 
-    model_name = args.pretrained.split('/')[-1].replace('.ckpt', '')
-    result_path = os.path.join(args.result_path, model_name)
+    model_name = config.pretrained.split('/')[-1].replace('.ckpt', '')
+    result_path = os.path.join(config.result_path, model_name)
     if os.path.exists(result_path):
         pass
     if not os.path.isdir(result_path):
         os.makedirs(result_path, exist_ok=True)
 
     # result file
-    ret_files_set = {
-        'face': os.path.join(result_path, 'comp4_det_test_face_rm5050.txt'),
-    }
+    ret_files_set = {'face': os.path.join(result_path, 'comp4_det_test_face_rm5050.txt'),}
 
     test_net = BuildTestNetwork(network, reduction_0, reduction_1, reduction_2, anchors, anchors_mask, num_classes,
-                                args)
+                                config)
 
-    print('conf_thresh:', args.conf_thresh)
+    print('conf_thresh:', config.conf_thresh)
 
     eval_times = 0
 
     for data in ds.create_tuple_iterator(output_numpy=True):
-        batch_images = data[0]
-        batch_labels = data[1]
-        batch_image_name = data[2]
-        batch_image_size = data[3]
+        batch_images, batch_labels, batch_image_name, batch_image_size = data[0:4]
         eval_times += 1
 
         img_tensor = Tensor(batch_images, mstype.float32)
@@ -153,11 +186,11 @@ if __name__ == "__main__":
         coords_0, cls_scores_0, coords_1, cls_scores_1, coords_2, cls_scores_2 = test_net(img_tensor)
 
         boxes_0, boxes_1, boxes_2 = get_bounding_boxes(coords_0, cls_scores_0, coords_1, cls_scores_1, coords_2,
-                                                       cls_scores_2, args.conf_thresh, args.input_shape,
+                                                       cls_scores_2, config.conf_thresh, config.input_shape,
                                                        num_classes)
 
         converted_boxes_0, converted_boxes_1, converted_boxes_2 = tensor_to_brambox(boxes_0, boxes_1, boxes_2,
-                                                                                    args.input_shape, labels)
+                                                                                    config.input_shape, labels)
 
         tdets.append(converted_boxes_0)
         tdets.append(converted_boxes_1)
@@ -175,11 +208,11 @@ if __name__ == "__main__":
         img_anno.update({batch_image_name[k].decode('UTF-8'): v for k, v in enumerate(batch_labels)})
 
     print('eval times:', eval_times)
-    print('batch size: ', args.batch_size)
+    print('batch size: ', config.batch_size)
 
-    netw, neth = args.input_shape
+    netw, neth = config.input_shape
     reorg_dets = voc_wrapper.reorg_detection(det, netw, neth, img_size)
-    voc_wrapper.gen_results(reorg_dets, result_path, img_size, args.nms_thresh)
+    voc_wrapper.gen_results(reorg_dets, result_path, img_size, config.nms_thresh)
 
     # compute mAP
     ground_truth = parse_gt_from_anno(img_anno, classes)
@@ -208,3 +241,6 @@ if __name__ == "__main__":
     plt.savefig(ap_save_path)
 
     print('=============yolov3 evaluating finished==================')
+
+if __name__ == "__main__":
+    run_eval()

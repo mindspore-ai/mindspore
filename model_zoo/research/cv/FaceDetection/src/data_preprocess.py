@@ -19,7 +19,7 @@ import mindspore.dataset.vision.py_transforms as P
 import mindspore.dataset as de
 
 from src.transforms import RandomCropLetterbox, RandomFlip, HSVShift, ResizeLetterbox
-from src.config import config
+from model_utils.config import config
 
 
 class SingleScaleTrans:
