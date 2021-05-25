@@ -127,7 +127,7 @@ double MatMulCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, co
 // this operator uses
 double MatMulCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
                                              const std::vector<TensorInfo> &outputs, int64_t) const {
-  // In forward phase, the compuatation cost = slice(A) + slice(B) + (0 or 1) allreduce(slice(C))
+  // In forward phase, the computation cost = slice(A) + slice(B) + (0 or 1) allreduce(slice(C))
   double result = 0.0;
   TensorInfo output0 = outputs[0];
   Shape input0_slice_shape = inputs[0].slice_shape();
@@ -368,7 +368,7 @@ void ReLU6Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_outpu
 
 // Taking account of input
 void TransposeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
-  // When calulating 'dx', taking account of 'y'
+  // When calculating 'dx', taking account of 'y'
   if (is_parameter_[0]) {
     is_inputs_should_in_memory_[0] = true;
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
@@ -617,8 +617,8 @@ void OneHotCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false
 void OneHotCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
-  is_inputs_should_in_memory_[2] = is_parameter_[2];
-  is_inputs_should_in_memory_[3] = is_parameter_[3];
+  is_inputs_should_in_memory_[ONEHOT_INPUTS_SIZE - 2] = is_parameter_[ONEHOT_INPUTS_SIZE - 2];
+  is_inputs_should_in_memory_[ONEHOT_INPUTS_SIZE - 1] = is_parameter_[ONEHOT_INPUTS_SIZE - 1];
 }
 
 // return the per device communication cost in the forward phase.
@@ -999,23 +999,25 @@ void SliceCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_outpu
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(SLICE_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(SLICE_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[SLICE_INPUTS_SIZE - 1] = true;
     }
   } else if (is_parameter_involve_[0]) {
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(SLICE_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(SLICE_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[SLICE_INPUTS_SIZE - 1] = true;
     }
   }
 
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  if (!is_inputs_should_in_memory_[2]) {
-    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  if (!is_inputs_should_in_memory_[SLICE_INPUTS_SIZE - 1]) {
+    is_inputs_should_in_memory_[SLICE_INPUTS_SIZE - 1] = is_parameter_[SLICE_INPUTS_SIZE - 1];
   }
 }
 
@@ -1026,32 +1028,36 @@ void StridedSliceCost::CalculateInputsInMemory(const std::map<size_t, bool> &pre
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(STRIDED_SLICE_INPUTS_SIZE - 2) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(STRIDED_SLICE_INPUTS_SIZE - 2))) {
+      is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 2] = true;
     }
-    if ((prev_output_in_mem.find(3) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(3))) {
-      is_inputs_should_in_memory_[3] = true;
+    if ((prev_output_in_mem.find(STRIDED_SLICE_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(STRIDED_SLICE_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 1] = true;
     }
   } else if (is_parameter_involve_[0]) {
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(STRIDED_SLICE_INPUTS_SIZE - 2) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(STRIDED_SLICE_INPUTS_SIZE - 2))) {
+      is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 2] = true;
     }
-    if ((prev_output_in_mem.find(3) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(3))) {
-      is_inputs_should_in_memory_[3] = true;
+    if ((prev_output_in_mem.find(STRIDED_SLICE_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(STRIDED_SLICE_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 1] = true;
     }
   }
 
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  if (!is_inputs_should_in_memory_[2]) {
-    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  if (!is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 2]) {
+    is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 2] = is_parameter_[STRIDED_SLICE_INPUTS_SIZE - 2];
   }
-  if (!is_inputs_should_in_memory_[3]) {
-    is_inputs_should_in_memory_[3] = is_parameter_[3];
+  if (!is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 1]) {
+    is_inputs_should_in_memory_[STRIDED_SLICE_INPUTS_SIZE - 1] = is_parameter_[STRIDED_SLICE_INPUTS_SIZE - 1];
   }
 }
 
@@ -1075,7 +1081,7 @@ void DropOutDoMaskCost::CalculateInputsInMemory(const std::map<size_t, bool> &pr
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  is_inputs_should_in_memory_[2] = is_parameter_[2];
+  is_inputs_should_in_memory_[DROPOUTDOMASK_INPUTS_SIZE - 1] = is_parameter_[DROPOUTDOMASK_INPUTS_SIZE - 1];
 }
 
 bool IsDataParallel(const Shape &shape, const Shape &slice_shape, int64_t stage_id) {
@@ -1306,23 +1312,25 @@ void GatherV2Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_ou
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(GATHERV2_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(GATHERV2_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[GATHERV2_INPUTS_SIZE - 1] = true;
     }
   } else if (is_parameter_involve_[0]) {
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(GATHERV2_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(GATHERV2_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[GATHERV2_INPUTS_SIZE - 1] = true;
     }
   }
 
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  if (!is_inputs_should_in_memory_[2]) {
-    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  if (!is_inputs_should_in_memory_[GATHERV2_INPUTS_SIZE - 1]) {
+    is_inputs_should_in_memory_[GATHERV2_INPUTS_SIZE - 1] = is_parameter_[GATHERV2_INPUTS_SIZE - 1];
   }
 }
 
@@ -1404,7 +1412,7 @@ void LayerNormCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_o
       is_inputs_should_in_memory_[1] = true;
     }
   }
-  is_inputs_should_in_memory_[2] = is_parameter_[2];
+  is_inputs_should_in_memory_[LAYERNORM_INPUTS_SIZE - 1] = is_parameter_[LAYERNORM_INPUTS_SIZE - 1];
 }
 
 double UniqueCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -1644,7 +1652,7 @@ void UnsortedSegmentSumCost::CalculateInputsInMemory(const std::map<size_t, bool
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  is_inputs_should_in_memory_[2] = is_parameter_[2];
+  is_inputs_should_in_memory_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1] = is_parameter_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1];
 }
 
 double UnsortedSegmentMinCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
@@ -1720,15 +1728,16 @@ void UnsortedSegmentMinCost::CalculateInputsInMemory(const std::map<size_t, bool
     if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
       is_inputs_should_in_memory_[1] = true;
     }
-    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
-      is_inputs_should_in_memory_[2] = true;
+    if ((prev_output_in_mem.find(UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1) == prev_output_in_mem.end()) ||
+        (!prev_output_in_mem.at(UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1))) {
+      is_inputs_should_in_memory_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1] = true;
     }
   }
   if (!is_inputs_should_in_memory_[1]) {
     is_inputs_should_in_memory_[1] = is_parameter_[1];
   }
-  if (!is_inputs_should_in_memory_[2]) {
-    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  if (!is_inputs_should_in_memory_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1]) {
+    is_inputs_should_in_memory_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1] = is_parameter_[UNSORTEDSEGMENTSUM_INPUTS_SIZE - 1];
   }
 }
 

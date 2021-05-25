@@ -534,11 +534,11 @@ Status CostGraph::SearchStrategyForTwoNodeFinalGraph(const std::vector<OperatorI
   MS_EXCEPTION_IF_NULL(v);
   auto e = u->GetAliveSuccEdges()[0];
   MS_EXCEPTION_IF_NULL(e);
-  auto cost_list = CreateFinalCostList(u, e, v);
+  auto f_cost_list = CreateFinalCostList(u, e, v);
   CostPtr cost = nullptr;
   if (phase == TRAINING_PHASE) {
     // training phase
-    cost = SelectCostWithMinTrainingTime(cost_list, device_mem_capacity);
+    cost = SelectCostWithMinTrainingTime(f_cost_list, device_mem_capacity);
   } else {
     MS_LOG(EXCEPTION) << "Currently, searching strategy for the two-connected-node final graph in the inference "
                          "phase is not supported.";
@@ -548,11 +548,11 @@ Status CostGraph::SearchStrategyForTwoNodeFinalGraph(const std::vector<OperatorI
     return FAILED;
   }
   MS_EXCEPTION_IF_NULL(cost->decision_ptr_);
-  auto decision = cost->decision_ptr_->cast<FinalDecisionPtr>();
-  MS_EXCEPTION_IF_NULL(decision);
-  u->SetSelectedStrategyAndCost(decision->u_strategy_, decision->left_cost_);
-  v->SetSelectedStrategyAndCost(decision->v_strategy_, decision->right_cost_);
-  e->set_selected_cost(decision->middle_cost_);
+  auto f_decision = cost->decision_ptr_->cast<FinalDecisionPtr>();
+  MS_EXCEPTION_IF_NULL(f_decision);
+  u->SetSelectedStrategyAndCost(f_decision->u_strategy_, f_decision->left_cost_);
+  v->SetSelectedStrategyAndCost(f_decision->v_strategy_, f_decision->right_cost_);
+  e->set_selected_cost(f_decision->middle_cost_);
   MS_LOG(INFO) << "Searching the strategy for the eliminated final graph ended.";
   return SUCCESS;
 }
