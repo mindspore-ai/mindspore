@@ -23,7 +23,6 @@
 #include "actor/actorpolicy.h"
 
 namespace mindspore {
-
 void ActorPolicy::SetRunningStatus(bool startRun) {
   std::lock_guard<std::mutex> lock(mailboxLock);
   this->start = startRun;

@@ -21,26 +21,16 @@
 #include "actor/actorthread.h"
 
 namespace mindspore {
-constexpr int MAXTHREADNAMELEN = 12;
 ActorThread::ActorThread() : readyActors(), workers() {
   readyActors.clear();
   workers.clear();
-
-  char *envThreadName = getenv("LITEBUS_THREAD_NAME");
-  if (envThreadName != nullptr) {
-    threadName = envThreadName;
-    if (threadName.size() > MAXTHREADNAMELEN) {
-      threadName.resize(MAXTHREADNAMELEN);
-    }
-  } else {
-    threadName = "HARES_LB_ACT";
-  }
+  threadName = "MINDRT_LB_ACT";
 }
 
 ActorThread::~ActorThread() {}
 void ActorThread::AddThread(int threadCount) {
   for (int i = 0; i < threadCount; ++i) {
-    std::unique_ptr<std::thread> worker(new (std::nothrow) std::thread(&ActorThread::Run, this));
+    std::unique_ptr<std::thread> worker = std::make_unique<std::thread>(&ActorThread::Run, this);
     BUS_OOM_EXIT(worker);
     workers.push_back(std::move(worker));
   }
@@ -82,7 +72,7 @@ void ActorThread::Run() {
 #if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 12
   static std::atomic<int> actorCount(1);
   int ret = pthread_setname_np(pthread_self(), (threadName + std::to_string(actorCount.fetch_add(1))).c_str());
-  if (0 != ret) {
+  if (ret != 0) {
     MS_LOG(INFO) << "set pthread name fail]ret:" << ret;
   } else {
     MS_LOG(INFO) << "set pthread name success]threadID:" << pthread_self();
