@@ -93,7 +93,7 @@ std::ostream &operator<<<VarPtr, BaseRef>(std::ostream &os, const Equiv &equiv) 
       os << "Named " << x.ToString().c_str();
     } else if (utils::isa<VarPtr>(x)) {
       os << "TypeString[Var]";
-      os << utils::cast<VarPtr>(x);
+      os << (utils::cast<VarPtr>(x));
     } else if (utils::isa<FuncGraphPtr>(x)) {
       os << "TypeString[Graph]";
     }

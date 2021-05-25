@@ -448,7 +448,6 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
 
     std::vector<int64_t> ori_shape;
     AnfAlgo::GetRealDynamicShape(AnfAlgo::GetOutputInferShape(anf_node, *output_idx), NOT_NULL(&ori_shape));
-    // std::vector<size_t> ori_shape = AnfAlgo::GetOutputInferShape(anf_node, *output_idx);
     if (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) {
       format = kOpFormat_NCDHW;
     }
@@ -556,27 +555,22 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   MS_EXCEPTION_IF_NULL(attr_obj);
   if (type == kVTypeInt) {
     if (value->isa<Int32Imm>()) {
-      auto attr_value = GetValue<int>(value);
-      (*attr_obj)[kJValue] = attr_value;
+      (*attr_obj)[kJValue] = GetValue<int>(value);
     } else {
-      auto attr_value = GetValue<int64_t>(value);
-      (*attr_obj)[kJValue] = attr_value;
+      (*attr_obj)[kJValue] = GetValue<int64_t>(value);
     }
   } else if (type == kVTypeInt64) {
-    auto attr_value = GetValue<int64_t>(value);
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = GetValue<int64_t>(value);
   } else if (type == kVTypeStr) {
-    auto attr_value = GetValue<std::string>(value);
-    if (attr_value == kOpFormat_FRAC_Z) {
-      attr_value = kOpFormat_FRACTAL_Z;
+    auto attr_str_value = GetValue<std::string>(value);
+    if (attr_str_value == kOpFormat_FRAC_Z) {
+      attr_str_value = kOpFormat_FRACTAL_Z;
     }
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = attr_str_value;
   } else if (type == kVTypeBool) {
-    auto attr_value = GetValue<bool>(value);
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = GetValue<bool>(value);
   } else if (type == kVTypeFloat) {
-    auto attr_value = GetValue<float>(value);
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = GetValue<float>(value);
   } else if (type == kVTypeListInt) {
     std::vector<int64_t> attr_value;
     auto value_type = value->type();
@@ -612,11 +606,9 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     }
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListUInt64) {
-    auto attr_value = GetValue<std::vector<size_t>>(value);
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = GetValue<std::vector<size_t>>(value);
   } else if (type == kVTypeListListInt) {
-    auto attr_value = GetValue<std::vector<std::vector<int64_t>>>(value);
-    (*attr_obj)[kJValue] = attr_value;
+    (*attr_obj)[kJValue] = GetValue<std::vector<std::vector<int64_t>>>(value);
   } else {
     MS_LOG(EXCEPTION) << "Type: " << type << "not support";
   }
@@ -886,7 +878,6 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   }
   nlohmann::json attr_desc;
   for (const auto &attr : json_attr_args) {
-    //    if(attr[kJName] != "isRef" && attr["valid"] == true) {
     if (attr[kJName] != "isRef" && attr[kJValid] == true) {
       attr_desc.push_back(attr[kJValue]);
     }
@@ -950,19 +941,25 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
   }
   (*output_desc)[kJFormat] = format;
   // special node
+  constexpr size_t DIM0 = 0;
+  constexpr size_t DIM1 = 1;
+  constexpr size_t DIM2 = 2;
+  constexpr size_t DIM3 = 3;
+  constexpr size_t DIM4 = 4;
+  constexpr size_t C0 = 16;
   if (fusion_data_type == kFusionAddN && format == kOpFormat_NC1HWC0) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[0]);
-    spec_shape.emplace_back(shape[1]);
-    spec_shape.emplace_back(shape[2] * shape[3]);
-    spec_shape.emplace_back(shape[4]);
+    spec_shape.emplace_back(shape[DIM0]);
+    spec_shape.emplace_back(shape[DIM1]);
+    spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
+    spec_shape.emplace_back(shape[DIM4]);
     (*output_desc)[kJShape] = spec_shape;
   } else if (fusion_data_type == kFusionReLUGradV2) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[0]);
-    spec_shape.emplace_back(shape[1]);
-    spec_shape.emplace_back(shape[2] * shape[3]);
-    spec_shape.emplace_back(16);
+    spec_shape.emplace_back(shape[DIM0]);
+    spec_shape.emplace_back(shape[DIM1]);
+    spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
+    spec_shape.emplace_back(C0);
     (*output_desc)[kJShape] = spec_shape;
     (*output_desc)[kJDataType] = kVTypeBool;
   }
@@ -1019,8 +1016,8 @@ bool TbeKernelBuild::GetInputLayers(const std::vector<mindspore::AnfNodePtr> &in
   MS_EXCEPTION_IF_NULL(input_layers);
   MS_EXCEPTION_IF_NULL(spec_data_input);
   auto result = std::find_if(compute_nodes.begin(), compute_nodes.end(), [](const auto &it) {
-    auto op_name = AnfAlgo::GetCNodeName(it);
-    return op_name == kConv2DBackpropInputOpName;
+    auto node_name = AnfAlgo::GetCNodeName(it);
+    return node_name == kConv2DBackpropInputOpName;
   });
   bool need_spec = (result != compute_nodes.end());
   size_t input_size = 0;
@@ -1312,13 +1309,8 @@ size_t TbeKernelBuild::GetIOSizeImpl(const nlohmann::json &desc) {
   return ret;
 }
 
-bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
-                               const std::vector<mindspore::AnfNodePtr> &output_nodes,
-                               std::vector<size_t> *input_size_list, std::vector<size_t> *output_size_list) {
+void TbeKernelBuild::CalInputSize(const nlohmann::json &fusion_op_list, std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(input_size_list);
-  MS_EXCEPTION_IF_NULL(output_size_list);
-  input_size_list->clear();
-  output_size_list->clear();
   // cal input size for malloc
   for (const auto &op : fusion_op_list) {
     if (op[kJtype] == "Data") {
@@ -1327,11 +1319,16 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
         if (data_output[kJShape] == "NULL") {
           break;
         }
-        auto ret = GetIOSizeImpl(data_output);
-        input_size_list->push_back(ret);
+        input_size_list->push_back(GetIOSizeImpl(data_output));
       }
     }
   }
+}
+
+bool TbeKernelBuild::CalOutputSize(const nlohmann::json &fusion_op_list,
+                                   const std::vector<mindspore::AnfNodePtr> &output_nodes,
+                                   std::vector<size_t> *output_size_list) {
+  MS_EXCEPTION_IF_NULL(output_size_list);
   // cal output size for malloc
   for (const auto &output_node : output_nodes) {
     auto kernel_idx = AnfAlgo::VisitKernel(output_node, 0);
@@ -1348,21 +1345,32 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
             MS_LOG(INFO) << "Fusion error: output_desc's shape is empty. real_index " << real_idx;
             return false;
           }
-          auto ret = GetIOSizeImpl(output_desc);
-          output_size_list->push_back(ret);
+          output_size_list->push_back(GetIOSizeImpl(output_desc));
         } else {
           for (const auto &output_desc : op_output_desces) {
             if (output_desc[kJShape].empty()) {
               continue;
             }
-            auto ret = GetIOSizeImpl(output_desc);
-            output_size_list->push_back(ret);
+            output_size_list->push_back(GetIOSizeImpl(output_desc));
           }
         }
       }
     }
   }
   return true;
+}
+
+bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
+                               const std::vector<mindspore::AnfNodePtr> &output_nodes,
+                               std::vector<size_t> *input_size_list, std::vector<size_t> *output_size_list) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
+  MS_EXCEPTION_IF_NULL(output_size_list);
+  input_size_list->clear();
+  output_size_list->clear();
+  // cal input size for malloc
+  CalInputSize(fusion_op_list, input_size_list);
+  // cal output size for malloc
+  return CalOutputSize(fusion_op_list, output_nodes, output_size_list);
 }
 }  // namespace kernel
 }  // namespace mindspore

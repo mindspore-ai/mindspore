@@ -365,7 +365,8 @@ void RemoveNopNode(session::KernelGraph *const graph) {
           new_inputs.push_back(input);
           continue;
         }
-        if (cinput->inputs().size() == 2) {
+        constexpr auto kInputSize = 2;
+        if (cinput->inputs().size() == kInputSize) {
           new_inputs.push_back(cinput->input(1));
           need_update = true;
           changed = true;
