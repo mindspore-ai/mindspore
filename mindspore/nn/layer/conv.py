@@ -963,15 +963,15 @@ class Conv2dTranspose(_Conv):
         if Validator.check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
-        # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel.
-        self.conv2d_transpose = P.Conv2DBackpropInput(out_channel=in_channels,
-                                                      kernel_size=kernel_size,
-                                                      mode=1,
-                                                      pad_mode=pad_mode,
-                                                      pad=padding,
-                                                      stride=stride,
-                                                      dilation=dilation,
-                                                      group=group)
+        # cause Conv2DTranspose's out_channel refers to Conv2D's out_channel.
+        self.conv2d_transpose = P.Conv2DTranspose(out_channel=in_channels,
+                                                  kernel_size=kernel_size,
+                                                  mode=1,
+                                                  pad_mode=pad_mode,
+                                                  pad=padding,
+                                                  stride=stride,
+                                                  dilation=dilation,
+                                                  group=group)
         self.bias_add = P.BiasAdd()
         if isinstance(self.padding, int):
             self.padding_top, self.padding_bottom, self.padding_left, self.padding_right = (self.padding,) * 4

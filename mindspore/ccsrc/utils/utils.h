@@ -175,6 +175,7 @@ constexpr auto kSpaceToBatchOpName = "SpaceToBatch";
 constexpr auto kBatchToSpaceOpName = "BatchToSpace";
 constexpr auto kSpaceToDepthOpName = "SpaceToDepth";
 constexpr auto kPadOpName = "Pad";
+constexpr auto kConv2DTransposeOpName = "Conv2DTranspose";
 constexpr auto kConv2DBackpropInputOpName = "Conv2DBackpropInput";
 constexpr auto kConv2DBackpropFilterOpName = "Conv2DBackpropFilter";
 constexpr auto kDepthwiseConv2dNativeOpName = "DepthwiseConv2dNative";

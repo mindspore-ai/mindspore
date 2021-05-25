@@ -26,6 +26,7 @@
 #include "backend/optimizer/pass/convert_attr_to_unify_mindir.h"
 #include "backend/optimizer/pass/add_training_attr.h"
 #include "backend/optimizer/pass/optimize_updatestate.h"
+#include "backend/optimizer/pass/conv_transpose_to_conv_bp.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -43,6 +44,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
+  common_pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
