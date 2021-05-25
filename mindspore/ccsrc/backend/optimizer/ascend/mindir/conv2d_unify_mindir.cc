@@ -64,8 +64,7 @@ bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vecto
   auto in_channel = in_shape[1];
   auto out_channel = out_shape[1];
   if (group != in_channel || group != out_channel) {
-    MS_LOG(EXCEPTION) << "Conv2D's attr group should be equal to in_channel and out_channel when group > 1, but got "
-                      << "group: " << group << " in_channel: " << in_channel << " out_channel: " << out_channel;
+    return false;
   }
   return true;
 }
