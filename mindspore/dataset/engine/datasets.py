@@ -3697,13 +3697,18 @@ class GeneratorDataset(MappableDataset):
 
         sample_fn = None
         if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
-            if new_op.num_parallel_workers > 1:
-                sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
-                                      self.max_rowsize)
-                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
-            else:
-                new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
-            new_op.sample_fn = sample_fn
+            # The reason why there is a try catch here is because when the new op is being constructed with shared
+            # memory enabled, there will be an exception thrown if there is not enough shared memory available
+            try:
+                if new_op.num_parallel_workers > 1:
+                    sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
+                                          self.max_rowsize)
+                    new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
+                else:
+                    new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
+                new_op.sample_fn = sample_fn
+            except RuntimeError as e:
+                raise Exception("Init failed during deepcopy, reason is", e.message)
         else:
             try:
                 new_op.sampler = None
