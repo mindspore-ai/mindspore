@@ -22,7 +22,6 @@
 using mindspore::MSTensor;
 using mindspore::DataType;
 
-
 std::vector<std::string> GetAllFiles(std::string_view dirName) {
   struct dirent *filename;
   DIR *dir = OpenDir(dirName);
@@ -34,12 +33,8 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
     std::string dName = std::string(filename->d_name);
     if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
       continue;
-    } else if (filename->d_type == DT_REG) {
-      std::string test_name = std::string(filename->d_name);
-      if (test_name.compare(test_name.size()-3, 3, "jpg") == 0) {
-        res.emplace_back(std::string(dirName) + "/" + filename->d_name);
-      }
     }
+    res.emplace_back(std::string(dirName) + "/" + filename->d_name);
   }
   std::sort(res.begin(), res.end());
   for (auto &f : res) {
@@ -47,7 +42,6 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
   }
   return res;
 }
-
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
   std::string homePath = "./result_Files";
@@ -60,7 +54,7 @@ int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outpu
     std::string fileName(imageFile, pos + 1);
     fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
     std::string outFileName = homePath + "/" + fileName;
-    FILE *outputFile = fopen(outFileName.c_str(), "wb");
+    FILE * outputFile = fopen(outFileName.c_str(), "wb");
     fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
     fclose(outputFile);
     outputFile = nullptr;
@@ -123,6 +117,7 @@ std::string RealPath(std::string_view path) {
   char realPathMem[PATH_MAX] = {0};
   char *realPathRet = nullptr;
   realPathRet = realpath(path.data(), realPathMem);
+
   if (realPathRet == nullptr) {
     std::cout << "File: " << path << " is not exist.";
     return "";

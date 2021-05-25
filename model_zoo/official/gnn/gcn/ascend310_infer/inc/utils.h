@@ -29,5 +29,4 @@ DIR *OpenDir(std::string_view dirName);
 std::string RealPath(std::string_view path);
 mindspore::MSTensor ReadFileToTensor(const std::string &file);
 int WriteResult(const std::string& imageFile, const std::vector<mindspore::MSTensor> &outputs);
-
 #endif

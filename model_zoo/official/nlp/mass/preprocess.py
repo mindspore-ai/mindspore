@@ -38,7 +38,7 @@ def generate_bin():
     cur_dir = args.result_path
     source_eos_ids_path = os.path.join(cur_dir, "00_source_eos_ids")
     source_eos_mask_path = os.path.join(cur_dir, "01_source_eos_mask")
-    target_eos_ids_path = os.path.join(cur_dir, " target_eos_ids")
+    target_eos_ids_path = os.path.join(cur_dir, "target_eos_ids")
 
     if not os.path.isdir(source_eos_ids_path):
         os.makedirs(source_eos_ids_path)
