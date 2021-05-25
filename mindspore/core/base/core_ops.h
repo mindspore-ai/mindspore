@@ -49,6 +49,7 @@ constexpr auto kSub = "Sub";
 constexpr auto kMul = "Mul";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kAdd = "Add";
+constexpr auto kTile = "Tile";
 
 // Arrays
 constexpr auto kStack = "Stack";
@@ -167,7 +168,7 @@ inline const PrimitivePtr kPrimDynamicAssign = std::make_shared<Primitive>("Dyna
 inline const PrimitivePtr kPrimPadAndShift = std::make_shared<Primitive>("PadAndShift");
 inline const PrimitivePtr kPrimSlice = std::make_shared<Primitive>("Slice");
 inline const PrimitivePtr kPrimSliceFusion = std::make_shared<Primitive>("SliceFusion");
-inline const PrimitivePtr kPrimTile = std::make_shared<Primitive>("Tile");
+inline const PrimitivePtr kPrimTile = std::make_shared<Primitive>(kTile);
 inline const PrimitivePtr kPrimAddN = std::make_shared<Primitive>("AddN");
 inline const PrimitivePtr kPrimAccumulateNV2 = std::make_shared<Primitive>("AccumulateNV2");
 inline const PrimitivePtr KPrimTransData = std::make_shared<Primitive>("TransData");

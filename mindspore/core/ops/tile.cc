@@ -23,11 +23,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto multiples_v = GetValue<std::vector<int64_t>>(input_args[1]->cast<abstract::AbstractTuplePtr>()->BuildValue());
-  int len_sub = input_shape.size() - multiples_v.size();
+std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &multiples_v) {
+  int len_sub = multiples_v.size() - input_shape.size();
   std::vector<int64_t> infer_shape = input_shape;
   std::vector<int64_t> multiples_w;
   if (len_sub == 0) {
@@ -46,17 +43,46 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   for (size_t i = 0; i < multiples_w.size(); i++) {
     infer_shape[i] *= multiples_w[i];
   }
-  return std::make_shared<abstract::Shape>(infer_shape);
+  return infer_shape;
 }
 
-TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("tile_prim_infer", input_args.size(), kEqual, 2, prim->name());
+abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  auto get_cast_temp = input_args[1]->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(get_cast_temp);
+  auto multiples_v = GetValue<std::vector<int64_t>>(get_cast_temp->BuildValue());
+  auto infer_shape = GetInferShape(input_shape, multiples_v);
+  if (max_shape.empty() && min_shape.empty()) {
+    return std::make_shared<abstract::Shape>(infer_shape);
+  }
+  auto infer_shape_min = GetInferShape(min_shape, multiples_v);
+  auto infer_shape_max = GetInferShape(max_shape, multiples_v);
+  return std::make_shared<abstract::Shape>(infer_shape, infer_shape_min, infer_shape_max);
+}
+
+TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  CheckAndConvertUtils::CheckInteger("tile_prim_infer", input_args.size(), kEqual, 2, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto x_type_map = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type_map);
+  auto x_dtype = x_type_map->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(x_dtype);
   std::set<TypePtr> template_types = {kTensorType};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, template_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, template_types, prim_name);
 }
 }  // namespace
 
@@ -66,5 +92,6 @@ AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                                                     TileInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameTile, Tile);
+
 }  // namespace ops
 }  // namespace mindspore
