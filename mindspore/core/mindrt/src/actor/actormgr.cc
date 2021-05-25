@@ -86,7 +86,7 @@ void ActorMgr::TerminateAll() {
 
   // send terminal msg to all actors.
   for (auto actorIt = actorsWaiting.begin(); actorIt != actorsWaiting.end(); ++actorIt) {
-    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
+    std::unique_ptr<MessageBase> msg = std::make_unique<MessageBase>("Terminate", MessageBase::Type::KTERMINATE);
     BUS_OOM_EXIT(msg);
     (void)(*actorIt)->EnqueMessage(std::move(msg));
     (*actorIt)->SetRunningStatus(true);
@@ -171,7 +171,6 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
     MS_LOG(ERROR) << "The actor's name conflicts,name:" << actor->GetAID().Name().c_str();
     BUS_EXIT("Actor name conflicts.");
   }
-
   MS_LOG(DEBUG) << "ACTOR was spawned,a=" << actor->GetAID().Name().c_str();
 
   std::unique_ptr<ActorPolicy> threadPolicy;
@@ -179,7 +178,6 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
     threadPolicy.reset(new (std::nothrow) ShardedThread(actor));
     BUS_OOM_EXIT(threadPolicy);
     actor->Spawn(actor, std::move(threadPolicy));
-
   } else {
     threadPolicy.reset(new (std::nothrow) SingleThread());
     BUS_OOM_EXIT(threadPolicy);
@@ -192,7 +190,6 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
 
   // long time
   actor->Init();
-
   actor->SetRunningStatus(start);
 
   return actor->GetAID();
@@ -201,7 +198,7 @@ AID ActorMgr::Spawn(ActorReference &actor, bool shareThread, bool start) {
 void ActorMgr::Terminate(const AID &id) {
   auto actor = GetActor(id);
   if (actor != nullptr) {
-    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
+    std::unique_ptr<MessageBase> msg = std::make_unique<MessageBase>("Terminate", MessageBase::Type::KTERMINATE);
     BUS_OOM_EXIT(msg);
     (void)actor->EnqueMessage(std::move(msg));
     actor->SetRunningStatus(true);

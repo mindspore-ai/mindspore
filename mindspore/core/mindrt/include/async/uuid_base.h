@@ -33,10 +33,6 @@ struct uuid {
  public:
   static std::size_t Size();
 
-  static std::string ToBytes(const uuid &u);
-
-  static Option<uuid> FromBytes(const std::string &s);
-
   static Option<unsigned char> GetValue(char c);
 
   static Option<uuid> FromString(const std::string &s);
@@ -55,17 +51,11 @@ struct uuid {
 
   uint8_t *EndAddress();
 
-  friend class RandomBasedGenerator;
   friend bool operator==(uuid const &left, uuid const &right);
   friend bool operator!=(uuid const &left, uuid const &right);
   template <typename T, typename F>
   friend std::basic_ostream<T, F> &operator<<(std::basic_ostream<T, F> &s, const struct uuid &outputUuid);
   uint8_t uuidData[UUID_SIZE];
-};
-
-class RandomBasedGenerator {
- public:
-  static uuid GenerateRandomUuid();
 };
 
 // operator override

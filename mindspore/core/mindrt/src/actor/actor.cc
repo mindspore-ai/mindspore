@@ -43,7 +43,7 @@ void ActorBase::Await() {
   MS_LOG(DEBUG) << "ACTOR succeeded in waiting. a=" << actorName.c_str();
 }
 void ActorBase::Terminate() {
-  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
+  std::unique_ptr<MessageBase> msg = std::make_unique<MessageBase>("Terminate", MessageBase::Type::KTERMINATE);
   BUS_OOM_EXIT(msg);
   (void)EnqueMessage(std::move(msg));
 }

@@ -83,9 +83,7 @@ void AID::SetProtocol(const std::string &protocol) {
       url = protocol + url.substr(index);
     }
   } else {
-    if (protocol == BUS_TCP) {
-      //            url = url;
-    } else {
+    if (protocol != BUS_TCP) {
       url = protocol + "://" + url;
     }
   }
