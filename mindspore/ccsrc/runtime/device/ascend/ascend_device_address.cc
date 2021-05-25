@@ -23,6 +23,7 @@
 #include "runtime/mem.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
+#include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
@@ -174,10 +175,6 @@ DeviceAddressPtr AssignLaunchMemory(size_t size, const std::string &format, Type
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto address_ptr = runtime_instance->AssignSingleOpLaunchMemory(size, format, type);
   return address_ptr;
-}
-
-size_t GetCommonAlignSize(size_t input_size) {
-  return (input_size + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
 }
 
 nlohmann::json ConstructAttrs(const std::string &format) {
@@ -372,7 +369,7 @@ void AscendDeviceAddress::LaunchTransData(const kernel::KernelModPtr &kernel_mod
   std::vector<DeviceAddressPtr> workspace_address_ptr(workspace_size_list.size());
   if (!workspace_size_list.empty()) {
     for (size_t i = 0; i < workspace_size_list.size(); ++i) {
-      auto workspace_size = GetCommonAlignSize(workspace_size_list[i]);
+      auto workspace_size = MemoryManager::GetCommonAlignSize(workspace_size_list[i]);
       workspace_address_ptr[i] = AssignLaunchMemory(workspace_size, "", kTypeUnknown);
       MS_EXCEPTION_IF_NULL(workspace_address_ptr[i]);
       auto workspace_address = std::make_shared<kernel::Address>();
@@ -451,7 +448,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     auto shape_size = abstract::ShapeSize(host_shape);
     size = device_dtype_size * shape_size;
   }
-  size = GetCommonAlignSize(size);
+  size = MemoryManager::GetCommonAlignSize(size);
   auto output_address = AssignLaunchMemory(size, kOpFormat_NCHW, type_id_);
   MS_EXCEPTION_IF_NULL(output_address);
   auto workspace_size_list = GetWorkspaceSizeList(kernel_json);
