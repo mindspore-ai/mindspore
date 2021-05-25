@@ -40,7 +40,7 @@ class DenseNoTranpose(nn.Cell):
     def construct(self, x):
         x = self.cast(x, mstype.float16)
         weight = self.cast(self.weight, mstype.float16)
-        output = self.bias_add(self.cast(self.matmul(x, weight), mstype.float32), self.bias)
+        output = self.bias_add(self.matmul(x, weight), self.bias)
         return output
 
 
@@ -165,7 +165,7 @@ class Rcnn(nn.Cell):
 
         weights = self.cast(weights, mstype.float32)
         loss_cls = loss_cls * weights
-        loss_cls = self.sum_loss(loss_cls, (0,)) / self.sum_loss(weights, (0,))
+        loss_cls = self.sum_loss(loss_cls, (0,)) / (self.sum_loss(weights, (0,)) + 1e-5)
 
         bbox_weights = self.cast(self.onehot(bbox_weights, self.num_classes, self.on_value, self.off_value),
                                  mstype.float32)
@@ -175,7 +175,7 @@ class Rcnn(nn.Cell):
         loss_reg = self.loss_bbox(pos_bbox_pred, bbox_targets)
         loss_reg = self.sum_loss(loss_reg, (2,))
         loss_reg = loss_reg * bbox_weights
-        loss_reg = loss_reg / self.sum_loss(weights, (0,))
+        loss_reg = loss_reg / (self.sum_loss(weights, (0,)) + 1e-5)
         loss_reg = self.sum_loss(loss_reg, (0, 1))
 
         loss = self.rcnn_loss_cls_weight * loss_cls + self.rcnn_loss_reg_weight * loss_reg
