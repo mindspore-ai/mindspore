@@ -17,6 +17,7 @@
 import inspect
 from functools import wraps
 
+
 def cell_attr_register(fn=None, attrs=None):
     """
     Cell init attributes register.
@@ -31,6 +32,7 @@ def cell_attr_register(fn=None, attrs=None):
     Returns:
         function, original function.
     """
+
     def wrap_cell(fn):
         @wraps(fn)
         def deco(self, *args, **kwargs):

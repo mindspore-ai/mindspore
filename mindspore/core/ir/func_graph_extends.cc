@@ -47,7 +47,7 @@ AbstractFunctionPtr FuncGraph::abstract() {
     args_spec_list.push_back(p->abstract());
   }
 
-  if (nullptr == output()) {
+  if (output() == nullptr) {
     MS_LOG(ERROR) << "Error func graph no output";
     return nullptr;
   }

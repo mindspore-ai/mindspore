@@ -214,8 +214,7 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig d_1 =
-    opt::OptPassConfig({// Safe inlining
-                        irpass.call_graph_tuple_transform_, irpass.item_tuple_or_list_eliminate_});
+    opt::OptPassConfig({irpass.call_graph_tuple_transform_, irpass.item_tuple_or_list_eliminate_});
 
   OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
