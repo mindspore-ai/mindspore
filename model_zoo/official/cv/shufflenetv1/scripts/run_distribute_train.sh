@@ -11,6 +11,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
+# run as sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_DIR
 # limitations under the License.
 # ============================================================================
 
@@ -43,8 +44,8 @@ do
 
     env > env.log
     taskset -c $cmdopt python ../train.py  \
-    --is_distributed \
+    --is_distributed=True \
     --device_target=Ascend \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --train_dataset_path=$DATA_DIR > log.txt 2>&1 &
     cd ../
 done

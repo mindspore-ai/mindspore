@@ -15,7 +15,6 @@
 """train ShuffleNetV1"""
 import os
 import time
-import argparse
 from mindspore import context
 from mindspore import Tensor
 from mindspore.common import set_seed
@@ -23,58 +22,56 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init, get_group_size
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from src.lr_generator import get_lr
 from src.shufflenetv1 import ShuffleNetV1
-from src.config import config
 from src.dataset import create_dataset
 from src.crossentropysmooth import CrossEntropySmooth
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_rank_id
+
 
 set_seed(1)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='image classification training')
-    parser.add_argument('--is_distributed', action='store_true', default=False, help='distributed training')
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
-    parser.add_argument('--dataset_path', type=str, default='', help='dataset path')
-    parser.add_argument('--device_id', type=int, default=0, help='device id')
-    parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
-    parser.add_argument('--model_size', type=str, default='2.0x', help='ShuffleNetV1 model size',
-                        choices=['2.0x', '1.5x', '1.0x', '0.5x'])
-    args_opt = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
+def modelarts_pre_process():
+    pass
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train():
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
 
     # init distributed
-    if args_opt.is_distributed:
+    if config.is_distributed:
         if os.getenv('DEVICE_ID', "not_set").isdigit():
-            context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+            context.set_context(device_id=get_device_id())
         init()
-        rank = get_rank()
+        rank = get_rank_id()
         group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
         context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=group_size, gradients_mean=True)
     else:
         rank = 0
         group_size = 1
-        context.set_context(device_id=args_opt.device_id)
-        config.loss_scale = 128
+        context.set_context(device_id=config.device_id)
 
     # define network
-    net = ShuffleNetV1(model_size=args_opt.model_size)
+    net = ShuffleNetV1(model_size=config.model_size)
 
     # define loss
     loss = CrossEntropySmooth(sparse=True, reduction="mean", smooth_factor=config.label_smooth_factor,
                               num_classes=config.num_classes)
 
     # define dataset
-    dataset = create_dataset(args_opt.dataset_path, do_train=True, device_num=group_size, rank=rank)
+    dataset = create_dataset(config.train_dataset_path, do_train=True, device_num=group_size, rank=rank)
     batches_per_epoch = dataset.get_dataset_size()
 
     # resume
-    if args_opt.resume:
-        ckpt = load_checkpoint(args_opt.resume)
+    if config.resume:
+        ckpt = load_checkpoint(config.resume)
         load_param_into_net(net, ckpt)
 
     # get learning rate
@@ -93,7 +90,7 @@ if __name__ == '__main__':
     # define callbacks
     cb = [TimeMonitor(), LossMonitor()]
     if config.save_checkpoint:
-        save_ckpt_path = config.ckpt_path
+        save_ckpt_path = config.save_ckpt_path
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * batches_per_epoch,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint("shufflenetv1", directory=save_ckpt_path, config=config_ck)
@@ -101,7 +98,7 @@ if __name__ == '__main__':
     print("============== Starting Training ==============")
     start_time = time.time()
     # begin train
-    if args_opt.is_distributed:
+    if config.is_distributed:
         if rank == 0:
             cb += [ckpt_cb]
     else:
@@ -109,3 +106,7 @@ if __name__ == '__main__':
     model.train(config.epoch_size, dataset, callbacks=cb, dataset_sink_mode=True)
     print("time: ", (time.time() - start_time) * 1000)
     print("============== Train Success ==============")
+
+
+if __name__ == '__main__':
+    train()

@@ -11,6 +11,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
+# run as sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 # limitations under the License.
 # ============================================================================
 
@@ -20,6 +21,5 @@ PATH_CHECKPOINT=$3
 
 python ./eval.py  \
     --device_target=Ascend \
-    --device_id=$DEVICE_ID \
-    --checkpoint_path=$PATH_CHECKPOINT \
-    --dataset_path=$DATA_DIR > eval.log 2>&1 &
+    --ckpt_path=$PATH_CHECKPOINT \
+    --eval_dataset_path=$DATA_DIR > eval.log 2>&1 &

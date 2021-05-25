@@ -1,0 +1,67 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unlesee you know exactly what you are doing)
+enable_modelarts: False
+# url for modelarts
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+# path for local
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+device_target: "Ascend"
+enable_profiling: False
+checkpoint_path: "./checkpoint/"
+checkpoint_file: "./checkpoint/.ckpt"
+# ======================================================================================
+# common options
+num_classes: 1000
+label_smooth_factor: 0.1
+model_size: "2.0x"
+device_id: 0
+
+# ======================================================================================
+# Training options
+epoch_size: 250
+keep_checkpoint_max: 5
+save_ckpt_path: "/data1/mjq/ckpt/shufflenetv1/test_before_pr/"
+save_checkpoint_epochs: 1
+save_checkpoint: True
+amp_level: "O3"
+is_distributed: False
+train_dataset_path: "/data1/mjq/dataset/ImageNet_Original/train/"
+resume: ""
+
+# Dataset config
+batch_size: 128
+
+#learning rate config
+decay_method: "cosine"
+lr_init: 0.00
+lr_max: 0.50
+lr_end: 0.00
+warmup_epochs: 4
+loss_scale: 1024
+
+#optimization config
+weight_decay: 0.00004
+momentum: 0.9
+
+
+# ======================================================================================
+# Eval options
+ckpt_path: "/data1/mjq/ckpt/shufflenetv1/shufflenetv1_1-250_1251.ckpt"
+eval_dataset_path: "/data1/mjq/dataset/ImageNet_Original/validation_preprocess/"
+
+
+---
+# Help description for each configuration
+enable_modelarts: "Whether training on modelarts default: False"
+data_url: "Url for modelarts"
+train_url: "Url for modelarts"
+data_path: "The location of input data"
+output_pah: "The location of the output file"
+device_target: "device id of GPU or Ascend. (Default: None)"
+enable_profiling: "Whether enable profiling while training default: False"
+is_distributed: "distributed training"
+resume: "resume training with existed checkpoint"
+model_size: "shuffleNetV1 model size choices 2.0x, 1.5x, 1.0x, 0.5x"
