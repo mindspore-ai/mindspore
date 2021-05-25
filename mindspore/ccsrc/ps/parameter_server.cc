@@ -35,7 +35,9 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   SyncEmbeddingTables();
   MS_LOG(INFO) << "PServer finished updating models, starts finalizing...";
   server_node_->Finish();
-  server_node_->Stop();
+  if (!server_node_->Stop()) {
+    MS_LOG(WARNING) << "Parameter server stop failed.";
+  }
   MS_LOG(INFO) << "PServer finalized successfully.";
 }
 
@@ -48,11 +50,11 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
 
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
-  server_node_->set_event_callback([&](const core::NodeEvent &event) {
+  server_node_->set_event_callback([this](const core::NodeEvent &event) {
     if ((event == core::NodeEvent::CLUSTER_TIMEOUT) ||
         (event == core::NodeEvent::SCHEDULER_TIMEOUT || (event == core::NodeEvent::NODE_TIMEOUT))) {
       MS_LOG(ERROR) << "Trigger timeout event:" << event << " begin to exit the system!";
-      Finalize();
+      this->Finalize();
     }
   });
   thread_.reset(new std::thread(&ParameterServer::UpdateWeights, this));
@@ -560,7 +562,9 @@ void ParameterServer::ServerHandler::HandleInitWeights(DataPtr data, size_t size
   std::unique_lock<std::mutex> lock(ps_->mutex());
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  input.ParseFromArray(data.get(), size);
+  if (!input.ParseFromArray(data.get(), SizeToInt(size))) {
+    MS_LOG(WARNING) << "Parse data failed.";
+  }
   int key_num = input.keys_size();
   const float *data_ptr = input.values().data();
   size_t pos = 0;
@@ -585,9 +589,11 @@ void ParameterServer::ServerHandler::HandleInitWeightToOptimId(DataPtr data, siz
   std::unique_lock<std::mutex> lock(ps_->mutex());
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  input.ParseFromArray(data.get(), size);
-  size_t key_num = input.keys_size();
-  for (size_t i = 0; i < key_num; i++) {
+  if (!input.ParseFromArray(data.get(), SizeToInt(size))) {
+    MS_LOG(WARNING) << "Parse data failed.";
+  }
+  int key_num = input.keys_size();
+  for (int i = 0; i < key_num; i++) {
     Key key = input.keys()[i];
     float val = input.values()[i];
     if (init_weight_to_optim_[key]) {
@@ -595,7 +601,7 @@ void ParameterServer::ServerHandler::HandleInitWeightToOptimId(DataPtr data, siz
     } else {
       init_weight_to_optim_[key] = true;
     }
-    ps_->InitWeightKeyToOptims(key, val);
+    ps_->InitWeightKeyToOptims(key, static_cast<int64_t>(val));
   }
 }
 
@@ -678,7 +684,7 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPull(DataPtr data, size_
   const Key &key = input.keys()[0];
   bool ready = ps_->ReadyForPull(key);
   KVMessage res_data;
-  res_data.add_keys(key);
+  res_data.add_keys(SizeToInt(key));
   res_data.add_values(ready);
   res->resize(res_data.ByteSizeLong());
   size_t dest_size = res_data.ByteSizeLong();
@@ -692,7 +698,7 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPull(DataPtr data, size_
 void ParameterServer::ServerHandler::HandleEmbeddingLookup(DataPtr data, size_t size, VectorPtr res) {
   MS_EXCEPTION_IF_NULL(res);
   EmbeddingTableLookup input;
-  input.ParseFromArray(data.get(), size);
+  input.ParseFromArray(data.get(), SizeToInt(size));
   const Key &key = input.key();
 
   KVMessage res_data;
@@ -714,14 +720,14 @@ void ParameterServer::ServerHandler::HandleUpdateEmbeddings(DataPtr data, size_t
   std::unique_lock<std::mutex> lock(ps_->mutex());
   MS_EXCEPTION_IF_NULL(res);
   KVMessage input;
-  input.ParseFromArray(data.get(), size);
+  input.ParseFromArray(data.get(), SizeToInt(size));
   const Key &key = input.keys()[0];
   const LookupIds &lookup_ids = {input.keys().begin() + 1, input.keys().end()};
   const Values &update_vals = {input.values().begin(), input.values().end()};
   ps_->UpdateEmbeddings(key, lookup_ids, update_vals);
 }
 
-void ParameterServer::ServerHandler::HandleFinalize(DataPtr data, size_t size, VectorPtr res) {
+void ParameterServer::ServerHandler::HandleFinalize(DataPtr, size_t, VectorPtr res) {
   MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
 }

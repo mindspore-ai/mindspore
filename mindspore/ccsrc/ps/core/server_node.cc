@@ -74,9 +74,9 @@ void ServerNode::CreateTcpServer() {
     }
   });
   server_->Init();
-  server_thread_ = std::make_unique<std::thread>([&]() {
+  server_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The server node start a tcp server!";
-    server_->Start();
+    this->server_->Start();
   });
 }
 

@@ -71,8 +71,8 @@ void TcpClient::set_connected_callback(const OnConnected &connected) { connected
 
 bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
   std::unique_lock<std::mutex> lock(connection_mutex_);
-  bool res =
-    connection_cond_.wait_for(lock, std::chrono::seconds(connected_timeout), [&] { return is_connected_.load(); });
+  bool res = connection_cond_.wait_for(lock, std::chrono::seconds(connected_timeout),
+                                       [this] { return this->is_connected_.load(); });
   return res;
 }
 

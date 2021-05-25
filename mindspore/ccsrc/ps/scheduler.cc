@@ -20,9 +20,19 @@ namespace mindspore {
 namespace ps {
 void Scheduler::Run() {
   MS_LOG(INFO) << "Start scheduler.";
-  scheduler_node_.Start();
-  scheduler_node_.Finish();
-  scheduler_node_.Stop();
+
+  if (!scheduler_node_.Start()) {
+    MS_LOG(WARNING) << "Scheduler start failed.";
+  }
+
+  if (!scheduler_node_.Finish()) {
+    MS_LOG(WARNING) << "Scheduler finis failed.";
+  }
+
+  if (!scheduler_node_.Stop()) {
+    MS_LOG(WARNING) << "Scheduler stop failed.";
+  }
+
   exit(1);
 }
 }  // namespace ps
