@@ -69,7 +69,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   TypePtr type = dyn_cast<Type>(nd->Type());
   if ((shape != nullptr) && (type != nullptr)) {
     buffer << "<" << type << "x" << shape->shape() << ">";
-  } else if (nullptr != type) {
+  } else if (type != nullptr) {
     buffer << "<" << type << ">";
   } else {
     buffer << "<null>";

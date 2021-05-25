@@ -38,6 +38,8 @@ using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractUndetermined;
 
+static constexpr size_t kDictInputSize = 2;
+
 static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
   if (t == nullptr) {
     return nullptr;
@@ -307,7 +309,7 @@ AnfNodePtr EraseMakeDictNode(const CNodePtr &node) {
 AnfNodePtr EraseDictGetValues(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
-  MS_ASSERT(inputs.size() == 2 && "DictGetValues should have two inputs");
+  MS_ASSERT(inputs.size() == kDictInputSize && "DictGetValues should have two inputs");
   return inputs[1];
 }
 
