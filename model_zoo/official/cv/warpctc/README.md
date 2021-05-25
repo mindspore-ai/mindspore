@@ -16,10 +16,15 @@
         - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -167,10 +172,12 @@ The dataset is self-generated using a third-party library called [captcha](https
 └──warpctc
   ├── README.md                         # descriptions of warpctc
   ├── README_CN.md                      # chinese descriptions of warpctc
+  ├── ascend310_infer                   # application for 310 inference
   ├── script
     ├── run_distribute_train.sh         # launch distributed training in Ascend(8 pcs)
     ├── run_distribute_train_for_gpu.sh # launch distributed training in GPU
     ├── run_eval.sh                     # launch evaluation
+    ├── run_infer_310.sh                # launch 310infer
     ├── run_process_data.sh             # launch dataset generation
     └── run_standalone_train.sh         # launch standalone training(1 pcs)
   ├── src
@@ -190,6 +197,8 @@ The dataset is self-generated using a third-party library called [captcha](https
   ├── mindspore_hub_conf.py             # mindspore hub interface
   ├── eval.py                           # eval net
   ├── process_data.py                   # dataset generation script
+  ├── postprocess.py                    # 310infer postprocess script
+  ├── preprocess.py                     # 310infer preprocess script
   └── train.py                          # train net
 ```
 
@@ -267,6 +276,39 @@ bash run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 ```
 
+## [Inference Process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
+Use mindir+bin method for inferring, and bin is a binary format file of the preprocessed picture.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DATA_PATH` is mandatory,the data format is the path of the bin.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'Accuracy': 0.952
+```
+
 ## [Model Description](#contents)
 
 ### [Performance](#contents)
@@ -304,6 +346,20 @@ bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 | outputs             | ACC                         |
 | Accuracy            | 99.0%                       |
 | Model for inference | 20.3M (.ckpt file)          |
+
+#### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | WarpCTC                     |
+| Resource            | Ascend 310; CentOS 3.10     |
+| Uploaded Date       | 24/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | Captcha                     |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | Accuracy=0.952              |
+| Model for inference | 40.6M(.ckpt file)           |
 
 ## [Description of Random Situation](#contents)
 

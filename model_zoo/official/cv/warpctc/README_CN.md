@@ -19,10 +19,15 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
         - [评估性能](#评估性能)
+        - [推理性能](#推理性能)
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
@@ -171,10 +176,12 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
 └──warpctc
   ├── README.md                         # warpctc文档说明
   ├── README_CN.md                      # warpctc中文文档说明
+  ├── ascend310_infer                   # 用于310推理
   ├── script
     ├── run_distribute_train.sh         # 启动Ascend分布式训练（8卡）
     ├── run_distribute_train_for_gpu.sh # 启动GPU分布式训练
     ├── run_eval.sh                     # 启动评估
+    ├── run_infer_310.sh                # 启动310推理
     ├── run_process_data.sh             # 启动数据集生成
     └── run_standalone_train.sh         # 启动单机训练（1卡）
   ├── src
@@ -194,6 +201,8 @@ WarpCTC是带有一层FC神经网络的二层堆叠LSTM模型。详细信息请�
   ├── mindspore_hub_conf.py             # Mindspore Hub接口
   ├── eval.py                           # 评估网络
   ├── process_data.py                   # 数据集生成脚本
+  ├── postprocess.py                    # 310推理后处理脚本
+  ├── preprocess.py                     # 将数据前处理脚本
   └── train.py                          # 训练网络
 ```
 
@@ -271,6 +280,39 @@ bash run_distribute_train_gpu.sh [RANK_SIZE] [TRAIN_DATA_DIR]
 bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 ```
 
+## 推理过程
+
+### 导出MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+目前仅支持batch_size为1的推理。
+采用mindir+bin方式进行推理，其中bin为预处理完的图片的二进制文件。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+- `DATA_PATH` 为必填项，数据格式为bin的路径。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'Accuracy':0.952
+```
+
 ## 模型描述
 
 ### 性能
@@ -308,6 +350,20 @@ bash run_eval.sh [TEST_DATA_DIR] [CHECKPOINT_PATH] [DEVICE_TARGET]
 | 输出             | ACC                         |
 | 准确率            | 99.0%                       |
 | 推理模型 | 20.3M (.ckpt文件)          |
+
+### 推理性能
+
+| 参数            | Ascend                      |
+| ------------- | ----------------------------|
+| 模型版本        | WarpCTC                     |
+| 资源           | Ascend 310；系统 CentOS 3.10 |
+| 上传日期        | 2021-05-24                  |
+| MindSpore版本  | 1.2.0                       |
+| 数据集          | Captcha                     |
+| batch_size     | 1                          |
+| 输出            | Accuracy                   |
+| 准确率          | Accuracy=0.952             |
+| 推理模型        | 40.6M（.ckpt文件）           |
 
 ## 随机情况说明
 
