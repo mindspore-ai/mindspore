@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_t *mul_index) {
+bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *const mul, size_t *const mul_index) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(add);
 

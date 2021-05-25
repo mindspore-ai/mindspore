@@ -279,6 +279,7 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
     return nullptr;
   }
   auto sub0 = node;
+  constexpr size_t kOutputIndex2 = 2;
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto iter_sub0 = (*equiv).find(sub0_var_);
     if (iter_sub0 == (*equiv).end()) {
@@ -327,7 +328,7 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(add1, fusion_node_outputs[0]);
   (void)manager->Replace(add0, fusion_node_outputs[1]);
-  return fusion_node_outputs[2];
+  return fusion_node_outputs[kOutputIndex2];
 }
 }  // namespace opt
 }  // namespace mindspore
