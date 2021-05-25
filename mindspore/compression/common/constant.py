@@ -107,10 +107,13 @@ class QuantDtype(enum.Enum):
         Get the num bits of the QuantDtype member.
 
         Returns:
-            int, the num bits of the QuantDtype member
+            int, the num bits of the QuantDtype member.
 
         Examples:
+            >>> from mindspore.compression.common import QuantDtype
             >>> quant_dtype = QuantDtype.INT8
             >>> num_bits = quant_dtype.num_bits
+            >>> print(num_bits)
+            8
         """
         return self._value

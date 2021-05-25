@@ -24,7 +24,7 @@ __all__ = ["OptimizeOption"]
 
 class OptimizeOption(Enum):
     r"""
-    An enum for the model quantization optimize option, currently only support `QAT`.
+    An enum for the model quantization optimize option, currently only support `QAT` and `LEARNED_SCALE`.
     """
     # using quantization aware training
     QAT = "QAT"
