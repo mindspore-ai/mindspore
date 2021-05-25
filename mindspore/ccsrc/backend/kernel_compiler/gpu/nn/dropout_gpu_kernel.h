@@ -49,7 +49,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
     if (!states_init_) {
       CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
                                    "Failed to create generator");
-      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, time(NULL)),
+      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
                                    "Failed to SetPseudoRandomGeneratorSeed");
       MS_EXCEPTION_IF_NULL(mask_generator_);
       states_init_ = true;
@@ -84,6 +84,11 @@ class DropoutGpuFwdKernel : public GpuKernel {
       num_count_ *= x;
     }
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
+    int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");
+    if (seed == 0) {
+      seed = GetAttr<int64_t>(kernel_node, "Seed1");
+    }
+    seed_ = static_cast<uint64_t>(seed);
 
     InitSizeLists();
     return true;
@@ -94,6 +99,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
     is_null_input_ = false;
     num_count_ = 0;
     keep_prob_ = 0.0;
+    seed_ = 0;
     states_init_ = false;
     mask_generator_ = nullptr;
     input_size_list_.clear();
@@ -118,6 +124,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
   size_t num_count_;
   float keep_prob_;
   bool states_init_;
+  uint64_t seed_;
   curandGenerator_t mask_generator_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
