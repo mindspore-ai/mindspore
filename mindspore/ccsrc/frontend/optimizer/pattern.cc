@@ -103,8 +103,8 @@ MatchResultPtr OneOf::match(const AnfNodePtr &node) {
 
 MatchResultPtr NoneOf::match(const AnfNodePtr &node) {
   for (auto &iter : patterns_) {
-    auto res = iter->match(node);
-    if (res != nullptr) {
+    auto match_res = iter->match(node);
+    if (match_res != nullptr) {
       return nullptr;
     }
   }

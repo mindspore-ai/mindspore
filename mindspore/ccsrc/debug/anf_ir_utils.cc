@@ -88,9 +88,9 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
-  if ((nullptr != shape) && (nullptr != type)) {
+  if ((shape != nullptr) && (type != nullptr)) {
     oss << type->DumpText() << shape->DumpText();
-  } else if (nullptr != type) {
+  } else if (type != nullptr) {
     oss << type->DumpText();
   } else {
     oss << "Undefined";
