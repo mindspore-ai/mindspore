@@ -63,9 +63,10 @@ AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
+  size_t rank_size_t = LongToSize(rank_size);
   for (size_t i = 0; i < inputs_size; ++i) {
     std::vector<AnfNodePtr> concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
-    for (size_t j = 0, idx = i; j < IntToSize(rank_size); ++j, idx += inputs_size) {
+    for (size_t j = 0, idx = i; j < rank_size_t; ++j, idx += inputs_size) {
       concat_inputs.push_back(new_tuple_getitems[idx]);
     }
     auto concat = func_graph->NewCNode(concat_inputs);
@@ -73,7 +74,7 @@ AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &
     MS_EXCEPTION_IF_NULL(new_tuple_getitems[i]);
     auto dtypes = {AnfAlgo::GetOutputInferDataType(new_tuple_getitems[i], 0)};
     std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(new_tuple_getitems[i], 0);
-    shape[0] *= rank_size;
+    shape[0] *= rank_size_t;
     std::vector<std::vector<size_t>> shapes = {shape};
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
     AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat);
