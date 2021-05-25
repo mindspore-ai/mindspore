@@ -895,26 +895,27 @@ CLUEDataset::CLUEDataset(const std::vector<std::vector<char>> &dataset_files, co
 
 CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
                          const std::vector<char> &task, const bool &decode, const std::shared_ptr<Sampler> &sampler,
-                         const std::shared_ptr<DatasetCache> &cache) {
+                         const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<CocoNode>(CharToString(dataset_dir), CharToString(annotation_file), CharToString(task),
-                                       decode, sampler_obj, cache);
+                                       decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
                          const std::vector<char> &task, const bool &decode, const Sampler *sampler,
-                         const std::shared_ptr<DatasetCache> &cache) {
+                         const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata) {
   auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds = std::make_shared<CocoNode>(CharToString(dataset_dir), CharToString(annotation_file), CharToString(task),
-                                       decode, sampler_obj, cache);
+                                       decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 CocoDataset::CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
                          const std::vector<char> &task, const bool &decode,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache,
+                         const bool &extra_metadata) {
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<CocoNode>(CharToString(dataset_dir), CharToString(annotation_file), CharToString(task),
-                                       decode, sampler_obj, cache);
+                                       decode, sampler_obj, cache, extra_metadata);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

@@ -101,9 +101,9 @@ PYBIND_REGISTER(CocoNode, 2, ([](const py::module *m) {
                   (void)py::class_<CocoNode, DatasetNode, std::shared_ptr<CocoNode>>(*m, "CocoNode",
                                                                                      "to create a CocoNode")
                     .def(py::init([](std::string dataset_dir, std::string annotation_file, std::string task,
-                                     bool decode, py::handle sampler) {
+                                     bool decode, py::handle sampler, bool extra_metadata) {
                       std::shared_ptr<CocoNode> coco = std::make_shared<CocoNode>(
-                        dataset_dir, annotation_file, task, decode, toSamplerObj(sampler), nullptr);
+                        dataset_dir, annotation_file, task, decode, toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(coco->ValidateParams());
                       return coco;
                     }));

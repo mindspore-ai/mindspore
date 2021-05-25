@@ -100,7 +100,7 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
   }
   *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
                                   builder_op_connector_size_, builder_decode_, std::move(builder_schema_),
-                                  std::move(builder_sampler_));
+                                  std::move(builder_sampler_), false);
   return Status::OK();
 }
 
@@ -122,13 +122,14 @@ Status CocoOp::Builder::SanityCheck() {
 
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
                int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
-               std::shared_ptr<SamplerRT> sampler)
+               std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       task_type_(task_type),
       image_folder_path_(image_folder_path),
       annotation_path_(annotation_path),
-      data_schema_(std::move(data_schema)) {
+      data_schema_(std::move(data_schema)),
+      extra_metadata_(extra_metadata) {
   io_block_queues_.Init(num_workers_, queue_size);
 }
 
@@ -229,7 +230,20 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)});
   std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  trow->setPath({image_full_path, annotation_path_, annotation_path_, annotation_path_});
+  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_, annotation_path_};
+  if (extra_metadata_) {
+    std::string img_id;
+    size_t pos = image_id.find(".");
+    if (pos == image_id.npos) {
+      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+    }
+    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    std::shared_ptr<Tensor> filename;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
+    trow->push_back(std::move(filename));
+    path_list.push_back(image_full_path);
+  }
+  trow->setPath(path_list);
   return Status::OK();
 }
 
@@ -253,7 +267,20 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(item)});
   std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  trow->setPath({image_full_path, annotation_path_, annotation_path_});
+  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_};
+  if (extra_metadata_) {
+    std::string img_id;
+    size_t pos = image_id.find(".");
+    if (pos == image_id.npos) {
+      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+    }
+    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    std::shared_ptr<Tensor> filename;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
+    trow->push_back(std::move(filename));
+    path_list.push_back(image_full_path);
+  }
+  trow->setPath(path_list);
   return Status::OK();
 }
 
@@ -296,7 +323,21 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
   (*trow) = TensorRow(
     row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)});
   std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  trow->setPath({image_full_path, annotation_path_, annotation_path_, annotation_path_, annotation_path_});
+  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_, annotation_path_,
+                                        annotation_path_};
+  if (extra_metadata_) {
+    std::string img_id;
+    size_t pos = image_id.find(".");
+    if (pos == image_id.npos) {
+      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+    }
+    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    std::shared_ptr<Tensor> filename;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
+    trow->push_back(std::move(filename));
+    path_list.push_back(image_full_path);
+  }
+  trow->setPath(path_list);
   return Status::OK();
 }
 

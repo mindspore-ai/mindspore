@@ -30,7 +30,8 @@ class CocoNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
-           const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache);
+           const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
+           const bool &extra_metadata);
 
   /// \brief Destructor
   ~CocoNode() = default;
@@ -93,6 +94,7 @@ class CocoNode : public MappableSourceNode {
   std::string task_;
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
+  bool extra_metadata_;
 };
 
 }  // namespace dataset

@@ -29,17 +29,20 @@ namespace dataset {
 
 // Constructor for CocoNode
 CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
-                   const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
+                   const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
+                   const bool &extra_metadata)
     : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       annotation_file_(annotation_file),
       task_(task),
       decode_(decode),
-      sampler_(sampler) {}
+      sampler_(sampler),
+      extra_metadata_(extra_metadata) {}
 
 std::shared_ptr<DatasetNode> CocoNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
-  auto node = std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_);
+  auto node =
+    std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_, extra_metadata_);
   return node;
 }
 
@@ -119,12 +122,18 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  if (extra_metadata_) {
+    std::string meta_column = std::string(kDftMetaColumnPrefix) + std::string("filename");
+    TensorShape scalar = TensorShape::CreateScalar();
+    RETURN_IF_NOT_OK(
+      schema->AddColumn(ColDescriptor(meta_column, DataType(DataType::DE_STRING), TensorImpl::kFlexible, 0, &scalar)));
+  }
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, connector_que_size_, decode_,
-                             std::move(schema), std::move(sampler_rt));
+                             std::move(schema), std::move(sampler_rt), extra_metadata_);
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

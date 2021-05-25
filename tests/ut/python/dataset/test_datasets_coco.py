@@ -14,6 +14,7 @@
 # ==============================================================================
 import numpy as np
 import mindspore.dataset as ds
+import mindspore.dataset.text as text
 import mindspore.dataset.vision.c_transforms as vision
 
 DATA_DIR = "../data/dataset/testCOCO/train/"
@@ -28,17 +29,22 @@ INVALID_CATEGORY_ID_FILE = "../data/dataset/testCOCO/annotations/invalid_categor
 
 def test_coco_detection():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
-                           decode=True, shuffle=False)
+                           decode=True, shuffle=False, extra_metadata=True)
+    data1 = data1.rename("_meta-filename", "filename")
     num_iter = 0
+    file_name = []
     image_shape = []
     bbox = []
     category_id = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        file_name.append(text.to_str(data["filename"]))
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
         num_iter += 1
     assert num_iter == 6
+    assert file_name == ["000000391895", "000000318219", "000000554625", "000000574769",
+                         "000000060623", "000000309022"]
     assert image_shape[0] == (2268, 4032, 3)
     assert image_shape[1] == (561, 595, 3)
     assert image_shape[2] == (607, 585, 3)
@@ -61,17 +67,22 @@ def test_coco_detection():
 
 def test_coco_stuff():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff",
-                           decode=True, shuffle=False)
+                           decode=True, shuffle=False, extra_metadata=True)
+    data1 = data1.rename("_meta-filename", "filename")
     num_iter = 0
+    file_name = []
     image_shape = []
     segmentation = []
     iscrowd = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        file_name.append(text.to_str(data["filename"]))
         image_shape.append(data["image"].shape)
         segmentation.append(data["segmentation"])
         iscrowd.append(data["iscrowd"])
         num_iter += 1
     assert num_iter == 6
+    assert file_name == ["000000391895", "000000318219", "000000554625", "000000574769",
+                         "000000060623", "000000309022"]
     assert image_shape[0] == (2268, 4032, 3)
     assert image_shape[1] == (561, 595, 3)
     assert image_shape[2] == (607, 585, 3)
@@ -102,17 +113,21 @@ def test_coco_stuff():
 
 def test_coco_keypoint():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint",
-                           decode=True, shuffle=False)
+                           decode=True, shuffle=False, extra_metadata=True)
+    data1 = data1.rename("_meta-filename", "filename")
     num_iter = 0
+    file_name = []
     image_shape = []
     keypoints = []
     num_keypoints = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        file_name.append(text.to_str(data["filename"]))
         image_shape.append(data["image"].shape)
         keypoints.append(data["keypoints"])
         num_keypoints.append(data["num_keypoints"])
         num_iter += 1
     assert num_iter == 2
+    assert file_name == ["000000391895", "000000318219"]
     assert image_shape[0] == (2268, 4032, 3)
     assert image_shape[1] == (561, 595, 3)
     np.testing.assert_array_equal(np.array([[368., 61., 1., 369., 52., 2., 0., 0., 0., 382., 48., 2., 0., 0., 0., 368.,
@@ -129,14 +144,18 @@ def test_coco_keypoint():
 
 
 def test_coco_panoptic():
-    data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True, shuffle=False)
+    data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True, shuffle=False,
+                           extra_metadata=True)
+    data1 = data1.rename("_meta-filename", "filename")
     num_iter = 0
+    file_name = []
     image_shape = []
     bbox = []
     category_id = []
     iscrowd = []
     area = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        file_name.append(text.to_str(data["filename"]))
         image_shape.append(data["image"].shape)
         bbox.append(data["bbox"])
         category_id.append(data["category_id"])
@@ -144,6 +163,7 @@ def test_coco_panoptic():
         area.append(data["area"])
         num_iter += 1
     assert num_iter == 2
+    assert file_name == ["000000391895", "000000574769"]
     assert image_shape[0] == (2268, 4032, 3)
     np.testing.assert_array_equal(np.array([[472, 173, 36, 48], [340, 22, 154, 301], [486, 183, 30, 35]]), bbox[0])
     np.testing.assert_array_equal(np.array([[1], [1], [2]]), category_id[0])
@@ -156,13 +176,35 @@ def test_coco_panoptic():
     np.testing.assert_array_equal(np.array([[43102], [6079]]), area[1])
 
 
+def test_coco_meta_column():
+    data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
+                           decode=True, shuffle=False, extra_metadata=True)
+    for item in data1.create_tuple_iterator():
+        assert len(item) == 4
+
+    data2 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff",
+                           decode=True, shuffle=False, extra_metadata=True)
+    for item in data2.create_tuple_iterator():
+        assert len(item) == 3
+
+    data3 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint",
+                           decode=True, shuffle=False, extra_metadata=True)
+    for item in data3.create_tuple_iterator():
+        assert len(item) == 3
+
+    data4 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic",
+                           decode=True, shuffle=False, extra_metadata=True)
+    for item in data4.create_tuple_iterator():
+        assert len(item) == 5
+
+
 def test_coco_detection_classindex():
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     class_index = data1.get_class_indexing()
     assert class_index == {'person': [1], 'bicycle': [2], 'car': [3], 'cat': [4], 'dog': [5], 'monkey': [6],
                            'bag': [7], 'orange': [8]}
     num_iter = 0
-    for _ in data1.__iter__():
+    for _ in data1.create_dict_iterator(output_numpy=True):
         num_iter += 1
     assert num_iter == 6
 
@@ -172,7 +214,7 @@ def test_coco_panootic_classindex():
     class_index = data1.get_class_indexing()
     assert class_index == {'person': [1, 1], 'bicycle': [2, 1], 'car': [3, 1]}
     num_iter = 0
-    for _ in data1.__iter__():
+    for _ in data1.create_dict_iterator(output_numpy=True):
         num_iter += 1
     assert num_iter == 2
 
@@ -210,7 +252,7 @@ def test_coco_case_2():
     data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(4)
     num_iter = 0
-    for _ in data1.__iter__():
+    for _ in data1.create_dict_iterator(output_numpy=True):
         num_iter += 1
     assert num_iter == 24
 
@@ -222,7 +264,7 @@ def test_coco_case_3():
     data1 = data1.map(operations=resize_op, input_columns=["image"])
     data1 = data1.repeat(4)
     num_iter = 0
-    for _ in data1.__iter__():
+    for _ in data1.create_dict_iterator(output_numpy=True):
         num_iter += 1
     assert num_iter == 24
 
@@ -230,7 +272,7 @@ def test_coco_case_3():
 def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset("path_not_exist/", annotation_file=ANNOTATION_FILE, task="Detection")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except ValueError as e:
@@ -238,7 +280,7 @@ def test_coco_case_exception():
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file="./file_not_exist", task="Detection")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except ValueError as e:
@@ -246,7 +288,7 @@ def test_coco_case_exception():
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Invalid task")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except ValueError as e:
@@ -254,7 +296,7 @@ def test_coco_case_exception():
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=LACKOFIMAGE_FILE, task="Detection")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -262,7 +304,7 @@ def test_coco_case_exception():
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_CATEGORY_ID_FILE, task="Detection")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -270,7 +312,7 @@ def test_coco_case_exception():
 
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_FILE, task="Detection")
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -279,7 +321,7 @@ def test_coco_case_exception():
     try:
         sampler = ds.PKSampler(3)
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=INVALID_FILE, task="Detection", sampler=sampler)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except ValueError as e:
@@ -291,7 +333,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection")
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -301,7 +343,7 @@ def test_coco_case_exception():
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection")
         data1 = data1.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -310,7 +352,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection")
         data1 = data1.map(operations=exception_func, input_columns=["bbox"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -319,7 +361,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection")
         data1 = data1.map(operations=exception_func, input_columns=["category_id"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -328,7 +370,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff")
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -338,7 +380,7 @@ def test_coco_case_exception():
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff")
         data1 = data1.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -347,7 +389,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff")
         data1 = data1.map(operations=exception_func, input_columns=["segmentation"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -356,7 +398,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff")
         data1 = data1.map(operations=exception_func, input_columns=["iscrowd"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -365,7 +407,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint")
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -375,7 +417,7 @@ def test_coco_case_exception():
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint")
         data1 = data1.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -384,7 +426,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint")
         data1 = data1.map(operations=exception_func, input_columns=["keypoints"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -393,7 +435,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint")
         data1 = data1.map(operations=exception_func, input_columns=["num_keypoints"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -402,7 +444,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic")
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -412,7 +454,7 @@ def test_coco_case_exception():
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic")
         data1 = data1.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -421,7 +463,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic")
         data1 = data1.map(operations=exception_func, input_columns=["bbox"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -430,7 +472,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic")
         data1 = data1.map(operations=exception_func, input_columns=["category_id"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -439,7 +481,7 @@ def test_coco_case_exception():
     try:
         data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic")
         data1 = data1.map(operations=exception_func, input_columns=["area"], num_parallel_workers=1)
-        for _ in data1.__iter__():
+        for _ in data1.create_dict_iterator(output_numpy=True):
             pass
         assert False
     except RuntimeError as e:

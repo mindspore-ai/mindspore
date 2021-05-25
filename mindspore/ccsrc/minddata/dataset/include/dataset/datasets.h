@@ -962,13 +962,13 @@ class CocoDataset : public Dataset {
  public:
   CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
               const std::vector<char> &task, const bool &decode, const std::shared_ptr<Sampler> &sampler,
-              const std::shared_ptr<DatasetCache> &cache);
+              const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata);
   CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
               const std::vector<char> &task, const bool &decode, const Sampler *sampler,
-              const std::shared_ptr<DatasetCache> &cache);
+              const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata);
   CocoDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file,
               const std::vector<char> &task, const bool &decode, const std::reference_wrapper<Sampler> sampler,
-              const std::shared_ptr<DatasetCache> &cache);
+              const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata);
   ~CocoDataset() = default;
 };
 
@@ -988,13 +988,15 @@ class CocoDataset : public Dataset {
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the CocoDataset.
 inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                          const std::string &task = "Detection", const bool &decode = false,
                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
-                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                         const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                         const bool &extra_metadata = false) {
   return std::make_shared<CocoDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), StringToChar(task),
-                                       decode, sampler, cache);
+                                       decode, sampler, cache, extra_metadata);
 }
 
 /// \brief Function to create a CocoDataset.
@@ -1012,12 +1014,14 @@ inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const s
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset..
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the CocoDataset.
 inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                          const std::string &task, const bool &decode, const Sampler *sampler,
-                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                         const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                         const bool &extra_metadata = false) {
   return std::make_shared<CocoDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), StringToChar(task),
-                                       decode, sampler, cache);
+                                       decode, sampler, cache, extra_metadata);
 }
 
 /// \brief Function to create a CocoDataset.
@@ -1035,13 +1039,15 @@ inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const s
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false)
 /// \return Shared pointer to the CocoDataset.
 inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                          const std::string &task, const bool &decode,
                                          const std::reference_wrapper<Sampler> sampler,
-                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                         const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                         const bool &extra_metadata = false) {
   return std::make_shared<CocoDataset>(StringToChar(dataset_dir), StringToChar(annotation_file), StringToChar(task),
-                                       decode, sampler, cache);
+                                       decode, sampler, cache, extra_metadata);
 }
 
 class CSVDataset : public Dataset {
