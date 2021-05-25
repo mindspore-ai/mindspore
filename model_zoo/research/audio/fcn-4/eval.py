@@ -17,15 +17,18 @@
 python eval.py
 '''
 
-import argparse
 import numpy as np
+
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+from src.musictagger import MusicTaggerCNN
+from src.dataset import create_dataset
+
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.musictagger import MusicTaggerCNN
-from src.config import music_cfg as cfg
-from src.dataset import create_dataset
 
 
 def calculate_auc(labels_list, preds_list):
@@ -107,22 +110,15 @@ def validation(net, model_path, data_dir, filename, num_consumer, batch):
     return auc
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Evaluate model')
-    parser.add_argument('--device_id',
-                        type=int,
-                        help='device ID',
-                        default=None)
-    args = parser.parse_args()
+def modelarts_process():
+    pass
 
-    if args.device_id is not None:
-        context.set_context(device_target=cfg.device_target,
-                            mode=context.GRAPH_MODE,
-                            device_id=args.device_id)
-    else:
-        context.set_context(device_target=cfg.device_target,
-                            mode=context.GRAPH_MODE,
-                            device_id=cfg.device_id)
+@moxing_wrapper(pre_process=modelarts_process)
+def fcn4_eval():
+    """
+    eval network
+    """
+    context.set_context(device_target=config.device_target, mode=context.GRAPH_MODE, device_id=get_device_id())
 
     network = MusicTaggerCNN(in_classes=[1, 128, 384, 768, 2048],
                              kernel_size=[3, 3, 3, 3, 3],
@@ -130,8 +126,12 @@ if __name__ == "__main__":
                              maxpool=[(2, 4), (4, 5), (3, 8), (4, 8)],
                              has_bias=True)
     network.set_train(False)
-    auc_val = validation(network, cfg.checkpoint_path + "/" + cfg.model_name, cfg.data_dir,
-                         cfg.val_filename, cfg.num_consumer, cfg.batch_size)
+    auc_val = validation(network, config.checkpoint_path + "/" + config.model_name, config.data_dir,
+                         config.val_filename, config.num_consumer, config.batch_size)
 
     print("=" * 10 + "Validation Performance" + "=" * 10)
     print("AUC: {:.5f}".format(auc_val))
+
+
+if __name__ == "__main__":
+    fcn4_eval()

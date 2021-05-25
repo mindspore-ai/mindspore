@@ -14,5 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
+export DATA_PATH=$1
+export CKPT_PATH=$2
+export DEVICE_ID=$3
 export SLOG_PRINT_TO_STDOUT=1
-python ../eval.py --device_id 0
+python ../eval.py --data_dir=$DATA_PATH --checkpoint_path=$CKPT_PATH --device_id=$DEVICE_ID > log_eval 2>&1 &

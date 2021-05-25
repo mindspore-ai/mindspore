@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-export DATA_PATH=$1
-export CKPT_PATH=$2
-export DEVICE_ID=$3
-export SLOG_PRINT_TO_STDOUT=1
-python ../train.py --data_dir=$DATA_PATH --checkpoint_path=$CKPT_PATH --device_id=$DEVICE_ID > log 2>&1 &
+"""Local adapter"""
+
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

@@ -21,7 +21,7 @@ import numpy as np
 import librosa
 from mindspore.mindrecord import FileWriter
 from mindspore import context
-from src.config import data_cfg as cfg
+from model_utils.config import config as cfg
 
 
 def compute_melgram(audio_path, save_path='', filename='', save_npy=True):
