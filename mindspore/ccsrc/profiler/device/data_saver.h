@@ -34,7 +34,7 @@ struct OpDetailInfo {
   float proportion_{0};
 
   OpDetailInfo() = default;
-  OpDetailInfo(std::shared_ptr<OpInfo> op_info, float proportion);
+  OpDetailInfo(const std::shared_ptr<OpInfo> op_info, float proportion);
 
   std::string GetCpuHeader() const {
     return "op_side,op_type,op_name,full_op_name,op_occurrences,op_total_time(ms),"
@@ -105,7 +105,7 @@ class DataSaver {
  protected:
   void AddOpDetailInfoForType(const OpDetailInfo &op_detail_info);
 
-  float GetTotalOpTime(const OpInfoMap &op_info_maps);
+  float GetTotalOpTime(const OpInfoMap &op_info_maps) const;
 
   void WriteOpType(const std::string &saver_base_dir);
 
@@ -113,7 +113,7 @@ class DataSaver {
 
   void WriteOpTimestamp(const std::string &saver_base_dir);
 
-  void ChangeFileMode(const std::string &file_path);
+  void ChangeFileMode(const std::string &file_path) const;
 
   OpTypeInfos op_type_infos_;
   OpDetailInfos op_detail_infos_;

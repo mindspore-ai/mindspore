@@ -50,15 +50,15 @@ Status CallbackManager::CallbackProcess() {
     auto rt_err = rtEventSynchronize(event);
     if (rt_err != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "rtEventSynchronize failed. ret:" << rt_err;
-      auto ret = rtEventDestroy(event);
-      if (ret != RT_ERROR_NONE) {
+      rt_err = rtEventDestroy(event);
+      if (rt_err != RT_ERROR_NONE) {
         MS_LOG(ERROR) << "rtEventDestroy failed";
       }
       return kFail;
     }
 
-    auto ret = rtEventDestroy(event);
-    if (ret != RT_ERROR_NONE) {
+    rt_err = rtEventDestroy(event);
+    if (rt_err != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "rtEventDestroy failed";
     }
 
@@ -120,7 +120,7 @@ void CallbackManager::RtCallbackFunc(const void *data) {
 }
 
 Status CallbackManager::RegisterCallback(const std::function<void()> &callback) {
-  auto func = std::unique_ptr<std::function<void()>>(new (std::nothrow) std::function<void()>(callback));
+  auto func = std::make_unique<std::function<void()>>(callback);
   if (func == nullptr) {
     MS_LOG(ERROR) << "callback is nullptr";
     return kInvalidParam;

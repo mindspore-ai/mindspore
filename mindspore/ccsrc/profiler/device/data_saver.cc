@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace profiler {
-OpDetailInfo::OpDetailInfo(std::shared_ptr<OpInfo> op_info, float proportion)
+OpDetailInfo::OpDetailInfo(const std::shared_ptr<OpInfo> op_info, float proportion)
     : op_info_(op_info), proportion_(proportion) {
   // op_full_name is like 'xxx/xxx/{op_type}-op{node_id}'
   op_full_name_ = op_info->op_name;
@@ -72,7 +72,7 @@ void DataSaver::AddOpDetailInfoForType(const OpDetailInfo &op_detail_info) {
   }
 }
 
-float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) {
+float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) const {
   float sum = 0;
   sum = std::accumulate(op_info_maps.begin(), op_info_maps.end(), sum,
                         [](float i, auto iter) { return i + iter.second.op_host_cost_time; });
@@ -167,7 +167,7 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
   ChangeFileMode(file_path);
 }
 
-void DataSaver::ChangeFileMode(const std::string &file_path) {
+void DataSaver::ChangeFileMode(const std::string &file_path) const {
   if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
     MS_LOG(WARNING) << "Modify file: " << file_path << " to rw fail.";
     return;

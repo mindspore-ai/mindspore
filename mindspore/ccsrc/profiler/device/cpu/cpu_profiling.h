@@ -33,6 +33,7 @@ const float kNanosecondToMillisecond = 1000000;
 class CPUProfiler : public Profiler {
  public:
   static std::shared_ptr<CPUProfiler> GetInstance();
+  CPUProfiler() = default;
   ~CPUProfiler() = default;
   CPUProfiler(const CPUProfiler &) = delete;
   CPUProfiler &operator=(const CPUProfiler &) = delete;
@@ -44,7 +45,6 @@ class CPUProfiler : public Profiler {
   void OpDataProducerEnd() override;
 
  private:
-  CPUProfiler() = default;
   void SetRunTimeData(const std::string &op_name, const uint32_t pid);
   void SaveProfileData() override;
   void ClearInst() override;
