@@ -50,6 +50,10 @@ def normal(shape, mean, stddev, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore.Tensor
+        >>> import mindspore.ops.composite as C
+        >>> from mindspore.common import dtype as mstype
         >>> shape = (3, 1, 2)
         >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> stddev = Tensor(1.0, mstype.float32)
@@ -141,10 +145,20 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         of `minval` and `maxval`.
         The dtype is designated as the input `dtype`.
 
+    Raises:
+        TypeError: If `shape` is not tuple.
+        TypeError: If 'minval' or 'maxval' is neither int32 nor float32
+            and dtype of 'minval' is not the same as 'maxval'
+        TypeError: If `seed` is not an int.
+        TypeError: If 'dtype' is neither int32 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore.Tensor
+        >>> import mindspore.ops.composite as C
+        >>> from mindspore.common import dtype as mstype
         >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
         >>> minval = Tensor(1, mstype.int32)
@@ -202,6 +216,9 @@ def gamma(shape, alpha, beta, seed=None):
         ``Ascend``
 
     Examples:
+        >>> import mindspore.Tensor
+        >>> import mindspore.ops.composite as C
+        >>> from mindspore.common import dtype as mstype
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> beta = Tensor(np.array([1.0]), mstype.float32)
@@ -243,6 +260,9 @@ def poisson(shape, mean, seed=None):
         ``Ascend``
 
     Examples:
+        >>> import mindspore.Tensor
+        >>> import mindspore.ops.composite as C
+        >>> from mindspore.common import dtype as mstype
         >>> shape = (4, 1)
         >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
         >>> output = C.poisson(shape, mean, seed=5)
@@ -286,6 +306,9 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         ``GPU``
 
     Examples:
+        >>> import mindspore.Tensor
+        >>> import mindspore.ops.composite as C
+        >>> from mindspore.common import dtype as mstype
         >>> input = Tensor([0, 9, 4, 0], mstype.float32)
         >>> output = C.multinomial(input, 2, True)
         >>> print(output)
