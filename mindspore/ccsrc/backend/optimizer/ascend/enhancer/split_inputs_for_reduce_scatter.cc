@@ -26,6 +26,7 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
   MS_EXCEPTION_IF_NULL(func_graph);
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> split_outputs;
+  size_t rank_size_t = LongToSize(rank_size);
   for (size_t i = 0; i < inputs_size; i++) {
     std::vector<AnfNodePtr> split_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
     split_inputs.push_back(AnfAlgo::GetInputNode(node, i));
@@ -34,16 +35,16 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
     std::vector<TypeId> dtypes(rank_size, AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
     std::vector<std::vector<size_t>> shapes;
     std::vector<int> size_splits;
-    for (size_t j = 0; j < IntToSize(rank_size); j++) {
+    for (size_t j = 0; j < rank_size_t; j++) {
       std::vector<size_t> output_node_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, i);
-      output_node_shape[0] /= rank_size;
+      output_node_shape[0] /= rank_size_t;
       shapes.push_back(output_node_shape);
       size_splits.push_back(output_node_shape[0]);
     }
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
 
     AnfAlgo::SetNodeAttr("split_dim", MakeValue(0L), split);
-    AnfAlgo::SetNodeAttr("num_split", MakeValue(SizeToInt(rank_size)), split);
+    AnfAlgo::SetNodeAttr("num_split", MakeValue(rank_size_t), split);
     AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);
     kernel_select_->SelectKernel(split);
     std::vector<AnfNodePtr> new_outputs;
@@ -63,8 +64,9 @@ AnfNodePtr SplitInputsForReduceScatter::RearrangeInputsForReduceScatter(const Fu
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> reduce_scatter_inputs{
     NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceScatter->name()))};
-  for (size_t i = 0; i < IntToSize(rank_size); i++) {
-    for (size_t j = 0, idx = i; j < inputs_size; j++, idx += IntToSize(rank_size)) {
+  size_t rank_size_t = LongToSize(rank_size);
+  for (size_t i = 0; i < rank_size_t; i++) {
+    for (size_t j = 0, idx = i; j < inputs_size; j++, idx += rank_size_t) {
       reduce_scatter_inputs.push_back(inputs[idx]);
     }
   }

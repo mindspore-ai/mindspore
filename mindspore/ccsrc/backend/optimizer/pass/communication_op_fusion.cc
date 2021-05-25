@@ -50,20 +50,21 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
     if (AnfAlgo::HasNodeAttr(kAttrRankSize, cnode) && AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName) {
       rank_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
     }
+    size_t rank_size_t = LongToSize(rank_size);
     MS_EXCEPTION_IF_NULL(cnode);
     size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_device_format.push_back(AnfAlgo::GetInputFormat(cnode, input_index));
       inputs_device_type.push_back(AnfAlgo::GetInputDeviceDataType(cnode, input_index));
     }
-    for (size_t rank_index = 0; rank_index < IntToSize(rank_size); ++rank_index) {
+    for (size_t rank_index = 0; rank_index < rank_size_t; ++rank_index) {
       size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
         outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
         outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));
         std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
         if (!shape.empty()) {
-          shape[0] /= rank_size;
+          shape[0] /= rank_size_t;
         }
         outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
       }
@@ -315,16 +316,17 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   if (AnfAlgo::HasNodeAttr(kAttrRankSize, final_node) && AnfAlgo::GetCNodeName(final_node) == kAllGatherOpName) {
     rank_size = AnfAlgo::GetNodeAttr<int64_t>(final_node, kAttrRankSize);
   }
-  size_t output_num = node_num * rank_size;
+  size_t rank_size_t = LongToSize(rank_size);
+  size_t output_num = node_num * rank_size_t;
   std::vector<TypeId> dtypes(output_num, AnfAlgo::GetOutputInferDataType(final_node, 0));
   std::vector<std::vector<size_t>> shapes;
-  for (size_t i = 0; i < IntToSize(rank_size); ++i) {
+  for (size_t i = 0; i < rank_size_t; ++i) {
     for (size_t idx = start_index; idx <= end_index; ++idx) {
       auto input_cnode = communication_op_info.communication_op_nodes[idx];
       MS_EXCEPTION_IF_NULL(input_cnode);
       std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(input_cnode, 0);
       if (!shape.empty()) {
-        shape[0] /= rank_size;
+        shape[0] /= rank_size_t;
       }
       shapes.push_back(shape);
     }
