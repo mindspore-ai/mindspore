@@ -58,7 +58,7 @@ Context::Context() : data_(std::make_shared<Data>()) {}
 
 template <class T, typename U = std::remove_cv_t<std::remove_reference_t<T>>>
 static const U &GetValue(const std::shared_ptr<DeviceInfoContext::Data> &data, const std::string &key) {
-  static U empty_result;
+  static const U empty_result{};
   if (data == nullptr) {
     return empty_result;
   }

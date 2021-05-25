@@ -1519,7 +1519,8 @@ void AscendStreamAssign::InsertEventHcomDependHcom(const NotNull<KernelGraphPtr>
       }
     }
 
-    if (stream_indices.size() < 2) {
+    constexpr size_t kStreamMax = 2;
+    if (stream_indices.size() < kStreamMax) {
       MS_LOG(INFO) << "Group:" << group
                    << "; different stream hcom size is less than 2, no need insert event between them";
       continue;

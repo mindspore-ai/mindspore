@@ -122,7 +122,7 @@ Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::
       return kMCInvalidInput;
     }
     auto ret = memcpy_s(input->data_c(), input->Size(), item.MutableData(), item.DataSize());
-    if (ret != kSuccess) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "MSTensor copy failed";
       return kMCFailed;
     }
@@ -318,7 +318,7 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
       }
     }
   } else {
-    auto ret = rtSetDevice(device_id_);
+    auto ret = rtSetDevice(static_cast<int32_t>(device_id_));
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id_ << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
     }
@@ -346,7 +346,7 @@ AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
       return;
     }
   } else {
-    auto ret = rtDeviceReset(device_id_);
+    auto ret = rtDeviceReset(static_cast<int32_t>(device_id_));
     if (ret != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Device " << device_id_ << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
       return;
@@ -395,7 +395,7 @@ PythonEnvGuard::~PythonEnvGuard() {
   }
 }
 
-bool PythonEnvGuard::PythonIsInited() { return Py_IsInitialized() != 0; }
+bool PythonEnvGuard::PythonIsInited() const { return Py_IsInitialized() != 0; }
 
 void PythonEnvGuard::InitPython() {
   if (!PythonIsInited()) {

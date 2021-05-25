@@ -20,9 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
-                                        const std::vector<AddressPtr> & /*workspace*/,
-                                        const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
+bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &, void *) {
   MS_LOG(INFO) << "HcomAllReduceScatter launch";
   return true;
 }
