@@ -47,7 +47,7 @@ class StackFrame : public Base {
 
   void Load() {
     node_slots = TopoSort(func_graph_->get_return(), SuccIncoming, [this](const AnfNodePtr &node) -> IncludeType {
-      if (node->func_graph() != func_graph_ || node->isa<ValueNode>()) {
+      if (node->isa<ValueNode>() || node->isa<Parameter>()) {
         return EXCLUDE;
       }
       return FOLLOW;

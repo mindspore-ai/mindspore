@@ -52,6 +52,7 @@ AnalysisContextPtr StackFrame::GetParentContext(const BaseFuncGraphEvaluatorPtr 
   return parent_context;
 }
 
+// Inner jump implementation.
 StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
                                  const AbstractFunctionPtr &graph_func) {
   // Get the evaluator for func graph.
@@ -119,6 +120,7 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
   return DoJump(engine, cnode, dyn_cast<AbstractFunction>(maybe_func));
 }
 
+// Run one step in current func graph.
 EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
@@ -128,6 +130,7 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   return node_eval_result;
 }
 
+// Return back from branch func graph.
 void StackFrame::Back(const AnalysisEnginePtr &engine, const EvalResultPtr &result) {
   auto &current_node = NextNode();
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
