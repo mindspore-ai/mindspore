@@ -69,15 +69,27 @@ inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
   reply->set_rc(static_cast<int32_t>(rc.StatusCode()));
   reply->set_msg(rc.ToString());
 }
+
+/// Return the default cache path for a user
+inline std::string DefaultUserDir() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+  char user[LOGIN_NAME_MAX];
+  int rc = getlogin_r(user, sizeof(user));
+  if (rc == 0) {
+    return kDefaultCommonPath + std::string(user);
+  } else {
+    return kDefaultCommonPath;
+  }
+#else
+  return kDefaultCommonPath;
+#endif
+}
+
 /// \brief Generate the unix socket file we use on both client/server side given a tcp/ip port number
 /// \param port
 /// \return unix socket url
 inline std::string PortToUnixSocketPath(int port) {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-  return kDefaultCommonPath + Services::GetUserName() + std::string("/cache_server_p") + std::to_string(port);
-#else
-  return kDefaultCommonPath;
-#endif
+  return DefaultUserDir() + std::string("/cache_server_p") + std::to_string(port);
 }
 
 /// \brief Round up to the next 4k
@@ -96,13 +108,7 @@ using numa_id_t = int32_t;
 using cpu_id_t = int32_t;
 
 /// Return the default log dir for cache
-inline std::string DefaultLogDir() {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-  return kDefaultCommonPath + Services::GetUserName() + std::string("/cache/log");
-#else
-  return kDefaultCommonPath;
-#endif
-}
+inline std::string DefaultLogDir() { return DefaultUserDir() + std::string("/cache/log"); }
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_COMMON_H_
