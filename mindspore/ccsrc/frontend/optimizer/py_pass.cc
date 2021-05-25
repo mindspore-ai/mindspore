@@ -170,11 +170,11 @@ AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph
                        const MatchResultPtr &res) {
   auto target_inputs = pattern->inputs();
   if (target_inputs.size() == 0) {
-    auto new_node = ProcessSinglePattern(pattern, res, func_graph, top_graph);
-    if (new_node != nullptr) {
-      res->add_entry(pattern, new_node);
+    auto new_anf_node = ProcessSinglePattern(pattern, res, func_graph, top_graph);
+    if (new_anf_node != nullptr) {
+      res->add_entry(pattern, new_anf_node);
     }
-    return new_node;
+    return new_anf_node;
   }
   // Build up the AnfNode in a recursive manner
   std::vector<AnfNodePtr> new_inputs;
@@ -191,9 +191,9 @@ AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph
     }
     new_inputs.push_back(input_node);
   }
-  auto new_node = func_graph->NewCNode(new_inputs);
-  res->add_entry(pattern, new_node);
-  return new_node;
+  auto new_c_node = func_graph->NewCNode(new_inputs);
+  res->add_entry(pattern, new_c_node);
+  return new_c_node;
 }
 
 void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
@@ -211,7 +211,7 @@ void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor
   // 3. New a Parameter object with the above-specified args
   py::object parameter_class = py::module::import(PARAMETER_MODULE).attr(PARAMETER_CLASS);
   py::object new_parameter = parameter_class(default_tensor, param_name, requires_grad, layerwise_parallel);
-  // 4. Add the new python Parameter object to Cell's _params atttributes
+  // 4. Add the new python Parameter object to Cell's _params attributes
   top_cell.attr(SET_PARAM)(param_name, new_parameter);
   // 5. Set default_param for param_node
   ValuePtr param_value = nullptr;
