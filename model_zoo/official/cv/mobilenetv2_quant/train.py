@@ -164,6 +164,7 @@ def train_on_gpu():
         config = config_lsq_gpu_quant
     else:
         config = config_gpu_quant
+        context.set_context(enable_graph_kernel=True)
 
     print("training args: {}".format(args_opt))
     print("training configure: {}".format(config))
