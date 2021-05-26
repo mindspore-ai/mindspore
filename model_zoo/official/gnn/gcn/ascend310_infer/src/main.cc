@@ -36,19 +36,15 @@ using mindspore::Context;
 using mindspore::Serialization;
 using mindspore::Model;
 using mindspore::Status;
+using mindspore::MSTensor;
+using mindspore::dataset::Execute;
 using mindspore::ModelType;
 using mindspore::GraphCell;
 using mindspore::kSuccess;
-using mindspore::MSTensor;
-using mindspore::dataset::Execute;
-using mindspore::dataset::vision::Decode;
-using mindspore::dataset::vision::Resize;
-using mindspore::dataset::vision::Pad;
-using mindspore::dataset::vision::Normalize;
-using mindspore::dataset::vision::HWC2CHW;
 
 DEFINE_string(mindir_path, "", "mindir path");
-DEFINE_string(dataset_path, ".", "dataset path");
+DEFINE_string(input0_path, ".", "input0 path");
+DEFINE_string(input1_path, ".", "input1 path");
 DEFINE_int32(device_id, 0, "device id");
 
 int main(int argc, char **argv) {
@@ -64,6 +60,7 @@ int main(int argc, char **argv) {
   context->MutableDeviceInfo().push_back(ascend310);
   mindspore::Graph graph;
   Serialization::Load(FLAGS_mindir_path, ModelType::kMindIR, &graph);
+
   Model model;
   Status ret = model.Build(GraphCell(graph), context);
   if (ret != kSuccess) {
@@ -77,20 +74,16 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  auto all_files = GetAllFiles(FLAGS_dataset_path);
-  if (all_files.empty()) {
-    std::cout << "ERROR: no input data, please check your input dir." << std::endl;
+  auto input0_files = GetAllFiles(FLAGS_input0_path);
+  auto input1_files = GetAllFiles(FLAGS_input1_path);
+
+  if (input0_files.empty() || input1_files.empty()) {
+    std::cout << "ERROR: input data empty." << std::endl;
     return 1;
   }
 
   std::map<double, double> costTime_map;
-  size_t size = all_files.size();
-  auto decode = Decode();
-  Execute composeDecode(decode);
-
-  auto resize = Resize({1920, 1920});
-  auto normalize = Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
-  auto hwc2chw = HWC2CHW();
+  size_t size = input0_files.size();
 
   for (size_t i = 0; i < size; ++i) {
     struct timeval start = {0};
@@ -99,45 +92,26 @@ int main(int argc, char **argv) {
     double endTimeMs;
     std::vector<MSTensor> inputs;
     std::vector<MSTensor> outputs;
-    std::cout << "Start predict input files:" << all_files[i] <<std::endl;
-    auto imgDecode = MSTensor();
-    auto image = ReadFileToTensor(all_files[i]);
-    ret = composeDecode(image, &imgDecode);
-    if (ret != kSuccess) {
-      std::cout << "ERROR: Decode failed." << std::endl;
-      return 1;
-    }
-    std::vector<int64_t> shape = imgDecode.Shape();
-    int imgHeight = shape[0];
-    int imgWidth = shape[1];
-    std::vector<int> pad_size;
-    if (imgWidth < imgHeight) {
-      pad_size = {0, 0, (imgHeight - imgWidth), 0};
-    } else {
-      pad_size = {0, 0, 0, (imgWidth - imgHeight)};
-    }
-    auto pad = Pad(pad_size, {0});
-    Execute trans_list({pad, resize, normalize, hwc2chw});
-    auto img = MSTensor();
-    ret = trans_list(imgDecode, &img);
-    if (ret != kSuccess) {
-      std::cout << "ERROR: Image transfer failed." << std::endl;
-      return 1;
-    }
+    std::cout << "Start predict input files:" << input0_files[i] << std::endl;
 
+    auto input0 = ReadFileToTensor(input0_files[i]);
+    auto input1 = ReadFileToTensor(input1_files[i]);
     inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
-                        img.Data().get(), img.DataSize());
+                        input0.Data().get(), input0.DataSize());
+    inputs.emplace_back(model_inputs[1].Name(), model_inputs[1].DataType(), model_inputs[1].Shape(),
+                        input1.Data().get(), input1.DataSize());
+
     gettimeofday(&start, nullptr);
     ret = model.Predict(inputs, &outputs);
     gettimeofday(&end, nullptr);
     if (ret != kSuccess) {
-      std::cout << "Predict " << all_files[i] << " failed." << std::endl;
+      std::cout << "Predict " << input0_files[i] << " failed." << std::endl;
       return 1;
     }
     startTimeMs = (1.0 * start.tv_sec * 1000000 + start.tv_usec) / 1000;
     endTimeMs = (1.0 * end.tv_sec * 1000000 + end.tv_usec) / 1000;
     costTime_map.insert(std::pair<double, double>(startTimeMs, endTimeMs));
-    WriteResult(all_files[i], outputs);
+    WriteResult(input0_files[i], outputs);
   }
   double average = 0.0;
   int inferCount = 0;
