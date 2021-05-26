@@ -127,18 +127,9 @@ void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, con
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   const float block_size = 128.0;
   size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
-  int dims = SizeToInt(axes_.size());
-  int *size = new int[dims];
-  size[dims - 1] = 1;
-  for (int i = dims - 1; i > 0; i--) {
-    size[i - 1] = size[i] * output_shape_[i];
-  }
-  int **position = new int *[thread_num];
-  for (size_t i = 0; i < thread_num; ++i) {
-    position[i] = new int[dims];
-  }
   std::vector<common::Task> tasks;
-  std::function<void(const T *, T *, const int *, int *, int *, TransposeParameter *, int, int)> TransposeDims;
+  std::function<void(const T *, T *, const int *, TransposeParameter *, int, int)> TransposeDims;
+
   if constexpr (std::is_same_v<T, int8_t>) {
     TransposeDims = &TransposeDimsInt8;
   } else if constexpr (std::is_same_v<T, int16_t>) {
@@ -162,15 +153,12 @@ void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, con
   }
   for (int task_id = 0; task_id < SizeToInt(thread_num); ++task_id) {
     auto task = [&, task_id, thread_num]() {
-      TransposeDims(input_addr, output_addr, output_shape, size, position[task_id], &transpose_param_, task_id,
-                    SizeToInt(thread_num));
+      TransposeDims(input_addr, output_addr, output_shape, &transpose_param_, task_id, SizeToInt(thread_num));
       return common::SUCCESS;
     };
     tasks.emplace_back(task);
   }
   common::ThreadPool::GetInstance().SyncRun(tasks);
-  delete[] size;
-  delete[] position;
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP16_TRANSPOSE_FP16_H_
 #define MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP16_TRANSPOSE_FP16_H_
 
@@ -32,12 +31,11 @@ class TransposeFp16CPUKernel : public TransposeCPUKernel {
       : TransposeCPUKernel(param, inputs, outputs, ctx) {}
   ~TransposeFp16CPUKernel() = default;
 
-  int Init() override;
-  int Run() override;
-
  private:
-  float16_t *in_data_fp16_ = nullptr;
-  float16_t *out_data_fp16_ = nullptr;
+  void GetNchwToNhwcFunc() override;
+  void GetNhwcToNchwFunc() override;
+  int TransposeDim2to6() override;
+  int TransposeDimGreaterThan6(int task_id) override;
 };
 }  // namespace mindspore::kernel
 

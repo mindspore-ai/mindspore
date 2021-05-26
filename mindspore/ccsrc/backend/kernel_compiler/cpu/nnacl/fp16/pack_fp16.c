@@ -159,7 +159,8 @@ void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
-void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int channel) {
+void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int channel, int task_id,
+                        int thread_count) {
 #ifdef ENABLE_ARM64
   // Transpose16x8 in arm64
   const int hw_tile = C16NUM;
@@ -167,13 +168,27 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int 
   // Transpose8x8 in others
   const int hw_tile = C8NUM;
 #endif
-  int hw_align = plane / hw_tile * hw_tile;
+  int hw_align = plane / hw_tile;
+  int task_start = 0;
+  int task_end = plane;
+  if (thread_count > 0) {
+    int offset_hw = UP_DIV(hw_align, thread_count) * hw_tile;
+    task_start = offset_hw * task_id;
+    int count = plane - task_start;
+    if (count <= 0) {
+      return;
+    }
+    task_end = (task_id + 1) == thread_count ? plane : MSMIN(plane, task_start + offset_hw);
+    hw_align = task_start + ((task_end - task_start) >= offset_hw ? offset_hw : 0);
+  } else {
+    hw_align *= hw_tile;
+  }
   int c8 = channel / C8NUM * C8NUM;
   int batch = plane * channel;
   for (int n = 0; n < batches; n++) {
     const float16_t *src_batch = (const float16_t *)src + n * batch;
     float16_t *dst_batch = (float16_t *)dst + n * batch;
-    int hw = 0;
+    int hw = task_start;
     for (; hw < hw_align; hw += hw_tile) {
       int c = 0;
       for (; c < c8; c += C8NUM) {
@@ -203,7 +218,7 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int 
         }
       }
     }
-    for (; hw < plane; hw++) {
+    for (; hw < task_end; hw++) {
       const float16_t *src_ptr = src_batch + hw * channel;
       float16_t *dst_ptr = dst_batch + hw;
       for (size_t i = 0; i < channel; i++) {
@@ -213,8 +228,8 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, int batches, int plane, int 
   }
 }
 
-void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel) {
-  return PackNHWCToNCHWFp16(src, dst, batch, channel, plane);
+void PackNCHWToNHWCFp16(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count) {
+  return PackNHWCToNCHWFp16(src, dst, batch, channel, plane, task_id, thread_count);
 }
 
 void PackNHWCToNHWC4Fp16(const void *src, void *dst, int batch, int plane, int channel) {

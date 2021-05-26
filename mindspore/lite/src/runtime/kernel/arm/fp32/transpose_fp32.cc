@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -36,16 +35,15 @@ int TransposeCPUKernel::Init() {
 }
 
 int TransposeCPUKernel::ReSize() {
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(op_parameter_);
   if (in_tensors_.size() == 2) {
-    param->num_axes_ = in_tensors_.at(1)->ElementsNum();
+    param_->num_axes_ = in_tensors_.at(1)->ElementsNum();
   }
   int trans3d[3] = {0, 2, 1};
   int *perm_data = nullptr;
   auto input_tensor = in_tensors_.at(kInputIndex);
-  if (input_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
-    if (input_tensor->shape().size() == 3 && param->num_axes_ == 4) {
-      param->num_axes_ = 3;
+  if (input_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
+    if (input_tensor->shape().size() == 3 && param_->num_axes_ == 4) {
+      param_->num_axes_ = 3;
       perm_data = trans3d;
     } else {
       return RET_OK;
@@ -55,21 +53,19 @@ int TransposeCPUKernel::ReSize() {
     auto perm_tensor = in_tensors_.at(1);
     perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
   }
-  // set perm data
-  MS_ASSERT(perm_data != nullptr);
-  for (int i = 0; i < param->num_axes_; ++i) {
-    param->perm_[i] = perm_data[i];
+  for (int i = 0; i < param_->num_axes_; ++i) {
+    param_->perm_[i] = perm_data[i];
   }
   auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
   auto in_shape = inTensor->shape();
   auto out_shape = outTensor->shape();
-  param->strides_[param->num_axes_ - 1] = 1;
-  param->out_strides_[param->num_axes_ - 1] = 1;
-  param->data_size_ = inTensor->Size();
-  for (int i = param->num_axes_ - 2; i >= 0; i--) {
-    param->strides_[i] = in_shape.at(i + 1) * param->strides_[i + 1];
-    param->out_strides_[i] = out_shape.at(i + 1) * param->out_strides_[i + 1];
+  param_->strides_[param_->num_axes_ - 1] = 1;
+  param_->out_strides_[param_->num_axes_ - 1] = 1;
+  param_->data_size_ = inTensor->Size();
+  for (int i = param_->num_axes_ - 2; i >= 0; i--) {
+    param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
+    param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
 
   if (this->out_shape_ != nullptr) {
@@ -92,35 +88,49 @@ TransposeCPUKernel::~TransposeCPUKernel() {
   }
 }
 
-void TransposeCPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor,
-                                              TransposeParameter *param) {
+void TransposeCPUKernel::GetNchwToNhwcFunc() { NHNCTransposeFunc_ = PackNCHWToNHWCFp32; }
+
+void TransposeCPUKernel::GetNhwcToNchwFunc() { NHNCTransposeFunc_ = PackNHWCToNCHWFp32; }
+
+int TransposeCPUKernel::TransposeDim2to6() {
+  return DoTransposeFp32(static_cast<const float *>(in_data_), static_cast<float *>(out_data_), out_shape_, param_);
+}
+
+int TransposeCPUKernel::TransposeDimGreaterThan6(int task_id) {
+  TransposeDimsFp32(static_cast<const float *>(in_data_), static_cast<float *>(out_data_), out_shape_, param_, task_id,
+                    op_parameter_->thread_num_);
+  return RET_OK;
+}
+
+void TransposeCPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor) {
+  if (in_tensor->shape().size() != 4) {
+    return;
+  }
   auto out_shape = out_tensor->shape();
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
-      param->perm_[3] == 1) {
+  if (param_->perm_[0] == 0 && param_->perm_[1] == 2 && param_->perm_[2] == 3 && param_->perm_[3] == 1) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[1] * out_shape[2];
     nhnc_param_[2] = out_shape[3];
     if (in_tensor->data_type() == kNumberTypeFloat32) {
-      NHNCTransposeFunc_ = PackNCHWToNHWCFp32;
+      GetNchwToNhwcFunc();
     }
   }
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
-      param->perm_[3] == 2) {
+  if (param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 && param_->perm_[3] == 2) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[2] * out_shape[3];
     nhnc_param_[2] = out_shape[1];
     if (in_tensor->data_type() == kNumberTypeFloat32) {
-      NHNCTransposeFunc_ = PackNHWCToNCHWFp32;
+      GetNhwcToNchwFunc();
     }
   }
 }
 
 int TransposeCPUKernel::RunImpl(int task_id) {
   if (NHNCTransposeFunc_ != nullptr) {
-    NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2], task_id, thread_count_);
+    NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2], task_id,
+                       op_parameter_->thread_num_);
   } else {
-    TransposeDimsFp32(in_data_, out_data_, out_shape_, dim_size_, position_ + dims_ * task_id, param_, task_id,
-                      thread_count_);
+    return TransposeDimGreaterThan6(task_id);
   }
   return RET_OK;
 }
@@ -143,63 +153,26 @@ int TransposeCPUKernel::Run() {
     MS_LOG(ERROR) << "null pointer dreferencing.";
     return RET_ERROR;
   }
-  in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
-  out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
+  in_data_ = in_tensor->data_c();
+  out_data_ = out_tensor->data_c();
   MS_ASSERT(in_data_);
   MS_ASSERT(out_data_);
 
-  param_ = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
   if (in_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
-    memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
+    memcpy(out_data_, in_data_, in_tensor->Size());
     return RET_OK;
   }
-  thread_count_ = op_parameter_->thread_num_;
-  GetNHNCTransposeFunc(in_tensor, out_tensor, param_);
+  GetNHNCTransposeFunc(in_tensor, out_tensor);
   if (NHNCTransposeFunc_ != nullptr) {
-    auto ret = static_cast<const lite::InnerContext *>(this->context_)
-                 ->thread_pool_->ParallelLaunch(TransposeImpl, this, thread_count_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "NHNCTransposeFunc_ is error!";
-    }
-    return ret;
+    return static_cast<const lite::InnerContext *>(this->context_)
+      ->thread_pool_->ParallelLaunch(TransposeImpl, this, op_parameter_->thread_num_);
   }
-
-  MS_ASSERT(out_shape_);
-  dims_ = out_tensor->shape().size();
-  if (dims_ > DIMENSION_6D) {
-    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims_ * sizeof(int)));
-    if (dim_size_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_NULL_PTR;
-    }
-    *(dim_size_ + dims_ - 1) = 1;
-    for (int i = dims_ - 1; i > 0; --i) {
-      *(dim_size_ + i - 1) = *(dim_size_ + i) * out_shape_[i];
-    }
-    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims_ * sizeof(int) * thread_count_));
-    if (position_ == nullptr) {
-      context_->allocator->Free(dim_size_);
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_NULL_PTR;
-    }
-  }
-  int ret;
-  if (dims_ > DIMENSION_6D) {
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(TransposeImpl, this, thread_count_);
+  if (out_tensor->shape().size() <= DIMENSION_6D) {
+    return TransposeDim2to6();
   } else {
-    ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
+    return static_cast<const lite::InnerContext *>(this->context_)
+      ->thread_pool_->ParallelLaunch(TransposeImpl, this, op_parameter_->thread_num_);
   }
-  if (dims_ > DIMENSION_6D) {
-    context_->allocator->Free(dim_size_);
-    context_->allocator->Free(position_);
-    dim_size_ = nullptr;
-    position_ = nullptr;
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Transpose run failed";
-  }
-  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)

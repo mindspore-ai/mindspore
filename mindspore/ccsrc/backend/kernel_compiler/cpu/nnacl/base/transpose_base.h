@@ -40,21 +40,21 @@ int DoTransposeInt64(const int64_t *in_data, int64_t *out_data, const int *outpu
                      TransposeParameter *transpose_param);
 int DoTransposeBool(const bool *in_data, bool *out_data, const int *output_shape, TransposeParameter *transpose_param);
 
-void TransposeDimsUInt8(const uint8_t *in_data, uint8_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsUInt8(const uint8_t *in_data, uint8_t *out_data, const int *output_shape,
                         TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsUInt16(const uint16_t *in_data, uint16_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsUInt16(const uint16_t *in_data, uint16_t *out_data, const int *output_shape,
                          TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsUInt32(const uint32_t *in_data, uint32_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsUInt32(const uint32_t *in_data, uint32_t *out_data, const int *output_shape,
                          TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsUInt64(const uint64_t *in_data, uint64_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsUInt64(const uint64_t *in_data, uint64_t *out_data, const int *output_shape,
                          TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsInt16(const int16_t *in_data, int16_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsInt16(const int16_t *in_data, int16_t *out_data, const int *output_shape,
                         TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsInt32(const int32_t *in_data, int32_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsInt32(const int32_t *in_data, int32_t *out_data, const int *output_shape,
                         TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsInt64(const int64_t *in_data, int64_t *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsInt64(const int64_t *in_data, int64_t *out_data, const int *output_shape,
                         TransposeParameter *transpose_param, int task_id, int thread_num);
-void TransposeDimsBool(const bool *in_data, bool *out_data, const int *output_shape, int *size, int *position,
+void TransposeDimsBool(const bool *in_data, bool *out_data, const int *output_shape,
                        TransposeParameter *transpose_param, int task_id, int thread_num);
 
 #ifdef __cplusplus

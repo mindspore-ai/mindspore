@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_H_
 #define MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_H_
 
@@ -33,7 +32,9 @@ class TransposeCPUKernel : public InnerKernel {
  public:
   explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(param, inputs, outputs, ctx) {}
+      : InnerKernel(param, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<TransposeParameter *>(param);
+  }
   ~TransposeCPUKernel() override;
 
   int Init() override;
@@ -42,17 +43,18 @@ class TransposeCPUKernel : public InnerKernel {
   int RunImpl(int task_id);
 
  protected:
-  void GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor, TransposeParameter *param);
-  float *in_data_ = nullptr;
-  float *out_data_ = nullptr;
+  virtual void GetNchwToNhwcFunc();
+  virtual void GetNhwcToNchwFunc();
+  virtual int TransposeDim2to6();
+  virtual int TransposeDimGreaterThan6(int task_id);
+
+  void GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor);
+  void *in_data_ = nullptr;
+  void *out_data_ = nullptr;
   int *out_shape_ = nullptr;
-  int *dim_size_ = nullptr;
-  int *position_ = nullptr;
   TransposeParameter *param_ = nullptr;
   TransposeFunc NHNCTransposeFunc_ = nullptr;
-  int thread_count_ = 0;
   int nhnc_param_[3] = {0};
-  int dims_ = 0;
 };
 }  // namespace mindspore::kernel
 
