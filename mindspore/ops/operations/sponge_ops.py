@@ -2852,33 +2852,54 @@ class TransferCrd(PrimitiveWithInfer):
 
     Inputs:
         - **crd** (Tensor, float32) - [N, 3], the coordinate of each atom.
+          N is the number of atoms..
+        - **old_crd** (Tensor, float32) - [N, 3], the last coordinate of each atom.
           N is the number of atoms.
-
+        - **box** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
 
     Outputs:
-        - **output** (uint32)
+        - **radial** (Tensor, float32) - [number,], the array of radial transferred from coordinates.
+        - **angular** (Tensor, float32) - [number,], the array of angular transferred from coordinates.
+        - **nowarp_crd** (Tensor, float32) - [N, 3], the modified coordinate of each atom for
+         computing radial and angular.
+        - **box_map_times** (Tensor, int32) - [N, 3], the box map times for radial and  angular.
 
     Supported Platforms:
         ``GPU``
     """
 
     @prim_attr_register
-    def __init__(self, start_serial, end_serial, number):
+    def __init__(self, start_serial, end_serial, number, atom_numbers):
+        validator.check_value_type('start_serial', start_serial, (int), self.name)
+        validator.check_value_type('end_serial', end_serial, (int), self.name)
+        validator.check_value_type('number', number, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.start_serial = start_serial
         self.end_serial = end_serial
         self.number = number
+        self.atom_numbers = atom_numbers
         self.add_prim_attr('start_serial', self.start_serial)
         self.add_prim_attr('end_serial', self.end_serial)
         self.add_prim_attr('number', self.number)
+        self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(
-            inputs=['crd'],
-            outputs=['radial', 'angular'])
+            inputs=['crd', 'old_crd', 'box'],
+            outputs=['radial', 'angular', 'nowarp_crd', 'box_map_times'])
 
-    def infer_shape(self, crd_shape):
+    def infer_shape(self, crd_shape, old_crd_shape, box_shape):
+        N = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", self.name)
-        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[0]", self.name)
-        return [self.number,], [self.number,]
+        validator.check_int(crd_shape[0], N, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(len(old_crd_shape), 2, Rel.EQ, "old_crd_dim", self.name)
+        validator.check_int(old_crd_shape[0], N, Rel.EQ, "old_crd_shape[0]", self.name)
+        validator.check_int(old_crd_shape[1], 3, Rel.EQ, "old_crd_shape[1]", self.name)
+        validator.check_int(len(box_shape), 1, Rel.EQ, "box_dim", self.name)
+        validator.check_int(box_shape[0], 3, Rel.EQ, "box_shape[0]", self.name)
+        return [self.number,], [self.number,], [N, 3], [N, 3]
 
-    def infer_dtype(self, crd_dtype):
+    def infer_dtype(self, crd_dtype, old_crd_dtype, box_dtype):
         validator.check_tensor_dtype_valid('crd', crd_dtype, [mstype.float32], self.name)
-        return mstype.float32, mstype.float32
+        validator.check_tensor_dtype_valid('old_crd', old_crd_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('box', box_dtype, [mstype.float32], self.name)
+        return mstype.float32, mstype.float32, mstype.float32, mstype.int32
