@@ -208,6 +208,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/image/center_crop_op.cc
         ${MINDDATA_DIR}/kernels/image/crop_op.cc
         ${MINDDATA_DIR}/kernels/image/decode_op.cc
+        ${MINDDATA_DIR}/kernels/image/gaussian_blur_op.cc
         ${MINDDATA_DIR}/kernels/image/normalize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_preserve_ar_op.cc
@@ -233,6 +234,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/ir/vision/cutout_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/decode_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/equalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/gaussian_blur_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/hwc_to_chw_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/invert_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/mixup_batch_ir.cc
@@ -479,6 +481,7 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
         "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
         "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/gaussian_blur.cc"
         "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
         "${MINDDATA_DIR}/kernels/image/image_utils.cc"
         "${MINDDATA_DIR}/kernels/image/invert_op.cc"
@@ -539,6 +542,7 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         ${MINDDATA_DIR}/kernels/ir/vision/cutout_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/decode_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/equalize_ir.cc
+        ${MINDDATA_DIR}/kernels/ir/vision/gaussian_blur_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/hwc_to_chw_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/invert_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/mixup_batch_ir.cc

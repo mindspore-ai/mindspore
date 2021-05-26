@@ -54,7 +54,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur
 from ..transforms.c_transforms import TensorOperation
 
 
@@ -293,6 +293,41 @@ class Equalize(ImageTensorOperation):
 
     def parse(self):
         return cde.EqualizeOperation()
+
+
+class GaussianBlur(ImageTensorOperation):
+    """
+    BLur input image with the specified Gaussian kernel.
+
+    Args:
+        kernel_size (Union[int, sequence]): Size of the Gaussian kernel to use. The value must be positive and odd. If
+            only an integer is provied, the kernel size will be (size, size). If a sequence of integer is provied, it
+            must be a sequence of 2 values which represents (width, height).
+        sigma (Union[float, sequence], optional): Standard deviation of the Gaussian kernel to use (default=None). The
+            value must be positive. If only an float is provied, the sigma will be (sigma, sigma). If a sequence of
+            float is provied, it must be a sequence of 2 values which represents the sigma of width and height. If None
+            is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
+
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.GaussianBlur(3, 3)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_gaussian_blur
+    def __init__(self, kernel_size, sigma=None):
+        if isinstance(kernel_size, int):
+            kernel_size = (kernel_size,)
+        if sigma is None:
+            sigma = (0,)
+        elif isinstance(sigma, (int, float)):
+            sigma = (float(sigma),)
+        self.kernel_size = kernel_size
+        self.sigma = sigma
+
+    def parse(self):
+        return cde.GaussianBlurOperation(self.kernel_size, self.sigma)
 
 
 class HWC2CHW(ImageTensorOperation):

@@ -30,6 +30,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 #include "minddata/dataset/kernels/ir/vision/invert_ir.h"
 #include "minddata/dataset/kernels/ir/vision/mixup_batch_ir.h"
@@ -296,6 +297,24 @@ std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env
 Equalize::Equalize() {}
 
 std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<EqualizeOperation>(); }
+#endif  // not ENABLE_ANDROID
+
+// GaussianBlur Transform Operation.
+struct GaussianBlur::Data {
+  Data(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma)
+      : kernel_size_(kernel_size), sigma_(sigma) {}
+  std::vector<int32_t> kernel_size_;
+  std::vector<float> sigma_;
+};
+
+GaussianBlur::GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma)
+    : data_(std::make_shared<Data>(kernel_size, sigma)) {}
+
+std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
+  return std::make_shared<GaussianBlurOperation>(data_->kernel_size_, data_->sigma_);
+}
+
+#ifndef ENABLE_ANDROID
 // HwcToChw Transform Operation.
 HWC2CHW::HWC2CHW() {}
 

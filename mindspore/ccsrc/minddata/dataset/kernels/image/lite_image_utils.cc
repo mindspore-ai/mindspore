@@ -710,5 +710,40 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 }
 
+Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_x,
+                    int32_t kernel_y, float sigma_x, float sigma_y) {
+  try {
+    LiteMat lite_mat_input;
+    if (input->Rank() == 3) {
+      if (input->shape()[2] != 1 && input->shape()[2] != 3) {
+        RETURN_STATUS_UNEXPECTED("GaussianBlur: input image is not in channel of 1 or 3");
+      }
+      lite_mat_input = LiteMat(input->shape()[1], input->shape()[0], input->shape()[2],
+                               const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                               GetLiteCVDataType(input->type()));
+    } else if (input->Rank() == 2) {
+      lite_mat_input = LiteMat(input->shape()[1], input->shape()[0],
+                               const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                               GetLiteCVDataType(input->type()));
+    } else {
+      RETURN_STATUS_UNEXPECTED("GaussianBlur: input image is not in shape of <H,W,C> or <H,W>");
+    }
+
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    LiteMat lite_mat_output;
+    lite_mat_output.Init(lite_mat_input.width_, lite_mat_input.height_, lite_mat_input.channel_,
+                         reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
+    bool ret = GaussianBlur(lite_mat_input, lite_mat_output, {kernel_x, kernel_y}, static_cast<double>(sigma_x),
+                            static_cast<double>(sigma_y));
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "GaussianBlur: GaussianBlur failed.");
+    *output = output_tensor;
+    return Status::OK();
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("GaussianBlur: " + std::string(e.what()));
+  }
+}
+
 }  // namespace dataset
 }  // namespace mindspore

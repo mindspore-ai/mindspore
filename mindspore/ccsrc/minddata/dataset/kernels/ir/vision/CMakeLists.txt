@@ -11,6 +11,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         cutout_ir.cc
         decode_ir.cc
         equalize_ir.cc
+        gaussian_blur_ir.cc
         hwc_to_chw_ir.cc
         invert_ir.cc
         mixup_batch_ir.cc

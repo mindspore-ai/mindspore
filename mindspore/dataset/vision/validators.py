@@ -21,7 +21,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio
+    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff, check_value_ratio, check_odd
 from .utils import Inter, Border, ImageBatchFormat
 
 
@@ -493,6 +493,7 @@ def check_rgb_to_hsv(method):
         [is_hwc], _ = parse_user_args(method, *args, **kwargs)
         type_check(is_hwc, (bool,), "is_hwc")
         return method(self, *args, **kwargs)
+
     return new_method
 
 
@@ -504,6 +505,7 @@ def check_hsv_to_rgb(method):
         [is_hwc], _ = parse_user_args(method, *args, **kwargs)
         type_check(is_hwc, (bool,), "is_hwc")
         return method(self, *args, **kwargs)
+
     return new_method
 
 
@@ -815,6 +817,42 @@ def check_random_solarize(method):
             check_value(element, (0, UINT8_MAX))
         if threshold[1] < threshold[0]:
             raise ValueError("threshold must be in min max format numbers.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_gaussian_blur(method):
+    """Wrapper method to check the parameters of GaussianBlur."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [kernel_size, sigma], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(kernel_size, (int, list, tuple), "kernel_size")
+        if isinstance(kernel_size, int):
+            check_value(kernel_size, (1, FLOAT_MAX_INTEGER), "kernel_size")
+            check_odd(kernel_size, "kernel_size")
+        elif isinstance(kernel_size, (list, tuple)) and len(kernel_size) == 2:
+            for index, value in enumerate(kernel_size):
+                type_check(value, (int,), "kernel_size[{}]".format(index))
+                check_value(value, (1, FLOAT_MAX_INTEGER), "kernel_size")
+                check_odd(value, "kernel_size[{}]".format(index))
+        else:
+            raise TypeError(
+                "Kernel size should be a single integer or a list/tuple (kernel_width, kernel_height) of length 2.")
+
+        if sigma is not None:
+            type_check(sigma, (numbers.Number, list, tuple), "sigma")
+            if isinstance(sigma, numbers.Number):
+                check_value(sigma, (0, FLOAT_MAX_INTEGER), "sigma")
+            elif isinstance(sigma, (list, tuple)) and len(sigma) == 2:
+                for index, value in enumerate(sigma):
+                    type_check(value, (numbers.Number,), "size[{}]".format(index))
+                    check_value(value, (0, FLOAT_MAX_INTEGER), "sigma")
+            else:
+                raise TypeError("Sigma should be a single number or a list/tuple of length 2 for width and height.")
 
         return method(self, *args, **kwargs)
 

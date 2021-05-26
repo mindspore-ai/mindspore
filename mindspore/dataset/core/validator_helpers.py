@@ -114,6 +114,13 @@ def check_positive(value, arg_name=""):
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
 
 
+def check_odd(value, arg_name=""):
+    arg_name = pad_arg_name(arg_name)
+    if value % 2 != 1:
+        raise ValueError(
+            "Input {0}is not an odd value.".format(arg_name))
+
+
 def check_2tuple(value, arg_name=""):
     if not (isinstance(value, tuple) and len(value) == 2):
         raise ValueError("Value {0}needs to be a 2-tuple.".format(arg_name))
