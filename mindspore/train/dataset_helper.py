@@ -20,7 +20,6 @@ from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
-from ..nn.wrap import GetNextSingleOp
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes
 from ..ops import operations as P
 
@@ -370,20 +369,6 @@ class _DatasetIterMSLoopSink(_DatasetIter):
             return tuple()
 
         self.op = op
-
-
-class _DatasetIterMS(_DatasetIter):
-    """Iter for MS(enable_loop_sink=False)."""
-
-    def __init__(self, dataset, sink_size, epoch_num):
-        super().__init__(dataset, sink_size, epoch_num)
-        if sink_size > 0:
-            self.sink_count = sink_size
-        else:
-            self.sink_count = dataset.get_dataset_size()
-
-        queue_name = dataset.__transfer_dataset__.queue_name
-        self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)
 
 
 class _DatasetIterPSServer(_DatasetIter):
