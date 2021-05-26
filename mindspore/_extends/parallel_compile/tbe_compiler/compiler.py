@@ -19,10 +19,10 @@ import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
 import tbe.common.context.op_info as operator_info
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-# pylint: disable=wrong-import-position
+import tbe.common.context.op_context as op_context
 from tbe_common import check_kernel_info, get_args, get_built_in_impl_path
 
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 build_in_impl_path = get_built_in_impl_path()
 
 # op function list
@@ -48,8 +48,7 @@ def _replace_range(args):
         shape_range = arg["range"]
         for range_item in shape_range:
             for index, value in enumerate(range_item):
-                if value < 0:
-                    range_item[index] = None
+                range_item[index] = None if value < 0 else range_item[index]
 
 
 def build_op(build_type, json_str, tune_mode=None):
@@ -67,22 +66,9 @@ def build_op(build_type, json_str, tune_mode=None):
     kernel_info = json.loads(json_str)
     check_kernel_info(kernel_info)
     te_set_version(kernel_info["op_info"]["socVersion"])
-    op_name = kernel_info['op_info']['name']
     op_type = kernel_info['op_info']['Type']
-
     try:
-        custom_flag = False
-        if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
-            impl_path = os.path.realpath(kernel_info['impl_path'])
-            if os.path.isfile(impl_path):
-                path, file_name = os.path.split(impl_path)
-                op_name, _ = os.path.splitext(file_name)
-                impl_path = path
-                custom_flag = True
-            else:
-                impl_path = ""
-        _initialize(impl_path)
-
+        custom_flag, op_name = _get_custom_flag(kernel_info)
         inputs_args = get_args(kernel_info['op_info'], 'inputs')
         outputs_args = get_args(kernel_info['op_info'], 'outputs')
         attrs_args = get_args(kernel_info['op_info'], 'attrs')
@@ -92,46 +78,82 @@ def build_op(build_type, json_str, tune_mode=None):
             _replace_range(inputs_args)
             _replace_range(outputs_args)
 
-        if custom_flag:
-            op_module = __import__(op_name)
-        else:
-            if is_dynamic_shape:
-                op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
-                op_module_name = "impl.dynamic." + op_name
-            else:
-                op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
-                op_module_name = "impl." + op_name
-        # get function
-        if build_type == op_build:
-            if custom_flag:
-                py_fn_name = kernel_info['op_info']['name']
-            else:
-                py_fn_name = op_name
-        else:
-            raise ValueError("function {} is not supported by Tbe op {}.".format(build_type, op_name))
-        op_func = getattr(op_module, py_fn_name, None)
-        if op_func is None:
-            raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
+        op_module, op_module_name = _get_op_module(custom_flag, is_dynamic_shape, op_name)
+        op_func = _get_op_func(build_type, custom_flag, kernel_info, op_module, op_name)
 
         # call function
-        if is_dynamic_shape:
-            import tbe.common.context.op_context as op_context
-            with op_context.OpContext("dynamic"):
-                op_info = operator_info.OpInfo(op_type, op_type)
-                op_context.get_context().add_op_info(op_info)
-                op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
-                compile_info = op_context.get_context().get_compile_info()
-                if tune_mode is not None:
-                    return compile_info, (inputs_args, outputs_args, attrs_args), op_module_name
-                return compile_info
-        else:
-            res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
-            if tune_mode is not None:
-                return None, (inputs_args, outputs_args, attrs_args), op_module_name
-            return res
+        return _call_op_func(attrs_args, inputs_args, is_dynamic_shape, kernel_name, op_func, op_module_name, op_type,
+                             outputs_args, tune_mode)
 
     except Exception as e:
         raise RuntimeError(e)
+
+
+def _get_op_func(build_type, custom_flag, kernel_info, op_module, op_name):
+    """ Get op func to build """
+    # get function
+    if build_type == op_build:
+        if custom_flag:
+            py_fn_name = kernel_info['op_info']['name']
+        else:
+            py_fn_name = op_name
+    else:
+        raise ValueError("function {} is not supported by Tbe op {}.".format(build_type, op_name))
+    op_func = getattr(op_module, py_fn_name, None)
+    if op_func is None:
+        raise ValueError("Op:{} function {} is not supported by Tbe.".format(op_name, build_type))
+    return op_func
+
+
+def _get_op_module(custom_flag, is_dynamic_shape, op_name):
+    """ Get op module info """
+    if custom_flag:
+        op_module = __import__(op_name)
+        op_module_name = ""
+    else:
+        if is_dynamic_shape:
+            op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
+            op_module_name = "impl.dynamic." + op_name
+        else:
+            op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
+            op_module_name = "impl." + op_name
+    return op_module, op_module_name
+
+
+def _get_custom_flag(kernel_info):
+    """ Get impl path """
+    custom_flag = False
+    op_name = kernel_info['op_info']['name']
+    if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
+        impl_path = os.path.realpath(kernel_info['impl_path'])
+        if os.path.isfile(impl_path):
+            path, file_name = os.path.split(impl_path)
+            op_name, _ = os.path.splitext(file_name)
+            impl_path = path
+            custom_flag = True
+        else:
+            impl_path = ""
+    _initialize(impl_path)
+    return custom_flag, op_name
+
+
+def _call_op_func(attrs_args, inputs_args, is_dynamic_shape, kernel_name, op_func, op_module_name, op_type,
+                  outputs_args, tune_mode):
+    """ Call op func to build """
+    if is_dynamic_shape:
+        with op_context.OpContext("dynamic"):
+            op_info = operator_info.OpInfo(op_type, op_type)
+            op_context.get_context().add_op_info(op_info)
+            op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+            compile_info = op_context.get_context().get_compile_info()
+            if tune_mode is not None:
+                return compile_info, (inputs_args, outputs_args, attrs_args), op_module_name
+            return compile_info
+    else:
+        res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+        if tune_mode is not None:
+            return None, (inputs_args, outputs_args, attrs_args), op_module_name
+        return res
 
 
 def compile_fusion_op(json_str):
