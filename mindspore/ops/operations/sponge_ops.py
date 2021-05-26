@@ -2377,8 +2377,8 @@ class MDTemperature(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, residue_numbers, atom_numbers):
-        assert isinstance(residue_numbers, int)
-        assert isinstance(atom_numbers, int)
+        validator.check_value_type('residue_numbers', residue_numbers, (int), self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, (int), self.name)
         self.residue_numbers = residue_numbers
         self.atom_numbers = atom_numbers
         self.add_prim_attr('residue_numbers', self.residue_numbers)
@@ -2511,24 +2511,25 @@ class NeighborListUpdate(PrimitiveWithInfer):
                     uint_crd_shape, gpointer_shape, nl_atom_numbers_shape, nl_atom_serial_shape,
                     uint_dr_to_dr_cof_shape, excluded_list_start_shape, excluded_list_shape, excluded_numbers_shape,
                     need_refresh_flag_shape, refresh_count_shape):
-        assert len(atom_numbers_in_grid_bucket_shape) == 1
-        assert len(bucket_shape) == 2
-        assert len(crd_shape) == 2
-        assert len(box_length_shape) == 1
-        assert len(grid_N_shape) == 1
-        assert len(grid_length_inverse_shape) == 1
-        assert len(atom_in_grid_serial_shape) == 1
-        assert len(old_crd_shape) == 2
-        assert len(crd_to_uint_crd_cof_shape) == 1
-        assert len(uint_crd_shape) == 2
-        assert len(gpointer_shape) == 2
-        assert len(nl_atom_numbers_shape) == 1
-        assert len(nl_atom_serial_shape) == 2
-        assert len(uint_dr_to_dr_cof_shape) == 1
-        assert len(excluded_list_start_shape) == 1
-        assert len(excluded_list_shape) == 1
-        assert len(excluded_numbers_shape) == 1
-        assert len(need_refresh_flag_shape) == 1
+        validator.check_int(len(atom_numbers_in_grid_bucket_shape), 1, Rel.EQ,
+                            "atom_numbers_in_grid_bucket_dim", self.name)
+        validator.check_int(len(bucket_shape), 2, Rel.EQ, "bucket_dim", self.name)
+        validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(box_length_shape), 1, Rel.EQ, "box_length_dim", self.name)
+        validator.check_int(len(grid_N_shape), 1, Rel.EQ, "grid_N_dim", self.name)
+        validator.check_int(len(grid_length_inverse_shape), 1, Rel.EQ, "grid_length_inverse_dim", self.name)
+        validator.check_int(len(atom_in_grid_serial_shape), 1, Rel.EQ, "atom_in_grid_serial_dim", self.name)
+        validator.check_int(len(old_crd_shape), 2, Rel.EQ, "old_crd_dim", self.name)
+        validator.check_int(len(crd_to_uint_crd_cof_shape), 1, Rel.EQ, "crd_to_uint_crd_cof_dim", self.name)
+        validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", self.name)
+        validator.check_int(len(gpointer_shape), 2, Rel.EQ, "gpointer_dim", self.name)
+        validator.check_int(len(nl_atom_numbers_shape), 1, Rel.EQ, "nl_atom_numbers_dim", self.name)
+        validator.check_int(len(nl_atom_serial_shape), 2, Rel.EQ, "nl_atom_serial_dim", self.name)
+        validator.check_int(len(uint_dr_to_dr_cof_shape), 1, Rel.EQ, "uint_dr_to_dr_cof_dim", self.name)
+        validator.check_int(len(excluded_list_start_shape), 1, Rel.EQ, "excluded_list_start_dim", self.name)
+        validator.check_int(len(excluded_list_shape), 1, Rel.EQ, "excluded_list_dim", self.name)
+        validator.check_int(len(excluded_numbers_shape), 1, Rel.EQ, "excluded_numbers_dim", self.name)
+        validator.check_int(len(need_refresh_flag_shape), 1, Rel.EQ, "need_refresh_flag_dim", self.name)
 
         validator.check_int(atom_numbers_in_grid_bucket_shape[0], self.grid_numbers, Rel.EQ,
                             "atom_numbers_in_grid_bucket", self.name)
