@@ -37,7 +37,7 @@ using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
-
+using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
 FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_key = results[0];
@@ -302,19 +302,23 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
 
 template <typename T>
 bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
+  constexpr int kBit8 = 8;
+  constexpr int kBit16 = 16;
+  constexpr int kBit32 = 32;
+  constexpr int kBit64 = 64;
   auto int_dypte = dyn_cast<Int>(dtype);
   if (int_dypte != nullptr) {
     switch (int_dypte->nbits()) {
-      case 8:
+      case kBit8:
         *data = std::make_shared<Int8Imm>(obj);
         break;
-      case 16:
+      case kBit16:
         *data = std::make_shared<Int16Imm>(obj);
         break;
-      case 32:
+      case kBit32:
         *data = std::make_shared<Int32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         *data = std::make_shared<Int64Imm>(obj);
         break;
       default:
@@ -326,16 +330,16 @@ bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
   auto uint_dypte = dyn_cast<UInt>(dtype);
   if (uint_dypte != nullptr) {
     switch (uint_dypte->nbits()) {
-      case 8:
+      case kBit8:
         *data = std::make_shared<UInt8Imm>(obj);
         break;
-      case 16:
+      case kBit16:
         *data = std::make_shared<UInt16Imm>(obj);
         break;
-      case 32:
+      case kBit32:
         *data = std::make_shared<UInt32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         *data = std::make_shared<UInt64Imm>(obj);
         break;
       default:
@@ -347,10 +351,10 @@ bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
   auto float_dypte = dyn_cast<Float>(dtype);
   if (float_dypte != nullptr) {
     switch (float_dypte->nbits()) {
-      case 32:
+      case kBit32:
         *data = std::make_shared<FP32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         *data = std::make_shared<FP64Imm>(obj);
         break;
       default:
