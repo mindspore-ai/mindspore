@@ -38,8 +38,7 @@ OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> 
   return optim_info;
 }
 
-void OptimizerInfoBuilder::BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes,
-                                           size_t worker_num) {
+void OptimizerInfoBuilder::BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes, size_t) {
   for (size_t i = 0; i < ws_sizes.size(); i++) {
     size_t size = ws_sizes[i];
     AddressPtr workspace = std::make_shared<kernel::Address>();
@@ -83,13 +82,13 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
     addr_data_size = std::accumulate(shape.begin(), shape.end(), worker_num_, std::multiplies<size_t>());
   } else {
     EXC_IF_VEC_IDX_OOB(ps_lens, ps_index);
-    addr_data_size = ps_lens[ps_index];
+    addr_data_size = IntToSize(ps_lens[ps_index]);
   }
-  addr_data_offset = std::accumulate(ps_lens.begin(), ps_lens.begin() + ps_index, 0, std::plus<int>());
+  addr_data_offset = IntToSize(std::accumulate(ps_lens.begin(), ps_lens.begin() + ps_index, 0, std::plus<int>()));
 
   // The size in ps_lens instead of addr_data_size is the size of real data.
   T *buffer = new T[addr_data_size];
-  addr_ptr->size = ps_lens[ps_index] * sizeof(T);
+  addr_ptr->size = IntToSize(ps_lens[ps_index] * sizeof(T));
   addr_ptr->addr = buffer;
 
   size_t dst_size = addr_ptr->size;
@@ -108,9 +107,9 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
   return addr_ptr;
 }
 
-OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
-                                                     const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                     size_t worker_num, const std::shared_ptr<PServerKernel> &, bool) {
+OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &, const Values &values,
+                                                     const Lengths &lens, const InputsShapePtr &, size_t,
+                                                     const std::shared_ptr<PServerKernel> &, bool) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
   weight_addr->addr = weight->data();
@@ -135,10 +134,9 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   return new MomentumOptimInfo(weight_addr, accumulate, learning_rate, gradient, momentum);
 }
 
-OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
-                                                       const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                       size_t worker_num, const std::shared_ptr<PServerKernel> &,
-                                                       bool sharded) {
+OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &, const Values &values,
+                                                       const Lengths &lens, const InputsShapePtr &inputs_shape, size_t,
+                                                       const std::shared_ptr<PServerKernel> &, bool sharded) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
   weight_addr->addr = weight->data();
@@ -185,9 +183,8 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
                                  grad, indices, sharded);
 }
 
-OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
-                                                       const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                       size_t worker_num,
+OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &, const Values &values,
+                                                       const Lengths &lens, const InputsShapePtr &inputs_shape, size_t,
                                                        const std::shared_ptr<PServerKernel> &pserver_kernel,
                                                        bool sharded) {
   MS_EXCEPTION_IF_NULL(inputs_shape);
