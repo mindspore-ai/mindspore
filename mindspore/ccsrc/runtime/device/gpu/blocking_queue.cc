@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace device {
+const size_t kTimeout = 100;
+
 GpuQueue::GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity)
     : buffer_(addr),
       head_(0),
@@ -110,7 +112,7 @@ void BlockingQueue::RegisterRelease(const std::function<void(void *, int32_t)> &
 BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataItemGpu> &data, unsigned int) {
   std::unique_lock<std::mutex> locker(mutex_);
   if (queue_->IsFull()) {
-    if (not_full_cond_.wait_for(locker, std::chrono::microseconds(100)) == std::cv_status::timeout) {
+    if (not_full_cond_.wait_for(locker, std::chrono::microseconds(kTimeout)) == std::cv_status::timeout) {
       return TIMEOUT;
     }
   }

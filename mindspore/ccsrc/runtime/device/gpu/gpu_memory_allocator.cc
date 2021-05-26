@@ -24,13 +24,15 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
+const size_t kGBToByte = 1024 << 20;
+
 bool GPUMemoryAllocator::Init() {
   size_t total_size = total_mem_size();
   size_t free_size = CudaDriver::free_mem_size();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   limited_device_memory_ = context_ptr->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
-  available_device_memory_ = FloatToSize(limited_device_memory_ * 1024 * 1024 * 1024);
+  available_device_memory_ = FloatToSize(limited_device_memory_ * kGBToByte);
   if (total_size > 0 && free_size > 0 && available_device_memory_ > 0) {
     MS_LOG(INFO) << "GPU device total memory size " << total_size << ", current free memory size " << free_size
                  << ", set max available memory size " << available_device_memory_ << ".";
