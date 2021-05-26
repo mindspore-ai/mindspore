@@ -172,7 +172,6 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     tensor::TensorPtr stub_output_tensor =
       std::make_shared<tensor::Tensor>(infer_type, tensor_abstract->shape()->shape(), nullptr);
     const auto &output_type = AnfAlgo::GetOutputDeviceDataType(output_node, output_index);
-    const auto &output_shape = AnfAlgo::GetOutputDeviceShape(output_node, output_index);
     const auto &output_format = AnfAlgo::GetOutputFormat(output_node, output_index);
     tensor::DeviceInfo device_info;
     device_info.format_ = output_format;
@@ -707,7 +706,7 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
     return;
   }
 
-  const auto &graph = PreBuildOp(op_run_info, graph_info, input_tensors, tensors_mask);
+  const auto &graph = PreBuildOp(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(graph);
   // init runtime resource
   InitRuntimeResource();
@@ -758,7 +757,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   MS_LOG(INFO) << "Run op " << op_run_info->op_name << " finish!";
 }
 
-KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
                                          const std::vector<tensor::TensorPtr> &input_tensors,
                                          const std::vector<int64_t> &tensors_mask) {
   // Construct graph include one op
@@ -816,7 +815,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   MS_EXCEPTION_IF_NULL(graph);
   std::map<KernelWithIndex, OutputTensorInfo> op_output_info;
   std::vector<CNodePtr> kernels;
-  std::unordered_map<KernelGraphPtr, std::vector<GraphInfo>> single_op_graphs;
+  std::unordered_map<KernelGraphPtr, GraphInfo> single_op_graphs;
   // Collect kernels need to be built in single op graphs
   for (const auto &kernel : graph->execution_order()) {
     // Generate fake input tensors, tensor masks and input kernel with index
@@ -837,13 +836,13 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
       continue;
     }
     const auto &single_op_graph =
-      PreBuildOp(op_run_info, graph_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
+      PreBuildOp(op_run_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
     MS_EXCEPTION_IF_NULL(single_op_graph);
     GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
     opt::HideNopNode(single_op_graph.get());
     // The graph info could have been changed in PreBuildOp
     const GraphInfo &new_graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
-    single_op_graphs.insert({single_op_graph, {graph_info, new_graph_info}});
+    single_op_graphs.emplace(single_op_graph, new_graph_info);
     const auto &execution_order = single_op_graph->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));
   }
@@ -861,10 +860,8 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
   for (const auto &graph_item : single_op_graphs) {
     RunOpMemoryClear(graph_item.first.get());
-    for (const auto &graph_info : graph_item.second) {
-      run_op_graphs_[graph_info] = graph_item.first;
-      MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_info;
-    }
+    run_op_graphs_[graph_item.second] = graph_item.first;
+    MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_item.second;
   }
   built_graph_id_.insert(graph_id);
 }
