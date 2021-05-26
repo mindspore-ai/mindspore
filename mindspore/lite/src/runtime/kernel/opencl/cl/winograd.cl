@@ -17,7 +17,7 @@ constant FLT Bt[36] = {
 __kernel void Winograd4x4To36(__read_only image2d_t input,    // height=N*H             width=W*CI_SLICES
                               __write_only image2d_t output,  // height=CI_SLICES*36    width=H/4*W/4
                               int4 input_shape,               // N H W CI_SLICES
-                              int TILE_HW, int pad) {
+                              int TILE_HW, int pad_u, int pad_l) {
   int tile_hw = get_global_id(0);
   int row = get_global_id(1);
   int ci_slice = get_global_id(2);
@@ -33,8 +33,8 @@ __kernel void Winograd4x4To36(__read_only image2d_t input,    // height=N*H     
 
   constant FLT *Bt_row = Bt + row * 6;
   FLT4 BtD_row[6] = {0};
-  int h = tile_h * 4 - pad;
-  int w = tile_w * 4 - pad;
+  int h = tile_h * 4 - pad_u;
+  int w = tile_w * 4 - pad_l;
 
   int x_idx = w * CI_SLICES + ci_slice;
   FLT bt0 = Bt_row[0], bt1 = Bt_row[1], bt2 = Bt_row[2], bt3 = Bt_row[3], bt4 = Bt_row[4], bt5 = Bt_row[5];

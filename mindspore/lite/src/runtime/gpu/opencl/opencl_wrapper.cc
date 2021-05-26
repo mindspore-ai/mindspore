@@ -89,6 +89,8 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   func_name = reinterpret_cast<func_name##Func>(dlsym(*handle_ptr, #func_name));               \
   if (func_name == nullptr) {                                                                  \
     MS_LOG(ERROR) << "load func (" << #func_name << ") from (" << library_path << ") failed!"; \
+    UnLoadOpenCLLibrary(*handle_ptr);                                                          \
+    return false;                                                                              \
   }
 
   LOAD_OPENCL_FUNCTION_PTR(clGetPlatformIDs);
@@ -100,7 +102,6 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clCreateProgramWithSource);
   LOAD_OPENCL_FUNCTION_PTR(clCreateBuffer);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage2D);
-  LOAD_OPENCL_FUNCTION_PTR(clImportMemoryARM);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage3D);
   LOAD_OPENCL_FUNCTION_PTR(clRetainKernel);
   LOAD_OPENCL_FUNCTION_PTR(clCreateKernel);

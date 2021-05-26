@@ -162,7 +162,8 @@ void WinogradOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_);
   ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, input_shape);
   ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, TILE_HW_);
-  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn, param_->pad_u_);
+  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, param_->pad_u_);
+  ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn, param_->pad_l_);
 
   arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem0_);
