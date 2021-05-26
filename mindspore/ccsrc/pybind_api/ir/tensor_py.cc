@@ -284,8 +284,8 @@ void MemCopyFromCacheToHost(void *hashmap_addr, void *host_addr, void *cache_add
   size_t single_col_bytes = param_type_size * col_size;
   for (size_t i = 0; i < hashmap_size; ++i) {
     if (!hashmap_data[i].IsEmpty()) {
-      size_t host_offset = single_col_bytes * hashmap_data[i].key_;
-      size_t cache_offset = single_col_bytes * hashmap_data[i].value_;
+      size_t host_offset = single_col_bytes * LongToSize(hashmap_data[i].key_);
+      size_t cache_offset = single_col_bytes * LongToSize(hashmap_data[i].value_);
       if (cache_offset + single_col_bytes <= cache_max) {
         auto ret =
           memcpy_s(host_data + host_offset, host_max - host_offset, cache_data + cache_offset, single_col_bytes);
@@ -319,8 +319,8 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
         MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                           << "host shape:" << host_shape << ", cache shape:" << cache_shape;
       }
-      auto host_data_max_size = tensor.Size();
-      auto cache_data_max_size = cache_tensor_ptr->Size();
+      auto host_data_max_size = static_cast<size_t>(tensor.Size());
+      auto cache_data_max_size = static_cast<size_t>(cache_tensor_ptr->Size());
       auto hashmap_data_type = hashmap_tensor_ptr->data_type();
       if (hashmap_data_type == TypeId::kNumberTypeInt32) {
         MemCopyFromCacheToHost<int32_t>(hashmap_tensor_ptr->data_c(), tensor.data_c(), cache_tensor_ptr->data_c(),

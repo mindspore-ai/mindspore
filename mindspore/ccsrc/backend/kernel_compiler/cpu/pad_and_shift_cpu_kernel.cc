@@ -63,9 +63,9 @@ void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   if (shift_idx >= static_cast<T>(cum_sum_size_)) {
     MS_LOG(EXCEPTION) << "Shift index must small than cumsum size.";
   }
-  size_t output_size = cum_sum_arr[cum_sum_size_ - 1];
-  T shift_size = cum_sum_arr[shift_idx];
-  T valid_size = cum_sum_arr[shift_idx + 1] - shift_size;
+  size_t output_size = static_cast<size_t>(cum_sum_arr[cum_sum_size_ - 1]);
+  size_t shift_size = static_cast<size_t>(cum_sum_arr[shift_idx]);
+  size_t valid_size = static_cast<size_t>(cum_sum_arr[shift_idx + 1] - shift_size);
   int ret = memset_s(output, outputs[0]->size, -1, type_size_ * output_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno" << ret;
