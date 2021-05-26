@@ -40,7 +40,8 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
 
   // set abstract
-  auto bn_input1 = bn_cnode->input(2);
+  constexpr size_t DIM2 = 2;
+  auto bn_input1 = bn_cnode->input(DIM2);
   MS_EXCEPTION_IF_NULL(bn_input1);
   AbstractBasePtrList abstract_list{bn_input1->abstract(), bn_input1->abstract()};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
