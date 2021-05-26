@@ -29,16 +29,16 @@ using mindspore::tensor::TensorPy;
 namespace mindspore {
 namespace session {
 namespace {
-void SetOutputTensorsWaitStatus(const VectorRef *outputs) {
+void GetNeedNotifyTensors(const VectorRef *outputs, std::set<TensorPtr> *result) {
   MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(result);
   for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
-      SetOutputTensorsWaitStatus(&vector_ref);
+      GetNeedNotifyTensors(&vector_ref, result);
     } else if (utils::isa<tensor::TensorPtr>(item)) {
       auto tensor = utils::cast<tensor::TensorPtr>(item);
-      MS_EXCEPTION_IF_NULL(tensor);
-      tensor->SetNeedWait(false);
+      result->emplace(tensor);
     }
   }
 }
@@ -138,10 +138,13 @@ void RunGraphTask::Run() {
   }
   MS_LOG(INFO) << "End run graph " << graph_id_;
   graph->OnRunGraphFinished();
-  for (auto &tensor : input_need_lock_tensors_) {
-    tensor->SetNeedWait(false);
+  std::set<TensorPtr> need_notify_tensors(input_need_lock_tensors_.begin(), input_need_lock_tensors_.end());
+  GetNeedNotifyTensors(&outputs_, &need_notify_tensors);
+  for (auto &tensor : need_notify_tensors) {
+    if (tensor != nullptr) {
+      tensor->SetNeedWait(false);
+    }
   }
-  SetOutputTensorsWaitStatus(&outputs_);
   ExecutorManager::Instance().OnEvent(ExecutorEvent::kRunGraphFinished);
 }
 

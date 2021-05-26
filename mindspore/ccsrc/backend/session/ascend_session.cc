@@ -85,6 +85,10 @@ using mindspore::profiler::MemoryProfiling;
 namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
+const size_t kLoopSinkTensorNum = 3;
+const size_t kLoopSinkCurLoopIndex = 0;
+const size_t kLoopSinkNextLoopIndex = 1;
+const size_t kLoopSinkEpochIndex = 2;
 constexpr char SR_TAG[] = "sr_tag";
 constexpr char BACKWARD[] = "backward";
 namespace {
@@ -279,11 +283,11 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   if (inputs_params == nullptr) {
     return 0;
   }
-  if (inputs_params->size() < 3) {
+  if (inputs_params->size() < kLoopSinkTensorNum) {
     MS_LOG(EXCEPTION) << "Illegal inputs_params size";
   }
   // update current loop tensor to 0 per iterator
-  auto cur_loop_tensor = (*inputs_params)[0];
+  auto cur_loop_tensor = (*inputs_params)[kLoopSinkCurLoopIndex];
   MS_EXCEPTION_IF_NULL(cur_loop_tensor);
   auto *cur_val = static_cast<int32_t *>(cur_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(cur_val);
@@ -294,7 +298,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   inputs->push_back(cur_loop_tensor);
 
   // update next loop tensor to 0 per iterator
-  auto next_loop_tensor = (*inputs_params)[1];
+  auto next_loop_tensor = (*inputs_params)[kLoopSinkNextLoopIndex];
   MS_EXCEPTION_IF_NULL(next_loop_tensor);
   auto *next_val = static_cast<int32_t *>(next_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(next_val);
@@ -304,7 +308,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(next_loop_tensor);
 
-  auto epoch_tensor = (*inputs_params)[2];
+  auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
   auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
   MS_EXCEPTION_IF_NULL(epoch_val);
@@ -392,13 +396,13 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
 void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                   const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = 3;
+  size_t input_ctrl_size = kLoopSinkTensorNum;
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->input_ctrl_tensors()) {
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
   }
   auto &input_nodes = kernel_graph->input_nodes();
-  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size()) {
+  if ((inputs.size() + input_ctrl_size) - kLoopSinkTensorNum != input_nodes.size()) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }

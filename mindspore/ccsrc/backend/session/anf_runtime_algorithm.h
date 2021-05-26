@@ -24,6 +24,7 @@
 #include <utility>
 #include <memory>
 #include <unordered_set>
+#include <map>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "base/base.h"
@@ -271,7 +272,7 @@ class AnfRuntimeAlgorithm {
   static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
   static bool IsNodeDynamicShape(const AnfNodePtr &node);
-  static void InferShape(const CNodePtr &node);
+  static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
   static std::vector<size_t> GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
   static std::vector<size_t> GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
   // Find real input nodes.
