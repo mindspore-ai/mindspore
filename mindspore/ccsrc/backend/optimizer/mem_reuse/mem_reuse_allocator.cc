@@ -198,17 +198,17 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   // add left align border for the first output and right align border for the last output to alloc align border memory
   size_t output_index = 0;
   auto output_ref_indexes = current_kernel_->GetOutputRefIndexs();
-  for (const auto &tensor_idx : output_ref_indexes) {
-    size_t index = GetTensorIndex(tensor_idx);
-    auto tensor_desc = tensor_ptr_list_[index];
-    MS_EXCEPTION_IF_NULL(tensor_desc);
+  for (const auto &out_index : output_ref_indexes) {
+    size_t index = GetTensorIndex(out_index);
+    auto descption = tensor_ptr_list_[index];
+    MS_EXCEPTION_IF_NULL(descption);
     if (output_index == 0) {
-      tensor_desc->size_ += kDefaultMemAlignSize;
+      descption->size_ += kDefaultMemAlignSize;
     }
 
     if ((output_index == 0) && (output_ref_indexes.size() == 1)) {
       // add right align border for single output
-      tensor_desc->size_ += kDefaultMemAlignSize;
+      descption->size_ += kDefaultMemAlignSize;
     }
 
     output_index++;
@@ -218,28 +218,28 @@ void BestFitMemReuse::AssignCommunicationNodeOutputOffset() {
   if (!reusable_membuf_map.empty()) {
     auto membuf_index = reusable_membuf_map.begin()->second;
     output_index = 0;
-    for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
-      size_t index = GetTensorIndex(tensor_idx);
-      auto tensor_desc = tensor_ptr_list_[index];
-      MS_EXCEPTION_IF_NULL(tensor_desc);
-      ReuseExistMembuf(tensor_desc.get(), membuf_index + output_index, kDynamicMem);
+    for (const auto &idx : current_kernel_->GetOutputRefIndexs()) {
+      size_t index = GetTensorIndex(idx);
+      auto desc = tensor_ptr_list_[index];
+      MS_EXCEPTION_IF_NULL(desc);
+      ReuseExistMembuf(desc.get(), membuf_index + output_index, kDynamicMem);
       // skip skip left align border for communication op's first output to used
       if (output_index == 0) {
-        tensor_desc->offset_ += kDefaultMemAlignSize;
+        desc->offset_ += kDefaultMemAlignSize;
       }
       output_index++;
     }
   } else {
     // no membuf can reuse, add new membuf after the membuf_ptr_list
     output_index = 0;
-    for (const auto &tensor_idx : current_kernel_->GetOutputRefIndexs()) {
-      size_t index = GetTensorIndex(tensor_idx);
-      auto tensor_desc = tensor_ptr_list_[index];
-      MS_EXCEPTION_IF_NULL(tensor_desc);
-      AddNewMembufPtr(tensor_desc.get(), kDynamicMem);
+    for (const auto &tensor_index : current_kernel_->GetOutputRefIndexs()) {
+      size_t index = GetTensorIndex(tensor_index);
+      auto desc = tensor_ptr_list_[index];
+      MS_EXCEPTION_IF_NULL(desc);
+      AddNewMembufPtr(desc.get(), kDynamicMem);
       // skip align size offset for first output to used
       if (output_index == 0) {
-        tensor_desc->offset_ += kDefaultMemAlignSize;
+        desc->offset_ += kDefaultMemAlignSize;
       }
       output_index++;
 #ifdef MEM_REUSE_DEBUG

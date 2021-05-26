@@ -148,8 +148,9 @@ size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size) {
   }
   auto alloc_mem_size = mem_alloc_unit_size();
   // Growing at twice of alloc size
+  constexpr size_t kDouble = 2;
   while (alloc_mem_size < size) {
-    alloc_mem_size = alloc_mem_size * 2;
+    alloc_mem_size = alloc_mem_size * kDouble;
   }
   alloc_mem_size = std::min(alloc_mem_size, device_free_mem_size);
   return alloc_mem_size;

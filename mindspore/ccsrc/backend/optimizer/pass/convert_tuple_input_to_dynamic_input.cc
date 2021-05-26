@@ -49,8 +49,8 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
     return input_size;
   }
   for (size_t index = 0; index < input_size; ++index) {
-    auto dyn_input_node = CreatTupleGetItemNode(graph, tuple_input, index);
-    plant_inputs->emplace_back(dyn_input_node);
+    auto dynamic_input_node = CreatTupleGetItemNode(graph, tuple_input, index);
+    plant_inputs->emplace_back(dynamic_input_node);
   }
   return input_size;
 }
