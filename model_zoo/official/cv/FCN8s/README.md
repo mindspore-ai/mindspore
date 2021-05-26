@@ -55,10 +55,10 @@ Dataset used:
 - running on Ascend with default parameters
 
   ```python
-  # run training example
+  # Ascend单卡训练示例
   python train.py --device_id device_id
 
-  # run evaluation example with default parameters
+  # Ascend评估示例
   python eval.py --device_id device_id
   ```
 
@@ -102,7 +102,7 @@ Dataset used:
 
 - config for FCN8s
 
-  ```python
+  ```default_config.yaml
      # dataset
     'data_file': '/data/workspace/mindspore_dataset/FCN/FCN/dataset/MINDRECORED_NAME.mindrecord', # path and name of one mindrecord file
     'train_batch_size': 32,
@@ -157,12 +157,14 @@ Dataset used:
 
 - running on Ascend with default parameters
 
-  ```python 单卡训练
-  sh scripts/run_standalone_train.sh DEVICE_ID
-  ```
+  ```python
+  # Ascend单卡训练示例
+  python train.py --device_id device_id
+  or
+  sh scripts/run_standalone_train.sh [DEVICE_ID]
 
-  ```python 分布式训练
-  sh scripts/run_train.sh DEVICE_NUM RANK_TABLE_FILES
+  #Ascend八卡并行训练
+  sh scripts/run_train.sh [DEVICE_NUM] rank_table.json
   ```
 
   训练时，训练过程中的epch和step以及此时的loss和精确度会呈现log.txt中:
@@ -173,6 +175,79 @@ Dataset used:
   ```
 
   此模型的checkpoint会在默认路径下存储
+
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```ModelArts
+#  在ModelArts上使用分布式训练示例:
+#  数据集存放方式
+
+#  ├── VOC2012                                                     # dir
+#    ├── VOCdevkit                                                 # VOCdevkit dir
+#      ├── Please refer to VOCdevkit structure  
+#    ├── benchmark_RELEASE                                         # benchmark_RELEASE dir
+#      ├── Please refer to benchmark_RELEASE structure
+#    ├── backbone                                                  # backbone dir
+#      ├── vgg_predtrained.ckpt
+#    ├── predtrained                                               # predtrained dir
+#      ├── FCN8s_1-133_300.ckpt
+#    ├── checkpoint                                                # checkpoint dir
+#      ├── FCN8s_1-133_300.ckpt
+#    ├── vocaug_mindrecords                                        # train dataset dir
+#      ├── voctrain.mindrecords0
+#      ├── voctrain.mindrecords0.db
+#      ├── voctrain.mindrecords1
+#      ├── voctrain.mindrecords1.db
+#      ├── voctrain.mindrecords2
+#      ├── voctrain.mindrecords2.db
+#      ├── voctrain.mindrecords3
+#      ├── voctrain.mindrecords3.db
+#      ├── voctrain.mindrecords4
+#      ├── voctrain.mindrecords4.db
+#      ├── voctrain.mindrecords5
+#      ├── voctrain.mindrecords5.db
+#      ├── voctrain.mindrecords6
+#      ├── voctrain.mindrecords6.db
+#      ├── voctrain.mindrecords7
+#      ├── voctrain.mindrecords7.db
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式
+#       a. 设置 "enable_modelarts=True"
+#          设置 "ckpt_dir=/cache/train/outputs_FCN8s/"
+#          设置 "ckpt_vgg16=/cache/data/backbone/vgg_predtrain file"  如果没有预训练 ckpt_vgg16=""
+#          设置 "ckpt_pre_trained=/cache/data/predtrained/pred file" 如果无需继续训练 ckpt_pre_trained=""
+#          设置 "data_file=/cache/data/vocaug_mindrecords/voctrain.mindrecords0"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/FCN8s"
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py"
+# (5) 在modelarts的界面上设置模型的数据路径 ".../VOC2012"(选择VOC2012文件夹路径)
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path"
+# (6) 开始模型的训练
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置
+# (2) 选择a或者b其中一种方式
+#       a. 设置 "enable_modelarts=True"
+#          设置 "data_root=/cache/data/VOCdevkit/VOC2012/"
+#          设置 "data_lst=./ImageSets/Segmentation/val.txt"
+#          设置 "ckpt_file=/cache/data/checkpoint/ckpt file name"
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in default_config.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/FCN8s"
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py"
+# (6) 在modelarts的界面上设置模型的数据路径 ".../VOC2012"(选择VOC2012文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path"
+# (7) 开始模型的推理
+```
 
 ## [评估步骤](#contents)
 
@@ -186,7 +261,7 @@ Dataset used:
   python eval.py
   ```
 
-  ```python shell脚本验证
+  ```shell 评估
   sh scripts/run_eval.sh DATA_ROOT DATA_LST CKPT_PATH
   ```
 
