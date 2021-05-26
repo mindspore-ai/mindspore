@@ -25,7 +25,8 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
-  T i = (entry + 1) % length, off = 1;
+  T i = (entry + 1) % length;
+  int64_t off = 1;
   int compress_count = 0;
   for (; !entry_p[i].IsEmpty(); i = (i + 1) % length, off++) {
     if (entry_p[i].tag_ > off) {
@@ -62,9 +63,6 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
   }
   hashmap_length_ = hashmap_shape[0];
-  if (hashmap_length_ <= 0) {
-    MS_LOG(EXCEPTION) << "Hashmap length must > 0";
-  }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
@@ -116,13 +114,13 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     size_t count = 1;
     count_size += 1;
     while ((!hashmap[tmp_entry].IsEmpty() && !hashmap[tmp_entry].IsKey(key))) {
-      tmp_entry = (tmp_entry + 1) % hashmap_length_;
+      tmp_entry = (tmp_entry + 1) % static_cast<T>(hashmap_length_);
       if (count > hashmap_length_) {
         MS_LOG(EXCEPTION) << "Hashmap is full, search cache idx failed, please set a larger vocab_cache_size!";
       }
       count += 1;
     }
-    total_count += count;
+    total_count += SizeToFloat(count);
     if (hashmap[tmp_entry].IsEmpty()) {
       miss_idx.emplace_back(i);
       output_miss_emb_idx[miss_count] = key;
@@ -149,19 +147,19 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     T entry = HashFunc(emb_idx, hashmap_length_);
     size_t tag_count = 1;
     while (!hashmap[entry].IsEmpty()) {
-      entry = (entry + 1) % hashmap_length_;
+      entry = (entry + 1) % static_cast<T>(hashmap_length_);
       if (tag_count > hashmap_length_) {
         MS_LOG(EXCEPTION) << "Hashmap is full, insert new key failed, please set a larger vocab_cache_size!";
       }
       tag_count++;
     }
     hashmap[entry].key_ = emb_idx;
-    hashmap[entry].step_ = step_[0];
-    hashmap[entry].tag_ = tag_count;
-    T tmp_entry = (entry + 1) % hashmap_length_;
+    hashmap[entry].step_ = SizeToLong(step_[0]);
+    hashmap[entry].tag_ = SizeToLong(tag_count);
+    T tmp_entry = (entry + 1) % static_cast<T>(hashmap_length_);
     size_t delete_count = 1;
     while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
-      tmp_entry = (tmp_entry + 1) % hashmap_length_;
+      tmp_entry = (tmp_entry + 1) % static_cast<T>(hashmap_length_);
       if (delete_count > hashmap_length_) {
         MS_LOG(EXCEPTION) << "Hashmap is full, delete old key failed, please set a larger vocab_cache_size!";
       }
@@ -172,8 +170,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     hashmap[entry].value_ = output_swap_cache_idx[i];
     hashmap[tmp_entry].SetEmpty();
     int compress_count = Compress(hashmap, hashmap_length_, tmp_entry);
-    total_delete_count += (compress_count + delete_count);
-    total_insert_count += tag_count;
+    total_delete_count += IntToFloat(compress_count + SizeToInt(delete_count));
+    total_insert_count += SizeToFloat(tag_count);
   }
   if (miss_count != 0) {
     MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count;

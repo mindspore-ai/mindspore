@@ -791,17 +791,17 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
 
   auto max_shape = shape;
   auto min_shape = shape;
-  int x_num = 1;
-  int x_min_num = 1;
-  int x_max_num = 1;
-  for (int value : x_shape) {
-    x_num = IntMulWithOverflowCheck(value, x_num);
+  int64_t x_num = 1;
+  int64_t x_min_num = 1;
+  int64_t x_max_num = 1;
+  for (int64_t value : x_shape) {
+    x_num = LongMulWithOverflowCheck(value, x_num);
   }
-  for (int value : x_min_shape) {
-    x_min_num = IntMulWithOverflowCheck(value, x_min_num);
+  for (int64_t value : x_min_shape) {
+    x_min_num = LongMulWithOverflowCheck(value, x_min_num);
   }
-  for (int value : x_max_shape) {
-    x_max_num = IntMulWithOverflowCheck(value, x_max_num);
+  for (int64_t value : x_max_shape) {
+    x_max_num = LongMulWithOverflowCheck(value, x_max_num);
   }
 
   auto it_first = find(shape.begin(), shape.end(), -1);
@@ -811,11 +811,11 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
       MS_LOG(EXCEPTION) << "At most one component of input shape can be -1";
     }
     auto index = std::distance(shape.begin(), it_first);
-    int infer_value = x_num;
-    int infer_min_value = x_min_num;
-    int infer_max_value = x_max_num;
+    int64_t infer_value = x_num;
+    int64_t infer_min_value = x_min_num;
+    int64_t infer_max_value = x_max_num;
     for (size_t i = 0; i < shape.size(); ++i) {
-      int value = shape[i];
+      int64_t value = shape[i];
       if (value != -1 && value != 0) {
         infer_value = infer_value / value;
         infer_min_value = infer_min_value / value;
