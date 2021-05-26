@@ -68,7 +68,7 @@ void SetMaxType(TypeId *max_type_id, size_t *max_type_number, const TypeId type_
   *max_type_number = type_number;
 }
 
-bool GetTensorOrScalarTypeInfo(TypePtr arg_type_origin, TypeId *arg_type_id, TypeId *arg_type = nullptr) {
+bool GetTensorOrScalarTypeInfo(const TypePtr &arg_type_origin, TypeId *arg_type_id, TypeId *arg_type = nullptr) {
   if (arg_type_origin->isa<TensorType>()) {
     auto tensor = arg_type_origin->cast<TensorTypePtr>();
     auto tensor_type = tensor->element();
@@ -91,8 +91,7 @@ bool GetTensorOrScalarTypeInfo(TypePtr arg_type_origin, TypeId *arg_type_id, Typ
   return false;
 }
 
-TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, std::vector<size_t> indices,
-                    const std::set<size_t> &write_indices) {
+TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, std::vector<size_t> indices) {
   TypeId max_type_id = kTypeUnknown;
   size_t max_type_number = 0;
   bool has_int8 = false;
@@ -184,7 +183,7 @@ MaxTypeMap GetMaxDtype(const std::vector<SignatureEnumDType> &dtypes, const std:
       (void)dst_type.insert(std::make_pair(type, kTypeUnknown));
       continue;
     }
-    (void)dst_type.insert(std::make_pair(type, GetMaxTypeId(input_types, indices, write_indices)));
+    (void)dst_type.insert(std::make_pair(type, GetMaxTypeId(input_types, indices)));
   }
   return dst_type;
 }
@@ -344,7 +343,7 @@ void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::s
                     << "'. The writable arg type is not equal to the largest type, "
                     << "so can not cast automatically.";
 }
-void RaiseExceptionForCheckParameter(const std::string &func_name, int i, const std::string &source_type) {
+void RaiseExceptionForCheckParameter(const std::string &func_name, size_t i, const std::string &source_type) {
   MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "
                           << source_type << ".";
 }

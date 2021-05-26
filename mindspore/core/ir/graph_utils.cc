@@ -144,7 +144,7 @@ CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const Matc
   return nullptr;
 }
 
-std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root) {
   std::vector<FuncGraphPtr> todo;
   todo.reserve(128);
   todo.push_back(root);

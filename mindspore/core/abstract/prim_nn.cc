@@ -504,8 +504,9 @@ AbstractBasePtr InferImplCTCGreedyDecoder(const AnalysisEnginePtr &, const Primi
   CheckArgsSize(op_name, args_spec_list, 2);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
+  constexpr size_t size_expected = 3;
   auto shape = input->shape();
-  if (shape->shape().size() != 3) {
+  if (shape->shape().size() != size_expected) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 3.";
   }
 
@@ -571,12 +572,12 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
                                                const AbstractBasePtrList &args_spec_list) {
   // inputs: true_classes, sampled_candidates
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t size_expected = 2;
+  CheckArgsSize(op_name, args_spec_list, size_expected);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
   auto shape = input->shape();
-  const size_t shape_size = 2;
-  if (shape->shape().size() != shape_size) {
+  if (shape->shape().size() != size_expected) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
   }
   ShapeVector indices_shape = {Shape::SHP_ANY};

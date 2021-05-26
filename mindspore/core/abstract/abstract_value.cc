@@ -1261,6 +1261,5 @@ bool AbstractIOMonad::operator==(const AbstractBase &other) const {
   }
   return other.isa<AbstractIOMonad>();
 }
-
 }  // namespace abstract
 }  // namespace mindspore
