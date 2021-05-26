@@ -186,17 +186,17 @@ void TopoSortForNodeList(std::vector<AnfNodePtr> *lst) {
   }
 
   while (!q.empty()) {
-    auto node = q.front();
+    auto front_node = q.front();
     q.pop();
-    res.push_back(node);
-    if (!outs.count(node)) {
+    res.push_back(front_node);
+    if (!outs.count(front_node)) {
       continue;
     }
-    for (auto out : outs[node]) {
+    for (auto out : outs[front_node]) {
       if (!ins.count(out)) {
         continue;
       }
-      ins[out].erase(node);
+      ins[out].erase(front_node);
       if (ins[out].size() == 0) {
         q.push(out);
       }

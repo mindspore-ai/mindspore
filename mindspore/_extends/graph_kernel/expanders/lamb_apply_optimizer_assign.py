@@ -15,6 +15,7 @@
 """generate json desc for LambApplyOptimizerAssign"""
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
+
 @VLD.check_all_formats_same
 class LambApplyOptimizerAssign(Expander):
     """LambApplyOptimizerAssign expander"""

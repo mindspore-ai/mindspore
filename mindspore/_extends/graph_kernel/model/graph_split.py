@@ -17,6 +17,7 @@ import os
 from functools import reduce
 from .model import PrimLib, Graph, Tensor
 
+
 class GraphSplitByPattern:
     """Graph splitter"""
     class Area:
@@ -254,6 +255,8 @@ class GraphSplitByPattern:
             self.areas += new_areas
 
 use_poly_reduce = True
+
+
 class GraphSplitGpu(GraphSplitByPattern):
     """Graph splitter"""
     BORADCAST_FUSE_DEPTH = 20
@@ -460,6 +463,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 changed = self.fuse(_reduce_stitch) or changed
         self.fuse(_transpose)
 
+
 class GraphSplitAscend(GraphSplitByPattern):
     """Graph splitter"""
     BORADCAST_FUSE_DEPTH = 6
@@ -575,6 +579,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             changed = self.fuse(_reduce_width) or changed
             changed = self.fuse(_broadcast_depth) or changed
             changed = self.fuse(_broadcast_width) or changed
+
 
 def split(graph, target):
     """Split graph"""
