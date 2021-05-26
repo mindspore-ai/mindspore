@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 void Unsqueeze::Init(const std::vector<int64_t> axis) { this->set_axis(axis); }
 
-void Unsqueeze::set_axis(std::vector<int64_t> axis) { this->AddAttr(kAxis, MakeValue(axis)); }
+void Unsqueeze::set_axis(const std::vector<int64_t> axis) { this->AddAttr(kAxis, MakeValue(axis)); }
 
 std::vector<int64_t> Unsqueeze::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
@@ -35,7 +35,7 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto unsqueeze_prim = primitive->cast<PrimUnsqueezePtr>();
   MS_EXCEPTION_IF_NULL(unsqueeze_prim);
   auto prim_name = unsqueeze_prim->name();
-  CheckAndConvertUtils::CheckInteger("unsqueeze_infer", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("unsqueeze_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto input = input_args[0];
 
@@ -58,7 +58,7 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
       if (ax_itr < dim_rank && dims[ax_itr] == (int64_t)i) {
         out_shape.emplace_back(1);
         ax_itr++;
-      } else if (ax_itr < dim_rank && dims[ax_itr] + sz == i) {
+      } else if (ax_itr < dim_rank && LongToSize(dims[ax_itr]) + sz == i) {
         out_shape.emplace_back(1);
         ax_itr++;
       } else {

@@ -68,11 +68,11 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input1->BuildShape(), prim_name);
   auto prim_axis = full_prim->get_axis();
   if (full_prim->get_has_bias()) {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 3, prim_name);
+    CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 3, prim_name);
   } else {
-    CheckAndConvertUtils::CheckInteger("input_args.size()", input_args.size(), kEqual, 2, prim_name);
+    CheckAndConvertUtils::CheckInteger("input_args.size()", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   }
-  if (full_prim->get_use_axis() && (prim_axis < 1 || prim_axis > (int64_t)input0_shape.size())) {
+  if (full_prim->get_use_axis() && (prim_axis < 1 || prim_axis > SizeToLong(input0_shape.size()))) {
     MS_EXCEPTION(ValueError) << "Full Connection axis invalid";
   }
   int64_t new_k = 1;

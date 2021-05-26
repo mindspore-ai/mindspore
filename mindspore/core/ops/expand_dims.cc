@@ -34,17 +34,17 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto expand_dims_prim = primitive->cast<PrimExpandDims>();
   MS_EXCEPTION_IF_NULL(expand_dims_prim);
   auto prim_name = expand_dims_prim->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto dim_val = GetValue<int64_t>(input_args[1]->BuildValue());
-  auto rank = x_shape.size();
+  auto rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", dim_val, kIncludeBoth, {-rank - 1, rank}, prim_name);
   if (dim_val < 0) {
-    dim_val += x_shape.size() + 1;
+    dim_val += SizeToLong(x_shape.size()) + 1L;
   }
   auto out_shape = x_shape;
   out_shape.insert(out_shape.begin() + dim_val, 1, 1);

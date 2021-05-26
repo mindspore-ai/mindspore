@@ -26,11 +26,11 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto flatten_prim = primitive->cast<PrimFlattenPtr>();
   MS_EXCEPTION_IF_NULL(flatten_prim);
   auto prim_name = flatten_prim->name();
-  CheckAndConvertUtils::CheckInteger("input args size", input_args.size(), kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto prod = 1;
-  int64_t size = x_shape.size();
-  for (int64_t i = 1; i < size; i++) {
+  size_t size = x_shape.size();
+  for (size_t i = 1; i < size; i++) {
     prod = prod * x_shape[i];
   }
   std::vector<int64_t> out_shape = {x_shape[0], prod};

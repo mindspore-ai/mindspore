@@ -94,7 +94,7 @@ int64_t AudioSpectrogram::Log2Ceil(int64_t length) {
       floor += shift;
     }
   }
-  return length == (length & ~(unsigned int)(length - 1)) ? floor : floor + 1;
+  return length == (length & ~(unsigned int)(length - 1L)) ? floor : floor + 1;
 }
 
 int64_t AudioSpectrogram::GetFftLength(int64_t length) {

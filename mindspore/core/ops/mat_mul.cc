@@ -25,7 +25,7 @@ namespace {
 abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("matmul_infer_input", input_args.size(), kEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("matmul_infer_input", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->BuildShape(), prim_name);
   auto trans_a = GetValue<bool>(primitive->GetAttr(kTransposeA));

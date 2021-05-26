@@ -58,17 +58,16 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
+TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
+    MS_LOG(EXCEPTION) << "Sequence inputs contain nullptr";
   }
   return input_args[0]->BuildType();
 }
 }  // namespace
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameSqueeze, Squeeze);
 }  // namespace ops

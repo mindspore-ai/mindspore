@@ -43,9 +43,9 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
   TypePtr condition;
   if (!(input_args[0]->BuildType()->type_id() == kObjectTypeTensorType)) {
     auto condition_value = GetValue<std::vector<bool>>(input_args[0]->BuildValue());
-    CheckAndConvertUtils::CheckInteger("condition's rank", condition_value.size(), kLessEqual, 1, op_name);
+    CheckAndConvertUtils::CheckInteger("condition's rank", SizeToLong(condition_value.size()), kLessEqual, 1, op_name);
     if (condition_value.size() == 1) {
-      CheckAndConvertUtils::CheckInteger("condition[0]", condition_value[0], kEqual, 1, op_name);
+      CheckAndConvertUtils::CheckInteger("condition[0]", SizeToLong(condition_value[0]), kEqual, 1, op_name);
     }
     condition = TypeIdToType(kNumberTypeBool);
   } else {
@@ -56,7 +56,7 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
       auto condition_value = reinterpret_cast<bool *>(input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c());
       MS_EXCEPTION_IF_NULL(condition_value);
       //      auto condition_value = GetValue<bool>(input_args[0]->BuildValue());
-      CheckAndConvertUtils::CheckInteger("condition[0]", *condition_value, kEqual, 1, op_name);
+      CheckAndConvertUtils::CheckInteger("condition[0]", (int64_t)*condition_value, kEqual, 1, op_name);
     }
     condition = input_args[0]->BuildType();
   }

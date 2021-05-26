@@ -45,7 +45,7 @@ AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto prim = primitive->cast<PrimL2NormalizePtr>();
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
