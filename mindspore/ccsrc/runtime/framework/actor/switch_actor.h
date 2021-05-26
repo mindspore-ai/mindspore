@@ -44,8 +44,10 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   SwitchActor(const std::string &name, const CNodePtr &node) : SwitchActorBase(name), node_(node) {}
   ~SwitchActor() override = default;
 
+  void Init() override;
+
   // The switch actor run when receive the input data.
-  void RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context);
+  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context);
   // Initialize the input and output information of the switch actor According to node_.
   void Initialize();
   // Add input for all branches.
@@ -90,6 +92,9 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The dependent input data number.
   size_t input_datas_num_{0};
   CNodePtr node_;
+
+  //  The output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_;
 };
 
 using SwitchActorPtr = std::shared_ptr<SwitchActor>;

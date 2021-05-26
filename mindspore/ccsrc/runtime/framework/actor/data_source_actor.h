@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::device::KernelInfo;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq
@@ -42,6 +43,8 @@ class DataSourceActor : public MemoryAwareActor {
   DataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid)
       : MemoryAwareActor(name), buffer_capacity_(buffer_capacity), memory_manager_aid_(memory_manager_aid) {}
   virtual ~DataSourceActor() = default;
+
+  void Init() override;
 
   // The process entry of data processing.
   void FetchData(OpContext<DeviceTensor> *context);
@@ -65,7 +68,7 @@ class DataSourceActor : public MemoryAwareActor {
   void SendOutput(OpContext<DeviceTensor> *context);
 
   // The output result arrows of graph output.
-  std::vector<OpArrowPtr> output_result_arrows_;
+  std::vector<DataArrowPtr> output_result_arrows_;
 
   // The buffers store the device tensors.
   std::queue<std::vector<DeviceTensor *>> buffers_;
@@ -73,6 +76,9 @@ class DataSourceActor : public MemoryAwareActor {
 
   // The id of memory manager actor. Send message to it for alloc and free memory during the data processing.
   const AID memory_manager_aid_;
+
+  //  The output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 };
 
 // The class represents that the data source is device queue.
@@ -95,7 +101,8 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   friend class GraphScheduler;
 
   // Input data kernel(for example GetNext) fetches data from device queue.
-  CNodePtr data_kernel_;
+  CNodePtr data_kernel_{nullptr};
+  KernelInfo *kernel_info_{nullptr};
 
   const DeviceContext *device_context_;
 };

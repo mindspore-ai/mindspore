@@ -191,7 +191,7 @@ class ActorBase {
 
   void Run();
   void Quit();
-  int EnqueMessage(std::unique_ptr<MessageBase> msg);
+  int EnqueMessage(std::unique_ptr<MessageBase> &&msg);
 
   void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> actorThread);
   void SetRunningStatus(bool start);

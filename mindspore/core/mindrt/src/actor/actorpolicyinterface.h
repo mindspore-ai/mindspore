@@ -42,7 +42,7 @@ class ActorPolicy {
  protected:
   void SetRunningStatus(bool startRun);
   virtual void Terminate(const ActorBase *actor) = 0;
-  virtual int EnqueMessage(std::unique_ptr<MessageBase> &msg) = 0;
+  virtual int EnqueMessage(std::unique_ptr<MessageBase> &&msg) = 0;
   virtual std::list<std::unique_ptr<MessageBase>> *GetMsgs() = 0;
   virtual void Notify() = 0;
 

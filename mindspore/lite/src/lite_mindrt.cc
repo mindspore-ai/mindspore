@@ -25,7 +25,7 @@
 namespace mindspore::lite {
 
 int LiteOpActor::CompileArrowThroughOutputKernels() {
-  output_op_arrows_.clear();
+  output_data_arrows_.clear();
   int out_tensor_size = static_cast<int>(kernel_->out_tensors().size());
   for (int i = 0; i < out_tensor_size; i++) {
     for (auto out : kernel_->out_kernels()) {
@@ -41,12 +41,12 @@ int LiteOpActor::CompileArrowThroughOutputKernels() {
         continue;
       }
       auto id = out->name() + this->GetAID().Url();
-      auto arrow = std::make_shared<OpArrow>(i, AID(id), to_input_index);
+      auto arrow = std::make_shared<DataArrow>(i, AID(id), to_input_index);
       if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create OpArrow failed, out kernel: " << out->name();
+        MS_LOG(ERROR) << "create DataArrow failed, out kernel: " << out->name();
         return RET_ERROR;
       }
-      output_op_arrows_.emplace_back(std::move(arrow));
+      output_data_arrows_.emplace_back(std::move(arrow));
     }
   }
   return RET_OK;
@@ -73,12 +73,12 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
     auto out_actor_id = subgraph_index_to_actor.at(partial_para->sub_graph_index_);
     kernel_->set_out_tensors(partial_node->in_tensors());
     for (size_t i = 0; i < partial_node->in_tensors().size(); ++i) {
-      auto arrow = std::make_shared<OpArrow>(i, out_actor_id, i);
+      auto arrow = std::make_shared<DataArrow>(i, out_actor_id, i);
       if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create OpArrow failed";
+        MS_LOG(ERROR) << "create DataArrow failed";
         return RET_ERROR;
       }
-      output_op_arrows_.emplace_back(std::move(arrow));
+      output_data_arrows_.emplace_back(std::move(arrow));
     }
   }
 
@@ -88,20 +88,20 @@ int LiteOpActor::CompileArrowThroughPartialCall() {
 }
 
 int LiteOpActor::CompileArrow() {
-  output_op_arrows_.clear();
+  output_data_arrows_.clear();
   int ret = CompileArrowThroughPartialCall();
   if (ret != RET_OK) {
-    output_op_arrows_.clear();
+    output_data_arrows_.clear();
     MS_LOG(ERROR) << "CompileArrowThroughPartialCall failed.";
     return ret;
   }
-  if (!output_op_arrows_.empty()) {
+  if (!output_data_arrows_.empty()) {
     MS_LOG(INFO) << "CompileArrowThroughPartialCall done.";
     return RET_OK;
   }
   ret = CompileArrowThroughOutputKernels();
   if (ret != RET_OK) {
-    output_op_arrows_.clear();
+    output_data_arrows_.clear();
     MS_LOG(ERROR) << "CompileArrowThroughOutputKernels failed.";
     return ret;
   }
@@ -173,9 +173,9 @@ int LiteOpActor::SetInputData() {
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
-  for (const auto &op_arrow : output_op_arrows_) {
+  for (const auto &op_arrow : output_data_arrows_) {
     auto data = outputs_data_.at(op_arrow->from_output_index_);
-    Async(op_arrow->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data, context);
+    Async(op_arrow->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 
@@ -188,7 +188,7 @@ void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
 }
 
 int LiteOpActor::PrepareOutputData() {
-  for (auto &arrow : output_op_arrows_) {
+  for (auto &arrow : output_data_arrows_) {
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
     outputs_data_.emplace_back(data);
@@ -236,7 +236,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
 }
 
 int LiteSwitchOpActor::CompileTrueBranchArrow() {
-  true_branch_output_op_arrows_.clear();
+  true_branch_output_data_arrows_.clear();
   if (true_partial_node_ == nullptr) {
     MS_LOG(ERROR) << "true_partial_node_ is nullptr.";
     return RET_NULL_PTR;
@@ -254,19 +254,19 @@ int LiteSwitchOpActor::CompileTrueBranchArrow() {
       if (true_partial_node_->in_tensors()[i] != kernel_->out_tensors()[j]) {
         continue;
       }
-      auto arrow = std::make_shared<OpArrow>(j, true_branch_actor_id, i);
+      auto arrow = std::make_shared<DataArrow>(j, true_branch_actor_id, i);
       if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create OpArrow failed";
+        MS_LOG(ERROR) << "create DataArrow failed";
         return RET_ERROR;
       }
-      true_branch_output_op_arrows_.emplace_back(std::move(arrow));
+      true_branch_output_data_arrows_.emplace_back(std::move(arrow));
     }
   }
   return RET_OK;
 }
 
 int LiteSwitchOpActor::CompileFalseBranchArrow() {
-  false_branch_output_op_arrows_.clear();
+  false_branch_output_data_arrows_.clear();
   if (false_partial_node_ == nullptr) {
     MS_LOG(ERROR) << "false_partial_node_ is nullptr.";
     return RET_NULL_PTR;
@@ -284,12 +284,12 @@ int LiteSwitchOpActor::CompileFalseBranchArrow() {
       if (false_partial_node_->in_tensors()[i] != kernel_->out_tensors()[j]) {
         continue;
       }
-      auto arrow = std::make_shared<OpArrow>(j, false_branch_actor_id, i);
+      auto arrow = std::make_shared<DataArrow>(j, false_branch_actor_id, i);
       if (arrow == nullptr) {
-        MS_LOG(ERROR) << "create OpArrow failed";
+        MS_LOG(ERROR) << "create DataArrow failed";
         return RET_ERROR;
       }
-      false_branch_output_op_arrows_.emplace_back(std::move(arrow));
+      false_branch_output_data_arrows_.emplace_back(std::move(arrow));
     }
   }
   return RET_OK;
@@ -352,15 +352,15 @@ int LiteSwitchOpActor::CompileArrowThroughSwitchCall() {
   ret = CompileTrueBranchArrow();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CompileTrueBranchArrow failed.";
-    true_branch_output_op_arrows_.clear();
+    true_branch_output_data_arrows_.clear();
     return ret;
   }
 
   ret = CompileFalseBranchArrow();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "CompileFalseBranchArrow failed.";
-    false_branch_output_op_arrows_.clear();
-    true_branch_output_op_arrows_.clear();
+    false_branch_output_data_arrows_.clear();
+    true_branch_output_data_arrows_.clear();
     return ret;
   }
 
@@ -375,18 +375,18 @@ int LiteSwitchOpActor::CompileArrowThroughSwitchCall() {
 int LiteSwitchOpActor::CompileArrow() {
   int ret = CompileArrowThroughSwitchCall();
   if (ret != RET_OK) {
-    true_branch_output_op_arrows_.clear();
-    false_branch_output_op_arrows_.clear();
+    true_branch_output_data_arrows_.clear();
+    false_branch_output_data_arrows_.clear();
     MS_LOG(ERROR) << "CompileArrowThroughSwitchCall failed.";
     return ret;
   }
-  if (!true_branch_output_op_arrows_.empty() && !false_branch_output_op_arrows_.empty()) {
+  if (!true_branch_output_data_arrows_.empty() && !false_branch_output_data_arrows_.empty()) {
     MS_LOG(INFO) << "CompileArrowThroughSwitchCall done.";
     return RET_OK;
   }
   ret = CompileArrowThroughOutputKernels();
   if (ret != RET_OK) {
-    output_op_arrows_.clear();
+    output_data_arrows_.clear();
     MS_LOG(ERROR) << "CompileArrowThroughOutputKernels failed.";
     return ret;
   }
@@ -394,13 +394,13 @@ int LiteSwitchOpActor::CompileArrow() {
 }
 
 int LiteSwitchOpActor::PrepareOutputData() {
-  for (auto &arrow : true_branch_output_op_arrows_) {
+  for (auto &arrow : true_branch_output_data_arrows_) {
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
     true_branch_outputs_data_.emplace_back(data);
   }
 
-  for (auto &arrow : false_branch_output_op_arrows_) {
+  for (auto &arrow : false_branch_output_data_arrows_) {
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
     false_branch_outputs_data_.emplace_back(data);
@@ -409,18 +409,18 @@ int LiteSwitchOpActor::PrepareOutputData() {
 }
 
 void LiteSwitchOpActor::AsyncTrueBranchOutput(OpContext<Tensor> *context) {
-  MS_ASSERT(true_branch_output_op_arrows_.size() == true_branch_outputs_data_.size());
-  for (size_t i = 0; i < true_branch_output_op_arrows_.size(); ++i) {
+  MS_ASSERT(true_branch_output_data_arrows_.size() == true_branch_outputs_data_.size());
+  for (size_t i = 0; i < true_branch_output_data_arrows_.size(); ++i) {
     auto &data = true_branch_outputs_data_.at(i);
-    Async(true_branch_output_op_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data, context);
+    Async(true_branch_output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 
 void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
-  MS_ASSERT(false_branch_output_op_arrows_.size() == false_branch_outputs_data_.size());
-  for (size_t i = 0; i < false_branch_output_op_arrows_.size(); ++i) {
+  MS_ASSERT(false_branch_output_data_arrows_.size() == false_branch_outputs_data_.size());
+  for (size_t i = 0; i < false_branch_output_data_arrows_.size(); ++i) {
     auto &data = false_branch_outputs_data_.at(i);
-    Async(false_branch_output_op_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data, context);
+    Async(false_branch_output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 

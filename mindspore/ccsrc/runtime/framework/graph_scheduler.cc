@@ -702,6 +702,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       InsertActor(device_queue_ds_actor.get());
       data_source_actors.emplace_back(device_queue_ds_actor);
       device_queue_ds_actor->data_kernel_ = *iter;
+      device_queue_ds_actor->kernel_info_ = static_cast<device::KernelInfo *>((*iter)->kernel_info());
     }
   }
   return data_source_actors;
@@ -870,8 +871,8 @@ void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *f
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
-    auto op_arrow = std::make_shared<OpArrow>(from_output_index, to_aid, to_input_index);
-    from_actor->output_op_arrows_.emplace_back(op_arrow);
+    auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
+    from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
 
     // Update the reference count of device tensor.
@@ -897,8 +898,8 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
-    auto op_arrow = std::make_shared<OpArrow>(position, to_aid, to_input_index);
-    from_actor->output_op_arrows_.emplace_back(op_arrow);
+    auto op_arrow = std::make_shared<DataArrow>(position, to_aid, to_input_index);
+    from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
 
     // Update the reference count of device tensor.
@@ -921,8 +922,8 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
     auto to_aid = to_actor->GetAID();
-    auto op_arrow = std::make_shared<OpArrow>(from_output_index, to_aid, to_input_index);
-    from_actor->output_op_arrows_.emplace_back(op_arrow);
+    auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
+    from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
 
     // Update the reference count of device tensor.
@@ -957,21 +958,21 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor
     // LInk.
     const DeviceContext *from_devcie_context = nullptr;
     auto from_device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
-    auto op_arrow_to_copy = std::make_shared<OpArrow>(from_output_index, copy_actor->GetAID(), 0);
+    auto op_arrow_to_copy = std::make_shared<DataArrow>(from_output_index, copy_actor->GetAID(), 0);
     if (IsDeviceQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(from_actor);
       from_devcie_context = real_from_actor->device_context_;
-      real_from_actor->output_op_arrows_.emplace_back(op_arrow_to_copy);
+      real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsKernelActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<KernelActor *>(from_actor);
       from_devcie_context = real_from_actor->device_context_;
-      real_from_actor->output_op_arrows_.emplace_back(op_arrow_to_copy);
+      real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     } else if (IsHostQueueDSActor(from_kernel)) {
       auto real_from_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
       auto position = real_from_actor->FetchDataNodePosition(from_kernel);
       from_devcie_context = real_from_actor->device_contexts_[position];
       op_arrow_to_copy->from_output_index_ = position;
-      real_from_actor->output_op_arrows_.emplace_back(op_arrow_to_copy);
+      real_from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
       from_device_tensor =
         AnfAlgo::GetMutableOutputAddr(real_from_actor->data_nodes_[position], from_output_index, false);
     }
@@ -990,8 +991,8 @@ void GraphScheduler::LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor
   }
 
   // If the copy actor already exists, only need link between copy actor and to actor.
-  auto op_arrow_from_copy = std::make_shared<OpArrow>(0, to_actor->GetAID(), to_input_index);
-  copy_actor->output_op_arrows_.emplace_back(op_arrow_from_copy);
+  auto op_arrow_from_copy = std::make_shared<DataArrow>(0, to_actor->GetAID(), to_input_index);
+  copy_actor->output_data_arrows_.emplace_back(op_arrow_from_copy);
   to_actor->input_datas_num_++;
   UpdateRefCount(copy_actor->output_.get());
 }
@@ -1010,11 +1011,11 @@ void GraphScheduler::LinkControlArrowForKernelActor(std::vector<KernelActorPtr> 
     // If the kernel actor has no output in the pipeline mode, then adds the output control to loop count actor.
     if (strategy == GraphExecutionStrategy::kPipeline) {
       MS_EXCEPTION_IF_NULL(to_actor);
-      if ((from_actor->output_op_arrows_.size() == 0) && (from_actor->output_op_controls_.size() == 0)) {
+      if ((from_actor->output_data_arrows_.size() == 0) && (from_actor->output_control_arrows_.size() == 0)) {
         MS_EXCEPTION_IF_NULL(from_actor->kernel_);
         MS_LOG(INFO) << from_actor->kernel_->fullname_with_scope() << " is not real used by other nodes.";
         auto to_aid = to_actor->GetAID();
-        from_actor->output_op_controls_.emplace_back(to_aid);
+        from_actor->output_control_arrows_.emplace_back(to_aid);
         to_actor->input_controls_num_++;
       }
     }
@@ -1068,7 +1069,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
   // Link the control arrow between the kernel actors.
   const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_input->fullname_with_scope()));
   MS_EXCEPTION_IF_NULL(from_actor);
-  from_actor->output_op_controls_.emplace_back(to_actor->GetAID());
+  from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
 }
 
@@ -1131,7 +1132,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         const auto &from_actor =
           dynamic_cast<KernelActor *>(FetchActor(output_with_index.first->fullname_with_scope()));
         MS_EXCEPTION_IF_NULL(from_actor);
-        auto op_arrow = std::make_shared<OpArrow>(output_with_index.second, to_actor->GetAID(), iter->second);
+        auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), iter->second);
         from_actor->output_result_arrows_.emplace_back(op_arrow);
         continue;
       }
@@ -1152,7 +1153,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         from_actor_output_index = output_with_index.second;
       }
       MS_EXCEPTION_IF_NULL(from_actor);
-      auto op_arrow = std::make_shared<OpArrow>(from_actor_output_index, to_actor->GetAID(), iter->second);
+      auto op_arrow = std::make_shared<DataArrow>(from_actor_output_index, to_actor->GetAID(), iter->second);
       from_actor->output_result_arrows_.emplace_back(op_arrow);
     }
   }
@@ -1191,11 +1192,11 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       copy_actor->output_device_context_ = another_device_context;
 
       // LInk from copy actor to kernel actor users.
-      if (kernel_actor->output_op_controls_.size() == 0) {
+      if (kernel_actor->output_control_arrows_.size() == 0) {
         MS_LOG(WARNING) << "The kernel actor has no control arrow:" << kernel_actor->GetAID().Name();
       }
-      for (auto &output_contorl : kernel_actor->output_op_controls_) {
-        copy_actor->output_op_controls_.emplace_back(output_contorl);
+      for (auto &output_contorl : kernel_actor->output_control_arrows_) {
+        copy_actor->output_control_arrows_.emplace_back(output_contorl);
         auto to_actor = FetchActor(output_contorl.Name());
         MS_EXCEPTION_IF_NULL(to_actor);
         if (output_contorl.Name().find("_LoopCountActor") != string::npos) {
@@ -1207,7 +1208,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
         }
       }
       // Link from kernel actor to copy actor.
-      kernel_actor->output_op_controls_.emplace_back(copy_actor->GetAID());
+      kernel_actor->output_control_arrows_.emplace_back(copy_actor->GetAID());
       copy_actor->input_controls_num_++;
     }
   }
@@ -1218,7 +1219,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
   // Check the data source actors.
   for (const auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
-    if (data_source_actor->output_op_arrows_.size() == 0) {
+    if (data_source_actor->output_data_arrows_.size() == 0) {
       MS_LOG(ERROR) << data_source_actor->GetAID().Name() << " has no user.";
       return false;
     }
@@ -1231,7 +1232,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
   // Check the kernel actors.
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
-    if (kernel_actor->output_op_arrows_.size() + kernel_actor->output_op_controls_.size() == 0) {
+    if (kernel_actor->output_data_arrows_.size() + kernel_actor->output_control_arrows_.size() == 0) {
       MS_LOG(ERROR) << kernel_actor->GetAID().Name() << " has no user.";
       return false;
     }
@@ -1250,7 +1251,7 @@ bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionSt
   // Check the copy actors.
   for (const auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
-    if (copy_actor->output_op_arrows_.size() + copy_actor->output_op_controls_.size() == 0) {
+    if (copy_actor->output_data_arrows_.size() + copy_actor->output_control_arrows_.size() == 0) {
       MS_LOG(ERROR) << copy_actor->GetAID().Name() << " has no user.";
       return false;
     }
@@ -1406,18 +1407,18 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
 void GraphScheduler::DumpBaseActor(const OpActor<DeviceTensor> *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
 
-  const auto &output_op_arrows = actor->output_op_arrows();
-  ofs << "\t\toutput_data_arrows:" << output_op_arrows.size() << "\n ";
-  for (const auto &data_arrow : output_op_arrows) {
+  const auto &output_data_arrows = actor->output_data_arrows();
+  ofs << "\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
+  for (const auto &data_arrow : output_data_arrows) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
         << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
         << "\n";
   }
 
-  const auto &output_op_controls = actor->output_op_controls();
-  ofs << "\t\toutput_control_arrows:" << output_op_controls.size() << "\n ";
-  for (const auto &aid : output_op_controls) {
+  const auto &output_control_arrows = actor->output_control_arrows();
+  ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
+  for (const auto &aid : output_control_arrows) {
     ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
   }
 }

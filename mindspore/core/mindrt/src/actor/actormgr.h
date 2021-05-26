@@ -22,6 +22,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <shared_mutex>
 
 #include "actor/actor.h"
 #include "thread/inter_threadpool.h"
@@ -50,11 +51,11 @@ class ActorMgr {
   void Finalize();
   void Initialize() {}
   void RemoveActor(const std::string &name);
-  ActorReference GetActor(const AID &id);
+  ActorBase *GetActor(const AID &id);
   const std::string GetUrl(const std::string &protocol = "tcp");
   void AddUrl(const std::string &protocol, const std::string &url);
   void AddIOMgr(const std::string &protocol, const std::shared_ptr<IOMgr> &ioMgr);
-  int Send(const AID &to, std::unique_ptr<MessageBase> msg, bool remoteLink = false, bool isExactNotRemote = false);
+  int Send(const AID &to, std::unique_ptr<MessageBase> &&msg, bool remoteLink = false, bool isExactNotRemote = false);
   AID Spawn(ActorReference &actor, bool shareThread = true, bool start = true);
   void Terminate(const AID &id);
   void TerminateAll();
@@ -82,7 +83,7 @@ class ActorMgr {
   }
   // Map of all local spawned and running processes.
   std::map<std::string, ActorReference> actors;
-  std::mutex actorsMutex;
+  std::shared_mutex actorsMutex;
 
   std::map<std::string, std::string> procotols;
   std::set<std::string> urls;

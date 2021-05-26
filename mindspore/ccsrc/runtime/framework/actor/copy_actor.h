@@ -41,12 +41,13 @@ class CopyActor : public MemoryAwareActor {
         memory_manager_aid_(memory_manager_aid),
         input_datas_num_(0),
         input_controls_num_(0),
-        input_device_tensor_(nullptr),
         output_(nullptr) {}
   ~CopyActor() override = default;
 
+  void Init() override;
+
   // The copy actor run when receive the input data.
-  void RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) override;
+  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
   // The copy actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
 
@@ -87,9 +88,12 @@ class CopyActor : public MemoryAwareActor {
   const DeviceContext *output_device_context_;
 
   // The input device tensor is saved from the input data or fetched by device_tensor_store_key_.
-  DeviceTensor *input_device_tensor_;
+  std::vector<DeviceTensor *> input_device_tensor_;
   // The output device tensor is saved from the output or fetched by device_tensor_store_key_.
-  DeviceTensor *output_device_tensor_;
+  std::vector<DeviceTensor *> output_device_tensor_;
+
+  //  The output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
   // The output is created in the copy actor build, so can't be the raw pointer.
   DeviceTensorPtr output_;

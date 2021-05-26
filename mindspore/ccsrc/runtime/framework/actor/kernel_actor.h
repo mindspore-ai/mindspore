@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 using mindspore::tensor::TensorPtr;
@@ -45,14 +46,18 @@ class KernelActor : public MemoryAwareActor {
   KernelActor(std::string name, CNodePtr kernel, const DeviceContext *device_context, const AID memory_manager_aid)
       : MemoryAwareActor(name),
         kernel_(kernel),
+        kernel_info_(nullptr),
         device_context_(device_context),
         memory_manager_aid_(memory_manager_aid),
         input_datas_num_(0),
-        input_controls_num_(0) {}
+        input_controls_num_(0),
+        real_input_num_(0) {}
   ~KernelActor() override = default;
 
+  void Init() override;
+
   // The kernel actor run when receive the input data.
-  void RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) override;
+  void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
   // The kernel actor run when receive the input control.
   void RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) override;
   // The kernel actor run when receive the input control and input tensors, used in step mode.
@@ -81,12 +86,14 @@ class KernelActor : public MemoryAwareActor {
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   void FetchOutputDeviceTensor();
-  void FetchWorkspaceDeviceTensor();
 
   // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
   void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
+  // The info of kernel.
   CNodePtr kernel_;
+  KernelInfo *kernel_info_;
+
   // The device interface of kernel launch.
   const DeviceContext *device_context_;
 
@@ -97,6 +104,8 @@ class KernelActor : public MemoryAwareActor {
   size_t input_datas_num_;
   // The dependent input controls number.
   size_t input_controls_num_;
+  // The real input number of kernel launch.
+  size_t real_input_num_;
 
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
   std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
@@ -106,8 +115,19 @@ class KernelActor : public MemoryAwareActor {
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
 
+  // The device tensors for memory alloc and free.
+  // output + workspace
+  std::vector<DeviceTensor *> memory_alloc_list_;
+  // input + output + workspace
+  std::vector<DeviceTensor *> memory_free_list_;
+
   // The output result arrows of graph output.
-  std::vector<OpArrowPtr> output_result_arrows_;
+  std::vector<DataArrowPtr> output_result_arrows_;
+
+  // Cache unique output data by output index to modify the output data effectively.
+  std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_by_output_index_;
+  //  The output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<OpData<DeviceTensor> *> output_data_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

@@ -30,13 +30,14 @@
 
 namespace mindspore {
 // OpActor data route.
-struct OpArrow {
-  OpArrow(int from_output_index, const AID &to_op_id, int to_input_index)
+struct DataArrow {
+  DataArrow(int from_output_index, const AID &to_op_id, int to_input_index)
       : from_output_index_(from_output_index), to_op_id_(to_op_id), to_input_index_(to_input_index) {}
   int from_output_index_;
   AID to_op_id_;
   int to_input_index_;
 };
+using DataArrowPtr = std::shared_ptr<DataArrow>;
 
 // OpActor data.
 template <typename T>
@@ -47,9 +48,12 @@ struct OpData {
   int index_;
 };
 
-using OpArrowPtr = std::shared_ptr<OpArrow>;
 template <typename T>
 using OpDataPtr = std::shared_ptr<OpData<T>>;
+
+template <typename T>
+using OpDataUniquePtr = std::unique_ptr<OpData<T>>;
+
 // The context of opActor running.
 template <typename T>
 struct OpContext {
@@ -81,22 +85,22 @@ class OpActor : public ActorBase {
   virtual ~OpActor() = default;
 
   // The op actor run when receive the input data.
-  virtual void RunOpData(OpDataPtr<T> input_data, OpContext<T> *context = nullptr) {}
+  virtual void RunOpData(OpData<T> *input_data, OpContext<T> *context = nullptr) {}
 
   // The op actor run when receive the input control.
   virtual void RunOpControl(AID *input_control, OpContext<T> *context = nullptr) {}
 
-  std::vector<OpArrowPtr> output_op_arrows() const { return output_op_arrows_; }
-  std::vector<AID> output_op_controls() const { return output_op_controls_; }
+  std::vector<DataArrowPtr> output_data_arrows() const { return output_data_arrows_; }
+  std::vector<AID> output_control_arrows() const { return output_control_arrows_; }
 
  protected:
   // The op data.
-  std::unordered_map<uuids::uuid *, std::vector<OpDataPtr<T>>> input_op_datas_;
-  std::vector<OpArrowPtr> output_op_arrows_;
+  std::unordered_map<uuids::uuid *, std::vector<OpData<T> *>> input_op_datas_;
+  std::vector<DataArrowPtr> output_data_arrows_;
 
   // The op controls.
   std::unordered_map<uuids::uuid *, std::vector<AID *>> input_op_controls_;
-  std::vector<AID> output_op_controls_;
+  std::vector<AID> output_control_arrows_;
 };
 
 template <typename T>
@@ -108,7 +112,7 @@ Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &input_dat
   Future<std::list<int>> collect = mindspore::Collect<int>(futures);
 
   for (auto data : input_data) {
-    Async(data->op_id_, &mindspore::OpActor<T>::RunOpData, data, context);
+    Async(data->op_id_, &mindspore::OpActor<T>::RunOpData, data.get(), context);
   }
 
   return collect;

@@ -102,7 +102,7 @@ void Await(const ActorReference &actor) { ActorMgr::GetActorMgrRef()->Wait(actor
 void Await(const AID &actor) { ActorMgr::GetActorMgrRef()->Wait(actor); }
 
 // brief get actor with aid
-ActorReference GetActor(const AID &actor) { return ActorMgr::GetActorMgrRef()->GetActor(actor); }
+ActorBase *GetActor(const AID &actor) { return ActorMgr::GetActorMgrRef()->GetActor(actor); }
 
 void Terminate(const AID &actor) { ActorMgr::GetActorMgrRef()->Terminate(actor); }
 

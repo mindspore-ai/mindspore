@@ -36,7 +36,7 @@ void SingleThread::Terminate(const ActorBase *actor) {
   ActorMgr::GetActorMgrRef()->RemoveActor(actorName);
 }
 
-int SingleThread::EnqueMessage(std::unique_ptr<MessageBase> &msg) {
+int SingleThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
   int result;
   {
     std::lock_guard<std::mutex> lock(mailboxLock);
@@ -85,7 +85,7 @@ void ShardedThread::Terminate(const ActorBase *aActor) {
   mailboxLock.unlock();
 }
 
-int ShardedThread::EnqueMessage(std::unique_ptr<MessageBase> &msg) {
+int ShardedThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
   int result;
   mailboxLock.lock();
   enqueMailbox->push_back(std::move(msg));

@@ -39,7 +39,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  public:
   explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {}
   ~LiteOpActor() override = default;
-  void RunOpData(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) override {
+  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override {
     auto op_uuid = context->sequential_num_;
     input_op_datas_[op_uuid].push_back(inputs);
     inputs_data_.push_back(inputs->data_);
@@ -68,7 +68,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       context->SetFailed(ret);
       return;
     }
-    for (auto &arrow : output_op_arrows_) {
+    for (auto &arrow : output_data_arrows_) {
       kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
     }
 
@@ -144,7 +144,7 @@ class LiteSwitchOpActor : public LiteOpActor {
  public:
   explicit LiteSwitchOpActor(kernel::LiteKernel *kernel) : LiteOpActor(kernel) {}
   ~LiteSwitchOpActor() override = default;
-  void RunOpData(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) override {
+  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override {
     auto op_uuid = context->sequential_num_;
     input_op_datas_[op_uuid].push_back(inputs);
     inputs_data_.push_back(inputs->data_);
@@ -178,12 +178,12 @@ class LiteSwitchOpActor : public LiteOpActor {
 
     bool *cond = reinterpret_cast<bool *>(output_tensors_[0]->data());
     if (*cond) {
-      for (auto &arrow : true_branch_output_op_arrows_) {
+      for (auto &arrow : true_branch_output_data_arrows_) {
         kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
       }
       AsyncTrueBranchOutput(context);
     } else {
-      for (auto &arrow : false_branch_output_op_arrows_) {
+      for (auto &arrow : false_branch_output_data_arrows_) {
         kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
       }
       AsyncFalseBranchOutput(context);
@@ -216,8 +216,8 @@ class LiteSwitchOpActor : public LiteOpActor {
   int CompileArrowThroughSwitchCall();
   int PrepareOutputData() override;
 
-  std::vector<OpArrowPtr> true_branch_output_op_arrows_;
-  std::vector<OpArrowPtr> false_branch_output_op_arrows_;
+  std::vector<DataArrowPtr> true_branch_output_data_arrows_;
+  std::vector<DataArrowPtr> false_branch_output_data_arrows_;
 
   kernel::LiteKernel *bool_node_ = nullptr;
   kernel::LiteKernel *true_partial_node_ = nullptr;

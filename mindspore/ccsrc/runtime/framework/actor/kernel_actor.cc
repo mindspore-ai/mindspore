@@ -22,28 +22,65 @@
 
 namespace mindspore {
 namespace runtime {
-void KernelActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) {
+void KernelActor::Init() {
+  MS_EXCEPTION_IF_NULL(kernel_);
+  real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
+  kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
+
+  // Init the device tensors.
+  input_device_tensors_.resize(real_input_num_);
+  for (auto &input_address : input_device_tensors_) {
+    memory_free_list_.emplace_back(input_address);
+  }
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  for (auto &output_address : kernel_info_->output_address_list()) {
+    MS_EXCEPTION_IF_NULL(output_address);
+    output_device_tensors_.emplace_back(output_address.get());
+    memory_alloc_list_.emplace_back(output_address.get());
+    memory_free_list_.emplace_back(output_address.get());
+  }
+  for (auto &workspace_address : kernel_info_->workspace_address_list()) {
+    MS_EXCEPTION_IF_NULL(workspace_address);
+    workspace_device_tensors_.emplace_back(workspace_address.get());
+    memory_alloc_list_.emplace_back(workspace_address.get());
+    memory_free_list_.emplace_back(workspace_address.get());
+  }
+
+  // Init the output data.
+  output_data_by_output_index_.resize(output_device_tensors_.size());
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors_.size()) {
+      MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
+    }
+    auto device_address = output_device_tensors_[data_arrow->from_output_index_];
+    auto data =
+      std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address, data_arrow->to_input_index_);
+    output_data_.emplace_back(data.get());
+    output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
+  }
+}
+
+void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
+  auto &sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    FetchWorkspaceDeviceTensor();
     SendMemoryAllocReq(context);
   }
 }
 
 void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
+  auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    FetchWorkspaceDeviceTensor();
     SendMemoryAllocReq(context);
   }
 }
@@ -52,29 +89,24 @@ void KernelActor::RunOpControlWithInputTensor(AID *input_control, OpContext<Devi
                                               const std::vector<TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(input_tensors);
-  auto sequential_num = context->sequential_num_;
+  auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
   PushInputDeviceTensor(input_tensors);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
-    FetchWorkspaceDeviceTensor();
     SendMemoryAllocReq(context);
   }
 }
 
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
-  std::vector<DeviceTensor *> alloc_list(output_device_tensors_);
-  alloc_list.insert(alloc_list.end(), workspace_device_tensors_.begin(), workspace_device_tensors_.end());
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, device_context_, context, GetAID());
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_context_, context,
+        GetAID());
 }
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  std::vector<DeviceTensor *> free_list(input_device_tensors_);
-  free_list.insert(free_list.end(), output_device_tensors_.begin(), output_device_tensors_.end());
-  free_list.insert(free_list.end(), workspace_device_tensors_.begin(), workspace_device_tensors_.end());
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, free_list, device_context_, context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_context_, context);
 }
 
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
@@ -105,7 +137,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
-    auto data_iter = input_op_datas_.find(context->sequential_num_);
+    const auto &data_iter = input_op_datas_.find(context->sequential_num_);
     if (data_iter == input_op_datas_.end()) {
       return false;
     }
@@ -115,7 +147,7 @@ bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
   }
 
   if (input_controls_num_ != 0) {
-    auto control_iter = input_op_controls_.find(context->sequential_num_);
+    const auto &control_iter = input_op_controls_.find(context->sequential_num_);
     if (control_iter == input_op_controls_.end()) {
       return false;
     }
@@ -128,15 +160,10 @@ bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
 
 void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(input_tensors);
-  auto input_size = AnfAlgo::GetInputTensorNum(kernel_);
-  if (input_tensors->size() != input_size) {
+  if (input_tensors->size() != real_input_num_) {
     MS_LOG(ERROR) << "Input tensor number: " << input_tensors->size()
-                  << " is not equal to kernel's input size: " << input_size;
+                  << " is not equal to kernel's input size: " << real_input_num_;
     return;
-  }
-
-  if (input_device_tensors_.empty()) {
-    input_device_tensors_.resize(input_size);
   }
 
   for (size_t input_index = 0; input_index < input_tensors->size(); input_index++) {
@@ -144,6 +171,7 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
       std::dynamic_pointer_cast<DeviceTensor>((*input_tensors)[input_index]->device_address());
     if (device_tensor != nullptr) {
       input_device_tensors_[input_index] = device_tensor.get();
+      memory_free_list_[input_index] = device_tensor.get();
     }
   }
 }
@@ -151,49 +179,49 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
 void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_context_);
-  auto input_size = AnfAlgo::GetInputTensorNum(kernel_);
-  if (input_device_tensors_.empty()) {
-    input_device_tensors_.resize(input_size);
-  }
 
-  auto data_iter = input_op_datas_.find(context->sequential_num_);
+  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(input_data);
-      input_device_tensors_[input_data->index_] = input_data->data_;
+      if (input_device_tensors_[input_data->index_] != input_data->data_) {
+        input_device_tensors_[input_data->index_] = input_data->data_;
+        memory_free_list_[input_data->index_] = input_data->data_;
+      }
     }
   }
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    input_device_tensors_[device_tensor_store_key.first] =
+    auto device_tensor =
       DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
-    if (input_device_tensors_[device_tensor_store_key.first] == nullptr) {
+    if (device_tensor == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
+    if (input_device_tensors_[device_tensor_store_key.first] != device_tensor) {
+      input_device_tensors_[device_tensor_store_key.first] = device_tensor;
+      memory_free_list_[device_tensor_store_key.first] = device_tensor;
+    }
   }
 }
 
 void KernelActor::FetchOutputDeviceTensor() {
-  output_device_tensors_.clear();
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_, i, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    output_device_tensors_.emplace_back(device_address.get());
-  }
-}
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  auto &output_addresss = kernel_info_->output_address_list();
+  for (size_t i = 0; i < output_addresss.size(); ++i) {
+    auto output_address = output_addresss[i].get();
+    if (output_device_tensors_[i] != output_address) {
+      output_device_tensors_[i] = output_address;
+      memory_alloc_list_[i] = output_address;
+      memory_free_list_[real_input_num_ + i] = output_address;
 
-void KernelActor::FetchWorkspaceDeviceTensor() {
-  workspace_device_tensors_.clear();
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
-  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
-    auto device_address = AnfAlgo::GetMutableWorkspaceAddr(kernel_, i);
-    MS_EXCEPTION_IF_NULL(device_address);
-    workspace_device_tensors_.emplace_back(device_address.get());
+      // Update output data.
+      for (auto &output_data : output_data_by_output_index_[i]) {
+        output_data->data_ = output_address;
+      }
+    }
   }
 }
 
@@ -221,7 +249,8 @@ void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::v
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   // No output.
-  if ((output_op_arrows_.size() == 0) && (output_op_controls_.size() == 0) && (output_result_arrows_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
+      (output_result_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
@@ -233,21 +262,17 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   }
 
   // Send output data.
-  for (auto &op_arrow : output_op_arrows_) {
-    MS_EXCEPTION_IF_NULL(op_arrow);
-    if (IntToSize(op_arrow->from_output_index_) >= output_device_tensors_.size()) {
-      std::string error_info = "The output index is out of range: " + kernel_->ToString();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
-    auto device_address = output_device_tensors_[op_arrow->from_output_index_];
-    auto data = std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, device_address, op_arrow->to_input_index_);
-    Async(op_arrow->to_op_id_, &KernelActor::RunOpData, data, context);
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
   }
 
   // Send output control.
-  auto source_aid = const_cast<AID *>(&GetAID());
-  for (auto &output_control : output_op_controls_) {
-    Async(output_control, &OpActor::RunOpControl, source_aid, context);
+  if (output_control_arrows_.size() > 0) {
+    auto source_aid = const_cast<AID *>(&GetAID());
+    for (auto &output_control : output_control_arrows_) {
+      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+    }
   }
 }
 

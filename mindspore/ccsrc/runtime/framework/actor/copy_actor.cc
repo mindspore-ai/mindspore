@@ -21,9 +21,26 @@
 
 namespace mindspore {
 namespace runtime {
-void CopyActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTensor> *context) {
+const size_t kDeviceTensorNum = 1;
+
+void CopyActor::Init() {
+  input_device_tensor_.resize(kDeviceTensorNum);
+  output_device_tensor_.resize(kDeviceTensorNum);
+
+  // Init output data.
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    if (IntToSize(data_arrow->from_output_index_) != 0) {
+      MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
+    }
+    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+    output_data_.emplace_back(std::move(data));
+  }
+}
+
+void CopyActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
+  auto &sequential_num = context->sequential_num_;
   input_op_datas_[sequential_num].emplace_back(input_data);
   // When all the inputs are collected, then allocate memory and callback copy.
   if (CheckCopyCondition(context)) {
@@ -34,7 +51,7 @@ void CopyActor::RunOpData(OpDataPtr<DeviceTensor> input_data, OpContext<DeviceTe
 
 void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
+  auto &sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback copy.
   if (CheckCopyCondition(context)) {
@@ -44,22 +61,19 @@ void CopyActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *contex
 }
 
 void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *context) {
-  std::vector<DeviceTensor *> alloc_list({output_device_tensor_});
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, alloc_list, output_device_context_, context,
-        GetAID());
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_, output_device_context_,
+        context, GetAID());
 }
 
 void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
-  std::vector<DeviceTensor *> input_free_list({input_device_tensor_});
-  std::vector<DeviceTensor *> output_free_list({output_device_tensor_});
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, input_free_list, input_device_context_, context);
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, output_free_list, output_device_context_, context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_, input_device_context_, context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_, output_device_context_, context);
 }
 
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
 
-  if (!Copy(output_device_tensor_, input_device_tensor_)) {
+  if (!Copy(output_device_tensor_[0], input_device_tensor_[0])) {
     std::string error_info = "Copy device tensor failed: " + GetAID().Name();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
@@ -94,7 +108,7 @@ bool CopyActor::Copy(DeviceTensor *dst_device_tensor, const DeviceTensor *src_de
 bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
-    auto data_iter = input_op_datas_.find(context->sequential_num_);
+    const auto &data_iter = input_op_datas_.find(context->sequential_num_);
     if (data_iter == input_op_datas_.end()) {
       return false;
     }
@@ -104,7 +118,7 @@ bool CopyActor::CheckCopyCondition(OpContext<DeviceTensor> *context) const {
   }
 
   if (input_controls_num_ != 0) {
-    auto control_iter = input_op_controls_.find(context->sequential_num_);
+    const auto &control_iter = input_op_controls_.find(context->sequential_num_);
     if (control_iter == input_op_controls_.end()) {
       return false;
     }
@@ -120,18 +134,18 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(input_device_context_);
 
   if (device_tensor_store_key_.second != nullptr) {
-    input_device_tensor_ = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key_.second,
-                                                                  input_device_context_->GetDeviceAddressType());
-    if (input_device_tensor_ == nullptr) {
+    input_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key_.second,
+                                                                     input_device_context_->GetDeviceAddressType());
+    if (input_device_tensor_[0] == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key_.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(input_device_context_->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
-    output_device_tensor_ = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key_.second,
-                                                                   output_device_context_->GetDeviceAddressType());
-    if (output_device_tensor_ == nullptr) {
+    output_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key_.second,
+                                                                      output_device_context_->GetDeviceAddressType());
+    if (output_device_tensor_[0] == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key_.second->fullname_with_scope() +
         ", device type:" + std::to_string(static_cast<int>(output_device_context_->GetDeviceAddressType()));
@@ -144,36 +158,33 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *context) {
     }
     const auto &input_data = data_iter->second[0];
     MS_EXCEPTION_IF_NULL(input_data);
-    input_device_tensor_ = input_data->data_;
+    input_device_tensor_[0] = input_data->data_;
 
     MS_EXCEPTION_IF_NULL(output_);
-    output_device_tensor_ = output_.get();
+    output_device_tensor_[0] = output_.get();
   }
 }
 
 void CopyActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   // No output.
-  if ((output_op_arrows_.size() == 0) && (output_op_controls_.size() == 0)) {
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
   // Send output data.
-  for (auto &op_arrow : output_op_arrows_) {
-    MS_EXCEPTION_IF_NULL(op_arrow);
-    if (IntToSize(op_arrow->from_output_index_) != 0) {
-      std::string error_info = "The output index is out of range: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
-    auto data =
-      std::make_shared<OpData<DeviceTensor>>(op_arrow->to_op_id_, output_device_tensor_, op_arrow->to_input_index_);
-    Async(op_arrow->to_op_id_, &CopyActor::RunOpData, data, context);
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    output_data->data_ = output_device_tensor_[0];
+    Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
   }
 
   // Send output control.
-  auto source_aid = const_cast<AID *>(&GetAID());
-  for (auto &output_control : output_op_controls_) {
-    Async(output_control, &OpActor::RunOpControl, source_aid, context);
+  if (output_control_arrows_.size() > 0) {
+    auto source_aid = const_cast<AID *>(&GetAID());
+    for (auto &output_control : output_control_arrows_) {
+      Async(output_control, &OpActor::RunOpControl, source_aid, context);
+    }
   }
 }
 

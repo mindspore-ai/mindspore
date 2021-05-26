@@ -32,11 +32,11 @@ class SwitchActorBase : public OpActor<T> {
   virtual ~SwitchActorBase() = default;
 
   // The actor run when receive the input data.
-  void RunOpData(OpDataPtr<T> input_data, OpContext<T> *context = nullptr) override {}
+  void RunOpData(OpData<T> *input_data, OpContext<T> *context = nullptr) override {}
 
  protected:
   // Different output branches according to the input.
-  std::vector<std::vector<OpArrowPtr>> output_branch_arrows_;
+  std::vector<std::vector<DataArrowPtr>> output_branch_arrows_;
 };
 
 }  // namespace mindspore
