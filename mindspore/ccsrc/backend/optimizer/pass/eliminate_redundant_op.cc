@@ -42,13 +42,14 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
 
   auto input0 = cnode->input(0);
   MS_EXCEPTION_IF_NULL(input0);
+  constexpr size_t kInput2 = 2;
   if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
     auto temp_node = cnode->input(index + IntToSize(1));
     MS_EXCEPTION_IF_NULL(temp_node);
     pass_vector->push_back(make_pair(cnode, index + IntToSize(1)));
     return GetRealPrevCNode(temp_node, 0, pass_vector);
   } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
-    auto input2 = cnode->input(2);
+    auto input2 = cnode->input(kInput2);
     MS_EXCEPTION_IF_NULL(input2);
     auto value_node = input2->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -96,21 +97,22 @@ const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNode
         AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
       has_depend_node = true;
     }
-    if (users[nd].size() >= 2) {
+    if (users[nd].size() > 1) {
       has_node_used_more_than_once = true;
     }
   }
 
   // when no depend node and no node used more than once, no need to rebuild the pass nodes
+  constexpr size_t kOffset = 2;
   if (!has_depend_node) {
     return prev_cnode->input(1);
   } else if (!has_node_used_more_than_once) {
     (void)manager->Replace(prev_cnode, prev_cnode->input(1));
     return cnode->input(1);
   } else {  // rebuild the pass nodes
-    for (size_t idx = pass_size - 2; idx > 0; --idx) {
+    for (size_t idx = pass_size - kOffset; idx > 0; --idx) {
       auto new_node = func_graph->NewCNode((*pass_vector)[idx].first->inputs());
-      if (idx == pass_size - 2) {
+      if (idx == pass_size - kOffset) {
         new_node->set_input((*pass_vector)[idx].second,
                             (*pass_vector)[idx + 1].first->input((*pass_vector)[idx + 1].second));
       } else {
