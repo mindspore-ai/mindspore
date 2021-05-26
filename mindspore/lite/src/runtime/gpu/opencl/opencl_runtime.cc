@@ -15,12 +15,13 @@
  */
 
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
-#include <vector>
-#include <numeric>
-#include <utility>
+#include <dlfcn.h>
 #ifdef SHARING_MEM_WITH_OPENGL
 #include <EGL/egl.h>
 #endif
+#include <vector>
+#include <numeric>
+#include <utility>
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/gpu/opencl/opencl_allocator.h"
@@ -267,6 +268,22 @@ int OpenCLRuntime::Init() {
   auto ms_ret = InitGPUDevice(&platforms);
   if (ms_ret != RET_OK) {
     return ms_ret;
+  }
+
+  // only support mali device.
+  if (gpu_info_.type == MALI || gpu_info_.type == MALI_T || gpu_info_.type == MALI_G) {
+    clImportMemoryARM = reinterpret_cast<clImportMemoryARMFunc>(dlsym(handle_, "clImportMemoryARM"));
+    if (clImportMemoryARM == nullptr) {
+      mindspore::LogWriter(mindspore::LocationInfo((sizeof("_file_name_") > GetRealPathPos()
+                                                      ? static_cast<const char *>("_file_name_") + GetRealPathPos()
+                                                      : static_cast<const char *>("_file_name_")),
+                                                   105, "_function_name_"),
+                           mindspore::ERROR) < mindspore::LogStream() << "load func ("
+                                                                      << "clImportMemoryARM"
+                                                                      << ") failed!";
+      UnLoadOpenCLLibrary(handle_);
+      return false;
+    }
   }
 
   ms_ret = InitQueue(&platforms);

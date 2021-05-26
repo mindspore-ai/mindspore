@@ -213,7 +213,7 @@ inline void MergeRemoveB(LiteKernel *a, LiteKernel *b, std::set<LiteKernel *> *r
   }
 }
 
-// Pad + Conv2D(no_winograd)
+// Pad + Conv2D
 // Pad + DepthwiseConv2D
 // Pad + DeConv2D
 // Pad + Pooling
@@ -221,11 +221,6 @@ template <typename ParamType>
 void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(node);
   MS_ASSERT(removed_set);
-  if (node->type() == schema::PrimitiveType_Conv2DFusion) {
-    if (reinterpret_cast<Conv2DOpenCLKernel *>(node->kernel())->use_winograd_) {
-      return;
-    }
-  }
   if (!PredIs(node, schema::PrimitiveType_PadFusion, nodes)) {
     return;
   }
