@@ -260,7 +260,9 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   ScopeGuard scope_guard(scope);
 
   FuncGraphPtr func_graph = out_conf->node()->func_graph();
-  AnfNodePtr new_node = MixedPrecisionCastHelper(out_node_inputs[2], args_spec_list[1], out_node_inputs[1], func_graph);
+  constexpr size_t source_node_index = 2;
+  AnfNodePtr new_node =
+    MixedPrecisionCastHelper(out_node_inputs[source_node_index], args_spec_list[1], out_node_inputs[1], func_graph);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context());
 
   if (new_node->isa<CNode>()) {

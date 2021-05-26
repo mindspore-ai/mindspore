@@ -99,7 +99,8 @@ void TwoCastEliminater::Visit(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimCast)) {
     auto cnode = node->cast<CNodePtr>();
     // {prim::kPrimCast, X, Y}
-    if (cnode->size() != 3) {
+    constexpr size_t cast_size = 3;
+    if (cnode->size() != cast_size) {
       return;
     }
     x_ = cnode->input(1);

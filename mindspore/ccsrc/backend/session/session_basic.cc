@@ -812,7 +812,8 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cno
   auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
-  if (cnode->inputs().size() < 2) {
+  constexpr size_t cnode_size = 2;
+  if (cnode->inputs().size() < cnode_size) {
     cnode_inputs = switch_cnode->inputs();
     return cnode_inputs;
   }
