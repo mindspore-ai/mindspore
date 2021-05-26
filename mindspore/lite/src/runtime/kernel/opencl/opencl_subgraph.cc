@@ -163,9 +163,9 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       parameter = nullptr;
       return RET_ERROR;
     }
-    auto *in_convert_op = new (std::nothrow) kernel::LiteKernel(in_convert_op_inner);
+    std::shared_ptr<kernel::Kernel> inner_convert_op(in_convert_op_inner);
+    auto *in_convert_op = new (std::nothrow) kernel::LiteKernel(inner_convert_op);
     if (in_convert_op == nullptr) {
-      delete in_convert_op_inner;
       MS_LOG(ERROR) << "OpenCLSubGraph create op failed!";
       delete new_tensor;
       new_tensor = nullptr;

@@ -55,7 +55,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!";
     return ret;
   }
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,

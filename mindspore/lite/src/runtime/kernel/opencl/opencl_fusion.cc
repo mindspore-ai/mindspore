@@ -544,17 +544,15 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
   MS_ASSERT(old);
   MS_ASSERT(nodes);
   MS_ASSERT(removed_set);
-  auto *inner_kernel = new (std::nothrow)
-    FusionEltwiseOpenCLKernel(reinterpret_cast<OpParameter *>(param), old->in_tensors(), old->out_tensors(), nullptr);
+  auto inner_kernel = std::make_shared<FusionEltwiseOpenCLKernel>(reinterpret_cast<OpParameter *>(param),
+                                                                  old->in_tensors(), old->out_tensors(), nullptr);
   if (inner_kernel == nullptr) {
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
   }
   inner_kernel->set_registry_data_type(old->desc().data_type);
-
   auto *eltwise = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (eltwise == nullptr) {
-    delete inner_kernel;
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
   }

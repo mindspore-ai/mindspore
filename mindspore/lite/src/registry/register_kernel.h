@@ -28,6 +28,9 @@
 
 namespace mindspore {
 namespace kernel {
+static const char *const kArchCPU __attribute__((unused)) = "CPU";
+static const char *const kArchGPU __attribute__((unused)) = "GPU";
+
 struct MS_API KernelDesc {
   TypeId data_type;
   int type;
