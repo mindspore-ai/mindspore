@@ -57,7 +57,7 @@ def train_alexnet():
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
     context.set_context(save_graphs=False)
     if device_target == "GPU":
-        context.set_context(enbale_graph_kernel=True)
+        context.set_context(enable_graph_kernel=True)
 
     device_num = get_device_num()
     if config.dataset_name == "cifar10":
