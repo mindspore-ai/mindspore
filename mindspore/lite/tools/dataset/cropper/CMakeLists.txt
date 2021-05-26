@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15.5)
+cmake_minimum_required(VERSION 3.14.0)
 project(MinddataCropper)
 
 add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
