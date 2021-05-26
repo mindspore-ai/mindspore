@@ -189,6 +189,10 @@ class AnfRuntimeAlgorithm {
   // set infer shapes and types of anf node
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                          const std::vector<std::vector<size_t>> &shapes, AnfNode *node);
+  // get and set output shape ptr
+  static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
+  static void SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
+                                          const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);
   static void CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node);
   // get op pattern of the node
   static kernel::OpPattern GetOpPattern(const AnfNodePtr &node);

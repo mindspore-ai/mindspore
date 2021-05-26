@@ -42,8 +42,8 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackprop(
   layer_norm_x_backprop->set_scope(layer_norm_grad->scope());
 
   auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(layer_norm_grad, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, layer_norm_x_backprop.get());
+  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0)};
+  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_x_backprop.get());
 
   (*layer_norm_x_backprop_outputs).push_back(layer_norm_x_backprop);
 }
@@ -66,8 +66,8 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
 
   auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 1),
                 AnfAlgo::GetOutputInferDataType(layer_norm_grad, 2)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(layer_norm_grad, 1), AnfAlgo::GetOutputInferShape(layer_norm_grad, 2)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, layer_norm_beta_gamma_backprop.get());
+  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 1), AnfAlgo::GetOutputDetailShape(layer_norm_grad, 2)};
+  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_beta_gamma_backprop.get());
 
   // get device shape of LayerNormGrad's 5th Input, and convert it to attr
   std::vector<size_t> shape_gamma = AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, 4);
@@ -87,9 +87,6 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
                                              const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
-    return nullptr;
-  }
   auto cnode = node->cast<CNodePtr>();
   if (AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
     return nullptr;

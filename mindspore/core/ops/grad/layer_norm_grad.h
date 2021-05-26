@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_GRAD_LAYER_NORM_GRAD_H_
 #define MINDSPORE_CORE_OPS_GRAD_LAYER_NORM_GRAD_H_
 #include <string>
+#include <vector>
+#include <memory>
 
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -24,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLayerNormGrad = "LayerNormGrad";
+constexpr auto kNameLayerNormGrad = prim::kLayerNormGrad;
 class LayerNormGrad : public PrimitiveC {
  public:
   LayerNormGrad() : PrimitiveC(kNameLayerNormGrad) {}
@@ -37,6 +39,10 @@ class LayerNormGrad : public PrimitiveC {
   int64_t get_begin_norm_axis() const;
   int64_t get_begin_params_axis() const;
 };
+
+AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args);
+using PrimLayerNormGradPtr = std::shared_ptr<LayerNormGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
