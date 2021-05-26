@@ -46,8 +46,8 @@ kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor
   transpose_param->perm_[3] = 1;
   transpose_param->num_axes_ = 4;
 
-  auto inner_kernel = new (std::nothrow)
-    kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
+  auto inner_kernel = std::make_shared<kernel::TransposeCPUKernel>(reinterpret_cast<OpParameter *>(transpose_param),
+                                                                   in_tensors, out_tensors, ctx);
 
   if (inner_kernel != nullptr) {
     auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
@@ -57,7 +57,6 @@ kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor
       return kernel;
     } else {
       free(transpose_param);
-      delete inner_kernel;
     }
   } else {
     MS_LOG(ERROR) << "New Nchw2Nhwc Kernel failed.";
@@ -83,9 +82,8 @@ kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor
   transpose_param->perm_[3] = 2;
   transpose_param->num_axes_ = 4;
 
-  auto inner_kernel = new (std::nothrow)
-    kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
-
+  auto inner_kernel = std::make_shared<kernel::TransposeCPUKernel>(reinterpret_cast<OpParameter *>(transpose_param),
+                                                                   in_tensors, out_tensors, ctx);
   if (inner_kernel != nullptr) {
     auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
     if (kernel != nullptr) {
@@ -94,7 +92,6 @@ kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor
       return kernel;
     } else {
       free(transpose_param);
-      delete inner_kernel;
     }
   } else {
     MS_LOG(ERROR) << "New Nhwc2Nchw Kernel failed.";

@@ -30,7 +30,7 @@ using mindspore::lite::RET_OK;
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(kernel_ != nullptr);
   if ((desc_.provider == kBuiltin) && (kernel_->type() == schema::PrimitiveType_Merge)) {
-    return static_cast<MergeCPUKernel *>(kernel_)->IsReady(scope_tensors);
+    return std::static_pointer_cast<MergeCPUKernel>(kernel_)->IsReady(scope_tensors);
   }
   auto &in_tensors = this->in_tensors();
   return std::all_of(in_tensors.begin(), in_tensors.end(), [&](lite::Tensor *in_tensor) {

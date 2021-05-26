@@ -119,9 +119,9 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     free(op_parameter);
     FAIL();
   }
-  auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  auto *kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
   if (kernel == nullptr) {
-    delete inner_kernel;
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();
@@ -279,9 +279,9 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     FAIL();
   }
   inner_kernel->set_registry_data_type(key.data_type);
-  auto *kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+  std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+  auto *kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
   if (kernel == nullptr) {
-    delete inner_kernel;
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
     FAIL();

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
@@ -58,7 +59,7 @@ class SubGraphKernel : public LiteKernel {
  public:
   SubGraphKernel(std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
                  std::vector<LiteKernel *> nodes, Kernel *kernel)
-      : LiteKernel(kernel),
+      : LiteKernel(std::shared_ptr<Kernel>(kernel)),
         nodes_(std::move(nodes)),
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {

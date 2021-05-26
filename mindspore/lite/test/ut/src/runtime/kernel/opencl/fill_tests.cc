@@ -59,8 +59,8 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
     return;
   }
 
-  auto *inner_kernel =
-    new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  auto inner_kernel =
+    std::make_shared<kernel::FillOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
   if (inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
@@ -68,7 +68,6 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   }
   auto *fill_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (fill_kernel == nullptr) {
-    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
     return;
@@ -130,8 +129,8 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
     return;
   }
 
-  auto *inner_kernel =
-    new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
+  auto inner_kernel =
+    std::make_shared<kernel::FillOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
   if (inner_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
@@ -139,7 +138,6 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   }
   auto *fill_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
   if (fill_kernel == nullptr) {
-    delete inner_kernel;
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
     return;

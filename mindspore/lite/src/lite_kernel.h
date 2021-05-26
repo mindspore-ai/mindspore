@@ -70,17 +70,12 @@ class LiteKernel {
     this->out_kernels_.clear();
   }
 
-  explicit LiteKernel(Kernel *kernel) : kernel_(kernel) {
+  explicit LiteKernel(std::shared_ptr<Kernel> kernel) : kernel_(kernel) {
     this->in_kernels_.clear();
     this->out_kernels_.clear();
   }
 
-  virtual ~LiteKernel() {
-    if (kernel_ != nullptr) {
-      delete kernel_;
-      kernel_ = nullptr;
-    }
-  }
+  virtual ~LiteKernel() = default;
 
   virtual int Execute() { return Execute(nullptr, nullptr); }
 
@@ -133,7 +128,7 @@ class LiteKernel {
 
   OpParameter *op_parameter() const {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->op_parameter();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->op_parameter();
   }
 
   std::string name() const {
@@ -148,32 +143,32 @@ class LiteKernel {
 
   virtual int Train() {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->Train();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->Train();
   }
 
   virtual bool IsTrain() const {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->IsTrain();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrain();
   }
 
   virtual int Eval() {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->Eval();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->Eval();
   }
 
   virtual bool IsEval() const {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->IsEval();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->IsEval();
   }
 
   virtual void set_trainable(bool trainable = true) {
     MS_ASSERT(kernel_ != nullptr);
-    static_cast<InnerKernel *>(kernel_)->set_trainable(trainable);
+    std::static_pointer_cast<InnerKernel>(kernel_)->set_trainable(trainable);
   }
 
   virtual bool is_trainable() const {
     MS_ASSERT(kernel_ != nullptr);
-    return static_cast<InnerKernel *>(kernel_)->is_trainable();
+    return std::static_pointer_cast<InnerKernel>(kernel_)->is_trainable();
   }
 
   void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
@@ -198,7 +193,7 @@ class LiteKernel {
   void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      static_cast<InnerKernel *>(kernel_)->set_in_tensors(in_tensors);
+      std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensors(in_tensors);
     } else {
       std::vector<mindspore::tensor::MSTensor *> ms_tensors(in_tensors.begin(), in_tensors.end());
       kernel_->set_inputs(ms_tensors);
@@ -208,7 +203,7 @@ class LiteKernel {
   void set_in_tensor(lite::Tensor *in_tensor, int index) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      static_cast<InnerKernel *>(kernel_)->set_in_tensor(in_tensor, index);
+      std::static_pointer_cast<InnerKernel>(kernel_)->set_in_tensor(in_tensor, index);
     } else {
       mindspore::tensor::MSTensor *ms_tensors(in_tensor);
       kernel_->set_input(ms_tensors, index);
@@ -218,7 +213,7 @@ class LiteKernel {
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      static_cast<InnerKernel *>(kernel_)->set_out_tensors(out_tensors);
+      std::static_pointer_cast<InnerKernel>(kernel_)->set_out_tensors(out_tensors);
     } else {
       std::vector<mindspore::tensor::MSTensor *> ms_tensors(out_tensors.begin(), out_tensors.end());
       kernel_->set_outputs(ms_tensors);
@@ -228,7 +223,7 @@ class LiteKernel {
   const std::vector<lite::Tensor *> &in_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return static_cast<InnerKernel *>(kernel_)->in_tensors();
+      return std::static_pointer_cast<InnerKernel>(kernel_)->in_tensors();
     } else {
       auto &ms_tensors = kernel_->inputs();
       mutable_in_tensors_.resize(ms_tensors.size());
@@ -242,7 +237,7 @@ class LiteKernel {
   const std::vector<lite::Tensor *> &out_tensors() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
-      return static_cast<InnerKernel *>(kernel_)->out_tensors();
+      return std::static_pointer_cast<InnerKernel>(kernel_)->out_tensors();
     } else {
       auto &ms_tensors = kernel_->outputs();
       mutable_out_tensors_.resize(ms_tensors.size());
@@ -289,10 +284,10 @@ class LiteKernel {
 
   virtual std::string ToString() const;
 
-  Kernel *kernel() { return kernel_; }
+  Kernel *kernel() { return kernel_.get(); }
 
  protected:
-  Kernel *kernel_ = nullptr;
+  std::shared_ptr<Kernel> kernel_ = nullptr;
   KernelKey desc_;
   // tensor will free in ~lite_session()
   std::vector<LiteKernel *> in_kernels_;

@@ -135,13 +135,12 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       auto inner_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
       if (inner_kernel != nullptr) {
         inner_kernel->set_registry_data_type(key.data_type);
-        auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(inner_kernel);
+        std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
+        auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
         if (lite_kernel != nullptr) {
           lite_kernel->set_desc(key);
           *kernel = lite_kernel;
           return RET_OK;
-        } else {
-          delete inner_kernel;
         }
       }
       return RET_ERROR;
@@ -157,7 +156,7 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
     std::vector<tensor::MSTensor *> tensors_out(out_tensors.begin(), out_tensors.end());
     auto base_kernel = creator(tensors_in, tensors_out, static_cast<const schema::Primitive *>(primitive), ctx);
     if (base_kernel != nullptr) {
-      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel.get());
+      auto *lite_kernel = new (std::nothrow) kernel::LiteKernel(base_kernel);
       if (lite_kernel != nullptr) {
         lite_kernel->set_desc(key);
         *kernel = lite_kernel;
