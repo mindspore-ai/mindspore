@@ -42,7 +42,8 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
 
   ShapePtr input_shape = dyn_cast<Shape>(input_tensor->GetShapeTrack());  // NCHW
   MS_EXCEPTION_IF_NULL(input_shape);
-  if (input_shape->shape().size() != 4) {
+  const size_t input_shape_size = 4;
+  if (input_shape->shape().size() != input_shape_size) {
     MS_LOG(EXCEPTION) << "Pooling input should be a 4-D tensor.";
   }
   int64_t h_input = input_shape->shape()[2];
@@ -610,7 +611,8 @@ AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, c
                                                     const AbstractBasePtrList &args_spec_list) {
   CheckRequiredArgsSize(primitive->name(), args_spec_list, 7);
   AbstractBasePtrList elements;
-  for (size_t i = 0; i < 2; ++i) {
+  const size_t args_size = 2;
+  for (size_t i = 0; i < args_size; ++i) {
     elements.push_back(args_spec_list[i]->Clone()->Broaden());
   }
   return std::make_shared<AbstractTuple>(elements);
@@ -702,7 +704,8 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
   auto shape = input->shape();
-  if (shape->shape().size() != 2) {
+  const size_t shape_size = 2;
+  if (shape->shape().size() != shape_size) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
   }
   ShapeVector indices_shape = {Shape::SHP_ANY};
