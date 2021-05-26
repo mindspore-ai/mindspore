@@ -48,7 +48,7 @@ int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *co
   return hash_index;
 }
 
-int EmbeddingHashMap::FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *const need_swap,
+int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
                                        bool *const need_wait_graph) {
   MS_EXCEPTION_IF_NULL(need_swap);
   MS_EXCEPTION_IF_NULL(need_wait_graph);

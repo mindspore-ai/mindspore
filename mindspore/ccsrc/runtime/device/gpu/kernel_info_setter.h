@@ -32,6 +32,7 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 const size_t kAllPositions = SIZE_MAX;
+const size_t kFormatTransformDimension = 4;
 
 // Map<opName, (inputFormatPosition, outputFormatPosition)>, used for getting the inserted position of format transform.
 // If the inserted position is kAllPositions, then insert all the positions, because the input or output numbers of

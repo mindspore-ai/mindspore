@@ -214,14 +214,17 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   auto hash_swap_out_mod = std::make_shared<kernel::AicpuOpKernelMod>();
   MS_ERROR_IF_NULL(hash_swap_out_mod);
   hash_swap_out_mod->SetNodeName(kEmbeddingLookupOpName);
-  std::vector<std::vector<size_t>> input_shape;
-  std::vector<std::vector<size_t>> output_shape;
+
+  std::vector<size_t> hash_table_shape = {cache_vocab_size, embedding_size};
+  std::vector<size_t> swap_out_index_shape = {swap_out_size};
+  std::vector<size_t> offset_shape = {1};
+  std::vector<std::vector<size_t>> input_shape = {hash_table_shape, swap_out_index_shape, offset_shape};
+
+  std::vector<size_t> swap_out_value_shape = {swap_out_size, embedding_size};
+  std::vector<std::vector<size_t>> output_shape = {swap_out_value_shape};
+
   std::vector<TypeId> input_type = {TypeId::kNumberTypeFloat32, TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32};
   std::vector<TypeId> output_type = {TypeId::kNumberTypeFloat32};
-  input_shape.push_back({cache_vocab_size, embedding_size});
-  input_shape.push_back({swap_out_size});
-  input_shape.push_back({1});
-  output_shape.push_back({swap_out_size, embedding_size});
   auto op_info =
     std::make_shared<KernelNodeInfo>(kEmbeddingLookupOpName, input_shape, input_type, output_shape, output_type);
   RETURN_IF_FALSE(SetNodedefProto(op_info, hash_swap_out_mod));
@@ -230,10 +233,10 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   AddressPtrList kernel_outputs = {
     std::make_shared<Address>(swap_out_value_addr, swap_out_size * embedding_size * sizeof(float))};
   AddressPtrList kernel_workspaces;
-  kernel_inputs.push_back(
+  kernel_inputs.emplace_back(
     std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
-  kernel_inputs.push_back(std::make_shared<Address>(swap_out_index_addr, swap_out_size * sizeof(int)));
-  kernel_inputs.push_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
+  kernel_inputs.emplace_back(std::make_shared<Address>(swap_out_index_addr, swap_out_size * sizeof(int)));
+  kernel_inputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_out_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
     MS_LOG(ERROR) << "Hash swap out launch failed.";
@@ -250,16 +253,18 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   auto hash_swap_in_mod = std::make_shared<kernel::AicpuOpKernelMod>();
   MS_ERROR_IF_NULL(hash_swap_in_mod);
   hash_swap_in_mod->SetNodeName(kernel::kUpdateCache);
-  std::vector<std::vector<size_t>> input_shape;
-  std::vector<std::vector<size_t>> output_shape;
+
+  std::vector<size_t> hash_table_shape = {cache_vocab_size, embedding_size};
+  std::vector<size_t> swap_in_index_shape = {swap_in_size};
+  std::vector<size_t> swap_in_value_shape = {swap_in_size, embedding_size};
+  std::vector<size_t> offset_shape = {1};
+  std::vector<std::vector<size_t>> input_shape = {hash_table_shape, swap_in_index_shape, swap_in_value_shape,
+                                                  offset_shape};
+  std::vector<std::vector<size_t>> output_shape = {offset_shape};
+
   std::vector<TypeId> input_type = {TypeId::kNumberTypeFloat32, TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat32,
                                     TypeId::kNumberTypeInt32};
   std::vector<TypeId> output_type = {TypeId::kNumberTypeInt32};
-  input_shape.push_back({cache_vocab_size, embedding_size});
-  input_shape.push_back({swap_in_size});
-  input_shape.push_back({swap_in_size, embedding_size});
-  input_shape.push_back({1});
-  output_shape.push_back({1});
   auto op_info =
     std::make_shared<KernelNodeInfo>(kernel::kUpdateCache, input_shape, input_type, output_shape, output_type);
   SetNodedefProto(op_info, hash_swap_in_mod);
@@ -267,13 +272,14 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_outputs;
   AddressPtrList kernel_workspaces;
-  kernel_inputs.push_back(
+  kernel_inputs.emplace_back(
     std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
-  kernel_inputs.push_back(std::make_shared<Address>(swap_in_index_addr, swap_in_size * sizeof(int)));
-  kernel_inputs.push_back(std::make_shared<Address>(swap_in_value_addr, swap_in_size * embedding_size * sizeof(float)));
-  kernel_inputs.push_back(std::make_shared<Address>(cache_vocab_size_addr_, sizeof(int)));
+  kernel_inputs.emplace_back(std::make_shared<Address>(swap_in_index_addr, swap_in_size * sizeof(int)));
+  kernel_inputs.emplace_back(
+    std::make_shared<Address>(swap_in_value_addr, swap_in_size * embedding_size * sizeof(float)));
+  kernel_inputs.emplace_back(std::make_shared<Address>(cache_vocab_size_addr_, sizeof(int)));
   // The output of updateCache kernel is required but not useful, so any address can be assigned.
-  kernel_outputs.push_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
+  kernel_outputs.emplace_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_in_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
     MS_LOG(ERROR) << "Hash swap in launch failed.";

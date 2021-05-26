@@ -19,6 +19,8 @@
 
 namespace mindspore {
 namespace ps {
+const size_t kTimeoutLoopCount = 10;
+
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {
   if (cache_enable_ == false) {
     return;
@@ -69,7 +71,8 @@ bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, c
   if (!need_wait_) {
     return true;
   }
-  for (int i = 0; i < 10; i++) {
+
+  for (size_t i = 0; i < kTimeoutLoopCount; ++i) {
     if (data_prefetch_.wait_for(locker, std::chrono::seconds(30),
                                 [this] { return data_ready_ == false || need_wait_ == false; })) {
       return true;
@@ -94,7 +97,8 @@ bool PsDataPrefetch::FinalizeData(const std::string &channel_name) {
   if (!need_wait_) {
     return true;
   }
-  for (int i = 0; i < 10; i++) {
+
+  for (size_t i = 0; i < kTimeoutLoopCount; ++i) {
     if (data_process_.wait_for(locker, std::chrono::seconds(30),
                                [this] { return data_ready_ == true || need_wait_ == false; })) {
       return true;
@@ -147,7 +151,7 @@ bool PsDataPrefetch::TryWakeChannel(const std::string &channel_name) {
 }
 
 void PsDataPrefetch::WakeAllChannel() {
-  for (auto iter = ps_data_channel_map_.begin(); iter != ps_data_channel_map_.end(); iter++) {
+  for (auto iter = ps_data_channel_map_.begin(); iter != ps_data_channel_map_.end(); ++iter) {
     auto channel = iter->second;
     if (channel == nullptr) {
       return;
