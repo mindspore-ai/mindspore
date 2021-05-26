@@ -35,15 +35,15 @@ then
         python ${BASEPATH}/../train.py \
                 --net=$1 \
                 --dataset=$2 \
-                --data_dir=$3 \
+                --train_data_dir=$3 \
                 --is_distributed=0 \
                 --device_target='CPU' \
-                --pretrained=$4 > train.log 2>&1 &
+                --train_pretrained=$4 > train.log 2>&1 &
 else
         python ${BASEPATH}/../train.py \
                 --net=$1 \
                 --dataset=$2 \
-                --data_dir=$3 \
+                --train_data_dir=$3 \
                 --is_distributed=0 \
                 --device_target='CPU' > train.log 2>&1 &
 fi

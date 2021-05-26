@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -lt 4 ]
-then
-    echo "Usage: sh run_eval_cpu.sh [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]"
-    exit 1
-fi
+"""Local adapter"""
 
-# check checkpoint file
-if [ ! -f $4 ]
-then
-    echo "error: CHECKPOINT_PATH=$4 is not a file"
-    exit 1
-fi
+import os
 
-BASEPATH=$(cd "`dirname $0`" || exit; pwd)
-export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
 
-if [ -d "../eval" ];
-then
-    rm -rf ../eval
-fi
-mkdir ../eval
-cd ../eval || exit
 
-python ${BASEPATH}/../eval.py \
-            --net=$1 \
-            --dataset=$2 \
-            --train_data_dir=$3 \
-            --device_target='CPU' \
-            --is_distributed=0 \
-            --train_pretrained=$4 > eval.log 2>&1 &
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

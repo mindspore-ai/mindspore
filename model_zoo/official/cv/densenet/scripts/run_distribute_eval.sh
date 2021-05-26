@@ -17,7 +17,7 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "sh scripts/run_distribute_eval.sh DEVICE_NUM RANK_TABLE_FILE NET_NAME DATASET_NAME DATASET CKPT_PATH"
-echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json densenet121 imagenet /path/to/dataset /path/to/ckpt"
+echo "for example: sh scripts/run_distribute_eval.sh 8 /data/hccl.json densenet121 imagenet /path/to/dataset /path/to/ckpt"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
@@ -36,6 +36,7 @@ do
     rm -rf eval_$i
     mkdir ./eval_$i
     cp ./*.py ./eval_$i
+    cp ./*.yaml ./eval_$i
     cp -r ./src ./eval_$i
     cd ./eval_$i || exit
     export RANK_ID=$i
@@ -44,8 +45,9 @@ do
     python eval.py  \
     --net=$NET_NAME \
     --dataset=$DATASET_NAME \
-    --data_dir=$DATASET  \
-    --pretrained=$CKPT_PATH > log.txt 2>&1 &
+    --eval_data_dir=$DATASET  \
+    --is_distributed=1         \
+    --ckpt_files=$CKPT_PATH > log.txt 2>&1 &
 
     cd ../
 done

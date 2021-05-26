@@ -19,21 +19,22 @@ python eval.py --net densenet121 --dataset imagenet --data_dir /PATH/TO/DATASET 
 """
 
 import os
-import argparse
 import datetime
 import glob
 import numpy as np
 from mindspore import context
-
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.communication.management import init, get_rank, get_group_size, release
+from mindspore.communication.management import init, get_group_size, release
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
-
 from src.utils.logging import get_logger
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.config import config
+from src.model_utils.device_adapter import get_device_id, get_rank_id
+
 
 class ParameterReduce(nn.Cell):
     """
@@ -51,54 +52,6 @@ class ParameterReduce(nn.Cell):
         return ret
 
 
-def parse_args(cloud_args=None):
-    """
-    parse args
-    """
-    parser = argparse.ArgumentParser('mindspore classification test')
-
-    # network and dataset choices
-    parser.add_argument('--net', type=str, default='', help='Densenet Model, densenet100 or densenet121')
-    parser.add_argument('--dataset', type=str, default='', help='Dataset, either cifar10 or imagenet')
-
-    # dataset related
-    parser.add_argument('--data_dir', type=str, default='', help='eval data dir')
-
-    # network related
-    parser.add_argument('--backbone', default='resnet50', help='backbone')
-    parser.add_argument('--pretrained', default='', type=str, help='fully path of pretrained model to load.'
-                                                                   'If it is a direction, it will test all ckpt')
-
-    # logging related
-    parser.add_argument('--log_path', type=str, default='outputs/', help='path to save log')
-    parser.add_argument('--is_distributed', type=int, default=1, help='if multi device')
-    parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-    parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-
-    # roma obs
-    parser.add_argument('--train_url', type=str, default="", help='train url')
-
-    # platform
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU', 'CPU'),
-                        help='device target')
-
-    args, _ = parser.parse_known_args()
-    args = merge_args(args, cloud_args)
-
-    if args.net == "densenet100":
-        from src.config import config_100 as config
-    else:
-        from src.config import config_121 as config
-
-    args.per_batch_size = config.per_batch_size
-    args.image_size = config.image_size
-    args.num_classes = config.num_classes
-
-    args.image_size = list(map(int, args.image_size.split(',')))
-
-    return args
-
-
 def get_top5_acc(top5_arg, gt_class):
     sub_count = 0
     for top5, gt in zip(top5_arg, gt_class):
@@ -106,20 +59,6 @@ def get_top5_acc(top5_arg, gt_class):
             sub_count += 1
     return sub_count
 
-def merge_args(args, cloud_args):
-    """
-    merge args and cloud_args
-    """
-    args_dict = vars(args)
-    if isinstance(cloud_args, dict):
-        for key in cloud_args.keys():
-            val = cloud_args[key]
-            if key in args_dict and val:
-                arg_type = type(args_dict[key])
-                if arg_type is not type(None):
-                    val = arg_type(val)
-                args_dict[key] = val
-    return args
 
 def generate_results(model, rank, group_size, top1_correct, top5_correct, img_tot):
     model_md5 = model.replace('/', '')
@@ -157,60 +96,61 @@ def generate_results(model, rank, group_size, top1_correct, top5_correct, img_to
         img_tot_all += np.load(img_tot_npy)
     return [[top1_correct_all], [top5_correct_all], [img_tot_all]]
 
-def test(cloud_args=None):
+
+@moxing_wrapper()
+def test():
     """
     network eval function. Get top1 and top5 ACC from classification for imagenet,
     and top1 ACC for cifar10.
     The result will be save at [./outputs] by default.
     """
-    args = parse_args(cloud_args)
+    config.image_size = list(map(int, config.image_size.split(',')))
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target,
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
                         save_graphs=True)
-    if args.device_target == 'Ascend':
-        devid = int(os.getenv('DEVICE_ID'))
+    if config.device_target == 'Ascend':
+        devid = get_device_id()
         context.set_context(device_id=devid)
 
     # init distributed
-    if args.is_distributed:
+    if config.is_distributed:
         init()
-        args.rank = get_rank()
-        args.group_size = get_group_size()
+        config.rank = get_rank_id()
+        config.group_size = get_group_size()
 
-    args.outputs_dir = os.path.join(args.log_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    config.outputs_dir = os.path.join(config.log_path, datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
 
-    args.logger = get_logger(args.outputs_dir, args.rank)
-    args.logger.save_args(args)
+    config.logger = get_logger(config.outputs_dir, config.rank)
+    config.logger.save_args(config)
 
     # network
-    args.logger.important_info('start create network')
-    if os.path.isdir(args.pretrained):
-        models = list(glob.glob(os.path.join(args.pretrained, '*.ckpt')))
+    config.logger.important_info('start create network')
+    if os.path.isdir(config.ckpt_files):
+        models = list(glob.glob(os.path.join(config.ckpt_files, '*.ckpt')))
 
         f = lambda x: -1 * int(os.path.splitext(os.path.split(x)[-1])[0].split('-')[-1].split('_')[0])
 
-        args.models = sorted(models, key=f)
+        config.models = sorted(models, key=f)
     else:
-        args.models = [args.pretrained,]
+        config.models = [config.ckpt_files,]
 
-    if args.net == "densenet100":
+    if config.net == "densenet100":
         from src.network.densenet import DenseNet100 as DenseNet
     else:
         from src.network.densenet import DenseNet121 as DenseNet
 
-    if args.dataset == "cifar10":
+    if config.dataset == "cifar10":
         from src.datasets import classification_dataset_cifar10 as classification_dataset
     else:
         from src.datasets import classification_dataset_imagenet as classification_dataset
 
-    for model in args.models:
-        de_dataset = classification_dataset(args.data_dir, image_size=args.image_size,
-                                            per_batch_size=args.per_batch_size,
-                                            max_epoch=1, rank=args.rank, group_size=args.group_size,
+    for model in config.models:
+        de_dataset = classification_dataset(config.eval_data_dir, image_size=config.image_size,
+                                            per_batch_size=config.per_batch_size,
+                                            max_epoch=1, rank=config.rank, group_size=config.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator()
-        network = DenseNet(args.num_classes)
+        network = DenseNet(config.num_classes)
 
         param_dict = load_checkpoint(model)
         param_dict_new = {}
@@ -222,9 +162,9 @@ def test(cloud_args=None):
             else:
                 param_dict_new[key] = values
         load_param_into_net(network, param_dict_new)
-        args.logger.info('load model {} success'.format(model))
+        config.logger.info('load model %s success', str(model))
 
-        if args.device_target == 'Ascend':
+        if config.device_target == 'Ascend':
             network.add_flags_recursive(fp16=True)
 
         img_tot = 0
@@ -242,30 +182,31 @@ def test(cloud_args=None):
             t1_correct = np.equal(top1_output, gt_classes).sum()
             top1_correct += t1_correct
             top5_correct += get_top5_acc(top5_output, gt_classes)
-            img_tot += args.per_batch_size
+            img_tot += config.per_batch_size
 
         results = [[top1_correct], [top5_correct], [img_tot]]
-        args.logger.info('before results={}'.format(results))
-        if args.is_distributed:
-            results = generate_results(model, args.rank, args.group_size, top1_correct,
+        config.logger.info('before results=%s', str(results))
+        if config.is_distributed:
+            results = generate_results(model, config.rank, config.group_size, top1_correct,
                                        top5_correct, img_tot)
             results = np.array(results)
         else:
             results = np.array(results)
 
-        args.logger.info('after results={}'.format(results))
+        config.logger.info('after results=%s', str(results))
         top1_correct = results[0, 0]
         top5_correct = results[1, 0]
         img_tot = results[2, 0]
         acc1 = 100.0 * top1_correct / img_tot
         acc5 = 100.0 * top5_correct / img_tot
-        args.logger.info('after allreduce eval: top1_correct={}, tot={}, acc={:.2f}%'.format(top1_correct, img_tot,
-                                                                                             acc1))
-        if args.dataset == 'imagenet':
-            args.logger.info('after allreduce eval: top5_correct={}, tot={}, acc={:.2f}%'.format(top5_correct, img_tot,
-                                                                                                 acc5))
-    if args.is_distributed:
+        config.logger.info('after allreduce eval: top1_correct={}, tot={}, acc={:.2f}%'.format(top1_correct
+                                                                                               , img_tot, acc1))
+        if config.dataset == 'imagenet':
+            config.logger.info('after allreduce eval: top5_correct={}, tot={}, acc={:.2f}%'.format(top5_correct
+                                                                                                   , img_tot, acc5))
+    if config.is_distributed:
         release()
+
 
 if __name__ == "__main__":
     test()

@@ -30,12 +30,14 @@ DATASET_NAME=$4
 DATASET=$5
 CKPT_FILE=$6
 
+
 for((i=0;i<RANK_SIZE;i++))
 do
     export DEVICE_ID=$i
     rm -rf train_$i
     mkdir ./train_$i
     cp ./*.py ./train_$i
+    cp ./*.yaml ./train_$i
     cp -r ./src ./train_$i
     cd ./train_$i || exit
     export RANK_ID=$i
@@ -43,9 +45,9 @@ do
     env > env.log
     if [ -f $CKPT_FILE ]
     then
-      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --data_dir=$DATASET --pretrained=$CKPT_FILE > log.txt 2>&1 &
+      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --train_data_dir=$DATASET --train_pretrained=$CKPT_FILE --is_distributed=1 > log.txt 2>&1 &
     else
-      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --data_dir=$DATASET > log.txt 2>&1 &
+      python train.py --net=$NET_NAME --dataset=$DATASET_NAME --train_data_dir=$DATASET --is_distributed=1 > log.txt 2>&1 &
     fi
 
     cd ../

@@ -18,10 +18,6 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
-    - [导出过程](#导出过程)
-        - [导出](#导出)
-    - [推理过程](#推理过程)
-        - [推理](#推理)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练准确率结果](#训练准确率结果)
@@ -99,20 +95,17 @@ DenseNet-100使用的数据集： Cifar-10
 
 - Ascend处理器环境运行
 
-  ```python
-  # 训练示例
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  ```默认训练densenet121，训练densenet100需要修改 _config_path值，参数路径: src/model_utils/config.py
+  # 单卡训练示例
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # 分布式训练示例
-  sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
+  sh scripts/run_distribute_train.sh 8 /PATH/TO/RANK_TABLE.JSON [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
-  # 评估示例
-  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
-  OR
+  # 单卡评估示例
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+
   sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
-
-  # 推理示例
-  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   ```
 
   分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -121,18 +114,68 @@ DenseNet-100使用的数据集： Cifar-10
 
   [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
 
+- 如果要在modelarts上进行模型的训练，可以参考modelarts的[官方指导文档](https://support.huaweicloud.com/modelarts/) 开始进行模型的训练和推理，具体操作如下：
+
+```python
+#  在modelarts上使用分布式训练densenet121示例:
+#  数据集存放方式
+
+#  ├── ImageNet_Original         # dir
+#    ├── train                   # train dir
+#      ├── train_dataset        # train_dataset dir
+#      ├── train_predtrained    # predtrained dir
+#    ├── eval                    # eval dir
+#      ├── eval_dataset         # eval dataset dir
+#      ├── checkpoint           # ckpt files dir
+
+# (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          设置 "save_ckpt_path=/cache/train/outputs_imagenet/"
+#          设置 "train_data_dir=/cache/data/train/train_dataset/"
+#          设置 "train_pretrained=/cache/data/train/train_predtrained/pred file name" 如果没有预训练权重 train_pretrained=""
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (2)设置网络配置文件的路径 "_config_path=/The path of config in densenet121.yaml/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/densenet"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 ".../ImageNet_Original"(选择ImageNet_Original文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选择a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          设置 "eval_data_dir=/cache/data/eval/eval_dataset/"
+#          设置 "ckpt_files=/cache/data/eval/checkpoint/"  该方法会测试checkpoint文件夹下的所有ckpt文件
+
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置方法a所需要的参数
+#          注意：路径参数不需要加引号
+
+# (3) 设置网络配置文件的路径 "_config_path=/The path of config in densenet121.yaml/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/densenet"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "../ImageNet_Original"(选择ImageNet_Original文件夹路径) ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
+```
+
 - GPU处理器环境运行
 
   ```python
   # 训练示例
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # 分布式训练示例
   sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # 评估示例
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
   sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
@@ -146,13 +189,14 @@ DenseNet-100使用的数据集： Cifar-10
     ├── README.md                          // 所有模型的说明
     ├── densenet
         ├── README.md                    // DenseNet相关说明
-        ├── ascend310_infer              // 实现310推理源代码
+        ├── README_CN.md                 // DenseNet相关说明
         ├── scripts
         │   ├── run_distribute_train.sh             // Ascend分布式shell脚本
         │   ├── run_distribute_train_gpu.sh             // GPU分布式shell脚本
         │   ├── run_distribute_eval.sh              // Ascend评估shell脚本
-        │   ├── run_infer_310.sh                    // Ascend 310 推理shell脚本
         │   ├── run_distribute_eval_gpu.sh              // GPU评估shell脚本
+        │   ├── run_eval_cpu.sh              // CPU训练shell脚本
+        │   ├── run_train_cpu.sh              // CPU评估shell脚本
         ├── src
         │   ├── datasets             // 数据集处理函数
         │   ├── losses
@@ -165,23 +209,30 @@ DenseNet-100使用的数据集： Cifar-10
         │   ├──utils
         │       ├──logging.py            // 日志函数
         │       ├──var_init.py            // DenseNet变量init函数
-        │   ├── config.py             // 网络配置
-        ├── train.py               // 训练脚本
-        ├── export.py              // 导出 AIR,MINDIR模型的脚本
-        ├── postprogress.py        // 310推理后处理脚本
-        ├── eval.py               //  评估脚本
+        │   ├── model_utils
+        │       ├──config.py             // 参数配置
+        │       ├──moxing_adapter.py     // modelarts设备配置
+        │       ├──device_adapter.py     // 设备配置
+        │       ├──local_adapter.py      // 本地设备配置
+        ├── train.py                    // 训练脚本
+        ├── eval.py                     //  评估脚本
+        ├── mindspore_hub_conf.py       //  hub配置脚本
+        ├── export.py                   // 导出脚本
+        ├── postprocess.py                   // 310 推理后处理脚本
+        ├── densenet100_config.yaml         //  配置文件
+        ├── densenet100_config.yaml       //  配置文件
 ```
 
 ## 脚本参数
 
-可通过`train.py`脚本中的参数修改训练行为。`train.py`脚本中的参数如下：
+可通过`densenet100.yaml/densenet121.yaml`脚本中的参数修改训练行为。`densenet100.yaml/densenet121.yaml`脚本中的参数如下：
 
-```param
-  --data_dir              训练数据目录
+```densenet100.yaml/densenet121.yaml
+  --train_data_dir        训练数据目录
   --num_classes           数据集中的类个数（DenseNet-121中默认为1000，DenseNet-100中默认为10）
   --image_size            数据集图片大小
   --per_batch_size        每GPU的迷你批次大小（DenseNet-121中默认为32， DenseNet-100中默认为64）
-  --pretrained            预训练模型的路径
+  --train_pretrained      预训练模型的路径
   --lr_scheduler          LR调度类型，取值包括 exponential，cosine_annealing
   --lr                    初始学习率
   --lr_epochs             lr变化的轮次里程碑
@@ -195,7 +246,7 @@ DenseNet-100使用的数据集： Cifar-10
   --label_smooth          是否在CE中使用标签平滑
   --label_smooth_factor   原始one-hot平滑强度
   --log_interval          日志记录间隔（默认为100）
-  --ckpt_path             存放检查点的路径
+  --save_ckpt_path        存放检查点的路径
   --ckpt_interval         保存检查点的间隔
   --is_save_on_master     在master或all rank上保存检查点
   --is_distributed        是否为多卡（默认为1）
@@ -210,7 +261,7 @@ DenseNet-100使用的数据集： Cifar-10
 - Ascend处理器环境运行
 
   ```python
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
   ```
 
   以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。在ImageNet数据集上训练DenseNet-121的损失值的实现如下：
@@ -229,7 +280,7 @@ DenseNet-100使用的数据集： Cifar-10
 
   ```python
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
   ```
 
   以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
@@ -237,7 +288,7 @@ DenseNet-100使用的数据集： Cifar-10
 - CPU处理器环境运行
 
   ```python
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
   ```
 
   以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
@@ -281,7 +332,7 @@ DenseNet-100使用的数据集： Cifar-10
   运行以下命令进行评估。
 
   ```eval
-  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
@@ -298,7 +349,7 @@ DenseNet-100使用的数据集： Cifar-10
   运行以下命令进行评估。
 
   ```eval
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
   sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
@@ -321,44 +372,13 @@ DenseNet-100使用的数据集： Cifar-10
   运行以下命令进行评估。
 
   ```eval
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='CPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='CPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   ```
 
   上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。DenseNet-100在Cifar-10的测试数据集的准确率如下：
 
   ```log
   2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
-  ```
-
-## 导出过程
-
-### 导出
-
-```shell
-python export.py --net [NET_NAME] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
-```
-
-`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
-
-## 推理过程
-
-### 推理
-
-在推理之前需要先导出模型，AIR模型只能在昇腾910环境上导出，MINDIR可以在任意环境上导出。
-
-```shell
-# 昇腾310 推理
-bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
-```
-
--注: Densnet121网络使用ImageNet数据集,图片的label是将文件夹排序后从0开始编号所得的数字.
-
-推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
-Densenet121网络使用ImageNet推理得到的结果如下:
-
-  ```log
-  2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.56%
-  2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.74%
   ```
 
 # 模型描述

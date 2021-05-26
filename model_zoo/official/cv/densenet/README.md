@@ -15,10 +15,6 @@
         - [Distributed Training](#distributed-training)  
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
-    - [Export Process](#export-process)
-        - [Export](#Export)
-    - [Inferenct Process](#Inferenct-process)
-        - [Inferenct](#Inferenct)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training accuracy results](#training-accuracy-results)
@@ -96,19 +92,16 @@ After installing MindSpore via the official website, you can start training and 
 - running on Ascend
 
   ```python
-  # run training example
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  # run training example default train densenet121 if you want to train densenet100 modify _config_path in /src/model_utils/config.py
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
 
   # run distributed training example
   sh scripts/run_distribute_train.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/PRETRAINED_CKPT
 
   # run evaluation example
-  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
-
-  # run inference example
-  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   ```
 
   For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -117,20 +110,71 @@ After installing MindSpore via the official website, you can start training and 
 
   <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
 
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training densenet121 on modelarts :
+#  Data set storage method
+
+#  ├── ImageNet_Original         # dir
+#    ├── train                   # train dir
+#      ├── train_dataset        # train_dataset dir
+#      ├── train_predtrained    # predtrained dir
+#    ├── eval                    # eval dir
+#      ├── eval_dataset         # eval dataset dir
+#      ├── checkpoint           # ckpt files dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True" 。
+#          set "save_ckpt_path=/cache/train/outputs_imagenet/"
+#          set "train_data_dir=/cache/data/train/train_dataset/"
+#          set "train_pretrained=/cache/data/train/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
+
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in densenet121.yaml/"
+# (3) Set the code path on the modelarts interface "/path/densenet"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ImageNet_Original"(choices ImageNet_Original Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#       a. set "enable_modelarts=True" 。
+#          set "eval_data_dir=/cache/data/eval/eval_dataset/"
+#          set "ckpt_files=/cache/data/eval/checkpoint/"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in densenet121.yaml/"
+# (4) Set the code path on the modelarts interface "/path/densenet"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../ImageNet_Original"(choices ImageNet_Original Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
+```
+
 - running on GPU
 
-  For running on GPU, please change `platform` from `Ascend` to `GPU`
+- For running on GPU, please change `platform` from `Ascend` to `GPU`
 
   ```python
   # run training example
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
 
   # run distributed training example
   sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7  [NET_NAME] [DATASET_NAME] [DATASET_PATH]
 
   # run evaluation example
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
   sh run_distribute_eval_gpu.sh 1 0  [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
@@ -144,12 +188,11 @@ After installing MindSpore via the official website, you can start training and 
     ├── README.md                          // descriptions about all the models
     ├── densenet
         ├── README.md                    // descriptions about densenet
-        ├── ascend310_infer              // application for 310 inference
+        ├── README.md                    // descriptions about densenet
         ├── scripts
         │   ├── run_distribute_train.sh             // shell script for distributed on Ascend
         │   ├── run_distribute_train_gpu.sh             // shell script for distributed on GPU
         │   ├── run_distribute_eval.sh              // shell script for evaluation on Ascend
-        │   ├── run_infer_310.sh                    // shell script for 310 inference
         │   ├── run_distribute_eval_gpu.sh              // shell script for evaluation on GPU
         ├── src
         │   ├── datasets             // dataset processing function
@@ -163,23 +206,30 @@ After installing MindSpore via the official website, you can start training and 
         │   ├──utils
         │       ├──logging.py            // logging function
         │       ├──var_init.py            // densenet variable init function
-        │   ├── config.py             // network config
+        │   ├── model_utils
+        │       ├──config.py             // Parameter config
+        │       ├──moxing_adapter.py     // modelarts device configuration
+        │       ├──device_adapter.py     // Device Config
+        │       ├──local_adapter.py      // local device config
         ├── train.py               // training script
-        ├── export.py              // export checkpoint, surpport .onnx, .air, .mindir convert
-        ├── postprogress.py        // post process for 310 inference
         ├── eval.py               //  evaluation script
+        ├── mindspore_hub_conf.py       //  hub config script
+        ├── postprocess.py                   // 310 Inference post-processing script
+        ├── export.py                   // Export script
+        ├── densenet100_config.yaml      //  config file
+        ├── densenet100_config.yaml      //  config file
 ```
 
 ## [Script Parameters](#contents)
 
-You can modify the training behaviour through the various flags in the `train.py` script. Flags in the `train.py` script are as follows:
+You can modify the training behaviour through the various flags in the `densenet100.yaml/densenet121.yaml` script. Flags in the `densenet100.yaml/densenet121.yaml` script are as follows:
 
-```python
-  --data_dir              train data dir
+```densenet100.yaml/densenet121.yaml
+  --train_data_dir              train data dir
   --num_classes           num of classes in dataset(default:1000 for densenet121; 10 for densenet100)
   --image_size            image size of the dataset
   --per_batch_size        mini-batch size (default: 32 for densenet121; 64 for densenet100) per gpu
-  --pretrained            path of pretrained model
+  --train_pretrained            path of pretrained model
   --lr_scheduler          type of LR schedule: exponential, cosine_annealing
   --lr                    initial learning rate
   --lr_epochs             epoch milestone of lr changing
@@ -193,7 +243,7 @@ You can modify the training behaviour through the various flags in the `train.py
   --label_smooth          whether to use label smooth in CE
   --label_smooth_factor   smooth strength of original one-hot
   --log_interval          logging interval(default:100)
-  --ckpt_path             path to save checkpoint
+  --save_ckpt_path             path to save checkpoint
   --ckpt_interval         the interval to save checkpoint
   --is_save_on_master     save checkpoint on master or all rank
   --is_distributed        if multi device(default: 1)
@@ -208,7 +258,7 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on Ascend
 
   ```python
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir /PATH/TO/DATASET --train_pretrained /PATH/TO/PRETRAINED_CKPT --is_distributed 0 > train.log 2>&1 &
   ```
 
   The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`. The loss value of training DenseNet121 on ImageNet will be achieved as follows:
@@ -227,7 +277,7 @@ You can modify the training behaviour through the various flags in the `train.py
 
   ```python
   export CUDA_VISIBLE_DEVICES=0
-  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  python train.py --net [NET_NAME] --dataset [DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
@@ -237,7 +287,7 @@ You can modify the training behaviour through the various flags in the `train.py
 - running on CPU
 
   ```python
-  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
+  python train.py --net=[NET_NAME] --dataset=[DATASET_NAME] --train_data_dir=[DATASET_PATH] --is_distributed=0 --device_target='CPU' > train.log 2>&1 &
   ```
 
   The python command above will run in the background, The log and model checkpoint will be generated in `output/202x-xx-xx_time_xx_xx_xx/`.
@@ -281,7 +331,7 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation.
 
   ```python
-  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --data_dir /PATH/TO/DATASET --pretrained /PATH/TO/CHECKPOINT > eval.log 2>&1 &
+  python eval.py --net [NET_NAME] --dataset [DATASET_NAME] --eval_data_dir /PATH/TO/DATASET --ckpt_files /PATH/TO/CHECKPOINT > eval.log 2>&1 &
   OR
   sh scripts/run_distribute_eval.sh 8 rank_table.json [NET_NAME] [DATASET_NAME] /PATH/TO/DATASET /PATH/TO/CHECKPOINT
   ```
@@ -298,7 +348,7 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation.
 
   ```python
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='GPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   OR
   sh run_distribute_eval_gpu.sh 1 0 [NET_NAME] [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
@@ -321,44 +371,13 @@ You can modify the training behaviour through the various flags in the `train.py
   running the command below for evaluation.
 
   ```python
-  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --data_dir=[DATASET_PATH] --device_target='CPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  python eval.py --net=[NET_NAME] --dataset=[DATASET_NAME] --eval_data_dir=[DATASET_PATH] --device_target='CPU' --ckpt_files=[CHECKPOINT_PATH] > eval.log 2>&1 &
   ```
 
   The above python command will run in the background. You can view the results through the file "eval/eval.log".  The accuracy of evaluating DenseNet100 on the test dataset of Cifar-10 will be as follows:
 
   ```log
   2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
-  ```
-
-## [Export Process](#contents)
-
-### export
-
-```shell
-python export.py --net [NET_NAME] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
-```
-
-`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
-
-## [Inference Process](#contents)
-
-### Inference
-
-Before performing inference, we need to export the model first. Air model can only be exported in Ascend 910 environment, mindir can be exported in any environment.
-
-```shell
-# Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
-```
-
--NOTE:Ascend310 inference use Imagenet dataset . The label of the image is the number of folder which is started from 0 after sorting.
-
-Inference result is saved in current path, you can find result like this in acc.log file.
-The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:
-
-  ```log
-  2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.56%
-  2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.74%
   ```
 
 # [Model Description](#contents)

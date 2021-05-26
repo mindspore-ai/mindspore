@@ -47,17 +47,17 @@ then
         mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
                                                  --net=$3 \
                                                  --dataset=$4 \
-                                                 --data_dir=$5 \
+                                                 --train_data_dir=$5 \
                                                  --device_target='GPU' \
-                                                 --pretrained=$6 > train.log 2>&1 &
+                                                 --train_pretrained=$6 > train.log 2>&1 &
     else
         python3 ${BASEPATH}/../train.py \
                 --net=$3 \
                 --dataset=$4 \
-                --data_dir=$5 \
+                --train_data_dir=$5 \
                 --is_distributed=0 \
                 --device_target='GPU' \
-                --pretrained=$6 > train.log 2>&1 &
+                --train_pretrained=$6 > train.log 2>&1 &
     fi
 else
     if [ $1 -gt 1 ]
@@ -65,13 +65,13 @@ else
         mpirun -n $1 --allow-run-as-root python3 ${BASEPATH}/../train.py \
                                                  --net=$3 \
                                                  --dataset=$4 \
-                                                 --data_dir=$5 \
+                                                 --train_data_dir=$5 \
                                                  --device_target='GPU' > train.log 2>&1 &
     else
         python3 ${BASEPATH}/../train.py \
                 --net=$3 \
                 --dataset=$4 \
-                --data_dir=$5 \
+                --train_data_dir=$5 \
                 --is_distributed=0 \
                 --device_target='GPU' > train.log 2>&1 &
     fi
