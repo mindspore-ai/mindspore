@@ -19,7 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-void GatherNdCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -56,28 +57,14 @@ void GatherNdCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool GatherNdCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                               const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeInt32) {
-    return LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    return LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    return LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Only support int, float, but actual data type is " << TypeIdLabel(dtype_);
-  }
-}
-
 template <typename T>
-bool GatherNdCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool GatherNdCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  //
   size_t output_dim0 = dims_[0];
   size_t output_dim1 = dims_[1];
   size_t indices_dim1 = dims_[2];

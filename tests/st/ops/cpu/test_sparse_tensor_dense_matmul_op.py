@@ -54,10 +54,10 @@ def judge_result_correct(result, expect):
 @pytest.mark.env_onecard
 def test_sparse_tensor_dense_matmul_no_transpose():
     indices_np = np.array([[0, 0], [1, 1], [2, 2], [2, 3]], np.int64)
-    values_np = np.array([2, 3, 4, 5], np.float32)
+    values_np = np.array([2, 3, 4, 5], np.float16)
     dense_shape = (3, 4)
-    sparse_np = np.array([[2, 0, 0, 0], [0, 3, 0, 0], [0, 0, 4, 5]], dtype=np.float32)
-    dense_np = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]], dtype=np.float32)
+    sparse_np = np.array([[2, 0, 0, 0], [0, 3, 0, 0], [0, 0, 4, 5]], dtype=np.float16)
+    dense_np = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]], dtype=np.float16)
 
     sparse_dense_matmul_net = SparseDenseMatmulNet()
     indices = Tensor(indices_np)
@@ -69,12 +69,12 @@ def test_sparse_tensor_dense_matmul_no_transpose():
 
     grad_net = GradNet(sparse_dense_matmul_net)
     grad_ms = grad_net(indices, values, dense_shape, dense)
-    expect_values_grad = np.array([3., 12., 21., 30.], dtype=np.float32)
+    expect_values_grad = np.array([3., 12., 21., 30.], dtype=np.float16)
     judge_result_correct(grad_ms[1].asnumpy(), expect_values_grad)
     expect_dense_grad = np.array([[2., 2., 2.],
                                   [3., 3., 3.],
                                   [4., 4., 4.],
-                                  [5., 5., 5.]], dtype=np.float32)
+                                  [5., 5., 5.]], dtype=np.float16)
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 

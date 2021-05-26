@@ -17,182 +17,129 @@ import numpy as np
 import pytest
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.nn import Cell
+from mindspore import nn
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="CPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-class SparseToDenseNet(Cell):
+class SparseToDenseNet(nn.Cell):
     def __init__(self):
         super(SparseToDenseNet, self).__init__()
         self.sparse_to_dense = P.SparseToDense()
 
-    def construct(self, indices, values, dense_shape):
-        return self.sparse_to_dense(indices, values, dense_shape)
+    def construct(self, indices, values, sparse_shape):
+        return self.sparse_to_dense(indices, values, sparse_shape)
+
+
+class GradNet(nn.Cell):
+    def __init__(self, network):
+        super(GradNet, self).__init__()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, indices, values, sparse_shape, sense):
+        return self.grad(self.network)(indices, values, sparse_shape, sense)
+
+
+def judge_result_correct(result, expect):
+    assert result.dtype == expect.dtype
+    assert result.shape == expect.shape
+    assert np.allclose(result, expect)
+
+
+def sparse_to_dense_int(i_type, v_type):
+    indices = np.array([[0, 1], [1, 2]]).astype(i_type)
+    values = np.array([7, 8]).astype(v_type)
+    sparse_shape = (3, 3)
+    forward_net = SparseToDenseNet()
+    forward_output = forward_net(Tensor(indices), Tensor(values), sparse_shape)
+    expect_forward_output = np.array([[0, 7, 0],
+                                      [0, 0, 8],
+                                      [0, 0, 0]]).astype(v_type)
+    judge_result_correct(forward_output.asnumpy(), expect_forward_output)
+
+    grad_net = GradNet(forward_net)
+    sense = Tensor(np.arange(9).reshape((3, 3)).astype(v_type))
+    grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape, sense)
+    expect_grad_output = np.array([1, 5]).astype(v_type)
+    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
+
+
+def sparse_to_dense_float(i_type, v_type):
+    indices = np.array([[0, 1, 0], [1, 2, 1], [2, 3, 2], [0, 2, 3]]).astype(i_type)
+    values = np.array([6.5, 7.5, 9.5, 10.5]).astype(v_type)
+    sparse_shape = (3, 4, 4)
+    forward_net = SparseToDenseNet()
+    forward_output = forward_net(Tensor(indices), Tensor(values), sparse_shape)
+    expect_forward_output = np.array([[[0, 0, 0, 0],
+                                       [6.5, 0, 0, 0],
+                                       [0, 0, 0, 10.5],
+                                       [0, 0, 0, 0]],
+                                      [[0, 0, 0, 0],
+                                       [0, 0, 0, 0],
+                                       [0, 7.5, 0, 0],
+                                       [0, 0, 0, 0]],
+                                      [[0, 0, 0, 0],
+                                       [0, 0, 0, 0],
+                                       [0, 0, 0, 0],
+                                       [0, 0, 9.5, 0]]]).astype(v_type)
+    judge_result_correct(forward_output.asnumpy(), expect_forward_output)
+
+    grad_net = GradNet(forward_net)
+    sense = Tensor(np.arange(48).reshape((3, 4, 4)).astype(v_type) + 0.8)
+    grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape, sense)
+    expect_grad_output = np.array([4.8, 25.8, 46.8, 11.8]).astype(v_type)
+    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
+
+
+def sparse_to_dense_1D(i_type, v_type):
+    indices = np.array([[8], [2], [6], [4]]).astype(i_type)
+    values = np.array([6.5, 7.5, 9.5, 10.5]).astype(v_type)
+    sparse_shape = (10,)
+    forward_net = SparseToDenseNet()
+    forward_output = forward_net(Tensor(indices), Tensor(values), sparse_shape)
+    expect_forward_output = np.array([0, 0, 7.5, 0, 10.5, 0, 9.5, 0, 6.5, 0]).astype(v_type)
+    judge_result_correct(forward_output.asnumpy(), expect_forward_output)
+
+    grad_net = GradNet(forward_net)
+    sense = Tensor(np.arange(10).astype(v_type) + 0.8)
+    grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape, sense)
+    expect_grad_output = np.array([8.8, 2.8, 6.8, 4.8]).astype(v_type)
+    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
+
+
+indices_types = (np.int32, np.int64)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_to_dense_A():
-    np.random.seed(0)
-    indices = np.array([[0, 1], [1, 2]]).astype(np.int32)
-    values = np.array([7, 8]).astype(np.int32)
-    dense_shape = (3, 4)
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    expect_output = np.array([[0, 7, 0, 0],
-                              [0, 0, 8, 0],
-                              [0, 0, 0, 0]]).astype(np.int32)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+def test_sparse_to_dense_int():
+    values_types = (np.bool_,
+                    np.uint8, np.uint16, np.uint32, np.uint64,
+                    np.int8, np.int16, np.int32, np.int64)
+    for i_type in indices_types:
+        for v_type in values_types:
+            sparse_to_dense_int(i_type, v_type)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_to_dense_B():
-    np.random.seed(0)
-    indices = np.array([[0, 1], [1, 2], [2, 3]]).astype(np.int32)
-    values = np.array([6.5, 7.5, 9.5]).astype(np.float64)
-    dense_shape = (3, 4)
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    expect_output = np.array([[0, 6.5, 0, 0],
-                              [0, 0, 7.5, 0],
-                              [0, 0, 0, 9.5]]).astype(np.float64)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+def test_sparse_to_dense_float():
+    values_types = (np.float16, np.float32, np.float64)
+    for i_type in indices_types:
+        for v_type in values_types:
+            sparse_to_dense_float(i_type, v_type)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_sparse_to_dense_C():
-    np.random.seed(0)
-    indices = np.array([[0, 1, 0, 0],
-                        [1, 0, 0, 2],
-                        [2, 0, 3, 0],
-                        [4, 2, 3, 5]]).astype(np.int32)
-    values = np.array([26.5, 17.5, 39.5, 11.5]).astype(np.float16)
-    dense_shape = (10, 8, 5, 10)
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    expect_output = np.zeros([10, 8, 5, 10]).astype(np.float16)
-    for i in range(0, indices.shape[0]):
-        j = indices[i][0]
-        k = indices[i][1]
-        l = indices[i][2]
-        m = indices[i][3]
-        expect_output[j][k][l][m] = values[i]
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_D():
-    np.random.seed(0)
-    indices = np.array([[0, 1, 0, 0, 2, 1],
-                        [9, 0, 0, 8, 0, 0],
-                        [2, 0, 4, 0, 1, 1],
-                        [4, 2, 3, 5, 0, 2],
-                        [7, 4, 3, 9, 0, 1]]).astype(np.int32)
-    values = np.array([1, 1, 1, 1, 1]).astype(np.bool)
-    dense_shape = (10, 5, 5, 10, 3, 3)
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    expect_output = np.zeros([10, 5, 5, 10, 3, 3]).astype(np.bool)
-    for i in range(0, indices.shape[0]):
-        j = indices[i][0]
-        k = indices[i][1]
-        l = indices[i][2]
-        m = indices[i][3]
-        u = indices[i][4]
-        v = indices[i][5]
-        expect_output[j][k][l][m][u][v] = values[i]
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_E():
-    indices = np.array([2, 5, 7]).astype(np.int32)
-    values = np.array([17, 18, 19]).astype(np.int8)
-    dense_shape = ([10])
-    expect_output = np.zeros([10]).astype(np.int8)
-    for i in range(0, indices.shape[0]):
-        j = indices[i]
-        expect_output[j] = values[i]
-
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_F():
-    indices = np.array([2, 4, 18]).astype(np.int32)
-    values = np.array([-23, 18, -1]).astype(np.int16)
-    dense_shape = ([20])
-    expect_output = np.zeros([20]).astype(np.int16)
-    for i in range(0, indices.shape[0]):
-        j = indices[i]
-        expect_output[j] = values[i]
-
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_G():
-    indices = np.array([2, 5, 7]).astype(np.int32)
-    values = np.array([17, 18, 19]).astype(np.uint8)
-    dense_shape = ([10])
-    expect_output = np.zeros([10]).astype(np.uint8)
-    for i in range(0, indices.shape[0]):
-        j = indices[i]
-        expect_output[j] = values[i]
-
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_H():
-    indices = np.array([2, 5, 7]).astype(np.int32)
-    values = np.array([17, 18, 19]).astype(np.uint16)
-    dense_shape = ([10])
-    expect_output = np.zeros([10]).astype(np.uint16)
-    for i in range(0, indices.shape[0]):
-        j = indices[i]
-        expect_output[j] = values[i]
-
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_sparse_to_dense_I():
-    indices = np.array([2, 5, 7]).astype(np.int64)
-    values = np.array([17, 18, 19]).astype(np.float16)
-    dense_shape = ([10])
-    expect_output = np.zeros([10]).astype(np.float16)
-    for i in range(0, indices.shape[0]):
-        j = indices[i]
-        expect_output[j] = values[i]
-
-    net = SparseToDenseNet()
-    result = net(Tensor(indices), Tensor(values), dense_shape)
-    assert np.allclose(result.asnumpy(), expect_output, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+def test_sparse_to_dense_1D():
+    values_types = (np.float16, np.float32, np.float64)
+    for i_type in indices_types:
+        for v_type in values_types:
+            sparse_to_dense_1D(i_type, v_type)

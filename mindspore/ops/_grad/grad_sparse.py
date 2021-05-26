@@ -54,7 +54,7 @@ def get_bprop_sparse_to_dense(self):
     """Generate bprop for SparseToDense"""
 
     def bprop(indices, values, dense_shape, out, dout):
-        return zeros_like(indices), dout, zeros_like(dense_shape)
+        return zeros_like(indices), F.gather_nd(dout, indices), zeros_like(dense_shape)
 
     return bprop
 
