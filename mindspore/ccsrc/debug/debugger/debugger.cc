@@ -340,7 +340,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
     }
   } else if (graph_proto_list_.size() == 1) {
     if (device_target_ == kGPUDevice && num_step_ != 0) {
-      if (!(run_level_ == "node" && suspended_at_last_kernel_)) {
+      if (debugger_enabled_ && !(run_level_ == "node" && suspended_at_last_kernel_)) {
         CommandLoop();
       }
       debug_services_->ResetLoadedTensors();
