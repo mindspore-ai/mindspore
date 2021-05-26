@@ -42,9 +42,9 @@ class RISE(PerturbationAttribution):
     Args:
         network (Cell): The black-box model to be explained.
         activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
-            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
-            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
-            when combining this function with network, the final output is the probability of the input.
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
+            tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
+            as when combining this function with network, the final output is the probability of the input.
         perturbation_per_eval (int, optional): Number of perturbations for each inference during inferring the
             perturbed samples. Within the memory capacity, usually the larger this number is, the faster the
             explanation is obtained. Default: 32.
@@ -120,30 +120,27 @@ class RISE(PerturbationAttribution):
         self._verify_data(inputs, targets)
         height, width = inputs.shape[2], inputs.shape[3]
 
-        batch_size = inputs.shape[0]
-
         if self._num_classes is None:
-            logits = self.network(inputs)
-            num_classes = logits.shape[1]
-            self._num_classes = num_classes
+            self._num_classes = self.network(inputs).shape[1]
 
         # Due to the unsupported Op of slice assignment, we use numpy array here
         targets = self._unify_targets(inputs, targets)
 
-        attr_np = np.zeros(shape=(batch_size, targets.shape[1], height, width))
+        attr_np = np.zeros(shape=(inputs.shape[0], targets.shape[1], height, width))
 
         cal_times = math.ceil(self._num_masks / self._perturbation_per_eval)
 
         for idx, data in enumerate(inputs):
             bg_data = data * 0 + self._base_value
+            data = op.reshape(data, (1, -1, height, width))
             for j in range(cal_times):
                 bs = min(self._num_masks - j * self._perturbation_per_eval,
                          self._perturbation_per_eval)
-                data = op.reshape(data, (1, -1, height, width))
+
                 masks = self._generate_masks(data, bs)
 
-                masked_input = masks * data + (1 - masks) * bg_data
-                weights = self._activation_fn(self.network(masked_input))
+                weights = masks * data + (1 - masks) * bg_data
+                weights = self._activation_fn(self.network(weights))
                 while len(weights.shape) > 2:
                     weights = op.mean(weights, axis=2)
 

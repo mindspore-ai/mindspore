@@ -59,6 +59,16 @@ def _np_to_image(img_np, mode):
     return Image.fromarray(np.uint8(img_np * 255), mode=mode)
 
 
+class _VerifyFlag:
+    """Verification flags of dataset and settings of ImageClassificationRunner."""
+    ALL = 0xFFFFFFFF
+    REGISTRATION = 1
+    DATA_N_NETWORK = 1 << 1
+    SALIENCY = 1 << 2
+    HOC = 1 << 3
+    ENVIRONMENT = 1 << 4
+
+
 class ImageClassificationRunner:
     """
     A high-level API for users to generate and store results of the explanation methods and the evaluation methods.
@@ -73,9 +83,9 @@ class ImageClassificationRunner:
             share the exact same length and order of the network outputs.
         network (Cell): The network(with logit outputs) to be explained.
         activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
-            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
-            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
-            when combining this function with network, the final output is the probability of the input.
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
+            tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
+            as when combining this function with network, the final output is the probability of the input.
 
     Examples:
         >>> from mindspore.explainer import ImageClassificationRunner
@@ -154,14 +164,12 @@ class ImageClassificationRunner:
         self._hoc_searcher = None
         self._summary_timestamp = None
         self._sample_index = -1
+        self._manifest = None
 
         self._full_network = SequentialCell([self._network, activation_fn])
         self._full_network.set_train(False)
 
-        self._manifest = None
-
-        self._verify_data_n_settings(check_data_n_network=True,
-                                     check_environment=True)
+        self._verify(_VerifyFlag.DATA_N_NETWORK | _VerifyFlag.ENVIRONMENT)
 
     def register_saliency(self,
                           explainers,
@@ -203,7 +211,7 @@ class ImageClassificationRunner:
         self._benchmarkers = benchmarkers
 
         try:
-            self._verify_data_n_settings(check_saliency=True, check_environment=True)
+            self._verify(_VerifyFlag.SALIENCY | _VerifyFlag.ENVIRONMENT)
         except (ValueError, TypeError):
             self._explainers = None
             self._benchmarkers = None
@@ -227,7 +235,7 @@ class ImageClassificationRunner:
         self._hoc_searcher = hoc.Searcher(self._full_network)
 
         try:
-            self._verify_data_n_settings(check_hoc=True, check_environment=True)
+            self._verify(_VerifyFlag.HOC | _VerifyFlag.ENVIRONMENT)
         except ValueError:
             self._hoc_searcher = None
             raise
@@ -266,7 +274,7 @@ class ImageClassificationRunner:
             TypeError: Be raised for any data or settings' type problem.
             RuntimeError: Be raised for any runtime problem.
         """
-        self._verify_data_n_settings(check_all=True)
+        self._verify(_VerifyFlag.ALL)
         self._manifest = {"saliency_map": False,
                           "benchmark": False,
                           "uncertainty": False,
@@ -347,140 +355,148 @@ class ImageClassificationRunner:
         Returns:
             dict, The map of sample d to the union of its ground truth and predicted labels.
         """
-        has_uncertainty_rec = False
         sample_id_labels = {}
         self._sample_index = 0
         ds.config.set_seed(self._DATASET_SEED)
         for j, next_element in enumerate(self._dataset):
             now = time()
-            inputs, labels, _ = self._unpack_next_element(next_element)
-            prob = self._full_network(inputs).asnumpy()
-
-            if self._uncertainty is not None:
-                prob_var = self._uncertainty.eval_epistemic_uncertainty(inputs)
-            else:
-                prob_var = None
-
-            for idx, inp in enumerate(inputs):
-                gt_labels = labels[idx]
-                gt_probs = [float(prob[idx][i]) for i in gt_labels]
-
-                if prob_var is not None:
-                    gt_prob_vars = [float(prob_var[idx][i]) for i in gt_labels]
-                    gt_itl_lows, gt_itl_his, gt_prob_sds = \
-                        self._calc_beta_intervals(gt_probs, gt_prob_vars)
-
-                data_np = _convert_image_format(np.expand_dims(inp.asnumpy(), 0), 'NCHW')
-                original_image = _np_to_image(_normalize(data_np), mode='RGB')
-                original_image_path = self._save_original_image(self._sample_index, original_image)
-
-                predicted_labels = [int(i) for i in (prob[idx] > threshold).nonzero()[0]]
-                predicted_probs = [float(prob[idx][i]) for i in predicted_labels]
-
-                if prob_var is not None:
-                    predicted_prob_vars = [float(prob_var[idx][i]) for i in predicted_labels]
-                    predicted_itl_lows, predicted_itl_his, predicted_prob_sds = \
-                        self._calc_beta_intervals(predicted_probs, predicted_prob_vars)
-
-                union_labs = list(set(gt_labels + predicted_labels))
-                sample_id_labels[str(self._sample_index)] = union_labs
-
-                explain = Explain()
-                explain.sample_id = self._sample_index
-                explain.image_path = original_image_path
-                summary.add_value("explainer", "sample", explain)
-
-                explain = Explain()
-                explain.sample_id = self._sample_index
-                explain.ground_truth_label.extend(gt_labels)
-                explain.inference.ground_truth_prob.extend(gt_probs)
-                explain.inference.predicted_label.extend(predicted_labels)
-                explain.inference.predicted_prob.extend(predicted_probs)
-
-                if prob_var is not None:
-                    explain.inference.ground_truth_prob_sd.extend(gt_prob_sds)
-                    explain.inference.ground_truth_prob_itl95_low.extend(gt_itl_lows)
-                    explain.inference.ground_truth_prob_itl95_hi.extend(gt_itl_his)
-                    explain.inference.predicted_prob_sd.extend(predicted_prob_sds)
-                    explain.inference.predicted_prob_itl95_low.extend(predicted_itl_lows)
-                    explain.inference.predicted_prob_itl95_hi.extend(predicted_itl_his)
-
-                    has_uncertainty_rec = True
-
-                summary.add_value("explainer", "inference", explain)
-                summary.record(1)
-
-                if self._is_hoc_registered:
-                    self._run_hoc(summary, self._sample_index, inputs[idx], prob[idx])
-
-                self._sample_index += 1
+            self._run_sample(summary, next_element, sample_id_labels, threshold)
+            self._sample_index += 1
             self._spaced_print("Finish running and writing {}-th batch inference data."
                                " Time elapsed: {:.3f} s".format(j, time() - now))
-
-        if has_uncertainty_rec:
-            self._manifest["uncertainty"] = True
-
         return sample_id_labels
+
+    def _run_sample(self, summary, next_element, sample_id_labels, threshold):
+        """
+        Run inference for a sample.
+
+        Args:
+            summary (SummaryRecord): The summary object to store the data.
+            next_element (tuple): The next dataset sample.
+            sample_id_labels (dict): The sample id to labels dictionary.
+            threshold (float): The threshold for prediction.
+        """
+        inputs, labels, _ = self._unpack_next_element(next_element)
+        prob = self._full_network(inputs).asnumpy()
+
+        if self._uncertainty is not None:
+            prob_var = self._uncertainty.eval_epistemic_uncertainty(inputs)
+        else:
+            prob_var = None
+
+        for idx, inp in enumerate(inputs):
+            gt_labels = labels[idx]
+            gt_probs = [float(prob[idx][i]) for i in gt_labels]
+
+            if prob_var is not None:
+                gt_prob_vars = [float(prob_var[idx][i]) for i in gt_labels]
+                gt_itl_lows, gt_itl_his, gt_prob_sds = \
+                    self._calc_beta_intervals(gt_probs, gt_prob_vars)
+
+            data_np = _convert_image_format(np.expand_dims(inp.asnumpy(), 0), 'NCHW')
+            original_image = _np_to_image(_normalize(data_np), mode='RGB')
+            original_image_path = self._save_original_image(self._sample_index, original_image)
+
+            predicted_labels = [int(i) for i in (prob[idx] > threshold).nonzero()[0]]
+            predicted_probs = [float(prob[idx][i]) for i in predicted_labels]
+
+            if prob_var is not None:
+                predicted_prob_vars = [float(prob_var[idx][i]) for i in predicted_labels]
+                predicted_itl_lows, predicted_itl_his, predicted_prob_sds = \
+                    self._calc_beta_intervals(predicted_probs, predicted_prob_vars)
+
+            union_labs = list(set(gt_labels + predicted_labels))
+            sample_id_labels[str(self._sample_index)] = union_labs
+
+            explain = Explain()
+            explain.sample_id = self._sample_index
+            explain.image_path = original_image_path
+            summary.add_value("explainer", "sample", explain)
+
+            explain = Explain()
+            explain.sample_id = self._sample_index
+            explain.ground_truth_label.extend(gt_labels)
+            explain.inference.ground_truth_prob.extend(gt_probs)
+            explain.inference.predicted_label.extend(predicted_labels)
+            explain.inference.predicted_prob.extend(predicted_probs)
+
+            if prob_var is not None:
+                explain.inference.ground_truth_prob_sd.extend(gt_prob_sds)
+                explain.inference.ground_truth_prob_itl95_low.extend(gt_itl_lows)
+                explain.inference.ground_truth_prob_itl95_hi.extend(gt_itl_his)
+                explain.inference.predicted_prob_sd.extend(predicted_prob_sds)
+                explain.inference.predicted_prob_itl95_low.extend(predicted_itl_lows)
+                explain.inference.predicted_prob_itl95_hi.extend(predicted_itl_his)
+
+                self._manifest["uncertainty"] = True
+
+            summary.add_value("explainer", "inference", explain)
+            summary.record(1)
+
+            if self._is_hoc_registered:
+                self._run_hoc(summary, self._sample_index, inputs[idx], prob[idx])
+
+    def _run_explainer(self, summary, sample_id_labels, explainer):
+        """
+        Run the explainer.
+
+        Args:
+            summary (SummaryRecord): The summary object to store the data.
+            sample_id_labels (dict): A dict that maps the sample id and its union labels.
+            explainer (_Attribution): An Attribution object to generate saliency maps.
+        """
+        for idx, next_element in enumerate(self._dataset):
+            now = time()
+            self._spaced_print("Start running {}-th explanation data for {}......".format(
+                idx, explainer.__class__.__name__))
+            saliency_dict_lst = self._run_exp_step(next_element, explainer, sample_id_labels, summary)
+            self._spaced_print(
+                "Finish writing {}-th batch explanation data for {}. Time elapsed: {:.3f} s".format(
+                    idx, explainer.__class__.__name__, time() - now))
+
+            if not self._benchmarkers:
+                continue
+
+            for bench in self._benchmarkers:
+                now = time()
+                self._spaced_print(
+                    "Start running {}-th batch {} data for {}......".format(
+                        idx, bench.__class__.__name__, explainer.__class__.__name__))
+                self._run_exp_benchmark_step(next_element, explainer, bench, saliency_dict_lst)
+                self._spaced_print(
+                    "Finish running {}-th batch {} data for {}. Time elapsed: {:.3f} s".format(
+                        idx, bench.__class__.__name__, explainer.__class__.__name__, time() - now))
 
     def _run_saliency(self, summary, sample_id_labels):
         """Run the saliency explanations."""
-        if self._benchmarkers is None or not self._benchmarkers:
-            for exp in self._explainers:
-                start = time()
-                print("Start running and writing explanation data for {}......".format(exp.__class__.__name__))
-                self._sample_index = 0
-                ds.config.set_seed(self._DATASET_SEED)
-                for idx, next_element in enumerate(self._dataset):
-                    now = time()
-                    self._spaced_print("Start running {}-th explanation data for {}......".format(
-                        idx, exp.__class__.__name__))
-                    self._run_exp_step(next_element, exp, sample_id_labels, summary)
-                    self._spaced_print("Finish writing {}-th explanation data for {}. Time elapsed: "
-                                       "{:.3f} s".format(idx, exp.__class__.__name__, time() - now))
-                self._spaced_print(
-                    "Finish running and writing explanation data for {}. Time elapsed: {:.3f} s".format(
-                        exp.__class__.__name__, time() - start))
-        else:
-            for exp in self._explainers:
-                explain = Explain()
+
+        for explainer in self._explainers:
+            explain = Explain()
+            if self._benchmarkers:
                 for bench in self._benchmarkers:
                     bench.reset()
-                print(f"Start running and writing explanation and "
-                      f"benchmark data for {exp.__class__.__name__}......")
-                self._sample_index = 0
-                start = time()
-                ds.config.set_seed(self._DATASET_SEED)
-                for idx, next_element in enumerate(self._dataset):
-                    now = time()
-                    self._spaced_print("Start running {}-th explanation data for {}......".format(
-                        idx, exp.__class__.__name__))
-                    saliency_dict_lst = self._run_exp_step(next_element, exp, sample_id_labels, summary)
-                    self._spaced_print(
-                        "Finish writing {}-th batch explanation data for {}. Time elapsed: {:.3f} s".format(
-                            idx, exp.__class__.__name__, time() - now))
-                    for bench in self._benchmarkers:
-                        now = time()
-                        self._spaced_print(
-                            "Start running {}-th batch {} data for {}......".format(
-                                idx, bench.__class__.__name__, exp.__class__.__name__))
-                        self._run_exp_benchmark_step(next_element, exp, bench, saliency_dict_lst)
-                        self._spaced_print(
-                            "Finish running {}-th batch {} data for {}. Time elapsed: {:.3f} s".format(
-                                idx, bench.__class__.__name__, exp.__class__.__name__, time() - now))
+            print(f"Start running and writing explanation for {explainer.__class__.__name__}......")
+            self._sample_index = 0
+            start = time()
+            ds.config.set_seed(self._DATASET_SEED)
+            self._run_explainer(summary, sample_id_labels, explainer)
 
-                for bench in self._benchmarkers:
-                    benchmark = explain.benchmark.add()
-                    benchmark.explain_method = exp.__class__.__name__
-                    benchmark.benchmark_method = bench.__class__.__name__
+            if not self._benchmarkers:
+                continue
 
-                    benchmark.total_score = bench.performance
-                    if isinstance(bench, LabelSensitiveMetric):
-                        benchmark.label_score.extend(bench.class_performances)
+            for bench in self._benchmarkers:
+                benchmark = explain.benchmark.add()
+                benchmark.explain_method = explainer.__class__.__name__
+                benchmark.benchmark_method = bench.__class__.__name__
 
-                self._spaced_print("Finish running and writing explanation and benchmark data for {}. "
-                                   "Time elapsed: {:.3f} s".format(exp.__class__.__name__, time() - start))
-                summary.add_value('explainer', 'benchmark', explain)
-                summary.record(1)
+                benchmark.total_score = bench.performance
+                if isinstance(bench, LabelSensitiveMetric):
+                    benchmark.label_score.extend(bench.class_performances)
+
+            self._spaced_print("Finish running and writing explanation and benchmark data for {}. "
+                               "Time elapsed: {:.3f} s".format(explainer.__class__.__name__, time() - start))
+            summary.add_value('explainer', 'benchmark', explain)
+            summary.record(1)
 
     def _run_hoc(self, summary, sample_id, sample_input, prob):
         """
@@ -497,84 +513,82 @@ class ImageClassificationRunner:
             sample_input = sample_input.asnumpy()
         if len(sample_input.shape) == 3:
             sample_input = np.expand_dims(sample_input, axis=0)
-        has_rec = False
-        explain = Explain()
-        explain.sample_id = sample_id
+
+        explain = None
         str_mask = hoc.auto_str_mask(sample_input)
         compiled_mask = None
+
         for label_idx, label_prob in enumerate(prob):
-            if label_prob > self._hoc_searcher.threshold:
-                if compiled_mask is None:
-                    compiled_mask = hoc.compile_mask(str_mask, sample_input)
-                try:
-                    edit_tree, layer_outputs = self._hoc_searcher.search(sample_input, label_idx, compiled_mask)
-                except hoc.NoValidResultError:
-                    log.warning(f"No Hierarchical Occlusion result was found in sample#{sample_id} "
-                                f"label:{self._labels[label_idx]}, skipped.")
-                    continue
-                has_rec = True
-                hoc_rec = explain.hoc.add()
-                hoc_rec.label = label_idx
-                hoc_rec.mask = str_mask
-                layer_count = edit_tree.max_layer + 1
-                for layer in range(layer_count):
-                    steps = edit_tree.get_layer_or_leaf_steps(layer)
-                    layer_output = layer_outputs[layer]
-                    hoc_layer = hoc_rec.layer.add()
-                    hoc_layer.prob = layer_output
-                    for step in steps:
-                        hoc_layer.box.extend(list(step.box))
-        if has_rec:
+            if label_prob <= self._hoc_searcher.threshold:
+                continue
+            if compiled_mask is None:
+                compiled_mask = hoc.compile_mask(str_mask, sample_input)
+            try:
+                edit_tree, layer_outputs = self._hoc_searcher.search(sample_input, label_idx, compiled_mask)
+            except hoc.NoValidResultError:
+                log.warning(f"No Hierarchical Occlusion result was found in sample#{sample_id} "
+                            f"label:{self._labels[label_idx]}, skipped.")
+                continue
+
+            if explain is None:
+                explain = Explain()
+                explain.sample_id = sample_id
+
+            self._add_hoc_result_to_explain(label_idx, str_mask, edit_tree, layer_outputs, explain)
+
+        if explain is not None:
             summary.add_value("explainer", "hoc", explain)
             summary.record(1)
             self._manifest['hierarchical_occlusion'] = True
 
-    def _run_exp_step(self, next_element, explainer, sample_id_labels, summary):
+    @staticmethod
+    def _add_hoc_result_to_explain(label_idx, str_mask, edit_tree, layer_outputs, explain):
         """
-        Run the explanation for each step and write explanation results into summary.
+        Add HOC result to Explain record.
 
         Args:
-            next_element (Tuple): Data of one step
-            explainer (_Attribution): An Attribution object to generate saliency maps.
-            sample_id_labels (dict): A dict that maps the sample id and its union labels.
-            summary (SummaryRecord): The summary object to store the data.
-
-        Returns:
-            list, List of dict that maps label to its corresponding saliency map.
+            label_idx (int): The label index.
+            str_mask (str): The mask string.
+            edit_tree (EditStep): The result HOC edit tree.
+            layer_outputs (list[float]): The network output confident of each layer.
+            explain (Explain): The Explain record.
         """
-        has_saliency_rec = False
-        inputs, labels, _ = self._unpack_next_element(next_element)
-        sample_index = self._sample_index
-        unions = []
-        for _ in range(len(labels)):
-            unions_labels = sample_id_labels[str(sample_index)]
-            unions.append(unions_labels)
-            sample_index += 1
+        hoc_rec = explain.hoc.add()
+        hoc_rec.label = label_idx
+        hoc_rec.mask = str_mask
+        layer_count = edit_tree.max_layer + 1
+        for layer in range(layer_count):
+            steps = edit_tree.get_layer_or_leaf_steps(layer)
+            layer_output = layer_outputs[layer]
+            hoc_layer = hoc_rec.layer.add()
+            hoc_layer.prob = layer_output
+            for step in steps:
+                hoc_layer.box.extend(list(step.box))
 
-        batch_unions = self._make_label_batch(unions)
+    def _add_exp_step_samples(self, explainer, sample_label_sets, batch_saliency_full, summary):
+        """
+        Add explanation results of samples to summary record.
+
+        Args:
+            explainer (Attribution): The explainer to be run.
+            sample_label_sets (list[list[int]]): The label sets of samples.
+            batch_saliency_full (Tensor): The saliency output from explainer.
+            summary (SummaryRecord): The summary record.
+        """
         saliency_dict_lst = []
-
-        if isinstance(explainer, RISE):
-            batch_saliency_full = explainer(inputs, batch_unions)
-        else:
-            batch_saliency_full = []
-            for i in range(len(batch_unions[0])):
-                batch_saliency = explainer(inputs, batch_unions[:, i])
-                batch_saliency_full.append(batch_saliency)
-            concat = ms.ops.operations.Concat(1)
-            batch_saliency_full = concat(tuple(batch_saliency_full))
-
-        for idx, union in enumerate(unions):
+        has_saliency_rec = False
+        for idx, label_set in enumerate(sample_label_sets):
             saliency_dict = {}
             explain = Explain()
             explain.sample_id = self._sample_index
-            for k, lab in enumerate(union):
+            for k, lab in enumerate(label_set):
                 saliency = batch_saliency_full[idx:idx + 1, k:k + 1]
                 saliency_dict[lab] = saliency
 
                 saliency_np = _normalize(saliency.asnumpy().squeeze())
                 saliency_image = _np_to_image(saliency_np, mode='L')
-                heatmap_path = self._save_heatmap(explainer.__class__.__name__, lab, self._sample_index, saliency_image)
+                heatmap_path = self._save_heatmap(explainer.__class__.__name__, lab,
+                                                  self._sample_index, saliency_image)
 
                 explanation = explain.explanation.add()
                 explanation.explain_method = explainer.__class__.__name__
@@ -589,6 +603,43 @@ class ImageClassificationRunner:
             self._sample_index += 1
             saliency_dict_lst.append(saliency_dict)
 
+        return saliency_dict_lst, has_saliency_rec
+
+    def _run_exp_step(self, next_element, explainer, sample_id_labels, summary):
+        """
+        Run the explanation for each step and write explanation results into summary.
+
+        Args:
+            next_element (Tuple): Data of one step
+            explainer (_Attribution): An Attribution object to generate saliency maps.
+            sample_id_labels (dict): A dict that maps the sample id and its union labels.
+            summary (SummaryRecord): The summary object to store the data.
+
+        Returns:
+            list, List of dict that maps label to its corresponding saliency map.
+        """
+        inputs, labels, _ = self._unpack_next_element(next_element)
+        sample_index = self._sample_index
+        sample_label_sets = []
+        for _ in range(len(labels)):
+            sample_label_sets.append(sample_id_labels[str(sample_index)])
+            sample_index += 1
+
+        batch_label_sets = self._make_label_batch(sample_label_sets)
+
+        if isinstance(explainer, RISE):
+            batch_saliency_full = explainer(inputs, batch_label_sets)
+        else:
+            batch_saliency_full = []
+            for i in range(len(batch_label_sets[0])):
+                batch_saliency = explainer(inputs, batch_label_sets[:, i])
+                batch_saliency_full.append(batch_saliency)
+            concat = ms.ops.operations.Concat(1)
+            batch_saliency_full = concat(tuple(batch_saliency_full))
+
+        saliency_dict_lst, has_saliency_rec = \
+            self._add_exp_step_samples(explainer, sample_label_sets, batch_saliency_full, summary)
+
         if has_saliency_rec:
             self._manifest['saliency_map'] = True
 
@@ -599,25 +650,25 @@ class ImageClassificationRunner:
         inputs, labels, _ = self._unpack_next_element(next_element)
         for idx, inp in enumerate(inputs):
             inp = _EXPAND_DIMS(inp, 0)
+            self._manifest['benchmark'] = True
             if isinstance(benchmarker, LabelAgnosticMetric):
                 res = benchmarker.evaluate(explainer, inp)
                 benchmarker.aggregate(res)
-            else:
-                saliency_dict = saliency_dict_lst[idx]
-                for label, saliency in saliency_dict.items():
-                    if isinstance(benchmarker, Localization):
-                        _, _, bboxes = self._unpack_next_element(next_element, True)
-                        if label in labels[idx]:
-                            res = benchmarker.evaluate(explainer, inp, targets=label, mask=bboxes[idx][label],
-                                                       saliency=saliency)
-                            benchmarker.aggregate(res, label)
-                    elif isinstance(benchmarker, LabelSensitiveMetric):
-                        res = benchmarker.evaluate(explainer, inp, targets=label, saliency=saliency)
+                continue
+            saliency_dict = saliency_dict_lst[idx]
+            for label, saliency in saliency_dict.items():
+                if isinstance(benchmarker, Localization):
+                    _, _, bboxes = self._unpack_next_element(next_element, True)
+                    if label in labels[idx]:
+                        res = benchmarker.evaluate(explainer, inp, targets=label, mask=bboxes[idx][label],
+                                                   saliency=saliency)
                         benchmarker.aggregate(res, label)
-                    else:
-                        raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
-                                        'receive {}'.format(type(benchmarker)))
-            self._manifest['benchmark'] = True
+                elif isinstance(benchmarker, LabelSensitiveMetric):
+                    res = benchmarker.evaluate(explainer, inp, targets=label, saliency=saliency)
+                    benchmarker.aggregate(res, label)
+                else:
+                    raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
+                                    'receive {}'.format(type(benchmarker)))
 
     @staticmethod
     def _calc_beta_intervals(means, variances, prob=0.95):
@@ -638,6 +689,57 @@ class ImageClassificationRunner:
                 sds[i] = 0
         return itl_lows, itl_his, sds
 
+    def _verify(self, flags):
+        """
+        Verify datasets and settings.
+
+        Args:
+            flags (int): Verification flags, use bitwise or '|' to combine multiple flags.
+                Possible bitwise flags are shown as follow.
+
+                - _VerifyFlag.ALL: Verify everything.
+                - _VerifyFlag.REGISTRATION: Verify explainer module registration.
+                - _VerifyFlag.DATA_N_NETWORK: Verify dataset and network.
+                - _VerifyFlag.SALIENCY: Verify saliency related settings.
+                - _VerifyFlag.HOC: Verify HOC related settings.
+                - _VerifyFlag.ENVIRONMENT: Verify the runtime environment.
+
+        Raises:
+                ValueError: Be raised for any data or settings' value problem.
+                TypeError: Be raised for any data or settings' type problem.
+                RuntimeError: Be raised for any runtime problem.
+        """
+        if flags & _VerifyFlag.ENVIRONMENT:
+            device_target = context.get_context('device_target')
+            if device_target not in ("Ascend", "GPU"):
+                raise RuntimeError(f"Unsupported device_target: '{device_target}', "
+                                   f"only 'Ascend' or 'GPU' is supported. "
+                                   f"Please call context.set_context(device_target='Ascend') or "
+                                   f"context.set_context(device_target='GPU').")
+        if flags & (_VerifyFlag.ENVIRONMENT | _VerifyFlag.SALIENCY):
+            if self._is_saliency_registered:
+                mode = context.get_context('mode')
+                if mode != context.PYNATIVE_MODE:
+                    raise RuntimeError("Context mode: GRAPH_MODE is not supported, "
+                                       "please call context.set_context(mode=context.PYNATIVE_MODE).")
+
+        if flags & _VerifyFlag.REGISTRATION:
+            if self._is_uncertainty_registered and not self._is_saliency_registered:
+                raise ValueError("Function register_uncertainty() is called but register_saliency() is not.")
+            if not self._is_saliency_registered and not self._is_hoc_registered:
+                raise ValueError(
+                    "No explanation module was registered, user should at least call register_saliency() "
+                    "or register_hierarchical_occlusion() once with proper arguments.")
+
+        if flags & (_VerifyFlag.DATA_N_NETWORK | _VerifyFlag.SALIENCY | _VerifyFlag.HOC):
+            self._verify_data()
+
+        if flags & _VerifyFlag.DATA_N_NETWORK:
+            self._verify_network()
+
+        if flags & _VerifyFlag.SALIENCY:
+            self._verify_saliency()
+
     def _verify_labels(self):
         """Verify labels."""
         label_set = set()
@@ -651,26 +753,8 @@ class ImageClassificationRunner:
                 raise ValueError(f"Duplicated label:{label}! Please make sure all labels are unique.")
             label_set.add(label)
 
-    def _verify_ds_sample(self, sample):
-        """Verify a dataset sample."""
-        if len(sample) not in [1, 2, 3]:
-            raise ValueError("The dataset should provide [images] or [images, labels], [images, labels, bboxes]"
-                             " as columns.")
-
-        if len(sample) == 3:
-            inputs, labels, bboxes = sample
-            if bboxes.shape[-1] != 4:
-                raise ValueError("The third element of dataset should be bounding boxes with shape of "
-                                 "[batch_size, num_ground_truth, 4].")
-        else:
-            if self._benchmarkers is not None:
-                if any([isinstance(bench, Localization) for bench in self._benchmarkers]):
-                    raise ValueError("The dataset must provide bboxes if Localization is to be computed.")
-
-            if len(sample) == 2:
-                inputs, labels = sample
-            if len(sample) == 1:
-                inputs = sample[0]
+    def _verify_ds_inputs_shape(self, sample, inputs, labels):
+        """Verify a dataset sample's input shape."""
 
         if len(inputs.shape) > 4 or len(inputs.shape) < 3 or inputs.shape[-3] not in [1, 3, 4]:
             raise ValueError(
@@ -696,6 +780,29 @@ class ImageClassificationRunner:
                 raise ValueError(
                     "Hierarchical occlusion is registered, images' short side must be equals to or greater then "
                     "{}, but {} is encountered.".format(hoc.AUTO_IMAGE_SHORT_SIDE_MIN, short_side))
+
+    def _verify_ds_sample(self, sample):
+        """Verify a dataset sample."""
+        if len(sample) not in [1, 2, 3]:
+            raise ValueError("The dataset should provide [images] or [images, labels], [images, labels, bboxes]"
+                             " as columns.")
+
+        if len(sample) == 3:
+            inputs, labels, bboxes = sample
+            if bboxes.shape[-1] != 4:
+                raise ValueError("The third element of dataset should be bounding boxes with shape of "
+                                 "[batch_size, num_ground_truth, 4].")
+        else:
+            if self._benchmarkers is not None:
+                if any([isinstance(bench, Localization) for bench in self._benchmarkers]):
+                    raise ValueError("The dataset must provide bboxes if Localization is to be computed.")
+
+            if len(sample) == 2:
+                inputs, labels = sample
+            if len(sample) == 1:
+                inputs = sample[0]
+
+        self._verify_ds_inputs_shape(sample, inputs, labels)
 
     def _verify_data(self):
         """Verify dataset and labels."""
@@ -742,65 +849,41 @@ class ImageClassificationRunner:
                                      "from no. of labels of runner. Please make them are the same.")
                 benchmarker_classes.append(benchmarker.__class__)
 
-    def _verify_data_n_settings(self,
-                                check_all=False,
-                                check_registration=False,
-                                check_data_n_network=False,
-                                check_saliency=False,
-                                check_hoc=False,
-                                check_environment=False):
+    def _transform_bboxes(self, inputs, labels, bboxes, ifbbox):
         """
-        Verify the validity of dataset and other settings.
-
+        Transform the bounding boxes.
         Args:
-            check_all (bool): Set it True for checking everything.
-            check_registration (bool): Set it True for checking registrations, check if it is enough to invoke run().
-            check_data_n_network (bool): Set it True for checking data and network.
-            check_saliency (bool): Set it True for checking saliency related settings.
-            check_hoc (bool): Set it True for checking HOC related settings.
-            check_environment (bool): Set it True for checking environment conditions.
+            inputs (Tensor): the image data
+            labels (Tensor): the labels
+            bboxes (Tensor): the boudnding boxes data
+            ifbbox (bool): whether to preprocess bboxes. If True, a dictionary that indicates bounding boxes w.r.t
+                label id will be returned. If False, the returned bboxes is the the parsed bboxes.
 
-        Raises:
-            ValueError: Be raised for any data or settings' value problem.
-            TypeError: Be raised for any data or settings' type problem.
-            RuntimeError: Be raised for any runtime problem.
+         Returns:
+            bboxes (Union[list[dict], None, Tensor]): the bounding boxes
         """
-        if check_all:
-            check_registration = True
-            check_data_n_network = True
-            check_saliency = True
-            check_hoc = True
-            check_environment = True
-
-        if check_environment:
-            device_target = context.get_context('device_target')
-            if device_target not in ("Ascend", "GPU"):
-                raise RuntimeError(f"Unsupported device_target: '{device_target}', "
-                                   f"only 'Ascend' or 'GPU' is supported. "
-                                   f"Please call context.set_context(device_target='Ascend') or "
-                                   f"context.set_context(device_target='GPU').")
-        if check_environment or check_saliency:
-            if self._is_saliency_registered:
-                mode = context.get_context('mode')
-                if mode != context.PYNATIVE_MODE:
-                    raise RuntimeError("Context mode: GRAPH_MODE is not supported, "
-                                       "please call context.set_context(mode=context.PYNATIVE_MODE).")
-
-        if check_registration:
-            if self._is_uncertainty_registered and not self._is_saliency_registered:
-                raise ValueError("Function register_uncertainty() is called but register_saliency() is not.")
-            if not self._is_saliency_registered and not self._is_hoc_registered:
-                raise ValueError("No explanation module was registered, user should at least call register_saliency() "
-                                 "or register_hierarchical_occlusion() once with proper arguments.")
-
-        if check_data_n_network or check_saliency or check_hoc:
-            self._verify_data()
-
-        if check_data_n_network:
-            self._verify_network()
-
-        if check_saliency:
-            self._verify_saliency()
+        input_len = len(inputs)
+        if bboxes is not None and ifbbox:
+            bboxes = ms.Tensor(bboxes, ms.int32)
+            masks_lst = []
+            labels = labels.asnumpy().reshape([input_len, -1])
+            bboxes = bboxes.asnumpy().reshape([input_len, -1, 4])
+            for idx, label in enumerate(labels):
+                height, width = inputs[idx].shape[-2], inputs[idx].shape[-1]
+                masks = {}
+                for j, label_item in enumerate(label):
+                    target = int(label_item)
+                    if -1 < target < len(self._labels):
+                        if target not in masks:
+                            mask = np.zeros((1, 1, height, width))
+                        else:
+                            mask = masks[target]
+                        x_min, y_min, x_len, y_len = bboxes[idx][j].astype(int)
+                        mask[:, :, x_min:x_min + x_len, y_min:y_min + y_len] = 1
+                        masks[target] = mask
+                masks_lst.append(masks)
+            bboxes = masks_lst
+        return bboxes
 
     def _transform_data(self, inputs, labels, bboxes, ifbbox):
         """
@@ -828,34 +911,13 @@ class ImageClassificationRunner:
                 bboxes = ms.Tensor(bboxes, ms.int32)
                 bboxes = _EXPAND_DIMS(bboxes, 0)
 
-        input_len = len(inputs)
-        if bboxes is not None and ifbbox:
-            bboxes = ms.Tensor(bboxes, ms.int32)
-            masks_lst = []
-            labels = labels.asnumpy().reshape([input_len, -1])
-            bboxes = bboxes.asnumpy().reshape([input_len, -1, 4])
-            for idx, label in enumerate(labels):
-                height, width = inputs[idx].shape[-2], inputs[idx].shape[-1]
-                masks = {}
-                for j, label_item in enumerate(label):
-                    target = int(label_item)
-                    if -1 < target < len(self._labels):
-                        if target not in masks:
-                            mask = np.zeros((1, 1, height, width))
-                        else:
-                            mask = masks[target]
-                        x_min, y_min, x_len, y_len = bboxes[idx][j].astype(int)
-                        mask[:, :, x_min:x_min + x_len, y_min:y_min + y_len] = 1
-                        masks[target] = mask
-
-                masks_lst.append(masks)
-            bboxes = masks_lst
+        bboxes = self._transform_bboxes(inputs, labels, bboxes, ifbbox)
 
         labels = ms.Tensor(labels, ms.int32)
         if len(labels.shape) == 1:
             labels_lst = [[int(i)] for i in labels.asnumpy()]
         else:
-            labels = labels.asnumpy().reshape([input_len, -1])
+            labels = labels.asnumpy().reshape([len(inputs), -1])
             labels_lst = []
             for item in labels:
                 labels_lst.append(list(set(int(i) for i in item if -1 < int(i) < len(self._labels))))
@@ -914,8 +976,15 @@ class ImageClassificationRunner:
                        self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp)]
         abs_dir_path = self._create_subdir(*path_tokens)
         save_path = os.path.join(abs_dir_path, self._MANIFEST_FILENAME)
-        with open(save_path, 'w') as file:
+        fd = os.open(save_path, os.O_WRONLY | os.O_CREAT)
+        file = os.fdopen(fd, "w")
+        try:
             json.dump(self._manifest, file, indent=4)
+        except IOError:
+            log.error(f"Failed to save manifest as {save_path}!")
+            raise
+        finally:
+            file.close()
         os.chmod(save_path, self._FILE_MODE)
 
     def _save_original_image(self, sample_id, image):

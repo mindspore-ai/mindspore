@@ -219,8 +219,9 @@ class EditStep:
             return cls.apply_masking(image, mask, edit_steps, inplace)
         return cls.apply_unmasking(image, mask, edit_steps, inplace)
 
-    @staticmethod
-    def apply_masking(image,
+    @classmethod
+    def apply_masking(cls,
+                      image,
                       mask,
                       edit_steps,
                       inplace=False):
@@ -245,34 +246,19 @@ class EditStep:
             TypeError: Be raised for any argument or data type problem.
             ValueError: Be raised for any argument or data value problem.
         """
-        check_value_type('image', image, np.ndarray)
-        check_value_type('mask', mask, (str, tuple, float, np.ndarray))
-        if isinstance(mask, tuple):
-            _check_iterable_type('mask', mask, tuple, float)
 
-        if edit_steps is not None:
-            _check_iterable_type('edit_steps', edit_steps, (tuple, list), EditStep)
+        cls._apply_check_args(image, mask, edit_steps)
 
         mask = compile_mask(mask, image)
 
-        if inplace:
-            background = image
-        else:
-            background = np.copy(image)
+        background = image if inplace else np.copy(image)
 
         if not edit_steps:
             return background
 
         for step in edit_steps:
 
-            x_max = step.x + step.width
-            y_max = step.y + step.height
-
-            if x_max > background.shape[-1]:
-                x_max = background.shape[-1]
-
-            if y_max > background.shape[-2]:
-                y_max = background.shape[-2]
+            x_max, y_max = cls._get_step_xy_max(step, background.shape[-1], background.shape[-2])
 
             if x_max <= step.x or y_max <= step.y:
                 continue
@@ -286,8 +272,9 @@ class EditStep:
                     background[..., c, step.y:y_max, step.x:x_max] = mask[c]
         return background
 
-    @staticmethod
-    def apply_unmasking(image,
+    @classmethod
+    def apply_unmasking(cls,
+                        image,
                         mask,
                         edit_steps,
                         inplace=False):
@@ -312,13 +299,8 @@ class EditStep:
             TypeError: Be raised for any argument or data type problem.
             ValueError: Be raised for any argument or data value problem.
         """
-        check_value_type('image', image, np.ndarray)
-        check_value_type('mask', mask, (str, tuple, float, np.ndarray))
-        if isinstance(mask, tuple):
-            _check_iterable_type('mask', mask, tuple, float)
 
-        if edit_steps is not None:
-            _check_iterable_type('edit_steps', edit_steps, (tuple, list), EditStep)
+        cls._apply_check_args(image, mask, edit_steps)
 
         mask = compile_mask(mask, image)
 
@@ -343,14 +325,7 @@ class EditStep:
 
         for step in edit_steps:
 
-            x_max = step.x + step.width
-            y_max = step.y + step.height
-
-            if x_max > background.shape[-1]:
-                x_max = background.shape[-1]
-
-            if y_max > background.shape[-2]:
-                y_max = background.shape[-2]
+            x_max, y_max = cls._get_step_xy_max(step, background.shape[-1], background.shape[-2])
 
             if x_max <= step.x or y_max <= step.y:
                 continue
@@ -358,6 +333,45 @@ class EditStep:
             background[..., step.y:y_max, step.x:x_max] = image[..., step.y:y_max, step.x:x_max]
 
         return background
+
+    @staticmethod
+    def _apply_check_args(image, mask, edit_steps):
+        """
+        Check arguments for apply edit steps.
+
+        Args:
+            image (numpy.ndarray): Image tensor in CHW or NCHW(N=1) format.
+            mask (Union[str, tuple[float, float, float], float, numpy.ndarray]): The mask, type can be
+                str: String mask, e.g. 'gaussian:9' - Gaussian blur with radius of 9.
+                tuple[float, float, float]: RGB solid color mask,
+                float: Grey scale solid color mask.
+                numpy.ndarray: Image mask in CHW or NCHW(N=1) format.
+            edit_steps (list[EditStep], optional): Edit steps to be applied.
+
+        Raises:
+            TypeError: Be raised for any argument or data type problem.
+            ValueError: Be raised for any argument or data value problem.
+        """
+        check_value_type('image', image, np.ndarray)
+        check_value_type('mask', mask, (str, tuple, float, np.ndarray))
+        if isinstance(mask, tuple):
+            _check_iterable_type('mask', mask, tuple, float)
+
+        if edit_steps is not None:
+            _check_iterable_type('edit_steps', edit_steps, (tuple, list), EditStep)
+
+    @staticmethod
+    def _get_step_xy_max(step, x_limit, y_limit):
+        """Get the step x and y max. position."""
+        x_max = step.x + step.width
+        y_max = step.y + step.height
+
+        if x_max > x_limit:
+            x_max = x_limit
+
+        if y_max > y_limit:
+            y_max = y_limit
+        return x_max, y_max
 
 
 class NoValidResultError(RuntimeError):
@@ -522,7 +536,24 @@ class Searcher:
                               pre_edit_steps=None,
                               parent_step=root_step)
         self._process_root_job(image, root_job)
+        return self._touch_result(image, class_idx, root_step)
 
+    def _touch_result(self, image, class_idx, root_step):
+        """
+        Final treatment to the search result.
+
+        Args:
+            image (numpy.ndarray): Image tensor in CHW or NCHW(N=1) format.
+            class_idx (int): Target class index.
+            root_step (EditStep): The searched root step.
+
+        Returns:
+            tuple[EditStep, list[float]], the root edit step and network output of each layer after applied the
+                layer steps.
+
+        Raise:
+            NoValidResultError: Be raised if no valid result was found.
+        """
         # the leaf layer's network output may not meet the threshold,
         # we have to cutoff the unqualified layers
         layer_count = root_step.max_layer + 1
@@ -821,7 +852,6 @@ class _SearchJob:
             workpiece = np.expand_dims(workpiece, axis=0)
 
         # generate input tensors with shifted masked/unmasked region and pack into a batch
-        squeeze = Squeeze()
         best_new_workpiece = None
         best_output = None
         best_edit = None
@@ -854,45 +884,23 @@ class _SearchJob:
                 batch_i += 1
                 batch_uvs.append((u, v))
                 batch_steps.append(edit_step)
-                if batch_i == self.batch_size:
-                    # the batch is full, inference and empty it
-                    batch_output = self.network(Tensor(batch))
-                    batch_output = batch_output[:, self.class_idx]
-                    if len(batch_output.shape) > 1:
-                        batch_output = squeeze(batch_output)
-                    if self.by_masking:
-                        batch_best_i = np.argmin(batch_output.asnumpy())
-                    else:
-                        batch_best_i = np.argmax(batch_output.asnumpy())
-                    batch_best_output = batch_output[int(batch_best_i)].asnumpy().item()
+                if batch_i != self.batch_size:
+                    continue
 
-                    if best_output is None or self._is_output0_better(batch_best_output, best_output):
-                        best_output = batch_best_output
-                        best_uv = batch_uvs[batch_best_i]
-                        best_edit = batch_steps[batch_best_i]
-                        best_new_workpiece = batch[batch_best_i]
+                # the batch is full, inference and empty it
+                updated = self._update_best(batch, batch_uvs, batch_steps, best_output)
+                if updated:
+                    best_output, best_uv, best_edit, best_new_workpiece = updated
 
-                    batch = np.repeat(workpiece, repeats=self.batch_size, axis=0)
-                    batch_uvs = []
-                    batch_i = 0
+                batch = np.repeat(workpiece, repeats=self.batch_size, axis=0)
+                batch_uvs = []
+                batch_i = 0
 
         if batch_i > 0:
             # don't forget the last half full batch
-            batch_output = self.network(Tensor(batch))
-            batch_output = batch_output[:, self.class_idx]
-            if len(batch_output.shape) > 1:
-                batch_output = squeeze(batch_output)
-            if self.by_masking:
-                batch_best_i = np.argmin(batch_output.asnumpy()[:batch_i, ...])
-            else:
-                batch_best_i = np.argmax(batch_output.asnumpy()[:batch_i, ...])
-
-            batch_best_output = batch_output[int(batch_best_i)].asnumpy().item()
-            if best_output is None or self._is_output0_better(batch_best_output, best_output):
-                best_output = batch_best_output
-                best_uv = batch_uvs[batch_best_i]
-                best_edit = batch_steps[batch_best_i]
-                best_new_workpiece = batch[batch_best_i]
+            updated = self._update_best(batch, batch_uvs, batch_steps, best_output, batch_i)
+            if updated:
+                best_output, best_uv, best_edit, best_new_workpiece = updated
 
         if best_edit is None:
             raise _NoNewStepError
@@ -908,6 +916,29 @@ class _SearchJob:
         self._workpiece = best_new_workpiece
 
         return best_edit
+
+    def _update_best(self, batch, batch_uvs, batch_steps, best_output, batch_i=None):
+        """Update the best edit step."""
+        squeeze = Squeeze()
+        batch_output = self.network(Tensor(batch))
+        batch_output = batch_output[:, self.class_idx]
+        if len(batch_output.shape) > 1:
+            batch_output = squeeze(batch_output)
+
+        aggregation = np.argmin if self.by_masking else np.argmax
+        if batch_i is None:
+            batch_best_i = aggregation(batch_output.asnumpy())
+        else:
+            batch_best_i = aggregation(batch_output.asnumpy()[:batch_i, ...])
+        batch_best_output = batch_output[int(batch_best_i)].asnumpy().item()
+
+        if best_output is None or self._is_output0_better(batch_best_output, best_output):
+            best_output = batch_best_output
+            best_uv = batch_uvs[batch_best_i]
+            best_edit = batch_steps[batch_best_i]
+            best_new_workpiece = batch[batch_best_i]
+            return best_output, best_uv, best_edit, best_new_workpiece
+        return None
 
     def _is_output0_better(self, output0, output1):
         """Check if the network output0 is better."""
