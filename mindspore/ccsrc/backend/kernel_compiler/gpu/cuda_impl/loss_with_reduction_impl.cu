@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "loss_with_reduction_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
+#include "util.cuh"
 
 inline __device__ float logT(float x) { return logf(x); }
 inline __device__ half logT(half x) { return hlog(x); }
@@ -33,6 +34,14 @@ __global__ void Copy(T *loss, T *tmp_loss, int reduction, int input_size) {
   }
 }
 
+// copy array of equal size
+template <typename T>
+__global__ void CopyEqual(const T *src, T *dest, const int size) {
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
+    dest[i] = src[i];
+  }
+}
+
 template <typename T>
 __global__ void AddTile(T *tmp_loss, int index) {
   tmp_loss[0] += tmp_loss[index];
@@ -41,6 +50,74 @@ template <typename T>
 __global__ void PartialSum(T *tmp_loss, int stride) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < stride; i += blockDim.x * gridDim.x) {
     tmp_loss[i] += tmp_loss[i + stride];
+  }
+}
+
+template <typename T, typename S>
+__device__ void MultiplyDevice(const S a, const T b, T *out) {
+  *out = a * b;
+}
+
+template <>
+__device__ void MultiplyDevice(const half a, const float b, float *out) {
+  // cast a to float for calculation
+  float a_float = __half2float(a);
+  *out = a_float * b;
+}
+
+template <>
+__device__ void MultiplyDevice(const float a, const half b, half *out) {
+  // cast b to float for calculation
+  float b_float = __half2float(b);
+  float out_float = a * b_float;
+  *out = __float2half(out_float);
+}
+
+template <typename T, typename S>
+__global__ void Divide(const T *numerator, const S *denominator, T *result) {
+  result[0] = numerator[0] / denominator[0];
+}
+
+template <>
+__global__ void Divide(const float *numerator, const half *denominator, float *result) {
+  float denom_float = __half2float(denominator[0]);
+
+  result[0] = numerator[0] / denom_float;
+}
+
+template <>
+__global__ void Divide(const half *numerator, const float *denominator, half *result) {
+  float numer_float = __half2float(numerator[0]);
+
+  float result_float = numer_float / denominator[0];
+
+  result[0] = __float2half(result_float);
+}
+
+template <typename T>
+void Sum(T *array, const int &size, cudaStream_t stream) {
+  if (size % 2 == 1) {
+    AddTile<<<1, 1, 0, stream>>>(array, size - 1);
+  }
+  for (int stride = size / 2; stride > 0; stride >>= 1) {
+    PartialSum<<<GET_BLOCKS(stride), GET_THREADS, 0, stream>>>(array, stride);
+    if (stride > 2 && stride % 2 == 1) {
+      AddTile<<<1, 1, 0, stream>>>(array, stride - 1);
+    }
+  }
+}
+
+template <typename T, typename S>
+void Reduce(T *tmp_loss, const int &size, S *denom, const int &reduction, T *output, cudaStream_t stream) {
+  // sum losses together
+  Sum(tmp_loss, size, stream);
+
+  if (reduction == 1) {
+    // mean reduction, divide sum by denominator, store result in output
+    Divide<<<1, 1, 0, stream>>>(tmp_loss, denom, output);
+  } else if (reduction == 2) {
+    // sum reduction, copy sum to output
+    CopyEqual<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(tmp_loss, output, size);
   }
 }
 
@@ -216,6 +293,48 @@ void BinaryCrossEntropyLossGrad(const int &input_size, const int &reduction, con
                                                                                        input_y, weight, dloss, dx);
 }
 
+// helper function to calculate single negative log likelihood
+template <typename T, typename S>
+__global__ void NLLLossKernel(const int n, const int c, const T *input, const int32_t *target, const S *weight,
+                              S *tmp_target_weight, T *output) {
+  int target_class;
+  int input_idx;
+
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
+    target_class = static_cast<int>(target[i]);
+
+    tmp_target_weight[i] = weight[target_class];  // fill tmp_target_weight for later summation
+
+    input_idx = c * i + target_class;
+
+    MultiplyDevice(-weight[target_class], input[input_idx], output + i);
+  }
+}
+
+template <typename T, typename S>
+void NLLLoss(const int n, const int c, const int reduction, const T *input, const int32_t *target, const S *weight,
+             S *tmp_weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
+  CopyEqual<<<GET_BLOCKS(c), GET_THREADS, 0, stream>>>(weight, tmp_weight, c);
+  Sum(tmp_weight, c, stream);
+
+  // copy sum of weight (tmp_weight[0]) to total_weight
+  CopyEqual<<<1, 1, 0, stream>>>(tmp_weight, total_weight, 1);
+
+  // if reduction != "none"
+  if (reduction != 0) {
+    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, tmp_loss);
+    if (reduction == 1) {
+      // prepare denominator for mean reduction
+      Sum(tmp_target_weight, n, stream);
+    }
+    // reduce tmp_loss
+    Reduce(tmp_loss, n, tmp_target_weight, reduction, loss, stream);
+  } else {
+    // no reduction, output directly to loss
+    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, loss);
+  }
+}
+
 template void KLDivLoss<float>(const int &input_size, const int &reduction, const float *input_x, const float *input_y,
                                float *loss, float *tmp_loss, cudaStream_t stream);
 
@@ -230,6 +349,15 @@ template void BinaryCrossEntropyLossGrad<float>(const int &input_size, const int
                                                 const float *input_y, const float *weight, const float *dloss,
                                                 float *dx, cudaStream_t stream);
 
+template void NLLLoss<float, float>(const int n, const int c, const int reduction, const float *input,
+                                    const int32_t *target, const float *weight, float *tmp_weight, float *loss,
+                                    float *total_weight, float *tmp_loss, float *tmp_target_weight,
+                                    cudaStream_t stream);
+
+template void NLLLoss<float, half>(const int n, const int c, const int reduction, const float *input,
+                                   const int32_t *target, const half *weight, half *tmp_weight, float *loss,
+                                   half *total_weight, float *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
+
 template void KLDivLoss<half>(const int &input_size, const int &reduction, const half *input_x, const half *input_y,
                               half *loss, half *tmp_loss, cudaStream_t stream);
 
@@ -243,3 +371,11 @@ template void BinaryCrossEntropyLoss<half>(const int &input_size, const int &red
 template void BinaryCrossEntropyLossGrad<half>(const int &input_size, const int &reduction, const half *input_x,
                                                const half *input_y, const half *weight, const half *dloss, half *dx,
                                                cudaStream_t stream);
+
+template void NLLLoss<half, half>(const int n, const int c, const int reduction, const half *input,
+                                  const int32_t *target, const half *weight, half *tmp_weight, half *loss,
+                                  half *total_weight, half *tmp_loss, half *tmp_target_weight, cudaStream_t stream);
+
+template void NLLLoss<half, float>(const int n, const int c, const int reduction, const half *input,
+                                   const int32_t *target, const float *weight, float *tmp_weight, half *loss,
+                                   float *total_weight, half *tmp_loss, float *tmp_target_weight, cudaStream_t stream);

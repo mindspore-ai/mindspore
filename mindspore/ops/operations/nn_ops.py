@@ -2299,7 +2299,7 @@ class NLLLoss(PrimitiveWithInfer):
                     each other.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
 
     Examples:

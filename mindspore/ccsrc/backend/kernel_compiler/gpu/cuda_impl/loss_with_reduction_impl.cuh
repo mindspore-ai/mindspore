@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LOSS_WITH_REDUCTION_IMPL_CUH
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LOSS_WITH_REDUCTION_IMPL_CUH
+
 template <typename T>
 void BinaryCrossEntropyLoss(const int &input_size, const int &reduction, const T *input_x, const T *input_y,
                             const T *weight, T *loss, T *tmp_loss, cudaStream_t stream);
@@ -28,4 +29,7 @@ void KLDivLoss(const int &input_size, const int &reduction, const T *input_x, co
 template <typename T>
 void KLDivLossGrad(const int &input_size, const int &reduction, const T *input_x, const T *input_y, const T *dloss,
                    T *dx, T *dy, cudaStream_t stream);
+template <typename T, typename S>
+void NLLLoss(const int n, const int c, const int reduction, const T *input, const int32_t *target, const S *weight,
+             S *tmp_weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LOSS_WITH_REDUCTION_IMPL_CUH
