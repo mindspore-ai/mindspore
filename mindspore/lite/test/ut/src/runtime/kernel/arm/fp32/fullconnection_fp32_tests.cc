@@ -87,6 +87,7 @@ TEST_F(TestFcFp32, FcTest1) {
   fc->Init();
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
+  delete ctx;
 }
 
 int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
@@ -146,6 +147,7 @@ TEST_F(TestFcFp32, FcTest2) {
   fc->Init();
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
+  delete ctx;
 }
 
 void FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
@@ -198,6 +200,7 @@ TEST_F(TestFcFp32, FcTest3) {
   for (int i = 0; i < 100000; ++i) fc->Run();
   gettimeofday(&end, nullptr);
   // printf("## elapsed: %llu\n", 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - end.tv_usec);
+  delete ctx;
 }
 
 }  // namespace mindspore

@@ -163,8 +163,8 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
     packed_output_ = output_ptr;
   }
 
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ConvDwSWRun, this,
-                       conv_param_->thread_num_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(ConvDwSWRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWRun error: error_code[" << ret << "]";
   }

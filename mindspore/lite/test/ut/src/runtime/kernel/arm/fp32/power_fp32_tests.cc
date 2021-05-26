@@ -81,6 +81,7 @@ TEST_F(TestPowerFp32, Simple) {
   float correct[] = {1, 64, 2187, 65536};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete op;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
@@ -105,6 +106,7 @@ TEST_F(TestPowerFp32, Broadcast) {
   float correct[] = {1, 4, 9, 16};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete op;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }

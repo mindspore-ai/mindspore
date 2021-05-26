@@ -84,7 +84,7 @@ int BiasGradRun(void *cdata, int task_id) {
 
 int BiasGradCPUKernel::Run() {
   int error_code =
-    ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, BiasGradRun, this, 1);
+    static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(BiasGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
     return RET_ERROR;

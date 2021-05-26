@@ -83,8 +83,8 @@ int ArithmeticSelfFp16CPUKernel::Run() {
   }
   output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ArithmeticSelfRun,
-                            this, op_parameter_->thread_num_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }

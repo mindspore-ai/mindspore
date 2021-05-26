@@ -87,8 +87,8 @@ int EmbeddingLookupCPUKernel::Run() {
     memcpy(input_addr_ + dest_loc, input_t, sizeof(float) * in_tensors_.at(i)->ElementsNum());
     dest_loc += in_tensors_.at(i)->ElementsNum();
   }
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, EmbeddingLookupRun,
-                            this, op_parameter_->thread_num_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(EmbeddingLookupRun, this, op_parameter_->thread_num_);
   FreeRunBuff();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "EmbeddingLookup error: error_code[" << ret << "]";

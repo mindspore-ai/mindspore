@@ -25,10 +25,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <new>
-
-#ifdef __ANDROID__
-#define BIND_CORE
-#endif
+#include "thread/core_affinity.h"
 
 namespace mindspore {
 
@@ -60,12 +57,6 @@ namespace mindspore {
 enum ThreadRet { THREAD_OK = 0, THREAD_ERROR = 1 };
 enum ThreadType { kActorThread = 0, kKernelThread = 1 };
 
-enum BindMode {
-  Power_NoBind = 0,  // free schedule
-  Power_Higher = 1,
-  Power_Middle = 2,
-};
-
 using Func = int (*)(void *arg, int);
 using Contend = void *;
 
@@ -83,6 +74,7 @@ typedef struct Worker {
   std::atomic_int type{kActorThread};
   Task *task{nullptr};
   sem_t sem;
+  sem_t init;
   int spin{0};
 } Worker;
 
@@ -96,6 +88,8 @@ class ThreadPool {
   int SetCpuAffinity(const std::vector<int> &core_list);
   int SetCpuAffinity(BindMode bind_mode);
 
+  int SetProcessAffinity(BindMode bind_mode) const;
+
   int ParallelLaunch(const Func &func, Contend contend, int task_num);
 
  protected:
@@ -104,13 +98,14 @@ class ThreadPool {
   int CreateThreads(size_t thread_num);
   void DestructThreads();
 
-  virtual void ThreadAsyncRun(size_t thread_id);
+  int InitAffinityInfo(BindMode bind_mode);
+
+  virtual void ThreadAsyncRun(Worker *worker);
   void KernelThreadRun(Worker *worker);
 
   void DistributeTask(Task *task, int task_num);
 
   std::mutex pool_mutex_;
-  std::condition_variable start_cond_;
 
   std::vector<Worker *> workers_;
   std::vector<Worker *> freelist_;
@@ -118,6 +113,8 @@ class ThreadPool {
 
   size_t inter_thread_num_{0};
   size_t thread_num_{1};
+
+  CoreAffinity *affinity_{nullptr};
 };
 
 }  // namespace mindspore

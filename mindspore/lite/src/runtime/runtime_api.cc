@@ -23,8 +23,6 @@ static std::mutex gWorkspaceMutex;
 extern "C" {
 #endif
 
-ThreadPool *CreateLiteThreadPool(int thread_num, int mode) { return CreateThreadPool(thread_num, mode); }
-
 void LiteAPISetLastError(const char *msg) { MS_LOG(ERROR) << "The lite api set last error is " << msg; }
 #ifdef __cplusplus
 }

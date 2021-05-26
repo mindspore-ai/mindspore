@@ -52,8 +52,8 @@ int CropInt8CPUKernel::Init() {
 int CropInt8CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropInt8CPUKernel::Run() {
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, CropInt8Run, this,
-                            crop_para_->thread_count_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(CropInt8Run, this, crop_para_->thread_count_);
   return ret;
 }
 

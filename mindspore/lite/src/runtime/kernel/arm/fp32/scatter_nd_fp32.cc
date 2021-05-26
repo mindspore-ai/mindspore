@@ -149,8 +149,8 @@ int ScatterNDRun(void *cdata, int task_id) {
 }
 
 int ScatterNDCPUKernel::Run() {
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ScatterNDRun, this,
-                            thread_n_num_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(ScatterNDRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ScatterND error error_code[" << ret << "]";
     return RET_ERROR;

@@ -130,10 +130,6 @@ if(ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL
     include(${TOP_DIR}/cmake/external_libs/json.cmake)
 endif()
 
-if(SUPPORT_TRAIN OR WIN32)
-    set(ENABLE_MINDRT "off")
-endif()
-
 if(DEFINED ARCHS)
     add_definitions(-DMS_COMPILE_IOS)
 endif()
@@ -210,6 +206,7 @@ endif()
 
 if(ENABLE_MINDRT)
     include_directories(${CORE_DIR}/mindrt/include)
+    include_directories(${CORE_DIR}/mindrt/src)
 endif()
 
 if(NOT WIN32 AND NOT APPLE)

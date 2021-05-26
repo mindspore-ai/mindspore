@@ -570,11 +570,16 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-  BindThreads(context_->thread_pool_, true,
-              context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
+  CpuBindMode cpu_bind_mode = this->context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
+  InterThreadPool *thread_pool = this->context_->thread_pool_;
+  if (thread_pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    is_running_.store(false);
+    return RET_NULL_PTR;
+  }
+  thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
   ret = InitGPURuntime();
-  BindThreads(context_->thread_pool_, false,
-              context_->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_);
+  thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init GPU runtime failed.";
     is_running_.store(false);
@@ -614,7 +619,6 @@ LiteSession::~LiteSession() {
   output_node_map_.clear();
   output_tensor_map_.clear();
   input_vec_.clear();
-  delete this->context_;
   delete this->executor_;
   this->executor_ = nullptr;
 #if SUPPORT_NPU
@@ -628,6 +632,8 @@ LiteSession::~LiteSession() {
 #if GPU_OPENCL
   delete opencl_runtime_wrapper_;
 #endif
+  delete this->context_;
+  this->context_ = nullptr;
   delete (model_);
   is_running_.store(false);
 }

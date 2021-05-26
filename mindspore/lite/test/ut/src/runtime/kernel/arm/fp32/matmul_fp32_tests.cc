@@ -142,6 +142,7 @@ TEST_F(TestMatMulFp32, simple) {
                      -0.3049793541431427, -0.027687929570674896, -0.18109679222106934};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete mm;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
@@ -175,6 +176,7 @@ TEST_F(TestMatMulFp32, simple_bias) {
                      -0.3049793541431427 + 1, -0.027687929570674896 + 2, -0.18109679222106934 + 3};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete mm;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
@@ -266,6 +268,7 @@ TEST_F(TestMatMulFp32, simple2) {
     243, 319, 346};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete mm;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
@@ -296,6 +299,7 @@ TEST_F(TestMatMulFp32, simple_transb) {
   float correct[] = {0.00533547, 0.002545945, 0.062974121, -0.445441471, -0.246223617, -0.142070031};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete mm;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }
@@ -350,6 +354,7 @@ TEST_F(TestMatMulFp32, batch) {
                      8.869029998779297,  25.034008026123047};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete mm;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }

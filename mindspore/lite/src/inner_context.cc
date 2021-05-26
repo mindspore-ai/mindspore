@@ -72,9 +72,9 @@ int InnerContext::Init() {
     return RET_NOT_SUPPORT;
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
-    this->thread_pool_ =
-      CreateLiteThreadPool(this->thread_num_, this->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);
-    if (this->thread_pool_ == nullptr) {
+    thread_pool_ = InterThreadPool::CreateThreadPool(
+      1, this->thread_num_, static_cast<BindMode>(this->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_));
+    if (thread_pool_ == nullptr) {
       MS_LOG(ERROR) << "Create ThreadPool failed";
       return RET_NULL_PTR;
     }
@@ -110,8 +110,7 @@ int InnerContext::Init() {
 
 InnerContext::~InnerContext() {
   if (this->thread_pool_ != nullptr) {
-    DestroyThreadPool(this->thread_pool_);
-    free(this->thread_pool_);
+    delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
 #ifdef ENABLE_ARM

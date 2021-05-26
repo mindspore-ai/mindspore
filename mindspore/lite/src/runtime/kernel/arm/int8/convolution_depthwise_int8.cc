@@ -148,8 +148,8 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<int8_t *>(output_tensor->MutableData());
 
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ConvDwInt8Run, this,
-                       conv_param_->thread_num_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
   }

@@ -95,8 +95,8 @@ int SoftmaxLastAxisFp16Run(void *cdata, int task_id) {
 
 int SoftmaxFp16CPUKernel::Run() {
   if (in_plane_size_ == 1) {
-    auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                              SoftmaxLastAxisFp16Run, this, context_->thread_num_);
+    auto ret = static_cast<const lite::InnerContext *>(this->context_)
+                 ->thread_pool_->ParallelLaunch(SoftmaxLastAxisFp16Run, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SoftmaxFp16CPUKernel ParallelLaunch failed, ret: " << ret;
     }

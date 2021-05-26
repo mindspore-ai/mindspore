@@ -158,6 +158,7 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   ASSERT_EQ(0, CompareOutputData(output_num_det, correct_num_det, outputs_[3]->ElementsNum(), 0.0001));
 
   delete op;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
 }

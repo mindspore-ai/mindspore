@@ -73,6 +73,7 @@ TEST_F(TestSkipGramFp32, ElTest) {
     }
     printf("\n");
   }
+  delete ctx;
 }
 
 }  // namespace mindspore

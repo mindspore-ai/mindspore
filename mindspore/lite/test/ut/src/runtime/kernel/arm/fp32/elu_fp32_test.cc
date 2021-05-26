@@ -69,6 +69,7 @@ TEST_F(TestEluFp32, EluTest) {
     std::cout << out[i] << ' ';
   }
   std::cout << std::endl;
+  delete ctx;
 }
 
 };  // namespace mindspore

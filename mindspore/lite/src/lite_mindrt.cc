@@ -199,6 +199,11 @@ int LiteOpActor::PrepareOutputData() {
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   std::unordered_map<size_t, AID> partial_map{};
+  auto thread_pool = kernels[0]->Context()->thread_pool_;
+  if (thread_pool == nullptr) {
+    MS_LOG(ERROR) << "thread pool is nullptr";
+    return actors;
+  }
   for (size_t i = 0; i < kernels.size(); ++i) {
     if ((kernel::LiteKernelUtil::IsSwitchCall(kernels[i]))) {
       auto switch_actor = std::make_shared<LiteSwitchOpActor>(kernels[i]);
@@ -207,6 +212,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         actors.clear();
         return actors;
       }
+      switch_actor->set_thread_pool(thread_pool);
       partial_map[i] = switch_actor->GetAID();
       actors.push_back(switch_actor);
     } else {
@@ -216,6 +222,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
         actors.clear();
         return actors;
       }
+      actor->set_thread_pool(thread_pool);
       partial_map[i] = actor->GetAID();
       actors.push_back(actor);
     }
@@ -423,7 +430,6 @@ void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list
   for (const auto &actor : actor_list) {
     mindspore::Terminate(actor->GetAID());
   }
-  mindspore::TerminateCurThreads(1);
 }
 
 }  // namespace mindspore::lite

@@ -23,7 +23,8 @@
 #include <memory>
 #include <string>
 
-#include "actor/actorthread.h"
+#include "actor/actor.h"
+#include "thread/inter_threadpool.h"
 
 namespace mindspore {
 
@@ -47,8 +48,7 @@ class ActorMgr {
   ~ActorMgr();
 
   void Finalize();
-  void Initialize(int threadCount);
-  void TerminateCurThreads(int threadCount);
+  void Initialize() {}
   void RemoveActor(const std::string &name);
   ActorReference GetActor(const AID &id);
   const std::string GetUrl(const std::string &protocol = "tcp");
@@ -62,7 +62,14 @@ class ActorMgr {
   inline const std::string &GetDelegate() const { return delegate; }
 
   inline void SetDelegate(const std::string &d) { delegate = d; }
-  inline void SetActorReady(const std::shared_ptr<ActorBase> &actor) { threadPool.EnqueReadyActor(actor); }
+  inline void SetActorReady(const std::shared_ptr<ActorBase> &actor) const {
+    auto pool = actor->pool_;
+    if (pool == nullptr) {
+      MS_LOG(ERROR) << "ThreadPOol is nullptr, actor: " << actor->GetAID().Name();
+      return;
+    }
+    pool->EnqueReadyActor(actor);
+  }
   void SetActorStatus(const AID &pid, bool start);
 
  private:
@@ -76,8 +83,6 @@ class ActorMgr {
   // Map of all local spawned and running processes.
   std::map<std::string, ActorReference> actors;
   std::mutex actorsMutex;
-
-  ActorThread threadPool;
 
   std::map<std::string, std::string> procotols;
   std::set<std::string> urls;

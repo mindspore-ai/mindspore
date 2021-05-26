@@ -57,10 +57,6 @@ const MindrtAddress &GetMindrtAddress() {
   return *local::g_mindrtAddress;
 }
 
-void SetThreadCount(int threadCount) { ActorMgr::GetActorMgrRef()->Initialize(threadCount); }
-
-void TerminateCurThreads(int threadCount) { ActorMgr::GetActorMgrRef()->TerminateCurThreads(threadCount); }
-
 class MindrtExit {
  public:
   MindrtExit() { MS_LOG(DEBUG) << "trace: enter MindrtExit()---------"; }
@@ -73,10 +69,7 @@ class MindrtExit {
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
   MS_LOG(DEBUG) << "mindrt starts ......";
-
-  // start actor's thread
-  SetThreadCount(threadCount);
-
+  ActorMgr::GetActorMgrRef()->Initialize();
   MS_LOG(DEBUG) << "mindrt has started.";
   return MINDRT_OK;
 }

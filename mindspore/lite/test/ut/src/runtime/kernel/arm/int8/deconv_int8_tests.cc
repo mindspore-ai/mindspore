@@ -331,6 +331,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
 
   delete deconv_param;
   delete deconv;
+  delete ctx;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;
   free(correct);

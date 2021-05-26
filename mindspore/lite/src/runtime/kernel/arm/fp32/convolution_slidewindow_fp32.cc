@@ -179,8 +179,8 @@ int ConvolutionSWCPUKernel::Run() {
   auto input_data = in_tensors_.at(kInputIndex)->MutableData();
   MS_ASSERT(input_data != nullptr);
   ori_input_data_ = reinterpret_cast<float *>(input_data);
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  ConvolutionSWImpl, this, thread_count_);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(ConvolutionSWImpl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();

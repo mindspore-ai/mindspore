@@ -68,8 +68,8 @@ int UnsortedSegmentSumRun(void *cdata, int task_id) {
 }
 
 int UnsortedSegmentSumCPUKernel::Run() {
-  int error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_,
-                                  UnsortedSegmentSumRun, this, 1);
+  int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(UnsortedSegmentSumRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Strided slice error error_code[" << error_code << "]";
     return RET_ERROR;

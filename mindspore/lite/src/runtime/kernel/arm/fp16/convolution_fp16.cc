@@ -144,8 +144,8 @@ int ConvolutionFP16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ConvolutionFp16Impl, this,
-                       thread_count_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(ConvolutionFp16Impl, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error ret[" << ret << "]";
   }

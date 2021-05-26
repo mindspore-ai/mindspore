@@ -98,16 +98,11 @@ void ActorMgr::TerminateAll() {
   }
 }
 
-void ActorMgr::Initialize(int threadCount) { threadPool.AddThread(threadCount); }
-
-void ActorMgr::TerminateCurThreads(int threadCount) { threadPool.TerminateThread(threadCount); }
-
 void ActorMgr::Finalize() {
   this->TerminateAll();
   MS_LOG(INFO) << "mindrt Actors finish exiting.";
 
   // stop all actor threads;
-  threadPool.Finalize();
   MS_LOG(INFO) << "mindrt Threads finish exiting.";
 
   // stop iomgr thread
@@ -115,7 +110,6 @@ void ActorMgr::Finalize() {
     MS_LOG(INFO) << "finalize IOMgr=" << mgrIt->first.c_str();
     mgrIt->second->Finish();
   }
-
   MS_LOG(INFO) << "mindrt IOMGRS finish exiting.";
 }
 

@@ -121,8 +121,8 @@ int ReduceCPUKernel::Run() {
       MS_LOG(ERROR) << "axis_size_ is must not be zero!";
       return RET_ERROR;
     }
-    auto error_code = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, ReduceImpl,
-                                     this, context_->thread_num_);
+    auto error_code = static_cast<const lite::InnerContext *>(this->context_)
+                        ->thread_pool_->ParallelLaunch(ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
       FreeTmpBuffer();

@@ -20,6 +20,11 @@
 namespace mindspore {
 
 InterThreadPool::~InterThreadPool() {
+  {
+    THREAD_INFO("wait util actor queue is empty");
+    std::unique_lock<std::mutex> _l(actor_mutex_);
+    finish_cond_var_.wait(_l, [this]() { return actor_queue_.empty(); });
+  }
   exit_ = true;
   alive_ = false;
   actor_cond_var_.notify_all();
@@ -38,15 +43,12 @@ void InterThreadPool::ActorThreadRun() {
     actor_queue_.pop();
   }
   actor->Run();
+  finish_cond_var_.notify_one();
 }
 
-void InterThreadPool::ThreadAsyncRun(size_t thread_id) {
-  {
-    std::unique_lock<std::mutex> _l(pool_mutex_);
-    start_cond_.wait(_l, [this]() { return workers_.size() == thread_num_; });
-  }
-  Worker *worker = workers_[thread_id];
+void InterThreadPool::ThreadAsyncRun(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
+  sem_post(&worker->init);
   while (alive_) {
     if (worker->type == kKernelThread) {
       KernelThreadRun(worker);
@@ -78,7 +80,7 @@ InterThreadPool *InterThreadPool::CreateThreadPool(size_t inter_thread_num, size
     return nullptr;
   }
 #ifdef BIND_CORE
-  ret = CoreAffinity::GetInstance()->InitBindCoreId(thread_num, bind_mode);
+  ret = pool->InitAffinityInfo(bind_mode);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

@@ -88,8 +88,8 @@ int SqueezeInt8CPUKernel::Init() {
 int SqueezeInt8CPUKernel::ReSize() { return RET_OK; }
 
 int SqueezeInt8CPUKernel::Run() {
-  auto ret = ParallelLaunch(static_cast<const lite::InnerContext *>(this->context_)->thread_pool_, SqueezeInt8Run, this,
-                            op_parameter_->thread_num_);
+  auto ret = static_cast<const lite::InnerContext *>(this->context_)
+               ->thread_pool_->ParallelLaunch(SqueezeInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "RunSqueezeParam failed. errorcode: ";
   }
