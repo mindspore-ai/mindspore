@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Context of auto parallel"""
+import os
 import threading
 import mindspore.context as context
 import mindspore.log as logger
@@ -270,10 +271,9 @@ class _AutoParallelContext:
         Set strategy checkpoint save path.
 
         Args:
-            strategy_ckpt_save_file (bool): Path to save parallel strategy checkpoint.
+            strategy_ckpt_save_file (str): Path to save parallel strategy checkpoint.
         """
         self.check_context_handle()
-        import os
         dir_path = os.path.dirname(strategy_ckpt_save_file)
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -287,7 +287,6 @@ class _AutoParallelContext:
     def set_group_ckpt_save_file(self, group_ckpt_save_file):
         """Set group checkpoint save path."""
         self.check_context_handle()
-        import os
         dir_path = os.path.dirname(group_ckpt_save_file)
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -503,8 +502,8 @@ class _AutoParallelContext:
         self.check_context_handle()
         self._context_handle.reset()
 
-
-    def _check_and_default_group(self, group):
+    @classmethod
+    def _check_and_default_group(cls, group):
         """Validate the given group, if group is empty, returns a default fusion group"""
         if isinstance(group, (str)):
             group_len = len(group)

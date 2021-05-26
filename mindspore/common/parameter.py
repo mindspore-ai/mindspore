@@ -135,7 +135,8 @@ class Parameter(Tensor_):
         return (
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
-    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
+    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False,
+                 parallel_optimizer=True):
         self.param_info = ParamInfo()
         self.init_in_server = False
         self.cache_enable = False

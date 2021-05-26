@@ -70,8 +70,7 @@ def _set_fusion_strategy_by_idx(idx_list, group="hccl_world_group"):
         import hccl_test.manage.api as hccl
         hccl.set_fusion_strategy_by_idx()
         return
-    finally:
-        pass
+
     if isinstance(group, (str)):
         group_len = len(group)
         if (group_len > _MAX_GROUP_NAME_LEN or group_len == 0):
@@ -130,8 +129,6 @@ def _set_fusion_strategy_by_size(data_size_list, group="hccl_world_group"):
         import hccl_test.manage.api as hccl
         hccl.set_fusion_strategy_by_size()
         return
-    finally:
-        pass
 
     if isinstance(group, (str)):
         group_len = len(group)
@@ -149,9 +146,9 @@ def _set_fusion_strategy_by_size(data_size_list, group="hccl_world_group"):
         if not isinstance(data_size, (int, float)):
             raise TypeError('data_size in data_size_list is invalid')
 
-    c_array_sizeList = _c_array(ctypes.c_float, data_size_list)
+    c_array_size_list = _c_array(ctypes.c_float, data_size_list)
     c_size_num = ctypes.c_uint(len(data_size_list))
     c_group = _c_str(group)
-    ret = lib_ctype.hcom_set_split_strategy_by_size(c_group, c_size_num, c_array_sizeList)
+    ret = lib_ctype.hcom_set_split_strategy_by_size(c_group, c_size_num, c_array_size_list)
     if ret != 0:
         raise RuntimeError('Allreduce split error')
