@@ -59,7 +59,7 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
                << " registered scheduler success!";
 }
 
-bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
+bool AbstractNode::Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                              const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(message);
   if (node_role != NodeRole::SERVER) {
@@ -256,8 +256,8 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
   } else {
     receive_callbacks_[std::make_pair(rank_id, rank_request_id)] = [=]() mutable {
       receive_callbacks_mutex_.lock();
-      auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
-      *output = res;
+      auto res_output = received_data_[std::make_pair(rank_id, rank_request_id)];
+      *output = res_output;
       received_data_.erase(std::make_pair(rank_id, rank_request_id));
       receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
       MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;

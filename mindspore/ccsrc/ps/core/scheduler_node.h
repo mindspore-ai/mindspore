@@ -32,6 +32,7 @@
 #include "ps/core/tcp_server.h"
 #include "ps/core/node_manager.h"
 #include "ps/core/node.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {

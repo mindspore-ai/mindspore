@@ -58,19 +58,19 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
   int64_t optim_id = key_to_optimId_[key];
   MS_LOG(INFO) << "The key is:" << key << " the optim_id:" << optim_id;
   bool is_sparse = false;
-  if (optim_id == 1 || optim_id == 2 || optim_id == 3) {
+  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex || optim_id == 3) {
     is_sparse = true;
   }
   int64_t grad_index = -1;
   int64_t indice_index = -1;
 
   // Sparse adam gradient
-  if (optim_id == 1 || optim_id == 2) {
-    grad_index = 6;
-    indice_index = 7;
+  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex) {
+    grad_index = kSparseGradIndex;
+    indice_index = kSparseIndiceIndex;
 
     // Sparse ftrl gradient
-  } else if (optim_id == 3) {
+  } else if (optim_id == kSparseFtrlIndex) {
     grad_index = 0;
     indice_index = 1;
   }
@@ -349,9 +349,9 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     src_data = pair->first;
     MS_EXCEPTION_IF_NULL(dst_data);
     MS_EXCEPTION_IF_NULL(src_data);
-    auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+    if (mem_ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
       return;
     }
     offset += single_id_len;
@@ -602,9 +602,9 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   src_data = const_cast<float *>(grads);
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (mem_ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
     return;
   }
 
@@ -618,9 +618,9 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   src_data = indices;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  ret = memcpy_s(dst_data, dst_size, src_data, src_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+  mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  if (mem_ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
     return;
   }
 }
@@ -723,13 +723,13 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
   if (attrs.count(0) == 0 || attrs.count(1) == 0 || attrs.count(2) == 0 || attrs.count(3) == 0) {
     MS_LOG(EXCEPTION) << "Invalid attrs keys";
   }
-  auto iter = attrs.find(0);
+  auto iter = attrs.find(kGradIndex);
   size_t grad_index = static_cast<size_t>(iter->second);
-  iter = attrs.find(1);
+  iter = attrs.find(kIndiceIndex);
   size_t indice_index = static_cast<size_t>(iter->second);
-  iter = attrs.find(2);
+  iter = attrs.find(kFirstDimSize);
   size_t first_dim_size = static_cast<size_t>(iter->second);
-  iter = attrs.find(3);
+  iter = attrs.find(kOutDimSize);
   size_t outer_dim_size = static_cast<size_t>(iter->second);
 
   int grad_size = send.len()[grad_index];
@@ -796,8 +796,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
                                  first_dim_size, outer_dim_size, &unique_sparse_grad);
 
       // Update the length of reduce sparse gradient and indice
-      std::vector<int> reduced_lens;
-      reduced_lens = {kvs.len().begin(), kvs.len().end()};
+      std::vector<int> reduced_lens = {kvs.len().begin(), kvs.len().end()};
       reduced_lens[grad_index] = unique_sparse_grad.indices_size_ * segment_size;
       reduced_lens[indice_index] = unique_sparse_grad.indices_size_;
 
@@ -816,7 +815,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
       std::vector<float> no_vals;
       std::vector<float> no_lens;
       no_keys.push_back(key);
-      no_vals.push_back(-100);
+      no_vals.push_back(kGradValue);
       *kvs.mutable_values() = {no_vals.begin(), no_vals.end()};
       *kvs.mutable_len() = {no_lens.begin(), no_lens.end()};
     }

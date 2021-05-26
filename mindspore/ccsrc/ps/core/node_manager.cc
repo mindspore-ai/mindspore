@@ -111,8 +111,8 @@ void NodeManager::UpdateClusterState() {
   }
   if (!timeout_nodes_info_.empty()) {
     is_node_timeout_ = true;
-    for (auto it = timeout_nodes_info_.begin(); it != timeout_nodes_info_.end(); ++it) {
-      finish_nodes_id_.insert(it->first);
+    for (auto iter = timeout_nodes_info_.begin(); iter != timeout_nodes_info_.end(); ++iter) {
+      finish_nodes_id_.insert(iter->first);
     }
   }
 
