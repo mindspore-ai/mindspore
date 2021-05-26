@@ -38,7 +38,7 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
 // AccumulateNV2
 INPUT_MAP(AccumulateNV2) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AccumulateNV2) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(AccumulateNV2) = {{"N", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(AccumulateNV2) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())}};
 OUTPUT_MAP(AccumulateNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AccumulateNV2, kNameAccumulateNV2, ADPT_DESC(AccumulateNV2))
 

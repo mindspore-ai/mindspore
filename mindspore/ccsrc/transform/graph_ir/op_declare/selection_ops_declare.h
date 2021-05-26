@@ -57,9 +57,11 @@ DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentSumD)
 DECLARE_OP_USE_OUTPUT(UnsortedSegmentSumD)
 
 DECLARE_OP_ADAPTER(UnsortedSegmentProdD)
+DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentProdD)
 DECLARE_OP_USE_OUTPUT(UnsortedSegmentProdD)
 
 DECLARE_OP_ADAPTER(UnsortedSegmentMaxD)
+DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentMaxD)
 DECLARE_OP_USE_OUTPUT(UnsortedSegmentMaxD)
 
 DECLARE_OP_ADAPTER(UnsortedSegmentMin)
