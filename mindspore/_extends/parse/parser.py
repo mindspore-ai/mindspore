@@ -101,14 +101,13 @@ def get_parse_method_of_class(obj, parse_method=None):
     method_name = None
     if parse_method is not None:
         method_name = parse_method
-    else:
-        if isinstance(obj, nn.Cell):
-            if obj.enable_hook:
-                if context.get_context("mode") == context.GRAPH_MODE:
-                    raise ValueError("The graph mode does not support hook function.")
-                method_name = "_hook_construct"
-            else:
-                method_name = "construct"
+    elif isinstance(obj, nn.Cell):
+        if obj.enable_hook:
+            if context.get_context("mode") == context.GRAPH_MODE:
+                raise ValueError("The graph mode does not support hook function.")
+            method_name = "_hook_construct"
+        else:
+            method_name = "construct"
     if method_name is not None:
         if hasattr(obj, method_name):
             method = getattr(obj, method_name)

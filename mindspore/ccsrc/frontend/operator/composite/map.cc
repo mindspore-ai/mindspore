@@ -186,10 +186,10 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
   bool found = false;
   TypeId id = kObjectTypeEnd;
   std::pair<AnfNodePtr, TypePtr> pair;
-  for (auto &item : arg_pairs) {
-    pair = item;
+  for (auto &arg_pair : arg_pairs) {
+    pair = arg_pair;
     MS_LOG(DEBUG) << "Map " << pair.second->ToString();
-    id = item.second->type_id();
+    id = arg_pair.second->type_id();
     if (nonleaf_.count(id)) {
       found = true;
       break;

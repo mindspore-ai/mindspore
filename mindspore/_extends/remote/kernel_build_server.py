@@ -17,6 +17,7 @@ import os
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
 
+
 class AkgBuilder:
     """Akg building wrapper"""
 
@@ -32,7 +33,9 @@ class AkgBuilder:
     def compile(self):
         return self.akg_builder.compile()
 
+
 class Messager:
+
     '''Messager'''
 
     def __init__(self, fdin, fdout):
