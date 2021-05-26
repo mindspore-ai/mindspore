@@ -102,20 +102,6 @@ Status VirtualDatasetInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status VirtualDatasetInfo::InferTensorInfo() {
-  for (size_t i = 0; i < strategy_->GetInputNumber(); i++) {
-    MS_LOG(INFO) << name_ << ": InferTensorInfo " << i << ",  size " << strategy_->GetInputNumber();
-    TensorLayout tensor_layout_in;
-    if (tensor_layout_in.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(i), inputs_shape_.at(i)) != SUCCESS) {
-      return FAILED;
-    }
-    TensorInfo tensor_info_in(tensor_layout_in);
-    inputs_tensor_info_.push_back(tensor_info_in);
-    outputs_tensor_info_.push_back(tensor_info_in);
-  }
-  return SUCCESS;
-}
-
 Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
 Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {

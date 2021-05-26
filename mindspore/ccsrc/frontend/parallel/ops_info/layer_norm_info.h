@@ -52,15 +52,11 @@ class LayerNormInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
-  Status CreateTensorMap(size_t input_index);
-  Status CreateTensorInfo(size_t input_index);
-  Status CreateMirrorOp(size_t input_index);
+  Status CreateInputTensorMap(size_t input_index);
   Status GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();
 

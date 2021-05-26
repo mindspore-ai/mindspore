@@ -287,23 +287,6 @@ Status ActivationBase::InferTensorMap() {
   return SUCCESS;
 }
 
-Status ActivationBase::InferTensorInfo() {
-  TensorLayout input_tensor_layout, output_tensor_layout;
-  if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) ||
-      (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]))) {
-    MS_LOG(ERROR) << name_ << ": init tensor layout failed";
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
-
-  return SUCCESS;
-}
-
 Status DropoutInfo::GetAttrs() {
   auto iter0 = attrs_.find(SEED0);
   if (iter0 != attrs_.end()) {
@@ -328,29 +311,29 @@ Status DropoutInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status DropoutInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
+Status DropoutInfo::InferTensorMap() {
+  Shape tensor_map_in;
+  size_t size = inputs_shape_.at(0).size();
+  // such as 4: tensor_map_index [3,2,1,0]
+  for (size_t i = 0; i < size; ++i) {
+    tensor_map_in.push_back((int64_t)(size - i - 1));
+  }
 
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  // dropout has two outputs
-  Strategys outputs_strategy = {inputs_strategy.at(0), inputs_strategy.at(0)};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
+  inputs_tensor_map_.push_back(tensor_map_in);
+  outputs_tensor_map_.push_back(tensor_map_in);
+  outputs_tensor_map_.push_back(tensor_map_in);  // the dropout has two outputs
+  return SUCCESS;
+}
+
+Status DropoutInfo::InferAsLossDivisor() {
+  if (outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The size of outputs tensor map is empty";
     return FAILED;
   }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  TensorLayout input_tensor_layout;
-  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
-    return FAILED;
-  }
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  inputs_tensor_info_.push_back(input_tensor_info);
-  // the two outputs of dropout all have the same tensor_info as input
-  outputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(input_tensor_info);
-
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(dev_matrix_shape_, outputs_tensor_map_[0]);
+  MS_LOG(INFO) << name_ << " : The dev matrix shape is " << ShapeToString(dev_matrix_shape_)
+               << ", the output[0]'s tensor map is " << ShapeToString(outputs_tensor_map_[0])
+               << ", as_loss_divisor_ is " << as_loss_divisor_;
   return SUCCESS;
 }
 
@@ -514,58 +497,6 @@ Status ExpandDimsInfo::InferTensorStrategy() {
   return SUCCESS;
 }
 
-Status ExpandDimsInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The shape of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  if (inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The tensor map of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  Shape input_shape = inputs_shape_[0];
-  Shape output_shape = outputs_shape_[0];
-
-  // infer slice shape
-  if (InferTensorStrategy() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer tensor strategy failed";
-    return FAILED;
-  }
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  if (InferSliceShape(inputs_strategy_, outputs_strategy_, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer slice shape failed";
-    return FAILED;
-  }
-
-  if (inputs_slice_shape.empty() || outputs_slice_shape.empty()) {
-    MS_LOG(ERROR) << name_ << ": The slice shape of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  Shape input_slice_shape = inputs_slice_shape[0];
-  Shape output_slice_shape = outputs_slice_shape[0];
-
-  TensorLayout input_tensor_layout, output_tensor_layout;
-  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout for input failed";
-    return FAILED;
-  }
-
-  if (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout for output failed";
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
 Status ExpandDimsInfo::InferMirrorOps() {
   mirror_ops_.clear();
 
@@ -673,65 +604,6 @@ Status SqueezeInfo::InferTensorMap() {
   MS_LOG(INFO) << name_ << ": The tensor map of input is " << ShapeToString(input_tensor_map)
                << ", and the tensor map of output is " << ShapeToString(output_tensor_map);
 
-  return SUCCESS;
-}
-
-Status SqueezeInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The shape of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  if (inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The tensor map of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  Shape input_shape = inputs_shape_[0];
-  Shape output_shape = outputs_shape_[0];
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Dimensions output_strategy;
-  std::vector<int64_t> axis = GetValue<const std::vector<int64_t>>(axis_);
-  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    auto iter = std::find(axis.begin(), axis.end(), SizeToLong(i));
-    if (iter == axis.end()) {
-      output_strategy.push_back(inputs_strategy[0].at(i));
-    }
-  }
-  Strategys outputs_strategy = {output_strategy};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer slice shape failed";
-    return FAILED;
-  }
-
-  if (inputs_slice_shape.empty() || outputs_slice_shape.empty()) {
-    MS_LOG(ERROR) << name_ << ": The slice shape of inputs or outputs is empty";
-    return FAILED;
-  }
-
-  Shape input_slice_shape = inputs_slice_shape[0];
-  Shape output_slice_shape = outputs_slice_shape[0];
-
-  // infer tensor layout
-  TensorLayout input_tensor_layout, output_tensor_layout;
-  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout for input failed";
-    return FAILED;
-  }
-
-  if (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout for output failed";
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
   return SUCCESS;
 }
 

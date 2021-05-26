@@ -49,7 +49,6 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorMap() override;
   Status GetAttrs() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
 };
 

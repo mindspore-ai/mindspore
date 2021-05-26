@@ -144,14 +144,14 @@ Status TensorDotInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (axes_type_ == INT_TYPE) {  // for example: axes = 3, [a, b, c, d] and [b, c, d, e]
     for (int32_t i = 0; i < axes_int_; ++i) {
       if (input_a_strategy[input_a_strategy.size() - axes_int_ + i] != input_b_strategy[i]) {
-        MS_LOG(ERROR) << name_ << ": The strategies of relavent dimensions are no equal";
+        MS_LOG(ERROR) << name_ << ": The strategies of relevant dimensions are no equal";
         return FAILED;
       }
     }
   } else if (axes_type_ == TUPLE_TUPLE_TYPE) {
     for (size_t i = 0; i < axes_tuple_tuple_[0].size(); ++i) {
       if (input_a_strategy[axes_tuple_tuple_[0][i]] != input_b_strategy[axes_tuple_tuple_[1][i]]) {
-        MS_LOG(ERROR) << name_ << ": The strategies of relavent dimensions are no equal";
+        MS_LOG(ERROR) << name_ << ": The strategies of relevant dimensions are no equal";
         return FAILED;
       }
     }
@@ -196,42 +196,10 @@ Status TensorDotInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status TensorDotInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-
-  Shape input_a_tensor_map = inputs_tensor_map_[0];
-  Shape input_b_tensor_map = inputs_tensor_map_[1];
-  std::vector<Group> input_a_group, input_b_group;
-  if ((CreateGroupByTensorMap(input_a_tensor_map, &input_a_group) != SUCCESS) ||
-      (CreateGroupByTensorMap(input_b_tensor_map, &input_b_group) != SUCCESS)) {
-    MS_LOG(ERROR) << name_ << ": Create group by tensor map failed";
-    return FAILED;
-  }
-
-  if (input_a_group.empty() && input_b_group.empty()) {
-    MS_LOG(INFO) << name_ << ": The mirror ops is empty";
-    return SUCCESS;
-  }
-
-  OperatorVector op_for_input_a, op_for_input_b;
-  if (!input_a_group.empty()) {
-    op_for_input_a = CreateMirrorOps(input_a_group[0].name(), input_a_group[0].GetDevNum());
-    MS_LOG(INFO) << name_ << ": Create the mirror ops for input_a success, group is " << input_a_group[0].name();
-  }
-  if (!input_b_group.empty()) {
-    op_for_input_b = CreateMirrorOps(input_b_group[0].name(), input_b_group[0].GetDevNum());
-    MS_LOG(INFO) << name_ << ": Create the mirror ops for input_b success, group is " << input_b_group[0].name();
-  }
-
-  mirror_ops_.push_back(op_for_input_a);
-  mirror_ops_.push_back(op_for_input_b);
-  return SUCCESS;
-}
-
 Status TensorDotInfo::InferForwardCommunication() {
   forward_op_.clear();
   Shape forward_group_map = outputs_tensor_map_[0];
-  // handel the repeat calculation, the forward communication's group can not include the dimension of repeat
+  // handle the repeat calculation, the forward communication's group can not include the dimension of repeat
   // calculation
   if (repeated_calc_num_ > 1) {
     if (repeated_num_in_dev_matrix_right_) {
@@ -353,37 +321,6 @@ Status TensorDotInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status TensorDotInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-
-  TensorLayout input_layout, output_layout;
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    // infer tensor layout
-    if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-      return FAILED;
-    }
-    TensorInfo input_tensor_info(input_layout);
-    inputs_tensor_info_.push_back(input_tensor_info);
-  }
-
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo output_tensor_info(output_layout);
-  outputs_tensor_info_.push_back(output_tensor_info);
-
-  for (size_t i = 0; i < inputs_tensor_info_.size(); i++) {
-    MS_LOG(INFO) << name_ << ": The input " << i << " layout: " << inputs_tensor_info_[i].tensor_layout().ToString();
-  }
-  MS_LOG(INFO) << name_ << ": The output layout: " << outputs_tensor_info_[0].tensor_layout().ToString();
-  return SUCCESS;
-}
-
 Status TensorDotInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed";
@@ -415,23 +352,23 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
 
   if (axes_type_ == INT_TYPE) {
     if (IntToSize(axes_int_) == inputs_shape_[0].size()) {
-      input_b_strategy[0] = stage_device_size_;  // find the relavent dimension for input_b
+      input_b_strategy[0] = stage_device_size_;  // find the relevant dimension for input_b
     }
   } else if (axes_type_ == TUPLE_TUPLE_TYPE) {
-    // if the input_a's axes contain 0, the input_b has the relavent dimension with batch dimension
+    // if the input_a's axes contain 0, the input_b has the relevant dimension with batch dimension
     bool found = false;
-    size_t relavant_index = 0;
+    size_t relevant_index = 0;
     for (size_t i = 0; i < axes_tuple_tuple_[0].size(); ++i) {
       if (axes_tuple_tuple_[0][i] == 0) {
         found = true;
-        relavant_index = i;
+        relevant_index = i;
         break;
       }
     }
 
     if (found) {
-      // find the relavant
-      input_b_strategy[axes_tuple_tuple_[1][relavant_index]] = stage_device_size_;
+      // find the relevant
+      input_b_strategy[axes_tuple_tuple_[1][relevant_index]] = stage_device_size_;
     }
   } else {
     MS_LOG(EXCEPTION) << name_ << ": Now do not support TUPLE_TYPE";

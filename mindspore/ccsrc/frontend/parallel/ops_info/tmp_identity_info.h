@@ -48,7 +48,6 @@ class TmpIdentityInfo : public OperatorInfo {
   Status GetAttrs() override { return SUCCESS; }
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
 };

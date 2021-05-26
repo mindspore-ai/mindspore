@@ -45,13 +45,10 @@ class PReLUInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferForwardCommunication() override;
-  Status InferTensorInfo() override;
+  Status InferForwardCommunication() { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
-  Dimensions GetOutputStrategy();
 
  private:
   Dimensions input_strategy_;

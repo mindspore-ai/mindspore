@@ -108,63 +108,6 @@ Status TransposeInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-// the output tensor strategy is the permutation of input tensor strategy, the permutation is axis_v
-Strategys TransposeInfo::GetOutputsStrategy() {
-  Strategys outputs_strategy;
-  Dimensions strategy = input_strategy_;
-  for (uint64_t i = 0; i < strategy.size(); i++) {
-    strategy[i] = input_strategy_[LongToUlong(axis_v_[i])];
-  }
-  outputs_strategy.push_back(strategy);
-  return outputs_strategy;
-}
-
-Status TransposeInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
-  if ((inputs_layout == nullptr) || (outputs_layout == nullptr)) {
-    MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
-    return FAILED;
-  }
-  Shape shape_in = inputs_shape_.at(0);
-  TensorMap tensor_map_in = inputs_tensor_map_.at(0);
-  Shape shape_out = outputs_shape_.at(0);
-  TensorMap tensor_map_out = outputs_tensor_map_.at(0);
-
-  TensorLayout tensor_layout_in, tensor_layout_out;
-  if ((tensor_layout_in.InitFromVector(dev_matrix_shape_, tensor_map_in, shape_in) != SUCCESS) ||
-      (tensor_layout_out.InitFromVector(dev_matrix_shape_, tensor_map_out, shape_out) != SUCCESS)) {
-    return FAILED;
-  }
-
-  inputs_layout->push_back(tensor_layout_in);
-  outputs_layout->push_back(tensor_layout_out);
-  return SUCCESS;
-}
-
-Status TransposeInfo::InferTensorInfo() {
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Strategys outputs_strategy = GetOutputsStrategy();
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-
-  TensorLayouts inputs_layout, outputs_layout;
-  if (InferTensorLayout(&inputs_layout, &outputs_layout) != SUCCESS) {
-    return FAILED;
-  }
-  TensorLayout tensor_layout_in = inputs_layout.at(0);
-  TensorLayout tensor_layout_out = outputs_layout.at(0);
-  Shape shape_array_in = inputs_shape_.at(0);
-  Shape slice_shape_in = inputs_slice_shape.at(0);
-  Shape shape_array_out = outputs_shape_.at(0);
-  Shape slice_shape_out = outputs_slice_shape.at(0);
-  TensorInfo tensor_info_in(tensor_layout_in, shape_array_in, slice_shape_in);
-  TensorInfo tensor_info_out(tensor_layout_out, shape_array_out, slice_shape_out);
-  inputs_tensor_info_.push_back(tensor_info_in);
-  outputs_tensor_info_.push_back(tensor_info_out);
-  return SUCCESS;
-}
-
 // compute axis_v_ during this method
 Status TransposeInfo::GetAttrs() { return ComputeAxis(); }
 

@@ -43,7 +43,6 @@ class ActivationBase : public OperatorInfo {
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
 };
 
@@ -214,7 +213,6 @@ class ExpandDimsInfo : public ActivationOther {
  protected:
   Status GetAttrs() override;
   Status InferTensorMap() override;
-  Status InferTensorInfo() override;
   Status InferMirrorOps() override;
   Status InferTensorStrategy();
 
@@ -236,7 +234,6 @@ class SqueezeInfo : public ActivationOther {
   Status GetAttrs() override;
   Status InferReplaceOps(const StrategyPtr &strategy);
   Status InferTensorMap() override;
-  Status InferTensorInfo() override;
   Status Init(const StrategyPtr &strategy) override;
 
  private:
@@ -270,8 +267,9 @@ class DropoutInfo : public ActivationOther {
 
  protected:
   Status GetAttrs() override;
-  Status InferTensorInfo() override;
+  Status InferTensorMap() override;
   Status InferReplaceOps(const StrategyPtr &strategy);
+  Status InferAsLossDivisor() override;
 
  private:
   int64_t seed0_ = 0;
