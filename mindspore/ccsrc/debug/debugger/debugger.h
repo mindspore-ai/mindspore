@@ -219,10 +219,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::vector<std::string> CheckOpOverflow();
 
   // Check if the port is valid
-  bool CheckPort(const char *port) const;
+  bool CheckPort(const std::string &port) const;
 
   // Check if the IP is valid
-  bool CheckIp(const char *host) const;
+  bool CheckIp(const std::string &host) const;
 
   void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
 

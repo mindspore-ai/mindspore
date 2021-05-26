@@ -133,7 +133,8 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
   DebugServices::watchpoint_t wp) {
   auto parameter_list = wp.parameter_list;
   bool hit = false;
-  std::bitset<32> error_code;
+  const uint8_t bit_size = 32;
+  std::bitset<bit_size> error_code;
   CONDITION_TYPE type = wp.condition.type;
   // bit 0 denotes presence of nan
   error_code.set(0, nan_count > 0);
