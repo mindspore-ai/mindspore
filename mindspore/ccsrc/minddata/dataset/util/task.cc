@@ -172,7 +172,7 @@ Status Task::Join(WaitFlag blocking) {
 
             // just wait 30 seconds
             // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
-            if (wait_times > 30) {
+            if (wait_times > kWaitInterruptTaskTime) {
               MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
                               << " is not responding. Maybe it's destroyed, task stop.";
               break;

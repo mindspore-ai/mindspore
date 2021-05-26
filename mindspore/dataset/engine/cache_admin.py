@@ -23,6 +23,7 @@ import sys
 import mindspore
 
 def main():
+
     """Entry point for cache service"""
     cache_admin_dir = os.path.join(os.path.dirname(mindspore.__file__), "bin")
     os.chdir(cache_admin_dir)

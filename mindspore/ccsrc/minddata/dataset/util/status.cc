@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "minddata/dataset/util/status.h"
+#include <cstdio>
+#include <cstdlib>
 #include <sstream>
 #include <string>
 #include <memory.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "utils/ms_utils.h"
 #include "./securec.h"
 
@@ -34,8 +34,7 @@ namespace dataset {
 float GetMemoryUsage() {
   char buf[128] = {0};
 
-  FILE *fd;
-  fd = fopen("/proc/meminfo", "r");
+  FILE *fd = fopen("/proc/meminfo", "r");
   if (fd == nullptr) {
     MS_LOG(WARNING) << "The meminfo file: /proc/meminfo is opened failed.";
     return 0.0;
