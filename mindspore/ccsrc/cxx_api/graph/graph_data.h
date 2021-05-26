@@ -31,7 +31,7 @@ class Graph::GraphData {
 
   explicit GraphData(const FuncGraphPtr &func_graph, enum ModelType model_type = kMindIR);
 
-  GraphData(Buffer om_data, enum ModelType model_type);
+  GraphData(const Buffer &om_data, enum ModelType model_type);
 
   ~GraphData();
 

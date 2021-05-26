@@ -51,7 +51,7 @@ static Buffer ReadFile(const std::string &file) {
     return buffer;
   }
 
-  ifs.seekg(0, std::ios::end);
+  (void)ifs.seekg(0, std::ios::end);
   size_t size = static_cast<size_t>(ifs.tellg());
   buffer.ResizeData(size);
   if (buffer.DataSize() != size) {
@@ -60,8 +60,8 @@ static Buffer ReadFile(const std::string &file) {
     return buffer;
   }
 
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), static_cast<std::streamsize>(size));
+  (void)ifs.seekg(0, std::ios::beg);
+  (void)ifs.read(reinterpret_cast<char *>(buffer.MutableData()), static_cast<std::streamsize>(size));
   ifs.close();
 
   return buffer;
@@ -127,7 +127,7 @@ Status Serialization::LoadCheckPoint(const std::string &, std::map<std::string, 
   return kMEFailed;
 }
 
-Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *) {
+Status Serialization::SetParameters(const std::map<std::string, Buffer> &, Model *) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
