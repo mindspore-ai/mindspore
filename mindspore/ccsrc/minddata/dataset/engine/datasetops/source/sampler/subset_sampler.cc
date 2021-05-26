@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor.
-SubsetSamplerRT::SubsetSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices, int64_t samples_per_tensor)
+SubsetSamplerRT::SubsetSamplerRT(const std::vector<int64_t> &indices, int64_t num_samples, int64_t samples_per_tensor)
     : SamplerRT(num_samples, samples_per_tensor), indices_(indices), sample_id_(0) {}
 
 // Initialized this Sampler.

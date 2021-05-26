@@ -33,14 +33,13 @@ const uint8_t RandomRotationOp::kDefFillG = 0;
 const uint8_t RandomRotationOp::kDefFillB = 0;
 
 // constructor
-RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, float center_x, float center_y,
-                                   InterpolationMode interpolation, bool expand, uint8_t fill_r, uint8_t fill_g,
-                                   uint8_t fill_b)
+RandomRotationOp::RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample, bool expand,
+                                   float center_x, float center_y, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : degree_start_(start_degree),
       degree_end_(end_degree),
       center_x_(center_x),
       center_y_(center_y),
-      interpolation_(interpolation),
+      interpolation_(resample),
       expand_(expand),
       fill_r_(fill_r),
       fill_g_(fill_g),

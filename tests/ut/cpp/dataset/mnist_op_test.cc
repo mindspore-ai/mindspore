@@ -38,9 +38,9 @@
 
 namespace common = mindspore::common;
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
 std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
@@ -77,7 +77,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
   int64_t num_samples = 10;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
   auto op2 = Repeat(2);
   op1->set_total_repeats(2);
@@ -111,7 +111,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
   int64_t num_samples = 10;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
   auto op2 = Repeat(2);
   auto op3 = Batch(5);
@@ -119,10 +119,7 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   op1->set_num_repeats_per_epoch(2);
   auto tree = Build({op1, op2, op3});
   tree->Prepare();
-  uint32_t res[4][5] = { {0, 0, 0, 0, 0 },
-                         {0, 0, 0, 0, 0 },
-                         {0, 0, 0, 0, 0 },
-                         {0, 0, 0, 0, 0 } };
+  uint32_t res[4][5] = {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
   Status rc = tree->Launch();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";

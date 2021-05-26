@@ -42,18 +42,18 @@ class RandomRotationOp : public TensorOp {
   // Constructor for RandomRotationOp
   // @param startDegree starting range for random degree
   // @param endDegree ending range for random degree
-  // @param centerX x coordinate for center of image rotation
-  // @param centerY y coordinate for center of image rotation
   // @param interpolation DE interpolation mode for rotation
   // @param expand option for the output image shape to change
+  // @param center_x coordinate for center of image rotation
+  // @param center_y coordinate for center of image rotation
   // @param fill_r R value for the color to pad with
   // @param fill_g G value for the color to pad with
   // @param fill_b B value for the color to pad with
   // @details the randomly chosen degree is uniformly distributed
   // @details the output shape, if changed, will contain the entire rotated image
   // @note maybe using unsigned long int isn't the best here according to our coding rules
-  RandomRotationOp(float start_degree, float end_degree, float center_x = kDefCenterX, float center_y = kDefCenterY,
-                   InterpolationMode interpolation = kDefInterpolation, bool expand = kDefExpand,
+  RandomRotationOp(float start_degree, float end_degree, InterpolationMode resample = kDefInterpolation,
+                   bool expand = kDefExpand, float center_x = kDefCenterX, float center_y = kDefCenterY,
                    uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
 
   ~RandomRotationOp() override = default;

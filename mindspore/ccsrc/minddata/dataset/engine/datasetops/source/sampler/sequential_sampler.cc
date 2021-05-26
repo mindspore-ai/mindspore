@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-SequentialSamplerRT::SequentialSamplerRT(int64_t num_samples, int64_t start_index, int64_t samples_per_tensor)
+SequentialSamplerRT::SequentialSamplerRT(int64_t start_index, int64_t num_samples, int64_t samples_per_tensor)
     : SamplerRT(num_samples, samples_per_tensor), current_id_(start_index), start_index_(start_index), id_count_(0) {}
 
 Status SequentialSamplerRT::GetNextSample(TensorRow *out) {

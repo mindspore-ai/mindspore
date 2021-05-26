@@ -33,7 +33,7 @@ class RandomCropDecodeResizeOp : public RandomCropAndResizeOp {
  public:
   RandomCropDecodeResizeOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
                            float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb, float aspect_ub = kDefAspectUb,
-                           InterpolationMode interpolation = kDefInterpolation, int32_t max_iter = kDefMaxIter);
+                           InterpolationMode interpolation = kDefInterpolation, int32_t max_attempts = kDefMaxIter);
 
   explicit RandomCropDecodeResizeOp(const RandomCropAndResizeOp &rhs) : RandomCropAndResizeOp(rhs) {}
 

@@ -33,9 +33,9 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
 std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 
@@ -95,7 +95,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
 TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
   std::vector<int64_t> indices({1});
   int64_t num_samples = 0;
-  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(num_samples, indices);
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(indices, num_samples);
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   // Expect 6 samples for label 0 and 1
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(sampler))});
@@ -156,7 +156,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   int64_t num_samples = 1;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto op1 = Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {});
   auto op2 = Repeat(4);
   op1->set_total_repeats(4);
@@ -189,7 +189,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   int64_t num_samples = 1;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto tree = Build({Manifest(16, 2, 32, file, "eval", std::move(seq_sampler), {})});
   tree->Prepare();
   Status rc = tree->Launch();

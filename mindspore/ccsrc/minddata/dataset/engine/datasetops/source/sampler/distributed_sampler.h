@@ -28,10 +28,10 @@ namespace dataset {
 class DistributedSamplerRT : public SamplerRT {
  public:
   /// \brief Constructor
-  /// \param[in] num_samples The total number of rows in the dataset
-  /// \param[in] num_dev Total number of shards for the distributed sampler
-  /// \param[in] dev_id Device id of the shard
+  /// \param[in] num_shards Total number of shards for the distributed sampler
+  /// \param[in] shard_id Device id of the shard
   /// \param[in] shuffle Option to shuffle
+  /// \param[in] num_samples The total number of rows in the dataset
   /// \param seed Seed parameter to shuffle, default to max unsigned int (different seed in sampler will
   ///     result in different samples being picked
   /// \param[in] offset The starting device id where the elements in the dataset are send to, which should be no more
@@ -40,7 +40,7 @@ class DistributedSamplerRT : public SamplerRT {
   ///     This option is not exposed in the python API. Current behavior is that the remainder will always
   ///     be handled by the first n shards, n being the corresponding device id. Please notice that when offset is set,
   ///     even_dist will be forcibly converted to false for sending rest datasets in concatdataset scenario.
-  DistributedSamplerRT(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+  DistributedSamplerRT(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
                        uint32_t seed = std::numeric_limits<uint32_t>::max(), int64_t offset = -1,
                        bool even_dist = true);
 

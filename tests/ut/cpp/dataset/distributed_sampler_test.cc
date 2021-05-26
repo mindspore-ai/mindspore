@@ -27,9 +27,9 @@
 #include <unordered_set>
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestDistributedSampler : public UT::Common {
  public:
@@ -48,7 +48,7 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
   uint64_t num_samples = 7;
 
   // create sampler with replacement = true
-  DistributedSamplerRT m_sampler(num_samples, 2, 0, false, 0, -1, false);
+  DistributedSamplerRT m_sampler(2, 0, false, num_samples, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -72,7 +72,7 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
   uint64_t num_samples = 7;
 
   // create sampler with replacement = true
-  DistributedSamplerRT m_sampler(num_samples, 2, 1, false, 0, -1, false);
+  DistributedSamplerRT m_sampler(2, 1, false, num_samples, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
@@ -97,7 +97,7 @@ TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
   uint64_t num_samples = 2;
 
   // create sampler with replacement = true
-  DistributedSamplerRT m_sampler(num_samples, 3, 2, false, 0, -1, false);
+  DistributedSamplerRT m_sampler(3, 2, false, num_samples, 0, -1, false);
   DummyRandomAccessOp dummyRandomAccessOp(num_samples);
   m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 

@@ -33,9 +33,9 @@ namespace dataset {
 class RandomApplyOp : public TensorOp {
  public:
   /// constructor
-  /// \param[in] prob probability whether the list of TensorOps will be applied
   /// \param[in] ops the list of TensorOps to apply with prob likelihood
-  explicit RandomApplyOp(double prob, const std::vector<std::shared_ptr<TensorOp>> &ops);
+  /// \param[in] prob probability whether the list of TensorOps will be applied
+  explicit RandomApplyOp(const std::vector<std::shared_ptr<TensorOp>> &ops, double prob);
 
   /// default destructor
   ~RandomApplyOp() = default;

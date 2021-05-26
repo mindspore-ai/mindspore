@@ -27,9 +27,9 @@ namespace dataset {
 SoftDvppDecodeRandomCropResizeJpegOp::SoftDvppDecodeRandomCropResizeJpegOp(int32_t target_height, int32_t target_width,
                                                                            float scale_lb, float scale_ub,
                                                                            float aspect_lb, float aspect_ub,
-                                                                           int32_t max_iter)
+                                                                           int32_t max_attempts)
     : RandomCropAndResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub,
-                            InterpolationMode::kLinear, max_iter) {}
+                            InterpolationMode::kLinear, max_attempts) {}
 
 Status SoftDvppDecodeRandomCropResizeJpegOp::GetCropInfo(const std::shared_ptr<Tensor> &input,
                                                          SoftDpCropInfo *crop_info) {

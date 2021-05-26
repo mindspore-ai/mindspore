@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class FillOp : public TensorOp {
  public:
-  explicit FillOp(std::shared_ptr<Tensor> value) : fill_value_(value) {}
+  explicit FillOp(std::shared_ptr<Tensor> fill_value) : fill_value_(fill_value) {}
 
   ~FillOp() override = default;
 

@@ -71,7 +71,7 @@ Status PKSamplerObj::to_json(nlohmann::json *const out_json) {
 
 Status PKSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  *sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
+  *sampler = std::make_shared<dataset::PKSamplerRT>(num_val_, shuffle_, num_samples_);
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;
   return s;

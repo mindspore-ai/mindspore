@@ -72,7 +72,7 @@ Status SequentialSamplerObj::to_json(nlohmann::json *const out_json) {
 
 Status SequentialSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  *sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
+  *sampler = std::make_shared<dataset::SequentialSamplerRT>(start_index_, num_samples_);
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;
   return s;

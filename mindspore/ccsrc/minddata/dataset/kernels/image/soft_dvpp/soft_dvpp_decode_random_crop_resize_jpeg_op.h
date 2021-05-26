@@ -32,7 +32,7 @@ class SoftDvppDecodeRandomCropResizeJpegOp : public RandomCropAndResizeOp {
  public:
   SoftDvppDecodeRandomCropResizeJpegOp(int32_t target_height, int32_t target_width, float scale_lb = kDefScaleLb,
                                        float scale_ub = kDefScaleUb, float aspect_lb = kDefAspectLb,
-                                       float aspect_ub = kDefAspectUb, int32_t max_iter = kDefMaxIter);
+                                       float aspect_ub = kDefAspectUb, int32_t max_attempts = kDefMaxIter);
 
   /// \brief Destructor
   ~SoftDvppDecodeRandomCropResizeJpegOp() = default;

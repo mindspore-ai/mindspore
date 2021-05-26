@@ -97,7 +97,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   }
 
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
-                                                  padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
+                                                  pad_if_needed_, padding_mode_, fill_r, fill_g, fill_b);
   return tensor_op;
 }
 

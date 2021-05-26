@@ -28,11 +28,11 @@ namespace mindspore {
 namespace dataset {
 class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
  public:
-  // @param num_samples - the number of samples to draw.  value of 0 means to take the full amount
-  // @param int64_t val
+  // @param int64_t num_val
   // @param bool shuffle - shuffle all classIds or not, if true, classes may be 5,1,4,3,2
+  // @param num_samples - the number of samples to draw.  value of 0 means to take the full amount
   // @param int64_t samples_per_tensor - Num of Sampler Ids to fetch via 1 GetNextSample call
-  PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle,
+  PKSamplerRT(int64_t num_val, bool shuffle, int64_t num_samples,
               int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // default destructor

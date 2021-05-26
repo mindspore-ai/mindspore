@@ -32,7 +32,7 @@ namespace dataset {
 
 class TruncateSequencePairOp : public TensorOp {
  public:
-  explicit TruncateSequencePairOp(dsize_t length) : max_length_(length) {}
+  explicit TruncateSequencePairOp(dsize_t max_length) : max_length_(max_length) {}
 
   ~TruncateSequencePairOp() override = default;
 

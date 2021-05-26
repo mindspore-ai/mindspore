@@ -73,7 +73,7 @@ Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
 }
 
 Status WeightedRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
-  *sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
+  *sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(weights_, num_samples_, replacement_);
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;
   return s;

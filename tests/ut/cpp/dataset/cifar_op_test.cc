@@ -35,9 +35,9 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
@@ -60,11 +60,11 @@ class MindDataTestCifarOp : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
-  //Note: CIFAR and Mnist datasets are not included
-  //as part of the build tree.
-  //Download datasets and rebuild if data doesn't
-  //appear in this dataset
-  //Example: python tests/dataset/data/prep_data.py
+  // Note: CIFAR and Mnist datasets are not included
+  // as part of the build tree.
+  // Download datasets and rebuild if data doesn't
+  // appear in this dataset
+  // Example: python tests/dataset/data/prep_data.py
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   auto tree = Build({Cifarop(16, 2, 32, folder_path, nullptr)});
   tree->Prepare();
@@ -93,7 +93,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
 TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
   uint32_t original_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
-  std::shared_ptr<SamplerRT> sampler = std::make_unique<RandomSamplerRT>(12, true, true);
+  std::shared_ptr<SamplerRT> sampler = std::make_unique<RandomSamplerRT>(true, 12, true);
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   auto tree = Build({Cifarop(16, 2, 32, folder_path, std::move(sampler))});
   tree->Prepare();
@@ -139,8 +139,8 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar100) {
     while (tensor_map.size() != 0 && i < 100) {
       tensor_map["coarse_label"]->GetItemAt<uint32_t>(&coarse, {});
       tensor_map["fine_label"]->GetItemAt<uint32_t>(&fine, {});
-      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << " coarse:"
-                << coarse << " fine:" << fine << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << " coarse:" << coarse << " fine:" << fine
+                    << "\n";
       i++;
       ASSERT_OK(di.GetNextAsMap(&tensor_map));
     }

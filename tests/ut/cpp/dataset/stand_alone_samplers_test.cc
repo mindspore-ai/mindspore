@@ -62,7 +62,7 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   TensorRow sample_row;
   for (int i = 0; i < 6; i++) {
     std::shared_ptr<SamplerRT> sampler =
-      std::make_shared<DistributedSamplerRT>(num_samples, 3, i % 3, (i < 3 ? false : true));
+      std::make_shared<DistributedSamplerRT>(3, i % 3, (i < 3 ? false : true), num_samples);
     sampler->HandshakeRandomAccessOp(&mock);
     sampler->GetNextSample(&sample_row);
     tensor = sample_row[0];
@@ -82,7 +82,7 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3));
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  std::shared_ptr<SamplerRT> sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index, 3);
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples, 3);
 
   std::shared_ptr<Tensor> tensor;
   TensorRow sample_row;

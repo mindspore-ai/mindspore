@@ -26,13 +26,13 @@ const uint8_t PadOp::kDefFillR = 0;
 const uint8_t PadOp::kDefFillG = 0;
 const uint8_t PadOp::kDefFillB = 0;
 
-PadOp::PadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType border_types,
+PadOp::PadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType padding_mode,
              uint8_t fill_r, uint8_t fill_g, uint8_t fill_b)
     : pad_top_(pad_top),
       pad_bottom_(pad_bottom),
       pad_left_(pad_left),
       pad_right_(pad_right),
-      boarder_type_(border_types),
+      boarder_type_(padding_mode),
       fill_r_(fill_r),
       fill_g_(fill_g),
       fill_b_(fill_b) {}

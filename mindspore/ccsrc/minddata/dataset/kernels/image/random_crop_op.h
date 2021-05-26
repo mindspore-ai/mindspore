@@ -43,7 +43,7 @@ class RandomCropOp : public TensorOp {
 
   RandomCropOp(int32_t crop_height, int32_t crop_width, int32_t pad_top = kDefPadTop,
                int32_t pad_bottom = kDefPadBottom, int32_t pad_left = kDefPadLeft, int32_t pad_right = kDefPadRight,
-               BorderType border_types = kDefBorderType, bool pad_if_needed = kDefPadIfNeeded,
+               bool pad_if_needed = kDefPadIfNeeded, BorderType padding_mode = kDefBorderType,
                uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
 
   RandomCropOp(const RandomCropOp &rhs) = default;

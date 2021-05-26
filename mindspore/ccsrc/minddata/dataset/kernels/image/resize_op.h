@@ -45,8 +45,8 @@ class ResizeOp : public TensorOp {
   // @param size2: the second size of output. If this is also provided, the output size
   // will be (size1, size2)
   // @param InterpolationMode: the interpolation mode being used.
-  explicit ResizeOp(int32_t size1, int32_t size2 = kDefWidth, InterpolationMode mInterpolation = kDefInterpolation)
-      : size1_(size1), size2_(size2), interpolation_(mInterpolation) {}
+  explicit ResizeOp(int32_t size1, int32_t size2 = kDefWidth, InterpolationMode interpolation = kDefInterpolation)
+      : size1_(size1), size2_(size2), interpolation_(interpolation) {}
 
   ResizeOp(const ResizeOp &rhs) = default;
 

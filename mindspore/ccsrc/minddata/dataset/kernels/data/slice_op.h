@@ -31,7 +31,7 @@ namespace dataset {
 
 class SliceOp : public TensorOp {
  public:
-  explicit SliceOp(std::vector<SliceOption> slice_options) : slice_options_(slice_options) {}
+  explicit SliceOp(std::vector<SliceOption> slice_input) : slice_options_(slice_input) {}
   explicit SliceOp(SliceOption slice_option) { slice_options_.push_back(slice_option); }
   // short hand notation for slicing along fist dimension
   explicit SliceOp(Slice slice) { slice_options_.push_back(SliceOption(slice)); }

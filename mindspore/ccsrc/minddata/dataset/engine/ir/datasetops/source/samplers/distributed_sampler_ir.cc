@@ -77,7 +77,7 @@ Status DistributedSamplerObj::ValidateParams() {
 
 Status DistributedSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  *sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
+  *sampler = std::make_shared<dataset::DistributedSamplerRT>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
                                                              offset_, even_dist_);
   Status s = BuildChildren(sampler);
   sampler = s.IsOk() ? sampler : nullptr;

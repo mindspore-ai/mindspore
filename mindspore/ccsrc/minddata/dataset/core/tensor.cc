@@ -448,6 +448,13 @@ void Tensor::Print(std::ostream &out) const {
     out << "[Data area is null]";
   }
 }
+
+void Tensor::Print_data(std::ostream &out) const {
+  if (data_) {
+    PrintRecursive(out, 0, std::vector<dsize_t>{});
+  }
+}
+
 Status Tensor::AllocateBuffer(const dsize_t &length) {
   RETURN_UNEXPECTED_IF_NULL(data_allocator_);
   if (data_ == nullptr) {
@@ -619,6 +626,17 @@ Status Tensor::GetBufferInfo(Tensor *t, py::buffer_info *out) {
   return Status::OK();
 }
 #endif
+
+Status Tensor::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["shape"] = shape_.ToString();
+  args["type"] = type_.ToString();
+  std::stringstream ss;
+  this->Print_data(ss);
+  args["data"] = ss.str();
+  *out_json = args;
+  return Status::OK();
+}
 
 template <typename T>
 Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {

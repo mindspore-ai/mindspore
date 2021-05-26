@@ -40,11 +40,11 @@ class PadOp : public TensorOp {
   // @param pad_bottom number of pixels to pad the bottom of the image with.
   // @param pad_left number of pixels to pad the left of the image with.
   // @param pad_right number of pixels to pad the right of the image with.
-  // @param border_types BorderType enum, the type of boarders that we are using.
+  // @param padding_mode BorderType enum, the type of boarders that we are using.
   // @param fill_r R value for the color to pad with.
   // @param fill_g G value for the color to pad with.
   // @param fill_b B value for the color to pad with.
-  PadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType border_types,
+  PadOp(int32_t pad_top, int32_t pad_bottom, int32_t pad_left, int32_t pad_right, BorderType padding_mode,
         uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB);
 
   ~PadOp() override = default;

@@ -31,7 +31,7 @@ const int32_t RandomCropAndResizeOp::kDefMaxIter = 10;
 
 RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t target_width, float scale_lb,
                                              float scale_ub, float aspect_lb, float aspect_ub,
-                                             InterpolationMode interpolation, int32_t max_iter)
+                                             InterpolationMode interpolation, int32_t max_attempts)
     : target_height_(target_height),
       target_width_(target_width),
       rnd_scale_(scale_lb, scale_ub),
@@ -39,7 +39,7 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
       interpolation_(interpolation),
       aspect_lb_(aspect_lb),
       aspect_ub_(aspect_ub),
-      max_iter_(max_iter) {
+      max_iter_(max_attempts) {
   rnd_.seed(GetSeed());
   is_deterministic_ = false;
 }
