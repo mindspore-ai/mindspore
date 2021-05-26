@@ -124,8 +124,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-  auto prim = lite::ConvertToPrimitive(prim_t.release(), &fbb);
-  prim_t.reset();
+  auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
   if (prim == nullptr) {
     MS_LOG(ERROR) << "get primitive failed.";
     FreeTensors(&inputs);
@@ -158,6 +157,10 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     auto set_status = SetCNodeAbstract(cnode, outputs, status);
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
+      FreeTensors(&inputs);
+      FreeTensors(&outputs);
+      free(parameter);
+      fbb.Clear();
       return set_status;
     }
   } else {

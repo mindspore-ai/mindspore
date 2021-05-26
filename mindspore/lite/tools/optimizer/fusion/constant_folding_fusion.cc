@@ -146,8 +146,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   MS_ASSERT(cnode != nullptr && context != nullptr);
   auto prim_t = lite::GetPrimitiveT(cnode->input(0));
   flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
-  auto prim = lite::ConvertToPrimitive(prim_t.release(), &fbb);
-  prim_t.reset();
+  auto prim = lite::ConvertToPrimitive(prim_t.get(), &fbb);
   if (prim == nullptr) {
     fbb.Clear();
     MS_LOG(ERROR) << "get primitive failed.";
