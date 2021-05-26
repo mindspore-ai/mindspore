@@ -214,6 +214,9 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
 
 AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
+
+// Generate kernel build info for created kernel
+kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_
