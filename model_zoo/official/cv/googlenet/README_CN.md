@@ -20,6 +20,10 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+     - [导出过程](#导出过程)
+        - [导出](#导出)
+    - [推理过程](#推理过程)
+        - [推理](#推理)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -99,6 +103,9 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   python eval.py > eval.log 2>&1 &
   或
   sh run_eval.sh
+
+  # 运行推理示例
+  bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
   ```
 
   对于分布式训练，需要提前创建JSON格式的hccl配置文件。
@@ -228,10 +235,12 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
     ├── README.md                          // 所有模型相关说明
     ├── googlenet
         ├── README.md                    // googlenet相关说明
+        ├── ascend310_infer              // 实现310推理源代码
         ├── scripts
         │   ├──run_train.sh             // 分布式到Ascend的shell脚本
         │   ├──run_train_gpu.sh         // 分布式到GPU处理器的shell脚本
         │   ├──run_eval.sh              // Ascend评估的shell脚本
+        │   ├──run_infer_310.sh         // Ascend推理shell脚本
         │   ├──run_eval_gpu.sh          // GPU处理器评估的shell脚本
         ├── src
         │   ├──dataset.py             // 创建数据集
@@ -239,7 +248,8 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
         │   ├──config.py            // 参数配置
         ├── train.py               // 训练脚本
         ├── eval.py               // 评估脚本
-        ├── export.py            // 将checkpoint文件导出到air/onnx下
+        ├── postprogress.py       // 310推理后处理脚本
+        ├── export.py            // 将checkpoint文件导出到air/mindir
 ```
 
 ## 脚本参数
@@ -386,6 +396,35 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
   ```bash
   # grep "accuracy:" eval/eval.log
   accuracy:{'acc':0.930}
+  ```
+
+## 导出过程
+
+### 导出
+
+在导出之前需要修改数据集对应的配置文件，Cifar10的配置文件为cifar10_config.yaml，imagenet的配置文件为imagenet_config.yaml.
+需要修改的配置项为 batch_size 和 ckpt_file.
+
+```shell
+python export.py --config_path [CONFIG_PATH]
+```
+
+## 推理过程
+
+### 推理
+
+在还行推理之前我们需要先导出模型。Air模型只能在昇腾910环境上导出，mindir可以在任意环境上导出。batch_size只支持1。
+
+- 在昇腾310上使用CIFAR-10数据集进行推理
+
+  在执行下面的命令之前，我们需要先修改cifar10的配置文件。修改的项包括batch_size和val_data_path。LABEL_FILE参数只对ImageNet数据集有用，可以传任意值。
+
+  推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+
+  ```shell
+  # Ascend310 inference
+  sh run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+  after allreduce eval: top1_correct=9252, tot=10000, acc=92.52%
   ```
 
 # 模型描述
