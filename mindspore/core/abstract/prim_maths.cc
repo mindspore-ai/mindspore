@@ -25,10 +25,12 @@ AbstractBasePtr InferImplMinOrMaxGrad(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: three tensors.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  const size_t args_size = 3;
+  const size_t dout_index = 2;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto input_y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  auto dout = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto dout = CheckArg<AbstractTensor>(op_name, args_spec_list, dout_index);
   (void)CheckTensorsDTypeSame({input_x, input_y, dout}, {kInt, kUInt, kFloat},
                               op_name + "evaluator three inputs should be %s");
 
@@ -197,7 +199,8 @@ AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePt
 AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t args_size = 2;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
@@ -269,7 +272,8 @@ AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const Pri
 AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  constexpr size_t args_size = 3;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto start = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(start);
   MS_EXCEPTION_IF_NULL(start->shape());

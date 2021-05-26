@@ -328,7 +328,8 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) {
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
-  if (op_debug_mode_ < 0 || op_debug_mode_ > 3) {
+  const size_t max_mode = 3;
+  if (op_debug_mode_ < 0 || op_debug_mode_ > max_mode) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
   }
 }

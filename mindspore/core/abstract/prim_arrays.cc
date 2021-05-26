@@ -49,7 +49,8 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
                                         const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tuples.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t args_size = 2;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto xs = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   auto ys = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
 
@@ -239,7 +240,8 @@ AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePt
 AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  constexpr size_t args_size = 3;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
@@ -581,7 +583,8 @@ AbstractBasePtr InferImplRealDiv(const AnalysisEnginePtr &, const PrimitivePtr &
 AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  constexpr size_t args_size = 3;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   AbstractTensorPtr params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   AbstractTensorPtr indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
@@ -1028,10 +1031,14 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
   if (args_spec_list.size() == 1) {
     return args_spec_list[0]->Broaden();
   }
-  CheckArgsSize(op_name, args_spec_list, 3);
-  AbstractTensorPtr range_start = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  AbstractTensorPtr range_end = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  AbstractTensorPtr range_delta = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  constexpr size_t args_size = 3;
+  constexpr size_t range_start_index = 0;
+  constexpr size_t range_end_index = 1;
+  constexpr size_t range_delta_index = 2;
+  CheckArgsSize(op_name, args_spec_list, args_size);
+  AbstractTensorPtr range_start = CheckArg<AbstractTensor>(op_name, args_spec_list, range_start_index);
+  AbstractTensorPtr range_end = CheckArg<AbstractTensor>(op_name, args_spec_list, range_end_index);
+  AbstractTensorPtr range_delta = CheckArg<AbstractTensor>(op_name, args_spec_list, range_delta_index);
 
   TypePtrList supported_types = {kInt64, kInt32, kFloat32, kFloat64};
   TypePtr range_start_type = CheckTensorDType(range_start, supported_types, "range_start input of Range should be %s");
@@ -1040,8 +1047,9 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
   // check all 3 inputs are same type
   if (!IsIdentidityOrSubclass(range_start_type, range_end_type) ||
       !IsIdentidityOrSubclass(range_end_type, range_delta_type)) {
-    MS_LOG(EXCEPTION) << "All inputs must have same type, but got: " << args_spec_list[0]->type_name() << ", "
-                      << args_spec_list[1]->type_name() << ", and " << args_spec_list[2]->type_name();
+    MS_LOG(EXCEPTION) << "All inputs must have same type, but got: " << args_spec_list[range_start_index]->type_name()
+                      << ", " << args_spec_list[range_end_index]->type_name() << ", and "
+                      << args_spec_list[range_delta_index]->type_name();
   }
 
   int64_t max_output_length = -1;
