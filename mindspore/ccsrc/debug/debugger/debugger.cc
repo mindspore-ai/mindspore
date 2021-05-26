@@ -15,7 +15,7 @@
  */
 
 #include <dirent.h>
-#include <stdio.h>
+#include <cstdio>
 #include <fstream>
 #include <tuple>
 #include <vector>
@@ -47,7 +47,7 @@ using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
-#define CHUNK_SIZE 1024 * 1024 * 3
+constexpr int CHUNK_SIZE = 1024 * 1024 * 3;
 
 namespace mindspore {
 
@@ -140,7 +140,7 @@ void Debugger::EnableDebugger() {
 
   if (debugger_enabled_) {
     // configure grpc host
-    const std::string env_host_str = std::getenv("MS_DEBUGGER_HOST");
+    std::string env_host_str = common::GetEnv("MS_DEBUGGER_HOST");
     std::string host;
     if (!env_host_str.empty()) {
       if (CheckIp(env_host_str)) {
@@ -156,7 +156,7 @@ void Debugger::EnableDebugger() {
       host = "localhost";
     }
     // configure grpc port
-    const std::string env_port_str = std::getenv("MS_DEBUGGER_PORT");
+    std::string env_port_str = common::GetEnv("MS_DEBUGGER_PORT");
     std::string port;
     if (!env_port_str.empty()) {
       if (CheckPort(env_port_str)) {
@@ -169,7 +169,7 @@ void Debugger::EnableDebugger() {
       }
     } else {
       port = "50051";
-      if (!CheckPort(port.c_str())) {
+      if (!CheckPort(port)) {
         MS_EXCEPTION(ValueError) << "Default MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to 65535";
       }
       MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
@@ -1062,7 +1062,7 @@ uint64_t BytestoInt64(const std::vector<char> &buffer) {
   return ret;
 }
 
-#define BUF_SIZ 256
+constexpr int BUF_SIZ = 256;
 std::vector<std::string> Debugger::CheckOpOverflow() {
   std::vector<double> bin_list;
   std::vector<std::string> op_names;
