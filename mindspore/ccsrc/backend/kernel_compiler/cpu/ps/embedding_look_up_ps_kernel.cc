@@ -77,10 +77,10 @@ void EmbeddingLookUpPSKernel::UpdateEmbeddings(float *embedding_table, const siz
   size_t copy_len = outer_dim_size_ * sizeof(float);
   size_t dest_len = copy_len;
   for (size_t i = 0; i < ids_size; ++i) {
-    int index = lookup_ids[i] - offset_;
+    int index = SizeToInt(lookup_ids[i]) - LongToInt(offset_);
     if (index >= 0 && index < SizeToInt(first_dim_size_)) {
-      auto ret =
-        memcpy_s(embedding_table + index * outer_dim_size_, dest_len, update_vals + i * outer_dim_size_, copy_len);
+      auto ret = memcpy_s(embedding_table + IntToSize(index) * outer_dim_size_, dest_len,
+                          update_vals + i * outer_dim_size_, copy_len);
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "LookUpTable task memcpy failed.";
       }
