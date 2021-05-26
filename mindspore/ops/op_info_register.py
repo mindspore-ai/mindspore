@@ -213,6 +213,65 @@ class RegOp:
         return op_info
 
 
+class CpuRegOp(RegOp):
+    """Class for Cpu op info register"""
+
+    def __init__(self, op_name):
+        super(CpuRegOp, self).__init__(op_name)
+        self.imply_type = "CPU"
+
+    def input(self, index=None, name=None, param_type=None, **kwargs):
+        """
+        Register Cpu op input information.
+
+        Args:
+            index (int): Order of the input. Default: None.
+            name (str): Name of the input. Default: None.
+            param_type (str): Param type of the input. Default: None.
+            kwargs (dict): Other information of the input.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.inputs.append(input_dict)
+        return self
+
+    def output(self, index=None, name=None, param_type=None, **kwargs):
+        """
+        Register AiCPU op output information.
+
+        Args:
+            index (int): Order of the output. Default: None.
+            name (str): Name of the output. Default: None.
+            param_type (str): Param type of the output. Default: None.
+            kwargs (dict): Other information of the output.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.outputs.append(output_dict)
+        return self
+
+    def attr(self, name=None, value_type=None, value=None, **kwargs):
+        """
+        Register AiCPU op attribute information.
+
+        Args:
+            name (str): Name of the attribute. Default: None.
+            value_type (str): Value type of the attribute. Default: None.
+            value (str): Value of the attribute. Default: None.
+            kwargs (dict): Other information of the attribute.
+        """
+        param_list = [name, value_type, value]
+        key_list = ["name", "type", "value"]
+        fn_list = [self._is_string]
+        attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.attr_.append(attr_dict)
+        return self
+
+
 class AkgRegOp(RegOp):
     """Class for Akg op info register."""
 

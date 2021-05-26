@@ -57,24 +57,12 @@ class SplitCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL_T(
-  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SplitCPUKernel, float);
-MS_REG_CPU_KERNEL_T(
-  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  SplitCPUKernel, float16);
-MS_REG_CPU_KERNEL_T(
-  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  SplitCPUKernel, double);
-MS_REG_CPU_KERNEL_T(Split,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    SplitCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(Split,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    SplitCPUKernel, uint32_t);
-MS_REG_CPU_KERNEL_T(Split,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    SplitCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

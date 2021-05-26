@@ -48,11 +48,7 @@ class PadCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(Pad, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), PadCPUKernel);
-
-MS_REG_CPU_KERNEL(Pad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), PadCPUKernel);
-
-MS_REG_CPU_KERNEL(Pad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), PadCPUKernel);
+MS_REG_CPU_KERNEL(Pad, KernelAttr(), PadCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_

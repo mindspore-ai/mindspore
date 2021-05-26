@@ -75,33 +75,12 @@ class MaximumCPUKernel : public CPUKernel {
   const size_t max_dims{7};
 };
 
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MaximumCPUKernel, int32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  MaximumCPUKernel, uint32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MaximumCPUKernel, float);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  MaximumCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  MaximumCPUKernel, uint64_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MaximumCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, uint64_t);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Maximum, KernelAttr(), MaximumCPUKernel, double);
 }  // namespace kernel
 }  // namespace mindspore
 

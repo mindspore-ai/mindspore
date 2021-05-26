@@ -41,29 +41,11 @@ class HSwishGradCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL_T(
-  HSwishGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  HSwishGradCPUKernel, int8_t);
-
-MS_REG_CPU_KERNEL_T(
-  HSwishGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  HSwishGradCPUKernel, int16_t);
-
-MS_REG_CPU_KERNEL_T(
-  HSwishGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  HSwishGradCPUKernel, int);
-
-MS_REG_CPU_KERNEL_T(
-  HSwishGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  HSwishGradCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  HSwishGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  HSwishGradCPUKernel, float);
+MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(HSwishGrad, KernelAttr(), HSwishGradCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_

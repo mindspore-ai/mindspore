@@ -46,25 +46,7 @@ class LayerNormCPUKernel : public CPUKernel {
   size_t param_num_{1};
 };
 
-MS_REG_CPU_KERNEL(LayerNorm,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  LayerNormCPUKernel);
-
-MS_REG_CPU_KERNEL(LayerNorm,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  LayerNormCPUKernel);
+MS_REG_CPU_KERNEL(LayerNorm, KernelAttr(), LayerNormCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LAYER_NORM_CPU_KERNEL_H_

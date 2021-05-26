@@ -25,6 +25,7 @@
 
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "backend/kernel_compiler/oplib/oplib.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 
 namespace mindspore {
@@ -36,6 +37,8 @@ class CPUKernelFactory {
   static CPUKernelFactory &GetInstance();
   void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator);
   std::shared_ptr<CPUKernel> Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
+  void SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info, std::vector<KernelAttr> *kernel_attrs);
+  void UpdateKernelAttrs(const std::string &kernel_name, const std::vector<KernelAttr> &kernel_attrs);
   std::vector<KernelAttr> GetSupportedKernelAttrList(const std::string &kernel_name);
 
  private:

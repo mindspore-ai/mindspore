@@ -16,6 +16,7 @@
 
 import platform
 from .aicpu import *
+from .cpu import *
 if "Windows" not in platform.system():
     from .akg import *
     from .tbe import *

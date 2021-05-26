@@ -39,36 +39,16 @@ class ConcatCPUKernel : public CPUKernel {
   CNodeWeakPtr node_wpt_;
 };
 
-MS_REG_CPU_KERNEL_T(
-  Concat, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConcatCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    ConcatCPUKernel, int8_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    ConcatCPUKernel, int16_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    ConcatCPUKernel, int)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    ConcatCPUKernel, int64_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    ConcatCPUKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    ConcatCPUKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    ConcatCPUKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                    ConcatCPUKernel, uint64_t)
-MS_REG_CPU_KERNEL_T(Concat,
-                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                    ConcatCPUKernel, bool)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int8_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int16_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int32_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, int64_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, uint8_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, uint16_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, uint32_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, uint64_t)
+MS_REG_CPU_KERNEL_T(Concat, KernelAttr(), ConcatCPUKernel, bool)
 }  // namespace kernel
 }  // namespace mindspore
 

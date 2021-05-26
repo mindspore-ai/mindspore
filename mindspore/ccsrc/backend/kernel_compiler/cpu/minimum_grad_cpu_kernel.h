@@ -47,59 +47,7 @@ class MinimumGradCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  MinimumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeUInt32),
-                  MinimumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  MinimumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  MinimumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeUInt64),
-                  MinimumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MinimumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  MinimumGradCPUKernel);
+MS_REG_CPU_KERNEL(MinimumGrad, KernelAttr(), MinimumGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MinimumGrad_CPU_KERNEL_H_

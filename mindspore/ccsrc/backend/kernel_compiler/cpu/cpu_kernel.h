@@ -23,6 +23,7 @@
 #include <vector>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "ir/anf.h"
 
 using mindspore::kernel::Address;

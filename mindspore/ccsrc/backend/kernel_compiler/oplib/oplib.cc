@@ -50,6 +50,7 @@ constexpr auto kAiCore = "AiCore";
 constexpr auto kCUDA = "CUDA";
 constexpr auto kTbe = "TBE";
 constexpr auto kAkg = "AKG";
+constexpr auto kCpu = "CPU";
 constexpr auto kName = "name";
 constexpr auto kParamType = "param_type";
 constexpr auto kDtype = "dtype";
@@ -89,6 +90,9 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else if (imply_type_string == kAiCPU) {
       OpImplyType imply_type = kAICPU;
+      ret = DecodeOpInfo(op_json, imply_type, impl_path);
+    } else if (imply_type_string == kCpu) {
+      OpImplyType imply_type = kCPU;
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else {
       MS_LOG(ERROR) << "Not support imply_type";

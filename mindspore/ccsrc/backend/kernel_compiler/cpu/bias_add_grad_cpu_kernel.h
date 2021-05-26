@@ -36,8 +36,7 @@ class BiasAddGradCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> input_shape_;
 };
-MS_REG_CPU_KERNEL(BiasAddGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  BiasAddGradCPUKernel);
+MS_REG_CPU_KERNEL(BiasAddGrad, KernelAttr(), BiasAddGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BIASADDGRADCPUKERNEL_H_

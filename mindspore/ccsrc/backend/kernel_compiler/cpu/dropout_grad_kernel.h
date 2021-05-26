@@ -43,14 +43,7 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
                              size_t num_count, float keep_prob);
 };
 
-MS_REG_CPU_KERNEL(
-  DropoutGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  DropoutGradCpuBwdKernel);
-MS_REG_CPU_KERNEL(
-  DropoutGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  DropoutGradCpuBwdKernel);
+MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradCpuBwdKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

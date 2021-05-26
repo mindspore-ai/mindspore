@@ -39,76 +39,16 @@ class GatherDCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      GatherDCPUKernel, float, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      GatherDCPUKernel, float, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      GatherDCPUKernel, float16, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      GatherDCPUKernel, float16, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      GatherDCPUKernel, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      GatherDCPUKernel, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt64),
-                      GatherDCPUKernel, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt64),
-                      GatherDCPUKernel, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeBool),
-                      GatherDCPUKernel, bool, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeBool)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeBool),
-                      GatherDCPUKernel, bool, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float16, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float16, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int32_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int32_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int64_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int64_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, bool, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, bool, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

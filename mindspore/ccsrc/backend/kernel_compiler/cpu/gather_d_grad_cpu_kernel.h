@@ -40,44 +40,16 @@ class GatherDGradCPUKernel : public CPUKernel {
   int32_t axis_;
 };
 
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  GatherDGradCPUKernel, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  GatherDGradCPUKernel, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  GatherDGradCPUKernel, int32_t, float);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  GatherDGradCPUKernel, int32_t, float16);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  GatherDGradCPUKernel, int32_t, bool);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  GatherDGradCPUKernel, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  GatherDGradCPUKernel, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  GatherDGradCPUKernel, int64_t, float);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  GatherDGradCPUKernel, int64_t, float16);
-MS_REG_CPU_KERNEL_T_S(
-  GatherDGrad, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  GatherDGradCPUKernel, int64_t, bool);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, float);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, float16);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, bool);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, float);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, float16);
+MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int64_t, bool);
 }  // namespace kernel
 }  // namespace mindspore
 

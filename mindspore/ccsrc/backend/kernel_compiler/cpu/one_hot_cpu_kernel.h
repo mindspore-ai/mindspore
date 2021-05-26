@@ -38,13 +38,7 @@ class OneHotCPUKernel : public CPUKernel {
   size_t axis_;
 };
 
-MS_REG_CPU_KERNEL(OneHot,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  OneHotCPUKernel);
+MS_REG_CPU_KERNEL(OneHot, KernelAttr(), OneHotCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

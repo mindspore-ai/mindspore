@@ -47,59 +47,7 @@ class MaximumGradCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  MaximumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeUInt32)
-                    .AddOutputAttr(kNumberTypeUInt32),
-                  MaximumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  MaximumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64)
-                    .AddOutputAttr(kNumberTypeInt64),
-                  MaximumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeUInt64)
-                    .AddOutputAttr(kNumberTypeUInt64),
-                  MaximumGradCPUKernel);
-
-MS_REG_CPU_KERNEL(MaximumGrad,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  MaximumGradCPUKernel);
+MS_REG_CPU_KERNEL(MaximumGrad, KernelAttr(), MaximumGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MaximumGrad_CPU_KERNEL_H_

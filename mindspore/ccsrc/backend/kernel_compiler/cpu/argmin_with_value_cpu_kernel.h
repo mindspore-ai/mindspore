@@ -42,14 +42,8 @@ class ArgMinWithValueCPUKernel : public CPUKernel {
   size_t dim_axis_;
 };
 
-MS_REG_CPU_KERNEL_T(
-  ArgMinWithValue,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ArgMinWithValueCPUKernel, float);
-MS_REG_CPU_KERNEL_T(
-  ArgMinWithValue,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ArgMinWithValueCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCPUKernel, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

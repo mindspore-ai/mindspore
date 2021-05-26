@@ -41,12 +41,7 @@ class RangeCPUKernel : public CPUKernel {
   int64_t delta_;
 };
 
-MS_REG_CPU_KERNEL(Range, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), RangeCPUKernel);
-MS_REG_CPU_KERNEL(Range, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), RangeCPUKernel);
-MS_REG_CPU_KERNEL(Range, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  RangeCPUKernel);
-MS_REG_CPU_KERNEL(Range, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  RangeCPUKernel);
+MS_REG_CPU_KERNEL(Range, KernelAttr(), RangeCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -52,36 +52,7 @@ class TransposeCPUFwdKernel : public CPUKernel {
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
 };
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  TransposeCPUFwdKernel);
-MS_REG_CPU_KERNEL(Transpose,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose, KernelAttr(), TransposeCPUFwdKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_

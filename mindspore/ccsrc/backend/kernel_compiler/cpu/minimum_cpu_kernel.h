@@ -75,33 +75,12 @@ class MinimumCPUKernel : public CPUKernel {
   const size_t max_dims{7};
 };
 
-MS_REG_CPU_KERNEL_T(
-  Minimum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MinimumCPUKernel, int32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Minimum,
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  MinimumCPUKernel, uint32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Minimum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MinimumCPUKernel, float);
-
-MS_REG_CPU_KERNEL_T(
-  Minimum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  MinimumCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  Minimum,
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  MinimumCPUKernel, uint64_t);
-
-MS_REG_CPU_KERNEL_T(
-  Minimum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  MinimumCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, uint64_t);
+MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, double);
 }  // namespace kernel
 }  // namespace mindspore
 
