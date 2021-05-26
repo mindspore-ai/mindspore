@@ -506,6 +506,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     logger.info("Loading parameters into net is finished.")
     if param_not_load:
         logger.warning("{} parameters in the net are not loaded.".format(len(param_not_load)))
+        for param_name in param_not_load:
+            logger.warning("{} is not loaded.".format(param_name))
     return param_not_load
 
 
@@ -641,8 +643,8 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     """
     Export the MindSpore prediction model to a file in the specified format.
 
-    Notes:
-        When exporting to AIR format, the size of a single tensor can not exceed 2GB.
+    Note:
+        When exporting to AIR、ONNX format, the size of a single tensor can not exceed 2GB.
 
     Args:
         net (Cell): MindSpore network.
