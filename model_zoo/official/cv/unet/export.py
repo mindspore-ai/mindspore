@@ -29,15 +29,15 @@ if config.device_target == "Ascend":
     context.set_context(device_id=get_device_id())
 
 if __name__ == "__main__":
-    if config.model == 'unet_medical':
+    if config.model_name == 'unet_medical':
         net = UNetMedical(n_channels=config.num_channels, n_classes=config.num_classes)
-    elif config.model == 'unet_nested':
+    elif config.model_name == 'unet_nested':
         net = NestedUNet(in_channel=config.num_channels, n_class=config.num_classes, use_deconv=config.use_deconv,
                          use_bn=config.use_bn, use_ds=False)
-    elif config.model == 'unet_simple':
+    elif config.model_name == 'unet_simple':
         net = UNet(in_channel=config.num_channels, n_class=config.num_classes)
     else:
-        raise ValueError("Unsupported model: {}".format(config.model))
+        raise ValueError("Unsupported model: {}".format(config.model_name))
     # return a parameter dict for model
     param_dict = load_checkpoint(config.checkpoint_file_path)
     # load the parameter into net

@@ -100,6 +100,37 @@ After installing MindSpore via the official website, you can start training and 
   sh scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the Dataset directory in config file.
+# (3) Set the code directory to "/path/squeezenet" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the Dataset directory in config file.
+# (4) Set the code directory to "/path/squeezenet" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -109,21 +140,29 @@ After installing MindSpore via the official website, you can start training and 
 └── squeezenet
   ├── README.md
   ├── scripts
-    ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
-    ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
-    ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
-    ├── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
-    ├── run_eval.sh                        # launch ascend evaluation
-    └── run_eval_gpu.sh                    # launch gpu evaluation
+    ├── run_distribute_train.sh                 # launch ascend distributed training(8 pcs)
+    ├── run_standalone_train.sh                 # launch ascend standalone training(1 pcs)
+    ├── run_distribute_train_gpu.sh             # launch gpu distributed training(8 pcs)
+    ├── run_standalone_train_gpu.sh             # launch gpu standalone training(1 pcs)
+    ├── run_eval.sh                             # launch ascend evaluation
+    └── run_eval_gpu.sh                         # launch gpu evaluation
   ├── src
-    ├── config.py                          # parameter configuration
-    ├── dataset.py                         # data preprocessing
-    ├── CrossEntropySmooth.py              # loss definition for ImageNet dataset
-    ├── lr_generator.py                    # generate learning rate for each step
-    └── squeezenet.py                      # squeezenet architecture, including squeezenet and squeezenet_residual
-  ├── train.py                             # train net
-  ├── eval.py                              # eval net
-  └── export.py                            # export checkpoint files into geir/onnx
+    ├── dataset.py                              # data preprocessing
+    ├── CrossEntropySmooth.py                   # loss definition for ImageNet dataset
+    ├── lr_generator.py                         # generate learning rate for each step
+    └── squeezenet.py                           # squeezenet architecture, including squeezenet and squeezenet_residual
+  ├── model_utils
+  │   ├── device_adapter.py                    # device adapter
+  │   ├── local_adapter.py                     # local adapter
+  │   ├── moxing_adapter.py                    # moxing adapter
+  │   ├── config.py                            # parameter analysis
+  ├── squeezenet_cifar10_config.yaml            # parameter configuration
+  ├── squeezenet_imagenet_config.yaml           # parameter configuration
+  ├── squeezenet_residual_cifar10_config.yaml   # parameter configuration
+  ├── squeezenet_residual_imagenet_config.yaml  # parameter configuration
+  ├── train.py                                  # train net
+  ├── eval.py                                   # eval net
+  └── export.py                                 # export checkpoint files into geir/onnx
 ```
 
 ## [Script Parameters](#contents)
