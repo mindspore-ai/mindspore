@@ -275,6 +275,20 @@ class AnfRuntimeAlgorithm {
   static AnfNodeIndexSet GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.
   static void GetRealInputs(const AnfNodePtr &anf_node, std::vector<session::KernelWithIndex> *inputs);
+  // Check whether tensors need broadcast or not.
+  static bool IsTensorBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs);
+  // Calc tensor size in byte.
+  template <typename T>
+  static size_t TensorSizeInByte(const std::vector<size_t> &shape) {
+    if (shape.size() == 0) {
+      return 0;
+    }
+    size_t result = sizeof(T);
+    for (size_t i = 0; i < shape.size(); i++) {
+      result *= shape[i];
+    }
+    return result;
+  }
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

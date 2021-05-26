@@ -47,18 +47,8 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
   std::vector<std::vector<int>> shapes;
-  std::vector<std::vector<int64_t>> shapes_me = GetAttr<const std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-  (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(shapes),
-                       [](const std::vector<int64_t> &values) {
-                         std::vector<int> shape;
-                         (void)std::transform(values.begin(), values.end(), std::back_inserter(shape),
-                                              [](const int64_t &value) { return static_cast<int>(value); });
-                         return shape;
-                       });
-  auto types = GetAttr<const std::vector<TypePtr>>(kernel_node, "types");
-  if (shapes.size() != types.size()) {
-    MS_LOG(EXCEPTION) << "Invalid shapes: " << shapes << ", types: " << types;
-  }
+  std::vector<TypePtr> types;
+  GetShapeAndType(kernel_node, &shapes, &types);
 
   for (size_t i = 0; i < shapes.size(); i++) {
     int unit = UnitSizeInBytes(types[i]->type_id());
