@@ -19,6 +19,7 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include <functional>
 
 #include "ops/primitive_c.h"
 #include "ir/manager.h"
@@ -575,14 +576,12 @@ void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<Kern
 }
 
 void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
-                     const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
                      const std::map<KernelWithIndex, size_t> &ref_count,
-                     std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, VectorRef *outputs,
-                     std::vector<TensorPtr> *runop_output_tensors) {
+                     std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, GraphOutputInfo *graph_output_info) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_output_map);
-  MS_EXCEPTION_IF_NULL(outputs);
-  MS_EXCEPTION_IF_NULL(runop_output_tensors);
+  MS_EXCEPTION_IF_NULL(graph_output_info);
+  MS_EXCEPTION_IF_NULL(graph_output_info->graph_outputs);
   auto output_tensors = TransformVectorRefToMultiTensor(op_outputs);
   if (output_tensors.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
@@ -593,14 +592,14 @@ void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
     if (ref_count.find(kernel_with_index) != ref_count.end()) {
       (*op_output_map)[kernel_with_index] = output_tensor;
     }
-    const auto &iter = output_indexes.find(kernel_with_index);
-    if (iter == output_indexes.end()) {
+    const auto &iter = graph_output_info->output_indexes.find(kernel_with_index);
+    if (iter == graph_output_info->output_indexes.end()) {
       continue;
     }
     const std::vector<std::vector<size_t>> &multiple_ref_indexes = iter->second;
     for (const auto &ref_indexes : multiple_ref_indexes) {
       size_t n = 0;
-      const VectorRef *cur_vector_ref = outputs;
+      const VectorRef *cur_vector_ref = graph_output_info->graph_outputs;
       for (; n < ref_indexes.size() - 1; n += 1) {
         size_t index = ref_indexes.at(n);
         if (index >= cur_vector_ref->size()) {
@@ -615,7 +614,7 @@ void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
       }
       BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
       tensor_ref = output_tensor;
-      runop_output_tensors->emplace_back(output_tensor);
+      graph_output_info->graph_output_tensors.emplace_back(output_tensor);
     }
   }
 }
@@ -2185,8 +2184,9 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::map<AnfNodePtr, size_t> parameter_index;
   GetParameterIndex(kernel_graph.get(), inputs, &parameter_index);
-  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> output_indexes;
-  CreateOutputPlaceholder(kernel_graph, inputs, outputs, &output_indexes);
+  GraphOutputInfo graph_output_info;
+  graph_output_info.graph_outputs = outputs;
+  CreateOutputPlaceholder(kernel_graph, inputs, graph_output_info.graph_outputs, &graph_output_info.output_indexes);
   std::map<KernelWithIndex, size_t> cnode_refcount;
   GetRefCount(kernel_graph.get(), &cnode_refcount);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
@@ -2212,14 +2212,12 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     RunOpImpl(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
               input_tensor_info.input_tensors_mask);
 
-    std::vector<tensor::TensorPtr> new_output_tensors;
-
     // Handle inputs and outputs of current op
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
-    HandleOpOutputs(kernel, op_outputs, output_indexes, cnode_refcount, &op_output_map, outputs, &new_output_tensors);
+    HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
     // Save grad node to Bucket
     if (kernel_graph->is_bprop()) {
-      AddGradAddrToBucket(graph_id, new_output_tensors);
+      AddGradAddrToBucket(graph_id, graph_output_info.graph_output_tensors);
     }
   }
   MS_LOG(INFO) << "Finish!";
