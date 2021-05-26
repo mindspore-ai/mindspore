@@ -740,15 +740,14 @@ def set_ps_context(**kwargs):
         Some other environment variables should also be set for parameter server training mode.
         These environment variables are listed below:
 
-        MS_SERVER_NUM  # Server number
-        MS_WORKER_NUM  # Worker number
-        MS_SCHED_HOST  # Scheduler IP address
-        MS_SCHED_PORT  # Scheduler port
-        MS_ROLE        # The role of this process:
-        MS_SCHED       #represents the scheduler,
-        MS_WORKER      #represents the worker,
-        MS_PSERVER     #represents the Server
-
+    - MS_SERVER_NUM: Server number
+    - MS_WORKER_NUM: Worker number
+    - MS_SCHED_HOST: Scheduler IP address
+    - MS_SCHED_PORT: Scheduler port
+    - MS_ROLE: The role of this process:
+    - MS_SCHED: represents the scheduler,
+    - MS_WORKER: represents the worker,
+    - MS_PSERVER: represents the Server
 
     Args:
         enable_ps (bool): Whether to enable parameter server training mode.
@@ -770,6 +769,8 @@ def get_ps_context(attr_key):
 
     Args:
         attr_key (str): The key of the attribute.
+
+        - "enable_ps": Whether to enable parameter server training mode.
 
     Returns:
         Returns attribute value according to the key.
@@ -818,7 +819,6 @@ def set_fl_context(**kwargs):
         client_epoch_num (int): Client training epoch number. Default: 25.
         client_batch_size (int): Client training data batch size. Default: 32.
         client_learning_rate (float): Client training learning rate. Default: 0.001.
-        secure_aggregation (bool): Whether to use secure aggregation algorithm. Default: False.
 
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
@@ -835,11 +835,15 @@ def get_fl_context(attr_key):
 
     Args:
         attr_key (str): The key of the attribute.
+                        Please refer to `set_fl_context`'s parameters to decide which key should passed.
 
     Returns:
         Returns attribute value according to the key.
 
     Raises:
         ValueError: If input key is not attribute in federated learning mode context.
+
+    Examples:
+        >>> context.get_fl_context("server_mode")
     """
     return _get_ps_context(attr_key)

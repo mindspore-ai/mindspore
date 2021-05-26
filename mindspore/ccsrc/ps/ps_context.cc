@@ -304,10 +304,6 @@ void PSContext::set_client_learning_rate(float client_learning_rate) { client_le
 
 float PSContext::client_learning_rate() const { return client_learning_rate_; }
 
-void PSContext::set_secure_aggregation(bool secure_aggregation) { secure_aggregation_ = secure_aggregation; }
-
-bool PSContext::secure_aggregation() const { return secure_aggregation_; }
-
 bool PSContext::enable_ssl() const { return enable_ssl_; }
 
 void PSContext::set_enable_ssl(bool enabled) { enable_ssl_ = enabled; }
