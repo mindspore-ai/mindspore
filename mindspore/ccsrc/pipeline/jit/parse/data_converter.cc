@@ -40,6 +40,10 @@ using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
 using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
+static constexpr int kBit8 = 8;
+static constexpr int kBit16 = 16;
+static constexpr int kBit32 = 32;
+static constexpr int kBit64 = 64;
 class DataConverter {
  public:
   explicit DataConverter(InstanceConvertFunc convert_func) : convert_func_(std::move(convert_func)) {}
@@ -362,16 +366,16 @@ ValuePtr ConvertNumberWithType(const T &obj, TypePtr dtype) {
   auto int_dypte = dyn_cast<Int>(dtype);
   if (int_dypte != nullptr) {
     switch (int_dypte->nbits()) {
-      case 8:
+      case kBit8:
         data = std::make_shared<Int8Imm>(obj);
         break;
-      case 16:
+      case kBit16:
         data = std::make_shared<Int16Imm>(obj);
         break;
-      case 32:
+      case kBit32:
         data = std::make_shared<Int32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         data = std::make_shared<Int64Imm>(obj);
         break;
       default:
@@ -383,16 +387,16 @@ ValuePtr ConvertNumberWithType(const T &obj, TypePtr dtype) {
   auto uint_dypte = dyn_cast<UInt>(dtype);
   if (uint_dypte != nullptr) {
     switch (uint_dypte->nbits()) {
-      case 8:
+      case kBit8:
         data = std::make_shared<UInt8Imm>(obj);
         break;
-      case 16:
+      case kBit16:
         data = std::make_shared<UInt16Imm>(obj);
         break;
-      case 32:
+      case kBit32:
         data = std::make_shared<UInt32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         data = std::make_shared<UInt64Imm>(obj);
         break;
       default:
@@ -404,10 +408,10 @@ ValuePtr ConvertNumberWithType(const T &obj, TypePtr dtype) {
   auto float_dypte = dyn_cast<Float>(dtype);
   if (float_dypte != nullptr) {
     switch (float_dypte->nbits()) {
-      case 32:
+      case kBit32:
         data = std::make_shared<FP32Imm>(obj);
         break;
-      case 64:
+      case kBit64:
         data = std::make_shared<FP64Imm>(obj);
         break;
       default:
