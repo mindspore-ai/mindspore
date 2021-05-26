@@ -867,7 +867,6 @@ class InstanceNorm(PrimitiveWithInfer):
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
 
     Args:
-        is_training (bool): Is training or inference. Default: True.
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
             (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
@@ -934,10 +933,9 @@ class InstanceNorm(PrimitiveWithInfer):
     )
 
     @prim_attr_register
-    def __init__(self, is_training=True, epsilon=1e-5, momentum=0.1):
+    def __init__(self, epsilon=1e-5, momentum=0.1):
         self.init_prim_io_names(inputs=['x', 'gamma', 'beta', 'mean', 'variance'],
                                 outputs=['y', 'save_mean', 'save_variance'])
-        self.is_training = validator.check_bool(is_training, self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
