@@ -22,7 +22,7 @@ cus_cholesky_trsm_op_info = TBERegOp("CusCholeskyTrsm") \
     .async_flag(False) \
     .binfile_name("choleskytrsm.so") \
     .compute_cost(10) \
-    .kernel_name("CusCholeskyTrsm") \
+    .kernel_name("cus_cholesky_trsm") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
@@ -31,8 +31,8 @@ cus_cholesky_trsm_op_info = TBERegOp("CusCholeskyTrsm") \
 
 
 @op_info_register(cus_cholesky_trsm_op_info)
-def CusCholeskyTrsm(input_x, output, kernel_name):
-    """CusCholeskyTrsm"""
+def cus_cholesky_trsm(input_x, output, kernel_name):
+    """cus_cholesky_trsm"""
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
     split_dim = 128
@@ -100,8 +100,8 @@ def CusCholeskyTrsm(input_x, output, kernel_name):
             temp_scalar.set_as(input_x_ub[index, index])
             chol_diag_element = tik_instance.Scalar("float32")
             chol_diag_element.set_as(1.0 / temp_scalar)
-            tik_instance.vsub(64, temp_ub[index, 0], temp_ub[index, 0], assist_1_ub, vector_repeat_times, 1, 1, 1, 8, 8,
-                              8)
+            tik_instance.vsub(64, temp_ub[index, 0], temp_ub[index, 0], assist_1_ub, vector_repeat_times,
+                              1, 1, 1, 8, 8, 8)
             tik_instance.vmuls(64, temp_ub[index, 0], temp_ub[index, 0], chol_diag_element, vector_repeat_times, 1, 1,
                                8, 8)
 
