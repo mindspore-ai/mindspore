@@ -45,7 +45,8 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
     return RET_NULL_PTR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
-  PackNHWCTo1HWCNX(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_);
+  PackNHWCTo1HWCNXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel, packed_weight_,
+                       ori_weight_data_);
   if (in_tensors_.size() == kInputSize2) {
     bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_tile_ * sizeof(float)));
     if (bias_data_ == nullptr) {
@@ -61,30 +62,6 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
     }
   }
   return RET_OK;
-}
-
-void ConvolutionSWCPUKernel::PackNHWCTo1HWCNX(int kernel_h, int kernel_w, int output_channel, int oc_block_num,
-                                              int input_channel, float *tmp_weight) {
-  // pack weight NHWC to 1HWCxN32 1HWCxN24 1HWCxN16 1HWCxN8
-  int oc_block = 0;
-  for (int i = 0; i < oc_block_num; i += oc_block) {
-    oc_block = MSMIN(C4NUM, oc_block_num - i);  // max_tile = 4
-    int index = i * oc_tile_ * kernel_h * kernel_w * input_channel;
-    int oc_remainder = MSMIN(oc_tile_ * oc_block, output_channel - i * oc_tile_);
-    for (int h = 0; h < kernel_h; ++h) {
-      for (int w = 0; w < kernel_w; ++w) {
-        int w_index = (h * kernel_w + w) * input_channel + index;
-        for (int ic = 0; ic < input_channel; ++ic) {
-          int ic_index = ic + w_index;
-          for (int oc = 0; oc < oc_remainder; ++oc) {
-            int oc_index = oc * kernel_w * kernel_h * input_channel + ic_index;
-            tmp_weight[oc] = ori_weight_data_[oc_index];
-          }
-          tmp_weight += oc_block * oc_tile_;
-        }
-      }
-    }
-  }
 }
 
 int ConvolutionSWCPUKernel::Init() {

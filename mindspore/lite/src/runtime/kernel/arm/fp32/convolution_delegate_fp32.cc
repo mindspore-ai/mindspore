@@ -23,6 +23,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_x86_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "src/runtime/kernel/arm/base/group_convolution_creator.h"
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
@@ -185,16 +186,19 @@ kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *
     MS_LOG(ERROR) << "Get null opParameter for CpuConvDwFp32KernelCreator.";
     return nullptr;
   }
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::InnerKernel *kernel = nullptr;
   auto shape = outputs.front()->shape();
   if (std::find(shape.begin(), shape.end(), -1) == shape.end()) {
+#ifdef ENABLE_AVX
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernelX86(opParameter, inputs, outputs, ctx);
+#else
+    auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
     if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
     }
 #endif
-#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
+#if defined(ENABLE_ARM64)
     if (kernel == nullptr && CheckConvDwUseIndirectBuffer(conv_param)) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx);
     }
@@ -202,6 +206,7 @@ kernel::InnerKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *
     if (kernel == nullptr && conv_param->input_channel_ < 32) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernel(opParameter, inputs, outputs, ctx);
     }
+#endif
   }
   if (kernel == nullptr) {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);

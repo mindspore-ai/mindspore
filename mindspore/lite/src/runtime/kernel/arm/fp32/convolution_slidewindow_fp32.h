@@ -49,9 +49,6 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
-  void ConfigInputOutput();
-  void PackNHWCTo1HWCNX(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
-                        float *tmp_weight);
 
  private:
   void FreeTmpBuffer() {

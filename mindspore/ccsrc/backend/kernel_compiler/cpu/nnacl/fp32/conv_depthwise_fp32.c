@@ -1003,3 +1003,971 @@ void DeconvDwSWFp32(float *output_data, const float *input_data, const float *we
   // output nhwc4
 }
 /*deconv depthwise fp32 end*/
+
+#ifdef ENABLE_AVX
+void DepthwiseBorderAvxFp32(float *dst, const float *src, const float *weight, const float *bias, int top, int left,
+                            int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param,
+                            const DepthwiseSWKernel kernel, int act_type, int ow_bock, int oc_block) {
+  // dw border compate
+  int ih = top * conv_param->stride_h_ - conv_param->pad_u_;
+  int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
+  int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
+  const float *src_h = src + ih * sw_param->in_h_step_;
+  float *dst_kernel = dst + left * sw_param->block_channel_;
+  for (int ow = left; ow < right; ow += ow_bock) {
+    int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
+    int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
+    int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
+    const float *src_w = src_h + iw * sw_param->block_channel_;
+    const float *src_kernel = src_w + start_kh * sw_param->in_kh_step_ + start_kw * sw_param->in_kw_step_;
+    const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C8NUM * oc_block;
+    kernel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw, act_type, ow_bock,
+           oc_block, sw_param->block_channel_, sw_param->in_kw_step_, sw_param->in_kh_step_, sw_param->in_sw_step_,
+           (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block);
+    dst_kernel += ow_bock * sw_param->block_channel_;
+  }  // width loop
+}
+
+void DepthwiseSWAvxFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+                        const ConvParameter *conv_param, const SlidingWindowParam *sw_param, int task_id) {
+  // depthwise sw in x86 avx instructions
+  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
+  int act_type = 0;
+  if (conv_param->act_type_ == ActType_Relu6) {
+    act_type += 1;
+  }
+  if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
+    act_type += 2;
+  }
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int output_w = conv_param->output_w_;
+  int oc_algin = sw_param->block_channel_;
+  int oc_num = sw_param->c_block_;
+  int in_step = sw_param->in_step_;
+  int out_step = sw_param->out_step_;
+  int in_sw_step = sw_param->in_sw_step_;
+  int in_kw_step = sw_param->in_kw_step_;
+  int in_kh_step = sw_param->in_kh_step_;
+  int in_sh_step = sw_param->in_sh_step_;
+  int out_right = sw_param->right_;
+  int out_left = sw_param->left_;
+  int out_top = sw_param->top_;
+  int out_bottom = sw_param->bottom_;
+  int in_h_start = out_top * conv_param->stride_h_ - conv_param->pad_u_;
+  int in_w_start = out_left * conv_param->stride_w_ - conv_param->pad_l_;
+  int in_start = in_h_start * sw_param->in_h_step_ + in_w_start * oc_algin;
+  const int ow_block_num[4] = {8, 4, 4, 3};
+  const DepthwiseSWKernel kernel[4][2] = {{DepthwiseSW1x8Kernel, DepthwiseSW8x8Kernel},
+                                          {DepthwiseSW1x16Kernel, DepthwiseSW4x16Kernel},
+                                          {DepthwiseSW1x24Kernel, DepthwiseSW4x24Kernel},
+                                          {DepthwiseSW1x32Kernel, DepthwiseSW3x32Kernel}};
+  int oh_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int oh_start = oh_step * task_id;
+  int oh_end = MSMIN(oh_start + oh_step, conv_param->output_h_);
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    for (int oh = oh_start; oh < oh_end; ++oh) {
+      float *dst_oh = output_data + oh * sw_param->out_h_step_;
+      const float *src_h = input_data + in_start + (oh - out_top) * in_sh_step;
+      int oc_block = 0;
+      const float *bias = bias_data;
+      for (int oc = 0; oc < oc_num; oc += oc_block) {
+        oc_block = MSMIN(C4NUM, oc_num - oc);  // 4 3 2 1
+        int oc_step = oc * oc_tile_;
+        const float *weight = weight_data + oc * sw_param->kernel_step_;
+        if (bias != NULL) {
+          bias = bias_data + oc_step;
+        }
+        float *dst_w = dst_oh + oc_step;
+        const DepthwiseSWKernel kernel_border = kernel[oc_block - 1][0];
+        if (oh < out_top || oh >= out_bottom) {  // oh in up or down border
+          DepthwiseBorderAvxFp32(dst_w, input_data + oc_step, weight, bias, oh, 0, output_w, conv_param, sw_param,
+                                 kernel_border, act_type, 1, oc_block);
+        } else {  // oh in center
+          // ow in right
+          DepthwiseBorderAvxFp32(dst_w, input_data + oc_step, weight, bias, oh, 0, out_left, conv_param, sw_param,
+                                 kernel_border, act_type, 1, oc_block);
+          // ow in center
+          const float *src_w = src_h + oc_step;
+          int ow_block = ow_block_num[oc_block - 1];                 // 8 4 4 3
+          for (int ow = out_left; ow < out_right; ow += ow_block) {  // left ~ right
+            if (ow_block > out_right - ow) {                         // ow is not enough and process one ow
+              ow_block = 1;
+            }
+            kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
+              dst_w + ow * oc_algin, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block, oc_algin,
+              in_kw_step, in_kh_step, in_sw_step, 0);
+            src_w += ow_block * in_sw_step;
+          }
+          // ow in left
+          DepthwiseBorderAvxFp32(dst_w, input_data + oc_step, weight, bias, oh, out_right, output_w, conv_param,
+                                 sw_param, kernel_border, act_type, 1, oc_block);
+        }
+      }
+    }  // output h loop
+    input_data += in_step;
+    output_data += out_step;
+  }  // batch loop
+}
+
+#ifdef ENABLE_DEBUG
+void DepthwiseSWWxKKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                          size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                          size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  __m256 dst_data[12];
+  __m256 src_data;
+  const float *src_kh[12];
+  const float *src_kw[12];
+  __m256 weight_data[4];
+  for (int i = 0; i < ow_block; ++i) {
+    if (bias != NULL) {
+      for (int j = 0; j < oc_block; ++j) {
+        dst_data[i * oc_block + j] = _mm256_loadu_ps(bias + j * 8);
+      }
+    } else {
+      for (int j = 0; j < oc_block; ++j) {
+        dst_data[i * oc_block + j] = _mm256_set1_ps(0.0f);
+      }
+    }
+    src_kh[i] = src + i * in_sw_step;
+    src_kw[i] = NULL;
+  }
+  const float *weight_kernel = weight;
+  for (int kh = 0; kh < kernel_h; kh++) {
+    for (int i = 0; i < ow_block; ++i) {
+      src_kw[i] = src_kh[i];
+    }
+    for (int kw = 0; kw < kernel_w; kw++) {
+      for (int j = 0; j < oc_block; ++j) {
+        weight_data[j] = _mm256_loadu_ps(weight_kernel + j * C8NUM);
+      }
+      for (int i = 0; i < ow_block; ++i) {  // loop ow
+        for (int j = 0; j < oc_block; ++j) {
+          src_data = _mm256_loadu_ps(src_kw[i] + j * C8NUM);
+          dst_data[i * oc_block + j] += src_data * weight_data[j];
+        }
+      }
+      for (int i = 0; i < ow_block; ++i) {
+        src_kw[i] += in_kw_step;  // ic8 * dilation_w
+      }
+      weight_kernel += oc_block * C8NUM;
+    }  // kernel_w loop
+    weight_kernel += kw_remainder;
+    for (int i = 0; i < ow_block; ++i) {
+      src_kh[i] += in_kh_step;  //
+    }
+  }  // kernel_h loop
+  // add bias and relu
+  for (int i = 0; i < ow_block; ++i) {
+    for (int j = 0; j < oc_block; ++j) {
+      if (0x1 & act_flag) {  // relu6
+        dst_data[i * oc_block + j] = _mm256_min_ps(dst_data[i * oc_block + j], _mm256_set1_ps(6.0f));
+      }
+      if (0x2 & act_flag) {  // relu
+        dst_data[i * oc_block + j] = _mm256_max_ps(dst_data[i * oc_block + j], _mm256_set1_ps(0.0f));
+      }
+      _mm256_storeu_ps(dst + i * oc_algin + j * C8NUM, dst_data[i * oc_block + j]);
+    }
+  }
+}
+#endif
+
+void DepthwiseSW3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovups 0x60(%2), %%ymm3\n"
+    "vmovups (%2), %%ymm4\n"
+    "vmovups 0x20(%2), %%ymm5\n"
+    "vmovups 0x40(%2), %%ymm6\n"
+    "vmovups 0x60(%2), %%ymm7\n"
+    "vmovups (%2), %%ymm8\n"
+    "vmovups 0x20(%2), %%ymm9\n"
+    "vmovups 0x40(%2), %%ymm10\n"
+    "vmovups 0x60(%2), %%ymm11\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "vxorps %%ymm4, %%ymm4, %%ymm4\n"
+    "vxorps %%ymm5, %%ymm5, %%ymm5\n"
+    "vxorps %%ymm6, %%ymm6, %%ymm6\n"
+    "vxorps %%ymm7, %%ymm7, %%ymm7\n"
+    "vxorps %%ymm8, %%ymm8, %%ymm8\n"
+    "vxorps %%ymm9, %%ymm9, %%ymm9\n"
+    "vxorps %%ymm10, %%ymm10, %%ymm10\n"
+    "vxorps %%ymm11, %%ymm11, %%ymm11\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // LoopW
+
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7), %%ymm14\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
+
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm9\n"
+
+    "vmovups 0x40(%1), %%ymm12\n"
+    "vmovups 0x40(%%rcx), %%ymm13\n"
+    "vmovups 0x40(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x40(%%rcx, %7, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm6\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm10\n"
+
+    "vmovups 0x60(%1), %%ymm12\n"
+    "vmovups 0x60(%%rcx), %%ymm13\n"
+    "vmovups 0x60(%%rcx, %7), %%ymm14\n"
+    "vmovups 0x60(%%rcx, %7, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm11\n"
+    "addq $128, %1\n"
+
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %8, %1\n"
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder)                               // 8
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9",
+      "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+    "vmaxps %%ymm12, %%ymm4, %%ymm4\n"
+    "vmaxps %%ymm12, %%ymm5, %%ymm5\n"
+    "vmaxps %%ymm12, %%ymm6, %%ymm6\n"
+    "vmaxps %%ymm12, %%ymm7, %%ymm7\n"
+    "vmaxps %%ymm12, %%ymm8, %%ymm8\n"
+    "vmaxps %%ymm12, %%ymm9, %%ymm9\n"
+    "vmaxps %%ymm12, %%ymm10, %%ymm10\n"
+    "vmaxps %%ymm12, %%ymm11, %%ymm11\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+    "vminps %%ymm14, %%ymm4, %%ymm4\n"
+    "vminps %%ymm14, %%ymm5, %%ymm5\n"
+    "vminps %%ymm14, %%ymm6, %%ymm6\n"
+    "vminps %%ymm14, %%ymm7, %%ymm7\n"
+    "vminps %%ymm14, %%ymm8, %%ymm8\n"
+    "vminps %%ymm14, %%ymm9, %%ymm9\n"
+    "vminps %%ymm14, %%ymm10, %%ymm10\n"
+    "vminps %%ymm14, %%ymm11, %%ymm11\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, 0x60(%2)\n"
+    "vmovups %%ymm4, (%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm6, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm7, 0x60(%2, %1, 1)\n"
+    "vmovups %%ymm8, (%2, %1, 2)\n"
+    "vmovups %%ymm9, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm10, 0x40(%2, %1, 2)\n"
+    "vmovups %%ymm11, 0x60(%2, %1, 2)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
+      "%ymm11", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "vmovups 0x60(%2), %%ymm3\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // Loopw
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
+    "vmovups 0x40(%%rcx), %%ymm6\n"
+    "vmovups 0x60(%%rcx), %%ymm7\n"
+    // Weight data is loaded directly from memory instead of into registers for calculation.
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm6, %%ymm2\n"
+    "vfmadd231ps 0x60(%1), %%ymm7, %%ymm3\n"
+    "addq $128, %1\n"
+
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %7, %1\n"
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(kw_remainder)                                                // 7
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, 0x60(%2)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  size_t src_3_step = 3 * in_sw_step;
+  float *dst_3 = dst + 3 * oc_algin;
+  oc_algin *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
+    "vmovups (%2), %%ymm3\n"
+    "vmovups 0x20(%2), %%ymm4\n"
+    "vmovups 0x40(%2), %%ymm5\n"
+    "vmovups (%2), %%ymm6\n"
+    "vmovups 0x20(%2), %%ymm7\n"
+    "vmovups 0x40(%2), %%ymm8\n"
+    "vmovups (%2), %%ymm9\n"
+    "vmovups 0x20(%2), %%ymm10\n"
+    "vmovups 0x40(%2), %%ymm11\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "vxorps %%ymm4, %%ymm4, %%ymm4\n"
+    "vxorps %%ymm5, %%ymm5, %%ymm5\n"
+    "vxorps %%ymm6, %%ymm6, %%ymm6\n"
+    "vxorps %%ymm7, %%ymm7, %%ymm7\n"
+    "vxorps %%ymm8, %%ymm8, %%ymm8\n"
+    "vxorps %%ymm9, %%ymm9, %%ymm9\n"
+    "vxorps %%ymm10, %%ymm10, %%ymm10\n"
+    "vxorps %%ymm11, %%ymm11, %%ymm11\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // LoopW
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7, 1), %%ymm14\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm3\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
+    "vmovups (%%rcx, %9), %%ymm13\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm6\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm9\n"
+
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7, 1), %%ymm14\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x20(%%rcx, %9), %%ymm13\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm7\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm10\n"
+
+    "vmovups 0x40(%1), %%ymm12\n"
+    "vmovups 0x40(%%rcx), %%ymm13\n"
+    "vmovups 0x40(%%rcx, %7, 1), %%ymm14\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm2\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm5\n"
+    "vmovups 0x40(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x40(%%rcx, %9), %%ymm13\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm8\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm11\n"
+
+    "addq $96, %1\n"
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %8, %1\n"  // border in sw need to add remainder data
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder), "r"(src_3_step)              // 9
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9",
+      "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14", "%ymm15");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+    "vmaxps %%ymm12, %%ymm4, %%ymm4\n"
+    "vmaxps %%ymm12, %%ymm5, %%ymm5\n"
+    "vmaxps %%ymm12, %%ymm6, %%ymm6\n"
+    "vmaxps %%ymm12, %%ymm7, %%ymm7\n"
+    "vmaxps %%ymm12, %%ymm8, %%ymm8\n"
+    "vmaxps %%ymm12, %%ymm9, %%ymm9\n"
+    "vmaxps %%ymm12, %%ymm10, %%ymm10\n"
+    "vmaxps %%ymm12, %%ymm11, %%ymm11\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+    "vminps %%ymm14, %%ymm4, %%ymm4\n"
+    "vminps %%ymm14, %%ymm5, %%ymm5\n"
+    "vminps %%ymm14, %%ymm6, %%ymm6\n"
+    "vminps %%ymm14, %%ymm7, %%ymm7\n"
+    "vminps %%ymm14, %%ymm8, %%ymm8\n"
+    "vminps %%ymm14, %%ymm9, %%ymm9\n"
+    "vminps %%ymm14, %%ymm10, %%ymm10\n"
+    "vminps %%ymm14, %%ymm11, %%ymm11\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    "vmovups %%ymm3, (%2, %1, 1)\n"
+    "vmovups %%ymm4, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm5, 0x40(%2, %1, 1)\n"
+    "vmovups %%ymm6, (%2, %1, 2)\n"
+    "vmovups %%ymm7, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm8, 0x40(%2, %1, 2)\n"
+    "vmovups %%ymm9, (%3)\n"  // dst+3
+    "vmovups %%ymm10, 0x20(%3)\n"
+    "vmovups %%ymm11, 0x40(%3)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm8", "%ymm9", "%ymm10",
+      "%ymm11", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "vmovups 0x40(%2), %%ymm2\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // Loopw
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
+    "vmovups 0x40(%%rcx), %%ymm6\n"
+    // Weight data is loaded directly from memory instead of into registers for calculation.
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
+    "vfmadd231ps 0x40(%1), %%ymm6, %%ymm2\n"
+    "addq $96, %1\n"
+
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %7, %1\n"  // kw_remainder
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(kw_remainder)                                                // 7
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm2", "%ymm4", "%ymm5", "%ymm6");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm2, 0x40(%2)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW4x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  size_t src_3_step = 3 * in_sw_step;
+  float *dst_3 = dst + 3 * oc_algin;
+  oc_algin *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    // We need to copy ymm0 to ymm3 to reduce IO time, but unfortunately I didn't find the corresponding instruction.
+    "vmovups (%2), %%ymm3\n"
+    "vmovups 0x20(%2), %%ymm4\n"
+    "vmovups (%2), %%ymm6\n"
+    "vmovups 0x20(%2), %%ymm7\n"
+    "vmovups (%2), %%ymm9\n"
+    "vmovups 0x20(%2), %%ymm10\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "vxorps %%ymm4, %%ymm4, %%ymm4\n"
+    "vxorps %%ymm6, %%ymm6, %%ymm6\n"
+    "vxorps %%ymm7, %%ymm7, %%ymm7\n"
+    "vxorps %%ymm9, %%ymm9, %%ymm9\n"
+    "vxorps %%ymm10, %%ymm10, %%ymm10\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // LoopW
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rcx), %%ymm13\n"
+    "vmovups (%%rcx, %7, 1), %%ymm14\n"
+    "vmovups (%%rcx, %7, 2), %%ymm15\n"
+    "vmovups (%%rcx, %9), %%ymm2\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm3\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm6\n"
+    "vfmadd231ps %%ymm12, %%ymm2, %%ymm9\n"
+
+    "vmovups 0x20(%1), %%ymm12\n"
+    "vmovups 0x20(%%rcx), %%ymm13\n"
+    "vmovups 0x20(%%rcx, %7, 1), %%ymm14\n"
+    "vmovups 0x20(%%rcx, %7, 2), %%ymm15\n"
+    "vmovups 0x20(%%rcx, %9), %%ymm2\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm1\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm7\n"
+    "vfmadd231ps %%ymm12, %%ymm2, %%ymm10\n"
+
+    "addq $64, %1\n"
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %8, %1\n"  // border in sw need to add remainder data
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(in_sw_step), "r"(kw_remainder), "r"(src_3_step)              // 9
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm3", "%ymm4", "%ymm6", "%ymm7", "%ymm9", "%ymm10", "%ymm12", "%ymm13",
+      "%ymm14", "%ymm15");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+    "vmaxps %%ymm12, %%ymm4, %%ymm4\n"
+    "vmaxps %%ymm12, %%ymm6, %%ymm6\n"
+    "vmaxps %%ymm12, %%ymm7, %%ymm7\n"
+    "vmaxps %%ymm12, %%ymm9, %%ymm9\n"
+    "vmaxps %%ymm12, %%ymm10, %%ymm10\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+    "vminps %%ymm14, %%ymm4, %%ymm4\n"
+    "vminps %%ymm14, %%ymm6, %%ymm6\n"
+    "vminps %%ymm14, %%ymm7, %%ymm7\n"
+    "vminps %%ymm14, %%ymm9, %%ymm9\n"
+    "vminps %%ymm14, %%ymm10, %%ymm10\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    "vmovups %%ymm3, (%2, %1, 1)\n"
+    "vmovups %%ymm4, 0x20(%2, %1, 1)\n"
+    "vmovups %%ymm6, (%2, %1, 2)\n"
+    "vmovups %%ymm7, 0x20(%2, %1, 2)\n"
+    "vmovups %%ymm9, (%3)\n"  // dst+3
+    "vmovups %%ymm10, 0x20(%3)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm3", "%ymm4", "%ymm6", "%ymm7", "%ymm9", "%ymm10", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                           size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                           size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "vmovups 0x20(%2), %%ymm1\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // Loopw
+    "vmovups (%%rcx), %%ymm4\n"
+    "vmovups 0x20(%%rcx), %%ymm5\n"
+    // Weight data is loaded directly from memory instead of into registers for calculation.
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "vfmadd231ps 0x20(%1), %%ymm5, %%ymm1\n"
+    "addq $64, %1\n"
+
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %7, %1\n"  // kw_remainder
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(kw_remainder)                                                // 7
+    : "%rcx", "%rsi", "%ymm0", "%ymm1", "%ymm4", "%ymm5");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, 0x20(%2)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW8x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                          size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                          size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_sw_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  size_t src_3_step = 3 * in_sw_step;
+  float *dst_3 = dst + 3 * oc_algin;
+  float *dst_5 = dst + 5 * oc_algin;
+  oc_algin *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %0\n"
+    "je 0f\n"
+    "vmovups (%0), %%ymm0\n"
+    "vmovups (%0), %%ymm1\n"
+    "vmovups (%0), %%ymm2\n"
+    "vmovups (%0), %%ymm3\n"
+    "vmovups (%0), %%ymm4\n"
+    "vmovups (%0), %%ymm5\n"
+    "vmovups (%0), %%ymm6\n"
+    "vmovups (%0), %%ymm7\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "vxorps %%ymm1, %%ymm1, %%ymm1\n"
+    "vxorps %%ymm2, %%ymm2, %%ymm2\n"
+    "vxorps %%ymm3, %%ymm3, %%ymm3\n"
+    "vxorps %%ymm4, %%ymm4, %%ymm4\n"
+    "vxorps %%ymm5, %%ymm5, %%ymm5\n"
+    "vxorps %%ymm6, %%ymm6, %%ymm6\n"
+    "vxorps %%ymm7, %%ymm7, %%ymm7\n"
+    "1:\n"
+    :
+    : "r"(bias)
+    : "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7");
+
+  asm volatile(
+    "LoopH:\n"
+    "movq %3, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "LoopW:\n"
+    "movq %%rcx, %%rax\n"
+    "vmovups (%1), %%ymm12\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
+    "vmovups (%%rax, %6, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm0\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm1\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm2\n"
+    "addq %7, %%rax\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
+    "vmovups (%%rax, %6, 2), %%ymm15\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm3\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm4\n"
+    "vfmadd231ps %%ymm12, %%ymm15, %%ymm5\n"
+    "addq %7, %%rax\n"
+    "vmovups (%%rax), %%ymm13\n"
+    "vmovups (%%rax, %6), %%ymm14\n"
+    "vfmadd231ps %%ymm12, %%ymm13, %%ymm6\n"
+    "vfmadd231ps %%ymm12, %%ymm14, %%ymm7\n"
+
+    "addq $32, %1\n"
+    "addq %4, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg LoopW\n"
+
+    "addq %5, %0\n"  // in_kh_step
+    "addq %8, %1\n"  // border in sw need to add remainder data
+    "dec %2\n"
+    "jg LoopH\n"
+    :
+    : "r"(src), "r"(weight), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step), "r"(in_kh_step),  // 5
+      "r"(in_sw_step), "r"(src_3_step), "r"(kw_remainder)                                     // 8
+    : "%rcx", "%rsi", "%rax", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm12",
+      "%ymm13", "%ymm14", "%ymm15");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je Write\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+    "vmaxps %%ymm12, %%ymm1, %%ymm1\n"
+    "vmaxps %%ymm12, %%ymm2, %%ymm2\n"
+    "vmaxps %%ymm12, %%ymm3, %%ymm3\n"
+    "vmaxps %%ymm12, %%ymm4, %%ymm4\n"
+    "vmaxps %%ymm12, %%ymm5, %%ymm5\n"
+    "vmaxps %%ymm12, %%ymm6, %%ymm6\n"
+    "vmaxps %%ymm12, %%ymm7, %%ymm7\n"
+
+    "and $0x1, %%eax\n"
+    "je Write\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+    "vminps %%ymm14, %%ymm1, %%ymm1\n"
+    "vminps %%ymm14, %%ymm2, %%ymm2\n"
+    "vminps %%ymm14, %%ymm3, %%ymm3\n"
+    "vminps %%ymm14, %%ymm4, %%ymm4\n"
+    "vminps %%ymm14, %%ymm5, %%ymm5\n"
+    "vminps %%ymm14, %%ymm6, %%ymm6\n"
+    "vminps %%ymm14, %%ymm7, %%ymm7\n"
+
+    "Write:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    "vmovups %%ymm1, (%2, %1)\n"
+    "vmovups %%ymm2, (%2, %1, 2)\n"
+    "vmovups %%ymm3, (%3)\n"  // dst_3
+    "vmovups %%ymm4, (%2, %1, 4)\n"
+    "vmovups %%ymm5, (%4)\n"  // dst_5
+    "vmovups %%ymm6, (%4, %1, 1)\n"
+    "vmovups %%ymm7, (%4, %1, 2)\n"
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst), "r"(dst_3), "r"(dst_5)
+    : "%ecx", "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7", "%ymm12", "%ymm14");
+}
+
+void DepthwiseSW1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
+                          size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
+                          size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
+  in_kh_step *= sizeof(float);
+  in_kw_step *= sizeof(float);
+  oc_algin *= sizeof(float);
+  kw_remainder *= sizeof(float);
+  asm volatile(
+    "cmpq $0, %2\n"
+    "je 0f\n"
+    "vmovups (%2), %%ymm0\n"
+    "jmp 1f\n"
+    "0:\n"
+    "vxorps %%ymm0, %%ymm0, %%ymm0\n"
+    "1:\n"              // LoopH
+    "movq %4, %%rsi\n"  // width
+    "movq %0, %%rcx\n"  // src_h
+    "2:\n"              // Loopw
+    "vmovups (%%rcx), %%ymm4\n"
+    // Weight data is loaded directly from memory instead of into registers for calculation.
+    "vfmadd231ps (%1), %%ymm4, %%ymm0\n"
+    "addq $32, %1\n"
+
+    "addq %5, %%rcx\n"  // in_kw_step
+    "dec %%rsi\n"
+    "jg 2b\n"
+
+    "addq %6, %0\n"  // in_kh_step
+    "addq %7, %1\n"  // kw_remainder
+    "dec %3\n"
+    "jg 1b\n"
+    :
+    : "r"(src), "r"(weight), "r"(bias), "r"(kernel_h), "r"(kernel_w), "r"(in_kw_step),  // 5
+      "r"(in_kh_step), "r"(kw_remainder)                                                // 7
+    : "%rcx", "%rsi", "%ymm0", "%ymm4");
+
+  asm volatile(
+    "and $0x3, %%eax\n"
+    "je 0f\n"
+    // Relu
+    "vxorps %%ymm12, %%ymm12, %%ymm12\n"
+    "vmaxps %%ymm12, %%ymm0, %%ymm0\n"
+
+    "and $0x1, %%eax\n"
+    "je 0f\n"
+    // relu6
+    "mov $0x40C00000, %%ecx\n"
+    "vmovd %%ecx, %%xmm14\n"
+    "vpermps %%ymm14, %%ymm12, %%ymm14\n"
+    "vminps %%ymm14, %%ymm0, %%ymm0\n"
+
+    "0:\n"
+    "vmovups %%ymm0, (%2)\n"  // dst_0
+    :
+    : "a"(act_flag), "r"(oc_algin), "r"(dst)
+    : "%ecx", "%ymm0", "%ymm12", "%ymm14");
+}
+#endif

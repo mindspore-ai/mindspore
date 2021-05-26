@@ -29,6 +29,9 @@ void PackHWCToWHC(const float *src, float *dst, int height, int width, int chann
 void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
+void PackNHWCToNHWCXFp32(const void *src, void *dst, int batch, int plane, int channel, int oc_tile);
+void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+                          float *tmp_weight, const float *src);
 void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel);
 // Note: If not multithreaded, please set task_id = 0 and thread_count = 0;
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count);

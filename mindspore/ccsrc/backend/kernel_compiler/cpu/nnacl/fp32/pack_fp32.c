@@ -101,7 +101,6 @@ void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
     }
   }
 }
-
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
@@ -122,26 +121,66 @@ void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
 }
 
 void PackNHWCToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel) {
-  int c4 = UP_DIV(channel, C4NUM);
-  int c4_channel = c4 * C4NUM;
-  int nhwc4_batch_unit_offset = c4 * C4NUM * plane;
+  int oc_block = UP_DIV(channel, C4NUM);
+  int oc_block_channel = oc_block * C4NUM;
   int ic_remainder_ = channel % C4NUM;
   if (ic_remainder_ != 0) {
-    int nhwc4_batch_offset = 0;
     for (int b = 0; b < batch; b++) {
+      int dst_batch_offset = b * oc_block_channel * plane;
       int batch_offset = b * channel * plane;
       for (int i = 0; i < plane; i++) {
-        float *dst_per_plane = (float *)dst + nhwc4_batch_offset + i * c4_channel;
+        float *dst_per_plane = (float *)dst + dst_batch_offset + i * oc_block_channel;
         memcpy(dst_per_plane, (float *)src + batch_offset + i * channel, channel * sizeof(float));
-        for (int j = channel; j < c4_channel; ++j) {
-          dst_per_plane[j] = 0;
-        }
+        memset(dst_per_plane + channel, 0, (oc_block_channel - channel) * sizeof(float));
       }
-      nhwc4_batch_offset += nhwc4_batch_unit_offset;
     }
   } else {
     size_t ori_input_size = batch * plane * channel * sizeof(float);
     memcpy((float *)dst, (float *)src, ori_input_size);
+  }
+}
+
+void PackNHWCToNHWCXFp32(const void *src, void *dst, int batch, int plane, int channel, int oc_tile) {
+  int oc_block = UP_DIV(channel, oc_tile);
+  int oc_block_channel = oc_block * oc_tile;
+  int ic_remainder_ = channel % oc_tile;
+  if (ic_remainder_ != 0) {
+    for (int b = 0; b < batch; b++) {
+      int dst_batch_offset = b * oc_block_channel * plane;
+      int batch_offset = b * channel * plane;
+      for (int i = 0; i < plane; i++) {
+        float *dst_per_plane = (float *)dst + dst_batch_offset + i * oc_block_channel;
+        memcpy(dst_per_plane, (float *)src + batch_offset + i * channel, channel * sizeof(float));
+        memset(dst_per_plane + channel, 0, (oc_block_channel - channel) * sizeof(float));
+      }
+    }
+  } else {
+    size_t ori_input_size = batch * plane * channel * sizeof(float);
+    memcpy((float *)dst, (float *)src, ori_input_size);
+  }
+}
+
+void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
+                          float *tmp_weight, const float *src) {
+  // pack weight NHWC to 1HWCxN32 1HWCxN24 1HWCxN16 1HWCxN8
+  int oc_block = 0;
+  for (int i = 0; i < oc_block_num; i += oc_block) {
+    oc_block = MSMIN(C4NUM, oc_block_num - i);  // max_tile = 4
+    int index = i * C8NUM * kernel_h * kernel_w * input_channel;
+    int oc_remainder = MSMIN(C8NUM * oc_block, output_channel - i * C8NUM);
+    for (int h = 0; h < kernel_h; ++h) {
+      for (int w = 0; w < kernel_w; ++w) {
+        int w_index = (h * kernel_w + w) * input_channel + index;
+        for (int ic = 0; ic < input_channel; ++ic) {
+          int ic_index = ic + w_index;
+          for (int oc = 0; oc < oc_remainder; ++oc) {
+            int oc_index = oc * kernel_w * kernel_h * input_channel + ic_index;
+            tmp_weight[oc] = src[oc_index];
+          }
+          tmp_weight += oc_block * C8NUM;
+        }
+      }
+    }
   }
 }
 
