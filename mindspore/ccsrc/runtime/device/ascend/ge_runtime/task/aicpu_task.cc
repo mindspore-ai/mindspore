@@ -62,7 +62,7 @@ void AicpuTask::Distribute() {
   // Malloc device memory for args
   rtError_t rt_ret = rtMalloc(&args_, args_size, RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
   }
 
   SetAicpuParamHead(args_size, io_addrs_num);
@@ -80,7 +80,7 @@ void AicpuTask::Distribute() {
                                      reinterpret_cast<const void *>(task_info_->kernel_name().data()), 1, args_,
                                      args_size, nullptr, stream_, dump_flag);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlag failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlag failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "Distribute AicpuTask end.";
@@ -111,13 +111,13 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   } else {
     rtError_t flag = rtMalloc(&ext_info_, ext_size, RT_MEMORY_HBM);
     if (flag != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << std::hex << flag;
+      MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << flag;
     }
 
     flag = rtMemcpy(ext_info_, ext_size, const_cast<void *>(reinterpret_cast<const void *>(ext_info.data())), ext_size,
                     RT_MEMCPY_HOST_TO_DEVICE);
     if (flag != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << flag;
+      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << flag;
     }
 
     MS_LOG(INFO) << "ext info size: " << ext_size;
@@ -129,7 +129,7 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   auto rt_ret = rtMemcpy(args_, sizeof(aicpu::AicpuParamHead), reinterpret_cast<void *>(&aicpu_param_head),
                          sizeof(aicpu::AicpuParamHead), RT_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 }
 
@@ -140,7 +140,7 @@ void AicpuTask::SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_
                            static_cast<uint32_t>(io_addrs.size()) * sizeof(void *), io_addrs.data(),
                            static_cast<uint32_t>(io_addrs.size()) * sizeof(void *), RT_MEMCPY_HOST_TO_DEVICE);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
     }
   }
 }
@@ -152,7 +152,7 @@ void AicpuTask::SetNodeDef(uint32_t node_def_len_offset, uint32_t node_def_addr_
     rtMemcpy(reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + node_def_len_offset), sizeof(uint32_t),
              reinterpret_cast<const void *>(&size), sizeof(uint32_t), RT_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 
   // Memcpy node def
@@ -160,7 +160,7 @@ void AicpuTask::SetNodeDef(uint32_t node_def_len_offset, uint32_t node_def_addr_
                     task_info_->node_def().size(), reinterpret_cast<const void *>(task_info_->node_def().data()),
                     task_info_->node_def().size(), RT_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 }
 

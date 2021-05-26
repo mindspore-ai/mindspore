@@ -50,7 +50,7 @@ void LabelSwitchTask::Distribute() {
   void *label_info = label_info_->GetLabelInfo();
   rtError_t rt_ret = rtLabelSwitchByIndex(task_info_->cond(), task_info_->label_size(), label_info, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtLabelSwitchByIndex failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtLabelSwitchByIndex failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "DistributeTask end.";

@@ -41,7 +41,7 @@ LabelGuard::~LabelGuard() {
   if (label_info != nullptr) {
     rtError_t rt_ret = rtFree(label_info);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree label_info failed! ret: " << std::hex << rt_ret;
+      MS_LOG(ERROR) << "rtFree label_info failed! ret: " << rt_ret;
     }
   }
 }
@@ -99,13 +99,13 @@ std::shared_ptr<LabelGuard> LabelManager::GetLabelInfo(rtModel_t model, const st
   uint32_t label_info_size = sizeof(rtLabelDevInfo) * label_list.size();
   rt_ret = rtMalloc(&label_info, label_info_size, RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rt api rtMalloc failed, ret: " << std::hex << rt_ret;
+    MS_LOG(ERROR) << "Call rt api rtMalloc failed, ret: " << rt_ret;
     return nullptr;
   }
 
   rt_ret = rtLabelListCpy(label_list.data(), label_list.size(), label_info, label_info_size);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rt api rtLabelListCpy failed, ret: " << std::hex << rt_ret;
+    MS_LOG(ERROR) << "Call rt api rtLabelListCpy failed, ret: " << rt_ret;
     return nullptr;
   }
 

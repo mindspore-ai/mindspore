@@ -46,7 +46,7 @@ LabelGotoTask::~LabelGotoTask() {
   if (index_value_ != nullptr) {
     rtError_t rt_ret = rtFree(index_value_);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call rtFree index_value_ failed, ret: " << std::hex << rt_ret;
+      MS_LOG(ERROR) << "Call rtFree index_value_ failed, ret: " << rt_ret;
     }
     index_value_ = nullptr;
   }
@@ -60,20 +60,20 @@ void LabelGotoTask::Distribute() {
   if (index_value_ == nullptr) {
     rtError_t rt_ret = rtMalloc(&index_value_, sizeof(uint64_t), RT_MEMORY_HBM);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret;
     }
 
     uint64_t index = 0;
     rt_ret = rtMemcpy(index_value_, sizeof(uint64_t), &index, sizeof(index), RT_MEMCPY_HOST_TO_DEVICE);
     if (rt_ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << std::hex << rt_ret;
+      MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
     }
   }
 
   void *label_info = label_info_->GetLabelInfo();
   rtError_t rt_ret = rtLabelSwitchByIndex(index_value_, 1, label_info, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtLabelSwitchByIndex failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtLabelSwitchByIndex failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "DistributeTask end.";

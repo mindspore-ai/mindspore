@@ -47,7 +47,7 @@ void StreamActiveTask::Distribute() {
   MS_EXCEPTION_IF_NULL(active_stream_);
   rtError_t rt_ret = rtStreamActive(active_stream_, stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamActive failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtStreamActive failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "DistributeTask end.";
 }

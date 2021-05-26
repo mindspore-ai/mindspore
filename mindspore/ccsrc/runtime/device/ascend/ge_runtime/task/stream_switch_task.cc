@@ -60,7 +60,7 @@ void StreamSwitchTask::Distribute() {
   MS_LOG(INFO) << "StreamSwitchTask Distribute Start.";
   rtError_t rt_ret = rtStreamSwitchEx(input, cond, value, true_stream, stream_, data_type);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtStreamSwitchEx failed, ret: " << std::hex << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtStreamSwitchEx failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "Distribute StreamSwitch success";
