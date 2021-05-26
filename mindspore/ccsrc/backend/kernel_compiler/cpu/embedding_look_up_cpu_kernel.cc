@@ -31,7 +31,7 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
   for (size_t i = 0; i < indices_lens; ++i) {
     T index = indices_addr[i] - offset;
     if (index >= 0 && index < SizeToInt(first_dim_size)) {
-      size_t pos = index * outer_dim_size;
+      size_t pos = static_cast<size_t>(index) * outer_dim_size;
       auto ret = memcpy_s(output_addr, (indices_lens - i) * lens, input_addr + pos, lens);
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "LookUpTable task memcpy failed.";
