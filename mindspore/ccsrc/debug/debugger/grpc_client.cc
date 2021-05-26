@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ using debugger::Metadata;
 using debugger::TensorProto;
 using debugger::WatchpointHit;
 
-#define CHUNK_SIZE 1024 * 1024 * 3
+constexpr int CHUNK_SIZE = 1024 * 1024 * 3;
 
 namespace mindspore {
 GrpcClient::GrpcClient(const std::string &host, const std::string &port) : stub_(nullptr) { Init(host, port); }
