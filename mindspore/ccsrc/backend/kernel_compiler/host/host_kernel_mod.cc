@@ -22,12 +22,13 @@
 #include <utility>
 #include "runtime/mem.h"
 #include "utils/ms_context.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/executor/host_dynamic_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-void HostKernelFactory::Registe(const std::string &name, HostKernelCreater &&fun) {
+void HostKernelFactory::Register(const std::string &name, HostKernelCreater &&fun) {
   hostKernelMap_.emplace(name, std::move(fun));
 }
 
@@ -56,16 +57,10 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   for (size_t i = 0; i < input_num; i++) {
     std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, i));
-    MS_EXCEPTION_IF_NULL(type_ptr);
     int64_t size_i = 1;
-    for (size_t j = 0; j < shape_i.size(); j++) {
-      size_i = LongMulWithOverflowCheck(size_i, static_cast<int>(shape_i[j]));
-    }
-    size_t type_byte = GetTypeByte(type_ptr);
-    if (type_byte == 0) {
+    if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
       return false;
     }
-    size_i = LongMulWithOverflowCheck(size_i, SizeToInt(type_byte));
     input_size_list_.push_back(LongToSize(size_i));
   }
 
@@ -74,14 +69,9 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
     MS_EXCEPTION_IF_NULL(type_ptr);
     int64_t size_i = 1;
-    for (size_t j = 0; j < shape_i.size(); j++) {
-      size_i = LongMulWithOverflowCheck(size_i, static_cast<int>(shape_i[j]));
-    }
-    size_t type_byte = GetTypeByte(type_ptr);
-    if (type_byte == 0) {
+    if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
       return false;
     }
-    size_i = LongMulWithOverflowCheck(size_i, SizeToInt(type_byte));
     output_size_list_.push_back(LongToSize(size_i));
   }
   return true;

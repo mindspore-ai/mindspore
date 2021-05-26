@@ -103,7 +103,7 @@ std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   return shape_size_t;
 }
 
-enum ShapeType { kMaxShape, kMinShape };
+enum class ShapeType { kMaxShape, kMinShape };
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
@@ -918,19 +918,19 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
   }
+  auto abstract_ptr = node_ptr->abstract();
   if (shapes.empty()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1) {
     // single output handle
     ShapeVector shape_int;
-    auto abstract_ptr = node_ptr->abstract();
     abstract::AbstractTensorPtr abstract = nullptr;
     if (abstract_ptr != nullptr) {
-      auto max_shape = GetOutputMaxShape(node_ptr, 0);
-      auto min_shape = GetOutputMinShape(node_ptr, 0);
+      auto max_shape0 = GetOutputMaxShape(node_ptr, 0);
+      auto min_shape0 = GetOutputMinShape(node_ptr, 0);
       std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
       abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]),
-                                                  std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+                                                  std::make_shared<abstract::Shape>(shape_int, min_shape0, max_shape0));
     } else {
       abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
     }
@@ -940,7 +940,6 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
       ShapeVector shape_int;
-      auto abstract_ptr = node_ptr->abstract();
       abstract::AbstractTensorPtr abstract = nullptr;
       if (abstract_ptr != nullptr) {
         auto max_shape = GetOutputMaxShape(node_ptr, i);
@@ -1597,7 +1596,7 @@ std::vector<int64_t> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &s
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
-    if (type == kMaxShape) {
+    if (type == ShapeType::kMaxShape) {
       return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
     } else {
       return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
@@ -1625,8 +1624,8 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &an
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
     return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
   } else if (shape->isa<abstract::SequeueShape>()) {
-    auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
-    return GetShapeFromSequeueShape(shape_ptr, index, kMaxShape);
+    auto sequeue_shape_ptr = shape->cast<abstract::SequeueShapePtr>();
+    return GetShapeFromSequeueShape(sequeue_shape_ptr, index, ShapeType::kMaxShape);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {
@@ -1643,8 +1642,8 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &an
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
     return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
   } else if (shape->isa<abstract::SequeueShape>()) {
-    auto shape_ptr = shape->cast<abstract::SequeueShapePtr>();
-    return GetShapeFromSequeueShape(shape_ptr, index, kMinShape);
+    auto sequeue_shape_ptr = shape->cast<abstract::SequeueShapePtr>();
+    return GetShapeFromSequeueShape(sequeue_shape_ptr, index, ShapeType::kMinShape);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {
