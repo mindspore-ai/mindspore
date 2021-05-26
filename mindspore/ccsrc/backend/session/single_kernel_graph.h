@@ -32,10 +32,6 @@ class SingleKernelGraph {
   static std::shared_ptr<session::KernelGraph> ConstructKernelGraphBasedOnSingleOp(
     const std::string &op_name, const std::vector<TypeId> &input_dtypes, const std::vector<ShapeVector> &input_shapes,
     const std::vector<TypeId> &output_dtypes, const std::vector<std::vector<size_t>> &output_shapes);
-
- private:
-  static ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<session::KernelGraph> &graph,
-                                              const tensor::TensorPtr &input_tensor);
 };
 }  // namespace session
 }  // namespace mindspore

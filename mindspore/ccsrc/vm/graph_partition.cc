@@ -27,6 +27,7 @@
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
+#include "ir/anf_utils.h"
 #ifdef ENABLE_GE
 #include "transform/graph_ir/convert.h"
 #endif
@@ -175,7 +176,7 @@ std::vector<AnfNodePtr> OptimizeGetItemOrder(const std::vector<AnfNodePtr> &node
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto &inputs = cnode->inputs();
-      if (inputs.size() < 2) {
+      if (inputs.size() <= 1) {
         MS_LOG(EXCEPTION) << "Invalid get item node";
       }
       auto &parent = inputs[1];
@@ -528,38 +529,6 @@ bool IsSubGraph(const AnfNodePtr &node) {
   return false;
 }
 
-bool IsShapeDynamic(const abstract::ShapePtr &shape) {
-  MS_EXCEPTION_IF_NULL(shape);
-  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
-}
-
-bool IsNodeOutputDynamicShape(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto base_shape = node->Shape();
-  if (base_shape == nullptr) {
-    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
-    return false;
-  }
-  if (base_shape->isa<abstract::Shape>()) {
-    if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
-      return true;
-    }
-  } else if (base_shape->isa<abstract::TupleShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
-    for (size_t i = 0; i < tuple_shape->size(); i++) {
-      auto b_shape = (*tuple_shape)[i];
-      if (!b_shape->isa<abstract::Shape>()) {
-        continue;
-      }
-      if (IsShapeDynamic(b_shape->cast<abstract::ShapePtr>())) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 void AddSegment(const std::vector<AnfNodePtr> &nodes, std::vector<GraphSegmentPtr> *segments,
                 std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment) {
   MS_EXCEPTION_IF_NULL(segments);
@@ -666,7 +635,7 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
   std::set<AnfNodePtr> dynamic_nodes_set;
   for (auto &node : segment_nodes) {
     auto cnode = node->cast<CNodePtr>();
-    if (IsNodeOutputDynamicShape(cnode)) {
+    if (AnfUtils::IsNodeOutputDynamicShape(cnode)) {
       (void)dynamic_nodes_set.insert(node);
     }
   }
@@ -709,7 +678,7 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
           ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, true);
         }
         if (backend_name_ == kMsConvert && prim->name() == prim::kPrimMakeTuple->name()) {
-          if (inputs.size() < 2) {
+          if (inputs.size() <= 1) {
             return false;
           }
           auto ret = IsSubGraph(inputs[1]);

@@ -80,56 +80,13 @@ void DynamicKernel::InferShape() {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
   InferShapeRecursive();
-
   auto inputs = cnode->inputs();
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
   }
-  AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-
   // rebuild depend tensor map for gpu dynamic memory allocation.
   RebuildDependTensor();
-
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
-  for (size_t i = 0; i < input_size; ++i) {
-    auto input_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
-    auto real_input = input_with_index.first;
-    MS_EXCEPTION_IF_NULL(real_input);
-
-    auto ret = depend_tensor_map_.find(i);
-    if (ret != depend_tensor_map_.end()) {
-      auto tensor_ptr = ret->second;
-      MS_EXCEPTION_IF_NULL(tensor_ptr);
-      // sync data from device to host
-      tensor_ptr->data_sync();
-      real_input->abstract()->set_value(tensor_ptr);
-    }
-
-    auto cnode_input = cnode->input(i + 1);
-    MS_EXCEPTION_IF_NULL(cnode_input);
-    if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
-      auto base_shape = real_input->Shape();
-      if (!base_shape->isa<abstract::TupleShape>()) {
-        MS_LOG(EXCEPTION) << "Node:" << cnode->fullname_with_scope()
-                          << " input is a tuple_get_item but real input node shape is not a TupleShape";
-      }
-      auto tuple_ptr = base_shape->cast<abstract::TupleShapePtr>();
-      MS_EXCEPTION_IF_NULL(tuple_ptr);
-      auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
-      auto real_shape = tuple_ptr->shape().at(tuple_get_item_index);
-      auto abstract_tensor = cnode_input->abstract()->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(abstract_tensor);
-      args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(abstract_tensor->element(), real_shape));
-    } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
-      args_spec_list.emplace_back(cnode_input->abstract());
-    } else {
-      args_spec_list.emplace_back(real_input->abstract());
-    }
-  }
-
-  auto eval_result = opt::CppInferShape(primitive, args_spec_list);
-  cnode->set_abstract(eval_result);
+  AnfAlgo::InferShape(cnode, &depend_tensor_map_);
 }
 
 void DynamicKernel::InferShapeRecursive() {

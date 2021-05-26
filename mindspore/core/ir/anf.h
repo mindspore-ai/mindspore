@@ -33,6 +33,7 @@
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
 #include "utils/info.h"
+#include "utils/ms_utils.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:
