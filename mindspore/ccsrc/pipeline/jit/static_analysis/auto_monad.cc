@@ -35,7 +35,6 @@
 namespace mindspore {
 namespace pipeline {
 namespace {  // namespace anonymous
-
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 using RefInputs = OrderedMap<AnfNodePtr, std::vector<size_t>>;
 
@@ -1401,7 +1400,6 @@ class AutoMonadConverter {
   // Current IO state node, null if no IO side effects.
   AnfNodePtr io_;
 };  // class AutoMonadConverter
-
 }  // namespace
 
 // Entry point of the auto-monad phase,
