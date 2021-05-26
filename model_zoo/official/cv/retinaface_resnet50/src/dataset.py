@@ -56,6 +56,19 @@ class WiderFace():
         # add the last label
         self.labels_list.append(labels)
 
+        # del bbox which width is zero or height is zero
+        for i in range(len(self.labels_list) - 1, -1, -1):
+            labels = self.labels_list[i]
+            for j in range(len(labels) - 1, -1, -1):
+                label = labels[j]
+                if label[2] <= 0 or label[3] <= 0:
+                    labels.pop(j)
+            if not labels:
+                self.images_list.pop(i)
+                self.labels_list.pop(i)
+            else:
+                self.labels_list[i] = labels
+
     def __len__(self):
         return len(self.images_list)
 
