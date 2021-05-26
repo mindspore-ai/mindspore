@@ -19,16 +19,13 @@
 #include "src/lite_mindrt.h"
 #include "include/errorcode.h"
 #include "src/common/tensor_util.h"
+#include "nnacl/base/cast_base.h"
 
 namespace mindspore::lite {
-
 void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels,
                                       const std::vector<Tensor *> &inputs) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     for (size_t j = 0; j < kernels.size(); ++j) {
-      if (!kernels[j]->in_kernels().empty()) {
-        continue;
-      }
       auto in_tensor_size = kernels[j]->in_tensors().size();
       for (size_t k = 0; k < in_tensor_size; ++k) {
         if (inputs[i] != kernels[j]->in_tensors()[k]) {
@@ -44,21 +41,38 @@ void MindrtExecutor::PrepareInputData(const std::vector<kernel::LiteKernel *> &k
 void MindrtExecutor::PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels,
                                        const std::vector<Tensor *> &outputs) {
   for (size_t i = 0; i < outputs.size(); ++i) {
+    Tensor *graph_output_tensor = outputs[i];
+    auto current_output_map =
+      std::find_if(output_tensor_map_->begin(), output_tensor_map_->end(), [&](const auto output_map_tensor) {
+        if (graph_output_tensor == output_map_tensor.second) {
+          return true;
+        }
+        return false;
+      });
+    MS_ASSERT(current_output_map != output_tensor_map_->end());
+    Tensor *subgraph_output_tensor = current_output_map->first;
+
     for (size_t j = 0; j < kernels.size(); ++j) {
-      if (!kernels[j]->out_kernels().empty()) {
-        continue;
-      }
       auto out_tensor_size = kernels[j]->out_tensors().size();
       for (size_t k = 0; k < out_tensor_size; ++k) {
-        if (outputs[i] != kernels[j]->out_tensors()[k]) {
+        if (subgraph_output_tensor != kernels[j]->out_tensors()[k]) {
           continue;
         }
-        auto data = std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), outputs[i], static_cast<int>(k));
+        auto data =
+          std::make_shared<OpData<Tensor>>(op_actors_[j]->GetAID(), subgraph_output_tensor, static_cast<int>(k));
         op_actors_[j]->AddResultIndex(output_data_.size());
         output_data_.emplace_back(data);
       }
     }
   }
+}
+
+int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                           const std::vector<std::vector<int>> &dims) {
+  for (auto actor : op_actors_) {
+    actor->ResizeGraphInput(inputs, dims);
+  }
+  return RET_OK;
 }
 
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
@@ -78,7 +92,30 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
 
   PrepareOutputData(kernels, outputs);
 
+  for (auto actor : op_actors_) {
+    actor->LiteActorInit(&op_actors_);
+  }
+
   return RET_OK;
+}
+
+void MindrtExecutor::TransferGraphOutput() {
+  for (auto tensor_map : *output_tensor_map_) {
+    auto dst_tensor = tensor_map.second;
+    auto src_tensor = tensor_map.first;
+    dst_tensor->set_shape(src_tensor->shape());
+
+    if (src_tensor->data_type() == kNumberTypeFloat16) {
+      dst_tensor->MallocData();
+      Fp16ToFloat32(reinterpret_cast<uint16_t *>(src_tensor->MutableData()),
+                    reinterpret_cast<float *>(dst_tensor->data_c()), dst_tensor->ElementsNum());
+    } else {
+      dst_tensor->set_data(src_tensor->data());
+      src_tensor->set_data(nullptr);
+    }
+    src_tensor->DecRefCount();
+  }
+  return;
 }
 
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -97,7 +134,14 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
     tensor->set_ref_count(0);
   }
 
-  return MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
-}
+  auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "MindrtRun failed";
+    return ret;
+  }
 
+  TransferGraphOutput();
+
+  return RET_OK;
+}
 }  // namespace mindspore::lite

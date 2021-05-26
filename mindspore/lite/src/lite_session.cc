@@ -362,6 +362,60 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   }
 }
 
+void LiteSession::IsolateOutputTensor() {
+  for (Tensor *src_tensor : outputs_) {
+    Tensor *new_tensor =
+      new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
+    new_tensor->set_allocator(src_tensor->allocator()); /* GPU use opencl allocator */
+    new_tensor->set_tensor_name(src_tensor->tensor_name() + "_duplicate");
+    for (QuantArg quant : src_tensor->quant_params()) {
+      new_tensor->AddQuantParam(quant);
+    }
+    new_tensor->set_init_ref_count(src_tensor->init_ref_count());
+
+    /* src tensor set for graph calculate */
+    if (src_tensor->data_type() == kNumberTypeFloat16) {
+      src_tensor->set_data_type(kNumberTypeFloat32);
+    }
+    src_tensor->MallocData();
+    src_tensor->set_ref_count(1);
+
+    graph_output_map_.insert(std::make_pair(new_tensor, src_tensor));
+
+    /* set new tensor for calculate */
+    for (auto subgraph : kernels_) {
+      /* node input and output */
+      auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
+      for (size_t i = 0; i < nodes.size(); i++) {
+        auto node = nodes[i];
+        for (size_t j = 0; j < node->out_tensors().size(); j++) {
+          if (node->out_tensors()[j] == src_tensor) {
+            node->set_out_tensor(new_tensor, j);
+          }
+        }
+        for (size_t j = 0; j < node->in_tensors().size(); j++) {
+          if (node->in_tensors()[j] == src_tensor) {
+            node->set_in_tensor(new_tensor, j);
+          }
+        }
+      }
+
+      /* subgraph input and output */
+      for (size_t i = 0; i < subgraph->in_tensors().size(); i++) {
+        if (subgraph->in_tensors()[i] == src_tensor) {
+          subgraph->set_in_tensor(new_tensor, i);
+        }
+      }
+      for (size_t i = 0; i < subgraph->out_tensors().size(); i++) {
+        if (subgraph->out_tensors()[i] == src_tensor) {
+          subgraph->set_out_tensor(new_tensor, i);
+        }
+      }
+    }
+  }
+  return;
+}
+
 void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
@@ -382,6 +436,27 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
       tensor->FreeData();
     }
   }
+}
+
+bool LiteSession::IfUseMindrtExecutor() {
+  bool use_mindrt_run = true;
+#ifdef ENABLE_MINDRT
+#ifdef SUPPORT_TRAIN
+  use_mindrt_run = false;
+#else
+  use_mindrt_run = true;
+#endif
+#else
+  use_mindrt_run = false;
+#endif
+
+  for (auto kernel : kernels_) {
+    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    if (sub_graph->nodes()[0]->type() == schema::PrimitiveType_Merge) {
+      use_mindrt_run = false; /* control-flow model */
+    }
+  }
+  return use_mindrt_run;
 }
 
 int LiteSession::CompileGraph(Model *model) {
@@ -436,7 +511,9 @@ int LiteSession::CompileGraph(Model *model) {
 #endif
   InitGraphInOutTensors(model);
 
-  ret = PrepareKernels(model);
+  bool use_mindrt_run = IfUseMindrtExecutor();
+
+  ret = PrepareKernels(model, use_mindrt_run);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
     is_running_.store(false);
@@ -444,14 +521,16 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
 #ifdef ENABLE_MINDRT
-  if (kernels_.size() == 1) {
-    executor_ = new (std::nothrow) MindrtExecutor();
+  if (use_mindrt_run) {
+    IsolateOutputTensor();
+    executor_ = new (std::nothrow) MindrtExecutor(&graph_output_map_);
   } else {
-    executor_ = new (std::nothrow) Executor();
-  }
-#else
-  executor_ = new (std::nothrow) Executor();
 #endif
+    executor_ = new (std::nothrow) Executor();
+#ifdef ENABLE_MINDRT
+  }
+#endif
+
   if (nullptr == executor_) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
@@ -472,7 +551,7 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }  // namespace lite
 
-int LiteSession::PrepareKernels(Model *model) {
+int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   std::vector<kernel::LiteKernel *> all_kernels;
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
@@ -482,10 +561,14 @@ int LiteSession::PrepareKernels(Model *model) {
     auto kernel_in_subgraph = sub_graph->nodes();
     all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
   }
-  // find in_kernels and out_kernels for kernels
-  for (auto *kernel : all_kernels) {
-    kernel->FindInoutKernels(all_kernels);
+
+  if (!use_mindrt_run) {
+    // find in_kernels and out_kernels for kernels
+    for (auto *kernel : all_kernels) {
+      kernel->FindInoutKernels(all_kernels);
+    }
   }
+
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
     kernel->InitOutTensorInitRefCount();
@@ -614,11 +697,20 @@ LiteSession::~LiteSession() {
     }
     delete tensor;
   }
+
+  for (auto item : graph_output_map_) {
+    auto isolate_output_tensor = item.first;
+    isolate_output_tensor->set_data(nullptr);
+    delete isolate_output_tensor;
+  }
+
   // Tensor * in input_map output_map are freed in tensors
   input_map_.clear();
   output_node_map_.clear();
   output_tensor_map_.clear();
   input_vec_.clear();
+  graph_output_map_.clear();
+
   delete this->executor_;
   this->executor_ = nullptr;
 #if SUPPORT_NPU
@@ -692,6 +784,8 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
     inputs_[i]->FreeData();
     inputs_[i]->set_shape(dims[i]);
   }
+
+  executor_->Resize(inputs, dims);
   return RET_OK;
 }
 

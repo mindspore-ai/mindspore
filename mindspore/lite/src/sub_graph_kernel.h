@@ -64,6 +64,7 @@ class SubGraphKernel : public LiteKernel {
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {
     subgraph_type_ = kCpuFP32SubGraph;
+    desc_.data_type = kNumberTypeFloat32;
   }
 
   ~SubGraphKernel() override {
@@ -109,6 +110,10 @@ class SubGraphKernel : public LiteKernel {
 
   void DropNode(LiteKernel *node);
 
+  std::vector<LiteKernel *> in_nodes() { return this->in_nodes_; }
+
+  std::vector<LiteKernel *> out_nodes() { return this->out_nodes_; }
+
  protected:
   std::vector<LiteKernel *> nodes_{};
   // entry nodes in nodes
@@ -142,14 +147,9 @@ class CpuFp32SubGraph : public CpuSubGraph {
     subgraph_type_ = kCpuFP32SubGraph;
     static std::atomic_int index = 0;
     this->set_name("CpuFP32SubGraph" + std::to_string(index++));
+    desc_.data_type = kNumberTypeFloat32;
   }
-
   ~CpuFp32SubGraph() override = default;
-  int Init() override { return CpuSubGraph::Init(); }
-  int Execute() override { return CpuSubGraph::Execute(); }
-  int Execute(const KernelCallBack &before, const KernelCallBack &after) override {
-    return CpuSubGraph::Execute(before, after);
-  };
 };
 
 #ifdef ENABLE_FP16
@@ -161,6 +161,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
     subgraph_type_ = kCpuFP16SubGraph;
     static std::atomic_int index = 0;
     this->set_name("CpuFP16SubGraph" + std::to_string(index++));
+    desc_.data_type = kNumberTypeFloat16;
   }
 
   ~CpuFp16SubGraph() override = default;

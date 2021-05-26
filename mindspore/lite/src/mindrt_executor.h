@@ -16,8 +16,10 @@
 
 #ifndef MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
 #define MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
+
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include "src/runtime/inner_allocator.h"
 #include "src/lite_kernel.h"
 #include "src/lite_mindrt.h"
@@ -25,10 +27,9 @@
 #include "include/lite_session.h"
 
 namespace mindspore::lite {
-// class Executor {
 class MindrtExecutor : public Executor {
  public:
-  MindrtExecutor() = default;
+  explicit MindrtExecutor(std::unordered_map<Tensor *, Tensor *> *output_map) : output_tensor_map_(output_map) {}
   virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
 
   virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
@@ -38,12 +39,19 @@ class MindrtExecutor : public Executor {
                   const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
+  virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                     const std::vector<std::vector<int>> &dims);
+
+ private:
+  void TransferGraphOutput();
+
  protected:
   void PrepareInputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs);
   void PrepareOutputData(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &outputs);
   std::vector<std::shared_ptr<LiteOpActor>> op_actors_;
   std::vector<OpDataPtr<Tensor>> input_data_;
   std::vector<OpDataPtr<Tensor>> output_data_;
+  std::unordered_map<Tensor *, Tensor *> *output_tensor_map_;
 };
 
 }  // namespace mindspore::lite
