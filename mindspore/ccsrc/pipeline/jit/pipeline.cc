@@ -50,7 +50,7 @@
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
@@ -59,7 +59,7 @@
 #include "ps/server/server.h"
 #endif
 
-#if (ENABLE_GE || ENABLE_D)
+#if ((defined ENABLE_GE) || (defined ENABLE_D))
 #include "pipeline/jit/pipeline_ge.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/df_graph_manager.h"
@@ -82,7 +82,7 @@ using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
-#if (ENABLE_D)
+#ifdef ENABLE_D
 using mindspore::device::ascend::ProfilingManager;
 #endif
 
@@ -531,7 +531,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
 
   std::string backend = MsContext::GetInstance()->backend_policy();
 
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   const std::string &server_mode = ps::PSContext::instance()->server_mode();
   if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
       ps::PSContext::instance()->is_server()) {
@@ -898,7 +898,7 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
 
 FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
                                     const py::object &broadcast_params) {
-#if (ENABLE_GE || ENABLE_D)
+#if ((defined ENABLE_GE) || (defined ENABLE_D))
   return BuildDFGraph(info_, init_params, phase, broadcast_params);
 #else
   return nullptr;
@@ -924,7 +924,7 @@ void ExecutorPy::UpdataParamNodeDefaultInput(const std::string &phase,
 }
 
 void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) {
-#if ENABLE_GE
+#ifdef ENABLE_GE
   RunGEInitGraph(init_params, phase);
 #endif
 }
@@ -955,7 +955,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes, need_run);
   }
-#if ENABLE_GE
+#ifdef ENABLE_GE
   return InitExecDatasetGe(queue_name, iter_num, batch_size, types, shapes, input_indexes, phase);
 #else
   std::string backend = MsContext::GetInstance()->backend_policy();
@@ -969,7 +969,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
@@ -1035,7 +1035,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
   ConfigManager::GetInstance().set_iter_num(size);
   // PS cache does not support loop sink.
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(1);
@@ -1082,7 +1082,7 @@ void InitHccl() {
     (void)context::OpenTsd(ms_context);
   }
 #endif
-#if (ENABLE_D)
+#if (defined ENABLE_D)
   if (!ProfilingManager::GetInstance().IsProfiling()) {
     ProfilingManager::GetInstance().SetHcclEnabledBefProfilingEnabled();
   }
@@ -1099,7 +1099,7 @@ void FinalizeHccl() {
 }
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
-#if (ENABLE_GE || ENABLE_D)
+#if ((defined ENABLE_GE) || (defined ENABLE_D))
   ExportDFGraph(file_name, phase);
 #else
   MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
@@ -1158,7 +1158,7 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
-#if (ENABLE_CPU && !_WIN32)
+#if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
