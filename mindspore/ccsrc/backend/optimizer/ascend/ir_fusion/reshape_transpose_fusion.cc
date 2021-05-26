@@ -28,10 +28,13 @@ bool CheckShapeDimInfo(const std::vector<size_t> &shape) {
   if (shape.empty()) {
     return false;
   }
-  if (shape.size() == 1 && shape[0] % kCubeSize != 0) {
+  constexpr auto kShapeSize1 = 1;
+  constexpr auto kShapeSize2 = 2;
+  if (shape.size() == kShapeSize1 && shape[0] % kCubeSize != 0) {
     return false;
   }
-  return !(shape.size() >= 2 && (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - 2] % kCubeSize != 0));
+  return !(shape.size() >= kShapeSize2 &&
+           (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - kShapeSize2] % kCubeSize != 0));
 }
 }  // namespace
 
