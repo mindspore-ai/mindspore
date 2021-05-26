@@ -92,41 +92,6 @@ Status SoftmaxCrossEntropyWithLogitsInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
-  Shape first_output_shape = outputs_shape_.at(0);
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Strategys outputs_strategy = {{inputs_strategy[0][0]}, inputs_strategy.at(0)};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-  Shape first_output_slice_shape = outputs_slice_shape.at(0);
-
-  TensorMap input_tensor_map = inputs_tensor_map_.at(0);
-  TensorMap first_output_tensor_map = outputs_tensor_map_.at(0);
-
-  TensorLayout input_tensor_layout, first_output_tensor_layout;
-  if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, input_tensor_map, input_shape) != SUCCESS) ||
-      (first_output_tensor_layout.InitFromVector(dev_matrix_shape_, first_output_tensor_map, first_output_shape) !=
-       SUCCESS)) {
-    return FAILED;
-  }
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-  TensorInfo first_output_tensor_info(first_output_tensor_layout, first_output_shape, first_output_slice_shape);
-
-  inputs_tensor_info_.push_back(input_tensor_info);          // input
-  inputs_tensor_info_.push_back(input_tensor_info);          // label
-  outputs_tensor_info_.push_back(first_output_tensor_info);  // output-0
-  outputs_tensor_info_.push_back(input_tensor_info);         // output-1
-
-  return SUCCESS;
-}
-
 // There are two outputs for SoftmaxCrossEntropyWithLogits, and outputs[1] is used for grad and overload the function.
 Status SoftmaxCrossEntropyWithLogitsInfo::InferAsLossDivisor() {
   if (outputs_tensor_map_.size() != 2) {

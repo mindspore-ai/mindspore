@@ -46,12 +46,9 @@ class BiasAddInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout, const Shape &dev_matrix_array);
 };
 }  // namespace parallel
 }  // namespace mindspore

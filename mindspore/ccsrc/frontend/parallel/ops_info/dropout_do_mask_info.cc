@@ -88,38 +88,6 @@ Status DropoutDoMaskInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status DropoutDoMaskInfo::InferTensorInfo() {
-  if (inputs_shape_.size() != 3) {
-    MS_LOG(ERROR) << name_ << ": Invalid inputs shape size " << inputs_shape_.size();
-    return FAILED;
-  }
-
-  if (strategy_ == nullptr) {
-    MS_LOG(ERROR) << name_ << ": The strategy is null";
-    return FAILED;
-  }
-
-  Shape input_0_shape = inputs_shape_[0];
-
-  if (inputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
-    return FAILED;
-  }
-
-  TensorLayout input_0_tensor_layout;
-  if (input_0_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_0_shape) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init tensor layout failed";
-    return FAILED;
-  }
-
-  TensorInfo input_0_tensor_info(input_0_tensor_layout);
-
-  // input_1 do not need tensor info
-  inputs_tensor_info_.push_back(input_0_tensor_info);   // input_0
-  outputs_tensor_info_.push_back(input_0_tensor_info);  // output
-  return SUCCESS;
-}
-
 Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }

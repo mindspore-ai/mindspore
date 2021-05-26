@@ -170,6 +170,35 @@ Status OperatorInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+Status OperatorInfo::InferTensorInfo() {
+  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": Invalid args";
+    return FAILED;
+  }
+
+  for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
+    TensorLayout input_layout;
+    if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed, the index is " << i;
+      return FAILED;
+    }
+    TensorInfo input_tensor_info(input_layout);
+    inputs_tensor_info_.push_back(input_tensor_info);
+  }
+
+  for (size_t i = 0; i < outputs_tensor_map_.size(); ++i) {
+    TensorLayout output_layout;
+    if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[i], outputs_shape_[i]) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed, the index is " << i;
+      return FAILED;
+    }
+    TensorInfo output_tensor_info(output_layout);
+    outputs_tensor_info_.push_back(output_tensor_info);
+  }
+
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferRepeatedCalcInfo() {
   int64_t g_dev_list_size = stage_device_size_;
   int64_t dev_matrix_size =
@@ -247,11 +276,9 @@ Operator CreateVirtualDivOp(int64_t div_num) {
   return op;
 }
 
-// use for forward all reduce
-Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group) {
-  OperatorName operator_name = ALL_REDUCE;
-  ValuePtr attr0_value = MakeValue(reduce_op);  // ReduceOP.SUM
-  ValuePtr attr1_value = MakeValue(group);      // group
+static OperatorArgs CreateReduceCommunicationOpArgs(const std::string &reduce_op, const std::string &group) {
+  ValuePtr attr0_value = MakeValue(reduce_op);
+  ValuePtr attr1_value = MakeValue(group);
   Attr attr0 = std::make_pair(OP, attr0_value);
   Attr attr1 = std::make_pair(GROUP, attr1_value);
   OperatorAttrs operator_attrs;
@@ -259,7 +286,13 @@ Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &grou
   operator_attrs.push_back(attr1);
 
   OperatorParams operator_param;
-  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+  return std::make_pair(operator_attrs, operator_param);
+}
+
+// use for forward all reduce
+Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group) {
+  OperatorName operator_name = ALL_REDUCE;
+  OperatorArgs operator_arg = CreateReduceCommunicationOpArgs(reduce_op, group);
 
   Operator op = std::make_pair(operator_name, operator_arg);
   MS_LOG(INFO) << "Create all reduce op success, the reduce_op is  " << reduce_op << ", the group is " << group;
@@ -268,16 +301,7 @@ Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &grou
 
 Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group) {
   OperatorName operator_name = REDUCE_SCATTER;
-  ValuePtr attr0_value = MakeValue(reduce_op);  // ReduceOP.SUM
-  ValuePtr attr1_value = MakeValue(group);      // group
-  Attr attr0 = std::make_pair(OP, attr0_value);
-  Attr attr1 = std::make_pair(GROUP, attr1_value);
-  OperatorAttrs operator_attrs;
-  operator_attrs.push_back(attr0);
-  operator_attrs.push_back(attr1);
-
-  OperatorParams operator_param;
-  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+  OperatorArgs operator_arg = CreateReduceCommunicationOpArgs(reduce_op, group);
 
   Operator op = std::make_pair(operator_name, operator_arg);
   MS_LOG(INFO) << "Create reduce scatter op success, the reduce_op is  " << reduce_op << ", the group is " << group;

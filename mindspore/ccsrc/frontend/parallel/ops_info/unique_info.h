@@ -46,9 +46,7 @@ class UniqueInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferAsLossDivisor() override { return SUCCESS; }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))

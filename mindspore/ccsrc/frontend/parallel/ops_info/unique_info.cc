@@ -53,42 +53,6 @@ Status UniqueInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status UniqueInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
-  if (inputs_layout == nullptr || outputs_layout == nullptr) {
-    MS_LOG(ERROR) << name_ << " : The layout is null.";
-    return FAILED;
-  }
-  TensorLayout input_layout;
-  TensorLayout output_layout;
-  TensorLayout index_layout;
-  if ((input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) ||
-      (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) ||
-      (index_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[1], outputs_shape_[1]) != SUCCESS)) {
-    return FAILED;
-  }
-  inputs_layout->push_back(input_layout);
-  outputs_layout->push_back(output_layout);
-  outputs_layout->push_back(index_layout);
-  return SUCCESS;
-}
-
-Status UniqueInfo::InferTensorInfo() {
-  TensorLayouts inputs_layout;
-  TensorLayouts outputs_layout;
-  if (InferTensorLayout(&inputs_layout, &outputs_layout) != SUCCESS) {
-    return FAILED;
-  }
-  for (size_t i = 0; i < inputs_layout.size(); ++i) {
-    TensorInfo input_tensor_info(inputs_layout[i]);
-    inputs_tensor_info_.push_back(input_tensor_info);
-  }
-  for (size_t i = 0; i < outputs_layout.size(); ++i) {
-    TensorInfo output_tensor_info(outputs_layout[i]);
-    outputs_tensor_info_.push_back(output_tensor_info);
-  }
-  return SUCCESS;
-}
-
 Status UniqueInfo::InferDevMatrixShape() {
   dev_matrix_shape_.push_back(stage_device_size_);
   return SUCCESS;
@@ -129,29 +93,6 @@ Status UniqueInfo::GetAttrs() {
                   << outputs_shape_.size() << " is wrong.";
     return FAILED;
   }
-  return SUCCESS;
-}
-
-Status UniqueInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-
-  Shape tensor_map = inputs_tensor_map_[0];
-  std::vector<Group> group;
-  if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
-    return FAILED;
-  }
-  OperatorVector mirror_op;
-  if (group.empty()) {
-    MS_LOG(INFO) << name_ << " : The mirror ops is empty.";
-    return SUCCESS;
-  } else {
-    mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
-    mirror_ops_.push_back(mirror_op);
-    std::string group_name = group[0].name();
-    MS_LOG(INFO) << name_ << " : Create the mirror ops success, the group name is " << group_name;
-  }
-
   return SUCCESS;
 }
 

@@ -91,32 +91,6 @@ Status SelectInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status SelectInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-
-  TensorLayout input_layout, output_layout;
-  for (size_t i = 0; i < inputs_shape_.size(); ++i) {
-    // infer tensor layout
-    if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-      return FAILED;
-    }
-    TensorInfo input_tensor_info(input_layout);
-    inputs_tensor_info_.push_back(input_tensor_info);
-  }
-
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo output_tensor_info(output_layout);
-  outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
 void SelectInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = true;

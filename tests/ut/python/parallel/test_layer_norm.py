@@ -43,9 +43,9 @@ class Net(Cell):
         return out
 
 
-_x = Tensor(np.ones([128, 64, 32, 16]), dtype=ms.float32)
-_w = Tensor(np.ones([128, 64, 32, 16]), dtype=ms.float32)
-_b = Tensor(np.ones([128, 64, 32, 16]), dtype=ms.float32)
+_x = Tensor(np.ones([16, 64, 32, 16]), dtype=ms.float32)
+_w = Tensor(np.ones([16, 64, 32, 16]), dtype=ms.float32)
+_b = Tensor(np.ones([16, 64, 32, 16]), dtype=ms.float32)
 
 
 def compile_net(net):

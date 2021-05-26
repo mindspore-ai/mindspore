@@ -50,7 +50,6 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorMap() override;
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   // There are two outputs for SoftmaxCrossEntropyWithLogits, and outputs[1] is used for grad and overload
   // the InferAsLossDivisor.

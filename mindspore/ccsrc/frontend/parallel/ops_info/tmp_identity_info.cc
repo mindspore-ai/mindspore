@@ -48,32 +48,6 @@ Status TmpIdentityInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status TmpIdentityInfo::InferTensorInfo() {
-  // infer tensor shape
-  Shape input_shape = inputs_shape_.at(0);
-
-  // infer slice shape
-  Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Strategys outputs_strategy = {inputs_strategy.at(0)};
-  if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
-    return FAILED;
-  }
-  Shape input_slice_shape = inputs_slice_shape.at(0);
-
-  TensorLayout input_tensor_layout;
-  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(input_tensor_info);  // the same as input
-
-  return SUCCESS;
-}
-
 Status TmpIdentityInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";

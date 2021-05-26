@@ -48,7 +48,6 @@ class OneHotInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ExtractInputInfo();
