@@ -41,7 +41,8 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
     nodes.push_back(NewValueNode(unpack_graph));
     nodes.push_back(func_node);
     // {unpackcall, {GradOperation, ...}, args...}
-    std::transform(inputs_y.begin() + 2, inputs_y.end(), std::back_inserter(nodes),
+    const size_t inputs_begin_index = 2;
+    std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
                    [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   } else {
@@ -49,7 +50,8 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
     nodes.push_back(NewValueNode(unpack_graph));
     nodes.push_back(func_node);
     // {{GradOperation, ...}, args...}
-    std::transform(inputs_y.begin() + 1, inputs_y.end(), std::back_inserter(nodes),
+    const size_t inputs_begin_index = 1;
+    std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
                    [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   }
