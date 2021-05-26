@@ -397,13 +397,13 @@ PythonEnvGuard::~PythonEnvGuard() {
 
 bool PythonEnvGuard::PythonIsInited() const { return Py_IsInitialized() != 0; }
 
-void PythonEnvGuard::InitPython() {
+void PythonEnvGuard::InitPython() const {
   if (!PythonIsInited()) {
     Py_Initialize();
   }
 }
 
-void PythonEnvGuard::FinalizePython() {
+void PythonEnvGuard::FinalizePython() const {
   if (PythonIsInited()) {
     Py_Finalize();
   }
