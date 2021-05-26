@@ -59,6 +59,7 @@ ge::DataType GeTypesConvert::TransTypeIdToGeDataType(TypeId type_id) {
 }
 
 ge::Format GeTypesConvert::GetGeFormat(const std::string &format, size_t shape_size) {
+  static constexpr size_t k4dSize = 4;
   static const std::map<std::string, ge::Format> format_map = {
     // default format: nchw, fractal_nz?
     {kOpFormat_DEFAULT, ge::Format::FORMAT_NCHW},
@@ -82,7 +83,7 @@ ge::Format GeTypesConvert::GetGeFormat(const std::string &format, size_t shape_s
     {kOpFormat_FRACTAL_ZN_LSTM, ge::Format::FORMAT_FRACTAL_ZN_LSTM}};
   MS_LOG(INFO) << "GetGeFormat format:" << format << " shape_size:" << shape_size;
   if (format == kOpFormat_DEFAULT) {
-    return shape_size == 4 ? ge::Format::FORMAT_NCHW : ge::Format::FORMAT_ND;
+    return shape_size == k4dSize ? ge::Format::FORMAT_NCHW : ge::Format::FORMAT_ND;
   }
   auto iter = format_map.find(format);
   if (iter == format_map.end()) {

@@ -37,7 +37,7 @@ std::string GetDeviceTypeString(enum DeviceType type) {
     return iter->second;
   }
 
-  return "InvalidDeviceType" + std::to_string(type);
+  return "InvalidDeviceType" + std::to_string(static_cast<int>(type));
 }
 }  // namespace
 Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_context) {
@@ -119,7 +119,7 @@ std::vector<std::vector<char>> Model::GetOutputTensorNamesChar() {
   std::vector<std::vector<char>> ret;
   auto outputs = GetOutputs();
   std::transform(outputs.begin(), outputs.end(), std::back_inserter(ret),
-                 [](MSTensor item) -> std::vector<char> { return StringToChar(item.Name()); });
+                 [](const MSTensor &item) -> std::vector<char> { return StringToChar(item.Name()); });
   return ret;
 }
 

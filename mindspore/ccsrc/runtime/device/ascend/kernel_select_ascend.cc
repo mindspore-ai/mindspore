@@ -74,6 +74,8 @@ bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildIn
 }
 
 string GetPriorityMatchFormat(const CNodePtr &cnode) {
+  constexpr size_t k5dSize = 5;
+  constexpr size_t k4dSize = 4;
   string priority_matched_format = kOpFormat_NC1HWC0;
   bool is_init = false;
   bool need_change_nd = false;
@@ -91,10 +93,10 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
       priority_matched_format = kOpFormat_DEFAULT;
     }
     auto input_shape_size = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index).size();
-    if (input_shape_size == 5) {
+    if (input_shape_size == k5dSize) {
       is_5d_input = true;
     }
-    need_change_nd = (need_change_nd || (input_shape_size != 4 && input_shape_size > 1));
+    need_change_nd = (need_change_nd || (input_shape_size != k4dSize && input_shape_size > 1));
   }
   if (need_change_nd && priority_matched_format != kOpFormat_FRAC_NZ) {
     priority_matched_format = kOpFormat_DEFAULT;

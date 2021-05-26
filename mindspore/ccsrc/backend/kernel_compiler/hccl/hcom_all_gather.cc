@@ -20,9 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
-                                 const std::vector<AddressPtr> & /*workspace*/,
-                                 const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
+bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                 const std::vector<AddressPtr> &, void *) {
   MS_LOG(INFO) << "HcomAllGather launch";
   return true;
 }

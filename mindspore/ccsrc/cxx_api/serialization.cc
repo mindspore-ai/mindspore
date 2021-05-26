@@ -52,7 +52,7 @@ static Buffer ReadFile(const std::string &file) {
   }
 
   ifs.seekg(0, std::ios::end);
-  size_t size = ifs.tellg();
+  size_t size = static_cast<size_t>(ifs.tellg());
   buffer.ResizeData(size);
   if (buffer.DataSize() != size) {
     MS_LOG(ERROR) << "Malloc buf failed, file: " << real_path;
@@ -61,7 +61,7 @@ static Buffer ReadFile(const std::string &file) {
   }
 
   ifs.seekg(0, std::ios::beg);
-  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), size);
+  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), static_cast<std::streamsize>(size));
   ifs.close();
 
   return buffer;
@@ -122,22 +122,22 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
   return kMEInvalidInput;
 }
 
-Status Serialization::LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters) {
+Status Serialization::LoadCheckPoint(const std::string &, std::map<std::string, Buffer> *) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
 
-Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *model) {
+Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &model, ModelType model_type, Buffer *model_data) {
+Status Serialization::ExportModel(const Model &, ModelType, Buffer *) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
 
-Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file) {
+Status Serialization::ExportModel(const Model &, ModelType, const std::string &) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
