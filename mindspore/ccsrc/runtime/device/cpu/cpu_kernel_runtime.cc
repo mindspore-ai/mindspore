@@ -46,7 +46,6 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-
 bool CPUKernelRuntime::Init() {
   if (initialized_) {
     return true;
