@@ -23,8 +23,6 @@ from setuptools import setup, find_packages
 from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
-version = '1.2.0'
-
 backend_policy = os.getenv('BACKEND_POLICY')
 device_target = os.getenv('BACKEND_TARGET')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
@@ -39,6 +37,7 @@ def _read_file(filename):
         return f.read()
 
 
+version = _read_file('VERSION').replace("\n", "")
 readme = _read_file('README.md')
 
 

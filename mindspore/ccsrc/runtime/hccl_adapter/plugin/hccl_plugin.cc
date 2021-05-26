@@ -20,8 +20,6 @@
 #undef google
 #include "hccl/hcom.h"
 
-static constexpr const char *kHcclOpsKernelInfoStore = "ops_kernel_info_hccl";
-
 extern "C" {
 ge::Status Initialize(const std::map<std::string, std::string> &);
 ge::Status Finalize();

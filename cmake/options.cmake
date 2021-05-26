@@ -22,6 +22,8 @@ option(ENABLE_IBVERBS "enable IBVERBS for parameter server" OFF)
 option(ENABLE_PYTHON "Enable python" ON)
 option(ENABLE_ACL "enable acl" OFF)
 option(ENABLE_GLIBCXX "enable_glibcxx" OFF)
+option(MODE_ASCEND_ALL "supports all ascend platform" OFF)
+option(MODE_ASCEND_ACL "supports ascend acl mode only" OFF)
 
 if(NOT ENABLE_D AND NOT ENABLE_TESTCASES AND NOT ENABLE_ACL AND NOT ENABLE_GE)
     set(ENABLE_GLIBCXX ON)
@@ -130,3 +132,12 @@ endif()
 if(ENABLE_MINDDATA AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(MS_BUILD_GRPC ON)
 endif()
+
+if(ENABLE_D AND ENABLE_ACL)
+    set(MODE_ASCEND_ALL ON)
+endif()
+
+if(ENABLE_ACL AND NOT ENABLE_D)
+    set(MODE_ASCEND_ACL ON)
+endif()
+

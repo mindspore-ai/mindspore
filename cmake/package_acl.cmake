@@ -1,0 +1,179 @@
+# include dependency
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+# prepare output directory
+file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/output)
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/output)
+
+# cpack variables
+file(READ ${CMAKE_SOURCE_DIR}/VERSION VERSION_NUMBER)
+string(TOLOWER linux_${CMAKE_HOST_SYSTEM_PROCESSOR} PLATFORM_NAME)
+set(CPACK_PACKAGE_FILE_NAME mindspore_ascend-${VERSION_NUMBER}-${PLATFORM_NAME})
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_PACKAGE_CHECKSUM SHA256)
+set(CPACK_PACKAGE_DIRECTORY ${CMAKE_SOURCE_DIR}/output)
+
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
+set(INSTALL_BASE_DIR ".")
+set(INSTALL_BIN_DIR "bin")
+set(INSTALL_CFG_DIR "config")
+set(INSTALL_LIB_DIR "lib")
+
+# set package files
+install(
+        TARGETS mindspore_shared_lib
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
+
+install(
+        TARGETS mindspore_gvar
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
+
+if(USE_GLOG)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
+    install(
+            FILES ${GLOG_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
+file(GLOB_RECURSE LIBEVENT_LIB_LIST
+        ${libevent_LIBPATH}/libevent*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+        ${libevent_LIBPATH}/libevent_pthreads*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+        )
+
+install(
+        FILES ${LIBEVENT_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
+
+if(ENABLE_MINDDATA)
+    install(
+            TARGETS _c_dataengine _c_mindrecord
+            DESTINATION ${INSTALL_BASE_DIR}
+            COMPONENT mindspore
+    )
+    install(
+            TARGETS cache_admin cache_server
+            OPTIONAL
+            DESTINATION ${INSTALL_BIN_DIR}
+            COMPONENT mindspore
+    )
+    file(GLOB_RECURSE OPENCV_LIB_LIST
+            ${opencv_LIBPATH}/libopencv_core*
+            ${opencv_LIBPATH}/libopencv_imgcodecs*
+            ${opencv_LIBPATH}/libopencv_imgproc*
+            )
+    install(
+            FILES ${OPENCV_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
+    install(
+            FILES ${TINYXML2_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+    file(GLOB_RECURSE ICU4C_LIB_LIST
+            ${icu4c_LIBPATH}/libicuuc*
+            ${icu4c_LIBPATH}/libicudata*
+            ${icu4c_LIBPATH}/libicui18n*
+            )
+    install(
+            FILES ${ICU4C_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
+# CPU mode
+if(ENABLE_CPU AND NOT WIN32)
+    install(
+            TARGETS ps_cache
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
+if(ENABLE_CPU)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl${CMAKE_SHARED_LIBRARY_SUFFIX}*)
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/dnnl.dll)
+    endif()
+    install(
+            FILES ${DNNL_LIB_LIST}
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+    install(
+            TARGETS nnacl
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
+# ENABLE_D remnants
+if(DEFINED ENV{ASCEND_CUSTOM_PATH})
+    set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+else()
+    set(ASCEND_PATH /usr/local/Ascend)
+endif()
+set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+install(
+        FILES ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+)
+
+if(MS_BUILD_GRPC)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.27.3
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.so.1 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.9.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.9.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.9.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.so.9 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.9.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.so.9 COMPONENT mindspore)
+endif()
+
+## Public header files
+install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/include
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+)
+
+## Public header files for minddata
+install(
+        FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
+        DESTINATION ${INSTALL_BASE_DIR}/include/dataset
+        COMPONENT mindspore
+)
+
+## config files
+install(
+        FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
+        DESTINATION ${INSTALL_CFG_DIR}
+        COMPONENT mindspore
+)
+
+include(CPack)

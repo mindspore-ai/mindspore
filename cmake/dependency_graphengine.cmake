@@ -16,7 +16,7 @@ function(find_submodule_lib module name path)
             )
 endfunction()
 
-if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
+if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL OR ENABLE_TESTCASES)
     set(_ge_tmp_CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
     set(_ge_tmp_ENABLE_GITEE ${ENABLE_GITEE})
     set(_ge_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
