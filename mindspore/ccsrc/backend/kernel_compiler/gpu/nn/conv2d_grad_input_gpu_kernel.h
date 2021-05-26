@@ -299,6 +299,15 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
                                                   requested_algo_count, &returned_algo_count, &perf_results),
       "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
     algo_ = perf_results.algo;
+#if CUDNN_VERSION < 8000
+    if (group_ > 1) {
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
+        cudnnGetConvolutionBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real,
+                                                 CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &algo_),
+        "cudnnGetConvolutionBackwardDataAlgorithm failed");
+    }
+#endif
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
       algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
     }
