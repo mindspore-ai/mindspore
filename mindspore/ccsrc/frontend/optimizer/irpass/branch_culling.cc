@@ -529,58 +529,64 @@ bool GraphOutputCompatible(const AbstractBasePtr &true_branch_abs, const Abstrac
   return (*true_branch_type == *false_branch_type);
 }
 
-AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
-                              const AbstractBasePtr &true_graph_output_abs,
-                              const AbstractBasePtr &false_graph_output_abs, const FuncGraphPtr &switch_graph,
-                              const AnfNodePtr &cond) {
-  MS_EXCEPTION_IF_NULL(true_graph_output_abs);
-  MS_EXCEPTION_IF_NULL(false_graph_output_abs);
-  MS_EXCEPTION_IF_NULL(cond);
+// block_nodes[0]: condition node
+// block_nodes[1]: true branch node
+// block_nodes[2]: false branch node
+// branch_output_abs[0]: true branch abstract
+// branch_output_abs[1]: false branch abstract
+AnfNodePtr GenerateMergeNodes(const std::vector<AnfNodePtr> &block_nodes,
+                              const std::vector<AbstractBasePtr> &branch_output_abs, const FuncGraphPtr &switch_graph) {
+  MS_EXCEPTION_IF_NULL(branch_output_abs[0]);
+  MS_EXCEPTION_IF_NULL(branch_output_abs[1]);
+  MS_EXCEPTION_IF_NULL(block_nodes[0]);
   MS_EXCEPTION_IF_NULL(switch_graph);
   auto PrimMerge = prim::GetPythonOps("merge", "mindspore.ops.functional")->cast<PrimitivePtr>();
   MS_EXCEPTION_IF_NULL(PrimMerge);
 
-  if (!true_graph_output_abs->isa<abstract::AbstractTuple>()) {
+  if (!branch_output_abs[0]->isa<abstract::AbstractTuple>()) {
     std::vector<AnfNodePtr> merge_nodes;
     merge_nodes.push_back(NewValueNode(PrimMerge));
-    std::vector<AnfNodePtr> make_tuple_nodes{NewValueNode(prim::kPrimMakeTuple), true_output_node, false_output_node};
+    std::vector<AnfNodePtr> make_tuple_nodes{NewValueNode(prim::kPrimMakeTuple), block_nodes[1], block_nodes[2]};
     merge_nodes.push_back(switch_graph->NewCNode(make_tuple_nodes));
     std::vector<AnfNodePtr> tuple_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem),
                                                 switch_graph->NewCNode(merge_nodes),
                                                 NewValueNode(MakeValue(static_cast<int64_t>(0)))};
     return switch_graph->NewCNode(tuple_getitem_nodes);
   } else {
-    abstract::AbstractTuplePtr true_branch_tuple = true_graph_output_abs->cast<abstract::AbstractTuplePtr>();
-    abstract::AbstractTuplePtr false_branch_tuple = false_graph_output_abs->cast<abstract::AbstractTuplePtr>();
+    auto true_branch_tuple = branch_output_abs[0]->cast<abstract::AbstractTuplePtr>();
+    auto false_branch_tuple = branch_output_abs[1]->cast<abstract::AbstractTuplePtr>();
 
     std::vector<AnfNodePtr> make_tuple_nodes;
     make_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < true_branch_tuple->elements().size(); i++) {
-      std::vector<AnfNodePtr> true_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), true_output_node,
+      std::vector<AnfNodePtr> true_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), block_nodes[1],
                                                  NewValueNode(MakeValue(SizeToLong(i)))};
       auto true_node = switch_graph->NewCNode(true_getitem_nodes);
-      std::vector<AnfNodePtr> false_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), false_output_node,
+      std::vector<AnfNodePtr> false_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), block_nodes[2],
                                                   NewValueNode(MakeValue(SizeToLong(i)))};
       auto false_node = switch_graph->NewCNode(false_getitem_nodes);
 
-      auto merge_node = GenerateMergeNodes(true_node, false_node, true_branch_tuple->elements()[i],
-                                           false_branch_tuple->elements()[i], switch_graph, cond);
+      auto merge_node = GenerateMergeNodes(
+        {
+          block_nodes[0],
+          true_node,
+          false_node,
+        },
+        {true_branch_tuple->elements()[i], false_branch_tuple->elements()[i]}, switch_graph);
       make_tuple_nodes.push_back(merge_node);
     }
     return switch_graph->NewCNode(make_tuple_nodes);
   }
 }
 
-AnfNodePtr TransformMergeBranches(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
-                                  const AbstractBasePtr &true_graph_output_abs,
-                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond,
-                                  const FuncGraphPtr &switch_graph) {
-  if (!GraphOutputCompatible(true_graph_output_abs, false_graph_output_abs)) {
-    MS_LOG(EXCEPTION) << "Switch output branch not compatible, true:" << true_graph_output_abs->ToString()
-                      << "， false:" << false_graph_output_abs->ToString();
+AnfNodePtr TransformMergeBranches(const std::vector<AnfNodePtr> &block_nodes,
+                                  const std::vector<AbstractBasePtr> &branch_output_abs,
+                                  const FuncGraphPtr &func_graph) {
+  if (!GraphOutputCompatible(branch_output_abs[0], branch_output_abs[1])) {
+    MS_LOG(EXCEPTION) << "Switch output branch not compatible, true:" << branch_output_abs[0]->ToString()
+                      << "， false:" << branch_output_abs[1]->ToString();
   }
-  return GenerateMergeNodes(true_output_node, false_output_node, true_graph_output_abs, false_graph_output_abs,
-                            switch_graph, cond);
+  return GenerateMergeNodes(block_nodes, branch_output_abs, func_graph);
 }
 }  // namespace internal
 }  // namespace irpass
