@@ -449,7 +449,7 @@ void Tensor::Print(std::ostream &out) const {
   }
 }
 
-void Tensor::Print_data(std::ostream &out) const {
+void Tensor::PrintData(std::ostream &out) const {
   if (data_) {
     PrintRecursive(out, 0, std::vector<dsize_t>{});
   }
@@ -632,7 +632,7 @@ Status Tensor::to_json(nlohmann::json *out_json) {
   args["shape"] = shape_.ToString();
   args["type"] = type_.ToString();
   std::stringstream ss;
-  this->Print_data(ss);
+  this->PrintData(ss);
   args["data"] = ss.str();
   *out_json = args;
   return Status::OK();

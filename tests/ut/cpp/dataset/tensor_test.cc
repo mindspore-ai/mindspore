@@ -537,7 +537,7 @@ TEST_F(MindDataTestTensorDE, TensorEmpty) {
   ASSERT_TRUE(!t2->HasData());
 }
 
-TEST_F(MindDataTestTensorDE, TestTensor_json) {
+TEST_F(MindDataTestTensorDE, TestTensorJson) {
   MS_LOG(INFO) << "Doing TestTensor.";
   std::vector<uint64_t> labels = {1, 1, 2};
   std::shared_ptr<Tensor> input;
