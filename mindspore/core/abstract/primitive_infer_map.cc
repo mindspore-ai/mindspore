@@ -119,7 +119,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimPooling, {InferImplPooling, nullptr, true}},
     {prim::kPrimPoolingGrad, {InferImplPoolingGrad, nullptr, true}},
     {prim::kPrimBatchNorm, {InferImplBatchNorm, nullptr, true}},
-    {prim::kPrimReluGrad, {InferImplReluGrad, nullptr, true}},
     {prim::kPrimConv2D, {InferImplConv2D, nullptr, true}},
     {prim::kPrimBiasAdd, {InferImplBiasAdd, nullptr, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, nullptr, true}},
