@@ -21,6 +21,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/gathernd.cuh"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -113,13 +114,13 @@ class GatherNdGpuFwdKernel : public GpuKernel {
 
  protected:
   void InitSizeLists() override {
-    size_t size = GetSize(input_shapes_);
+    size_t size = AnfAlgo::TensorSizeInByte<T>(input_shapes_);
     input_size_list_.push_back(size);
 
-    size = GetSize(indices_shapes_);
+    size = AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
     input_size_list_.push_back(size);
 
-    size = GetSize(output_shapes_);
+    size = AnfAlgo::TensorSizeInByte<T>(output_shapes_);
     output_size_list_.push_back(size);
   }
 
@@ -139,16 +140,6 @@ class GatherNdGpuFwdKernel : public GpuKernel {
     dims_.emplace_back(dim_after_indices);
     dims_.emplace_back(dim_indices_last);
     return;
-  }
-  size_t GetSize(const std::vector<size_t> &shape) const {
-    if (shape.size() == 0) {
-      return 0;
-    }
-    size_t result = sizeof(T);
-    for (size_t i = 0; i < shape.size(); i++) {
-      result *= shape[i];
-    }
-    return result;
   }
 
   std::vector<size_t> input_shapes_;

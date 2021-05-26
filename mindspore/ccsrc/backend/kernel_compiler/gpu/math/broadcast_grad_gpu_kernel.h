@@ -25,6 +25,8 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/broadcast_grad_impl.cuh"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
+#include "backend/session/anf_runtime_algorithm.h"
+
 namespace mindspore {
 namespace kernel {
 template <typename T>
@@ -68,7 +70,7 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     auto shape1 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape3 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    need_broadcast_ = IsBroadcast(shape1, shape2);
+    need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > 4) {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 4";
     }
@@ -142,18 +144,6 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     } else {
       op_type_ = iter->second;
     }
-  }
-
-  bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-    if (lhs.size() != rhs.size()) {
-      return true;
-    }
-    for (size_t i = 0; i < lhs.size(); i++) {
-      if (lhs[i] != rhs[i]) {
-        return true;
-      }
-    }
-    return false;
   }
 
   BroadcastGradOpType op_type_;

@@ -23,6 +23,7 @@ namespace mindspore {
 namespace kernel {
 size_t UnitSizeInBytes(const mindspore::TypeId &t);
 int ElementNums(const std::vector<int> &shape);
+void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> *shapes, std::vector<TypePtr> *types);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DATASET_UTILS_KERNEL_H_
