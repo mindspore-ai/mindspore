@@ -57,10 +57,10 @@ Status WordpieceTokenizerOp::FoundNoToken(const std::string &input_token, const 
   out_tokens->clear();
   offsets_start->push_back(basic_start);
   if (unknown_token_.empty()) {
-    out_tokens->emplace_back(input_token);
+    (void)out_tokens->emplace_back(input_token);
     offsets_limit->push_back(basic_start + input_token.length());
   } else {
-    out_tokens->emplace_back(unknown_token_);
+    (void)out_tokens->emplace_back(unknown_token_);
     offsets_limit->push_back(basic_start + input_token.length());
   }
   return Status::OK();
@@ -68,25 +68,26 @@ Status WordpieceTokenizerOp::FoundNoToken(const std::string &input_token, const 
 
 Status WordpieceTokenizerOp::AddSubword(const std::string &input_token, const int &start, const int &end,
                                         std::vector<std::string> *out_tokens) const {
-  CHECK_FAIL_RETURN_UNEXPECTED(start >= 0 && end > start && end <= input_token.size(), "Out of range");
+  CHECK_FAIL_RETURN_UNEXPECTED(start >= 0 && end > start && end <= static_cast<int>(input_token.size()),
+                               "Out of range");
   std::string subword = input_token.substr(start, end - start);
   if (start > 0) {
     subword = suffix_indicator_ + subword;
   }
-  out_tokens->emplace_back(subword);
+  (void)out_tokens->emplace_back(subword);
   return Status::OK();
 }
 
 Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uint32_t &basic_start,
                                        std::vector<std::string> *out_tokens, std::vector<uint32_t> *offsets_start,
                                        std::vector<uint32_t> *offsets_limit) const {
-  if (input_token.size() > max_bytes_per_token_) {
+  if (input_token.size() > static_cast<int>(max_bytes_per_token_)) {
     offsets_start->push_back(basic_start);
     if (!unknown_token_.empty()) {
       offsets_limit->push_back(basic_start + unknown_token_.size());
-      out_tokens->emplace_back(unknown_token_);
+      (void)out_tokens->emplace_back(unknown_token_);
     } else {
-      out_tokens->emplace_back(input_token);
+      (void)out_tokens->emplace_back(input_token);
       offsets_limit->push_back(basic_start + input_token.size());
     }
     return Status::OK();
@@ -96,7 +97,7 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uin
     RETURN_STATUS_UNEXPECTED("WordpieceTokenizer: Decode utf8 string failed.");
   }
   int end = 0;
-  for (int start = 0; start < input_token.size();) {
+  for (int start = 0; start < static_cast<int>(input_token.size());) {
     bool found = false;
     RETURN_IF_NOT_OK(LookupWord(input_token, runes, start, &found, &end));
     if (found) {
@@ -132,7 +133,7 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
     count++;
   }
   if (out_tokens.empty()) {
-    out_tokens.emplace_back("");
+    (void)out_tokens.emplace_back("");
     offsets_start.push_back(0);
     offsets_limit.push_back(0);
   }

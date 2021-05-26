@@ -168,7 +168,7 @@ Status WeightedRandomSamplerRT::GetNextSample(TensorRow *out) {
       }
 
       *id_ptr = genId;
-      id_ptr++;
+      ++id_ptr;
       sample_id_++;
     }
 

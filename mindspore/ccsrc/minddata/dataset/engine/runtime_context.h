@@ -31,7 +31,7 @@ class RuntimeContext {
 
   /// Initialize the runtime, for now we just call the global init
   /// \return Status error code
-  Status Init();
+  Status Init() const;
 
   /// Set the tree consumer
   /// \param tree_consumer to be assigned

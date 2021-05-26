@@ -71,7 +71,7 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
       uint32_t token_offset = 0;
       RETURN_IF_NOT_OK(GetUnicodeSubstr(utext, token_start_index, token_len, &token));
       token_offset = token.length();
-      out_tokens->emplace_back(std::move(token));
+      (void)out_tokens->emplace_back(std::move(token));
       offsets_start->push_back(static_cast<uint32_t>(text_start_index));
       offsets_limit->push_back(static_cast<uint32_t>(text_start_index + token_offset));
       text_start_index += token_offset;
@@ -86,7 +86,7 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
       delim_matcher.reset(delim_str);
       delim_str_offset = delim_utf8_str.length();
       if (keep_delim_ && delim_matcher.matches(status) && U_SUCCESS(status)) {
-        out_tokens->emplace_back(std::move(delim_utf8_str));
+        (void)out_tokens->emplace_back(std::move(delim_utf8_str));
         offsets_start->push_back(static_cast<uint32_t>(text_start_index));
         offsets_limit->push_back(static_cast<uint32_t>(text_start_index + delim_str_offset));
       }
@@ -100,7 +100,7 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
     uint32_t temp_offset = 0;
     RETURN_IF_NOT_OK(GetUnicodeSubstr(utext, token_start_index, utext.length() - token_start_index, &temp));
     temp_offset = temp.length();
-    out_tokens->emplace_back(std::move(temp));
+    (void)out_tokens->emplace_back(std::move(temp));
     offsets_start->push_back(static_cast<uint32_t>(text_start_index));
     offsets_limit->push_back(static_cast<uint32_t>(text_start_index + temp_offset));
   }

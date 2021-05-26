@@ -58,10 +58,10 @@ class JiebaTokenizerOp : public TokenizerOp {
   std::string Name() const override { return kJiebaTokenizerOp; }
 
  protected:
+  JiebaMode jieba_mode_;
   std::string hmm_model_path_;
   std::string mp_dict_path_;
   std::unique_ptr<cppjieba::Jieba> jieba_parser_;
-  JiebaMode jieba_mode_;
 };
 }  // namespace dataset
 }  // namespace mindspore

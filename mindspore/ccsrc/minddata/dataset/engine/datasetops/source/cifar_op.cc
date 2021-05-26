@@ -283,10 +283,10 @@ Status CifarOp::ParseCifarData() {
                                            data_schema_->column(0).type(), &image_tensor));
       auto itr = image_tensor->begin<uint8_t>();
       uint32_t total_pix = kCifarImageHeight * kCifarImageWidth;
-      for (int pix = 0; pix < total_pix; ++pix) {
-        for (int ch = 0; ch < kCifarImageChannel; ++ch) {
+      for (uint32_t pix = 0; pix < total_pix; ++pix) {
+        for (uint32_t ch = 0; ch < kCifarImageChannel; ++ch) {
           *itr = block[cur_block_index + ch * total_pix + pix];
-          itr++;
+          ++itr;
         }
       }
       cur_block_index += total_pix * kCifarImageChannel;

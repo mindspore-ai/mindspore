@@ -37,7 +37,7 @@ Status TokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   RETURN_IF_NOT_OK(Tokenize(str, &splits, &offsets_start, &offsets_limit));
 
   if (splits.empty()) {
-    splits.emplace_back("");
+    (void)splits.emplace_back("");
     offsets_start.push_back(0);
     offsets_limit.push_back(0);
   }

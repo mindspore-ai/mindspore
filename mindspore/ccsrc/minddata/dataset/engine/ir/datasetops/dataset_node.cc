@@ -59,7 +59,6 @@ Status ComputeShuffleSize(int64_t num_files, int64_t num_devices, int64_t num_ro
 // Helper function to inject a shuffle operator over top of current operator being built
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
                     int32_t connector_que_size, std::shared_ptr<DatasetOp> *shuffle_op) {
-  std::shared_ptr<ShuffleOp> new_shuffle_op = nullptr;
   int64_t shuffle_size = 0;
   RETURN_IF_NOT_OK(ComputeShuffleSize(num_files, num_devices, num_rows, total_rows, &shuffle_size));
   MS_LOG(INFO) << "Dataset::AddShuffleOp - num_rows: " << num_rows << ", shuffle_size: " << shuffle_size;

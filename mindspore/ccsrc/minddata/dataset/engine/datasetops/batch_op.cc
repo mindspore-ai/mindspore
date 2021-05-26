@@ -225,7 +225,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
       std::vector<std::string> strings;
       for (dsize_t j = 0; j < batch_size; j++) {
         std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(i);
-        for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); itr++) {
+        for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); ++itr) {
           strings.emplace_back(*itr);
         }
       }
@@ -481,7 +481,7 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
                               std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes) {
   if (pad_info.empty()) {  // if pad_info empty, pad every columns automatically
-    for (dsize_t col_id = 0; col_id < column_name_id_map.size(); col_id++) {
+    for (size_t col_id = 0; col_id < column_name_id_map.size(); col_id++) {
       pad_cols->insert(col_id);
     }
   } else {
