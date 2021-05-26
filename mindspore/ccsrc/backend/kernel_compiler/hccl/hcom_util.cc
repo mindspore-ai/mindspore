@@ -113,6 +113,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
   size_t input_size;
   uint32_t type_size = 4;
   size_t size = AnfAlgo::GetInputTensorNum(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
   if (AnfAlgo::GetCNodeName(anf_node) == kReceiveOpName) {
     size = AnfAlgo::GetOutputTensorNum(anf_node);
   }
@@ -128,7 +129,6 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
 
     if (AnfAlgo::GetCNodeName(anf_node) == kReduceScatterOpName) {
       int64_t rank_size;
-      auto cnode = anf_node->cast<CNodePtr>();
       auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
       MS_EXCEPTION_IF_NULL(primitive);
       if (primitive->GetAttr("rank_size") != nullptr) {
@@ -145,7 +145,6 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
       total_size = total_size + block_size;
     } else {
       if (AnfAlgo::GetCNodeName(anf_node) == kAllGatherOpName) {
-        auto cnode = anf_node->cast<CNodePtr>();
         if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode) && AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion) &&
             AnfAlgo::GetInputTensorNum(anf_node) > 1) {
           block_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
@@ -177,8 +176,7 @@ bool HcomUtil::GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op
     MS_LOG(ERROR) << "Get HCOM_ATTR_REDUCE_TYPE fail, not support!";
     return false;
   }
-  auto hcom_op_type_get = GetValue<const char *>(primitive->GetAttr("op"));
-  string hcom_op_type(hcom_op_type_get);
+  auto hcom_op_type = GetValue<std::string>(primitive->GetAttr("op"));
   if (hcom_op_type == "min") {
     *op_type = HCCL_REDUCE_MIN;
   } else if (hcom_op_type == "max") {

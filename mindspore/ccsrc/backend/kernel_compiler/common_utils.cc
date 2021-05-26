@@ -848,5 +848,17 @@ void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, co
   }
 }
 
+bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int64_t *size_i) {
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  size_t type_byte = GetTypeByte(type_ptr);
+  if (type_byte == 0) {
+    return false;
+  }
+  for (size_t j = 0; j < shape.size(); j++) {
+    size_i[0] = LongMulWithOverflowCheck(size_i[0], static_cast<int>(shape[j]));
+  }
+  size_i[0] = LongMulWithOverflowCheck(size_i[0], SizeToInt(type_byte));
+  return true;
+}
 }  // namespace kernel
 }  // namespace mindspore

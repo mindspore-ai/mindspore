@@ -55,7 +55,7 @@ class HostKernelFactory {
 
  public:
   static HostKernelFactory &Get();
-  void Registe(const string &name, HostKernelCreater &&fun);
+  void Register(const string &name, HostKernelCreater &&fun);
   static std::shared_ptr<HostKernelMod> Get(const string &name);
 
  private:
@@ -65,7 +65,7 @@ class HostKernelFactory {
 class _HostKernelRegister {
  public:
   _HostKernelRegister(const string &name, HostKernelCreater &&fun) {
-    HostKernelFactory::Get().Registe(name, std::move(fun));
+    HostKernelFactory::Get().Register(name, std::move(fun));
   }
   ~_HostKernelRegister() = default;
 };
