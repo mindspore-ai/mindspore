@@ -341,13 +341,13 @@ void GenerateRepDepend(
   const std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> &repl_node,
   const std::function<AnfNodePtr(FuncGraphPtr graph, AnfNodePtr cond, AnfNodePtr data)> &generate_func) {
   auto inputs = node->inputs();
-  if (inputs.size() != 3) {
+  if (inputs.size() != kDependInputSize) {
     MS_LOG(EXCEPTION) << "Inputs should be [depend, actual_value, depended_node].";
   }
 
   std::vector<AnfNodePtr> new_depened_inputs;
   // Inputs should be [depend, actual_value, depended_node]
-  auto depended_node = inputs[2];
+  auto depended_node = inputs[kDependAttachNodeIndex];
   new_depened_inputs.push_back(inputs[0]);
   new_depened_inputs.push_back(inputs[1]);
   // depended node should be make_tuple or a single depended node
@@ -383,10 +383,10 @@ FuncGraphPtr TransformGraphDependNode(
     }
     if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
       auto cnode = node->cast<CNodePtr>();
-      if (cnode->size() != 3) {
-        MS_LOG(EXCEPTION) << "Dependnode input size != 3";
+      if (cnode->size() != kDependInputSize) {
+        MS_LOG(EXCEPTION) << "Dependnode input size != " << kDependInputSize;
       }
-      auto depended_node = cnode->input(2);
+      auto depended_node = cnode->input(kDependAttachNodeIndex);
       MS_EXCEPTION_IF_NULL(depended_node);
       if (!depended_node->isa<CNode>()) {
         continue;

@@ -985,7 +985,8 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   // select indexed item
   // args: tuple of items, index
   const std::string op_name = std::string("TupleGetItemTensor");
-  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t inputs_size = 2;
+  abstract::CheckArgsSize(op_name, args_spec_list, inputs_size);
   auto ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   auto functions = ret_graph->add_parameter();
