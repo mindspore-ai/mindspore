@@ -506,9 +506,10 @@ class Conv3d(_Conv):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and the width of
-            the kernel. A tuple of 3 ints means the first value is for the depth, second value is for height and the
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
+            Specifies the depth, height and width of the 3D convolution window.
+            Single int means the value is for the depth, height and the width of the kernel.
+            A tuple of 3 ints means the first value is for the depth, second value is for height and the
             other is for the width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
@@ -746,7 +747,8 @@ class Conv3dTranspose(_Conv):
 
     Examples:
         >>> input = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
-        >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2), pad_mode='pad')
+        >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2),
+        ...                                       pad_mode='pad')
         >>> output = conv3d_transpose(input)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)

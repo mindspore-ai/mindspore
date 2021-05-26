@@ -28,6 +28,7 @@ from mindspore.nn.layer.activation import get_activation
 
 __all__ = ['Dense_Thor', 'Conv2d_Thor', 'Embedding_Thor']
 
+
 class Dense_Thor(Cell):
     r"""
     The dense connected layer.
@@ -546,6 +547,7 @@ class Conv2d_Thor(_Conv):
                 self.weight_init,
                 self.bias_init)
         return s
+
 
 class Embedding_Thor(Cell):
     r"""
