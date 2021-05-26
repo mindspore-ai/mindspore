@@ -52,9 +52,9 @@ void SigmoidCrossEntropyWithLogitsGradCPUKernel::LaunchKernel(const std::vector<
   T one = (T)1.0;
   for (uint64_t i = 0; i < tensor_size_; ++i) {
     if (logits_addr[i] >= zero) {
-      output_addr[i] = (one / (one + exp(-logits_addr[i])) - labels_addr[i]) * dloss_addr[i];
+      output_addr[i] = (one / (one + static_cast<T>(exp(-logits_addr[i]))) - labels_addr[i]) * dloss_addr[i];
     } else {
-      const T exp_val = exp(logits_addr[i]);
+      const T exp_val = static_cast<T>(exp(logits_addr[i]));
       output_addr[i] = (exp_val / (one + exp_val) - labels_addr[i]) * dloss_addr[i];
     }
   }

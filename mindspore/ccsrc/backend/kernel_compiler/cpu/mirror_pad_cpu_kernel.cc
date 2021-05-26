@@ -120,21 +120,21 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   extract_paddings(paddings_arg, padd_dim, paddings);
   // Create anchor points for non mirrored data inside new tensor
-  int ap1_x = paddings[WIDTH + LEFT];
-  int ap2_x = paddings[WIDTH + LEFT] + old_width - 1;
-  int ap1_y = paddings[HEIGHT + TOP];
-  int ap2_y = paddings[HEIGHT + TOP] + old_height - 1;
-  int ap1_channel = paddings[CHANNEL + LEFT];
-  int ap2_channel = paddings[CHANNEL + LEFT] + old_channel - 1;
-  int ap1_batch = paddings[BATCH + LEFT];
-  int ap2_batch = paddings[BATCH + LEFT] + old_batch - 1;
-  int channels_new = old_channel + paddings[CHANNEL + LEFT] + paddings[CHANNEL + RIGHT];
+  int ap1_x = paddings[WIDTH];
+  int ap2_x = paddings[WIDTH] + old_width - 1;
+  int ap1_y = paddings[HEIGHT];
+  int ap2_y = paddings[HEIGHT] + old_height - 1;
+  int ap1_channel = paddings[CHANNEL];
+  int ap2_channel = paddings[CHANNEL] + old_channel - 1;
+  int ap1_batch = paddings[BATCH];
+  int ap2_batch = paddings[BATCH] + old_batch - 1;
+  int channels_new = old_channel + paddings[CHANNEL] + paddings[CHANNEL + RIGHT];
 
   for (size_t pos = 0; pos < output_size_; ++pos) {
-    int block_num = (pos / padded_width) / padded_height;
+    int block_num = (SizeToLong(pos) / padded_width) / padded_height;
     // cur position
-    const int padded_x = pos % padded_width;
-    const int padded_y = (pos / padded_width) % padded_height;
+    const int padded_x = SizeToLong(pos) % padded_width;
+    const int padded_y = (SizeToLong(pos) / padded_width) % padded_height;
     const int padded_channel = block_num % channels_new;
     const int padded_batch = block_num / channels_new;
 
@@ -167,13 +167,13 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     }
 
     // calculate equivalent block in input
-    equiv_block_num = ((matchval_batch_index - paddings[BATCH + LEFT]) * old_channel) +
-                      (matchval_channel_index - paddings[CHANNEL + LEFT]);
+    equiv_block_num =
+      ((matchval_batch_index - paddings[BATCH]) * old_channel) + (matchval_channel_index - paddings[CHANNEL]);
 
     // copy data from equiv block and adjusted x and y values in unpadded tensor
-    outputs_addr[pos] =
-      inputs_addr[(equiv_block_num * old_height + matchval_y_index - paddings[HEIGHT + TOP]) * old_width +
-                  matchval_x_index - paddings[WIDTH + LEFT]];
+    auto pos_index = (equiv_block_num * old_height + matchval_y_index - paddings[HEIGHT]) * old_width +
+                     matchval_x_index - paddings[WIDTH];
+    outputs_addr[pos] = inputs_addr[pos_index];
   }
 }
 
