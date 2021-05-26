@@ -185,7 +185,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
   if (host_queue_->IsEmpty()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Host data queue is empty.");
   }
-  auto &host_tensors = host_queue_->PullData();
+  auto &host_tensors = host_queue_->Pull();
   auto &device_tensors = buffers_.back();
   if (host_tensors.size() != device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context),
@@ -204,7 +204,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cont
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   }
-  host_queue_->PopData();
+  host_queue_->Pop();
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
   // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of

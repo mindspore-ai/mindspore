@@ -187,6 +187,50 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
     }
   }
 }
+
+void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  // Collect the inplace groups.
+  std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    if (!AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
+      continue;
+    }
+    auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto inplace_group_attr = primitive->GetAttr("inplace_group");
+    MS_EXCEPTION_IF_NULL(inplace_group_attr);
+    auto group_id = GetValue<uint32_t>(inplace_group_attr);
+    inplace_groups[group_id].emplace_back(kernel);
+  }
+
+  const size_t kMinInplaceGroupSize = 2;
+  for (const auto &inplace_group : inplace_groups) {
+    auto &group_nodes = inplace_group.second;
+    if (group_nodes.size() < kMinInplaceGroupSize) {
+      continue;
+    }
+    // Get the device address of the first node in the inplace group.
+    auto node_primitive = AnfAlgo::GetCNodePrimitive(group_nodes[0]);
+    MS_EXCEPTION_IF_NULL(node_primitive);
+    auto output_index = GetValue<uint32_t>(node_primitive->GetAttr("inplace_output_index"));
+    auto device_address = AnfAlgo::GetMutableOutputAddr(group_nodes[0], output_index, false);
+    MS_EXCEPTION_IF_NULL(device_address);
+
+    // Update the device address of other nodes using device address of the first node in the inplace group.
+    for (size_t i = 1; i < group_nodes.size(); ++i) {
+      auto &group_node = group_nodes[i];
+      auto prim = AnfAlgo::GetCNodePrimitive(group_node);
+      MS_EXCEPTION_IF_NULL(prim);
+      auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
+      AnfAlgo::SetOutputAddr(device_address, index, group_node.get());
+      // Update the reference count of device address.
+      device_address->IncreaseOriginalRefCount();
+      device_address->ResetRefCount();
+    }
+  }
+}
 }  // namespace
 
 void GraphCompiler::set_device_context(DeviceContext *device_context) {
@@ -285,6 +329,7 @@ void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph) const {
   CreateValueNodeDeviceAddress(device_context_, graph);
   CreateKernelOutputDeviceAddress(device_context_, graph);
   CreateKernelWorkspaceDeviceAddress(device_context_, graph);
+  UpdateDeviceAddressForInplaceNode(graph);
 }
 
 void GraphCompiler::GetParamAndOutputIndex(

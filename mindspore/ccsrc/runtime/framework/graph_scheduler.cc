@@ -465,7 +465,7 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
   if (host_data_source_actor != nullptr) {
     const auto &host_tensor_queue = FetchHostQueue(actor_set->name_);
     MS_EXCEPTION_IF_NULL(host_tensor_queue);
-    host_tensor_queue->PushData(host_tensors);
+    host_tensor_queue->Push(host_tensors);
   }
 }
 
@@ -590,7 +590,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     MS_EXCEPTION_IF_NULL(graph);
     auto execution_order = graph->execution_order();
     for (auto &kernel : execution_order) {
-      if (!IsKernelActor(kernel)) {
+      if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel))) {
         continue;
       }
       const auto &kernel_actor = dynamic_cast<KernelActor *>(FetchActor(kernel->fullname_with_scope()));
@@ -717,7 +717,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     MS_EXCEPTION_IF_NULL(graph);
     auto execution_order = graph->execution_order();
     for (auto &kernel : execution_order) {
-      if (IsKernelActor(kernel)) {
+      if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
         auto kernel_actor =
           std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_);
         MS_EXCEPTION_IF_NULL(kernel_actor);
@@ -786,13 +786,7 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const ActorSet *actor_
     std::string actor_name = actor_set->name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
     const auto &from_actor = dynamic_cast<DeviceQueueDataSourceActor *>(FetchActor(actor_name));
     LinkDataArrowForDeviceDSActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
-  } else if (IsHostQueueDSActor(from_kernel, graph)) {
-    bool tensor_has_device_address =
-      tensor != nullptr && (std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr);
-    if (tensor_has_device_address) {
-      return;
-    }
-
+  } else if (IsHostQueueDSActor(from_kernel, graph, tensor)) {
     // Link the data arrows of host queue data source actor.
     std::string actor_name = actor_set->name_ + "_HostDSActor";
     const auto &from_actor = dynamic_cast<HostQueueDataSourceActor *>(FetchActor(actor_name));
@@ -808,7 +802,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const ActorSet *actor_
     const auto devcie_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
     to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, devcie_tensor_store_key.get());
   } else {
-    MS_LOG(EXCEPTION) << "Invalid from kernel: " << from_kernel->fullname_with_scope();
+    // May exist the from kernel that no need link in the pynative mode.
+    MS_LOG(DEBUG) << "Invalid from kernel: " << from_kernel->fullname_with_scope();
   }
 }
 
@@ -910,9 +905,24 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_
 void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, KernelActor *to_actor,
                                                  KernelWithIndex from_kernel_with_output_idx,
                                                  KernelWithIndex to_kernel_with_input_idx) {
-  MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
+  if (IsSkippedKernelActor(from_kernel_with_output_idx.first)) {
+    auto real_kernel_with_index = AnfAlgo::GetPrevNodeOutput(from_kernel_with_output_idx.first, 0);
+    MS_EXCEPTION_IF_NULL(real_kernel_with_index.first);
+    LinkControlArrowBySkippedNode(to_actor, from_kernel_with_output_idx.first);
 
+    // Update the from kernel info by the real node info.
+    MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
+                 << to_kernel_with_input_idx.first->fullname_with_scope()
+                 << ", aggregate input index: " << to_kernel_with_input_idx.second
+                 << ", skip node: " << from_kernel_with_output_idx.first->fullname_with_scope()
+                 << ", real node: " << real_kernel_with_index.first->fullname_with_scope();
+    from_kernel_with_output_idx.first = real_kernel_with_index.first;
+    from_kernel_with_output_idx.second = real_kernel_with_index.second;
+    from_actor = dynamic_cast<KernelActor *>(FetchActor(from_kernel_with_output_idx.first->fullname_with_scope()));
+  }
+
+  MS_EXCEPTION_IF_NULL(from_actor);
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
   auto from_output_index = from_kernel_with_output_idx.second;
@@ -1029,7 +1039,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
     return;
   }
   // Find the real input node, include the monad node and make tuple node.
-  const std::vector<PrimitivePtr> &return_types = {prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
+  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
+                                                  prim::kPrimMakeTuple};
   const auto &input_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(from_node, 0, false, return_types);
   MS_EXCEPTION_IF_NULL(input_kernel_with_output_idx.first);
   if (!input_kernel_with_output_idx.first->isa<CNode>()) {
@@ -1037,40 +1048,65 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
   }
   const auto &input_cnode = input_kernel_with_output_idx.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(input_cnode);
-
-  // Get the real depend input by monad node which needs to link the control arrow.
-  AnfNodePtr real_depend_input = nullptr;
-  if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimUpdateState)) {
-    real_depend_input = input_cnode->input(kUpdateStateRealInput);
-  } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimLoad)) {
-    real_depend_input = input_cnode->input(kLoadStateInput);
-  } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple)) {
-    // Make tuple node needs to be expanded.
+  // Make tuple node needs to be expanded.
+  if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimMakeTuple)) {
     for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
       LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i));
     }
     return;
-  } else {
-    return;
   }
 
-  MS_EXCEPTION_IF_NULL(real_depend_input);
-  if (!real_depend_input->isa<CNode>()) {
-    return;
-  }
-  // The monad node and make tuple node need recursion.
-  if (AnfAlgo::CheckPrimitiveType(real_depend_input, prim::kPrimUpdateState) ||
-      AnfAlgo::CheckPrimitiveType(real_depend_input, prim::kPrimLoad) ||
-      AnfAlgo::CheckPrimitiveType(real_depend_input, prim::kPrimMakeTuple)) {
-    LinkControlArrowByAutoMonad(to_actor, real_depend_input);
-    return;
+  // Get the real depend input by monad node which needs to link the control arrow.
+  std::vector<AnfNodePtr> real_depend_inputs;
+  if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimDepend)) {
+    real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
+  } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimUpdateState)) {
+    for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
+      real_depend_inputs.push_back(input_cnode->input(i));
+    }
+  } else if (AnfAlgo::CheckPrimitiveType(input_cnode, prim::kPrimLoad)) {
+    real_depend_inputs.push_back(input_cnode->input(kLoadStateInput));
   }
 
-  // Link the control arrow between the kernel actors.
-  const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_input->fullname_with_scope()));
-  MS_EXCEPTION_IF_NULL(from_actor);
-  from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
-  to_actor->input_controls_num_++;
+  const std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
+    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
+  for (const auto &real_depend_input : real_depend_inputs) {
+    // The monad node and make tuple node need recursion.
+    if (AnfAlgo::IsOneOfPrimitiveCNode(real_depend_input, recursion_prims)) {
+      LinkControlArrowByAutoMonad(to_actor, real_depend_input);
+      continue;
+    }
+
+    if (!IsKernelActor(real_depend_input)) {
+      continue;
+    }
+    // Link the control arrow between the kernel actors.
+    const auto &from_actor = dynamic_cast<KernelActor *>(FetchActor(real_depend_input->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(from_actor);
+    MS_LOG(INFO) << "Link control arrow by auto monad, from actor:  " << from_actor->GetAID().Name()
+                 << ", to actor: " << to_actor->GetAID().Name();
+    from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
+    to_actor->input_controls_num_++;
+  }
+}
+
+void GraphScheduler::LinkControlArrowBySkippedNode(KernelActor *to_actor, const AnfNodePtr &skipped_node) {
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(skipped_node);
+  auto to_aid = to_actor->GetAID();
+
+  // Link the control arrow from all the inputs of skipped node to the user of skipped node.
+  auto input_num = AnfAlgo::GetInputTensorNum(skipped_node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
+    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
+    auto from_actor = dynamic_cast<KernelActor *>(FetchActor(kernel_with_index.first->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(from_actor);
+    MS_LOG(INFO) << "Link control arrow by skipped node: " << skipped_node->fullname_with_scope()
+                 << ", from actor: " << from_actor->GetAID().Name() << ", to actor: " << to_actor->GetAID().Name();
+    from_actor->output_control_arrows_.emplace_back(to_aid);
+    to_actor->input_controls_num_++;
+  }
 }
 
 void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,

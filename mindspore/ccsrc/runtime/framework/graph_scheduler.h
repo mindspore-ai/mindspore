@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 #include <map>
 #include <algorithm>
 #include <fstream>
@@ -190,6 +191,8 @@ class GraphScheduler {
   void LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                          GraphExecutionStrategy strategy);
   void LinkControlArrowByAutoMonad(KernelActor *to_actor, const AnfNodePtr &from_node);
+  // The skipped node doesn't run, so need link the control arrow between the inputs and user of skipped node.
+  void LinkControlArrowBySkippedNode(KernelActor *to_actor, const AnfNodePtr &skipped_node);
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 

@@ -50,6 +50,8 @@
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
+#include "mindrt/src/actor/actormgr.h"
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -1199,6 +1201,7 @@ void ClearResAtexit() {
   parse::Parser::CleanParserResource();
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
+  ActorMgr::GetActorMgrRef()->TerminateAll();
 }
 }  // namespace pipeline
 }  // namespace mindspore
