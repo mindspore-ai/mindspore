@@ -85,10 +85,113 @@ def test_profiling_complex_pipeline():
         data = json.load(f)
         op_info = data["op_info"]
         assert len(op_info) == 5
+        for i in range(5):
+            if op_info[i]["op_type"] != "ZipOp":
+                assert "size" in op_info[i]["metrics"]["output_queue"]
+                assert "length" in op_info[i]["metrics"]["output_queue"]
+                assert "throughput" in op_info[i]["metrics"]["output_queue"]
+            else:
+                # Note: Zip is an inline op and hence does not have metrics information
+                assert op_info[i]["metrics"] is None
+
+    assert os.path.exists(PIPELINE_FILE) is True
+    os.remove(PIPELINE_FILE)
+    assert os.path.exists(DATASET_ITERATOR_FILE) is True
+    os.remove(DATASET_ITERATOR_FILE)
+    del os.environ['PROFILING_MODE']
+    del os.environ['MINDDATA_PROFILING_DIR']
+
+
+def test_profiling_inline_ops_pipeline1():
+    """
+    Test pipeline with inline ops: Concat and EpochCtrl
+    Generator ->
+                 Concat -> EpochCtrl
+    Generator ->
+    """
+    os.environ['PROFILING_MODE'] = 'true'
+    os.environ['MINDDATA_PROFILING_DIR'] = '.'
+    os.environ['DEVICE_ID'] = '1'
+
+    # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
+    def source1():
+        for i in range(3):
+            yield (np.array([i]),)
+
+    # In source2 dataset: Number of rows is 7; its values are 3, 4, 5 ... 9
+    def source2():
+        for i in range(3, 10):
+            yield (np.array([i]),)
+
+    data1 = ds.GeneratorDataset(source1, ["col1"])
+    data2 = ds.GeneratorDataset(source2, ["col1"])
+    data3 = data1.concat(data2)
+
+    # Here i refers to index, d refers to data element
+    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+        t = d
+        assert i == t[0][0]
+
+    assert sum([1 for _ in data3]) == 10
+
+    with open(PIPELINE_FILE) as f:
+        data = json.load(f)
+        op_info = data["op_info"]
+        assert len(op_info) == 4
         for i in range(4):
-            assert "size" in op_info[i]["metrics"]["output_queue"]
-            assert "length" in op_info[i]["metrics"]["output_queue"]
-            assert "throughput" in op_info[i]["metrics"]["output_queue"]
+            # Note: The following ops are inline ops: Concat, EpochCtrl
+            if op_info[i]["op_type"] in ("ConcatOp", "EpochCtrlOp"):
+                # Confirm these inline ops do not have metrics information
+                assert op_info[i]["metrics"] is None
+            else:
+                assert "size" in op_info[i]["metrics"]["output_queue"]
+                assert "length" in op_info[i]["metrics"]["output_queue"]
+                assert "throughput" in op_info[i]["metrics"]["output_queue"]
+
+    assert os.path.exists(PIPELINE_FILE) is True
+    os.remove(PIPELINE_FILE)
+    assert os.path.exists(DATASET_ITERATOR_FILE) is True
+    os.remove(DATASET_ITERATOR_FILE)
+    del os.environ['PROFILING_MODE']
+    del os.environ['MINDDATA_PROFILING_DIR']
+
+
+def test_profiling_inline_ops_pipeline2():
+    """
+    Test pipeline with many inline ops
+    Generator -> Rename -> Skip -> Repeat -> Take
+    """
+    os.environ['PROFILING_MODE'] = 'true'
+    os.environ['MINDDATA_PROFILING_DIR'] = '.'
+    os.environ['DEVICE_ID'] = '1'
+
+    # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
+    def source1():
+        for i in range(10):
+            yield (np.array([i]),)
+
+    data1 = ds.GeneratorDataset(source1, ["col1"])
+    data1 = data1.rename(input_columns=["col1"], output_columns=["newcol1"])
+    data1 = data1.skip(2)
+    data1 = data1.repeat(2)
+    data1 = data1.take(12)
+
+    for _ in data1:
+        pass
+
+    with open(PIPELINE_FILE) as f:
+        data = json.load(f)
+        op_info = data["op_info"]
+        assert len(op_info) == 5
+        for i in range(5):
+            # Check for these inline ops
+            if op_info[i]["op_type"] in ("RenameOp", "RepeatOp", "SkipOp", "TakeOp"):
+                # Confirm these inline ops do not have metrics information
+                assert op_info[i]["metrics"] is None
+            else:
+                assert "size" in op_info[i]["metrics"]["output_queue"]
+                assert "length" in op_info[i]["metrics"]["output_queue"]
+                assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
     assert os.path.exists(PIPELINE_FILE) is True
     os.remove(PIPELINE_FILE)
@@ -132,4 +235,6 @@ def test_profiling_sampling_interval():
 if __name__ == "__main__":
     test_profiling_simple_pipeline()
     test_profiling_complex_pipeline()
+    test_profiling_inline_ops_pipeline1()
+    test_profiling_inline_ops_pipeline2()
     test_profiling_sampling_interval()

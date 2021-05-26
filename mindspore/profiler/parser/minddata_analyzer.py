@@ -25,6 +25,7 @@ from mindspore.profiler.common.exceptions.exceptions import \
 from mindspore import log as logger
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
+
 class MinddataProfilingAnalyzer:
     """
     The analyzer for MindData profiling files.
@@ -409,12 +410,13 @@ class MinddataProfilingAnalyzer:
 
         return return_dict
 
-    def _parse_cpu_util_info(self, cpu_util_info):
+    def _parse_cpu_util_info(self, cpu_util_info, num_pipeline_ops):
         """
         Parse and process the CPU profiling information.
 
         Args:
             cpu_util_info (dict): The CPU utilization profiling information.
+            num_pipeline_ops (int): Number of ops in the pipeline information.
 
         Returns:
             Dictionary with analyzed summary output information
@@ -438,20 +440,31 @@ class MinddataProfilingAnalyzer:
         # - overage cpu utilization for each op
         dict_opid_cpuutil = {}
         for op in cpu_util_info["op_info"]:
-            op_sys, op_usr = op["metrics"]["sys_utilization"], op["metrics"]["user_utilization"]
-            dict_opid_cpuutil[op["op_id"]] = [op_sys[i] + op_usr[i] for i in range(len(op_sys))]
+            # Note: The CPU utilization data may have an extra entry with op_id=-1
+            # Omit info for op_id=1
+            if op["op_id"] != -1:
+                op_sys, op_usr = op["metrics"]["sys_utilization"], op["metrics"]["user_utilization"]
+                dict_opid_cpuutil[op["op_id"]] = [op_sys[i] + op_usr[i] for i in range(len(op_sys))]
 
-        oplist_avg_cpu_pct = []
+        # Produce a warning if the CPU utilization data and pipeline data do not include information
+        # for the same number of ops
+        # Note: There are cases in which CPU utilization data does not have information for some ops
+        if len(dict_opid_cpuutil) != num_pipeline_ops:
+            warning_msg = 'Number of ops for CPU utilization data: ' + str(len(dict_opid_cpuutil)) + \
+                          ' does not match number of ops for pipeline data: ' + str(num_pipeline_ops)
+            logger.warning(warning_msg)
+
+        # Initialize oplist_avg_cpu_pct with -1 for each pipeline op, since
+        # CPU utilization data may not have information for each pipeline op
+        oplist_avg_cpu_pct = [-1] * num_pipeline_ops
         total_cpu = 0
-        # Note: The CPU utilization data has an extra entry with op_id=-1
         for op_id, cpu in dict_opid_cpuutil.items():
-            if op_id != -1:
-                op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
-                oplist_avg_cpu_pct.append((op_id, round(op_avg_cpu_pct, 2)))
-                total_cpu += op_avg_cpu_pct
+            op_avg_cpu_pct = sum(cpu) / len(cpu) if cpu else 0
+            oplist_avg_cpu_pct[op_id] = round(op_avg_cpu_pct, 2)
+            total_cpu += op_avg_cpu_pct
 
         return_dict = {}
-        return_dict['avg_cpu_pct'] = [x[1] for x in oplist_avg_cpu_pct]
+        return_dict['avg_cpu_pct'] = oplist_avg_cpu_pct
         return return_dict
 
     def _parse_device_trace_info(self, device_trace_info):
@@ -527,6 +540,7 @@ class MinddataProfilingAnalyzer:
 
         # Check if pipeline does not contain a DeviceQueue op
         op_names = summary_dict.get('op_names')
+
         if 'DeviceQueue' not in op_names:
             # No need for further bottleneck processing
             return return_dict
@@ -693,7 +707,8 @@ class MinddataProfilingAnalyzer:
         summary_dict.update(self._parse_pipeline_info(pipeline_info))
 
         # Parse and process CPU utilization information
-        summary_dict.update(self._parse_cpu_util_info(cpu_util_info))
+        # Supply the number of ops from the pipeline information
+        summary_dict.update(self._parse_cpu_util_info(cpu_util_info, len(summary_dict.get('pipeline_ops'))))
 
         if device_trace_info is not None:
             # Parse and process dataset iterator (CPU) or device queue (CPU, Ascend) trace profiling information
