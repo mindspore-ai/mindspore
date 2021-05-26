@@ -186,18 +186,6 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
   }
 }
 
-size_t CubeSizeByType(const TypeId data_type) {
-  const size_t default_error = 0;
-  auto dt_size = abstract::TypeIdSize(data_type);
-  if (dt_size < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
-    return default_error;
-  } else if (dt_size == 1) {
-    return kCubeSize * 2;
-  }
-  return kCubeSize;
-}
-
 namespace {
 bool CheckDims(const std::vector<size_t> &shape) {
   if (shape.size() != kNchwDims) {
@@ -269,30 +257,30 @@ std::vector<size_t> Nc1hwc0DeviceShape(const std::vector<size_t> &shape) {
 
 std::vector<size_t> Ndc1hwc0DeviceShape(const std::vector<size_t> &shape) {
   // NCDHW
-  if (shape.size() != 5) {
+  if (shape.size() != kNcdhw) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
   std::vector<size_t> device_shape;
   const size_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
   const size_t C0 = kCubeSize;
-  device_shape.push_back(shape[0]);
-  device_shape.push_back(shape[2]);
+  device_shape.push_back(shape[N_ncdhw]);
+  device_shape.push_back(shape[D_ncdhw]);
   device_shape.push_back(C1);
-  device_shape.push_back(shape[3]);
-  device_shape.push_back(shape[4]);
+  device_shape.push_back(shape[H_ncdhw]);
+  device_shape.push_back(shape[W_ncdhw]);
   device_shape.push_back(C0);
   return device_shape;
 }
 
 std::vector<size_t> Fracz3DDeviceShape(const std::vector<size_t> &shape) {
   // NCDHW -> Frac_Z_3D
-  if (shape.size() != 5) {
+  if (shape.size() != kNcdhw) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
   std::vector<size_t> device_shape;
   const size_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
   const size_t N1 = (shape[0] + kCubeSize - 1) / kCubeSize;
-  device_shape.push_back(shape[2] * C1 * shape[3] * shape[4]);
+  device_shape.push_back(shape[D_ncdhw] * C1 * shape[H_ncdhw] * shape[W_ncdhw]);
   device_shape.push_back(N1);
   device_shape.push_back(kCubeSize);
   device_shape.push_back(kCubeSize);
@@ -592,7 +580,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     device_shape.push_back(kCubeSize);
     return device_shape;
   }
-  if (shape.size() != kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (shape.size() < kNchwDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = PaddingShapeTo4dByDefault(shape);
   }
@@ -765,11 +753,7 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
 
-  auto c0 = CubeSizeByType(args.src_data_type);
-  if (c0 < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
-    return false;
-  }
+  const size_t c0 = 16;
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;
   auto chw = c * hw;
@@ -1093,11 +1077,7 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  auto c0 = CubeSizeByType(args.src_data_type);
-  if (c0 < 1) {
-    MS_LOG(ERROR) << "Illegal dtype.";
-    return false;
-  }
+  size_t c0 = 16;
   if (args.device_format == kOpFormat_NC1HWC0_C04) {
     c0 = 4;
   }
@@ -1260,7 +1240,7 @@ bool Ndc1hwc0ToNcdhw(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ndc1hwc0 to ncdhw";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != 5) {
+  if (args.host_shape.size() != kNcdhw) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1274,13 +1254,13 @@ bool Ndc1hwc0ToNcdhw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
     return false;
   }
-  auto n = args.host_shape[0];
-  auto c = args.host_shape[1];
-  auto d = args.host_shape[2];
-  auto h = args.host_shape[3];
-  auto w = args.host_shape[4];
-  auto c1 = args.device_shape[2];
-  auto c0 = args.device_shape[5];
+  auto n = args.host_shape[N_ncdhw];
+  auto c = args.host_shape[C_ncdhw];
+  auto d = args.host_shape[D_ncdhw];
+  auto h = args.host_shape[H_ncdhw];
+  auto w = args.host_shape[W_ncdhw];
+  auto c1 = args.device_shape[C1_ndc1hwc0];
+  auto c0 = args.device_shape[C0_ndc1hwc0];
   const size_t cdhw = c * d * h * w;
   const size_t dhw = d * h * w;
   const size_t hw = h * w;
@@ -1315,7 +1295,7 @@ bool NcdhwToNdc1hwc0(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ncdhw to ndc1hwc0";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != 5) {
+  if (args.host_shape.size() != kNcdhw) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1330,11 +1310,11 @@ bool NcdhwToNdc1hwc0(const FormatArgs &args, void *result) {
     return false;
   }
 
-  auto n = args.host_shape[0];
-  auto c = args.host_shape[1];
-  auto d = args.host_shape[2];
-  auto h = args.host_shape[3];
-  auto w = args.host_shape[4];
+  auto n = args.host_shape[N_ncdhw];
+  auto c = args.host_shape[C_ncdhw];
+  auto d = args.host_shape[D_ncdhw];
+  auto h = args.host_shape[H_ncdhw];
+  auto w = args.host_shape[W_ncdhw];
   auto c0 = kCubeSize;
   auto c1 = DivCeil(c, c0);
   const size_t cdhw = c * d * h * w;
@@ -1374,7 +1354,7 @@ bool NcdhwToFracZ3D(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from ncdhw to frac_z_3d";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != 5) {
+  if (args.host_shape.size() != kNcdhw) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1389,14 +1369,14 @@ bool NcdhwToFracZ3D(const FormatArgs &args, void *result) {
     return false;
   }
 
-  auto n = args.host_shape[0];
-  auto c = args.host_shape[1];
-  auto d = args.host_shape[2];
-  auto h = args.host_shape[3];
-  auto w = args.host_shape[4];
+  auto n = args.host_shape[N_ncdhw];
+  auto c = args.host_shape[C_ncdhw];
+  auto d = args.host_shape[D_ncdhw];
+  auto h = args.host_shape[H_ncdhw];
+  auto w = args.host_shape[W_ncdhw];
 
   auto n1n0 = DivCeil(n, kCubeSize) * kCubeSize;
-  auto c0 = CubeSizeByType(args.src_data_type);
+  const size_t c0 = 16;
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;
   auto dhw = d * hw;
@@ -1430,7 +1410,7 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
   MS_LOG(DEBUG) << "Trans from frac_z_3d to ncdhw";
   MS_EXCEPTION_IF_NULL(result);
 
-  if (args.host_shape.size() != 5) {
+  if (args.host_shape.size() != kNcdhw) {
     MS_LOG(ERROR) << "Illegal host shape dim, expect dim: 5, but got " << args.host_shape.size();
     return false;
   }
@@ -1444,11 +1424,11 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
     return false;
   }
-  auto n = args.host_shape[0];
-  auto c = args.host_shape[1];
-  auto d = args.host_shape[2];
-  auto h = args.host_shape[3];
-  auto w = args.host_shape[4];
+  auto n = args.host_shape[N_ncdhw];
+  auto c = args.host_shape[C_ncdhw];
+  auto d = args.host_shape[D_ncdhw];
+  auto h = args.host_shape[H_ncdhw];
+  auto w = args.host_shape[W_ncdhw];
   auto c0 = args.device_shape[3];
   auto c1 = DivCeil(c, kCubeSize);
   auto n1n0 = DivCeil(n, kCubeSize) * kCubeSize;

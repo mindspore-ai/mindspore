@@ -20,6 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 static const std::map<int32_t, int32_t> kMsProtoDataTypeMap = {
   {mindspore::TypeId::kTypeUnknown, mindspore::DataType::MS_UNKNOWN},
   {mindspore::TypeId::kNumberTypeBool, mindspore::DataType::MS_BOOL},
@@ -54,6 +55,7 @@ static const std::map<int32_t, int32_t> kProtoDataTypeToMsDataTypeMap = {
   {mindspore::DataType::MS_FLOAT32, mindspore::TypeId::kNumberTypeFloat32},
   {mindspore::DataType::MS_FLOAT64, mindspore::TypeId::kNumberTypeFloat64},
 };
+}  // namespace
 
 int AicpuOpUtil::MsTypeToProtoType(TypeId ms_type) {
   auto iter = kMsProtoDataTypeMap.find(ms_type);

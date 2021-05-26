@@ -37,6 +37,15 @@ enum Axis5D : int {
   H_ncdhw,
   W_ncdhw,
 };
+
+enum AxisNdc1hwc0 : int {
+  N_ndc1hwc0 = 0,
+  D_ndc1hwc0,
+  C1_ndc1hwc0,
+  H_ndc1hwc0,
+  W_ndc1hwc0,
+  C0_ndc1hwc0,
+};
 struct TypeIdArgs {
   const void *data;
   size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
@@ -54,8 +63,6 @@ struct FormatArgs {
   std::vector<size_t> device_shape;
   TypeId src_data_type;
 };
-
-size_t CubeSizeByType(const TypeId data_type);
 
 std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::string &format,
                                  const std::string &pad_index = {""});

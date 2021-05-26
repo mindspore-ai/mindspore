@@ -445,12 +445,12 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info, const s
   filewrite << info << std::endl;
   filewrite.close();
 #if defined(_WIN32) || defined(_WIN64)
-  if (nullptr == _fullpath(real_path, path.c_str(), PATH_MAX)) {
+  if (_fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
     MS_LOG(DEBUG) << "dir " << path << " does not exit.";
     return;
   }
 #else
-  if (nullptr == realpath(path.c_str(), real_path)) {
+  if (realpath(path.c_str(), real_path) == nullptr) {
     MS_LOG(DEBUG) << "dir " << path << " does not exit.";
     return;
   }
@@ -529,6 +529,57 @@ std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t 
   }
 }
 
+void GetUsersInputIndex(const NodeUsersMap &users, const AnfNodePtr &input, const size_t idx,
+                        const std::vector<AnfNodePtr> &node_list,
+                        std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> *input_index, bool *found) {
+  MS_EXCEPTION_IF_NULL(input_index);
+  MS_EXCEPTION_IF_NULL(found);
+  auto input_users = users.find(input);
+  if (input_users == users.end() || input_users->second.empty()) {
+    MS_EXCEPTION(ArgumentError) << "Input [" << idx << "][" << input->DebugString(2) << "] of ["
+                                << input->func_graph()->ToString() << "] has no users.";
+  }
+  for (auto const &input_user : input_users->second) {
+    for (auto const &anf_node : node_list) {
+      if (anf_node != input_user.first) {
+        continue;
+      }
+
+      std::vector<int64_t> dyn_input_sizes;
+      auto prim = AnfAlgo::GetCNodePrimitive(anf_node);
+      MS_EXCEPTION_IF_NULL(prim);
+      if (prim->GetAttr(kAttrDynInputSizes) != nullptr) {
+        dyn_input_sizes = GetValue<const std::vector<int64_t>>(prim->GetAttr(kAttrDynInputSizes));
+      }
+
+      if (dyn_input_sizes.empty()) {
+        input_index->push_back(std::make_pair(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0)));
+        *found = true;
+        break;
+      } else {
+        int used_as_idx = input_user.second - 1;
+        int accum_idx = 0;
+        size_t dyn_i = 0;
+        for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
+          accum_idx += dyn_input_sizes[dyn_i];
+          if (used_as_idx < accum_idx) {
+            input_index->push_back(std::make_pair(
+              anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
+            break;
+          }
+        }
+        if (dyn_i != dyn_input_sizes.size()) {
+          *found = true;
+          break;
+        }
+      }
+    }
+    if (*found) {
+      break;
+    }
+  }
+}
+
 std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(const std::vector<AnfNodePtr> &node_list,
                                                                             const std::vector<AnfNodePtr> &input_list) {
   std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> input_index;
@@ -540,52 +591,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
     auto mng = input->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(mng);
     const NodeUsersMap &users = mng->node_users();
-    auto input_users = users.find(input);
-    if (input_users == users.end() || input_users->second.empty()) {
-      MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
-                                  << input->func_graph()->ToString() << "] has no users.";
-    }
-
-    for (auto const &input_user : input_users->second) {
-      for (auto const &anf_node : node_list) {
-        if (anf_node != input_user.first) {
-          continue;
-        }
-
-        std::vector<int64_t> dyn_input_sizes;
-        auto prim = AnfAlgo::GetCNodePrimitive(anf_node);
-        MS_EXCEPTION_IF_NULL(prim);
-        if (prim->GetAttr(kAttrDynInputSizes) != nullptr) {
-          dyn_input_sizes = GetValue<const std::vector<int64_t>>(prim->GetAttr(kAttrDynInputSizes));
-        }
-
-        if (dyn_input_sizes.empty()) {
-          input_index.push_back(std::make_pair(anf_node, std::make_pair(IntToSize(input_user.second - 1), 0)));
-          found = true;
-          break;
-        } else {
-          int used_as_idx = input_user.second - 1;
-          int accum_idx = 0;
-          size_t dyn_i = 0;
-          for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
-            accum_idx += dyn_input_sizes[dyn_i];
-            if (used_as_idx < accum_idx) {
-              input_index.push_back(std::make_pair(
-                anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
-              break;
-            }
-          }
-          if (dyn_i != dyn_input_sizes.size()) {
-            found = true;
-            break;
-          }
-        }
-      }
-      if (found) {
-        break;
-      }
-    }
-
+    GetUsersInputIndex(users, input, i, node_list, &input_index, &found);
     if (!found) {
       MS_EXCEPTION(ArgumentError) << "Input [" << i << "][" << input->DebugString(2) << "] of ["
                                   << input->func_graph()->ToString() << "] found no related kernel info.";
