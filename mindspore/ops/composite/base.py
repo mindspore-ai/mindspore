@@ -191,7 +191,7 @@ class GradOperation(GradOperation_):
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: False.
-            If the sensor_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
+            If sensor_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
             the location parameter or key-value pair parameter. If the value is transferred through the key-value pair
             parameter, the key must be sens.
 
