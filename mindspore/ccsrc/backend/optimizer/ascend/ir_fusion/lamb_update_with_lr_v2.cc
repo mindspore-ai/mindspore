@@ -25,16 +25,23 @@ namespace opt {
 const BaseRef LambUpdateWithLrV2::DefinePattern() const {
   const auto prim_greater = std::make_shared<Primitive>(kGreaterOpName);
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
+  const size_t kZeroIndex = 0;
+  const size_t kFirstIndex = 1;
+  const size_t kSecondIndex = 2;
+  const size_t kThirdIndex = 3;
+  const size_t kFourthIndex = 4;
+  const size_t kFifthIndex = 5;
+  const size_t kSixthIndex = 6;
 
-  VectorRef greater0({prim_greater, input_varptr_[0], input_varptr_[5]});
-  VectorRef greater1({prim_greater, input_varptr_[1], input_varptr_[5]});
-  VectorRef real_div0({prim_deal_div, input_varptr_[0], input_varptr_[1]});
-  VectorRef select0({prim::kPrimSelect, greater1, real_div0, input_varptr_[6]});
-  VectorRef select1({prim::kPrimSelect, greater0, select0, input_varptr_[6]});
-  VectorRef mul0({prim::kPrimMul, select1, input_varptr_[2]});
-  VectorRef mul1({prim::kPrimMul, mul0, input_varptr_[3]});
+  VectorRef greater0({prim_greater, input_varptr_[kZeroIndex], input_varptr_[kFifthIndex]});
+  VectorRef greater1({prim_greater, input_varptr_[kFirstIndex], input_varptr_[kFifthIndex]});
+  VectorRef real_div0({prim_deal_div, input_varptr_[kZeroIndex], input_varptr_[kFirstIndex]});
+  VectorRef select0({prim::kPrimSelect, greater1, real_div0, input_varptr_[kSixthIndex]});
+  VectorRef select1({prim::kPrimSelect, greater0, select0, input_varptr_[kSixthIndex]});
+  VectorRef mul0({prim::kPrimMul, select1, input_varptr_[kSecondIndex]});
+  VectorRef mul1({prim::kPrimMul, mul0, input_varptr_[kThirdIndex]});
 
-  return VectorRef({prim::kPrimSub, input_varptr_[4], mul1});
+  return VectorRef({prim::kPrimSub, input_varptr_[kFourthIndex], mul1});
 }
 
 const AnfNodePtr LambUpdateWithLrV2::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

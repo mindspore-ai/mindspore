@@ -30,8 +30,9 @@ const size_t kReluV2OutputNum = 2;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);
+  constexpr size_t kReluIndex2 = 2;
   CheckCNodeInputSize(relu_grad, kReluGradInputTensorNum);
-  auto relu_anf = relu_grad->input(2);
+  auto relu_anf = relu_grad->input(kReluIndex2);
   MS_EXCEPTION_IF_NULL(relu_anf);
   return relu_anf->cast<CNodePtr>();
 }
@@ -40,7 +41,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(relu);
   CheckCNodeInputSize(relu, kReluInputTensorNum);
-
+  constexpr auto kMaskShapeSize = 4;
   auto prim = std::make_shared<Primitive>(kReluV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(1)};
   auto new_node = graph->NewCNode(inputs);
@@ -53,17 +54,24 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
     return nullptr;
   }
   std::vector<size_t> mask_shape = AnfAlgo::GetOutputInferShape(relu, 0);
-  if (mask_shape.size() != 4) {
+  if (mask_shape.size() != kMaskShapeSize) {
     MS_LOG(DEBUG) << "relu's infer shape size not equal 4";
     return nullptr;
   }
   auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(relu, 0);
+  constexpr auto kMultiplierInt8 = 31;
+  constexpr auto kDivisorInt8 = 32;
+  constexpr auto kMultiplier = 15;
+  constexpr auto kDivisor = 16;
+  constexpr auto kThirdShapeInt8 = 4;
+  constexpr auto kThirdShape = 2;
+
   if (input_dtype == kNumberTypeUInt8 || input_dtype == kNumberTypeInt8) {
-    mask_shape[1] = (mask_shape[1] + 31) / 32;
-    mask_shape.push_back(4);
+    mask_shape[1] = (mask_shape[1] + kMultiplierInt8) / kDivisorInt8;
+    mask_shape.push_back(kThirdShapeInt8);
   } else {
-    mask_shape[1] = (mask_shape[1] + 15) / 16;
-    mask_shape.push_back(2);
+    mask_shape[1] = (mask_shape[1] + kMultiplier) / kDivisor;
+    mask_shape.push_back(kThirdShape);
   }
 
   auto types = {AnfAlgo::GetOutputInferDataType(relu, 0), mask_dtype};

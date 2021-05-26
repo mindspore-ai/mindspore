@@ -26,26 +26,31 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kFirstIndex1 = 1;
+constexpr auto kSecondIndex2 = 2;
+constexpr auto kThirdIndex3 = 3;
+
 std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, AnfNodePtr> GetSharedNodes(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto add3 = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add3);
   CheckCNodeInputSize(add3, kAddInputTensorNum);
-  auto real_div2_anf = add3->input(1);
+  auto real_div2_anf = add3->input(kFirstIndex1);
   MS_EXCEPTION_IF_NULL(real_div2_anf);
   auto real_div2 = real_div2_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(real_div2);
   CheckCNodeInputSize(real_div2, kRealDivInputTensorNum);
-  auto sqrt0_anf = real_div2->input(2);
+  auto sqrt0_anf = real_div2->input(kSecondIndex2);
   MS_EXCEPTION_IF_NULL(sqrt0_anf);
   auto sqrt0 = sqrt0_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sqrt0);
   CheckCNodeInputSize(sqrt0, kSqrtInputTensorNum);
-  auto add2_anf = sqrt0->input(1);
+  auto add2_anf = sqrt0->input(kFirstIndex1);
   MS_EXCEPTION_IF_NULL(add2_anf);
   auto add2 = add2_anf->cast<CNodePtr>();
   CheckCNodeInputSize(add2, kAddInputTensorNum);
-  return std::make_tuple(add3->input(2), real_div2->input(1), add2->input(1), add2->input(2));
+  return std::make_tuple(add3->input(kSecondIndex2), real_div2->input(kFirstIndex1), add2->input(kFirstIndex1),
+                         add2->input(kSecondIndex2));
 }
 
 bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfNodePtr &real_div0,
@@ -57,7 +62,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(add5) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add5) != kAddInputTensorNum) {
     return false;
   }
-  auto real_div4_anf = add5->input(1);
+  auto real_div4_anf = add5->input(kFirstIndex1);
   if (real_div4_anf == nullptr || !real_div4_anf->isa<CNode>()) {
     return false;
   }
@@ -66,7 +71,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
       AnfAlgo::GetInputTensorNum(real_div4) != kRealDivInputTensorNum) {
     return false;
   }
-  auto add4_anf = real_div4->input(2);
+  auto add4_anf = real_div4->input(kSecondIndex2);
   if (add4_anf == nullptr || !add4_anf->isa<CNode>()) {
     return false;
   }
@@ -74,7 +79,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(add4) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add4) != kAddInputTensorNum) {
     return false;
   }
-  auto sqrt1_anf = add4->input(1);
+  auto sqrt1_anf = add4->input(kFirstIndex1);
   if (sqrt1_anf == nullptr || !sqrt1_anf->isa<CNode>()) {
     return false;
   }
@@ -82,8 +87,8 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
   if (AnfAlgo::GetCNodeName(sqrt1) != kSqrtOpName || AnfAlgo::GetInputTensorNum(sqrt1) != kSqrtInputTensorNum) {
     return false;
   }
-  return add5->input(2) == mul4 && real_div4->input(1) == real_div0 && sqrt1->input(1) == real_div1 &&
-         *add4->input(2) == *add2_y;
+  return add5->input(kSecondIndex2) == mul4 && real_div4->input(kFirstIndex1) == real_div0 &&
+         sqrt1->input(kFirstIndex1) == real_div1 && *add4->input(kSecondIndex2) == *add2_y;
 }
 
 std::tuple<AnfNodePtr, AnfNodePtr> GetAdd0Add1Nodes(const AnfNodePtr &real_div0_anf, const AnfNodePtr &real_div1_anf) {
@@ -188,10 +193,9 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
     MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!"
                       << " trace: " << trace::DumpSourceLines(node);
   }
-
-  (void)manager->Replace(add0, fusion_node_outputs[1]);
-  (void)manager->Replace(add1, fusion_node_outputs[2]);
-  (void)manager->Replace(add5, fusion_node_outputs[3]);
+  (void)manager->Replace(add0, fusion_node_outputs[kFirstIndex1]);
+  (void)manager->Replace(add1, fusion_node_outputs[kSecondIndex2]);
+  (void)manager->Replace(add5, fusion_node_outputs[kThirdIndex3]);
   return fusion_node_outputs[0];
 }
 }  // namespace opt

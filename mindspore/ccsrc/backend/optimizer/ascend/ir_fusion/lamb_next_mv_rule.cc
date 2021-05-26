@@ -30,11 +30,12 @@ bool LambNextMVRule::IsRuleMatched(const FuncGraphPtr &func_graph, const AnfNode
   MS_EXCEPTION_IF_NULL(equiv);
   auto real_div0 = GetAnfNodeByVar(equiv, real_div0_var_);
   auto real_div2 = GetAnfNodeByVar(equiv, real_div2_var_);
+  constexpr size_t kRealDiv0Size = 2;
 
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &users = manager->node_users();
-  if (users.find(real_div0) == users.end() || users[real_div0].size() < 2) {
+  if (users.find(real_div0) == users.end() || users[real_div0].size() < kRealDiv0Size) {
     return false;
   }
   AnfNodeIndexSet real_div0_outputs = users[real_div0];
@@ -60,6 +61,10 @@ AnfNodePtr LambNextMVRule::CreateLambNextMVNode(const FuncGraphPtr &func_graph,
                                                 const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto prim = std::make_shared<Primitive>(kLambNextMVOpName);
+  constexpr size_t kOutputsIndex1 = 1;
+  constexpr size_t kOutputsIndex2 = 2;
+  constexpr size_t kOutputsIndex3 = 3;
+
   std::vector<AnfNodePtr> lamb_next_mv_rule_inputs = {NewValueNode(prim)};
   lamb_next_mv_rule_inputs.push_back(utils::cast<AnfNodePtr>((*equiv)[input0_]));
   lamb_next_mv_rule_inputs.push_back(utils::cast<AnfNodePtr>((*equiv)[input1_]));
@@ -91,9 +96,9 @@ AnfNodePtr LambNextMVRule::CreateLambNextMVNode(const FuncGraphPtr &func_graph,
 
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(old_pattern_outputs[1], lamb_next_mv_rule_outputs[1]);
-  (void)manager->Replace(old_pattern_outputs[2], lamb_next_mv_rule_outputs[2]);
-  (void)manager->Replace(old_pattern_outputs[3], lamb_next_mv_rule_outputs[3]);
+  (void)manager->Replace(old_pattern_outputs[kOutputsIndex1], lamb_next_mv_rule_outputs[kOutputsIndex1]);
+  (void)manager->Replace(old_pattern_outputs[kOutputsIndex2], lamb_next_mv_rule_outputs[kOutputsIndex2]);
+  (void)manager->Replace(old_pattern_outputs[kOutputsIndex3], lamb_next_mv_rule_outputs[kOutputsIndex3]);
 
   return lamb_next_mv_rule_outputs[0];
 }
