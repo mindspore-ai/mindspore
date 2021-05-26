@@ -94,13 +94,13 @@ bool PSContext::is_server() const { return is_pserver_; }
 
 bool PSContext::is_scheduler() const { return is_sched_; }
 
-uint32_t PSContext::initial_worker_num() { return worker_num_; }
+uint32_t PSContext::initial_worker_num() const { return worker_num_; }
 
-uint32_t PSContext::initial_server_num() { return server_num_; }
+uint32_t PSContext::initial_server_num() const { return server_num_; }
 
-std::string PSContext::scheduler_host() { return scheduler_host_; }
+std::string PSContext::scheduler_host() const { return scheduler_host_; }
 
-uint16_t PSContext::scheduler_port() { return scheduler_port_; }
+uint16_t PSContext::scheduler_port() const { return scheduler_port_; }
 
 void PSContext::SetPSRankId(int rank_id) { rank_id_ = rank_id; }
 
