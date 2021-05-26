@@ -30,11 +30,11 @@ namespace somas {
 constexpr auto kSolNumThresholdMultiThread = 8;
 Status SomasSolverPre::checkTensors(TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) {
   auto &tensors = *pTensors;
-  if (nullptr == tensors[index1]) {
+  if (tensors[index1] == nullptr) {
     MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index1 << ")";
     return FAILED;
   }
-  if (nullptr == tensors[index2]) {
+  if (tensors[index2] == nullptr) {
     MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index2 << ")";
     return FAILED;
   }
@@ -98,7 +98,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
                                const std::vector<DynamicBitSet> *pConstraints,
                                const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool ball,
                                SortingType sorting, FittingType fitting, AlgorithmType algorithm) {
-  Status retval = SUCCESS;
+  Status ret = SUCCESS;
   try {
     TensorsDescMap &tensors = *ptensors;
     size_t total_sol = kNumSortingTypes * kNumFittingTypes * kNumAlgorithmTypes;
@@ -155,6 +155,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         *(tensor.second.get()) = *(vecTensorsMap[best_sol][tensor.first]);
       }
       max_offset_ = best_solver->GetUpperbound();
+      constexpr float kFloatPresent = 100.0;
       MS_LOG(INFO) << "SOMAS SOLVER RESUME:";
       MS_LOG(INFO) << "Best Solution:[" << 1 + best_sol << "/" << total_sol << "] ";
       MS_LOG(INFO) << "Best result:" << best << " Bytes " << (best) / (giga) << " GB ("
@@ -165,7 +166,8 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
       MS_LOG(INFO) << "Best sorting strategy: " << sortingNames[best_solver->sort_strategy_];
       MS_LOG(INFO) << "Best offset strategy: " << branchingNames[best_solver->branching_strategy_];
       MS_LOG(INFO) << "Time elapsed: " << total_time << " ms";
-      MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * 100.0)) << " %%";
+      MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * kFloatPresent))
+                   << " %%";
     } else {
       if (addContiguousInfoInMap(continuous_v, ptensors) == FAILED) {
         return FAILED;
@@ -182,21 +184,22 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         MS_LOG(INFO) << "SomasSolver::Solving RESULT: " << max_offset_ << " (" << max_offset_ / (giga) << " GB)";
       }
     }
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-    if (save_graphs) {
-      Log(graph, tensors, pConstraints, continuous_v);
-    }
+    Log(graph, tensors, pConstraints, continuous_v);
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "SomasSolver::Solving FAILED: " << e.what();
-    retval = FAILED;
+    ret = FAILED;
   }
-  return retval;
+  return ret;
 }
 
 void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
                          const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (!save_graphs) {
+    return;
+  }
   SolverInputLog(graph, tensors, pConstraints, continuous_v);
   SolverOutputLog(graph, tensors);
 }
@@ -209,46 +212,30 @@ void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const Ten
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string filename = save_graphs_path + "/" + "somas_solver_input_" + std::to_string(graph->graph_id()) + ".ir";
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
-  }
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
+  std::ofstream ofs;
+  if (Common::OpenFile(filename, ofs)) {
+    for (auto &t : tensors) {
+      ofs << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
+    }
 
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open log file '" << real_path.value() << "' failed!";
-    return;
-  }
-
-  for (auto &t : tensors) {
-    ofs << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
-  }
-
-  for (auto &t1 : tensors) {
-    for (auto &t2 : tensors) {
-      size_t idx1 = t1.first;
-      size_t idx2 = t2.first;
-      if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
-        ofs << "C " << idx1 << " " << idx2 << std::endl;
+    for (auto &t1 : tensors) {
+      for (auto &t2 : tensors) {
+        size_t idx1 = t1.first;
+        size_t idx2 = t2.first;
+        if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
+          ofs << "C " << idx1 << " " << idx2 << std::endl;
+        }
       }
     }
-  }
-  for (auto &s : continuous_v) {
-    ofs << "S";
-    for (auto idx : s) {
-      ofs << " " << idx;
+    for (auto &s : continuous_v) {
+      ofs << "S";
+      for (auto idx : s) {
+        ofs << " " << idx;
+      }
+      ofs << std::endl;
     }
-    ofs << std::endl;
+    ofs.close();
   }
-  ofs.close();
-
   MS_LOG(INFO) << "SomasSolver input Log done";
 }
 
@@ -277,15 +264,18 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const Te
     return;
   }
 
+  constexpr size_t contiguous_left = 1;
+  constexpr size_t contiguous_mid = 2;
+  constexpr size_t contiguous_right = 3;
   for (auto &t : tensors) {
     SomasSolverTensorDescPtr tensor = t.second;
     int continuous = 0;
     if (tensor->left_ == nullptr && tensor->right_ != nullptr)
-      continuous = 1;
+      continuous = contiguous_left;
     else if (tensor->left_ != nullptr && tensor->right_ != nullptr)
-      continuous = 2;
+      continuous = contiguous_mid;
     else if (tensor->left_ != nullptr && tensor->right_ == nullptr)
-      continuous = 3;
+      continuous = contiguous_right;
     const size_t alignment = 512;
     bool size_aligned = tensor->size_ % alignment == 0;
     bool offset_aligned = tensor->offset_ % alignment == 0;

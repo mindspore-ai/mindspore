@@ -35,13 +35,13 @@ void SomasStream::ComputeAncestorStreams() {
 
   while (!current_level.empty()) {
     // Push current level into ancestors
-    for (auto stream1 : current_level) {
-      ancestor_streams_.insert(stream1);
-      already_visited.insert(stream1);
+    for (auto stm1 : current_level) {
+      ancestor_streams_.insert(stm1);
+      already_visited.insert(stm1);
       // Keep next level of this ancestor
-      for (auto stream2 : stream1->ancestor_streams_) {
-        if (std::find(already_visited.begin(), already_visited.end(), stream2) == already_visited.end())
-          temp_level.insert(stream2);
+      for (auto stm2 : stm1->ancestor_streams_) {
+        if (std::find(already_visited.begin(), already_visited.end(), stm2) == already_visited.end())
+          temp_level.insert(stm2);
       }
     }
     current_level.clear();
