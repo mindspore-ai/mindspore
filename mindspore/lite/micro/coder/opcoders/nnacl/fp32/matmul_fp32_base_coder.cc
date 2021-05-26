@@ -149,6 +149,9 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
             {
               "MatmulFp32.S",
               "MatmulFp32Opt.S",
+              "MatmulFp32OptRow4.S",
+              "MatmulFp32OptRow8.S",
+              "MatmulFp32OptRow12.S",
               "MatVecMulFp32.S",
             });
   }

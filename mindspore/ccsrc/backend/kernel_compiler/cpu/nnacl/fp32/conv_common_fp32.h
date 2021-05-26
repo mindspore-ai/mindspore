@@ -25,6 +25,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef void (*Row2ColMajorFuncPtr)(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+#ifdef ENABLE_ARM64
+typedef void (*MatmulFloatOptFuncPtr)(const float *a, const float *b, float *c, const float *bias, int act_type,
+                                      int depth, int row, int col, size_t stride, size_t write_mode);
+#endif
 
 // fp32 convolution common (im2col+gemm)
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,

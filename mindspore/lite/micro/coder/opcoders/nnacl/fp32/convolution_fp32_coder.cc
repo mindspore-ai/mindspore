@@ -146,6 +146,9 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
             {
               "MatmulFp32.S",
               "MatmulFp32Opt.S",
+              "MatmulFp32OptRow4.S",
+              "MatmulFp32OptRow8.S",
+              "MatmulFp32OptRow12.S",
               "PreSum4x16Int8Peroc.S",
               "MatVecMulFp32.S",
               "PreSum4x16Int8Peroc.S",

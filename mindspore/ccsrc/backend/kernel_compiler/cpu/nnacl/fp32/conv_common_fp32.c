@@ -27,12 +27,35 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   int out_channel = conv_param->output_channel_;
   int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
+  Row2ColMajorFuncPtr Row2ColMajor = NULL;
 #ifdef ENABLE_AVX
   const int cal_num = C6NUM;
+  Row2ColMajor = RowMajor2Col6Major;
 #elif defined(ENABLE_SSE)
   const int cal_num = C4NUM;
+  Row2ColMajor = RowMajor2Col4Major;
+#elif defined(ENABLE_ARM64)
+  int cal_num = 0;
+  MatmulFloatOptFuncPtr MatmulFloatOpt = NULL;
+  if (output_count <= C4NUM) {
+    cal_num = C4NUM;
+    Row2ColMajor = RowMajor2Col4Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow4;
+  } else if (output_count <= C8NUM) {
+    cal_num = C8NUM;
+    Row2ColMajor = RowMajor2Col8Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow8;
+  } else {
+    cal_num = C12NUM;
+    Row2ColMajor = RowMajor2Col12Major;
+    MatmulFloatOpt = MatmulFloatNeon64OptRow12;
+  }
+#elif defined(ENABLE_ARM32)
+  const int cal_num = C12NUM;
+  Row2ColMajor = RowMajor2Col12Major;
 #else
   const int cal_num = C12NUM;
+  Row2ColMajor = RowMajor2Col12Major;
 #endif
   int output_tile_count = UP_DIV(output_count, cal_num);
 
@@ -54,15 +77,25 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
 
       int out_offset = thread_id * cal_num * out_channel + out_batch_offset;
       float *gemm_output = output_data + out_offset;
-#ifdef ENABLE_AVX
-      RowMajor2Col6Major(gemm_input, col_major_gemm_input, cal_num, deep);
-#elif defined(ENABLE_SSE)
-      RowMajor2Col4Major(gemm_input, col_major_gemm_input, cal_num, deep);
+
+      Row2ColMajor(gemm_input, col_major_gemm_input, cal_num, deep);
+// x86 func param types are different
+#if ENABLE_AVX
+      MatmulFloatAvxOpt(col_major_gemm_input, packed_weight, gemm_output, bias_data, (size_t)conv_param->act_type_,
+                        deep, real_cal_num, out_channel, (size_t)out_channel, (size_t)OutType_Nhwc);
+#elif ENABLE_SSE
+      MatmulFloatSse64Opt(col_major_gemm_input, packed_weight, gemm_output, bias_data, (int)conv_param->act_type_, deep,
+                          real_cal_num, out_channel, (size_t)out_channel, (int)OutType_Nhwc);
+#elif ENABLE_ARM32
+      MatmulFloatNeon32Opt12x4(col_major_gemm_input, packed_weight, gemm_output, bias_data, (int)conv_param->act_type_,
+                               deep, real_cal_num, out_channel, out_channel, OutType_Nhwc);
+#elif ENABLE_ARM64
+      MatmulFloatOpt(col_major_gemm_input, packed_weight, gemm_output, bias_data, conv_param->act_type_, deep,
+                     real_cal_num, out_channel, out_channel, OutType_Nhwc);
 #else
-      RowMajor2Col12Major(gemm_input, col_major_gemm_input, cal_num, deep);
+      MatMul12x8(col_major_gemm_input, packed_weight, gemm_output, bias_data, (int)conv_param->act_type_, deep,
+                 real_cal_num, out_channel, out_channel, OutType_Nhwc);
 #endif
-      MatMulOpt(col_major_gemm_input, packed_weight, gemm_output, bias_data, conv_param->act_type_, deep, real_cal_num,
-                out_channel, out_channel, OutType_Nhwc);
     }
   }
 }
