@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,20 @@ namespace {
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  // check
-  auto w_size_v = input_args[2]->BuildValue();
-  auto ret_shape = CheckAndConvertUtils::CheckAttrIntOrTupleInt("w_size", w_size_v, prim_name);
-  return std::make_shared<abstract::Shape>(ret_shape);
+  auto out_put = input_args[2]->BuildValue();
+  auto infer_shape = GetValue<std::vector<int64_t>>(out_put);
+  return std::make_shared<abstract::Shape>(infer_shape);
 }
 
 TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  // check
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const std::set<TypePtr> valid_types = {kInt8, kInt32, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  types.emplace("doutput", input_args[0]->BuildType());
-  types.emplace("x", input_args[1]->BuildType());
-  std::set<TypePtr> valid_x_type = {kInt8, kInt32, kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);
+  types.emplace("drotput", input_args[0]->BuildType());
+  types.emplace("input_x", input_args[1]->BuildType());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 
@@ -144,17 +142,9 @@ Format Conv2DBackpropFilter::get_format() const {
 
 AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  // check
-  CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 3, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   return std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
                                                     Conv2DBackpropFilterInferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer, nullptr,
-                             true);
+REGISTER_PRIMITIVE_C(kNameConv2DBackpropFilter, Conv2DBackpropFilter);
 }  // namespace ops
 }  // namespace mindspore
