@@ -24,7 +24,6 @@
 #include <sstream>
 #include <algorithm>
 #include "runtime/device/gpu/trt_loader.h"
-#include "runtime/device/gpu/cuda_driver.h"
 #include "backend/optimizer/trt_pass/trt_op_factory.h"
 #include "backend/kernel_compiler/gpu/trt/trt_utils.h"
 #include "utils/convert_utils.h"
@@ -33,105 +32,7 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::opt {
-namespace {
-void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
-                              std::vector<session::KernelWithIndex> *inputs) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>() || node->isa<Parameter>()) {
-    return inputs->push_back(std::make_pair(node, 0));
-  }
-
-  // Skip control node
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad) ||
-      AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
-    return GetRealOutputRecursively(node->cast<CNodePtr>()->input(kRealInputIndexInDepend), 0, inputs);
-  }
-
-  // Bypass TupleGetItem
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-    auto tuple_get_item = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_get_item);
-    auto input = AnfAlgo::GetTupleGetItemRealInput(tuple_get_item);
-    auto index = AnfAlgo::GetTupleGetItemOutIndex(tuple_get_item);
-
-    // Conceal MakeTuple + TupleGetItem pair.
-    if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
-      auto make_tuple = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(make_tuple);
-      auto real_input = AnfAlgo::GetInputNode(make_tuple, index);
-      return GetRealOutputRecursively(real_input, 0, inputs);
-    }
-
-    // Skip TupleGetItem.
-    return GetRealOutputRecursively(input, index, inputs);
-  }
-
-  // Flatten MakeTuple inputs.
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
-    auto make_tuple = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(make_tuple);
-    size_t input_num = AnfAlgo::GetInputTensorNum(make_tuple);
-    for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      auto input_node = AnfAlgo::GetInputNode(make_tuple, input_index);
-      GetRealOutputRecursively(input_node, 0, inputs);
-    }
-    return;
-  }
-
-  return inputs->push_back(std::make_pair(node, output_index));
-}
-
-/* Get node real inputs bypass control nodes.
- *   Examples:
- *     Case 1:
- *       c = Conv2D(a, b)
- *       d = ReLU(c)
- *     result: d--> (c)
- *
- *     Case 2:
- *       c = Conv2D(a, b)
- *       d = Depend(c, v)
- *       e = ReLU(d)
- *     result: d -> (c)
- *
- *     Case 3:
- *       (f, g, h, i, j) = BatchNorm(a, b, c, d, e)
- *       k = TupleGetItem((f, g, h, i, j), 0)
- *       l = ReLU(k)
- *     result: l -> (f)
- *
- *     Case 4:
- *       c = Conv2D(a, b)
- *       e = MakeTuple(c, d)
- *       f = TupleGetItem(e, 0)
- *       g = ReLU(k)
- *     result: g -> (c)
- *
- *     Case 5:
- *       b = MakeTuple(a1, a2, a3)
- *       c = MakeTuple(b, a4)
- *       d = return(c)
- *     result d -> (a1, a2, a3, a4)
- */
-void GetRealInputs(const AnfNodePtr &node, std::vector<session::KernelWithIndex> *inputs) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
-    GetRealOutputRecursively(input_node, 0, inputs);
-  }
-}
-}  // namespace
-
 bool TrtConverterContext::Init() {
-  // Set device id before invoke trt api as cudaSetDevice is thread level config.
-  const auto &context = MsContext::GetInstance();
-  const auto &device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  bool ret = device::gpu::CudaDriver::SetDevice(UintToInt(device_id));
-  if (!ret) {
-    MS_LOG(ERROR) << "Failed to set device id:" << device_id;
-    return false;
-  }
-
   auto trt_loader = Singleton<device::gpu::TrtLoader>::Instance();
   builder_ = trt_loader.CreateInferBuilder(&Singleton<TrtLogger>::Instance());
   MS_EXCEPTION_IF_NULL(builder_);
@@ -142,13 +43,13 @@ bool TrtConverterContext::Init() {
 
   config_ = TrtPtr(builder_->createBuilderConfig());
   MS_EXCEPTION_IF_NULL(config_);
+
+  InitInputTable();
+  InitValueNodeTable();
   return true;
 }
 
 bool TrtConverterContext::Parser() {
-  InitInputTable();
-  InitValueNodeTable();
-
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph_->get_return());
   const auto &converter_factory = TrtOpFactory::GetInstance();
   for (auto node : node_list) {
@@ -156,24 +57,10 @@ bool TrtConverterContext::Parser() {
       continue;
     }
 
-    // Mark graph outputs
-    std::string op_name = AnfAlgo::GetCNodePrimitive(node)->name();
-    if (op_name == kReturnOpName) {
-      std::vector<LayerInput> inputs;
-      (void)LoadLayerInput(node, &inputs);
-
-      for (size_t i = 0; i < inputs.size(); ++i) {
-        const auto &input = inputs[i].tensor();
-        std::string name = "return_output_" + std::to_string(i);
-        input->setName(name.c_str());
-        network_->markOutput(*input);
-      }
-      return true;
-    }
-
     // Transform AnfNode To Trt layer.
     // Bypass control node including Depend, Load, UpdateState, TupleGetItem, MakeTuple.
-    if (!AnfAlgo::IsRealKernel(node)) {
+    std::string op_name = AnfAlgo::GetCNodePrimitive(node)->name();
+    if (!AnfAlgo::IsRealKernel(node) && op_name != "Return") {
       continue;
     }
 
@@ -190,8 +77,7 @@ bool TrtConverterContext::Parser() {
     }
   }
 
-  MS_LOG(ERROR) << "Graph ended without return node.";
-  return false;
+  return true;
 }
 
 bool TrtConverterContext::Serialize(std::string *model) {
@@ -233,54 +119,58 @@ bool TrtConverterContext::InitInputTable() {
       weight.values = tensor->data_c();
       weight.type = TrtUtils::MsDtypeToTrtDtype(tensor->data_type());
       weight.count = tensor->DataSize();
-      output_map_[input_node][0] = LayerInput(weight);
+      output_map_[input_node][0] = LayerInput(weight, tensor->shape());
     } else {
       nvinfer1::DataType trt_dtype = TrtUtils::MsDtypeToTrtDtype(AnfAlgo::GetOutputInferDataType(input_node, 0));
       nvinfer1::Dims trt_dims = TrtUtils::MsDimsToTrtDims(AnfAlgo::GetOutputInferShape(input_node, 0), false);
       nvinfer1::ITensor *tensor = network_->addInput(input->name().c_str(), trt_dtype, trt_dims);
-      output_map_[input_node][0] = LayerInput(tensor);
+      const std::vector<int64_t> &shape = TrtUtils::TrtDimsToMsDims(trt_dims);
+      output_map_[input_node][0] = LayerInput(tensor, shape);
     }
   }
   return true;
 }
 
 bool TrtConverterContext::InitValueNodeTable() {
-  auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph_);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  const std::vector<AnfNodePtr> &node_list = TopoSort(func_graph_->get_return());
+  for (const auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
+      auto value_node = node->cast<ValueNodePtr>();
+      auto &node_value = value_node->value();
+      MS_EXCEPTION_IF_NULL(node_value);
 
-  for (auto &value_node : kernel_graph->graph_value_nodes()) {
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto &node_value = value_node->value();
-    MS_EXCEPTION_IF_NULL(node_value);
-
-    if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
-      std::vector<tensor::TensorPtr> tensors;
-      TensorValueToTensor(node_value, &tensors);
-      for (size_t i = 0; i < tensors.size(); i++) {
-        const auto &tensor = tensors[i];
-        nvinfer1::Weights weight;
-        weight.values = tensor->data_c();
-        weight.type = TrtUtils::MsDtypeToTrtDtype(tensor->data_type());
-        weight.count = tensor->DataSize();
-        output_map_[value_node][i] = LayerInput(weight);
+      if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueTuple>()) {
+        std::vector<tensor::TensorPtr> tensors;
+        TensorValueToTensor(node_value, &tensors);
+        for (size_t i = 0; i < tensors.size(); i++) {
+          const auto &tensor = tensors[i];
+          nvinfer1::Weights weight;
+          weight.values = tensor->data_c();
+          weight.type = TrtUtils::MsDtypeToTrtDtype(tensor->data_type());
+          weight.count = tensor->DataSize();
+          output_map_[value_node][i] = LayerInput(weight, tensor->shape());
+        }
       }
     }
   }
   return true;
 }
 
-bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::vector<LayerInput> &nv_tensors) {
+bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::vector<nvinfer1::ITensor *> &nv_tensors) {
   if (nv_tensors.size() != AnfAlgo::GetOutputTensorNum(node)) {
     MS_LOG(INFO) << node->DebugString() << " output num not match. expect: " << AnfAlgo::GetOutputTensorNum(node)
                  << ", while got: " << nv_tensors.size();
   }
 
   for (size_t tensor_index = 0; tensor_index < nv_tensors.size(); ++tensor_index) {
-    if (nv_tensors[tensor_index].tensor() != nullptr) {
-      output_map_[node][tensor_index] = nv_tensors[tensor_index];
+    if (nv_tensors[tensor_index] != nullptr) {
+      const nvinfer1::Dims &dim = nv_tensors[tensor_index]->getDimensions();
+      const std::vector<int64_t> &shape = TrtUtils::TrtDimsToMsDims(dim);
+      output_map_[node][tensor_index] = LayerInput(nv_tensors[tensor_index], shape);
 
       std::ostringstream oss;
-      nvinfer1::Dims dim = nv_tensors[tensor_index].tensor()->getDimensions();
       oss << node->fullname_with_scope() << ", output: " << tensor_index << ": [ ";
       for (int32_t dim_index = 0; dim_index < dim.nbDims; dim_index++) {
         oss << dim.d[dim_index] << " ";
@@ -294,7 +184,7 @@ bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::ve
 
 bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<LayerInput> *inputs) {
   std::vector<session::KernelWithIndex> real_inputs;
-  GetRealInputs(node, &real_inputs);
+  AnfAlgo::GetRealInputs(node, &real_inputs);
   for (auto item : real_inputs) {
     auto node_iter = output_map_.find(item.first);
     if (node_iter == output_map_.end()) {
@@ -313,7 +203,7 @@ bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<Lay
   return true;
 }
 
-std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() {
+std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
   // Get Anf-graph inputs without weights. All weights were binded to Trt-graph.
   std::unordered_map<std::string, AnfNodePtr> graph_inputs;
   for (const auto &input_node : func_graph_->parameters()) {
@@ -342,9 +232,9 @@ std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() {
   return trt_inputs;
 }
 
-std::vector<session::KernelWithIndex> TrtConverterContext::GetGraphOutputs() {
+std::vector<session::KernelWithIndex> TrtConverterContext::GetGraphOutputs() const {
   std::vector<session::KernelWithIndex> graph_outputs;
-  GetRealInputs(func_graph_->get_return(), &graph_outputs);
+  AnfAlgo::GetRealInputs(func_graph_->get_return(), &graph_outputs);
   return graph_outputs;
 }
 

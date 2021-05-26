@@ -50,13 +50,13 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
   bool Serialize(std::string *model);
 
   // Get trt graph inputs without weights. The inputs keep same order as binding name.
-  std::vector<AnfNodePtr> GetGraphInputs();
+  std::vector<AnfNodePtr> GetGraphInputs() const;
 
   // Get trt graph outputs. All outputs are flatten to vector with concret shape.
-  std::vector<session::KernelWithIndex> GetGraphOutputs();
+  std::vector<session::KernelWithIndex> GetGraphOutputs() const;
 
   // Store trt layer outputs to the cache.
-  bool StoreLayerOutput(const AnfNodePtr &node, const std::vector<LayerInput> &inputs);
+  bool StoreLayerOutput(const AnfNodePtr &node, const std::vector<nvinfer1::ITensor *> &inputs);
 
   // Get trt layer inputs from the cache.
   bool LoadLayerInput(const AnfNodePtr &node, std::vector<LayerInput> *inputs);
