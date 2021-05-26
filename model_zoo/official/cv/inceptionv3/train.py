@@ -60,6 +60,9 @@ if __name__ == '__main__':
     cfg = CFG_DICT[args_opt.platform]
     create_dataset = DS_DICT[cfg.ds_type]
 
+    if args_opt.platform == "GPU":
+        context.set_context(enable_graph_kernel=True)
+
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
