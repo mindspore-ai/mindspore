@@ -36,6 +36,7 @@ def _less_equal_scala(x, y):
    """
     return F.scalar_le(x, y)
 
+
 @less_equal.register("Tensor", "Number")
 @less_equal.register("Number", "Tensor")
 @less_equal.register("Tensor", "Tensor")

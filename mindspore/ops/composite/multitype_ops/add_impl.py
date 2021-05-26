@@ -268,6 +268,7 @@ def _add_umonad_umonad(x, y):
    """
     return x
 
+
 @_add_backward.register("IOMonad", "IOMonad")
 def _add_iomonad_iomonad(x, y):
     """
@@ -281,6 +282,7 @@ def _add_iomonad_iomonad(x, y):
        Monad, the dtype is same as x.
    """
     return x
+
 
 @_add_backward.register("RowTensor", "Tensor")
 def _add_rowtensor_tensor(x, y):

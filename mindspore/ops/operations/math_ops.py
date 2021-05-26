@@ -1844,7 +1844,8 @@ class Log1p(Primitive):
     Returns the natural logarithm of one plus the input tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type. The value must be greater than -1.
+        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
+          The value must be greater than -1.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
