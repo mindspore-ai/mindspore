@@ -97,7 +97,7 @@ class Simulation(nn.Cell):
         self.angle_numbers = self.angle.angle_numbers
         self.dihedral_numbers = self.dihedral.dihedral_numbers
         self.nb14_numbers = self.nb14.nb14_numbers
-        self.Nxy = self.nb_info.Nxy
+        self.nxy = self.nb_info.Nxy
         self.grid_numbers = self.nb_info.grid_numbers
         self.max_atom_in_grid_numbers = self.nb_info.max_atom_in_grid_numbers
         self.max_neighbor_numbers = self.nb_info.max_neighbor_numbers
@@ -229,7 +229,7 @@ class Simulation(nn.Cell):
 
         self.neighbor_list_update_init = P.NeighborListUpdate(grid_numbers=self.grid_numbers,
                                                               atom_numbers=self.atom_numbers, not_first_time=0,
-                                                              Nxy=self.Nxy,
+                                                              nxy=self.nxy,
                                                               excluded_atom_numbers=self.excluded_atom_numbers,
                                                               cutoff_square=self.cutoff_square,
                                                               half_skin_square=self.half_skin_square,
@@ -242,7 +242,7 @@ class Simulation(nn.Cell):
                                                               max_neighbor_numbers=self.max_neighbor_numbers)
 
         self.neighbor_list_update = P.NeighborListUpdate(grid_numbers=self.grid_numbers, atom_numbers=self.atom_numbers,
-                                                         not_first_time=1, Nxy=self.Nxy,
+                                                         not_first_time=1, nxy=self.nxy,
                                                          excluded_atom_numbers=self.excluded_atom_numbers,
                                                          cutoff_square=self.cutoff_square,
                                                          half_skin_square=self.half_skin_square,
