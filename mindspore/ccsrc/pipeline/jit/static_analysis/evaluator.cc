@@ -81,8 +81,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   const auto &parameters = fg->parameters();
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg = args_spec_list[i];
-    const auto &node = parameters[i];
-    AnfNodeConfigPtr conf = engine->MakeConfig(node, graph_context_);
+    const auto &parameter = parameters[i];
+    AnfNodeConfigPtr conf = engine->MakeConfig(parameter, graph_context_);
     engine->analysis_cache().set_value(conf, std::make_shared<EvalResult>(arg, nullptr));
   }
   const AnfNodePtr &func_node = fg->get_return();

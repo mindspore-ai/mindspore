@@ -19,6 +19,7 @@ from mindspore._extends.remote.kernel_build_server import Messager, get_logger, 
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import check_supported
 
+
 class TbeBuilder:
     """Tbe building wrapper"""
 
@@ -43,7 +44,9 @@ class TbeBuilder:
     def exit(self):
         self.tbe_builder.exit()
 
+
 class AscendMessager(Messager):
+
     '''
     Ascend Messager
     It works as a server, communicating with c++ client.
@@ -120,6 +123,7 @@ class AscendMessager(Messager):
         self.tbe_builder.exit()
         get_logger().info("[TRACE] Ascend Messager Exit...")
         exit()
+
 
 if __name__ == '__main__':
     warnings.simplefilter("ignore")
