@@ -43,7 +43,7 @@ void EmbeddingLookUpPSKernel::InitKernel(
 
   size_t offset = 0;
   for (size_t i = 0; i < rank_id_; i++) {
-    offset += Util::LocalShard(input_shape_[kAxis], i, pserver_num_);
+    offset += LongToSize(Util::LocalShard(SizeToLong(input_shape_[kAxis]), SizeToLong(i), SizeToLong(pserver_num_)));
   }
   offset_ = offset;
 
