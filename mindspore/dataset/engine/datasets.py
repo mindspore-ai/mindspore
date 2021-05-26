@@ -60,7 +60,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
     check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
-    get_prefetch_size
+    get_prefetch_size, get_dynamic_columns
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..core.validator_helpers import replace_none
 
@@ -211,6 +211,9 @@ class Dataset:
         self._num_classes = None
         self._repeat_count = None
         self._class_indexing = None
+        self.min_shapes = None
+        self.max_shapes = None
+        self.dynamic_shapes = None
         self._sync = False
 
     def create_ir_tree(self):
@@ -1555,6 +1558,82 @@ class Dataset:
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
             self.close_pool()
         return self.dataset_size
+
+    def get_dynamic_min_max_shape(self):
+        """
+        Get dynamic information of source data.
+
+        Returns:
+            lists, min_shapes, max_shapes, dynamic_shapes of source data.
+        """
+        # Assume data1 shape is dynamic, data2 shape is fix
+        # {"data1": [batch_size, None, feat_len], "data2": [batch_size, feat_len]}
+        dynamic_columns = get_dynamic_columns()
+        if not dynamic_columns:
+            raise RuntimeError("dynamic_columns is not set, call set_dynamic_columns() first.")
+
+        if self.min_shapes is not None and self.max_shapes is not None and self.dynamic_shapes is not None:
+            return self.min_shapes, self.max_shapes, self.dynamic_shapes
+
+        logger.warning("Calculating dynamic shape of input data, this will take a few minutes...")
+
+        # ["data1", "data2"]
+        dataset_columns = self.get_col_names()
+        for column in dynamic_columns:
+            if column not in dataset_columns:
+                raise RuntimeError("dynamic column [" + column + "] does not match any column in dataset: " +
+                                   str(dataset_columns))
+
+        # Shape[1] of data1 is variable
+        # {"data1": {(batch_size, 100, feat_len), (16, 200, 83)}, "data2": {(batch_size, feat_len)}}
+        column_shape_set = {col: set() for col in dataset_columns}
+        dataset_size_counter = 0
+        for data in self.create_dict_iterator(num_epochs=1, output_numpy=True):
+            dataset_size_counter += 1
+            for col in data.keys():
+                if col in dynamic_columns:
+                    shape_mismatch = "dynamic column [" + col + "] with shape " + str(dynamic_columns[col]) + \
+                        " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
+                    if data[col].ndim != len(dynamic_columns[col]):
+                        raise RuntimeError(shape_mismatch)
+                    for dim in range(len(dynamic_columns[col])):
+                        if dynamic_columns[col][dim] is not None and dynamic_columns[col][dim] != data[col].shape[dim]:
+                            raise RuntimeError(shape_mismatch)
+                column_shape_set[col].add(tuple(data[col].shape))
+
+        # we get dataset_size after dryrun
+        self.dataset_size = dataset_size_counter
+
+        min_shapes, max_shapes, dynamic_shapes = list(), list(), list()
+        for col, shape_set in column_shape_set.items():
+            if len(shape_set) > 1:
+                if col not in dynamic_columns:
+                    raise RuntimeError("column [" + col + "] has dynamic shape but not set by set_dynamic_columns()" +
+                                       ", shapes of [" + col + "]: " + str(list(shape_set)))
+                shape_npy = np.array(list(shape_set))
+                max_shape = shape_npy.max(axis=0)
+                min_shape = shape_npy.min(axis=0)
+
+                # Set min shape to 1 due to unknown shuffle
+                min_shape = np.where(np.equal(dynamic_columns[col], None), 1, min_shape)
+                # Set dynamic dim to -1 for ME
+                dynamic_shape = np.where(np.equal(dynamic_columns[col], None), -1, dynamic_columns[col])
+
+                max_shapes.append(max_shape.tolist())
+                min_shapes.append(min_shape.tolist())
+                dynamic_shapes.append(dynamic_shape.tolist())
+            else:
+                # Also append fix shape to keep order of column shape
+                if col in dynamic_columns:
+                    logger.warning("column [" + col + "] has no dynamic shape but set by set_dynamic_columns()")
+                fix_shape = list(list(shape_set)[0])
+                max_shapes.append(fix_shape)
+                min_shapes.append(fix_shape)
+                dynamic_shapes.append(fix_shape)
+        self.min_shapes = min_shapes
+        self.max_shapes = max_shapes
+        self.dynamic_shapes = dynamic_shapes
+        return self.min_shapes, self.max_shapes, self.dynamic_shapes
 
     def num_classes(self):
         """
