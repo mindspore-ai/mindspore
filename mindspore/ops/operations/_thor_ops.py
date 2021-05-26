@@ -90,7 +90,7 @@ class CusBatchMatMul(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusBatchMatMul"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.batch_matmul_impl import CusBatchMatMul
+        from mindspore.ops._op_impl._custom_op.batch_matmul_impl import cus_batch_matmul
 
     def infer_shape(self, data1_shape, data2_shape):
         return data1_shape
@@ -123,7 +123,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusCholeskyTrsm"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.cholesky_trsm_impl import CusCholeskyTrsm
+        from mindspore.ops._op_impl._custom_op.cholesky_trsm_impl import cus_cholesky_trsm
 
     def infer_shape(self, data1_shape):
         ll = []
@@ -205,7 +205,6 @@ class CusImg2Col(PrimitiveWithInfer):
         bs, c, h, w = data1_shape
         _, stride_h, stride_w, _ = self.strides
         _, k_w, k_h, _ = self.ksizes
-        # assert m == n
         c0 = 16
         c1 = c // 16
         if c1 == 0:
@@ -241,7 +240,7 @@ class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusMatMulCubeDenseLeft"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_left_impl import CusMatMulCubeDenseLeft
+        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_left_impl import cus_matmul_cube_dense_left
 
     def infer_shape(self, data1_shape, data2_shape):
         return data2_shape
@@ -276,7 +275,7 @@ class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusMatMulCubeFraczRightMul"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_right_mul_impl import CusMatMulCubeFraczRightMul
+        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_right_mul_impl import cus_matmul_cube_fraczrightmul
 
     def infer_shape(self, data1_shape, data2_shape, data3_shape):
         return data1_shape
@@ -317,18 +316,17 @@ class CusMatMulCube(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         self.transpose_a = transpose_a
         self.transpose_b = transpose_b
-        from mindspore.ops._op_impl._custom_op.matmul_cube_impl import CusMatMulCube
+        from mindspore.ops._op_impl._custom_op.matmul_cube_impl import cus_matmul_cube
 
     def infer_shape(self, data1_shape, data2_shape):
         if self.transpose_a:
-            k1, m = data1_shape
+            _, m = data1_shape
         else:
-            m, k1 = data1_shape
+            m, _ = data1_shape
         if self.transpose_b:
-            n, k2 = data2_shape
+            n, _ = data2_shape
         else:
-            k2, n = data2_shape
-        assert k1 == k2
+            _, n = data2_shape
         shape = [m, n]
         return shape
 
@@ -357,7 +355,7 @@ class CusMatrixCombine(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusMatrixCombine"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.matrix_combine_impl import CusMatrixCombine
+        from mindspore.ops._op_impl._custom_op.matrix_combine_impl import cus_matrix_combine
 
     def infer_shape(self, data_shape):
         a, b, c = data_shape
@@ -391,7 +389,7 @@ class CusTranspose02314(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusTranspose02314"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.transpose02314_impl import CusTranspose02314
+        from mindspore.ops._op_impl._custom_op.transpose02314_impl import cus_transpose02314
 
     def get_bprop(self):
         def bprop(x, out, dout):
@@ -400,7 +398,6 @@ class CusTranspose02314(PrimitiveWithInfer):
         return bprop
 
     def infer_shape(self, data1_shape):
-        assert len(data1_shape) == 4
         n, c, h, w = data1_shape
         c0 = 16
         c1 = c // 16
@@ -437,7 +434,7 @@ class CusMatMulCubeDenseRight(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusMatMulCubeDenseRight"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_right_impl import CusMatMulCubeDenseRight
+        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_right_impl import cus_matmul_cube_dense_right
 
     def infer_shape(self, data1_shape, data2_shape, data3_shape):
         return data1_shape
@@ -472,7 +469,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CusMatMulCubeFraczLeftCast"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
-        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_left_cast_impl import CusMatMulCubeFraczLeftCast
+        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_left_cast_impl import cus_matmul_cube_fraczleftcast
 
     def infer_shape(self, data1_shape, data2_shape):
         return data2_shape
@@ -483,7 +480,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
 
 class Im2Col(PrimitiveWithInfer):
     """
-    extracts image pathes from image.
+    extracts image paths from image.
 
     The rank of input_x1 must be `4`, data_format is "NCHW".
 

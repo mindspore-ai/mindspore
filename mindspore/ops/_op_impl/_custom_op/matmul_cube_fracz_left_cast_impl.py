@@ -18,6 +18,7 @@ matmul
 """
 from __future__ import absolute_import
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from mindspore.ops._op_impl._custom_op._basic import _shape_check, _get_bias, _get_input_shape
 import te.platform.cce_params as cce
 from te import tik
 from topi.cce import util
@@ -31,7 +32,7 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
     .async_flag(False) \
     .binfile_name("matmulcubefraczleftcast.so") \
     .compute_cost(10) \
-    .kernel_name("CusMatMulCubeFraczLeftCast") \
+    .kernel_name("cus_matmul_cube_fraczleftcast") \
     .partial_flag(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
@@ -41,206 +42,9 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
     .get_op_info()
 
 
-def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
-    """
-    Check the given input if legal
-
-    Parameters:
-    shape_a: list or tuple
-            Shape of the first tensor a with rank > 1
-    shape_b:  list or tuple
-            Shape of the second tensor b with the same type with a,
-            and shape_a, shape_b must be 2 dims
-    shape_bias: list or tuple
-            Shape of bias, only support the input data format with ND
-src_dtype: str
-            The data type of input, support "float32", "float16"
-    trans_a: bool
-            If True, shape_a == transposed before multiplication
-    trans_b: bool
-            If True, shape_b == transposed before multiplication
-
-    Returns None
-    """
-    shape_len = len(shape_a)
-    src_dtype = src_dtype.lower()
-    k_block_size = cce.BLOCK_REDUCE
-
-    check_list = ("float16")
-
-    if src_dtype not in check_list:
-        raise RuntimeError("matmul_cce only support %s while src_dtype == %s"
-                           % (",".join(check_list), src_dtype))
-    if shape_len != len(shape_b):
-        raise RuntimeError("length of a and b are not equal")
-
-    if shape_len != 2:
-        raise RuntimeError(
-            "length of shape must be 2, more than 2 dimensions should use batch_matmul now!")
-
-    is_gevm = True if shape_a[-2] == 1 or shape_a[-1] == 1 else False
-    is_gemv = True if shape_b[-2] == 1 or shape_b[-1] == 1 else False
-
-    if trans_a:
-        m_shape = shape_a[shape_len - 1]
-        km_shape = shape_a[shape_len - 2]
-    else:
-        m_shape = shape_a[shape_len - 2]
-        km_shape = shape_a[shape_len - 1]
-
-    if trans_b:
-        kn_shape = shape_b[shape_len - 1]
-        n_shape = shape_b[shape_len - 2]
-    else:
-        kn_shape = shape_b[shape_len - 2]
-        n_shape = shape_b[shape_len - 1]
-
-    if m_shape == 1:
-        if n_shape == 1:
-            raise RuntimeError("input shape M and N can't both be 1")
-
-    if km_shape != kn_shape:
-        print(km_shape, kn_shape)
-        raise RuntimeError("reduce axis not same")
-
-    if m_shape % cce.BLOCK_IN != 0 and m_shape != 1:
-        raise RuntimeError(
-            "input shape M should be 1 or multiple of %d" % cce.BLOCK_IN)
-
-    if m_shape != 1:
-        if n_shape == 1:
-            if km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
-                raise RuntimeError("input shape K1 should be multiple of %d"
-                                   % (cce.BLOCK_IN * cce.BLOCK_IN))
-        elif km_shape % k_block_size != 0:
-            raise RuntimeError(
-                "input shape K1 should be multiple of %d" % cce.BLOCK_IN)
-    else:
-        if km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
-            raise RuntimeError("input shape K1 should be multiple of %d"
-                               % (cce.BLOCK_IN * cce.BLOCK_IN))
-
-    if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
-        raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
-
-    if shape_bias:
-        if len(shape_bias) == 1:
-            if is_gevm or is_gemv:
-                if shape_bias[0] != m_shape * n_shape:
-                    raise RuntimeError("broadcast case shape bias for gemv must be equal m*n")
-            else:
-                if shape_bias[0] != n_shape:
-                    raise RuntimeError("broadcast bias shape must be equal to shape n")
-        elif len(shape_bias) == shape_len:
-            if [i for i in shape_bias[-2:]] != [m_shape, n_shape]:
-                raise RuntimeError("non broadcast bias shape must be same as output shape")
-        else:
-            raise RuntimeError("Unsupported input shape now for batch bias case")
-
-
-def _get_bias(shape_bias):
-    """_get_bias"""
-    bias_length = shape_bias[0]
-    if bias_length % 16 == 0:
-        return shape_bias
-    bias_length = (bias_length // 16) * 16 + 16
-    shape_bias = []
-    shape_bias.append(bias_length)
-    return shape_bias
-
-
-def _get_input_shape(shape_x):
-    """_get_input_shape"""
-    dim_a = shape_x[0]
-    dim_b = shape_x[1]
-    res = []
-    if dim_a % 16 != 0:
-        dim_a = (dim_a // 16) * 16 + 16
-        res.append(dim_a)
-    else:
-        res.append(dim_a)
-
-    if dim_b % 16 != 0:
-        dim_b = (dim_b // 16) * 16 + 16
-        res.append(dim_b)
-    else:
-        res.append(dim_b)
-    return res
-
-
-def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
-    """check_supported"""
-    shape_a = input_x1.get("shape")
-    shape_b = input_x2.get("shape")
-    print("shape_a: ", shape_a)
-    print("shape_b: ", shape_b)
-    src_dtype = input_x1.get("dtype")
-    util.check_kernel_name(kernel_name)
-    util.check_shape_rule(shape_a)
-    util.check_shape_rule(shape_b)
-    util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
-    util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
-    try:
-        trans_a_f = bool(1 - trans_a)
-        if src_dtype in ("floate32", "int32"):
-            if len(shape_a) != 2 and len(shape_b) != 2:
-                return False
-            if trans_b:
-                if shape_b[0] == 1:
-                    return False
-            else:
-                if shape_b[1] == 1:
-                    return False
-            if trans_a:
-                if trans_b:
-                    if shape_a[0] != shape_b[1]:
-                        return False
-                elif shape_a[0] != shape_b[0]:
-                    return False
-            elif trans_b:
-                if shape_a[1] != shape_b[1]:
-                    return False
-            elif shape_a[1] != shape_b[0]:
-                return False
-
-            if trans_a_f and trans_b and shape_b[1] == 1:
-                return False
-
-        if src_dtype == "float16":
-            if len(shape_a) != 2 and len(shape_b) != 2:
-                return False
-
-            if trans_a:
-                m_shape = shape_a[1]
-                k_shape = shape_a[0]
-            else:
-                m_shape = shape_a[0]
-                k_shape = shape_a[1]
-
-            if trans_b:
-                n_shape = shape_b[0]
-                k_b_shape = shape_b[1]
-            else:
-                n_shape = shape_b[1]
-                k_b_shape = shape_b[0]
-
-            if k_shape != k_b_shape:
-                return False
-
-            if m_shape == 1 or n_shape == 1:
-                if k_shape % 256 != 0:
-                    return False
-
-    except RuntimeError as e:
-        print(e)
-        return False
-
-    return True
-
-
 @op_info_register(matmul_cube_fracz_left_cast_op_info)
-def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
-                               kernel_name="CusMatMulCubeFraczLeftCast"):
+def cus_matmul_cube_fraczleftcast(input_x1, input_x2, bias=None, output_y=None, trans_a=False, trans_b=False,
+                                  kernel_name="cus_matmul_cube_fraczleftcast"):
     """
     calculating  matrix multiplication with bias, C = A*B + bias, support input
     data with fractal format.
@@ -294,10 +98,8 @@ def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans
 
     if input_x2.get("format") == "FRACTAL_NZ":
         shape_a = [shape_b[0], shape_b[0]]
-        shape_b = shape_b
 
     if input_x1.get("format") == "FRACTAL_NZ":
-        shape_a = shape_a
         shape_b = [shape_a[1], shape_a[1]]
 
     shape_a = list(shape_a)
@@ -369,11 +171,10 @@ def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans
     input_x1 = tik_instance.Tensor(input_x1.get("dtype"), shape_a_temp, name="left_matrix", scope=tik.scope_gm)
     input_x2 = tik_instance.Tensor(input_x2.get("dtype"), shape_b_temp, name="right_matrix", scope=tik.scope_gm)
     res_matmul = tik_instance.Tensor(output_y.get("dtype"), output_y.get("shape"), name="output", scope=tik.scope_gm)
-    DIAG_SIZE = 128
-    mo_tile, ko_tile, no_tile, diag_opt = get_cus_tile_info(input_x1, input_x2, DIAG_SIZE)
+    mo_tile, ko_tile, no_tile, diag_opt = get_cus_tile_info(input_x1, input_x2, 128)
     cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b, res_matmul,
                          mo_tile=mo_tile, ko_tile=ko_tile, no_tile=no_tile,
-                         diag_opt=diag_opt, diag_size=DIAG_SIZE)
+                         diag_opt=diag_opt, diag_size=128)
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[res_matmul])
     return tik_instance
 
@@ -419,9 +220,6 @@ def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
     no, ko, _, _ = input_x2.shape
     c0 = input_x1.shape[-1]
     diag_outer = diag_size // c0
-    maxblocknum = 32
-    fp32_size = 4
-    fp16_size = 2
     blocksize = 32
     vectorfp32_size = 64
     if [input_x1.shape[-1], input_x1.shape[-2], input_x2.shape[-1], input_x2.shape[-2]] != [c0, c0, c0, c0]:
@@ -431,10 +229,10 @@ def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
 
     core_m_num = mo // mo_tile
     loop_n_num = no // no_tile
-    if loop_n_num * core_m_num <= maxblocknum:
+    if loop_n_num * core_m_num <= 32:
         core_n_num = loop_n_num
     else:
-        core_n_num = maxblocknum // core_m_num
+        core_n_num = 32 // core_m_num
     if core_n_num > 0 and loop_n_num % core_n_num == 0:
         loop_n_num = loop_n_num // core_n_num
     else:
@@ -448,77 +246,77 @@ def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
     thread_num_k = 2
     loop_k_num *= thread_num_k
     ko_tile_inner = ko_tile // thread_num_k
-    with tik_instance.for_range(0, block_num, block_num=block_num) as block_idx:
+    with tik_instance.for_range(0, block_num, block_num=block_num) as block_idx, \
+            tik_instance.for_range(0, loop_n_num) as cc_n:
         core_m = block_idx // core_n_num
         core_n = block_idx % core_n_num
-        with tik_instance.for_range(0, loop_n_num) as cc_n:
-            res_L0C = tik_instance.Tensor("float32", [no_tile, mo_tile, c0, c0],
-                                          name="resMatmul_L0C", scope=tik.scope_cc)
-            with tik_instance.for_range(0, loop_k_num, thread_num=thread_num_k) as thread_idx_k:
-                # input_x2 -> input_x2_ub -(fp322fp16)-> input_x2_cast_ub -> input_x2_L1
-                input_x2_ub = tik_instance.Tensor("float32", [no_tile, ko_tile_inner, c0, c0], name="input_x2_ub",
-                                                  scope=tik.scope_ubuf)
-                if diag_opt:
-                    k_idx = core_m * mo_tile + thread_idx_k * ko_tile_inner
-                else:
-                    k_idx = thread_idx_k * ko_tile_inner
-                tik_instance.data_move(input_x2_ub,
-                                       input_x2[(core_n * loop_n_num + cc_n) * no_tile,
-                                                k_idx, 0, 0],
-                                       0, no_tile, ko_tile_inner * c0 * c0 * fp32_size // blocksize,
-                                       (ko - ko_tile_inner) * c0 * c0 * fp32_size // blocksize, 0)
-                input_x2_cast_ub = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
-                                                       name="input_x2_cast_ub", scope=tik.scope_ubuf)
-                repeate_num = no_tile * ko_tile_inner * c0 * c0 // vectorfp32_size
-                repeate_times_max = 255
-                count = 0
-                while repeate_num > repeate_times_max:
-                    tik_instance.vconv(vectorfp32_size, 'none',
-                                       input_x2_cast_ub[count * repeate_times_max * vectorfp32_size],
-                                       input_x2_ub[count * repeate_times_max * vectorfp32_size],
-                                       repeate_times_max,
-                                       1, 1, 4, 8)
-                    repeate_num -= repeate_times_max
-                    count += 1
+        res_l0c = tik_instance.Tensor("float32", [no_tile, mo_tile, c0, c0],
+                                      name="resMatmul_L0C", scope=tik.scope_cc)
+        with tik_instance.for_range(0, loop_k_num, thread_num=thread_num_k) as thread_idx_k:
+            # input_x2 -> input_x2_ub -(fp322fp16)-> input_x2_cast_ub -> input_x2_l1
+            input_x2_ub = tik_instance.Tensor("float32", [no_tile, ko_tile_inner, c0, c0], name="input_x2_ub",
+                                              scope=tik.scope_ubuf)
+            if diag_opt:
+                k_idx = core_m * mo_tile + thread_idx_k * ko_tile_inner
+            else:
+                k_idx = thread_idx_k * ko_tile_inner
+            tik_instance.data_move(input_x2_ub,
+                                   input_x2[(core_n * loop_n_num + cc_n) * no_tile,
+                                            k_idx, 0, 0],
+                                   0, no_tile, ko_tile_inner * c0 * c0 * 4 // blocksize,
+                                   (ko - ko_tile_inner) * c0 * c0 * 4 // blocksize, 0)
+            input_x2_cast_ub = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
+                                                   name="input_x2_cast_ub", scope=tik.scope_ubuf)
+            repeate_num = no_tile * ko_tile_inner * c0 * c0 // vectorfp32_size
+            repeate_times_max = 255
+            count = 0
+            while repeate_num > repeate_times_max:
                 tik_instance.vconv(vectorfp32_size, 'none',
                                    input_x2_cast_ub[count * repeate_times_max * vectorfp32_size],
-                                   input_x2_ub[count * repeate_times_max * vectorfp32_size], repeate_num,
+                                   input_x2_ub[count * repeate_times_max * vectorfp32_size],
+                                   repeate_times_max,
                                    1, 1, 4, 8)
-                input_x2_L1 = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
-                                                  name="input_x2_L1", scope=tik.scope_cbuf)
-                tik_instance.data_move(input_x2_L1, input_x2_cast_ub, 0, 1,
-                                       no_tile * ko_tile_inner * c0 * c0 * fp16_size // blocksize, 0, 0)
-                # input_x1 -> input_x1_L1
-                input_x1_L1 = tik_instance.Tensor(input_x1.dtype, [ko_tile_inner, mo_tile, c0, c0],
-                                                  name="input_x1_L1", scope=tik.scope_cbuf)
-                tik_instance.data_move(input_x1_L1,
-                                       input_x1[k_idx,
-                                                core_m * mo_tile, 0, 0],
-                                       0, ko_tile_inner, mo_tile * c0 * c0 * fp16_size // blocksize,
-                                       (mo - mo_tile) * c0 * c0 * fp16_size // blocksize, 0)
-                # input_x2_L1 -> input_x2_L0B
-                input_x2_L0B = tik_instance.Tensor("float16", [ko_tile_inner, no_tile, c0, c0],
-                                                   name="input_x2_L0B", scope=tik.scope_cb)
-                with tik_instance.for_range(0, ko_tile_inner) as cc2:
-                    tik_instance.load2dv1(input_x2_L0B[cc2, 0, 0, 0], input_x2_L1[0, cc2, 0, 0], 0, no_tile,
-                                          ko_tile_inner,
-                                          0, True)
-                # input_x1_L1 -> input_x1_L0A
-                input_x1_L0A = tik_instance.Tensor(input_x1.dtype, [mo_tile, ko_tile_inner, c0, c0],
-                                                   name="input_x1_L0A", scope=tik.scope_ca)
-                with tik_instance.for_range(0, mo_tile) as cc1:
-                    tik_instance.load2dv1(input_x1_L0A[cc1, 0, 0, 0], input_x1_L1[0, cc1, 0, 0], 0, ko_tile_inner,
-                                          mo_tile, 0, False)
-                with tik_instance.if_scope(thread_idx_k == 0):
-                    tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
-                                      ko_tile_inner * c0, no_tile * c0, 0)
-                with tik_instance.else_scope():
-                    tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
-                                      ko_tile_inner * c0, no_tile * c0, 1)
-            res_ub = tik_instance.Tensor(input_x1.dtype, [no_tile, mo_tile, c0, c0],
-                                         name="resMatmul_ub", scope=tik.scope_ubuf)
-            tik_instance.data_move(res_ub, res_L0C, 0, 1, no_tile * mo_tile, 0, 0, 1)
-            tik_instance.data_move(res[(core_n * loop_n_num + cc_n) * no_tile, core_m * mo_tile, 0, 0],
-                                   res_ub, 0, no_tile,
-                                   mo_tile * c0 * c0 * fp16_size // blocksize, 0,
-                                   (mo - mo_tile) * c0 * c0 * fp16_size // blocksize)
+                repeate_num -= repeate_times_max
+                count += 1
+            tik_instance.vconv(vectorfp32_size, 'none',
+                               input_x2_cast_ub[count * repeate_times_max * vectorfp32_size],
+                               input_x2_ub[count * repeate_times_max * vectorfp32_size], repeate_num,
+                               1, 1, 4, 8)
+            input_x2_l1 = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
+                                              name="input_x2_l1", scope=tik.scope_cbuf)
+            tik_instance.data_move(input_x2_l1, input_x2_cast_ub, 0, 1,
+                                   no_tile * ko_tile_inner * c0 * c0 * 2 // blocksize, 0, 0)
+            # input_x1 -> input_x1_l1
+            input_x1_l1 = tik_instance.Tensor(input_x1.dtype, [ko_tile_inner, mo_tile, c0, c0],
+                                              name="input_x1_l1", scope=tik.scope_cbuf)
+            tik_instance.data_move(input_x1_l1,
+                                   input_x1[k_idx,
+                                            core_m * mo_tile, 0, 0],
+                                   0, ko_tile_inner, mo_tile * c0 * c0 * 2 // blocksize,
+                                   (mo - mo_tile) * c0 * c0 * 2 // blocksize, 0)
+            # input_x2_l1 -> input_x2_l0b
+            input_x2_l0b = tik_instance.Tensor("float16", [ko_tile_inner, no_tile, c0, c0],
+                                               name="input_x2_l0b", scope=tik.scope_cb)
+            with tik_instance.for_range(0, ko_tile_inner) as cc2:
+                tik_instance.load2dv1(input_x2_l0b[cc2, 0, 0, 0], input_x2_l1[0, cc2, 0, 0], 0, no_tile,
+                                      ko_tile_inner,
+                                      0, True)
+            # input_x1_l1 -> input_x1_l0a
+            input_x1_l0a = tik_instance.Tensor(input_x1.dtype, [mo_tile, ko_tile_inner, c0, c0],
+                                               name="input_x1_l0a", scope=tik.scope_ca)
+            with tik_instance.for_range(0, mo_tile) as cc1:
+                tik_instance.load2dv1(input_x1_l0a[cc1, 0, 0, 0], input_x1_l1[0, cc1, 0, 0], 0, ko_tile_inner,
+                                      mo_tile, 0, False)
+            with tik_instance.if_scope(thread_idx_k == 0):
+                tik_instance.mmad(res_l0c, input_x1_l0a, input_x2_l0b, mo_tile * c0,
+                                  ko_tile_inner * c0, no_tile * c0, 0)
+            with tik_instance.else_scope():
+                tik_instance.mmad(res_l0c, input_x1_l0a, input_x2_l0b, mo_tile * c0,
+                                  ko_tile_inner * c0, no_tile * c0, 1)
+        res_ub = tik_instance.Tensor(input_x1.dtype, [no_tile, mo_tile, c0, c0],
+                                     name="resMatmul_ub", scope=tik.scope_ubuf)
+        tik_instance.data_move(res_ub, res_l0c, 0, 1, no_tile * mo_tile, 0, 0, 1)
+        tik_instance.data_move(res[(core_n * loop_n_num + cc_n) * no_tile, core_m * mo_tile, 0, 0],
+                               res_ub, 0, no_tile,
+                               mo_tile * c0 * c0 * 2 // blocksize, 0,
+                               (mo - mo_tile) * c0 * c0 * 2 // blocksize)
