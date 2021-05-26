@@ -14,53 +14,35 @@
  * limitations under the License.
  */
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
-#include <memory>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "cppjieba/Unicode.hpp"
-#include "unicode/errorcode.h"
 #include "unicode/uchar.h"
 #include "unicode/uscript.h"
-#include "minddata/dataset/text/kernels/data_utils.h"
 
 using cppjieba::DecodeRunesInString;
 using cppjieba::RuneStrArray;
 
 namespace mindspore {
 namespace dataset {
-
-const bool WhitespaceTokenizerOp::kDefWithOffsets = false;
-
-Status WhitespaceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
-  IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "WhitespaceTokenizer: input should be one column data.");
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED(
-      "WhitespaceTokenizer: the input shape should be scalar and the input datatype should be string.");
-  }
-  std::string_view str;
-  RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
-
+Status WhitespaceTokenizerOp::Tokenize(std::string_view str, std::vector<std::string> *splits,
+                                       std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("WhitespaceTokenizer: Decode utf8 string failed.");
   }
 
-  std::shared_ptr<Tensor> token_tensor;
-  std::vector<uint32_t> offsets_start, offsets_limit;
-  std::vector<std::string> splits;
   int start = 0;
   int len = 0;
   for (size_t i = 0; i < runes.size(); i++) {
     if (u_isUWhiteSpace(runes[i].rune)) {
       if (len > 0) {
-        offsets_start.push_back(static_cast<uint32_t>(start));
-        offsets_limit.push_back(static_cast<uint32_t>(start + len));
+        offsets_start->push_back(static_cast<uint32_t>(start));
+        offsets_limit->push_back(static_cast<uint32_t>(start + len));
         std::string temp(str.substr(start, len));
-        splits.emplace_back(std::move(temp));
+        splits->emplace_back(std::move(temp));
         len = 0;
       }
     } else {
@@ -71,20 +53,15 @@ Status WhitespaceTokenizerOp::Compute(const TensorRow &input, TensorRow *output)
     }
   }
   if (len > 0) {
-    offsets_start.push_back(static_cast<uint32_t>(start));
-    offsets_limit.push_back(static_cast<uint32_t>(start + len));
+    offsets_start->push_back(static_cast<uint32_t>(start));
+    offsets_limit->push_back(static_cast<uint32_t>(start + len));
     std::string temp(str.substr(start, len));
-    splits.emplace_back(std::move(temp));
+    splits->emplace_back(std::move(temp));
   }
-  if (splits.empty()) {
-    splits.emplace_back("");
-    offsets_start.push_back(0);
-    offsets_limit.push_back(0);
-  }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(splits, &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
+  if (splits->empty()) {
+    splits->emplace_back("");
+    offsets_start->push_back(0);
+    offsets_limit->push_back(0);
   }
   return Status::OK();
 }

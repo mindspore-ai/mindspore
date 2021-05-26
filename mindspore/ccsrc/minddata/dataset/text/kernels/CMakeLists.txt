@@ -15,6 +15,7 @@ add_library(text-kernels OBJECT
         data_utils.cc
         lookup_op.cc
         jieba_tokenizer_op.cc
+        tokenizer_op.cc
         unicode_char_tokenizer_op.cc
         ngram_op.cc
         sliding_window_op.cc

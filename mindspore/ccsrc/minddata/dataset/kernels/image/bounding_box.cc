@@ -51,7 +51,7 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
                   "BoundingBox: bounding boxes should have to be two-dimensional matrix at least.");
   }
   uint32_t num_of_features = image_and_bbox[1]->shape()[1];
-  if (num_of_features < 4) {
+  if (num_of_features < kNumOfCols) {
     return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: bounding boxes should be have at least 4 features.");
   }

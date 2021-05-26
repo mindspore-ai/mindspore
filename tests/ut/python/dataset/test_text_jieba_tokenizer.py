@@ -45,7 +45,8 @@ def test_jieba_callable():
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:
         _ = jieba_op1(text1, text2)
-    assert "JiebaTokenizer: input only support one column data." in str(info.value)
+    assert "JiebaTokenizerOp: input should be one column data." in str(info.value)
+
 
 
 def test_jieba_1():

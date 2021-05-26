@@ -17,21 +17,21 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TEXT_JIEBA_OP_H_
 
 #include <string>
+#include <vector>
 #include <memory>
 #include "cppjieba/Jieba.hpp"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class JiebaTokenizerOp : public TensorOp {
+class JiebaTokenizerOp : public TokenizerOp {
  public:
   // default constant for Jieba MPSegment algorithm.
   static constexpr size_t MAX_WORD_LENGTH = 512;
-  // default const for set whether Jieba output offsets tensor.
-  static const bool kDefWithOffsets;
   // Constructor for JiebaTokenizerOp.
   // @param hmm_path HMM model file.
   // @param mp_path MP model file.
@@ -47,7 +47,8 @@ class JiebaTokenizerOp : public TensorOp {
     out << Name() << ": " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_" << mp_dict_path_;
   }
 
-  Status Compute(const TensorRow &input, TensorRow *output) override;
+  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+                  std::vector<uint32_t> *offsets_limit) override;
 
   // @word the word to be added to the JiebaTokenizer.
   // @freq [Default 0] the frequency fo the word to be added.
@@ -61,7 +62,6 @@ class JiebaTokenizerOp : public TensorOp {
   std::string mp_dict_path_;
   std::unique_ptr<cppjieba::Jieba> jieba_parser_;
   JiebaMode jieba_mode_;
-  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

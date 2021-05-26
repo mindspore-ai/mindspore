@@ -24,7 +24,6 @@
 #include "unicode/errorcode.h"
 #include "unicode/uchar.h"
 #include "unicode/uscript.h"
-#include "minddata/dataset/text/kernels/data_utils.h"
 
 using cppjieba::DecodeRunesInString;
 using cppjieba::RuneStrArray;
@@ -33,30 +32,18 @@ namespace mindspore {
 namespace dataset {
 
 const bool UnicodeScriptTokenizerOp::kDefKeepWhitespace = false;
-const bool UnicodeScriptTokenizerOp::kDefWithOffsets = false;
 
-Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
-  IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "UnicodeScriptTokenizer: input should be one column data.");
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED(
-      "UnicodeScriptTokenizer: "
-      "the input shape should be scalar and the input datatype should be string.");
-  }
-  std::string_view str;
-  RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
+Status UnicodeScriptTokenizerOp::Tokenize(std::string_view str, std::vector<std::string> *splits,
+                                          std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("UnicodeScriptTokenizer: Decode utf8 string failed.");
   }
 
-  std::shared_ptr<Tensor> token_tensor;
   UScriptCode last_script = USCRIPT_INVALID_CODE;
   icu::ErrorCode status;
   int start = 0;
   int len = 0;
-  std::vector<std::string> splits;
-  std::vector<uint32_t> offsets_start, offsets_limit;
 
   bool was_space = false;
   for (size_t i = 0; i < runes.size(); i++) {
@@ -73,10 +60,10 @@ Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *outp
     if (len > 0 && (script != last_script || is_space != was_space)) {
       // 3) If keep_whitespace_ is false, all the whitespace characters will be discard
       if (keep_whitespace_ || !was_space) {
-        offsets_start.push_back(static_cast<uint32_t>(start));
-        offsets_limit.push_back(static_cast<uint32_t>(start + len));
+        offsets_start->push_back(static_cast<uint32_t>(start));
+        offsets_limit->push_back(static_cast<uint32_t>(start + len));
         std::string temp(str.substr(start, len));
-        splits.emplace_back(std::move(temp));
+        splits->emplace_back(std::move(temp));
       }
       start = runes[i].offset;
       len = runes[i].len;
@@ -88,22 +75,12 @@ Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *outp
   }
 
   if (len > 0 && (keep_whitespace_ || !was_space)) {
-    offsets_start.push_back(static_cast<uint32_t>(start));
-    offsets_limit.push_back(static_cast<uint32_t>(start + len));
+    offsets_start->push_back(static_cast<uint32_t>(start));
+    offsets_limit->push_back(static_cast<uint32_t>(start + len));
     std::string temp(str.substr(start, len));
-    splits.emplace_back(std::move(temp));
+    splits->emplace_back(std::move(temp));
   }
-  // 4) If the input is empty scalar string, the output will be 1-D empty string.
-  if (splits.empty()) {
-    splits.emplace_back("");
-    offsets_start.push_back(0);
-    offsets_limit.push_back(0);
-  }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(splits, &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
-  }
+
   return Status::OK();
 }
 }  // namespace dataset

@@ -19,12 +19,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/text/kernels/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
-
-const bool RegexTokenizerOp::kDefWithOffsets = false;
 
 Status RegexTokenizerOp::GetUnicodeSubstr(const icu::UnicodeString &input, const int &start, const int &len,
                                           std::string *out_utf8, icu::UnicodeString *out_unicode) const {
@@ -111,26 +108,10 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
   return Status::OK();
 }
 
-Status RegexTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
-  IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "RegexTokenizer: input should be one column data");
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED(
-      "RegexTokenizer: the input shape should be scalar and "
-      "the input datatype should be string.");
-  }
-  std::string_view text;
-  std::vector<std::string> tokens;
-  std::vector<uint32_t> offsets_start;
-  std::vector<uint32_t> offsets_limit;
-  std::shared_ptr<Tensor> token_tensor;
-  RETURN_IF_NOT_OK(input[0]->GetItemAt(&text, {}));
-  RETURN_IF_NOT_OK(GetRegexTokens(std::string(text.data(), text.size()), &tokens, &offsets_start, &offsets_limit));
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(std::move(tokens), &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
-  }
+Status RegexTokenizerOp::Tokenize(std::string_view str, std::vector<std::string> *splits,
+                                  std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
+  RETURN_IF_NOT_OK(GetRegexTokens(std::string(str.data(), str.size()), splits, offsets_start, offsets_limit));
+
   return Status::OK();
 }
 }  // namespace dataset

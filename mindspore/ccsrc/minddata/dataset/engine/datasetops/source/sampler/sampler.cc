@@ -191,6 +191,21 @@ Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   RETURN_IF_NOT_OK(sample_ids->GetItemAt<int64_t>(out_associated_id, {id}));
   return Status::OK();
 }
+Status SamplerRT::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_samples"] = num_samples_;
+  if (this->HasChildSampler()) {
+    std::vector<nlohmann::json> children_args;
+    for (const auto &child : child_) {
+      nlohmann::json child_arg;
+      RETURN_IF_NOT_OK(child->to_json(&child_arg));
+      children_args.push_back(child_arg);
+    }
+    args["child_sampler"] = children_args;
+  }
+  *out_json = args;
+  return Status::OK();
+}
 
 }  // namespace dataset
 }  // namespace mindspore

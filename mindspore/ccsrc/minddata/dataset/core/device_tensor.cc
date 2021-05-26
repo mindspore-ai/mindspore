@@ -43,11 +43,10 @@ Status DeviceTensor::CreateEmpty(const TensorShape &shape, const DataType &type,
 
   CHECK_FAIL_RETURN_UNEXPECTED(type.IsNumeric(), "Number of elements is not 0. The type should be numeric.");
 
-  int64_t byte_size = (*out)->SizeInBytes();
-
+  int64_t bytes = (*out)->SizeInBytes();
   // Don't allocate if we have a tensor with no elements.
-  if (byte_size != 0) {
-    RETURN_IF_NOT_OK((*out)->AllocateBuffer(byte_size));
+  if (bytes != 0) {
+    RETURN_IF_NOT_OK((*out)->AllocateBuffer(bytes));
   }
   return Status::OK();
 }

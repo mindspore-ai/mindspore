@@ -20,7 +20,6 @@
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
 
 namespace mindspore::dataset {
-
 Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
   std::vector<TensorPtr> row;
   {
