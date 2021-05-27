@@ -38,6 +38,12 @@ using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractUndetermined;
 
+inline void CheckInputsSize(size_t actual_size, size_t expect_size, const std::string &op_name) {
+  if (actual_size != expect_size) {
+    MS_LOG(EXCEPTION) << op_name << " should have " << expect_size << " inputs, but got " << actual_size;
+  }
+}
+
 static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
   if (t == nullptr) {
     return nullptr;
@@ -95,7 +101,9 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [getattr, data, attribute]
-  MS_ASSERT(inputs.size() == 3 && "GetAttr should have three inputs.");
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
+
   constexpr size_t data_index = 1;
   constexpr size_t attribute_index = 2;
   AnfNodePtr data = inputs[data_index];
@@ -138,7 +146,9 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
 
   // Inputs should be [dict_getitem, dict, item]
   const auto &inputs = node->inputs();
-  MS_ASSERT(inputs.size() == 3 && "DictGetItem should have three inputs.");
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
+
   constexpr size_t data_index = 1;
   constexpr size_t cons_index = 2;
   AnfNodePtr data = inputs[data_index];
@@ -176,7 +186,8 @@ AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
 
   // Inputs should be [dict_setitem, dict, item, value]
   const auto &inputs = node->inputs();
-  MS_ASSERT(inputs.size() == 4 && "DictSetItem should have three inputs.");
+  const size_t expect_inputs_size = 4;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
 
   const size_t data_index = 1;
   const size_t cons_index = 2;
@@ -233,7 +244,10 @@ AnfNodePtr ErasePartialNode(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [partial, fn, arg1, ...], so offset by 2 to get arg;
-  MS_ASSERT(inputs.size() >= 2 && "Partial should have more than two inputs.");
+  const size_t min_inputs_size = 2;
+  if (inputs.size() < min_inputs_size) {
+    MS_LOG(EXCEPTION) << "Partial should have at least 2 inputs, but got " << inputs.size();
+  }
 
   std::vector<AnfNodePtr> args(inputs.begin() + 2, inputs.end());
   auto oper = inputs[1];
@@ -272,10 +286,8 @@ AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [list_getitem, list, item]
-  const size_t list_getitem_inputs_size = 3;
-  if (inputs.size() < list_getitem_inputs_size) {
-    MS_LOG(EXCEPTION) << "Node's input number < 3.";
-  }
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
 
   AnfNodePtr data = inputs[1];
   AnfNodePtr cons = inputs[2];
@@ -292,10 +304,8 @@ AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
 
   const auto &inputs = node->inputs();
   // Inputs should be [list_setitem, list, index, item]
-  const size_t list_setitem_inputs_size = 4;
-  if (inputs.size() < list_setitem_inputs_size) {
-    MS_LOG(EXCEPTION) << "Node's input number < 4.";
-  }
+  const size_t expect_inputs_size = 4;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
 
   const size_t data_index = 1;
   const size_t cons_index = 2;
@@ -310,14 +320,16 @@ AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
 AnfNodePtr EraseMakeDictNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
-  MS_ASSERT(inputs.size() >= 3 && "MakeDict should have three inputs");
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
   return inputs[2];
 }
 
 AnfNodePtr EraseDictGetValues(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
-  MS_ASSERT(inputs.size() == 2 && "DictGetValues should have two inputs");
+  const size_t expect_inputs_size = 2;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
   return inputs[1];
 }
 
@@ -325,7 +337,8 @@ AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
   // Inputs should be [make_keyword_arg, key, value]
-  MS_ASSERT(inputs.size() == 3 && "MakeKeyword should have three inputs");
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
   return inputs[2];
 }
 
@@ -333,7 +346,8 @@ AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
   // Inputs should be [extract_keyword_arg, arg, key]
-  MS_ASSERT(inputs.size() == 3 && "ExtractKeyword should have three inputs");
+  const size_t expect_inputs_size = 3;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
   constexpr size_t key_index = 2;
   return inputs[key_index];
 }
@@ -440,10 +454,9 @@ AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int64_
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
   const auto &inputs = node->inputs();
-  // Inputs should be [spase_getattr, sparse]
-  if (inputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "Node's input number < 2.";
-  }
+  // Inputs should be [sparse_getattr, sparse]
+  const size_t expect_inputs_size = 2;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
 
   AnfNodePtr sparse = inputs[1];
   MS_EXCEPTION_IF_NULL(sparse);

@@ -32,10 +32,10 @@ namespace opt {
 namespace irpass {
 // (a, b, c, ...)[-1] => (a, b, c, ...)[length-1]
 // [a, b, c, ...][-1] => [a, b, c, ...][length-1]
+// (a, b, c, ...)[-1] = z => (a, b, c, ...)[length - 1] = z
+// [a, b, c, ...][-1] = z => [a, b, c, ...][length - 1] = z
 // {prim::kPrimTupleGetItem, T, N}
 // {prim::kPrimListGetItem, L, N}
-// setitem((a, b, c, ...), -1, z) => setitem((a, b, c, ...), length - 1, z)
-// setitem([a, b, c, ...], -1, z) => setitem([a, b, c, ...], length - 1, z)
 // {prim::kPrimTupleSetItem, T, N, Z}
 // {prim::kPrimListSetItem, L, N, Z}
 class ConvertItemIndexToPositive : public AnfVisitor {
@@ -189,8 +189,8 @@ class GetitemConstEliminator : public AnfVisitor {
   bool has_new_value_{false};
 };
 
-// setitem((a, b, c, ...), 0, z) => (z, b, c, ...)
-// setitem((a, b, c, ...), 1, z) => (a, z, c, ...)
+// (a, b, c, ...)[0] = z => (z, b, c, ...)
+// [a, b, c, ...][0] = z => [z, b, c, ...]
 // {prim::kPrimTupleSetItem, {prim::kPrimMakeTuple, a, b, c, ...}, 0, z} => {prim::kPrimMakeTuple, z, b, c, ...}
 // {prim::kPrimListSetItem, {prim::kPrimMakeList, a, b, c, ...}, 0, z} => {prim::kPrimMakeList, z, b, c, ...}
 // {prim::kPrimTupleSetItem, (a, b, c, ...), 0, z} => {prim::kPrimMakeTuple, z, b, c, ...}
@@ -344,10 +344,8 @@ class GetSetitemEliminator : public AnfVisitor {
   AnfNodePtr tuple_{nullptr}, last_{nullptr}, c2_{nullptr};
 };
 
-// {prim::kPrimTupleGetItem, {prim::kPrimDepend, X, Y}, C} ->
-// {prim::kPrimDepend, {prim::kPrimTupleGetItem, X, C}, Y}
-// {prim::kPrimListGetItem, {prim::kPrimDepend, X, Y}, C} ->
-// {prim::kPrimDepend, {prim::kPrimListGetItem, X, C}, Y}
+// {prim::kPrimTupleGetItem, {prim::kPrimDepend, X, Y}, C} => {prim::kPrimDepend, {prim::kPrimTupleGetItem, X, C}, Y}
+// {prim::kPrimListGetItem, {prim::kPrimDepend, X, Y}, C} => {prim::kPrimDepend, {prim::kPrimListGetItem, X, C}, Y}
 class GetitemDependReorder : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
