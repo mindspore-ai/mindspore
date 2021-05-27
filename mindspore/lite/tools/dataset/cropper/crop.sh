@@ -44,18 +44,18 @@ fi
 
 # exit if mindspore path is not given by user
 if [ -z "${MINDSPORE_PATH}" ]; then
-  echo -e "\e[31mPlease set MINDSPORE_PATH environment variable.\e[0m"
+  echo -e "\e[31mPlease set MINDSPORE_PATH using -p flag.\e[0m"
   exit 1
 fi
 
-ORIGNAL_PATH="$PWD"
+ORIGINAL_PATH="$PWD"
 FILE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # getting absolute paths for user provided filenames
 USER_CODES=""
 for i in "${@:OPTIND}";
 do
-  USER_CODES+="$(cd "$(dirname "${i}" )" &> /dev/null && pwd )/$(basename "${i}")"
+  USER_CODES+="$(cd "$(dirname "${i}" )" &> /dev/null && pwd )/$(basename "${i}") "
 done
 # exit if user has not given any argument as their code
 if [ -z "${USER_CODES}" ]; then
@@ -65,7 +65,7 @@ fi
 echo "Provided files: $USER_CODES"
 
 echo "MS PATH: $MINDSPORE_PATH"
-echo "CWD: $ORIGNAL_PATH"
+echo "CWD: $ORIGINAL_PATH"
 echo "File PATH: $FILE_PATH"
 
 
@@ -77,7 +77,7 @@ MD_LIB_FILENAME="libminddata-lite_static.a"
 MD_LIB_PATH=`find $MINDSPORE_PATH -name "${MD_LIB_FILENAME}" | head -n 1`
 if [ -z "${MD_LIB_PATH}" ]; then
   echo -e "\e[31mMindData lite static library could not be found.\e[0m"
-  cd $ORIGNAL_PATH
+  cd $ORIGINAL_PATH
   exit 1
 fi
 
@@ -116,7 +116,7 @@ cd ..
 python build_lib.py ${USER_CODES}
 retVal=$?
 if [ $retVal -ne 0 ]; then
-  cd $ORIGNAL_PATH
+  cd $ORIGINAL_PATH
   exit 1
 fi
 
@@ -145,13 +145,13 @@ echo "Architecture: $TARGET_ARCHITECTURE"
 if [ "$TARGET_ARCHITECTURE" == "ARM64" ]; then
   if [ -z "${ANDROID_NDK}" ]; then
     echo -e "\e[31mPlease set ANDROID_NDK environment variable.\e[0m"
-    cd $ORIGNAL_PATH
+    cd $ORIGINAL_PATH
     exit 1
   fi
 elif [ "$TARGET_ARCHITECTURE" == "ARM32" ]; then
   if [ -z "${ANDROID_NDK}" ]; then
     echo -e "\e[31mPlease set ANDROID_NDK environment variable.\e[0m"
-    cd $ORIGNAL_PATH
+    cd $ORIGINAL_PATH
     exit 1
   fi
   # add LIBCLANG_RT_LIB for ARM32
@@ -185,4 +185,4 @@ fi
 
 rm -rf tmp/
 
-cd $ORIGNAL_PATH
+cd $ORIGINAL_PATH
