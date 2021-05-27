@@ -891,9 +891,9 @@ def sometrue(a, axis=None, keepdims=False):
     Examples:
         >>> import mindspore.numpy as np
         >>> x = np.array([1, -2.3, 2.1]).astype('float32')
-        >>> output = np.signbit(x)
+        >>> output = np.sometrue(x)
         >>> print(output)
-        [False  True False]
+        True
     """
     if not isinstance(keepdims, int):
         _raise_type_error("integer argument expected, but got ", keepdims)

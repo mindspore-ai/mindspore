@@ -2207,7 +2207,7 @@ def size(a, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        TypeError: If input is not array_like or `axis` is not int or tuple of ints.
+        TypeError: If input is not array_like or `axis` is not int.
         ValueError: If any axis is out of range or duplicate axes exist.
 
     Examples:
@@ -2239,7 +2239,7 @@ def array_str(a):
         Numpy argument `max_line_width`, `precision` and `suppress_small` are not supported.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Input data.
+        a (Tensor): Input data.
 
     Returns:
         String.
@@ -2248,7 +2248,7 @@ def array_str(a):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        TypeError: If input is not array_like.
+        TypeError: If input is not tensor.
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2256,7 +2256,8 @@ def array_str(a):
         >>> np.array_str(x)
         '[0 1 2 3 4]'
     """
-    a = _to_tensor(a)
+    if not isinstance(a, Tensor):
+        _raise_type_error("Expect input to be tensor.")
     return a.__str__()
 
 
