@@ -12,10 +12,15 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Inference Process](#inference-process)
+            - [Export MindIR](#export-mindir)
+            - [Infer on Ascend310](#infer-on-ascend310)
+            - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
+        - [310 Inference Performance](#310-inference-performance)
     - [How to use](#how-to-use)
         - [Inference](#inference)
         - [Continue Training on the Pretrained Model](#continue-training-on-the-pretrained-model)
@@ -105,10 +110,12 @@ After installing MindSpore via the official website, you can start training and 
 .
 └── squeezenet
   ├── README.md
+  ├── ascend310_infer                      # application for 310 inference
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
     ├── run_eval.sh                        # launch ascend evaluation
+    ├── run_infer_310.sh                   # shell script for 310 infer
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
@@ -118,6 +125,8 @@ After installing MindSpore via the official website, you can start training and 
   ├── train.py                             # train net
   ├── eval.py                              # eval net
   └── export.py                            # export checkpoint files into geir/onnx
+  ├── postprocess.py                       # postprocess script
+  ├── preprocess.py                       # preprocess script
 ```
 
 ## [Script Parameters](#contents)
@@ -330,6 +339,61 @@ result: {'top_1_accuracy': 0.9077524038461539, 'top_5_accuracy': 0.9969951923076
 result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.826324423815621}
 ```
 
+## [Inference process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --batch_size [BATCH_SIZE] --net [NET] --dataset [DATASET] --file_format [EXPORT_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`BATCH_SIZE` can only be set to 1
+`NET` should be in ["squeezenet", "squeezenet_residual"]
+`DATASET` should be in ["cifar10", "imagenet"]
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
+```
+
+- `DATASET` should be in ["imagenet", "cifar10"].
+- `LABEL_PATH` label.txt path, LABEL_FILE is only useful for imagenet. Write a py script to sort the category under the dataset, map the file names under the categories and category sort values,Such as[file name : sort value], and write the mapping results to the labe.txt file.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+- Infer SqueezeNet with CIFAR-10 dataset
+
+```bash
+'Top1_Accuracy': 83.62%  'Top5_Accuracy': 99.31%
+```
+
+- Infer SqueezeNet with ImageNet dataset
+
+```bash
+'Top1_Accuracy': 59.30%  'Top5_Accuracy': 81.40%
+```
+
+- Infer SqueezeNet_Residual with CIFAR-10 dataset
+
+```bash
+'Top1_Accuracy': 87.28%  'Top5_Accuracy': 99.58%
+```
+
+- Infer SqueezeNet_Residual with ImageNet dataset
+
+```bash
+'Top1_Accuracy': 60.82%  'Top5_Accuracy': 82.56%
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -469,6 +533,60 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 | batch_size          | 32                          |
 | outputs             | probability                 |
 | Accuracy            | 8pcs: 60.9%(TOP1), 82.6%(TOP5)       |
+
+### 310 Inference Performance
+
+#### SqueezeNet on CIFAR-10
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SqueezeNet                  |
+| Resource            | Ascend 310; OS Euler2.8     |
+| Uploaded Date       | 27/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | CIFAR-10                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 83.62%, TOP5: 99.31%  |
+
+#### SqueezeNet on ImageNet
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SqueezeNet                  |
+| Resource            | Ascend 310; OS Euler2.8                 |
+| Uploaded Date       | 27/05/2020 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 59.30%, TOP5: 81.40%  |
+
+#### SqueezeNet_Residual on CIFAR-10
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SqueezeNet_Residual         |
+| Resource            | Ascend 310; OS Euler2.8             |
+| Uploaded Date       | 27/05/2020 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | CIFAR-10                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 87.28%, TOP5: 99.58%  |
+
+#### SqueezeNet_Residual on ImageNet
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SqueezeNet_Residual         |
+| Resource            | Ascend 310; OS Euler2.8               |
+| Uploaded Date       | 27/05/2020 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | TOP1: 60.82%, TOP5: 82.56%  |
 
 ## [How to use](#contents)
 
