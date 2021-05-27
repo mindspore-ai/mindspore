@@ -40,20 +40,7 @@ class TopKCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(TopK,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  TopKCPUKernel)
-MS_REG_CPU_KERNEL(TopK,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddOutputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeInt32),
-                  TopKCPUKernel)
+MS_REG_CPU_KERNEL(TopK, KernelAttr(), TopKCPUKernel)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_

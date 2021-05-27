@@ -47,20 +47,7 @@ class GatherNdCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(
-  GatherNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  GatherNdCPUKernel);
-MS_REG_CPU_KERNEL(
-  GatherNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  GatherNdCPUKernel);
-MS_REG_CPU_KERNEL(
-  GatherNd,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  GatherNdCPUKernel);
-MS_REG_CPU_KERNEL(
-  GatherNd,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  GatherNdCPUKernel);
+MS_REG_CPU_KERNEL(GatherNd, KernelAttr(), GatherNdCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

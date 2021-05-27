@@ -41,20 +41,11 @@ class HSwishCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), HSwishCPUKernel,
-                    int8_t);
-
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    HSwishCPUKernel, int16_t);
-
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    HSwishCPUKernel, int);
-
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    HSwishCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    HSwishCPUKernel, float);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_

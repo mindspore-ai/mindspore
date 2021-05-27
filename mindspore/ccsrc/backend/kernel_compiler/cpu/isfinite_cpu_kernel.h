@@ -51,41 +51,7 @@ class IsFiniteCPUKernel : public CPUKernel {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
-
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
-                  IsFiniteCPUKernel);
+MS_REG_CPU_KERNEL(IsFinite, KernelAttr(), IsFiniteCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

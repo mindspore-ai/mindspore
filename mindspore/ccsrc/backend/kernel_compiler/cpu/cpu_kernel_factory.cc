@@ -17,12 +17,14 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 #include <memory>
+#include <set>
 #include <string>
 
 #include "runtime/device/kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
+const std::set<std::string> same_op_name = {"Concat", "Pack", "Stack", "Split", "Transpose", "Unpack", "AddN"};
 CPUKernelFactory &CPUKernelFactory::GetInstance() {
   static CPUKernelFactory instance;
   return instance;
@@ -48,6 +50,58 @@ std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_na
   return nullptr;
 }
 
+void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info,
+                                      std::vector<KernelAttr> *kernel_attrs) {
+  auto inputs_ptr = op_info->inputs_ptr();
+  auto outputs_ptr = op_info->outputs_ptr();
+  auto first_input_dtypes = inputs_ptr[0]->dtypes();
+  auto input_formats = inputs_ptr[0]->formats();
+
+  for (size_t i = 0; i < first_input_dtypes.size(); i++) {
+    KernelAttr kernel_attr;
+    kernel_attr.AddInputAttr(kernel::DtypeToTypeId(first_input_dtypes[i]), input_formats[i]);
+    for (size_t j = 1; j < inputs_ptr.size(); j++) {
+      auto input_dtypes = inputs_ptr[j]->dtypes();
+      input_formats = inputs_ptr[j]->formats();
+      kernel_attr.AddInputAttr(kernel::DtypeToTypeId(input_dtypes[i]), input_formats[i]);
+    }
+    for (size_t j = 0; j < outputs_ptr.size(); j++) {
+      auto output_dtypes = outputs_ptr[j]->dtypes();
+      auto output_formats = outputs_ptr[j]->formats();
+      kernel_attr.AddOutputAttr(kernel::DtypeToTypeId(output_dtypes[i]), output_formats[i]);
+    }
+    if (same_op_name.count(op_info->op_name()) != 0) {
+      kernel_attr.SetAllSameAttr(true);
+    }
+    kernel_attrs->emplace_back(kernel_attr);
+  }
+}
+
+void CPUKernelFactory::UpdateKernelAttrs(const std::string &kernel_name, const std::vector<KernelAttr> &kernel_attrs) {
+  size_t attr_size = kernel_attrs.size();
+  std::vector<std::pair<KernelAttr, CPUKernelCreator>> attr_creators(attr_size);
+  auto iter = name_to_attr_creator_.find(kernel_name);
+  if (iter == name_to_attr_creator_.end()) {
+    MS_LOG(ERROR) << "CPUKernelFactory has not registered operator: " << kernel_name;
+    return;
+  }
+
+  if (attr_size <= iter->second.size()) {
+    for (size_t i = 0; i < attr_size; i++) {
+      auto creator = name_to_attr_creator_.find(kernel_name)->second[i].second;
+      attr_creators[i] = std::make_pair(kernel_attrs[i], creator);
+    }
+  } else {
+    MS_LOG(INFO) << "attr size is not equal creators size " << kernel_name << " attr_size = " << attr_size
+                 << " creator_size = " << iter->second.size();
+    auto single_creator = name_to_attr_creator_.find(kernel_name)->second[0].second;
+    for (size_t i = 0; i < attr_size; i++) {
+      attr_creators[i] = std::make_pair(kernel_attrs[i], single_creator);
+    }
+  }
+  name_to_attr_creator_[kernel_name] = attr_creators;
+}
+
 std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &kernel_name,
                                                              const KernelBuildInfo &kernel_info) {
   auto iter = name_to_attr_creator_.find(kernel_name);
@@ -55,10 +109,18 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
     MS_LOG(INFO) << "Not registered CPU kernel: op[" << kernel_name << "]!";
     return std::make_pair(false, 0);
   }
-  auto creators = iter->second;
-  for (size_t index = 0; index < creators.size(); ++index) {
-    auto attr_creator = creators[index];
-    if (CPUKernelSingleAttrCheck(attr_creator.first, kernel_info)) {
+  auto kernel_attrs = GetSupportedKernelAttrList(kernel_name);
+  if (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
+    auto op_info_ptr = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);
+    if (op_info_ptr == nullptr) {
+      MS_LOG(ERROR) << "Not find op[" << kernel_name << "] in cpu";
+    }
+    kernel_attrs.clear();
+    SetKernelAttrs(op_info_ptr, &kernel_attrs);
+    kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(kernel_name, kernel_attrs);
+  }
+  for (size_t index = 0; index < kernel_attrs.size(); ++index) {
+    if (CPUKernelSingleAttrCheck(kernel_attrs[index], kernel_info)) {
       return std::make_pair(true, index);
     }
   }

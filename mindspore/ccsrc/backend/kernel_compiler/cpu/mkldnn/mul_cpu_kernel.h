@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -36,9 +37,8 @@ class MulCPUKernel : public MKLCPUKernel {
   bool need_swap_{false};
 };
 
-MS_REG_CPU_KERNEL(
-  Mul, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  MulCPUKernel);
+MS_REG_CPU_KERNEL(Mul, KernelAttr(), MulCPUKernel);
+MS_REG_CPU_KERNEL_T(Mul, KernelAttr(), ArithmeticCPUKernel, int32_t);
 }  // namespace kernel
 }  // namespace mindspore
 

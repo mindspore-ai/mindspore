@@ -80,20 +80,7 @@ class MirrorPadGradCPUKernel : public CPUKernel {
   int num_paddings_;
 };
 
-MS_REG_CPU_KERNEL(
-  MirrorPadGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  MirrorPadGradCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MirrorPadGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  MirrorPadGradCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MirrorPadGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  MirrorPadGradCPUKernel);
+MS_REG_CPU_KERNEL(MirrorPadGrad, KernelAttr(), MirrorPadGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_

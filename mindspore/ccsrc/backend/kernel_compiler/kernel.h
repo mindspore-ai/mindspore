@@ -35,7 +35,8 @@ enum KernelType : int {
   RT_KERNEL,
   HCCL_KERNEL,
   TBE_KERNEL,
-  HOST_KERNEL
+  HOST_KERNEL,
+  CPU_KERNEL,
 };
 
 namespace kernel {

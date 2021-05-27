@@ -46,14 +46,7 @@ class DropoutCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL(
-  Dropout,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  DropoutCPUKernel);
-MS_REG_CPU_KERNEL(
-  Dropout,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  DropoutCPUKernel);
+MS_REG_CPU_KERNEL(Dropout, KernelAttr(), DropoutCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_CPU_KERNEL_H_

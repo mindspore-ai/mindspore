@@ -34,8 +34,8 @@ void Cast(const S *in, T *out, size_t size) {
 template <typename S, typename T>
 void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  source_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  target_dtype = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  source_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  target_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
 }
 
 template <typename S, typename T>

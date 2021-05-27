@@ -40,10 +40,8 @@ class ArgmaxCPUKernel : public CPUKernel {
   size_t dim_axis_;
 };
 
-MS_REG_CPU_KERNEL_T(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                    ArgmaxCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                    ArgmaxCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(Argmax, KernelAttr(), ArgmaxCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Argmax, KernelAttr(), ArgmaxCPUKernel, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

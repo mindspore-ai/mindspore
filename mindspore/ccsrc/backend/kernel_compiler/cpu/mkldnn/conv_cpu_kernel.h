@@ -33,10 +33,7 @@ class ConvCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(
-  Conv2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConvCPUKernel);
+MS_REG_CPU_KERNEL(Conv2D, KernelAttr(), ConvCPUKernel);
 MS_REG_CPU_KERNEL(
   Conv3D,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

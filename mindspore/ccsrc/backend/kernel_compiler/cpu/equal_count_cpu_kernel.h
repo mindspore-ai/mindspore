@@ -33,10 +33,7 @@ class EqualCountCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(
-  EqualCount,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  EqualCountCPUKernel);
+MS_REG_CPU_KERNEL(EqualCount, KernelAttr(), EqualCountCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

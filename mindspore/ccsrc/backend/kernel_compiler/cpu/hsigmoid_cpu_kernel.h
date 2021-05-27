@@ -41,20 +41,15 @@ class HSigmoidCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    HSigmoidCPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int8_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    HSigmoidCPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int16_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    HSigmoidCPUKernel, int);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int32_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    HSigmoidCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, int64_t);
 
-MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    HSigmoidCPUKernel, float);
+MS_REG_CPU_KERNEL_T(HSigmoid, KernelAttr(), HSigmoidCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
