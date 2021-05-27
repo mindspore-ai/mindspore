@@ -36,7 +36,7 @@ class GatherV2CPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  int GatherLaunch(int8_t *int8_in, int8_t *int8_out, size_t size);
+  void ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num);
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;

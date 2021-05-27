@@ -94,9 +94,6 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
     }
   }
   slice_param_.param_length_ = DIMENSION_8D;
-
-  size_t max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  slice_param_.op_parameter_.thread_num_ = std::min(slice_param_.size_[1], SizeToInt(max_thread_num));
 }
 
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -106,12 +103,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   }
   auto input_addr = inputs[0]->addr;
   auto output_addr = outputs[0]->addr;
-  int thread_num = slice_param_.op_parameter_.thread_num_;
-  if (parallel_ && thread_num >= 2) {
-    ParallelRun(input_addr, output_addr, thread_num);
-  } else {
-    DoSliceNoParallel(input_addr, output_addr, &slice_param_, data_size_);
-  }
+  DoSliceNoParallel(input_addr, output_addr, &slice_param_, data_size_);
   return true;
 }
 }  // namespace kernel
