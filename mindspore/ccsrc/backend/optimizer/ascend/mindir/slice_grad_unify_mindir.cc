@@ -72,8 +72,10 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
 
   // set attr paddings
   auto x_shape = GetInputXShape(slice_grad);
-  auto begins = GetTupleValue(slice_grad->input(3));
-  auto sizes = GetTupleValue(slice_grad->input(4));
+  constexpr auto kInput3 = 3;
+  constexpr auto kInput4 = 4;
+  auto begins = GetTupleValue(slice_grad->input(kInput3));
+  auto sizes = GetTupleValue(slice_grad->input(kInput4));
   if (x_shape.size() != begins.size() || begins.size() != sizes.size()) {
     MS_LOG(EXCEPTION) << "For SliceGrad, x's shape dim number should be equal to len(begin) and len(size).";
   }

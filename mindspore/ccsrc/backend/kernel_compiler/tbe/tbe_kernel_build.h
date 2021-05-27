@@ -45,6 +45,10 @@ class TbeKernelBuild {
                                  std::string *fusion_kernel_name);
   static bool GetIOSize(const nlohmann::json &fusion_op_list, const std::vector<AnfNodePtr> &output_nodes,
                         std::vector<size_t> *input_size_list, std::vector<size_t> *output_size_list);
+  static void CalInputSize(const nlohmann::json &fusion_op_list, std::vector<size_t> *input_size_list);
+  static bool CalOutputSize(const nlohmann::json &fusion_op_list,
+                            const std::vector<mindspore::AnfNodePtr> &output_nodes,
+                            std::vector<size_t> *output_size_list);
 
  private:
   TbeKernelBuild() = default;

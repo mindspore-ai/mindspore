@@ -33,6 +33,7 @@ constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kInput2 = 2;
 ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
@@ -426,7 +427,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto depend_node = GetDependNode(mul_node);
-  auto sparse_softmax_node = GetSparseNode(depend_node, 2);
+  auto sparse_softmax_node = GetSparseNode(depend_node, kInput2);
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
   CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
@@ -440,7 +441,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node);
   CNodePtr real_div_node;
   if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(2));
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kInput2));
   } else {
     real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node);
   }
@@ -480,7 +481,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
 
   auto depend_node = node->cast<CNodePtr>();
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
-  auto sparse_softmax_node = GetSparseNode(depend_node, 2);
+  auto sparse_softmax_node = GetSparseNode(depend_node, kInput2);
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad);
@@ -554,7 +555,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   auto tile_node = CreateTile(graph, sparse_softmax_node_grad, mul_node);
   CNodePtr real_div_node;
   if (tile_node == nullptr) {
-    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(2));
+    real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, mul_node->input(kInput2));
   } else {
     real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node);
   }

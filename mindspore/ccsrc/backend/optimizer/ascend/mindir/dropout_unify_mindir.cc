@@ -15,12 +15,10 @@
  */
 
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
-#include <ops/all_ops.h>
 #include <vector>
 #include <string>
 #include <memory>
 #include <numeric>
-#include <algorithm>
 #include <functional>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
@@ -42,6 +40,7 @@ constexpr int64_t kMaskAlignNum = 128;
 constexpr int64_t kMaskMultiNum = 16;
 constexpr size_t kFloat16Len = 2;  // size of float16
 constexpr size_t kInt64Len = 8;    // size of int64
+constexpr auto kInput2 = 2;        // size of int64
 
 TypeId GetInputXDataType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -117,8 +116,8 @@ std::vector<int64_t> CalDropoutGenMaskOutput(const std::vector<int64_t> &shape) 
 
 bool NeedUpdate(const CNodePtr &getitem_cnode) {
   MS_EXCEPTION_IF_NULL(getitem_cnode);
-  MS_EXCEPTION_IF_NULL(getitem_cnode->input(2));
-  auto index_vnode = getitem_cnode->input(2)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(getitem_cnode->input(kInput2));
+  auto index_vnode = getitem_cnode->input(kInput2)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(index_vnode);
   auto index_value = index_vnode->value();
   MS_EXCEPTION_IF_NULL(index_value);
@@ -146,7 +145,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(node);
   auto dropout_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dropout_grad_cnode);
-  auto getitem1_node = dropout_grad_cnode->input(2);
+  auto getitem1_node = dropout_grad_cnode->input(kInput2);
   MS_EXCEPTION_IF_NULL(getitem1_node);
   auto getitem1_cnode = getitem1_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(getitem1_cnode);
@@ -346,7 +345,7 @@ const AnfNodePtr DropoutGradUnifyMindIR::Process(const FuncGraphPtr &func_graph,
 
   // DropoutGrad may not in the same graph with Dropout in heterogeneous scene, and mask input which is a parameter
   // in that scene, need to be updated.
-  auto mask_input = dropout_grad_cnode->input(2);
+  auto mask_input = dropout_grad_cnode->input(kInput2);
   if (mask_input->isa<Parameter>()) {
     // update abstract
     auto mask_abstract = mask_input->abstract();

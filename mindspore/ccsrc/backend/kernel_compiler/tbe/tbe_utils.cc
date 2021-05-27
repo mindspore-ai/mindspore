@@ -216,13 +216,14 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
     dir = opendir(bin_dir.c_str());
   }
   struct dirent *entry;
+  constexpr size_t SUFFIX_LENS = 5;
   while ((entry = readdir(dir)) != nullptr) {
     string bin_dir_tmp = bin_dir;
     std::string cce_json = entry->d_name;
-    if (cce_json.length() <= 5) {
+    if (cce_json.length() <= SUFFIX_LENS) {
       continue;
     }
-    std::string suffix = cce_json.substr(cce_json.length() - 5);
+    std::string suffix = cce_json.substr(cce_json.length() - SUFFIX_LENS);
     if (suffix != kJsonSuffix) {
       continue;
     }
