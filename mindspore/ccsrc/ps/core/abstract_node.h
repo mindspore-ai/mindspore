@@ -41,23 +41,23 @@ class AbstractNode : public Node {
   using DataPtr = std::shared_ptr<unsigned char[]>;
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 
-  bool Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
+  bool Broadcast(const NodeRole &node_role, const DataPtr &message, size_t size, int command,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
   void set_event_callback(const OnNodeEventMessage &on_node_event_message);
 
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &lens, int command, const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
+  bool Send(const NodeRole &node_role, const uint32_t &rank_id, const DataPtr &message, size_t len, int command,
             VectorPtr *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<DataPtr> &data,
             const std::vector<size_t> &data_lens, int command, std::vector<VectorPtr> *output,
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
-  std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
+  uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
+  std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
   bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
@@ -81,12 +81,12 @@ class AbstractNode : public Node {
                        const uint32_t &timeout = kCommTimeoutInSeconds);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
                        const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
-  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
+  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                             const Protos &protos, const void *data, size_t size);
   void ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
   void RunMessageCallback(const uint64_t &request_id);
   void set_message_callback(const uint64_t &request_id, const MessageCallback &callback);
-  void NotifyMessageArrival(std::shared_ptr<MessageMeta> meta);
+  void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);
   void RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
   uint64_t NextExpectedRankRequestId(const uint32_t &rank_id);
   uint64_t NextActualRankRequestId(const uint32_t &rank_id);

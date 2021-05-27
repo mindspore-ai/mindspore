@@ -32,11 +32,11 @@ void Worker::Run() {
   }
 
   Initialize();
-  worker_node_.set_event_callback([&](const core::NodeEvent &event) {
+  worker_node_.set_event_callback([this](const core::NodeEvent &event) {
     if ((event == core::NodeEvent::CLUSTER_TIMEOUT) ||
         (event == core::NodeEvent::SCHEDULER_TIMEOUT || (event == core::NodeEvent::NODE_TIMEOUT))) {
       MS_LOG(WARNING) << "Trigger timeout event:" << event << " begin to exit the system!";
-      Finalize();
+      this->Finalize();
       exit(0);
     }
   });
@@ -58,7 +58,7 @@ void Worker::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs,
   int64_t optim_id = key_to_optimId_[key];
   MS_LOG(INFO) << "The key is:" << key << " the optim_id:" << optim_id;
   bool is_sparse = false;
-  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex || optim_id == 3) {
+  if (optim_id == 1 || optim_id == kSparseLazyAdamIndex || optim_id == kSparseFtrlIndex) {
     is_sparse = true;
   }
   int64_t grad_index = -1;
@@ -322,10 +322,10 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   }
 
   for (size_t i = 0; i < keys->size(); i++) {
-    const Key &key = keys->at(i);
+    const Key &map_key = keys->at(i);
     float *addr = values->data() + value_offset;
     value_offset += single_id_len;
-    id_addr_map[key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
+    id_addr_map[map_key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
   }
 
   float *result_addr = lookup_result->data();
@@ -526,13 +526,13 @@ bool Worker::IsReadyForPull(const Key &key) {
   }
 }
 
-void Worker::PrepareSparseGradient(const size_t begin, const size_t end, const std::unordered_set<int> &distinct_ids,
+void Worker::PrepareSparseGradient(const size_t, const size_t, const std::unordered_set<int> &distinct_ids,
                                    const std::vector<std::pair<int, float *>> &indice_to_grads, const int *all_indice,
                                    const size_t segment_size, float *gradient, int *indices) {
   MS_EXCEPTION_IF_NULL(all_indice);
   MS_EXCEPTION_IF_NULL(gradient);
   MS_EXCEPTION_IF_NULL(indices);
-  int64_t offset = 0;
+  size_t offset = 0;
   int64_t index = 0;
   size_t segment_data_size = segment_size * sizeof(float);
   size_t dst_size;
@@ -601,7 +601,6 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   dst_data = reduced_data->data() + grad_offset;
   src_data = const_cast<float *>(grads);
   MS_EXCEPTION_IF_NULL(dst_data);
-  MS_EXCEPTION_IF_NULL(src_data);
   auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (mem_ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
@@ -617,7 +616,6 @@ void Worker::BuildSparseValue(const std::vector<int> &lengths, const size_t grad
   dst_data = indice_data;
   src_data = indices;
   MS_EXCEPTION_IF_NULL(dst_data);
-  MS_EXCEPTION_IF_NULL(src_data);
   mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (mem_ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
@@ -720,7 +718,8 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
   // Init variables
   float *data = const_cast<float *>(send.values().data());
 
-  if (attrs.count(0) == 0 || attrs.count(1) == 0 || attrs.count(2) == 0 || attrs.count(3) == 0) {
+  if (attrs.count(kGradIndex) == 0 || attrs.count(kIndiceIndex) == 0 || attrs.count(kFirstDimSize) == 0 ||
+      attrs.count(kOutDimSize) == 0) {
     MS_LOG(EXCEPTION) << "Invalid attrs keys";
   }
   auto iter = attrs.find(kGradIndex);
@@ -826,7 +825,7 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
 void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *partition,
                                    const std::map<int64_t, int64_t> &attrs) {
   MS_EXCEPTION_IF_NULL(partition);
-  partition->resize(server_num_);
+  partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
   auto values = send.values();
   auto lens = send.len();
@@ -859,14 +858,14 @@ void Worker::RoundRobinPartitioner(const KVMessage &send, PartitionKVMessages *p
 }
 
 void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<std::pair<bool, KVMessage>> *partition,
-                                            const std::map<int64_t, int64_t> &attrs) {
+                                            const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
-  partition->resize(server_num_);
+  partition->resize(LongToSize(server_num_));
   auto keys = send.keys();
   auto values = send.values();
   auto lens = send.len();
 
-  size_t col_cnt = lens[0] / embedding_row_cnt_[keys[0]];
+  int32_t col_cnt = lens[0] / embedding_row_cnt_[keys[0]];
   const std::vector<EmbeddingTableShardMetadata> &ranges = *(embedding_table_ranges_[keys[0]]);
   for (size_t i = 0; i < ranges.size(); i++) {
     size_t offset_begin = ranges[i].begin() * col_cnt;
@@ -880,10 +879,10 @@ void Worker::WorkerInitEmbeddingPartitioner(const KVMessage &send, std::vector<s
   }
 }
 void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessages *partition,
-                                        const std::map<int64_t, int64_t> &attrs) {
+                                        const std::map<int64_t, int64_t> &) {
   MS_EXCEPTION_IF_NULL(partition);
   const float *embedding_vals = send.values().data();
-  const int *lookup_ids = send.len().data();
+  const size_t *lookup_ids = send.len().data();
   size_t val_size = send.values_size();
   size_t id_size = IntToSize(send.len_size());
   size_t embedding_dim = val_size / id_size;
@@ -897,7 +896,7 @@ void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessag
     const auto &begin = range.begin();
     const auto &end = range.end();
     auto &kvs = partition->at(i).second;
-    kvs.add_keys(key);
+    kvs.add_keys(SizeToInt(key));
     for (size_t j = 0; j < id_size; j++) {
       auto lookup_id = static_cast<uint64_t>(lookup_ids[j]);
       if (lookup_id >= begin && lookup_id <= end) {
@@ -920,7 +919,7 @@ void Worker::BroadcastPartitioner(const KVMessage &send, PartitionKVMessages *pa
                                   const std::map<int64_t, int64_t> &attrs) {
   MS_EXCEPTION_IF_NULL(partition);
   partition->resize(LongToSize(server_num_));
-  for (int64_t i = 0; i < server_num_; i++) {
+  for (size_t i = 0; i < LongToSize(server_num_); i++) {
     partition->at(i).first = true;
     partition->at(i).second = send;
   }
@@ -981,7 +980,7 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
   vals->clear();
   for (size_t i = 0; i < resp.size(); ++i) {
     KVMessage message;
-    message.ParseFromArray(resp.at(i)->data(), resp.at(i)->size());
+    message.ParseFromArray(resp.at(i)->data(), SizeToInt(resp.at(i)->size()));
     std::copy(message.values().begin(), message.values().end(), std::back_inserter(*vals));
 
     if (lens) {
