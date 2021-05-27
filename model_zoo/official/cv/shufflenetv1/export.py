@@ -22,11 +22,11 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from src.config import config as cfg
 from src.shufflenetv1 import ShuffleNetV1
 
 parser = argparse.ArgumentParser(description='ShuffleNetV1 export')
 parser.add_argument("--device_id", type=int, default=0, help="device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="shufflenetv1", help="output file name.")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
@@ -49,5 +49,5 @@ if __name__ == '__main__':
     load_param_into_net(net, param_dict)
 
     image_height, image_width = (224, 224)
-    input_arr = Tensor(np.ones([cfg.batch_size, 3, image_height, image_width]), ms.float32)
+    input_arr = Tensor(np.ones([args.batch_size, 3, image_height, image_width]), ms.float32)
     export(net, input_arr, file_name=args.file_name, file_format=args.file_format)

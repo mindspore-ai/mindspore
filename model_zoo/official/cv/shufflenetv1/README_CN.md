@@ -14,6 +14,10 @@
     - [评估过程](#评估过程)
         - [启动](#启动-1)
         - [结果](#结果-1)
+    - [导出过程](#导出过程)
+        - [导出](#导出)
+    - [推理过程](#推理过程)
+        - [推理](#推理)
 - [模型说明](#模型说明)
     - [训练性能](#训练性能)
 - [随机情况的描述](#随机情况的描述)
@@ -60,6 +64,7 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
     ├─run_standalone_train.sh                 # Ascend环境下的单卡训练脚本
     ├─run_distribute_train.sh                 # Ascend环境下的八卡并行训练脚本
     ├─run_eval.sh                             # Ascend环境下的评估脚本
+    ├─run_infer_310.sh                        # Ascend 310 推理shell脚本
   ├─src
     ├─dataset.py                              # 数据预处理
     ├─shufflenetv1.py                         # 网络模型定义
@@ -73,6 +78,7 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
   ├─default_config.yaml                       # 参数文件
   ├─train.py                                  # 网络训练脚本
   ├─export.py                                 # 模型格式转换脚本
+  ├─postprogress.py                           # 310推理后处理脚本
   └─eval.py                                   # 网络评估脚本
   └─mindspore_hub_conf.py                     # hub配置脚本
 ```
@@ -209,6 +215,36 @@ result:{'Loss': 2.0479587888106323, 'Top_1_Acc': 0.7385817307692307, 'Top_5_Acc'
 # 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
 # (7) 开始模型的推理。
 ```
+
+## 导出过程
+
+### 导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
+
+## 推理过程
+
+### 推理
+
+在推理之前需要先导出模型，AIR模型只能在昇腾910环境上导出，MINDIR可以在任意环境上导出。
+
+```shell
+# 昇腾310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+```
+
+-注: Densnet121网络使用ImageNet数据集,图片的label是将文件夹排序后从0开始编号所得的数字.
+
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
+Densenet121网络使用ImageNet推理得到的结果如下:
+
+  ```log
+  Top_1_Acc=73.85%, Top_5_Acc=91.526%
+  ```
 
 # 模型说明
 
