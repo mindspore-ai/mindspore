@@ -438,7 +438,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
     } else if (AnfAlgo::GetCNodeName(node) == prim::kPrimTupleGetItem->name()) {
       used_output_index = output_index;
     } else {
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(output_info.first, output_info.second - 1);
+      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(output_info.first, IntToSize(output_info.second - 1));
       if (kernel_with_index.first.get() != node.get()) {
         MS_LOG(EXCEPTION) << "Get used node failed for op[" << AnfAlgo::GetCNodeName(node) << "]";
       }

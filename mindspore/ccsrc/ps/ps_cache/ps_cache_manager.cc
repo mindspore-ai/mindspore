@@ -1087,7 +1087,7 @@ void PsCacheManager::DumpHashTables(bool dump_device_tables) const {
                  << ", device cache address:" << reinterpret_cast<void *>(item.second.device_address.addr)
                  << ", host cache address:" << reinterpret_cast<void *>(item.second.host_address.get());
     if (dump_device_tables) {
-      std::unique_ptr<float[]> output = std::make_unique<float[]>(item.second.device_address.size / 4);
+      std::unique_ptr<float[]> output = std::make_unique<float[]>(item.second.device_address.size / sizeof(float));
       embedding_device_cache_->cache_->CopyDeviceMemToHost(output.get(), item.second.device_address.addr,
                                                            item.second.device_address.size);
       embedding_device_cache_->cache_->SynchronizeStream();
@@ -1104,6 +1104,7 @@ void PsCacheManager::DumpHashTables(bool dump_device_tables) const {
 
 void PsCacheManager::DumpStatisticsInfo(size_t each_print_step) {
   // Default each 1000 step prints ps cache hit rate.
+  const size_t kFloatToPercentSign = 100;
   if (data_step_ % each_print_step == 0) {
     statistics_info_.batch_id_unique_count_ = statistics_info_.hash_hit_count_ + statistics_info_.host_to_device_size_;
     auto repeat_rate = SizeToFloat(statistics_info_.batch_id_count_ - statistics_info_.batch_id_unique_count_) /
@@ -1117,8 +1118,9 @@ void PsCacheManager::DumpStatisticsInfo(size_t each_print_step) {
                  << ", device swap to host num:" << statistics_info_.device_to_host_size_
                  << ", host swap to server num:" << statistics_info_.host_to_server_size_
                  << ", server swap to host num:" << statistics_info_.server_to_host_size_
-                 << ", data repeat rate:" << repeat_rate * 100 << "%, device cache hit rate:" << device_hit_rate * 100
-                 << "%, host cache hit rate:" << host_hit_rate * 100 << ").";
+                 << ", data repeat rate:" << (repeat_rate * kFloatToPercentSign)
+                 << "%, device cache hit rate:" << (device_hit_rate * kFloatToPercentSign)
+                 << "%, host cache hit rate:" << (host_hit_rate * kFloatToPercentSign) << ").";
   }
 }
 }  // namespace ps

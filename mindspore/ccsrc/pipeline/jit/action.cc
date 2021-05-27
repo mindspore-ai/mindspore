@@ -612,7 +612,7 @@ bool ExecuteAction(const ResourcePtr &res) {
 }
 
 #if (ENABLE_CPU && !_WIN32)
-bool StartPSWorkerAction(const ResourcePtr &res) {
+bool StartPSWorkerAction(const ResourcePtr &) {
   ps::Worker::GetInstance().Run();
   return true;
 }
