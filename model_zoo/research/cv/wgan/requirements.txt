@@ -1,0 +1,3 @@
+mindspore
+numpy
+Pillow
