@@ -1191,9 +1191,9 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     graph->set_summary_node_exist(true);
   }
 
+  UnifyMindIR(graph);
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-  UnifyMindIR(graph);
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
@@ -2028,7 +2028,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
-  graph->UpdateGraphDynamicAttr();
   // set output
   if (is_ascend) {
     graph->set_output(cnode);
@@ -2046,6 +2045,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     UnifyMindIR(graph);
   }
+  graph->UpdateGraphDynamicAttr();
   return graph;
 }
 

@@ -447,56 +447,6 @@ AbstractBasePtr InferImplDropout(const AnalysisEnginePtr &, const PrimitivePtr &
   return std::make_shared<AbstractTuple>(ret);
 }
 
-AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple and a tensor.
-  // Outputs: mask.
-  const std::string op_name = primitive->name();
-  CheckRequiredArgsSize(op_name, args_spec_list, 2);
-  AbstractTuplePtr x_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  AbstractTensorPtr keep_prob = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-
-  TypePtr prob_type = keep_prob->element()->BuildType();
-  if ((prob_type->type_id() != kNumberTypeFloat16) && (prob_type->type_id() != kNumberTypeFloat32)) {
-    MS_LOG(EXCEPTION) << op_name << " keep_prob type should be float16 or float32, but " << prob_type->ToString()
-                      << ".";
-  }
-
-  auto x_shape_data = x_shape->elements();
-  int64_t count = 1;
-  for (std::size_t i = 0; i < x_shape->size(); ++i) {
-    auto value_track = x_shape_data[i]->GetValueTrack();
-    MS_EXCEPTION_IF_NULL(value_track);
-    int64_t e_value = 0;
-    if (value_track->isa<Int64Imm>()) {
-      e_value = GetValue<int64_t>(value_track);
-    } else {
-      MS_LOG(EXCEPTION) << "DropOutGenMask input x_shape elements is not int64 or int32, but "
-                        << value_track->ToString() << ".";
-    }
-
-    if (e_value <= 0) {
-      MS_LOG(EXCEPTION) << "DropOutGenMask product of x_shape should be > 0";
-    }
-    if (std::numeric_limits<int64_t>::max() / count / e_value < 1) {
-      MS_LOG(EXCEPTION) << "integer multiply integer overflow";
-    }
-    count = count * e_value;
-  }
-
-  // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / 128;
-  if ((count % 128) != 0) {
-    n128s++;
-  }
-  int64_t bytes_count = n128s * 16;
-  std::vector<int64_t> shape_y{bytes_count};
-
-  primitive->set_attr("T", kInt32);
-  return std::make_shared<AbstractTensor>(std::make_shared<AbstractScalar>(kAnyValue, kUInt8),
-                                          std::make_shared<Shape>(std::vector<int64_t>{shape_y}));
-}
-
 AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   CheckRequiredArgsSize(primitive->name(), args_spec_list, 5);
