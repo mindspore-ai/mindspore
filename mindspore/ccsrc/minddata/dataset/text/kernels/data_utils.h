@@ -38,6 +38,14 @@ namespace dataset {
 /// \return Status return code
 Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, TensorShape out_shape,
                            uint32_t width, int32_t axis);
+
+/// \brief Helper method that append offsets tensor to output TensorRow.
+/// \param[in] offsets_start - Offsets start index vector.
+/// \param[in] offsets_limit - Offsets length vector.
+/// \param[out] output - Output TensorRow
+/// \return Status return code
+Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std::vector<uint32_t> &offsets_limit,
+                           TensorRow *output);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TEXT_DATA_UTILS_H_

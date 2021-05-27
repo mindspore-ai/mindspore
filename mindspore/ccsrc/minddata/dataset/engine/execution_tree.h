@@ -215,6 +215,7 @@ class ExecutionTree {
   bool numa_enable_;
   void *handle_;
 #endif
+  const uint32_t kCvThreadsNumLimits = 8;  // opencv suggested number of threads
 };
 }  // namespace dataset
 }  // namespace mindspore

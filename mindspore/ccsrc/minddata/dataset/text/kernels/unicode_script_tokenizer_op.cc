@@ -24,6 +24,7 @@
 #include "unicode/errorcode.h"
 #include "unicode/uchar.h"
 #include "unicode/uscript.h"
+#include "minddata/dataset/text/kernels/data_utils.h"
 
 using cppjieba::DecodeRunesInString;
 using cppjieba::RuneStrArray;
@@ -49,7 +50,7 @@ Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *outp
     RETURN_STATUS_UNEXPECTED("UnicodeScriptTokenizer: Decode utf8 string failed.");
   }
 
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
+  std::shared_ptr<Tensor> token_tensor;
   UScriptCode last_script = USCRIPT_INVALID_CODE;
   icu::ErrorCode status;
   int start = 0;
@@ -101,11 +102,7 @@ Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *outp
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(splits, &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
-
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
+    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
   }
   return Status::OK();
 }

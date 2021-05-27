@@ -208,6 +208,9 @@ class DeviceQueueOp : public PipelineOp {
   QueueList<std::unique_ptr<DataBuffer>> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;
   std::unique_ptr<GpuItemConnector> gpu_item_connector_;
+  const uint32_t kDeviceQueGpuNumThreads = 2;
+  const uint32_t kDeviceQueGpuQueueCapacity = 8;
+  const uint32_t kDeviceQueGpuThreadMemory = 1024;
   uint32_t num_workers_;
   uint32_t queue_capacity_;
   // This rank_id is for device_queue, one process work with only one rank_id,

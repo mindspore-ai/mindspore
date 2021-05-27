@@ -111,8 +111,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 
   cv::Mat in_image = input_cv->mat();
+  const uint32_t kResizeShapeLimits = 1000;
   // resize image too large or too small
-  if (output_height > in_image.rows * 1000 || output_width > in_image.cols * 1000) {
+  if (output_height > in_image.rows * kResizeShapeLimits || output_width > in_image.cols * kResizeShapeLimits) {
     std::string err_msg =
       "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image.";
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
@@ -559,8 +560,9 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       RETURN_STATUS_UNEXPECTED("CropAndResize: image shape is not <H,W,C> or <H,W>");
     }
     // image too large or too small
-    if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * 1000 ||
-        target_width == 0 || target_height > crop_width * 1000) {
+    const uint32_t kCropShapeLimits = 1000;
+    if (crop_height == 0 || crop_width == 0 || target_height == 0 || target_height > crop_height * kCropShapeLimits ||
+        target_width == 0 || target_height > crop_width * kCropShapeLimits) {
       std::string err_msg =
         "CropAndResize: the resizing width or height 1) is too big, it's up to "
         "1000 times the original image; 2) can not be 0.";

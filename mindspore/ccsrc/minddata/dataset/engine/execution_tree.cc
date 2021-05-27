@@ -165,8 +165,8 @@ Status ExecutionTree::Launch() {
     std::string err_msg = "Invalid thread number.";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  if (thread_num > 8)
-    cv::setNumThreads(8);
+  if (thread_num > kCvThreadsNumLimits)
+    cv::setNumThreads(kCvThreadsNumLimits);
   else
     cv::setNumThreads(thread_num);
 #endif

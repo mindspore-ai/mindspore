@@ -19,6 +19,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include "minddata/dataset/text/kernels/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -122,16 +123,13 @@ Status RegexTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   std::vector<std::string> tokens;
   std::vector<uint32_t> offsets_start;
   std::vector<uint32_t> offsets_limit;
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
+  std::shared_ptr<Tensor> token_tensor;
   RETURN_IF_NOT_OK(input[0]->GetItemAt(&text, {}));
   RETURN_IF_NOT_OK(GetRegexTokens(std::string(text.data(), text.size()), &tokens, &offsets_start, &offsets_limit));
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(std::move(tokens), &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
+    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
   }
   return Status::OK();
 }
