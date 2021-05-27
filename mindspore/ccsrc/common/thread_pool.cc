@@ -27,10 +27,11 @@ namespace common {
 const int kDeviceNum = 8;
 #endif
 const int kMaxThreadNum = 23;
+const int kRemainder = 2;
 bool Queue::Enqueue(Task *task) {
   const int tail_index = tail_.load(std::memory_order_relaxed);
   // queue full
-  auto next = (tail_index + 1) % 2;
+  auto next = (tail_index + 1) % kRemainder;
   if (next == head_.load(std::memory_order_acquire)) {
     return false;
   }
@@ -50,7 +51,7 @@ bool Queue::Dequeue(Task **out) {
     return false;
   }
   *out = buffer_[head_index];
-  head_.store((head_index + 1) % 2, std::memory_order_release);
+  head_.store((head_index + 1) % kRemainder, std::memory_order_release);
   return true;
 }
 
