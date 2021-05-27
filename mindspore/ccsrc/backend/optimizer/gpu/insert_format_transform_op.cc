@@ -28,6 +28,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
+const int kFakeTransposeShapeOneNum = 2;
+
 std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::string &dst_format) {
   if ((src_format == kOpFormat_NCHW) && (dst_format == kOpFormat_NHWC)) {
     return {0, 2, 3, 1};
@@ -43,14 +45,14 @@ std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::str
 // 2. out_shape [x, y, 1, 1]
 // 3. out_shape [x, 1, y, 1]
 bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int64_t> &transpose_perm) {
-  if (out_shape.size() != 4) {
+  if (out_shape.size() != device::gpu::kFormatTransformDimension) {
     MS_LOG(EXCEPTION) << "Invalid data shape, 4-D data was needed, but get " << out_shape.size() << "-D.";
   }
   std::vector<int64_t> perm1 = {0, 2, 3, 1};
   std::vector<int64_t> perm2 = {0, 3, 1, 2};
   auto num = std::count(out_shape.begin(), out_shape.end(), 1);
   if ((transpose_perm == perm1) || (transpose_perm == perm2)) {
-    if (num >= 2) {
+    if (num >= kFakeTransposeShapeOneNum) {
       return true;
     }
   }
@@ -130,9 +132,9 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
     if ((inputs_format[i] != kOpFormat_DEFAULT) && (inputs_format[i] != origin_data_format)) {
       auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
       MS_EXCEPTION_IF_NULL(input_node);
-      auto transpose_perm = TransposeAxis(origin_data_format, inputs_format[i]);
-      auto transpose_op = InsertTransposeOp(graph, input_node, node, i, transpose_perm);
-      SetTransposeOpBuildInfo(kOpFormat_DEFAULT, inputs_format[i], transpose_op);
+      auto input_transpose_perm = TransposeAxis(origin_data_format, inputs_format[i]);
+      auto input_transpose_op = InsertTransposeOp(graph, input_node, node, i, input_transpose_perm);
+      SetTransposeOpBuildInfo(kOpFormat_DEFAULT, inputs_format[i], input_transpose_op);
     }
   }
 
@@ -145,15 +147,15 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
       for (size_t j = 0; j < used_node_list->size(); j++) {
         auto used_node = used_node_list->at(j).first;
         auto used_node_index = used_node_list->at(j).second - 1;
-        auto transpose_perm = TransposeAxis(outputs_format[i], origin_data_format);
+        auto output_transpose_perm = TransposeAxis(outputs_format[i], origin_data_format);
         if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
           MS_LOG(DEBUG) << "The used node of [" << node->fullname_with_scope() << "] is tuple item.";
           // The tuple item need get next used nodes again.
-          ProcessForTupleItem(graph, used_node, used_node_index, transpose_perm, outputs_format[i]);
+          ProcessForTupleItem(graph, used_node, used_node_index, output_transpose_perm, outputs_format[i]);
           continue;
         }
-        auto transpose_op = InsertTransposeOp(graph, node, used_node, used_node_index, transpose_perm);
-        SetTransposeOpBuildInfo(outputs_format[i], kOpFormat_DEFAULT, transpose_op);
+        auto output_transpose_op = InsertTransposeOp(graph, node, used_node, used_node_index, output_transpose_perm);
+        SetTransposeOpBuildInfo(outputs_format[i], kOpFormat_DEFAULT, output_transpose_op);
       }
     }
   }

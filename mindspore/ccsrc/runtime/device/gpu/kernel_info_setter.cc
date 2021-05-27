@@ -220,7 +220,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   for (const auto &input_format_position : inputs_format_position) {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_format_position);
     // Only support the transformer between NCHW and NHWC, so need the shape is 4 dimension.
-    if (input_shape.size() != 4) {
+    if (input_shape.size() != kFormatTransformDimension) {
       return false;
     }
   }
@@ -231,7 +231,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   for (const auto &output_format_position : outputs_format_position) {
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, output_format_position);
     // Only support the transformer between NCHW and NHWC, so need the shape is 4 dimension.
-    if (output_shape.size() != 4) {
+    if (output_shape.size() != kFormatTransformDimension) {
       return false;
     }
   }
