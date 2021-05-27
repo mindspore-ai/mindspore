@@ -141,7 +141,7 @@ class MetaTensor : public Value {
   void SetDeviceInfo(const std::string &format, const TypePtr &data_type);
 
   // Get the size of a given dimension by its index number.
-  int DimensionSize(size_t index) const;
+  int64_t DimensionSize(size_t index) const;
 
   // Get total number of elements in a tensor.
   int ElementsNum() const;
