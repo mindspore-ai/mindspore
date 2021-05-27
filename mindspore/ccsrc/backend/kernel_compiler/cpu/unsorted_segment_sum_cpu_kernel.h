@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/base/unsorted_segment_sum_base.h"
 
 namespace mindspore {
 namespace kernel {

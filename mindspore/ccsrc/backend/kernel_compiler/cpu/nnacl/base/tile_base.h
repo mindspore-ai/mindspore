@@ -22,16 +22,16 @@
 typedef struct TileParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int multiples_[5];
-  int dims_[5];
+  int multiples_[7];
+  int dims_[7];
   size_t dims_size_;
   size_t multiples_size_;
 
   // shape correlative
-  int in_shape_[5];
-  int out_shape_[5];
-  int in_strides_[5];
-  int out_strides_[5];
+  int in_shape_[7];
+  int out_shape_[7];
+  int in_strides_[7];
+  int out_strides_[7];
 
   // other parameter
   int in_dim_;

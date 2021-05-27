@@ -20,17 +20,68 @@
 
 namespace mindspore {
 namespace kernel {
-void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+void TileCPUKernel::TileMultipleCompute(void) {
+  int large_one_multiple_count_ = 0;
+  int multiple = 0;
+  int mul_index = 0;
+  for (size_t i = 0; i < multiples_.size(); i++) {
+    tile_parameter_.multiples_[i] = multiples_[i];
+    if (tile_parameter_.multiples_[i] > 1) {
+      large_one_multiple_count_++;
+      multiple = tile_parameter_.multiples_[i];
+      mul_index = i;
+    }
+  }
+
+  one_dim_tile_ = large_one_multiple_count_ == 1;
+  if (one_dim_tile_) {
+    tile_parameter_.fast_multiple_ = static_cast<size_t>(multiple);
+    tile_parameter_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_parameter_.in_strides_[mul_index]);
+    tile_parameter_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_parameter_.fast_stride_);
+  }
+}
+
+void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
   (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  dtype_ = AnfAlgo ::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
   if (dtype_ == kTypeUnknown) {
     dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   }
+
+  size_t ones = multiples_.size() - x_shape_.size();
+  if (ones > 0) {
+    for (size_t i = 0; i < ones; ++i) {
+      x_shape_.insert(x_shape_.begin(), 1);
+    }
+  }
+
+  input_size_ = 1;
+  tile_parameter_.in_dim_ = x_shape_.size();
+  for (int i = 0; i < tile_parameter_.in_dim_; i++) {
+    input_size_ *= x_shape_[i];
+    tile_parameter_.in_shape_[i] = x_shape_[i];
+    tile_parameter_.out_shape_[i] = y_shape_[i];
+  }
+
+  int stridex = 1;
+  int stridey = 1;
+  for (int i = tile_parameter_.in_dim_ - 1; i >= 0; i--) {
+    tile_parameter_.in_strides_[i] = stridex;
+    tile_parameter_.out_strides_[i] = stridey;
+    stridex *= x_shape_[i];
+    stridey *= y_shape_[i];
+  }
+
+  TileMultipleCompute();
+}
+
+void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  CheckParam(kernel_node);
+  TileTensorParamrInit(kernel_node);
 
   launch_map_[kNumberTypeInt8] = &TileCPUKernel::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCPUKernel::LaunchKernel<int16_t>;
@@ -58,53 +109,17 @@ bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
 }
 
 template <typename T>
-void TileRecTask(const T *x, T *y, size_t dim, size_t *offset, std::vector<size_t> *pos,
-                 const std::vector<int> &multiples, const std::vector<size_t> &cargo_x,
-                 const std::vector<size_t> &cargo_y, const std::vector<size_t> &x_shape) {
-  if (dim == x_shape.size()) {
-    return;
-  }
-  for (size_t i = 0; i < x_shape[dim]; ++i) {
-    (*pos)[dim] = i;
-    if (dim == x_shape.size() - 1) {
-      size_t x_offset = 0;
-      for (size_t j = 0; j < (*pos).size(); ++j) {
-        x_offset += (*pos)[j] * cargo_x[j];
-      }
-      memcpy_s(y + *offset, sizeof(T), x + x_offset, sizeof(T));
-      *offset += 1;
-      continue;
-    }
-    TileRecTask(x, y, dim + 1, offset, pos, multiples, cargo_x, cargo_y, x_shape);
-  }
-  size_t dim_size = cargo_y[dim] * sizeof(T);
-  for (int m = 0; m < multiples[dim] - 1; ++m) {
-    size_t y_offset = *offset - cargo_y[dim];
-    memcpy_s(y + *offset, dim_size, y + y_offset, dim_size);
-    *offset += cargo_y[dim];
-  }
-}
-
-template <typename T>
 void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t ones = multiples_.size() - x_shape_.size();
-  if (ones > 0) {
-    for (size_t i = 0; i < ones; ++i) {
-      x_shape_.insert(x_shape_.begin(), 1);
-    }
+  tile_parameter_.data_size_ = sizeof(T);
+
+  if (one_dim_tile_) {
+    auto task = [&](size_t start, size_t end) { TileSimple(x_addr, y_addr, start, end, &tile_parameter_); };
+    CPUKernelUtils::ParallelFor(task, tile_parameter_.fast_outer_size_);
   }
-  int d = multiples_.size();
-  std::vector<size_t> pos(d, 0);
-  std::vector<size_t> cargo_x(d, 1);
-  std::vector<size_t> cargo_y = x_shape_;
-  for (int i = d - 2; i >= 0; --i) {
-    cargo_x[i] = x_shape_[i + 1] * cargo_x[i + 1];
-    cargo_y[i] *= cargo_y[i + 1] * multiples_[i + 1];
-  }
-  size_t offset = 0;
-  TileRecTask<T>(x_addr, y_addr, 0, &offset, &pos, multiples_, cargo_x, cargo_y, x_shape_);
+
+  Tile(x_addr, y_addr, &tile_parameter_);
 }
 
 void TileCPUKernel::CheckParam(const CNodePtr &kernel_node) {
