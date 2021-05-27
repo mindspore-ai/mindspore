@@ -34,7 +34,7 @@ class BayesianNet(nn.Cell):
 
         self.reduce_sum = P.ReduceSum(keep_dims=True)
 
-    def Normal(self,
+    def normal(self,
                name,
                observation=None,
                mean=None,
@@ -45,9 +45,8 @@ class BayesianNet(nn.Cell):
                reparameterize=True):
         """ Normal distribution wrapper """
 
-        assert not name is None
-        assert not seed is None
-        assert not dtype is None
+        if not isinstance(name, str):
+            raise TypeError("The type of `name` should be string")
 
         if observation is None:
             if reparameterize:
@@ -63,7 +62,7 @@ class BayesianNet(nn.Cell):
             'log_prob', sample, mean, std), 1)
         return sample, log_prob
 
-    def Bernoulli(self,
+    def bernoulli(self,
                   name,
                   observation=None,
                   probs=None,
@@ -72,9 +71,8 @@ class BayesianNet(nn.Cell):
                   shape=()):
         """ Bernoulli distribution wrapper """
 
-        assert not name is None
-        assert not seed is None
-        assert not dtype is None
+        if not isinstance(name, str):
+            raise TypeError("The type of `name` should be string")
 
         if observation is None:
             sample = self.bernoulli_dist('sample', shape, probs)

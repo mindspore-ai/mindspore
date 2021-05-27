@@ -15,8 +15,9 @@
 """
 Distribution operation utility functions.
 """
-from .utils import *
-from .custom_ops import *
+from .custom_ops import exp_generic, log_generic, broadcast_to
+from .utils import cast_to_tensor, check_greater_equal_zero, check_greater_zero
+from .utils import check_greater, check_prob, CheckTensor, CheckTuple, set_param_type
 
 __all__ = [
     'cast_to_tensor',

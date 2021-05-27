@@ -14,12 +14,12 @@
 # ============================================================================
 """dense_variational"""
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator
 from ...cell import Cell
 from ...layer.activation import get_activation
 from ..distribution.normal import Normal
-from .layer_distribution import NormalPrior, NormalPosterior
+from .layer_distribution import NormalPrior, normal_post_fn
+from ._util import check_prior, check_posterior
 
 __all__ = ['DenseReparam', 'DenseLocalReparam']
 
@@ -36,52 +36,22 @@ class _DenseVariational(Cell):
             activation=None,
             has_bias=True,
             weight_prior_fn=NormalPrior,
-            weight_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape),
+            weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
-            bias_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape)):
+            bias_posterior_fn=normal_post_fn):
         super(_DenseVariational, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
 
-        if isinstance(weight_prior_fn, Cell):
-            self.weight_prior = weight_prior_fn
-        else:
-            self.weight_prior = weight_prior_fn()
-        for prior_name, prior_dist in self.weight_prior.name_cells().items():
-            if prior_name != 'normal':
-                raise TypeError("The type of distribution of `weight_prior_fn` should be `normal`")
-            if not (isinstance(getattr(prior_dist, '_mean_value'), Tensor) and
-                    isinstance(getattr(prior_dist, '_sd_value'), Tensor)):
-                raise TypeError("The input form of `weight_prior_fn` is incorrect")
-
-        try:
-            self.weight_posterior = weight_posterior_fn(shape=[self.out_channels, self.in_channels], name='bnn_weight')
-        except TypeError:
-            raise TypeError('The type of `weight_posterior_fn` should be `NormalPosterior`')
-        for posterior_name, _ in self.weight_posterior.name_cells().items():
-            if posterior_name != 'normal':
-                raise TypeError("The type of distribution of `weight_posterior_fn` should be `normal`")
+        self.weight_prior = check_prior(weight_prior_fn, "weight_prior_fn")
+        self.weight_posterior = check_posterior(weight_posterior_fn, shape=[self.out_channels, self.in_channels],
+                                                param_name='bnn_weight', arg_name="weight_posterior_fn")
 
         if self.has_bias:
-            if isinstance(bias_prior_fn, Cell):
-                self.bias_prior = bias_prior_fn
-            else:
-                self.bias_prior = bias_prior_fn()
-            for prior_name, prior_dist in self.bias_prior.name_cells().items():
-                if prior_name != 'normal':
-                    raise TypeError("The type of distribution of `bias_prior_fn` should be `normal`")
-                if not (isinstance(getattr(prior_dist, '_mean_value'), Tensor) and
-                        isinstance(getattr(prior_dist, '_sd_value'), Tensor)):
-                    raise TypeError("The input form of `bias_prior_fn` is incorrect")
-
-            try:
-                self.bias_posterior = bias_posterior_fn(shape=[self.out_channels], name='bnn_bias')
-            except TypeError:
-                raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
-            for posterior_name, _ in self.bias_posterior.name_cells().items():
-                if posterior_name != 'normal':
-                    raise TypeError("The type of distribution of `bias_posterior_fn` should be `normal`")
+            self.bias_prior = check_prior(bias_prior_fn, "bias_prior_fn")
+            self.bias_posterior = check_posterior(bias_posterior_fn, shape=[self.out_channels], param_name='bnn_bias',
+                                                  arg_name="bias_posterior_fn")
 
         self.activation = activation
         if not self.activation:
@@ -100,9 +70,9 @@ class _DenseVariational(Cell):
         self.sum = P.ReduceSum()
 
     def construct(self, x):
-        outputs = self._apply_variational_weight(x)
+        outputs = self.apply_variational_weight(x)
         if self.has_bias:
-            outputs = self._apply_variational_bias(outputs)
+            outputs = self.apply_variational_bias(outputs)
         if self.activation_flag:
             outputs = self.activation(outputs)
         return outputs
@@ -118,7 +88,7 @@ class _DenseVariational(Cell):
             s += ', activation={}'.format(self.activation)
         return s
 
-    def _apply_variational_bias(self, inputs):
+    def apply_variational_bias(self, inputs):
         bias_posterior_tensor = self.bias_posterior("sample")
         return self.bias_add(inputs, bias_posterior_tensor)
 
@@ -162,16 +132,17 @@ class DenseReparam(_DenseVariational):
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        activation (str, Cell): A regularization function applied to the output of the layer. The type of `activation`
-            can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must
-            be instantiated beforehand. Default: None.
+        activation (str, Cell): A regularization function applied to the output of the layer.
+            The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
+            Note that if the type of activation is Cell, it must be instantiated beforehand.
+            Default: None.
         weight_prior_fn: The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
         bias_prior_fn: The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
@@ -179,7 +150,7 @@ class DenseReparam(_DenseVariational):
             only supports normal distribution.
         bias_posterior_fn: The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
 
     Inputs:
@@ -206,9 +177,9 @@ class DenseReparam(_DenseVariational):
             activation=None,
             has_bias=True,
             weight_prior_fn=NormalPrior,
-            weight_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape),
+            weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
-            bias_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape)):
+            bias_posterior_fn=normal_post_fn):
         super(DenseReparam, self).__init__(
             in_channels,
             out_channels,
@@ -220,7 +191,7 @@ class DenseReparam(_DenseVariational):
             bias_posterior_fn=bias_posterior_fn
         )
 
-    def _apply_variational_weight(self, inputs):
+    def apply_variational_weight(self, inputs):
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.matmul(inputs, weight_posterior_tensor)
         return outputs
@@ -250,16 +221,17 @@ class DenseLocalReparam(_DenseVariational):
         in_channels (int): The number of input channel.
         out_channels (int): The number of output channel .
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        activation (str, Cell): A regularization function applied to the output of the layer. The type of `activation`
-            can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()). Note that if the type of activation is Cell, it must
-            be instantiated beforehand. Default: None.
+        activation (str, Cell): A regularization function applied to the output of the layer.
+            The type of `activation` can be a string (eg. 'relu') or a Cell (eg. nn.ReLU()).
+            Note that if the type of activation is Cell, it must be instantiated beforehand.
+            Default: None.
         weight_prior_fn: The prior distribution for weight.
             It must return a mindspore distribution instance.
             Default: NormalPrior. (which creates an instance of standard
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
         bias_prior_fn: The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
@@ -267,7 +239,7 @@ class DenseLocalReparam(_DenseVariational):
             only supports normal distribution.
         bias_posterior_fn: The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
 
     Inputs:
@@ -294,9 +266,9 @@ class DenseLocalReparam(_DenseVariational):
             activation=None,
             has_bias=True,
             weight_prior_fn=NormalPrior,
-            weight_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape),
+            weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
-            bias_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape)):
+            bias_posterior_fn=normal_post_fn):
         super(DenseLocalReparam, self).__init__(
             in_channels,
             out_channels,
@@ -311,7 +283,7 @@ class DenseLocalReparam(_DenseVariational):
         self.square = P.Square()
         self.normal = Normal()
 
-    def _apply_variational_weight(self, inputs):
+    def apply_variational_weight(self, inputs):
         mean = self.matmul(inputs, self.weight_posterior("mean"))
         std = self.sqrt(self.matmul(self.square(inputs), self.square(self.weight_posterior("sd"))))
         weight_posterior_affine_tensor = self.normal("sample", mean=mean, sd=std)

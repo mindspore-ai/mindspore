@@ -24,6 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr, PrimitiveWithInfer, prim_attr_register
 import mindspore.nn as nn
 
+
 def cast_to_tensor(t, hint_type=mstype.float32):
     """
     Cast an user input value into a Tensor of dtype.
@@ -50,6 +51,7 @@ def cast_to_tensor(t, hint_type=mstype.float32):
     invalid_type = type(t)
     raise TypeError(
         f"Unable to convert input of type {invalid_type} to a Tensor of type {hint_type}")
+
 
 def cast_type_for_device(dtype):
     """
@@ -158,6 +160,7 @@ def check_prob(p):
     if not comp.all():
         raise ValueError('Probabilities should be less than one')
 
+
 def check_sum_equal_one(probs):
     """
     Used in categorical distribution. check if probabilities of each category sum to 1.
@@ -176,6 +179,7 @@ def check_sum_equal_one(probs):
     if not comp:
         raise ValueError('Probabilities for each category should sum to one for Categorical distribution.')
 
+
 def check_rank(probs):
     """
     Used in categorical distribution. check Rank >=1.
@@ -188,6 +192,7 @@ def check_rank(probs):
         probs = probs.data
     if probs.asnumpy().ndim == 0:
         raise ValueError('probs for Categorical distribution must have rank >= 1.')
+
 
 def logits_to_probs(logits, is_binary=False):
     """
@@ -204,8 +209,6 @@ def logits_to_probs(logits, is_binary=False):
 def clamp_probs(probs):
     """
     clamp probs boundary
-    Args:
-        probs (Tensor)
     """
     eps = P.Eps()(probs)
     return C.clip_by_value(probs, eps, 1-eps)
@@ -229,28 +232,34 @@ def raise_none_error(name):
     raise TypeError(f"the type {name} should be subclass of Tensor."
                     f" It should not be None since it is not specified during initialization.")
 
+
 @constexpr
 def raise_probs_logits_error():
     raise TypeError("Either 'probs' or 'logits' must be specified, but not both.")
 
+
 @constexpr
 def raise_broadcast_error(shape_a, shape_b):
     raise ValueError(f"Shape {shape_a} and {shape_b} is not broadcastable.")
+
 
 @constexpr
 def raise_not_impl_error(name):
     raise ValueError(
         f"{name} function should be implemented for non-linear transformation")
 
+
 @constexpr
 def raise_not_implemented_util(func_name, obj, *args, **kwargs):
     raise NotImplementedError(
         f"{func_name} is not implemented for {obj} distribution.")
 
+
 @constexpr
 def raise_type_error(name, cur_type, required_type):
     raise TypeError(
         f"For {name} , the type should be or be subclass of {required_type}, but got {cur_type}")
+
 
 @constexpr
 def raise_not_defined(func_name, obj, *args, **kwargs):
@@ -319,6 +328,7 @@ class CheckTensor(PrimitiveWithInfer):
         if isinstance(x, Tensor):
             return x
         raise TypeError(f"For {name}, input type should be a Tensor or Parameter.")
+
 
 def set_param_type(args, hint_type):
     """

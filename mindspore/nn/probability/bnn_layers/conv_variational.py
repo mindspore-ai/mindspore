@@ -14,11 +14,10 @@
 # ============================================================================
 """Convolutional variational layers."""
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
 from mindspore._checkparam import twice
 from ...layer.conv import _Conv
-from ...cell import Cell
-from .layer_distribution import NormalPrior, NormalPosterior
+from .layer_distribution import NormalPrior, normal_post_fn
+from ._util import check_prior, check_posterior
 
 __all__ = ['ConvReparam']
 
@@ -39,9 +38,9 @@ class _ConvVariational(_Conv):
                  group=1,
                  has_bias=False,
                  weight_prior_fn=NormalPrior,
-                 weight_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape),
+                 weight_posterior_fn=normal_post_fn,
                  bias_prior_fn=NormalPrior,
-                 bias_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape)):
+                 bias_posterior_fn=normal_post_fn):
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         dilation = twice(dilation)
@@ -78,47 +77,15 @@ class _ConvVariational(_Conv):
                       self.in_channels // self.group, *self.kernel_size]
 
         self.weight.requires_grad = False
-
-        if isinstance(weight_prior_fn, Cell):
-            self.weight_prior = weight_prior_fn
-        else:
-            self.weight_prior = weight_prior_fn()
-        for prior_name, prior_dist in self.weight_prior.name_cells().items():
-            if prior_name != 'normal':
-                raise TypeError("The type of distribution of `weight_prior_fn` should be `normal`")
-            if not (isinstance(getattr(prior_dist, '_mean_value'), Tensor) and
-                    isinstance(getattr(prior_dist, '_sd_value'), Tensor)):
-                raise TypeError("The input form of `weight_prior_fn` is incorrect")
-
-        try:
-            self.weight_posterior = weight_posterior_fn(shape=self.shape, name='bnn_weight')
-        except TypeError:
-            raise TypeError('The input form of `weight_posterior_fn` is incorrect')
-        for posterior_name, _ in self.weight_posterior.name_cells().items():
-            if posterior_name != 'normal':
-                raise TypeError("The type of distribution of `weight_posterior_fn` should be `normal`")
+        self.weight_prior = check_prior(weight_prior_fn, "weight_prior_fn")
+        self.weight_posterior = check_posterior(weight_posterior_fn, shape=self.shape, param_name='bnn_weight',
+                                                arg_name="weight_posterior_fn")
 
         if self.has_bias:
             self.bias.requires_grad = False
-
-            if isinstance(bias_prior_fn, Cell):
-                self.bias_prior = bias_prior_fn
-            else:
-                self.bias_prior = bias_prior_fn()
-            for prior_name, prior_dist in self.bias_prior.name_cells().items():
-                if prior_name != 'normal':
-                    raise TypeError("The type of distribution of `bias_prior_fn` should be `normal`")
-                if not (isinstance(getattr(prior_dist, '_mean_value'), Tensor) and
-                        isinstance(getattr(prior_dist, '_sd_value'), Tensor)):
-                    raise TypeError("The input form of `bias_prior_fn` is incorrect")
-
-            try:
-                self.bias_posterior = bias_posterior_fn(shape=[self.out_channels], name='bnn_bias')
-            except TypeError:
-                raise TypeError('The type of `bias_posterior_fn` should be `NormalPosterior`')
-            for posterior_name, _ in self.bias_posterior.name_cells().items():
-                if posterior_name != 'normal':
-                    raise TypeError("The type of distribution of `bias_posterior_fn` should be `normal`")
+            self.bias_prior = check_prior(bias_prior_fn, "bias_prior_fn")
+            self.bias_posterior = check_posterior(bias_posterior_fn, shape=[self.out_channels], param_name='bnn_bias',
+                                                  arg_name="bias_posterior_fn")
 
         # mindspore operations
         self.bias_add = P.BiasAdd()
@@ -135,23 +102,23 @@ class _ConvVariational(_Conv):
         self.sum = P.ReduceSum()
 
     def construct(self, inputs):
-        outputs = self._apply_variational_weight(inputs)
+        outputs = self.apply_variational_weight(inputs)
         if self.has_bias:
-            outputs = self._apply_variational_bias(outputs)
+            outputs = self.apply_variational_bias(outputs)
         return outputs
 
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={},  pad_mode={}, ' \
-            'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}'\
+            'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}' \
             .format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode, self.padding,
                     self.dilation, self.group, self.weight_posterior.mean, self.weight_posterior.untransformed_std,
                     self.has_bias)
         if self.has_bias:
-            s += ', bias_mean={}, bias_std={}'\
+            s += ', bias_mean={}, bias_std={}' \
                 .format(self.bias_posterior.mean, self.bias_posterior.untransformed_std)
         return s
 
-    def _apply_variational_bias(self, inputs):
+    def apply_variational_bias(self, inputs):
         bias_posterior_tensor = self.bias_posterior("sample")
         return self.bias_add(inputs, bias_posterior_tensor)
 
@@ -230,7 +197,7 @@ class ConvReparam(_ConvVariational):
             normal distribution). The current version only supports normal distribution.
         weight_posterior_fn: The posterior distribution for sampling weight.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
         bias_prior_fn: The prior distribution for bias vector. It must return
             a mindspore distribution. Default: NormalPrior(which creates an
@@ -238,7 +205,7 @@ class ConvReparam(_ConvVariational):
             only supports normal distribution.
         bias_posterior_fn: The posterior distribution for sampling bias vector.
             It must be a function handle which returns a mindspore
-            distribution instance. Default: lambda name, shape: NormalPosterior(name=name, shape=shape).
+            distribution instance. Default: normal_post_fn.
             The current version only supports normal distribution.
 
     Inputs:
@@ -270,9 +237,9 @@ class ConvReparam(_ConvVariational):
             group=1,
             has_bias=False,
             weight_prior_fn=NormalPrior,
-            weight_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape),
+            weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
-            bias_posterior_fn=lambda name, shape: NormalPosterior(name=name, shape=shape)):
+            bias_posterior_fn=normal_post_fn):
         super(ConvReparam, self).__init__(
             in_channels,
             out_channels,
@@ -289,7 +256,7 @@ class ConvReparam(_ConvVariational):
             bias_posterior_fn=bias_posterior_fn
         )
 
-    def _apply_variational_weight(self, inputs):
+    def apply_variational_weight(self, inputs):
         weight_posterior_tensor = self.weight_posterior("sample")
         outputs = self.conv2d(inputs, weight_posterior_tensor)
         return outputs
