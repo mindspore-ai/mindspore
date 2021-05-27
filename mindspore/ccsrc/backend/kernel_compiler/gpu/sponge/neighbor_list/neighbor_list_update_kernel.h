@@ -38,7 +38,7 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     refresh_interval = static_cast<int>(GetAttr<int64_t>(kernel_node, "refresh_interval"));
     not_first_time = static_cast<int>(GetAttr<int64_t>(kernel_node, "not_first_time"));
-    Nxy = static_cast<int>(GetAttr<int64_t>(kernel_node, "Nxy"));
+    nxy = static_cast<int>(GetAttr<int64_t>(kernel_node, "nxy"));
     excluded_atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "excluded_atom_numbers"));
 
     cutoff_square = static_cast<float>(GetAttr<float>(kernel_node, "cutoff_square"));
@@ -62,7 +62,7 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     auto bucket = GetDeviceAddress<int>(inputs, 1);
     auto crd = GetDeviceAddress<float>(inputs, 2);
     auto box_length = GetDeviceAddress<float>(inputs, 3);
-    auto grid_N = GetDeviceAddress<int>(inputs, 4);
+    auto grid_n = GetDeviceAddress<int>(inputs, 4);
     auto grid_length_inverse = GetDeviceAddress<float>(inputs, 5);
     auto atom_in_grid_serial = GetDeviceAddress<int>(inputs, 6);
     auto old_crd = GetDeviceAddress<float>(inputs, 7);
@@ -99,8 +99,8 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     Construct_Neighbor_List(atom_numbers, max_neighbor_numbers, nl_atom_numbers, nl_atom_serial, nl,
                             reinterpret_cast<cudaStream_t>(stream_ptr));
 
-    Neighbor_List_Update(grid_numbers, atom_numbers, d_refresh_count, refresh_interval, not_first_time, skin, Nxy,
-                         cutoff_square, cutoff_with_skin_square, grid_N, box_length, atom_numbers_in_grid_bucket,
+    Neighbor_List_Update(grid_numbers, atom_numbers, d_refresh_count, refresh_interval, not_first_time, skin, nxy,
+                         cutoff_square, cutoff_with_skin_square, grid_n, box_length, atom_numbers_in_grid_bucket,
                          grid_length_inverse, atom_in_grid_serial, d_bucket, crd, old_crd, crd_to_uint_crd_cof,
                          half_crd_to_uint_crd_cof, uint_crd, uint_dr_to_dr_cof, d_gpointer, nl, excluded_list_start,
                          excluded_list, excluded_numbers, half_skin_square, need_refresh_flag,
@@ -151,7 +151,7 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
   int atom_numbers;
   int grid_numbers;
   int refresh_interval;
-  int Nxy;
+  int nxy;
   int max_atom_in_grid_numbers;
   int max_neighbor_numbers;
   int excluded_atom_numbers;
