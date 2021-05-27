@@ -67,6 +67,7 @@ class ExceptionThread(threading.Thread):
             self.exception = e
             self.exc_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
 
+
 def check_filename(path, arg_name=""):
     """
     check the filename in the path.
@@ -106,6 +107,7 @@ def check_filename(path, arg_name=""):
 
     return True
 
+
 def check_parameter(func):
     """
     decorator for parameter check
@@ -135,6 +137,7 @@ def check_parameter(func):
         return func(*args, **kw)
 
     return wrapper
+
 
 def populate_data(raw, blob, columns, blob_fields, schema):
     """
