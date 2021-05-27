@@ -411,7 +411,7 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
     it++;
   }
 
-  size_t total_moved_size = it - last_grad_pos - 1;
+  size_t total_moved_size = LongToSize(it - last_grad_pos - 1);
   if (HasRefNodes(*moved_backward_cnodes) ||
       moved_backward_cnodes->size() + moved_forward_cnodes->size() != total_moved_size) {
     MS_LOG(INFO) << "Ref node was found or invalid number of moved nodes, give up optimization";
@@ -961,7 +961,7 @@ void AscendStreamAssign::ActiveRootGraphHcom(const NotNull<KernelGraphPtr> &grap
 }
 
 void AscendStreamAssign::ActiveRootGraphIndependent(const NotNull<KernelGraphPtr> &graph_ptr,
-                                                    std::set<uint32_t> independent_streams) {
+                                                    const std::set<uint32_t> &independent_streams) {
   MS_LOG(DEBUG) << "Start active root graph independent";
   std::vector<CNodePtr> update_cnode_list;
   auto exe_orders = graph_ptr->execution_order();
@@ -1356,7 +1356,6 @@ void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGrap
 
 vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr,
                                                        const CNodePtr &cur_cnode_ptr) {
-  auto cnode_ptr_list = graph_ptr->execution_order();
   auto group_name = GetHcomGroup(cur_cnode_ptr);
   auto input_cnodes = GetInputKernels(cur_cnode_ptr);
   if (input_cnodes.empty()) {
@@ -1406,10 +1405,10 @@ vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraph
   return final_inputs;
 }
 
-vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &node) {
+vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &cnode) {
   vector<CNodePtr> input_cnodes;
   queue<CNodePtr> nop_nodes;
-  auto inputs = node->inputs();
+  auto inputs = cnode->inputs();
   for (size_t i = 1; i < inputs.size(); i++) {
     auto real_input = AnfAlgo::VisitKernel(inputs[i], 0);
     auto node = real_input.first;
