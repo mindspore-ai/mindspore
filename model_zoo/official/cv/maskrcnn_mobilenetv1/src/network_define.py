@@ -23,6 +23,7 @@ from mindspore.ops import composite as C
 from mindspore import ParameterTuple
 from mindspore.train.callback import Callback
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from src.maskrcnn_mobilenetv1.mask_rcnn_mobilenetv1 import Mask_Rcnn_Mobilenetv1
 
 time_stamp_init = False
 time_stamp_first = 0
