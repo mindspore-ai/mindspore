@@ -72,6 +72,12 @@ struct OutputTensorInfo {
   bool is_weight;
 };
 
+struct GraphOutputInfo {
+  VectorRef *graph_outputs;
+  std::map<KernelWithIndex, std::vector<std::vector<size_t>>> output_indexes;
+  std::vector<tensor::TensorPtr> graph_output_tensors;
+};
+
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 class Executor;
 
