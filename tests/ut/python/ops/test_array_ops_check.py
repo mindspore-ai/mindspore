@@ -16,12 +16,14 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
+
+context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class ExpandDimsNet(nn.Cell):

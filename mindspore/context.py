@@ -147,7 +147,7 @@ class _Context:
 
     def __init__(self):
         self._thread_local_info = _ThreadLocalInfo()
-        self._context_switches = _ContextSwitchInfo(True)
+        self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
 
     def __new__(cls, *args, **kwargs):
@@ -522,7 +522,7 @@ def set_context(**kwargs):
     Context should be configured before running your program. If there is no configuration,
     it will automatic acquisition according to device target by default. GRAPH_MODE or
     PYNATIVE_MODE can be set by `mode` attribute and both modes support all backends, default
-    mode is PYNATIVE_MODE.
+    mode is GRAPH_MODE.
 
     When the `save_graphs` attribute is set to True, attribute of `save_graphs_path` is used to set the
     intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
@@ -532,7 +532,7 @@ def set_context(**kwargs):
     Note:
         Attribute name is required for setting attributes.
         The mode is not recommended to be changed after net was initialized because the implementations of some
-        operations are different in graph mode and pynative mode. Default: PYNATIVE_MODE.
+        operations are different in graph mode and pynative mode. Default: GRAPH_MODE.
 
     Some configurations are device specific, see the below table for details:
 
@@ -555,7 +555,7 @@ def set_context(**kwargs):
     ===========================  ===========================  =================
 
     Args:
-        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
+        mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: GRAPH_MODE(0).
         precompile_only (bool): Whether to only precompile the network. If set, the network will only be compiled and
              not executed. Default: False.
         device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".

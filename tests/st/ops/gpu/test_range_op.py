@@ -21,6 +21,9 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+
 class RangeNet(nn.Cell):
     def __init__(self, maxlen=50):
         super(RangeNet, self).__init__()
@@ -34,8 +37,6 @@ class RangeNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_precision_end_equals_last_element():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
     range_net = RangeNet(100)
     ms_out = range_net(Tensor(1000.04, mstype.float32),
                        Tensor(1001.04, mstype.float32),
@@ -68,8 +69,6 @@ def test_range_precision_end_equals_last_element():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_int():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
     range_net = RangeNet()
     ms_out = range_net(Tensor(2, mstype.int32), Tensor(5, mstype.int32), Tensor(1, mstype.int32)).asnumpy()
     np_expected = np.array([2, 3, 4])
@@ -94,8 +93,6 @@ def test_range_int():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_float():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
     range_net = RangeNet()
     ms_out = range_net(Tensor(2.3, mstype.float32), Tensor(5.5, mstype.float32), Tensor(1.2, mstype.float32)).asnumpy()
     np_expected = np.array([2.3, 3.5, 4.7])

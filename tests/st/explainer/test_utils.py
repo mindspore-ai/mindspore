@@ -19,6 +19,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
+from mindspore import context
 
 from mindspore.explainer._utils import (
     ForwardProbe,
@@ -27,6 +28,7 @@ from mindspore.explainer._utils import (
     retrieve_layer_by_name)
 from mindspore.explainer.explanation._attribution._backprop.backprop_utils import GradNet, get_bp_weights
 
+context.set_context(mode=context.PYNATIVE_MODE)
 
 class CustomNet(nn.Cell):
     """Simple net for test."""

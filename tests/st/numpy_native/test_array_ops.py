@@ -20,10 +20,13 @@ import pytest
 import numpy as onp
 
 import mindspore.numpy as mnp
+from mindspore import context
 from mindspore.nn import Cell
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
     rand_bool, match_res, run_multi_test, to_tensor, match_all_arrays
+
+context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class Cases():

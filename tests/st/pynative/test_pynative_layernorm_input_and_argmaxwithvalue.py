@@ -191,6 +191,7 @@ class ArgMaxWithValueFactory(OpsFactory):
         return input_grad.asnumpy()
 
     def forward_cmp(self):
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
         out_numpy = self.forward_numpy_impl()
         out_mindspore = self.forward_mindspore_impl()
         allclose_nparray(out_numpy[0], out_mindspore[0], self.loss, self.loss)

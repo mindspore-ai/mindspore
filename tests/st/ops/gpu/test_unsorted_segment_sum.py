@@ -23,7 +23,6 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import operations as P
 
-context.set_context(device_target='GPU')
 
 class UnsortedSegmentSumNet(nn.Cell):
     def __init__(self, num_segments):
@@ -39,6 +38,7 @@ class UnsortedSegmentSumNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1D():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([1, 2, 3, 4], mstype.float32)
     segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
     num_segments = 4
@@ -53,6 +53,7 @@ def test_1D():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2D():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([[1, 2, 3, 4],
                       [5, 6, 7, 8],
                       [9, 10, 11, 12]], mstype.float32)
@@ -72,6 +73,7 @@ def test_2D():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3D():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor(np.arange(4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3))
     segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
     num_segments = 5

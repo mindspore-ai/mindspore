@@ -18,11 +18,13 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore import Parameter, Tensor
+from mindspore import Parameter, Tensor, context
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.train.serialization import export
+
+context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class MeanConv(nn.Cell):

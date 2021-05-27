@@ -65,8 +65,8 @@ def test_inplace_fusion1():
     x2 = Tensor(x2_np.astype(np.float32))
     x3 = Tensor(x3_np.astype(np.float32))
 
-    net = Conv2dBpropInputInplace(w1, w2)
     context.set_context(device_target='GPU', mode=context.GRAPH_MODE)
+    net = Conv2dBpropInputInplace(w1, w2)
     fusion_output = net(x1, x2, x3)
 
     context.set_context(device_target='GPU', mode=context.PYNATIVE_MODE)

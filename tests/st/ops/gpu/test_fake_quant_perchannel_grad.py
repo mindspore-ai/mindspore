@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops.operations import _quant_ops as Q
 
-context.set_context(device_target='GPU', device_id=0)
+context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU', device_id=0)
 
 
 class Net(nn.Cell):
@@ -256,7 +256,7 @@ def test_fake_quant_grad10():
     x = np.array([-0.1, 0.0, 63.75, 63.8, -0.1, 0.0,
                   63.75, 63.8, -0.1, 0.0, 63.75, 63.8,
                   -0.1, 0.0, 63.75, 63.8, -0.1, 0.0,
-                  63.75, 63.8, -0.1, 0.0, 63.75, 63.8]).reshape(4, 3, 2, 1).astype(np.float32)
+                  63.75, 63.8, -0.1, 0.0, 63.75, 63.8]).reshape((4, 3, 2, 1)).astype(np.float32)
     min_val = np.array([-0.1, -0.1, -0.1, -0.1]).astype(np.float32)
     max_val = np.array([63.65, 63.65, 63.65, 63.65]).astype(np.float32)
     dout = read_dout.flatten()
@@ -286,7 +286,7 @@ def test_fake_quant_grad11():
     # WithVarsPerChannelDim4GradientNudgedDown_NarrowRange
     read_dout = np.random.uniform(-1, 1, size=[4, 3, 2, 1]).astype('float32')
     x = np.array([-0.1, 0.0, 63.5, 63.6, -0.1, 0.0, 63.5, 63.6, -0.1, 0.0, 63.5, 63.6, -0.1, 0.0, 63.5,
-                  63.6, -0.1, 0.0, 63.5, 63.6, -0.1, 0.0, 63.5, 63.6]).reshape(4, 3, 2, 1).astype(np.float32)
+                  63.6, -0.1, 0.0, 63.5, 63.6, -0.1, 0.0, 63.5, 63.6]).reshape((4, 3, 2, 1)).astype(np.float32)
     min_val = np.array([-0.1, -0.1, -0.1, -0.1]).astype(np.float32)
     max_val = np.array([63.4, 63.4, 63.4, 63.4]).astype(np.float32)
     dout = read_dout.flatten()
@@ -318,7 +318,7 @@ def test_fake_quant_grad12():
     x = np.array([-0.3, -0.25, 63.5, 63.6, -0.3, -0.25,
                   63.5, 63.6, -0.3, -0.25, 63.5, 63.6,
                   -0.3, -0.25, 63.5, 63.6, -0.3, -0.25,
-                  63.5, 63.6, -0.3, -0.25, 63.5, 63.6]).reshape(4, 3, 2, 1).astype(np.float32)
+                  63.5, 63.6, -0.3, -0.25, 63.5, 63.6]).reshape((4, 3, 2, 1)).astype(np.float32)
     min_val = np.array([-0.125, -0.125, -0.125, -0.125]).astype(np.float32)
     max_val = np.array([63.625, 63.625, 63.625, 63.625]).astype(np.float32)
     dout = read_dout.flatten()
@@ -350,7 +350,7 @@ def test_fake_quant_grad13():
     x = np.array([-0.3, -0.25, 63.25, 63.3, -0.3, -0.25,
                   63.25, 63.3, -0.3, -0.25, 63.25, 63.3,
                   -0.3, -0.25, 63.25, 63.3, -0.3, -0.25,
-                  63.25, 63.3, -0.3, -0.25, 63.25, 63.3]).reshape(4, 3, 2, 1).astype(np.float32)
+                  63.25, 63.3, -0.3, -0.25, 63.25, 63.3]).reshape((4, 3, 2, 1)).astype(np.float32)
     min_val = np.array([-0.125, -0.125, -0.125, -0.125]).astype(np.float32)
     max_val = np.array([63.375, 63.375, 63.375, 63.375]).astype(np.float32)
     dout = read_dout.flatten()

@@ -82,6 +82,8 @@ class CustomLoss(Loss):
         return self.get_loss(x, weights=2.0)
 
 def custom_loss(nptype):
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+
     loss = L1Loss()
     input_data = Tensor(np.array([[1, 2, 3], [2, 3, 4]]).astype(nptype))
     target_data = Tensor(np.array([[0, 2, 5], [3, 1, 1]]).astype(nptype))

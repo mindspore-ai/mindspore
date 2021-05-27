@@ -85,6 +85,7 @@ class Transpose_dynamic2(nn.Cell):
         return (out_1, out_2)
 
 def transpose1(nptype):
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     transpose = Transpose(nptype)
     output = transpose()
     expect0 = np.array([[[0, 6, 12, 18, 24],

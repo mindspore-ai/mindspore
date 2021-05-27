@@ -135,6 +135,7 @@ def test_sampled_softmax_loss_none_sampler():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sampledsoftmaxloss_reduction_invalid():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     # Check 'reduction'
     with pytest.raises(ValueError):
         nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="")

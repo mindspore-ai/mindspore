@@ -86,8 +86,6 @@ axis14 = ()
 np_axis14 = None
 keep_dims14 = True
 
-context.set_context(device_target='GPU')
-
 
 class ReduceSum(nn.Cell):
     def __init__(self):
@@ -176,6 +174,7 @@ class ReduceSum(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceSum():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_sum = ReduceSum()
     output = reduce_sum()
 

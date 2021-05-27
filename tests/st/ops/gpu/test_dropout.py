@@ -34,6 +34,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dropout():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_shape = [32, 16, 2, 5]
     x = np.ones(x_shape).astype(np.float32)
     keep_prob = 0.4

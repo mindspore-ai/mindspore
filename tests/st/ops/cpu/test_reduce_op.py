@@ -21,7 +21,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common.api import ms_function
 
-context.set_context(device_target="CPU")
+context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 
 
 class NetReduce(nn.Cell):

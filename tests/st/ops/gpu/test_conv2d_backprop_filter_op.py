@@ -23,7 +23,7 @@ from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
-context.set_context(device_target='GPU')
+context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
 
 class Conv2dFilter(nn.Cell):
