@@ -278,7 +278,7 @@ class GradExecutor {
   // Records forwrad cell, the bottom is top cell
   std::stack<std::string> cell_stack_;
   // For high grad of bprop
-  std::stack<bool> bprop_grad_stack_;
+  std::stack<std::pair<std::string, bool>> bprop_grad_stack_;
   std::vector<std::string> bprop_cell_list_;
   // For high grad order
   std::stack<std::pair<FuncGraphPtr, TopCellInfoPtr>> high_order_stack_;
