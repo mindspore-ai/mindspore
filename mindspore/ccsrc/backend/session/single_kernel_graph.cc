@@ -39,7 +39,7 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   auto input_num = input_dtypes.size();
   for (size_t i = 0; i < input_num; ++i) {
     auto tensor = std::make_shared<tensor::Tensor>(input_dtypes[i], input_shapes[i]);
-    auto value_node = ConstructRunOpValueNode(graph, tensor);
+    auto value_node = graph->NewValueNode(tensor);
     inputs.push_back(value_node);
   }
   // obtain cnode
@@ -58,23 +58,6 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   graph->set_output(cnode);
   graph->SetInputNodes();
   return graph;
-}
-
-ValueNodePtr SingleKernelGraph::ConstructRunOpValueNode(const std::shared_ptr<session::KernelGraph> &graph,
-                                                        const tensor::TensorPtr &input_tensor) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_node = std::make_shared<ValueNode>(input_tensor);
-  MS_EXCEPTION_IF_NULL(value_node);
-  // construct abstract of value node
-  auto type_of_tensor = input_tensor->Dtype();
-  auto shape_of_tensor = input_tensor->shape();
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
-  value_node->set_abstract(abstract);
-  // add value node to graph
-  auto input_value_node = graph->NewValueNode(value_node);
-  graph->AddValueNodeToGraph(input_value_node);
-  return input_value_node;
 }
 }  // namespace session
 }  // namespace mindspore

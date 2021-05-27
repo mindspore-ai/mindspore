@@ -33,6 +33,7 @@
 #include "abstract/param_validator.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/trace_base.h"
+#include "ir/anf_utils.h"
 
 namespace mindspore {
 namespace session {
@@ -50,15 +51,6 @@ constexpr size_t kNopNodeRealInputIndex = 1;
 using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
 PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
-
-bool IsShapeDynamic(const abstract::ShapePtr &shape) {
-  MS_EXCEPTION_IF_NULL(shape);
-  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
-}
-
-bool IsShapeDynamic(const std::vector<size_t> &shape) {
-  return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
-}
 
 bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
@@ -90,7 +82,7 @@ bool IsRealKernelCNode(const CNodePtr &cnode) {
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   std::vector<size_t> shape_size_t;
-  if (IsShapeDynamic(shape)) {
+  if (AnfUtils::IsShapeDynamic(shape)) {
     if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int64_t s) { return s >= 0; })) {
       std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t),
                      LongToSize);
@@ -1652,33 +1644,6 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &an
   }
 }
 
-bool IsNodeOutputDynamicShape(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto base_shape = node->Shape();
-  if (base_shape == nullptr) {
-    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
-    return false;
-  }
-  if (base_shape->isa<abstract::Shape>()) {
-    if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
-      return true;
-    }
-  } else if (base_shape->isa<abstract::TupleShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
-    for (size_t i = 0; i < tuple_shape->size(); i++) {
-      auto b_shape = (*tuple_shape)[i];
-      if (!b_shape->isa<abstract::Shape>()) {
-        continue;
-      }
-      if (IsShapeDynamic(b_shape->cast<abstract::ShapePtr>())) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
@@ -1694,7 +1659,7 @@ bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
       continue;
     }
     if (base_shape->isa<abstract::Shape>()) {
-      if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+      if (AnfUtils::IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
         return true;
       }
     } else if (base_shape->isa<abstract::TupleShape>()) {
@@ -1711,7 +1676,7 @@ bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
       if (!b_shp->isa<abstract::Shape>()) {
         continue;
       }
-      if (IsShapeDynamic(b_shp->cast<abstract::ShapePtr>())) {
+      if (AnfUtils::IsShapeDynamic(b_shp->cast<abstract::ShapePtr>())) {
         return true;
       }
     }
@@ -1727,7 +1692,7 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   auto in_dynamic = IsNodeInputDynamicShape(cnode);
-  auto out_dynamic = IsNodeOutputDynamicShape(cnode);
+  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
   if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
     MS_LOG(INFO) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
@@ -1742,7 +1707,7 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetInputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsShapeDynamic(device_shape)) {
+  if (AnfUtils::IsShapeDynamic(device_shape)) {
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
@@ -1754,7 +1719,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (IsShapeDynamic(device_shape)) {
+  if (AnfUtils::IsShapeDynamic(device_shape)) {
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
@@ -1804,7 +1769,7 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
   }
 }
 
-void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
+void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "InferShape start, node:" << node->DebugString();
   auto inputs = node->inputs();
@@ -1818,6 +1783,16 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
     auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
     auto real_input = input_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
+    if (depend_tensors != nullptr) {
+      auto iter_tensor = depend_tensors->find(i);
+      if (iter_tensor != depend_tensors->end()) {
+        auto tensor_ptr = iter_tensor->second;
+        MS_EXCEPTION_IF_NULL(tensor_ptr);
+        // sync data from device to host
+        tensor_ptr->data_sync();
+        real_input->abstract()->set_value(tensor_ptr);
+      }
+    }
     auto cnode_input = node->input(i + 1);
     MS_EXCEPTION_IF_NULL(cnode_input);
     if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {

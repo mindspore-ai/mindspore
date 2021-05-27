@@ -52,6 +52,10 @@
 
 namespace mindspore {
 namespace session {
+const size_t kLoopSinkTensorNum = 3;
+const size_t kLoopSinkCurLoopIndex = 0;
+const size_t kLoopSinkNextLoopIndex = 1;
+const size_t kLoopSinkEpochIndex = 2;
 static std::shared_ptr<std::map<ParamInfoPtr, ParameterPtr>> python_paras;
 void ClearPythonParasMap() { python_paras = nullptr; }
 namespace {
@@ -282,11 +286,11 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   if (inputs_params == nullptr) {
     return 0;
   }
-  if (inputs_params->size() < 3) {
+  if (inputs_params->size() < kLoopSinkTensorNum) {
     MS_LOG(EXCEPTION) << "Illegal inputs_params size";
   }
   // update current loop tensor to 0 per iterator
-  auto cur_loop_tensor = (*inputs_params)[0];
+  auto cur_loop_tensor = (*inputs_params)[kLoopSinkCurLoopIndex];
   MS_EXCEPTION_IF_NULL(cur_loop_tensor);
   auto *cur_val = static_cast<int32_t *>(cur_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(cur_val);
@@ -297,7 +301,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   inputs->push_back(cur_loop_tensor);
 
   // update next loop tensor to 0 per iterator
-  auto next_loop_tensor = (*inputs_params)[1];
+  auto next_loop_tensor = (*inputs_params)[kLoopSinkNextLoopIndex];
   MS_EXCEPTION_IF_NULL(next_loop_tensor);
   auto *next_val = static_cast<int32_t *>(next_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(next_val);
@@ -307,7 +311,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(next_loop_tensor);
 
-  auto epoch_tensor = (*inputs_params)[2];
+  auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
   auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
   MS_EXCEPTION_IF_NULL(epoch_val);
@@ -319,22 +323,6 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   graph->set_current_epoch(graph->current_epoch() + 1);
 
   return inputs_params->size();
-}
-
-ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_node = std::make_shared<ValueNode>(input_tensor);
-  MS_EXCEPTION_IF_NULL(value_node);
-  // construct abstract of value node
-  auto type_of_tensor = input_tensor->Dtype();
-  auto shape_of_tensor = input_tensor->shape();
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
-  value_node->set_abstract(abstract);
-  // add value node to graph
-  auto input_value_node = graph->NewValueNode(value_node);
-  graph->AddValueNodeToGraph(input_value_node);
-  return input_value_node;
 }
 
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
@@ -815,7 +803,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if (optimize_depend && input_idx > 1) {
+    } else if (optimize_depend && input_idx > kRealInputIndexInDepend) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
@@ -874,8 +862,8 @@ CNodePtr SessionBasic::CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr
   // switch input generalizes partial
   std::vector<AnfNodePtr> partial_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
   if (AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimPartial)) {
-    auto partial_node = graph->GetBackendAnfByFrontAnf(node_input);
-    return partial_node->cast<CNodePtr>();
+    auto backend_node = graph->GetBackendAnfByFrontAnf(node_input);
+    return backend_node->cast<CNodePtr>();
   } else if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
     partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
   } else {
@@ -905,8 +893,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cno
   auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
-  constexpr size_t cnode_size = 2;
-  if (cnode->inputs().size() < cnode_size) {
+  if (cnode->inputs().size() <= 1) {
     cnode_inputs = switch_cnode->inputs();
     return cnode_inputs;
   }
@@ -1577,13 +1564,13 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
 void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = 3;
+  size_t input_ctrl_size = kLoopSinkTensorNum;
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->input_ctrl_tensors()) {
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
   }
   auto &input_nodes = kernel_graph->input_nodes();
-  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size()) {
+  if ((inputs.size() + input_ctrl_size) - kLoopSinkTensorNum != input_nodes.size()) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }
@@ -1935,8 +1922,8 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
     auto cnode = front_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
-    if (inputs.size() > 2) {
-      return GetSupportedInternalNode(inputs[1]);
+    if (inputs.size() >= kDependInputSize) {
+      return GetSupportedInternalNode(inputs[kRealInputIndexInDepend]);
     }
   }
   return nullptr;
@@ -2070,7 +2057,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   }
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     if (tensors_mask[i] == kValueNodeTensorMask) {
-      auto value_node = ConstructRunOpValueNode(graph, input_tensors[i]);
+      auto value_node = graph->NewValueNode(input_tensors[i]);
       inputs.push_back(value_node);
       continue;
     }
