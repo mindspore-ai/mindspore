@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const CNodePtr &kernel_node,
-                                                                    dnnl::memory::desc src_desc) {
+                                                                    const dnnl::memory::desc src_desc) {
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name == "ReLU") {
     return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_relu, src_desc, 0.0);

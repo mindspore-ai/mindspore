@@ -42,7 +42,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   if (k < 1) {
     MS_LOG(EXCEPTION) << "Input k must > 0!";
   }
-  int k_num = std::min<int>(inner_size_, k);
+  size_t k_num = IntToSize(std::min<int>(inner_size_, k));
   if (outputs[0]->size != outer_size_ * k_num * sizeof(T)) {
     MS_LOG(EXCEPTION) << "Error output data size!";
   }
@@ -54,10 +54,10 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
                      [&input](size_t index_1, size_t index_2) { return input[index_1] > input[index_2]; });
     auto base_output = i * k_num;
     if (!sorted_) {
-      std::stable_sort(idx.begin(), idx.begin() + k_num);
+      std::stable_sort(idx.begin(), idx.begin() + SizeToLong(k_num));
     }
-    for (int j = 0; j < k_num; ++j) {
-      indices[base_output + j] = idx[j] - base_input;
+    for (size_t j = 0; j < k_num; ++j) {
+      indices[base_output + j] = SizeToInt(idx[j]) - SizeToInt(base_input);
       output[base_output + j] = input[idx[j]];
     }
   }
