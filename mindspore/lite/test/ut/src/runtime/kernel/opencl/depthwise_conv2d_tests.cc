@@ -35,6 +35,8 @@ OpParameter *CreateParameter(int kernel_h, int kernel_w, int stride_h, int strid
   param->pad_l_ = pad_l;
   param->pad_r_ = pad_r;
   param->input_channel_ = input_channel;
+  param->output_channel_ = input_channel;
+  param->group_ = input_channel;
   param->dilation_h_ = dilation_h;
   param->dilation_w_ = dilation_w;
   param->act_type_ = act_type;
