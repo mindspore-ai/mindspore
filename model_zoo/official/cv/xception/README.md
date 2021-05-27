@@ -18,6 +18,9 @@
         - [Usage](#usage-1)
         - [Launch](#launch-1)
         - [Result](#result-1)
+    - [Export Process](#Export-process)
+    - [Inference Process](#Inference-process)
+        - [Inference](#Inference)
 - [Model description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
@@ -73,12 +76,14 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 .
 └─Xception
   ├─README.md
+  ├─ascend310_infer                #application for 310 inference
   ├─scripts
     ├─run_standalone_train.sh      # launch standalone training with ascend platform(1p)
     ├─run_distribute_train.sh      # launch distributed training with ascend platform(8p)
     ├─run_train_gpu_fp32.sh        # launch standalone or distributed fp32 training with gpu platform(1p or 8p)
     ├─run_train_gpu_fp16.sh        # launch standalone or distributed fp16 training with gpu platform(1p or 8p)
     ├─run_eval.sh                  # launch evaluating with ascend platform
+    ├─run_infer_310.sh             # shell script for 310 inference
     └─run_eval_gpu.sh              # launch evaluating with gpu platform
   ├─src
     ├─config.py                    # parameter configuration
@@ -87,6 +92,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─loss.py                      # Customized CrossEntropy loss function
     └─lr_generator.py              # learning rate generator
   ├─train.py                       # train net
+  ├─postprogress.py                # post process for 310 inference
   ├─export.py                      # export net
   └─eval.py                        # eval net
 
@@ -176,6 +182,9 @@ sh scripts/run_train_gpu_fp16.sh 1 DATASET_PATH PRETRAINED_CKPT_PATH(optional)
 
 # infer example
 sh run_eval_gpu.sh DEVICE_ID DATASET_PATH CHECKPOINT_PATH
+
+#ascend310 infer example
+sh run_infer_310.sh MINDIR_PATH DATA_PATH LABEL_FILE DEVICE_ID
 ```
 
 > Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -272,6 +281,34 @@ result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc
 
 ```shell
 result: {'Loss': 1.7846775874590903, 'Top_1_Acc': 0.798735595390525, 'Top_5_Acc': 0.9498439500640204}
+```
+
+## [Export process](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
+
+`EXPORT_FORMAT` should be in ["AIR",  "MINDIR"]
+
+## [Inference process](#contents)
+
+### Inference
+
+Before performing inference, we need to export model first. Air model can only be exported in Ascend 910 environment, mindir model can be exported in any environment.
+Current batch_ size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+```
+
+-Note: the Imagenet data set is used in densnet121 network. The label of the picture is the number from 0 after sorting the folder.
+
+Inference result will be stored in the script path, you can find result like the followings in acc.log.
+
+```shell
+Top_1_Acc: 0.79886%, Top_5_Acc: 0.94882%
 ```
 
 # [Model description](#contents)
