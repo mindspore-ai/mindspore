@@ -714,11 +714,11 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
       // Try to travel the latest undetermined.
       if (latest_entry != eval_trace_.rbegin()->evaluator_) {
         MS_LOG(DEBUG) << "Direct Run Evaluator " << eval.get() << "----" << eval->ToString();
-        auto eval_result = latest_entry->Run(shared_from_this(), args_conf_list, out_conf);
-        MS_EXCEPTION_IF_NULL(eval_result->abstract());
+        auto latest_entry_eval_result = latest_entry->Run(shared_from_this(), args_conf_list, out_conf);
+        MS_EXCEPTION_IF_NULL(latest_entry_eval_result->abstract());
         MS_LOG(DEBUG) << "end Direct Evaluator " << latest_entry->ToString()
-                      << " return out_spec: " << eval_result->abstract()->ToString();
-        return eval_result;
+                      << " return out_spec: " << latest_entry_eval_result->abstract()->ToString();
+        return latest_entry_eval_result;
       }
     }
   }

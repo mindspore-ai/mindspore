@@ -43,20 +43,25 @@ def cell_attr_register(fn=None, attrs=None):
                 del arguments['self']
                 arguments = arguments.values()
             fn(self, *args, **kwargs)
-            if attrs is not None:
-                if isinstance(attrs, list):
-                    for item in attrs:
-                        if not isinstance(item, str):
-                            raise ValueError(f"attr must be a string")
-                        if hasattr(self, item):
-                            arguments.append(getattr(self, item))
-                elif isinstance(attrs, str):
-                    if hasattr(self, attrs):
-                        arguments = getattr(self, attrs)
-                else:
-                    raise ValueError(f"attrs must be list or string")
+            if attrs is None:
+                self.cell_init_args = type(self).__name__ + str(arguments)
+                return
+
+            if isinstance(attrs, list):
+                for item in attrs:
+                    if not isinstance(item, str):
+                        raise ValueError(f"attr must be a string")
+                    if hasattr(self, item):
+                        arguments.append(getattr(self, item))
+            elif isinstance(attrs, str):
+                if hasattr(self, attrs):
+                    arguments = getattr(self, attrs)
+            else:
+                raise ValueError(f"attrs must be list or string")
             self.cell_init_args = type(self).__name__ + str(arguments)
+
         return deco
+
     if fn is not None:
         return wrap_cell(fn)
     return wrap_cell

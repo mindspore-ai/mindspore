@@ -19,9 +19,39 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-const char *GetSubModuleName(SubModuleId module_id, const char **sub_module_names) {
-  return sub_module_names[module_id % NUM_SUBMODUES];
-}
+static const std::vector<std::string> sub_module_names = {
+  "UNKNOWN",            // SM_UNKNOWN
+  "CORE",               // SM_CORE
+  "ANALYZER",           // SM_ANALYZER
+  "COMMON",             // SM_COMMON
+  "DEBUG",              // SM_DEBUG
+  "OFFLINE_DEBUG",      // SM_OFFLINE_DEBUG
+  "DEVICE",             // SM_DEVICE
+  "GE_ADPT",            // SM_GE_ADPT
+  "IR",                 // SM_IR
+  "KERNEL",             // SM_KERNEL
+  "MD",                 // SM_MD
+  "ME",                 // SM_ME
+  "EXPRESS",            // SM_EXPRESS
+  "OPTIMIZER",          // SM_OPTIMIZER
+  "PARALLEL",           // SM_PARALLEL
+  "PARSER",             // SM_PARSER
+  "PIPELINE",           // SM_PIPELINE
+  "PRE_ACT",            // SM_PRE_ACT
+  "PYNATIVE",           // SM_PYNATIVE
+  "SESSION",            // SM_SESSION
+  "UTILS",              // SM_UTILS
+  "VM",                 // SM_VM
+  "PROFILER",           // SM_PROFILER
+  "PS",                 // SM_PS
+  "LITE",               // SM_LITE
+  "HCCL_ADPT",          // SM_HCCL_ADPT
+  "MINDQUANTUM",        // SM_MINDQUANTUM
+  "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
+  "GE",                 // SM_GE
+};
+
+const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_names[module_id % NUM_SUBMODUES]; }
 
 // export GetTimeString for all sub modules
 std::string GetTimeString() {

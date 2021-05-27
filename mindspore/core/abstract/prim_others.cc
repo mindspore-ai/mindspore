@@ -295,8 +295,9 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
+  constexpr auto kMakeSparseInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  CheckArgsSize(op_name, args_spec_list, kMakeSparseInputNum);
   auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);

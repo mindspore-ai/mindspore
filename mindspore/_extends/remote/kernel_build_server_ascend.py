@@ -58,12 +58,10 @@ class AscendMessager(Messager):
         self.tbe_builder = TbeBuilder()
         self.akg_builder = AkgBuilder()
 
-    def handle(self):
+    def tbe_handle(self, arg):
         """
-        Communicate with remote client.
-        Reference protocol between them at PR#3821 and PR#3935
+        Handle arg start with TBE
         """
-        arg = self.get_message()
         if arg == 'TBE/PRE':
             ans = self.tbe_builder.create()
             self.send_res(ans)
@@ -96,7 +94,15 @@ class AscendMessager(Messager):
         elif arg == 'TBE/RESET':
             self.tbe_builder.reset()
             self.send_ack()
-        elif arg == 'AKG/START':
+        else:
+            self.send_ack(False)
+            self.exit()
+
+    def akg_handle(self, arg):
+        """
+        Handle arg start with AKG
+        """
+        if arg == 'AKG/START':
             self.send_ack()
             process_num_str = self.get_message()
             self.send_ack()
@@ -117,6 +123,20 @@ class AscendMessager(Messager):
                 else:
                     self.send_ack(False)
                     break
+        else:
+            self.send_ack(False)
+            self.exit()
+
+    def handle(self):
+        """
+        Communicate with remote client.
+        Reference protocol between them at PR#3821 and PR#3935
+        """
+        arg = self.get_message()
+        if arg.startswith('TBE'):
+            self.tbe_handle(arg)
+        elif arg.startswith('AKG'):
+            self.akg_handle(arg)
         elif arg == 'FORMAT':
             self.send_ack()
             json = self.get_message()

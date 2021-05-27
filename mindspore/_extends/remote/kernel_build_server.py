@@ -63,7 +63,7 @@ class Messager:
                 logger.debug("[TRACE] read nothing...")
                 self.exit()
             if res[len(res) - 1] == '\n':
-                res = res[0:len(res)-1]
+                res = res[0:len(res) - 1]
             self.message = res
             logger.debug(f"[IN] {self.message}")
         except (EOFError, KeyboardInterrupt):
@@ -87,7 +87,7 @@ class Messager:
             res_str = str(res).replace('\n', '[LF]').replace('\r', '[CR]').replace(' ', '[SP]')
         else:
             res_str = str(res).replace('\n', '').replace('\r', '').replace(' ', '')
-        tag = '[~]' # The same as client kTAG
+        tag = '[~]'  # The same as client kTAG
 
         # Not write by print(tag + res_str, flush=True) any more
         try:
@@ -138,6 +138,7 @@ class Messager:
             All subclasses should override this interface.
         """
         raise NotImplementedError
+
 
 def get_logger():
     return logger

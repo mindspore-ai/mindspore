@@ -107,8 +107,9 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
 AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: three tensors(y, dy, x).
+  constexpr auto kPoolingGradInputNum = 3;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  CheckArgsSize(op_name, args_spec_list, kPoolingGradInputNum);
   auto out_y = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto d_out = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
@@ -152,8 +153,9 @@ void FusedBatchNormCheckDim(const PrimitivePtr &primitive, const AbstractBasePtr
 AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: five tensors(x, gamma, beta, mean, variance).
+  constexpr auto kBatchNormInputNum = 5;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 5);
+  CheckArgsSize(op_name, args_spec_list, kBatchNormInputNum);
   AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
@@ -266,8 +268,9 @@ void CheckShape(const std::string &op_name, const ShapeVector &w_shape, const Ab
 
 AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
+  constexpr auto kConv2DInputNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  CheckArgsSize(op_name, args_spec_list, kConv2DInputNum);
   AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());

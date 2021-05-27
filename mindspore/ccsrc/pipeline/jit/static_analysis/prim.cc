@@ -966,7 +966,6 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 }
 }  // end anonymous namespace
 
-// static variable start;
 namespace {
 class EmbedEvaluator : public SymbolicPrimEvaluator {
  public:
@@ -1067,14 +1066,14 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+    constexpr auto kGetAttrArgSize = 2;
     auto ret_abstract = AbstractEval(args_spec_list);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
       return ret_abstract;
     }
     // Inputs: data, item
-    constexpr size_t input_size = 2;
-    if (args_spec_list.size() != input_size) {
+    if (args_spec_list.size() != kGetAttrArgSize) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
     EvalResultPtr ret = nullptr;
@@ -1098,8 +1097,9 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(ResolveEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+    constexpr auto kResolveArgSize = 2;
     // Inputs: namespace, symbol
-    if (args_spec_list.size() != 2) {
+    if (args_spec_list.size() != kResolveArgSize) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
     EvalResultPtr ret = nullptr;
