@@ -21,13 +21,13 @@
 namespace mindspore {
 // export GetTimeString for all sub modules
 std::string GetTimeString() {
-#define BUFLEN 80
-  char buf[BUFLEN] = {'\0'};
+  const size_t buf_len = 80;
+  char buf[buf_len] = {'\0'};
 #if defined(_WIN32) || defined(_WIN64)
   time_t time_seconds = time(0);
   struct tm now_time;
   localtime_s(&now_time, &time_seconds);
-  sprintf_s(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
+  sprintf_s(buf, buf_len, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
             now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
 #else
   struct timeval cur_time;
@@ -35,7 +35,7 @@ std::string GetTimeString() {
 
   struct tm now;
   (void)localtime_r(&cur_time.tv_sec, &now);
-  (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
+  (void)strftime(buf, buf_len, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
   // set micro-second
   buf[27] = '\0';
   int idx = 26;

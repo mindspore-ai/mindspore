@@ -40,7 +40,8 @@ double RangeCountCalculator::GetPercentInRange() const {
   if (total == 0) {
     return 0.0;
   }
-  return 100.0 * count / total;
+  const double factor = 100.0;
+  return factor * count / total;
 }
 
 AllCloseCalculator::AllCloseCalculator() : atol(1.0e-8), rtol(1.0e-5), result(true) {}

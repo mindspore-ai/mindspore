@@ -1020,7 +1020,6 @@ uint64_t BytestoInt64(const std::vector<char> &buffer) {
   return ret;
 }
 
-constexpr int BUF_SIZ = 256;
 std::vector<std::string> Debugger::CheckOpOverflow() {
   std::vector<double> bin_list;
   std::vector<std::string> op_names;
@@ -1053,8 +1052,9 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
           const uint32_t offset = 313;
           infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
-          buffer.resize(BUF_SIZ);
-          infile.read(buffer.data(), BUF_SIZ);
+          const size_t buf_size = 256;
+          buffer.resize(buf_size);
+          infile.read(buffer.data(), buf_size);
           const uint8_t stream_id_offset = 8;
           const uint8_t task_id_offset = 16;
           uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
