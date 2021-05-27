@@ -1842,5 +1842,17 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   node->set_abstract(eval_result);
 }
+
+bool AnfRuntimeAlgorithm::IsTensorBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
+  if (lhs.size() != rhs.size()) {
+    return true;
+  }
+  for (size_t i = 0; i < lhs.size(); i++) {
+    if (lhs[i] != rhs[i]) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace session
 }  // namespace mindspore

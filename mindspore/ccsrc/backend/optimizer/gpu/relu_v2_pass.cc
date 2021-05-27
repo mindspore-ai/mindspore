@@ -29,6 +29,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 const size_t kReluV2OutputNum = 2;
+const size_t kBitPerUInt = 32;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);
@@ -80,7 +81,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   auto element_num =
     std::accumulate(output_shape.begin(), output_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 
-  std::vector<size_t> mask_shape = {(element_num + 31) / 32};
+  std::vector<size_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
   auto shapes = {AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
   auto types = {AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
