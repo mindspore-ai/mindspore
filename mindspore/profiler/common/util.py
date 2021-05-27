@@ -87,6 +87,7 @@ def fwrite_format(output_data_path, data_source=None, is_print=False, is_start=F
 
 
 def get_log_slice_id(file_name):
+    """Get the log slice id."""
     pattern = re.compile(r'(?<=slice_)\d+')
     slice_list = pattern.findall(file_name)
     index = re.findall(r'\d+', slice_list[0])
@@ -130,6 +131,7 @@ def get_file_join_name(input_path, file_name):
                     bin_data.write(txt.read())
     return file_join_name
 
+
 def get_file_names(input_path, file_name):
     """
     Search files under the special path.
@@ -153,36 +155,6 @@ def get_file_names(input_path, file_name):
                 break
 
     return name_list
-
-
-def analyse_device_list_from_profiler_dir(profiler_dir):
-    """
-    Analyse device list from profiler dir.
-
-    Args:
-        profiler_dir (str): The profiler data dir.
-
-    Returns:
-        list, the device_id list.
-    """
-    profiler_file_prefix = ["timeline_display", "output_op_compute_time"]
-
-    device_id_list = set()
-    for _, _, filenames in os.walk(profiler_dir):
-        for filename in filenames:
-            if filename.startswith("step_trace_raw"):
-                items = filename.split("_")
-                device_num = ""
-                if len(items) > 3:
-                    device_num = items[3]
-            else:
-                items = filename.split("_")
-                device_num = items[-1].split(".")[0] if items[-1].split(".") else ""
-
-            if device_num.isdigit() and '_'.join(items[:-1]) in profiler_file_prefix:
-                device_id_list.add(device_num)
-
-    return sorted(list(device_id_list))
 
 
 def query_latest_trace_time_file(profiler_dir, device_id=0):
@@ -298,6 +270,7 @@ def get_field_value(row_info, field_name, header, time_type='realtime'):
         value = to_millisecond(value)
 
     return value
+
 
 def get_options(options):
     if options is None:

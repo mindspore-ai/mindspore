@@ -420,7 +420,8 @@ class FrameworkParser:
                     os.path.join(profiling_data_path, file)
                 )
 
-    def _get_save_path(self, device_id, output_path):
+    @staticmethod
+    def _get_save_path(device_id, output_path):
         """
         Get the save path.
 
@@ -573,7 +574,8 @@ class FrameworkParser:
         return [full_op_name, op_name, op_type, subgraph_name,
                 json.dumps(op_info)]
 
-    def _get_subgraph_name(self, full_op_name):
+    @staticmethod
+    def _get_subgraph_name(full_op_name):
         """
         Get subgraph name.
 

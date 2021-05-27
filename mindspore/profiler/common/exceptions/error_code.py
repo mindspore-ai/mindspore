@@ -24,6 +24,7 @@ _ANALYSER_MASK = 0b00011 << 7
 class ProfilerMgrErrors(Enum):
     """Enum definition for profiler errors"""
 
+
 @unique
 class ProfilerErrors(ProfilerMgrErrors):
     """Profiler error codes."""

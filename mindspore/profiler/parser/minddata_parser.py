@@ -20,6 +20,7 @@ from mindspore import log as logger
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 
+
 class MinddataParser:
     """Minddata Aicpu Parser."""
     @staticmethod

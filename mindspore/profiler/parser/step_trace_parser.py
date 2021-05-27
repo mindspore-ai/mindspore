@@ -18,6 +18,7 @@ import json
 import os
 import stat
 import struct
+from abc import abstractmethod
 from collections import namedtuple
 from decimal import Decimal
 
@@ -74,6 +75,24 @@ class BaseStepTraceParser:
         print('\nThe step trace parse result saves under ${summary_dir}/profiler/%s'
               % self.output_file)
 
+    @abstractmethod
+    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
+        """
+        Get single reduce info.
+
+        Args:
+            field_name (str): The field name.
+            start_point (Tuple[int, int]): Start point time info, including (tag_id, sys_count).
+            end_point (Tuple[int, int]): End point time info, including (tag_id, sys_count).
+
+        Returns:
+            dict, reduce info.
+        """
+
+    @abstractmethod
+    def _parse(self, source_files):
+        """Parse source step trace files."""
+
     def parse_and_save(self):
         """Parse step trace files and save the result."""
         try:
@@ -86,165 +105,9 @@ class BaseStepTraceParser:
         else:
             log.info("Finish to save intermediate result for step trace file.")
 
-    def record_point_info(self, point_info, output_path):
-        """
-        Record point info into json.
-
-        Args:
-            point_info (dict): The point info about tag id and relative op name.
-            output_path (str): The output path for saving point info.
-
-        Returns:
-            dict, parsed point info.
-        """
-
-    def update_tag_op_type_map(self, point_info):
-        """
-        update the map from tag id to op type.
-
-        Args:
-            point_info (dict): The point info about tag id and relative op name.
-        """
-        self._get_step_trace_files()
-        self._get_step_end_tag_id()
-        tag_map = {}
-        for tag, op_name in point_info.items():
-            op_type = self._get_op_type(tag, op_name)
-            tag_map[tag] = op_type
-        log.info("Get tag types for step trace analysis: %s", tag_map)
-        self._tag_map = tag_map
-
-    def _get_op_type(self, tag, name):
-        """
-        Get op type from tag and name.
-
-        Args:
-            tag (int): The tag id.
-            name (str): The op name.
-
-        Returns:
-            str, the op type or communication op name.
-        """
-        tag_map = {self._fp_tag: 'fp', self._bp_tag: 'bp', self._step_end_tag_id: 'end'}
-        # get solid tag type
-        op_type = tag_map.get(tag, '')
-        if op_type:
-            return op_type
-        # check if the tag is step tag.
-        if tag > self._step_end_tag_id or tag == 0:
-            return 'start'
-        # analyze the reduce tag
-        op_name = name.rsplit('/', 1)[-1]
-        if not op_name:
-            log.warning("Unexpected op name:%s", name)
-
-        return op_name
-
     def _get_step_trace_files(self):
         """Get step trace files."""
         return self._input_dir
-
-    @staticmethod
-    def _search_file(input_dir):
-        """Search step trace file under specific input directory."""
-        # validate input_dir
-        if not os.path.isdir(input_dir):
-            raise ProfilerPathErrorException(
-                '{} does not exist or is not a dir'.format(input_dir)
-            )
-        # get step trace files
-        files = os.listdir(input_dir)
-        step_trace_files = list(
-            filter(
-                lambda file: file.startswith('training_trace') and not file.endswith('.done'),
-                files
-            )
-        )
-        # validate result
-        if len(step_trace_files) > 1:
-            # the format of file name is like
-            # `training_trace.46.dev.profiler_default_tag.$id.slice_$number`
-            # use the $number as the sorted key
-            try:
-                step_trace_files.sort(key=lambda path: int(path.rsplit('_', 1)[-1]))
-            except ValueError as err:
-                log.warning("Unable to parse file names: %s. %s", step_trace_files, err)
-                step_trace_files = []
-
-        file_paths = [os.path.join(input_dir, file) for file in step_trace_files]
-        log.info("Find %d step trace files.", len(file_paths))
-        return file_paths
-
-    def _parse(self, source_files):
-        """Parse source step trace files."""
-
-    def _get_next_step_trace(self, content, event_info):
-        """
-        Get next step trace info.
-
-        Args:
-            content (bytes): The input step trace info.
-            event_info (dict): The event info.
-
-        Returns:
-            Generator, return the step trace one by one.
-        """
-        for pos in range(0, len(content), 20):
-            next_event = self._get_trace_struct(content[pos:pos + self._event_size])
-            self._construct_event_info(next_event, event_info)
-            if event_info.get('end'):
-                yield event_info
-
-    def _get_trace_struct(self, bin_info):
-        """Translate event info to StepTraceStruct."""
-        if len(bin_info) == self._event_size:
-            parsed_info = struct.unpack('=QHHQ', bin_info)
-            return StepTraceStruct(*parsed_info)
-        return None
-
-    def _construct_event_info(self, next_event, event_info):
-        """Construct event info according to next_event."""
-        min_job_id = self._step_end_tag_id
-        step_flag: bool = lambda tag: tag > min_job_id or tag == 0
-        end_flag: bool = lambda tag: tag == min_job_id
-        fp_flag: bool = lambda tag: tag == self._fp_tag
-        bp_flag: bool = lambda tag: tag == self._bp_tag
-
-        def _on_step_event():
-            """Handle step event."""
-            self._validate_tag_id(tag_id)
-            start_time = event_info.get('end', '-')
-            event_info.clear()
-            event_info['start'] = start_time
-            event_info['reduce'] = {}
-
-        def _on_reduce_event(reduce_tag_id):
-            """Handle reduce event."""
-            stream_id = next_event.stream_id
-            if event_info['reduce'].get(stream_id):
-                event_info['reduce'][stream_id].append((reduce_tag_id, sys_count))
-            else:
-                event_info['reduce'][stream_id] = [(reduce_tag_id, sys_count)]
-
-        tag_id = next_event.tag_id
-        sys_count = next_event.sys_count
-        if end_flag(tag_id):
-            event_info['end'] = sys_count
-        elif step_flag(tag_id):
-            _on_step_event()
-        elif fp_flag(tag_id):
-            event_info['fp'] = sys_count
-        elif bp_flag(tag_id):
-            event_info['bp'] = sys_count
-        else:
-            _on_reduce_event(tag_id)
-
-    def _validate_tag_id(self, job_id):
-        """Check the job id in source step trace file is same as user set."""
-        if not self._job_id:
-            self._job_id = job_id
-        elif self._job_id != job_id:
-            raise JobIdMismatchException()
 
     def _record_trace_event(self, step_trace):
         """Record trace event."""
@@ -291,21 +154,6 @@ class BaseStepTraceParser:
                     field_name, time_points[point_id], time_points[point_id + 1])
                 row_data.update(reduce_info)
 
-    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
-        """
-        Get single reduce info.
-
-        Args:
-            field_name (str): The field name.
-            start_point (Tuple[int, int]): Start point time info, including (tag_id, sys_count).
-            end_point (Tuple[int, int]): End point time info, including (tag_id, sys_count).
-
-        Returns:
-            dict, reduce info.
-        """
-        ret_dict = {}
-        return ret_dict
-
     def _record_average_info(self):
         """Calculate average info."""
         result_size = len(self._result)
@@ -327,7 +175,7 @@ class BaseStepTraceParser:
 
     def _save(self):
         """save step trace file."""
-        BP_POINT, TAIL, FP_DURATION = 5, -1, -2
+        bp_point, tail, fp_duration = 5, -1, -2
         log.info("Start to save step trace file.")
         if not self._header:
             return
@@ -335,13 +183,13 @@ class BaseStepTraceParser:
             with open(self._output_path, 'w') as file_handle:
                 csv_writer = csv.writer(file_handle)
                 if not self._is_training_mode:
-                    self._header[FP_DURATION] = 'fp'
-                    self._header = self._header[:BP_POINT] + self._header[BP_POINT+1:TAIL]
+                    self._header[fp_duration] = 'fp'
+                    self._header = self._header[:bp_point] + self._header[bp_point+1:tail]
                 csv_writer.writerow(self._header)
                 for row_data in self._result:
                     if not self._is_training_mode:
-                        row_data[FP_DURATION] += row_data[TAIL]
-                        row_data = row_data[:BP_POINT] + row_data[BP_POINT+1:TAIL]
+                        row_data[fp_duration] += row_data[tail]
+                        row_data = row_data[:bp_point] + row_data[bp_point+1:tail]
                     csv_writer.writerow(row_data)
             os.chmod(self._output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
@@ -389,7 +237,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
                 json.dump(points, json_file)
             os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
-            log.warning('Failed to save point info. %s', err)
+            log.warning('Failed to save step trace point info. %s', err)
             raise ProfilerIOException
         return points
 
@@ -403,13 +251,13 @@ class GpuStepTraceParser(BaseStepTraceParser):
         fp_start, bp_end, iter_end, iter_start = 0, 1, 2, 3
         reduce_start = 4
         start_time, end_time = 0, 1
-        STEP_TRACE_POINT_COUNT = 3
+        step_trace_point_count = 3
 
         source_file = validate_and_normalize_path(source_file)
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
-                if len(lines) < STEP_TRACE_POINT_COUNT:
+                if len(lines) < step_trace_point_count:
                     raise ProfilerRawFileException(
                         f"Failed to parse {source_file} file. The FP_POINT/BP_POINT/ITER_END_POINT "
                         f"do not recognized correctly. Try to set the environment variable'PROFILING_FP_START' "
@@ -498,9 +346,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
                 'bp_end': point_info.get(self._bp_tag, '')
             }
         else:
-            points = {
-                'fp_start': point_info.get(self._fp_tag, ''),
-            }
+            points = {'fp_start': point_info.get(self._fp_tag, '')}
         if os.path.exists(output_path):
             return points
         try:
@@ -609,3 +455,144 @@ class AscendStepTraceParser(BaseStepTraceParser):
         reduce_info[field_name + '_end_point'] = end_point[1]
 
         return reduce_info
+
+    def update_tag_op_type_map(self, point_info):
+        """
+        update the map from tag id to op type.
+
+        Args:
+            point_info (dict): The point info about tag id and relative op name.
+        """
+        self._get_step_trace_files()
+        self._get_step_end_tag_id()
+        tag_map = {}
+        for tag, op_name in point_info.items():
+            op_type = self._get_op_type(tag, op_name)
+            tag_map[tag] = op_type
+        log.info("Get tag types for step trace analysis: %s", tag_map)
+        self._tag_map = tag_map
+
+    def _get_op_type(self, tag, name):
+        """
+        Get op type from tag and name.
+
+        Args:
+            tag (int): The tag id.
+            name (str): The op name.
+
+        Returns:
+            str, the op type or communication op name.
+        """
+        tag_map = {self._fp_tag: 'fp', self._bp_tag: 'bp', self._step_end_tag_id: 'end'}
+        # get solid tag type
+        op_type = tag_map.get(tag, '')
+        if op_type:
+            return op_type
+        # check if the tag is step tag.
+        if tag > self._step_end_tag_id or tag == 0:
+            return 'start'
+        # analyze the reduce tag
+        op_name = name.rsplit('/', 1)[-1]
+        if not op_name:
+            log.warning("Unexpected op name:%s", name)
+
+        return op_name
+
+    @staticmethod
+    def _search_file(input_dir):
+        """Search step trace file under specific input directory."""
+        # validate input_dir
+        if not os.path.isdir(input_dir):
+            raise ProfilerPathErrorException(
+                '{} does not exist or is not a dir'.format(input_dir)
+            )
+        # get step trace files
+        files = os.listdir(input_dir)
+        step_trace_files = list(
+            filter(
+                lambda file: file.startswith('training_trace') and not file.endswith('.done'),
+                files
+            )
+        )
+        # validate result
+        if len(step_trace_files) > 1:
+            # the format of file name is like
+            # `training_trace.46.dev.profiler_default_tag.$id.slice_$number`
+            # use the $number as the sorted key
+            try:
+                step_trace_files.sort(key=lambda path: int(path.rsplit('_', 1)[-1]))
+            except ValueError as err:
+                log.warning("Unable to parse file names: %s. %s", step_trace_files, err)
+                step_trace_files = []
+
+        file_paths = [os.path.join(input_dir, file) for file in step_trace_files]
+        log.info("Find %d step trace files.", len(file_paths))
+        return file_paths
+
+    def _get_next_step_trace(self, content, event_info):
+        """
+        Get next step trace info.
+
+        Args:
+            content (bytes): The input step trace info.
+            event_info (dict): The event info.
+
+        Returns:
+            Generator, return the step trace one by one.
+        """
+        for pos in range(0, len(content), 20):
+            next_event = self._get_trace_struct(content[pos:pos + self._event_size])
+            self._construct_event_info(next_event, event_info)
+            if event_info.get('end'):
+                yield event_info
+
+    def _get_trace_struct(self, bin_info):
+        """Translate event info to StepTraceStruct."""
+        if len(bin_info) == self._event_size:
+            parsed_info = struct.unpack('=QHHQ', bin_info)
+            return StepTraceStruct(*parsed_info)
+        return None
+
+    def _construct_event_info(self, next_event, event_info):
+        """Construct event info according to next_event."""
+        min_job_id = self._step_end_tag_id
+        step_flag: bool = lambda tag: tag > min_job_id or tag == 0
+        end_flag: bool = lambda tag: tag == min_job_id
+        fp_flag: bool = lambda tag: tag == self._fp_tag
+        bp_flag: bool = lambda tag: tag == self._bp_tag
+
+        def _on_step_event():
+            """Handle step event."""
+            self._validate_tag_id(tag_id)
+            start_time = event_info.get('end', '-')
+            event_info.clear()
+            event_info['start'] = start_time
+            event_info['reduce'] = {}
+
+        def _on_reduce_event(reduce_tag_id):
+            """Handle reduce event."""
+            stream_id = next_event.stream_id
+            if event_info['reduce'].get(stream_id):
+                event_info['reduce'][stream_id].append((reduce_tag_id, sys_count))
+            else:
+                event_info['reduce'][stream_id] = [(reduce_tag_id, sys_count)]
+
+        tag_id = next_event.tag_id
+        sys_count = next_event.sys_count
+        if end_flag(tag_id):
+            event_info['end'] = sys_count
+        elif step_flag(tag_id):
+            _on_step_event()
+        elif fp_flag(tag_id):
+            event_info['fp'] = sys_count
+        elif bp_flag(tag_id):
+            event_info['bp'] = sys_count
+        else:
+            _on_reduce_event(tag_id)
+
+    def _validate_tag_id(self, job_id):
+        """Check the job id in source step trace file is same as user set."""
+        if not self._job_id:
+            self._job_id = job_id
+        elif self._job_id != job_id:
+            raise JobIdMismatchException()
