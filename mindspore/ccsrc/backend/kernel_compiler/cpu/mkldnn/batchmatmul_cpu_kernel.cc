@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool BatchMatMulCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool BatchMatMulCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &outputs) {
   if (inputs.size() < 2 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "batchmatmul error input output size!";
@@ -83,7 +83,7 @@ void BatchMatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   auto input1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  dim_k_ = trans_a ? input1_shape[dims - 2] : input1_shape[dims - 1];
+  dim_k_ = static_cast<dnnl_dim_t>(trans_a ? input1_shape[dims - 2] : input1_shape[dims - 1]);
 
   trans_a_ = trans_a ? TRANSPOSE_YES : TRANSPOSE_NO;
   trans_b_ = trans_b ? TRANSPOSE_YES : TRANSPOSE_NO;

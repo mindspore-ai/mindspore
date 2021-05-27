@@ -64,8 +64,10 @@ void UnpackCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
     outputs_host_[i] = reinterpret_cast<T *>(outputs[i]->addr);
     MS_EXCEPTION_IF_NULL(outputs_host_[i]);
   }
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = input_size_ < 128 * max_thread_num ? std::ceil(input_size_ / 128.0) : max_thread_num;
+  size_t max_thread_num = static_cast<size_t>(std::thread::hardware_concurrency());
+  const size_t thread_per_block = 128;
+  size_t thread_num = static_cast<size_t>(std::ceil(input_size_ * 1.0 / thread_per_block));
+  thread_num = input_size_ < thread_per_block * max_thread_num ? thread_num : max_thread_num;
   if (thread_num < 1) {
     MS_LOG(ERROR) << "Invalid value: thread_num" << thread_num;
     return;

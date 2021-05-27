@@ -126,7 +126,7 @@ template <typename T>
 void Asin(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = asin(in[i]);
+      out[i] = static_cast<T>(asin(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -136,7 +136,7 @@ template <typename T>
 void ACos(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = acos(in[i]);
+      out[i] = static_cast<T>(acos(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -146,7 +146,7 @@ template <typename T>
 void Atan(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = atan(in[i]);
+      out[i] = static_cast<T>(atan(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -156,7 +156,7 @@ template <typename T>
 void Sin(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = sin(in[i]);
+      out[i] = static_cast<T>(sin(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -166,7 +166,7 @@ template <typename T>
 void Cos(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = cos(in[i]);
+      out[i] = static_cast<T>(cos(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -176,7 +176,7 @@ template <typename T>
 void Tan(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = tan(in[i]);
+      out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -186,7 +186,7 @@ template <typename T>
 void Sinh(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = sinh(in[i]);
+      out[i] = static_cast<T>(sinh(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -196,7 +196,7 @@ template <typename T>
 void Cosh(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = cosh(in[i]);
+      out[i] = static_cast<T>(cosh(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -206,7 +206,7 @@ template <typename T>
 void Asinh(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = asinh(in[i]);
+      out[i] = static_cast<T>(asinh(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -216,7 +216,7 @@ template <typename T>
 void Acosh(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = acosh(in[i]);
+      out[i] = static_cast<T>(acosh(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);
@@ -226,7 +226,7 @@ template <typename T>
 void Atanh(const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = atanh(in[i]);
+      out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
     }
   };
   CPUKernelUtils::ParallelFor(task, size);

@@ -32,7 +32,7 @@ bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   auto output = reinterpret_cast<int *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(int);
   for (size_t i = 0; i < elem_num; i++) {
-    output[i] = val[i];
+    output[i] = static_cast<int>(val[i]);
   }
 
   return true;

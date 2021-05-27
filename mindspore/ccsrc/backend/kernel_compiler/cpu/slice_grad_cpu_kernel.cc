@@ -105,10 +105,12 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   }
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
   int stride_signs[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
-  size_t out_start_offset[3] = {begin_[0] * output_element_num_[0], begin_[1] * output_element_num_[1],
-                                begin_[2] * output_element_num_[2]};
-  size_t out_step_size[3] = {strides_[0] * output_element_num_[0], strides_[1] * output_element_num_[1],
-                             strides_[2] * output_element_num_[2]};
+  size_t out_start_offset[3] = {IntToSize(begin_[0]) * output_element_num_[0],
+                                IntToSize(begin_[1]) * output_element_num_[1],
+                                IntToSize(begin_[2]) * output_element_num_[2]};
+  size_t out_step_size[3] = {IntToSize(strides_[0]) * output_element_num_[0],
+                             IntToSize(strides_[1]) * output_element_num_[1],
+                             IntToSize(strides_[2]) * output_element_num_[2]};
   auto in_n_offset = 0;
   auto out_n_offset = out_start_offset[0];
   for (int i = begin_[0]; stride_signs[0] * i < stride_signs[0] * end_[0];
@@ -136,7 +138,7 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
           continue;
         }
         for (int m = begin_[3]; stride_signs[3] * m < stride_signs[3] * end_[3]; m += strides_[3]) {
-          output_addr[out_n_offset + out_c_offset + out_h_offset + m] = *input_addr++;
+          output_addr[out_n_offset + out_c_offset + out_h_offset + IntToSize(m)] = *input_addr++;
         }
       }
     }

@@ -86,7 +86,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       reduce_func_(input_addr, i, output_addr);
     }
     if (reduce_type_ == ReduceType::ReduceMean) {
-      *output_addr /= input_size;
+      *output_addr /= static_cast<T>(input_size);
     }
   } else {
     // Calculate transpose axes and stride
@@ -126,7 +126,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
           iter.GenNextPos();
         }
         if (reduce_type_ == ReduceType::ReduceMean) {
-          output_addr[i] /= stride;
+          output_addr[i] /= static_cast<T>(stride);
         }
       }
     };

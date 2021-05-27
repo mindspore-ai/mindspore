@@ -55,7 +55,7 @@ bool IsFiniteCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, co
 }
 
 void IsFiniteCPUKernel::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+                                            const std::vector<kernel::AddressPtr> &outputs) const {
   float16 *input = reinterpret_cast<float16 *>(inputs[0]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
 

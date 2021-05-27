@@ -35,8 +35,7 @@ class LayerNormGradCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
   void CheckParam(const CNodePtr &kernel_node);

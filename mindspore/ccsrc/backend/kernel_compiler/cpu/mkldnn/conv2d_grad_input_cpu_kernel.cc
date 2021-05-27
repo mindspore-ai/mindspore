@@ -58,8 +58,9 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (stride_me.size() < h_index + 2) {
     MS_LOG(EXCEPTION) << "Strides should greater than " << (h_index + 1) << ", but got " << stride_me.size();
   }
-  (void)std::transform(stride_me.begin() + h_index, stride_me.begin() + h_index + 2, std::back_inserter(stride_ori),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+  auto h_index_int64 = SizeToLong(h_index);
+  (void)std::transform(stride_me.begin() + h_index_int64, stride_me.begin() + h_index_int64 + 2,
+                       std::back_inserter(stride_ori), [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
 
