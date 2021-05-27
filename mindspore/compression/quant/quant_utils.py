@@ -19,6 +19,7 @@ import numpy as np
 
 __all__ = ["load_nonquant_param_into_quant_net"]
 
+
 def cal_quantization_params(input_min, input_max, quant_min, quant_max, symmetric=False):
     r"""
     Calculate quantization params for scale and zero point.
@@ -103,6 +104,7 @@ def weight2int(data, scale, zero_point, quant_min, quant_max):
     weight_int[weight_int < quant_min] = quant_min
     return weight_int
 
+
 def get_quant_min_max(data_type, num_bits=8, narrow_range=False):
     """Calculate quantization params for minimum/maximum quantization integer"""
     if data_type == np.int8:
@@ -116,6 +118,7 @@ def get_quant_min_max(data_type, num_bits=8, narrow_range=False):
     if narrow_range:
         quant_min = quant_min + 1
     return quant_min, quant_max
+
 
 def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
