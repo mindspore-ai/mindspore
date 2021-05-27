@@ -39,10 +39,11 @@ std::string GetTimeString() {
   // set micro-second
   buf[27] = '\0';
   int idx = 26;
+  const int ten = 10;
   auto num = cur_time.tv_usec;
   for (int i = 5; i >= 0; i--) {
-    buf[idx--] = static_cast<char>(num % 10 + '0');
-    num /= 10;
+    buf[idx--] = static_cast<char>(num % ten + '0');
+    num /= ten;
     if (i % 3 == 0) {
       buf[idx--] = '.';
     }

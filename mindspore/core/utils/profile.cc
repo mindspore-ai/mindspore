@@ -110,7 +110,7 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
         }
         oss << "    " << std::left << std::setw(36) << name << " : " << std::right << std::setw(12) << std::fixed
             << std::setprecision(6) << iter.second << "s : " << std::right << std::setw(5) << std::fixed
-            << std::setprecision(2) << iter.second / total * 100 << "%\n";
+            << std::setprecision(2) << (iter.second / total) * 100 << "%\n";
       }
     }
     delete sums;
@@ -157,7 +157,7 @@ void Profile::Print(void) {
   std::ostringstream oss;
   PrintProfile(oss, *ctx_ptr_->time_info_);
   std::string text = oss.str();
-  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performace
+  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
   (void)printf("%s", text.c_str());
   (void)fflush(stdout);
 }
@@ -357,7 +357,7 @@ void MsProfile::Print() {
     PrintTimeStat(oss, groups[i], prefix);
   }
   std::string text = oss.str();
-  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performace
+  // here use printf to output profile info, not use MS_LOG(INFO) since when open log, it affects performance
   (void)printf("\nTime group info:\n%s", text.c_str());
   (void)fflush(stdout);
 }

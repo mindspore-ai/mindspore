@@ -295,7 +295,6 @@ void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
 void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users) {
   FuncGraphSet todo(func_graphs);
   std::set<FuncGraphPtr> dropped;
-  // int count = 0;
   while (!todo.empty()) {
     FuncGraphPtr func_graph = todo.pop();
     MS_EXCEPTION_IF_NULL(func_graph);

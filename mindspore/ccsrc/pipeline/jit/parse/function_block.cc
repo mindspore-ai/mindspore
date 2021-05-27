@@ -261,7 +261,7 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
 // 1. when this function is called, not all usage of this phi node had bound to the
 // graph of this function block, some may stay in vars_ in other blocks.
 // 2. it's costly to iterate the graph to replace the phi for each phi.
-// phi  : This parameter node is functioning as a phi node.
+// Args: phi: This parameter node is functioning as a phi node.
 bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
   std::string var = phi_nodes_[phi];

@@ -289,7 +289,8 @@ std::size_t AbstractSequeue::hash() const {
   std::size_t hash_sum = hash_combine(tid(), std::hash<size_t>{}(elements_.size()));
   // Hashing all elements is costly, so only take at most 4 elements into account based on
   // some experiments.
-  for (size_t i = 0; (i < elements_.size()) && (i < 4); i++) {
+  size_t max_elements_cnt = 4;
+  for (size_t i = 0; (i < elements_.size()) && (i < max_elements_cnt); i++) {
     hash_sum = hash_combine(hash_sum, elements_[i]->hash());
   }
   return hash_sum;

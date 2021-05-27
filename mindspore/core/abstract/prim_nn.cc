@@ -586,8 +586,9 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / 128;
-  if ((count % 128) != 0) {
+  int max_8bits = 128;
+  int64_t n128s = (count + max_8bits) / max_8bits;
+  if ((count % max_8bits) != 0) {
     n128s++;
   }
   int64_t bytes_count = n128s * 16;
