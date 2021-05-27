@@ -137,11 +137,11 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
         MS_LOG(ERROR) << "Get rank size failed";
         return false;
       }
-      int64_t actual_input_size = input_size;
+      size_t actual_input_size = input_size;
       if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode) && AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion)) {
         actual_input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
       }
-      block_size = actual_input_size / LongToSize(rank_size);
+      block_size = static_cast<uint64_t>(actual_input_size / LongToSize(rank_size));
       total_size = total_size + block_size;
     } else {
       if (AnfAlgo::GetCNodeName(anf_node) == kAllGatherOpName) {

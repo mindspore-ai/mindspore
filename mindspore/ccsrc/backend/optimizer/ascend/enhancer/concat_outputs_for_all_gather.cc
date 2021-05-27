@@ -95,7 +95,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < inputs_size; ++i) {
     std::vector<AnfNodePtr> concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
-    for (size_t j = 0, idx = i; j < IntToSize(rank_size); ++j, idx += inputs_size) {
+    for (size_t j = 0, idx = i; j < LongToSize(rank_size); ++j, idx += inputs_size) {
       concat_inputs.push_back(new_tuple_getitems[idx]);
     }
     auto concat = func_graph->NewCNode(concat_inputs);
