@@ -299,19 +299,21 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
   ShapeVector min_shape;
   int64_t num_val = 0;
   // 3rd input is a Tensor when LinSpace is a dynamic shape operator
-  if (args_spec_list[2]->isa<AbstractTensor>()) {
-    auto num = args_spec_list[2]->cast<AbstractTensorPtr>();
+  const size_t num_index = 2;
+  auto abs_num = args_spec_list[num_index];
+  if (abs_num->isa<AbstractTensor>()) {
+    auto num = abs_num->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num);
     auto num_value_ptr = num->BuildValue();
     MS_EXCEPTION_IF_NULL(num_value_ptr);
     auto num_tensor = num_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(num_tensor);
     num_val = *static_cast<int64_t *>(num_tensor->data_c());
-  } else if (args_spec_list[2]->isa<AbstractScalar>()) {
-    auto num = args_spec_list[2]->cast<AbstractScalarPtr>();
+  } else if (abs_num->isa<AbstractScalar>()) {
+    auto num = abs_num->cast<AbstractScalarPtr>();
     num_val = GetValue<int64_t>(num->BuildValue());
   } else {
-    MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();
+    MS_LOG(EXCEPTION) << "Invalid abstract type:" << abs_num->type_name();
   }
   shape.emplace_back(num_val);
   if (shape[0] < 0) {
@@ -444,7 +446,8 @@ AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitiveP
         output.push_back(xshp[i]);
       }
     }
-    size_t offset = xshp.size() - 2;
+    const size_t bias = 2;
+    size_t offset = xshp.size() - bias;
     output.push_back(xshp[offset + (transpose_a ? 1 : 0)]);
     output.push_back(yshp[offset + (transpose_b ? 0 : 1)]);
     return;

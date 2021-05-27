@@ -459,7 +459,8 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
   };
   for (const auto &node : nodes) {
     auto root_node = node->cast<CNodePtr>();
-    if (root_node == nullptr || root_node->size() != 3) {
+    const size_t root_node_size = 3;
+    if (root_node == nullptr || root_node->size() != root_node_size) {
       continue;
     }
     auto weight = root_node->input(2);

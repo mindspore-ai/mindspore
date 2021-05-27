@@ -19,6 +19,7 @@ import warnings
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler as akg_compile_single
 
+
 class GpuMessager(Messager):
     '''
     GPU Messager

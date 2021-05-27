@@ -741,6 +741,62 @@ class PConstant : public PBase<PConstant<T> > {
     return tmp_data;
   }
 
+  AnfNodePtr CalcuConstantTensor(const AnfNodePtr &node, const ValuePtr &value, const PrimitivePtr &calcu_type) {
+    tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
+    TypeId tensor_type = tensor_ptr->Dtype()->type_id();
+    auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
+    TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
+    ShapeVector tensor_shape = tensor_abstract->shape()->shape();
+    auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
+    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
+    if (new_tensor_ptr->DataSize() < tensor_ptr->DataSize()) {
+      MS_EXCEPTION(ValueError) << "DataSize of new_tensor_ptr is smaller than DataSize of tensor_ptr";
+    }
+    if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
+        (tensor_type == TypeId::kNumberTypeFloat64)) {
+      float *data = reinterpret_cast<float *>(tensor_ptr->data_c());
+      float *data2 = reinterpret_cast<float *>(new_tensor_ptr->data_c());
+      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+        return nullptr;
+      }
+      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
+          return nullptr;
+        }
+        data2[i] = CalcuConstant(data2[i], calcu_type);
+      }
+    }
+    if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
+      int *data = reinterpret_cast<int *>(tensor_ptr->data_c());
+      int *data2 = reinterpret_cast<int *>(new_tensor_ptr->data_c());
+      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+        return nullptr;
+      }
+      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
+          return nullptr;
+        }
+        data2[i] = CalcuConstant(data2[i], calcu_type);
+      }
+    }
+    if (tensor_type == TypeId::kNumberTypeFloat64) {
+      double *data = reinterpret_cast<double *>(tensor_ptr->data_c());
+      double *data2 = reinterpret_cast<double *>(new_tensor_ptr->data_c());
+      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+        return nullptr;
+      }
+      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
+        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
+          return nullptr;
+        }
+        data2[i] = CalcuConstant(data2[i], calcu_type);
+      }
+    }
+    auto new_vnode = NewValueNode(new_tensor_ptr);
+    new_vnode->set_abstract(tensor_ptr->ToAbstract());
+    return new_vnode;
+  }
+
   // calculate const with different operations
   AnfNodePtr ValueNodeWithOprations(const PrimitivePtr &calcu_type) {
     AnfNodePtr node = this->GetNode(captured_node_);
@@ -749,59 +805,7 @@ class PConstant : public PBase<PConstant<T> > {
     }
     auto value = node->cast<ValueNodePtr>()->value();
     if (value->isa<tensor::Tensor>()) {
-      tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
-      TypeId tensor_type = tensor_ptr->Dtype()->type_id();
-      auto tensor_abstract = node->abstract()->cast<abstract::AbstractTensorPtr>();
-      TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-      ShapeVector tensor_shape = tensor_abstract->shape()->shape();
-      auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-      size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
-      if (new_tensor_ptr->DataSize() < tensor_ptr->DataSize()) {
-        MS_EXCEPTION(ValueError) << "DataSize of new_tensor_ptr is smaller than DataSize of tensor_ptr";
-      }
-      if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
-          (tensor_type == TypeId::kNumberTypeFloat64)) {
-        float *data = reinterpret_cast<float *>(tensor_ptr->data_c());
-        float *data2 = reinterpret_cast<float *>(new_tensor_ptr->data_c());
-        if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
-          return nullptr;
-        }
-        for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-          if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-            return nullptr;
-          }
-          data2[i] = CalcuConstant(data2[i], calcu_type);
-        }
-      }
-      if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
-        int *data = reinterpret_cast<int *>(tensor_ptr->data_c());
-        int *data2 = reinterpret_cast<int *>(new_tensor_ptr->data_c());
-        if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
-          return nullptr;
-        }
-        for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-          if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-            return nullptr;
-          }
-          data2[i] = CalcuConstant(data2[i], calcu_type);
-        }
-      }
-      if (tensor_type == TypeId::kNumberTypeFloat64) {
-        double *data = reinterpret_cast<double *>(tensor_ptr->data_c());
-        double *data2 = reinterpret_cast<double *>(new_tensor_ptr->data_c());
-        if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
-          return nullptr;
-        }
-        for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-          if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-            return nullptr;
-          }
-          data2[i] = CalcuConstant(data2[i], calcu_type);
-        }
-      }
-      auto new_vnode = NewValueNode(new_tensor_ptr);
-      new_vnode->set_abstract(tensor_ptr->ToAbstract());
-      return new_vnode;
+      return CalcuConstantTensor(node, value, calcu_type);
     }
     return nullptr;
   }
@@ -877,21 +881,24 @@ class PConstant : public PBase<PConstant<T> > {
     return CalcConstantTensors(vnode_1, vnode_2, node_3, MULTIPLY);
   }
 
+  tensor::TensorPtr GetTensorFromValueNode(const AnfNodePtr &vnode) const {
+    if (!vnode->isa<ValueNode>() || vnode->abstract() == nullptr) {
+      return nullptr;
+    }
+    auto value = GetValueNode(vnode);
+    if (!value->isa<tensor::Tensor>()) {
+      return nullptr;
+    }
+    return dyn_cast<tensor::Tensor>(value);
+  }
+
   AnfNodePtr CalcConstantTensors(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3,
                                  BinOperator bin_operator) const {
-    if (!vnode_1->isa<ValueNode>() || !vnode_2->isa<ValueNode>() || (vnode_1->abstract() == nullptr) ||
-        (vnode_2->abstract() == nullptr) || (node_3->abstract() == nullptr)) {
+    auto tensor_ptr_1 = GetTensorFromValueNode(vnode_1);
+    auto tensor_ptr_2 = GetTensorFromValueNode(vnode_2);
+    if (tensor_ptr_1 == nullptr || tensor_ptr_2 == nullptr || node_3->abstract() == nullptr) {
       return nullptr;
     }
-
-    auto value_1 = GetValueNode(vnode_1);
-    auto value_2 = GetValueNode(vnode_2);
-    if (!value_1->isa<tensor::Tensor>() || !value_2->isa<tensor::Tensor>()) {
-      return nullptr;
-    }
-
-    auto tensor_ptr_1 = dyn_cast<tensor::Tensor>(value_1);
-    auto tensor_ptr_2 = dyn_cast<tensor::Tensor>(value_2);
 
     auto tensor_1_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
     auto tensor_2_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
