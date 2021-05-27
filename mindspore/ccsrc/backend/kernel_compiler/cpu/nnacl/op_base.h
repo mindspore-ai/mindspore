@@ -85,6 +85,7 @@ typedef struct OpParameter {
   int type_;
   int thread_num_;
   int quant_type_;
+  bool is_train_session_;
 } OpParameter;
 
 typedef struct QuantArg {

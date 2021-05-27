@@ -77,53 +77,7 @@ int MatmulCPUKernel::ReSize() {
 }
 
 int MatmulCPUKernel::Run() {
-  if (IsTrain()) {
-    if (RET_OK != InitBufferA()) {
-      return RET_ERROR;
-    }
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_.at(0)->data_c()));
-
-    if (RET_OK != InitBufferB()) {
-      return RET_ERROR;
-    }
-    InitMatrixB(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()));
-
-    FreeBiasBuf();
-    InitBiasData();
-  }
-
   MatmulFp32BaseCPUKernel::Run();
-
-  if (IsTrain()) {
-    context_->allocator->Free(a_pack_ptr_);
-    context_->allocator->Free(b_pack_ptr_);
-    a_pack_ptr_ = nullptr;
-    b_pack_ptr_ = nullptr;
-  }
-  return RET_OK;
-}
-
-int MatmulCPUKernel::Eval() {
-  // Copy weights after training
-  auto a_src = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-  auto b_src = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-  InnerKernel::Eval();
-
-  if (params_->a_const_) {
-    if (RET_OK != InitBufferA()) {
-      return RET_ERROR;
-    }
-    InitMatrixA(a_src);
-  }
-  if (params_->b_const_) {
-    if (RET_OK != InitBufferB()) {
-      return RET_ERROR;
-    }
-    InitMatrixB(b_src);
-  }
-
-  FreeBiasBuf();
-  InitBiasData();
   return RET_OK;
 }
 

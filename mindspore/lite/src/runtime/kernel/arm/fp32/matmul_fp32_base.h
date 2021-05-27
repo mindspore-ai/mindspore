@@ -74,6 +74,8 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   float *batch_a_ptr_ = nullptr;
   float *batch_b_ptr_ = nullptr;
   float *batch_c_ptr_ = nullptr;
+  int matrix_a_pack_size_ = -1;
+  int matrix_b_pack_size_ = -1;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_

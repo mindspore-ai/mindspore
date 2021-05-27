@@ -47,6 +47,10 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
  private:
   SoftmaxCrossEntropyParameter *param;
   SoftmaxParameter sm_params_;
+  int inner_size_ = 1;
+  int outter_size_ = 1;
+  int stage_;
+  int threads_;
 };
 
 }  // namespace mindspore::kernel

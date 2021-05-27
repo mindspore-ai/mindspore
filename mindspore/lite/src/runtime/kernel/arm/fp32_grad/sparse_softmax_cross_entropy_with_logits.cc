@@ -18,6 +18,7 @@
 #include "src/kernel_registry.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/fp32/softmax_fp32.h"
+#include "nnacl/fp32_grad/softmax.h"
 #include "src/runtime/kernel/arm/fp32_grad/sparse_softmax_cross_entropy_with_logits.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
@@ -87,16 +88,26 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   MS_ASSERT(out != nullptr);
   MS_ASSERT(labels != nullptr);
   MS_ASSERT(ins != nullptr);
-
-  float *losses_ = static_cast<float *>(workspace());
-  float *sum_data_ = losses_ + data_size;
-  std::fill(losses_, losses_ + data_size, 0.f);
-  std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0.f);
-  Softmax(ins, losses_, sum_data_, &sm_params_);
-  if (sce_param->is_grad_) {
-    GradPostExecute(labels, losses_, out);
-  } else {
-    ForwardPostExecute(labels, losses_, out);
+  float *losses = static_cast<float *>(workspace());
+  float *sum_data = losses + data_size;
+  int length = sm_params_.input_shape_[sm_params_.axis_];
+  int stride = UP_DIV(outter_size_, threads_);
+  int count = MSMIN(stride, outter_size_ - stride * task_id);
+  if (count <= 0) return RET_OK;
+  switch (stage_) {
+    case 0:
+      SoftMaxP1(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
+      break;
+    case 1:
+      SoftMaxP2(ins, losses, sum_data, task_id * stride, count, length, inner_size_);
+      break;
+    case 2:
+      if (sce_param->is_grad_) {
+        GradPostExecute(labels, losses, out);
+      } else {
+        ForwardPostExecute(labels, losses, out);
+      }
+      break;
   }
   return RET_OK;
 }
@@ -113,11 +124,34 @@ int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(SparseSoftmaxCrossEntropyWithLogitsRun, this, 1);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogits function error error_code[" << error_code << "]";
-    return RET_ERROR;
+  int axis = sm_params_.axis_;
+  int n_dim = sm_params_.n_dim_;
+  const int *input_shape = sm_params_.input_shape_;
+  int inner_size = 1;
+  int outter_size = 1;
+  size_t data_size = in_tensors_.at(0)->ElementsNum();
+  float *losses = static_cast<float *>(workspace());
+  float *sum_data = losses + data_size;
+  std::fill(losses, losses + data_size, 0.f);
+  std::fill(sum_data, sum_data + sm_params_.input_shape_[0], 0.f);
+  for (int i = 0; i < axis; i++) {
+    outter_size *= input_shape[i];
+  }
+  for (int i = axis + 1; i < n_dim; i++) {
+    inner_size *= input_shape[i];
+  }
+  inner_size_ = inner_size;
+  outter_size_ = outter_size;
+  const std::vector<int> threads = {context_->thread_num_, context_->thread_num_, 1};
+  for (int stage = 0; stage < static_cast<int>(threads.size()); stage++) {
+    stage_ = stage;
+    threads_ = threads.at(stage);
+    int error_code = static_cast<const lite::InnerContext *>(this->context_)
+                       ->thread_pool_->ParallelLaunch(SparseSoftmaxCrossEntropyWithLogitsRun, this, threads_);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogits function error error_code[" << error_code << "]";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
