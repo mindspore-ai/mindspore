@@ -415,9 +415,15 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
   if (ret.size() < list_size) {
     MS_LOG(EXCEPTION) << "List size should not be less than 5.";
   }
+  const size_t file_name_index = 0;
+  const size_t line_index = 1;
+  const size_t column_index = 2;
+  const size_t line_end_index = 3;
+  const size_t column_end_index = 4;
   // Refer to Location::Location() for each member of ret: line, column, line_end, column_end.
-  auto location = std::make_shared<Location>(ret[0].cast<std::string>(), ret[1].cast<int64_t>(), ret[2].cast<int64_t>(),
-                                             ret[3].cast<int64_t>(), ret[4].cast<int64_t>());
+  auto location = std::make_shared<Location>(ret[file_name_index].cast<std::string>(), ret[line_index].cast<int64_t>(),
+                                             ret[column_index].cast<int64_t>(), ret[line_end_index].cast<int64_t>(),
+                                             ret[column_end_index].cast<int64_t>());
   return location;
 }
 
@@ -570,9 +576,10 @@ AnfNodePtr Parser::GenerateMakeTuple(const FunctionBlockPtr &block, const std::v
 
 AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &args) {
   py::object father_class;
+  const size_t expect_args_size = 2;
   if (args.empty()) {
     father_class = py::none();
-  } else if (args.size() == 2) {
+  } else if (args.size() == expect_args_size) {
     father_class = args[0];
     auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[1])));
     if (arg_type != AST_SUB_TYPE_NAME || py::cast<std::string>(python_adapter::GetPyObjAttr(args[1], "id")) != "self") {
@@ -1187,10 +1194,8 @@ int64_t Parser::GetForTransToWhileLoop() {
 // for x in xs:
 //    body
 // It is compiled to be following statement
-// if len(xs) < max_loop_cnt:
-//    ParseForIter()  // use iter to implement for loop, which always unroll loop
-// else:
-//    ParseForLoop()  // use loop var to implement for loop, which always sink loop
+// if len(xs) < max_loop_cnt, ParseForIter. Use iter to implement for loop, which always unroll loop
+// else, ParseForLoop. Use loop var to implement for loop, which always sink loop
 FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For, create an if else statement";
   MS_EXCEPTION_IF_NULL(block);

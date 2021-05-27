@@ -42,7 +42,8 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   // args: tensor, slice or slice tuple
   const std::string op_name = std::string("UnpackCall");
   size_t arg_length = args_spec_list.size();
-  if (arg_length < 2) {
+  const size_t min_args_size = 2;
+  if (arg_length < min_args_size) {
     MS_LOG(EXCEPTION) << op_name << " requires at least two args, but got " << arg_length << ".";
   }
 
