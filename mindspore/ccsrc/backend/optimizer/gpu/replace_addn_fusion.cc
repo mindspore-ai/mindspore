@@ -24,7 +24,6 @@
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
 
-#define ADD_NUM 2
 namespace mindspore {
 namespace opt {
 const BaseRef ReplaceAddNFusion::DefinePattern() const {
@@ -42,7 +41,7 @@ const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(A);
   MS_EXCEPTION_IF_NULL(B);
   int64_t num_input = AnfAlgo::GetNodeAttr<int64_t>(node, "n");
-  if (num_input == ADD_NUM) {
+  if (num_input == kAddNInputNum) {
     auto prim = std::make_shared<Primitive>(prim::kPrimAdd->name());
     MS_EXCEPTION_IF_NULL(prim);
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim), A, B};
