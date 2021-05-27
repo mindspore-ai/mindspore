@@ -441,6 +441,7 @@ def _check_batch_size(x1_batch_size, x2_batch_size):
     if x1_batch_size != x2_batch_size:
         raise ValueError("Require both inputs with the same batch sizes.")
 
+
 @constexpr
 def _get_output_shape(batch_size, x1_ret, x2_ret):
     """
@@ -543,19 +544,23 @@ def batch_dot(x1, x2, axes=None):
 
     return final_result
 
+
 @constexpr
 def _check_same_type(dtype1, dtype2):
     return dtype1 == dtype2
+
 
 @constexpr
 def _max(*args):
     """Returns the maximum value."""
     return max(*args)
 
+
 @constexpr
 def _min(*args):
     """Returns the minimum value."""
     return min(*args)
+
 
 @constexpr
 def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
@@ -570,6 +575,7 @@ def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
         if ndim1 >= 1:
             shape_rem.append(shape2[-1])
     return tuple(shape_rem)
+
 
 @constexpr
 def _check_matmul_shapes(shape1, shape2):
@@ -588,6 +594,7 @@ def _check_matmul_shapes(shape1, shape2):
         shape_out.appendleft(max_size)
     return tuple(shape_out)
 
+
 @constexpr
 def _tile_size(shape, out_shape, ndim):
     """Returns tile_size such that shape*tile_size = out_shape"""
@@ -597,10 +604,12 @@ def _tile_size(shape, out_shape, ndim):
             size[idx] = j
     return tuple(size)
 
+
 @constexpr
 def _check_need_broadcast(shape1, shape2):
     """Returns True if broadcast is necessary for batchmatmul."""
     return shape1[:-2] != shape2[:-2]
+
 
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
@@ -608,10 +617,12 @@ def _expand(x, ndim):
         x = F.expand_dims(x, 0)
     return x
 
+
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
     size = _tile_size(shape_cur, shape_to, ndim_to)
     return F.tile(x, size)
+
 
 def matmul(x1, x2, dtype=None):
     """

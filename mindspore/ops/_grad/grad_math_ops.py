@@ -418,6 +418,7 @@ def get_bprop_xlogy(self):
 
     return bprop
 
+
 @bprop_getters.register(P.SquareSumAll)
 def get_bprop_square_sum_all(self):
     """Grad definition for `Square` operation."""

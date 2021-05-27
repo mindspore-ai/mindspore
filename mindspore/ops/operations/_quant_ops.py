@@ -953,7 +953,8 @@ class BatchNormFold2(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", batch_mean_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "beta shape", beta_shape, Rel.EQ, self.name)
-        validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape,
+                        Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
                         Rel.EQ, self.name)
@@ -1001,7 +1002,8 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
                     running_std_shape, running_mean_shape, global_step_shape):
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", batch_mean_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
-        validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape,
+                        Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "gamma shape", gamma_shape, Rel.EQ, self.name)
         validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel_axis],
                         Rel.EQ, self.name)
