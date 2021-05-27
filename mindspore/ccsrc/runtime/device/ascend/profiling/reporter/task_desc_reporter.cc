@@ -50,7 +50,7 @@ void TaskDescReporter::ReportData() {
   ReportAllLine();
 }
 
-void TaskDescReporter::CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id) {
+void TaskDescReporter::CheckStreamTaskValid(size_t task_id, size_t stream_id) const {
   if (task_id >= task_ids_.size() || stream_id >= stream_ids_.size()) {
     MS_LOG(EXCEPTION) << "Index invalid. task_id:" << task_id << ", task_ids.size:" << task_ids_.size()
                       << ", stream_id:" << stream_id << ", stream_ids.size:" << stream_ids_.size();

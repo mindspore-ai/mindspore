@@ -42,7 +42,7 @@ std::shared_ptr<HostKernelMod> HostKernelFactory::Get(const std::string &name) {
 }
 
 HostKernelFactory &HostKernelFactory::Get() {
-  static HostKernelFactory instance;
+  static HostKernelFactory instance{};
   return instance;
 }
 
@@ -76,8 +76,8 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   }
   return true;
 }
-bool HostKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                           const std::vector<AddressPtr> &, void *) {
   return true;
 }
 std::vector<TaskInfoPtr> HostKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

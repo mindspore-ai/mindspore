@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 DuplexPipe::~DuplexPipe() {
@@ -29,7 +30,7 @@ DuplexPipe::~DuplexPipe() {
   }
 }
 
-int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fds) {
+int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool append_fds) {
   if (pipe(fd1_) == -1) {
     DP_EXCEPTION << "pipe 1 failed, errno: " << errno;
   }
@@ -80,7 +81,7 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
   return 0;
 }
 
-void DuplexPipe::Write(const std::string &buf, bool flush) {
+void DuplexPipe::Write(const std::string &buf, bool flush) const {
   // Write the string into pipe
   if (write(fd1_[1], buf.data(), buf.size()) == -1) {
     DP_ERROR << "write failed, errno: " << errno;
@@ -108,7 +109,7 @@ std::string DuplexPipe::Read() {
     }
     CancelTimeOut();
     bool line_end = c_buf_[size - 1] == '\n';
-    buf.append(c_buf_, line_end ? size - 1 : size);  // Copy without the last '\n'
+    buf.append(c_buf_, LongToSize(line_end ? size - 1 : size));  // Copy without the last '\n'
     if (line_end) {
       break;
     }
@@ -166,12 +167,12 @@ DuplexPipe::SignalHandler::SignalHandler(const std::weak_ptr<DuplexPipe> &dp, pi
 
 DuplexPipe::SignalHandler::~SignalHandler() {}
 
-void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) {
+void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) const {
   signal(SIGALRM, SigAlarmHandler);
   alarm(interval_secs);
 }
 
-void DuplexPipe::SignalHandler::CancelAlarm() { alarm(0); }
+void DuplexPipe::SignalHandler::CancelAlarm() const { alarm(0); }
 
 void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
@@ -196,6 +197,7 @@ void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
 }
 
 void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
+  DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
   int status;
   if (child_pid_ != nullptr) {
     (void)waitpid(*child_pid_, &status, WNOHANG | WUNTRACED);

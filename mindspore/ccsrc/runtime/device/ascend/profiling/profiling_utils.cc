@@ -93,7 +93,7 @@ void ProfilingUtils::GetTraceCustomNode(ProfilingTraceInfo *trace_info) {
       break;
     }
     MS_LOG(INFO) << "Get custom profiling node:" << node_full_name;
-    trace_info->trace_custom_node.insert(node_full_name);
+    trace_info->trace_custom_node.emplace(node_full_name);
   }
 }
 
@@ -285,8 +285,7 @@ void ProfilingUtils::SaveProfilingPoint(uint32_t graph_id, const std::string &no
   std::shared_ptr<ProfDesc> prof_desc_ptr = std::make_shared<PointDesc>(node_name, point_id);
   auto iter = graph_point_.find(graph_id);
   if (iter == graph_point_.end()) {
-    std::vector<std::shared_ptr<ProfDesc>> tmp_vect = {prof_desc_ptr};
-    graph_point_.insert({graph_id, tmp_vect});
+    graph_point_.emplace(graph_id, std::vector<std::shared_ptr<ProfDesc>>{prof_desc_ptr});
   } else {
     iter->second.emplace_back(prof_desc_ptr);
   }
