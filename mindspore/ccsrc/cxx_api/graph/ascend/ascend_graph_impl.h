@@ -87,8 +87,8 @@ class PythonEnvGuard {
 
  private:
   bool PythonIsInited() const;
-  void InitPython();
-  void FinalizePython();
+  void InitPython() const;
+  void FinalizePython() const;
   bool origin_init_status_;
 };
 }  // namespace mindspore

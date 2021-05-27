@@ -29,18 +29,18 @@ Graph::GraphData::GraphData(const FuncGraphPtr &func_graph, enum ModelType model
   model_type_ = model_type;
 }
 
-Graph::GraphData::GraphData(Buffer om_data, enum ModelType model_type)
+Graph::GraphData::GraphData(const Buffer &om_data, enum ModelType model_type)
     : func_graph_(nullptr), om_data_(om_data), model_type_(model_type) {
-  if (model_type != ModelType::kOM) {
-    MS_LOG(EXCEPTION) << "Invalid ModelType " << model_type;
+  if (model_type_ != ModelType::kOM) {
+    MS_LOG(EXCEPTION) << "Invalid ModelType " << model_type_;
   }
 
 #ifdef ENABLE_ACL
   // check om
   ge::ModelHelper helper;
   ge::ModelData model_data;
-  model_data.model_data = om_data.MutableData();
-  model_data.model_len = om_data.DataSize();
+  model_data.model_data = om_data_.MutableData();
+  model_data.model_len = om_data_.DataSize();
   ge::Status ret = helper.LoadModel(model_data);
   if (ret != ge::SUCCESS) {
     MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";

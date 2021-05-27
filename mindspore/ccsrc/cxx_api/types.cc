@@ -16,8 +16,8 @@
 #include "include/api/types.h"
 #include <numeric>
 #include "securec/include/securec.h"
-#include "utils/utils.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -229,7 +229,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 
   if (tensor.DataSize() < (str_num + 1) * sizeof(int32_t)) {
     MS_LOG(ERROR) << "Invalid tensor data size " << tensor.DataSize() << ", need "
-                  << static_cast<size_t>(str_num + 1) * sizeof(int32_t) << " at least for " << str_num << " strings.";
+                  << IntToSize(str_num + 1) * sizeof(int32_t) << " at least for " << str_num << " strings.";
     return {};
   }
   for (size_t i = 0; i < static_cast<size_t>(str_num); ++i) {
