@@ -70,7 +70,8 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
     }
   }
 
-  struct timeval start_time, end_time;
+  struct timeval start_time = {0};
+  struct timeval end_time = {0};
   (void)gettimeofday(&start_time, nullptr);
 
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
