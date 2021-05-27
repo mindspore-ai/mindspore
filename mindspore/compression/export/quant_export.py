@@ -46,12 +46,11 @@ class ExportToQuantInferNetwork:
     Returns:
         Cell, Infer network.
     """
+
     __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         network = Validator.check_isinstance('network', network, (nn.Cell,))
-        self.input_scale = 1 / std_dev
-        self.input_zero_point = round(mean)
         self.data_type = mstype.int8
         self.network = copy.deepcopy(network)
         self.all_parameters = {p.name: p for p in self.network.get_parameters()}
@@ -77,7 +76,36 @@ class ExportToQuantInferNetwork:
 
     def _get_quant_block(self, cell_core, activation, fake_quant_a_out):
         """convert network's quant subcell to deploy subcell"""
-        # Calculate the scale and zero point
+        scale_a_in, zp_a_in, scale_w, zp_w, param_dict = self.__get_quant_param(cell_core, fake_quant_a_out)
+
+        # Build the `Quant` `Dequant` op.
+        # Quant only support perlayer version. Need check here.
+        quant_op = inner.Quant(1 / float(scale_a_in), float(zp_a_in))
+        scale_deq = self.__get_dequant_scale(scale_a_in, scale_w)
+        dequant_op = inner.Dequant()
+
+        if isinstance(activation, _AddFakeQuantAfterSubCell):
+            activation = activation.subcell
+        elif hasattr(activation, "get_origin"):
+            activation = activation.get_origin()
+
+        # get op
+        if isinstance(cell_core, quant.DenseQuant):
+            op_core = P.MatMul()
+        else:
+            op_core = cell_core.conv
+
+        # get the `weight` and `bias`
+        weight, bias, weight_b, bias_b = self.__get_weight_bias(cell_core, scale_a_in, scale_w, zp_w)
+
+        if self.is_mindir:
+            block = quant.QuantMindirBlock(op_core, weight_b, bias_b, activation, param_dict)
+        else:
+            block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
+        return block
+
+    def __get_quant_param(self, cell_core, fake_quant_a_out):
+        """get parameter for quant block"""
         w_minq_name = cell_core.fake_quant_weight.minq.name
         np_type = mstype.dtype_to_nptype(self.data_type)
         param_dict = dict()
@@ -102,7 +130,7 @@ class ExportToQuantInferNetwork:
             fake_quant_a_in_op, minq_name = info
             if minq_name == 'input':
                 scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
-                    self.input_scale, self.input_zero_point, 'None', 'None'
+                    (1 / self.std_dev), round(self.mean), 'None', 'None'
             else:
                 maxq = self.all_parameters[minq_name[:-4] + "maxq"]
                 minq = self.all_parameters[minq_name]
@@ -111,19 +139,28 @@ class ExportToQuantInferNetwork:
         else:
             # skip quant layer
             scale_a_in, zp_a_in = 1.0, 0.0
+        return scale_a_in, zp_a_in, scale_w, zp_w, param_dict
 
-        # Build the `Quant` `Dequant` op.
-        # Quant only support perlayer version. Need check here.
-        quant_op = inner.Quant(1 / float(scale_a_in), float(zp_a_in))
+    @staticmethod
+    def __get_dequant_scale(scale_a_in, scale_w):
+        """Get dequant scale"""
         scale_deq = scale_a_in * scale_w
-        dequant_op = inner.Dequant()
 
-        if isinstance(activation, _AddFakeQuantAfterSubCell):
-            activation = activation.subcell
-        elif hasattr(activation, "get_origin"):
-            activation = activation.get_origin()
+        # fuse parameter
+        # |--------|47:40|--------|39:32|--------|31:0|
+        #         offset_w [8]    shift_N [8]    deq_scale [32]
+        float32_deq_scale = scale_deq.astype(np.float32)
+        uint32_deq_scale = np.frombuffer(float32_deq_scale, np.uint32)
+        scale_length = scale_deq.size  # channel
+        dequant_param = np.zeros(scale_length, dtype=np.uint64)
+        for index in range(scale_length):
+            dequant_param[index] += uint32_deq_scale[index]
+        scale_deq = Tensor(dequant_param, mstype.uint64)
+        return scale_deq
 
-        # get the `weight` and `bias`
+    def __get_weight_bias(self, cell_core, scale_a_in, scale_w, zp_w):
+        """Get weight and bias for quantizaiton"""
+        np_type = mstype.dtype_to_nptype(self.data_type)
         weight = cell_core.weight.data.asnumpy()
         bias = None
         if isinstance(cell_core, (quant.DenseQuant, quant.Conv2dQuant)):
@@ -137,38 +174,35 @@ class ExportToQuantInferNetwork:
         bias_b = bias
         # apply the quant
         fake_quant_weight_op = cell_core.fake_quant_weight.fake_quant_infer
-        weight = quant_utils.weight2int(weight, scale_w, zp_w, np_type, fake_quant_weight_op.num_bits,
-                                        fake_quant_weight_op.narrow_range)
+        quant_min, quant_max = quant_utils.get_quant_min_max(np_type,
+                                                             fake_quant_weight_op.num_bits,
+                                                             fake_quant_weight_op.narrow_range)
+        weight = quant_utils.weight2int(weight, scale_w, zp_w, quant_min, quant_max)
         if bias is not None:
             bias = Tensor(bias / scale_a_in / scale_w, mstype.int32)
 
-        # fuse parameter
-        # |--------|47:40|--------|39:32|--------|31:0|
-        #         offset_w [8]    shift_N [8]    deq_scale [32]
-        float32_deq_scale = scale_deq.astype(np.float32)
-        uint32_deq_scale = np.frombuffer(float32_deq_scale, np.uint32)
-        scale_length = scale_deq.size  # channel
-        dequant_param = np.zeros(scale_length, dtype=np.uint64)
-        for index in range(scale_length):
-            dequant_param[index] += uint32_deq_scale[index]
-
-        scale_deq = Tensor(dequant_param, mstype.uint64)
-        # get op
         if isinstance(cell_core, quant.DenseQuant):
-            op_core = P.MatMul()
             weight = np.transpose(weight)
             weight_b = np.transpose(weight_b)
-        else:
-            op_core = cell_core.conv
+
         weight = Tensor(weight, self.data_type)
         weight_b = Tensor(weight_b)
         if bias_b is not None:
             bias_b = Tensor(bias_b, mstype.float32)
-        if self.is_mindir:
-            block = quant.QuantMindirBlock(op_core, weight_b, bias_b, activation, param_dict)
-        else:
-            block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
-        return block
+        return weight, bias, weight_b, bias_b
+
+    def _get_fake_name(self, network, subcell, name):
+        """Get fake name and change value for quant model"""
+        change = False
+        op = subcell.subcell
+        if op.name in QuantizationAwareTraining.__quant_op_name__ and isinstance(op, ops.Primitive):
+            if self.is_mindir:
+                op.add_prim_attr('output_maxq', Tensor(subcell.fake_quant_act.maxq.data.asnumpy()))
+                op.add_prim_attr('output_minq', Tensor(subcell.fake_quant_act.minq.data.asnumpy()))
+            network.__delattr__(name)
+            network.__setattr__(name, op)
+            change = True
+        return change
 
     def _convert_quant2deploy(self, network):
         """Convert network's all quant subcell to deploy subcell."""
@@ -197,14 +231,7 @@ class ExportToQuantInferNetwork:
                     network.insert_child_to_cell(name, new_subcell)
                     change = True
             elif isinstance(subcell, _AddFakeQuantAfterSubCell):
-                op = subcell.subcell
-                if op.name in QuantizationAwareTraining.__quant_op_name__ and isinstance(op, ops.Primitive):
-                    if self.is_mindir:
-                        op.add_prim_attr('output_maxq', Tensor(subcell.fake_quant_act.maxq.data.asnumpy()))
-                        op.add_prim_attr('output_minq', Tensor(subcell.fake_quant_act.minq.data.asnumpy()))
-                    network.__delattr__(name)
-                    network.__setattr__(name, op)
-                    change = True
+                change = self._get_fake_name(network, subcell, name)
             else:
                 self._convert_quant2deploy(subcell)
         if isinstance(network, nn.SequentialCell) and change:
@@ -224,7 +251,8 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
 
         Returns:
             Cell, Infer network.
-        """
+    """
+
     __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
@@ -241,12 +269,12 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
             if subcell == network:
                 continue
             if isinstance(subcell, nn.Conv2dBnAct):
-                network, change = self._convert_subcell(network, change, name, subcell)
+                network, change = self._convert_subcell_conv(network, change, name, subcell)
             elif isinstance(subcell, nn.DenseBnAct):
-                network, change = self._convert_subcell(network, change, name, subcell, conv=False)
+                network, change = self._convert_subcell_dense(network, change, name, subcell)
             elif isinstance(subcell, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant,
                                       quant.Conv2dQuant, quant.DenseQuant)):
-                network, change = self._convert_subcell(network, change, name, subcell, core=False)
+                network, change = self._convert_subcell(network, change, name, subcell)
             elif isinstance(subcell, quant.FakeQuantWithMinMaxObserver) and self.upcell:
                 np_type = mstype.dtype_to_nptype(self.data_type)
                 _, _, maxq, minq = quant_utils.scale_zp_max_min_from_fake_quant_cell(subcell, np_type)
@@ -254,14 +282,7 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
                 self.upcell.core_op.add_prim_attr('output_minq', Tensor(minq))
                 network.insert_child_to_cell(self.upname, self.upcell)
             elif isinstance(subcell, _AddFakeQuantAfterSubCell):
-                op = subcell.subcell
-                if op.name in QuantizationAwareTraining.__quant_op_name__ and isinstance(op, ops.Primitive):
-                    if self.is_mindir:
-                        op.add_prim_attr('output_maxq', Tensor(subcell.fake_quant_act.maxq.data.asnumpy()))
-                        op.add_prim_attr('output_minq', Tensor(subcell.fake_quant_act.minq.data.asnumpy()))
-                    network.__delattr__(name)
-                    network.__setattr__(name, op)
-                    change = True
+                change = self._get_fake_name(network, subcell, name)
             else:
                 self.upcell, self.upname = None, None
                 self._convert_quant2deploy(subcell)
@@ -269,22 +290,42 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
             network.cell_list = list(network.cells())
         return network
 
-    def _convert_subcell(self, network, change, name, subcell, core=True, conv=True):
+    def _convert_subcell(self, network, change, name, subcell):
         """Convert subcell to ant subcell."""
-        if core:
-            cell_core = subcell.conv if conv else subcell.dense
-            activation = subcell.activation
-            fake_quant_act = activation.fake_quant_act
-        else:
-            cell_core = subcell
-            activation = None
-            fake_quant_act = None
-        new_subcell = self._get_quant_block(cell_core, activation, fake_quant_act)
+        new_subcell = self._get_quant_block(subcell, None, None)
         if new_subcell:
             prefix = subcell.param_prefix
             new_subcell.update_parameters_name(prefix + '.')
-            self.upcell = None if core else new_subcell
-            self.upname = None if core else name
+            self.upcell = new_subcell
+            self.upname = name
             network.insert_child_to_cell(name, new_subcell)
+            change = True
+        return network, change
+
+    def _convert_subcell_conv(self, network, change, name, subcell):
+        """Convert subcell to ant subcell for conv."""
+        activation = subcell.activation
+        fake_quant_act = activation.fake_quant_act
+        new_subcell = self._get_quant_block(subcell.conv, activation, fake_quant_act)
+        if new_subcell:
+            self.upcell = None
+            self.upname = None
+            prefix = subcell.param_prefix
+            new_subcell.update_parameters_name(prefix + '.')
+            network.insert_child_to_cell(name, new_subcell)
+            change = True
+        return network, change
+
+    def _convert_subcell_dense(self, network, change, name, subcell):
+        """Convert subcell to ant subcell for dense."""
+        activation = subcell.activation
+        fake_quant_act = activation.fake_quant_act
+        new_subcell = self._get_quant_block(subcell.dense, activation, fake_quant_act)
+        if new_subcell:
+            prefix = subcell.param_prefix
+            new_subcell.update_parameters_name(prefix + '.')
+            network.insert_child_to_cell(name, new_subcell)
+            self.upcell = None
+            self.upname = None
             change = True
         return network, change
