@@ -108,7 +108,7 @@ std::vector<std::vector<size_t>> SplitGroup(const std::vector<AnfNodePtr> &topos
 // ...
 // b = Load(para1, u2)
 // u3 = UpdateState(u2, b)
-//==>
+// ==>
 // delete the UpdateState
 void DeleteLoadUserUpdateState(const FuncGraphManagerPtr &manager, const AnfNodePtr &load_user,
                                const AnfNodePtr &load) {
