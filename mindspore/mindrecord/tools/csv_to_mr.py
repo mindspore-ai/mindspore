@@ -73,13 +73,14 @@ class CsvToMR:
         self.writer = FileWriter(self.destination, self.partition_number)
 
     def _check_columns(self, columns, columns_name):
-        if columns:
-            if isinstance(columns, list):
-                for col in columns:
-                    if not isinstance(col, str):
-                        raise ValueError("The parameter {} must be list of str.".format(columns_name))
-            else:
-                raise ValueError("The parameter {} must be list of str.".format(columns_name))
+        if not columns:
+            return
+        if isinstance(columns, list):
+            for col in columns:
+                if not isinstance(col, str):
+                    raise ValueError("The parameter {} must be list of str.".format(columns_name))
+        else:
+            raise ValueError("The parameter {} must be list of str.".format(columns_name))
 
     def _get_schema(self, df):
         """

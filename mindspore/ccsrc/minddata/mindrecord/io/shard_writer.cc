@@ -178,17 +178,13 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
     return FAILED;
   }
   auto json_header = ret1.second;
-  auto ret2 = GetParentDir(path);
+  auto ret2 = GetDatasetFiles(path, json_header["shard_addresses"]);
   if (SUCCESS != ret2.first) {
     return FAILED;
   }
-  std::vector<std::string> real_addresses;
-  for (const auto &path : json_header["shard_addresses"]) {
-    std::string abs_path = ret2.second + string(path);
-    real_addresses.emplace_back(abs_path);
-  }
+  auto addresses = ret2.second;
   ShardHeader header = ShardHeader();
-  if (header.BuildDataset(real_addresses) == FAILED) {
+  if (header.BuildDataset(addresses) == FAILED) {
     return FAILED;
   }
   shard_header_ = std::make_shared<ShardHeader>(header);
@@ -201,9 +197,9 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
     return FAILED;
   }
   compression_size_ = shard_header_->GetCompressionSize();
-  ret = Open(real_addresses, true);
+  ret = Open(addresses, true);
   if (ret == FAILED) {
-    MS_LOG(ERROR) << "Invalid file, failed to open file: " << real_addresses;
+    MS_LOG(ERROR) << "Invalid file, failed to open file: " << addresses;
     return FAILED;
   }
   shard_column_ = std::make_shared<ShardColumn>(shard_header_);
@@ -660,17 +656,17 @@ MSRStatus ShardWriter::MergeBlobData(const std::vector<string> &blob_fields,
     std::vector<uint8_t> buf(sizeof(uint64_t), 0);
     size_t idx = 0;
     for (auto &field : blob_fields) {
-      auto &blob = row_bin_data.at(field);
-      uint64_t blob_size = blob->size();
+      auto &b = row_bin_data.at(field);
+      uint64_t blob_size = b->size();
       // big edian
       for (size_t i = 0; i < buf.size(); ++i) {
-        buf[buf.size() - 1 - i] = std::numeric_limits<uint8_t>::max() & blob_size;
+        buf[buf.size() - 1 - i] = (std::numeric_limits<uint8_t>::max() & blob_size);
         blob_size >>= 8u;
       }
       std::copy(buf.begin(), buf.end(), (*output)->begin() + idx);
       idx += buf.size();
-      std::copy(blob->begin(), blob->end(), (*output)->begin() + idx);
-      idx += blob->size();
+      std::copy(b->begin(), b->end(), (*output)->begin() + idx);
+      idx += b->size();
     }
   }
   return SUCCESS;
@@ -1296,7 +1292,7 @@ void ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &la
 
 MSRStatus ShardWriter::initialize(const std::unique_ptr<ShardWriter> *writer_ptr,
                                   const std::vector<std::string> &file_names) {
-  if (nullptr == writer_ptr) {
+  if (writer_ptr == nullptr) {
     MS_LOG(ERROR) << "ShardWriter pointer is NULL.";
     return FAILED;
   }
@@ -1305,8 +1301,8 @@ MSRStatus ShardWriter::initialize(const std::unique_ptr<ShardWriter> *writer_ptr
     MS_LOG(ERROR) << "Failed to open mindrecord files to writer.";
     return FAILED;
   }
-  (*writer_ptr)->SetHeaderSize(1 << 24);
-  (*writer_ptr)->SetPageSize(1 << 25);
+  (*writer_ptr)->SetHeaderSize(kDefaultHeaderSize);
+  (*writer_ptr)->SetPageSize(kDefaultPageSize);
   return SUCCESS;
 }
 }  // namespace mindrecord

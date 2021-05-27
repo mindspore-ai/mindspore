@@ -51,22 +51,7 @@ Status UnicodeCharTokenizerOp::Compute(const TensorRow &input, TensorRow *output
     offsets_limit.push_back(runes[i].offset + runes[i].len);
     splits[i] = str.substr(runes[i].offset, runes[i].len);
   }
-  if (splits.empty()) {
-    splits.emplace_back("");
-    offsets_start.push_back(0);
-    offsets_limit.push_back(0);
-  }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(splits, &token_tensor));
-
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
-
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
-  }
-  return Status::OK();
+  return TokenizerHelper(&splits, &offsets_start, &offsets_limit, with_offsets_, output);
 }
 }  // namespace dataset
 }  // namespace mindspore

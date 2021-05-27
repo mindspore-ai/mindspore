@@ -20,6 +20,9 @@ import sys
 import threading
 import traceback
 
+from inspect import signature
+from functools import wraps
+
 import numpy as np
 import mindspore._c_mindrecord as ms
 from .common.exceptions import ParamValueError, MRMUnsupportedSchemaError
@@ -45,6 +48,7 @@ VALUE_TYPE_MAP = {"int": ["int32", "int64"], "float": ["float32", "float64"], "s
 VALID_ATTRIBUTES = ["int32", "int64", "float32", "float64", "string", "bytes"]
 VALID_ARRAY_ATTRIBUTES = ["int32", "int64", "float32", "float64"]
 
+
 class ExceptionThread(threading.Thread):
     """ class to pass exception"""
     def __init__(self, *args, **kwargs):
@@ -58,7 +62,7 @@ class ExceptionThread(threading.Thread):
         try:
             if self._target:
                 self.res = self._target(*self._args, **self._kwargs)
-        except Exception as e: # pylint: disable=W0703
+        except Exception as e:  # pylint: disable=W0703
             self.exitcode = 1
             self.exception = e
             self.exc_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
@@ -101,6 +105,36 @@ def check_filename(path, arg_name=""):
         raise ParamValueError("File name should not start/end with space.")
 
     return True
+
+def check_parameter(func):
+    """
+    decorator for parameter check
+    """
+    sig = signature(func)
+
+    @wraps(func)
+    def wrapper(*args, **kw):
+        bound = sig.bind(*args, **kw)
+        for name, value in bound.arguments.items():
+            if name == 'file_name':
+                if isinstance(value, list):
+                    for f in value:
+                        check_filename(f)
+                else:
+                    check_filename(value)
+            if name == 'num_consumer':
+                if value is not None:
+                    if isinstance(value, int):
+                        if value < MIN_CONSUMER_COUNT or value > MAX_CONSUMER_COUNT():
+                            raise ParamValueError("Consumer number should between {} and {}."
+                                                  .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
+                    else:
+                        raise ParamValueError("Consumer number is illegal.")
+                else:
+                    raise ParamValueError("Consumer number is illegal.")
+        return func(*args, **kw)
+
+    return wrapper
 
 def populate_data(raw, blob, columns, blob_fields, schema):
     """

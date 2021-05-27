@@ -255,6 +255,8 @@ class API_PUBLIC ShardReader {
   /// \brief execute sqlite query with prepare statement
   MSRStatus QueryWithCriteria(sqlite3 *db, const string &sql, const string &criteria,
                               std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr);
+  /// \brief verify the validity of dataset
+  MSRStatus VerifyDataset(sqlite3 **db, const string &file);
 
   /// \brief get column values
   std::pair<MSRStatus, std::vector<json>> GetLabels(int group_id, int shard_id, const std::vector<std::string> &columns,

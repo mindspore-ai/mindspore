@@ -92,21 +92,7 @@ Status UnicodeScriptTokenizerOp::Compute(const TensorRow &input, TensorRow *outp
     splits.emplace_back(std::move(temp));
   }
   // 4) If the input is empty scalar string, the output will be 1-D empty string.
-  if (splits.empty()) {
-    splits.emplace_back("");
-    offsets_start.push_back(0);
-    offsets_limit.push_back(0);
-  }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(splits, &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
-
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
-  }
-  return Status::OK();
+  return TokenizerHelper(&splits, &offsets_start, &offsets_limit, with_offsets_, output);
 }
 }  // namespace dataset
 }  // namespace mindspore

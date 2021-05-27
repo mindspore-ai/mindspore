@@ -30,6 +30,7 @@ uint32_t DecodeAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info) {
     API_LOGE("The input buffer or out buffer is null or size is 0");
     return checkParamErr;
   }
+  // height and width must be even
   if (soft_dp_process_info->output_width % 2 == 1 || soft_dp_process_info->output_height % 2 == 1) {
     API_LOGE("odd width and height dose not support in resize interface");
     return checkParamErr;
@@ -65,6 +66,7 @@ uint32_t DecodeAndCropAndResizeJpeg(SoftDpProcsessInfo *soft_dp_process_info, co
     API_LOGE("The input buffer or out buffer is null or size is 0");
     return checkParamErr;
   }
+  // height and width must be even
   if (soft_dp_process_info->output_width % 2 == 1 || soft_dp_process_info->output_height % 2 == 1) {
     API_LOGE("odd width and height dose not support in crop and resize interface");
     return checkParamErr;

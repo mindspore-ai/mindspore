@@ -75,16 +75,11 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
     return FAILED;
   }
   if (file_paths.size() == 1 && load_dataset == true) {
-    auto ret2 = GetParentDir(file_path);
+    auto ret2 = GetDatasetFiles(file_path, ret.second);
     if (SUCCESS != ret2.first) {
       return FAILED;
     }
-    std::vector<std::string> real_addresses;
-    for (const auto &path : ret.second) {
-      std::string abs_path = ret2.second + string(path);
-      real_addresses.emplace_back(abs_path);
-    }
-    file_paths_ = real_addresses;
+    file_paths_ = ret2.second;
   } else if (file_paths.size() >= 1 && load_dataset == false) {
     file_paths_ = file_paths;
   } else {
@@ -102,35 +97,11 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
       return FAILED;
     }
     sqlite3 *db = nullptr;
-    // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
-    int rc = sqlite3_open_v2(common::SafeCStr(file + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
-    if (rc != SQLITE_OK) {
-      MS_LOG(ERROR) << "Invalid file, failed to open database: " << file + ".db, error: " << sqlite3_errmsg(db);
+    auto ret3 = VerifyDataset(&db, file);
+    if (ret3 != SUCCESS) {
       return FAILED;
     }
-    MS_LOG(DEBUG) << "Opened database successfully";
 
-    string sql = "select NAME from SHARD_NAME;";
-    std::vector<std::vector<std::string>> name;
-    char *errmsg = nullptr;
-    rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &name, &errmsg);
-    if (rc != SQLITE_OK) {
-      MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
-      sqlite3_free(errmsg);
-      sqlite3_close(db);
-      db = nullptr;
-      return FAILED;
-    } else {
-      MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
-      string shardName = GetFileName(file).second;
-      if (name.empty() || name[0][0] != shardName) {
-        MS_LOG(ERROR) << "Invalid file, DB file can not match file: " << file;
-        sqlite3_free(errmsg);
-        sqlite3_close(db);
-        db = nullptr;
-        return FAILED;
-      }
-    }
     database_paths_.push_back(db);
   }
   ShardHeader sh = ShardHeader();
@@ -173,6 +144,37 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
 
   MS_LOG(INFO) << "Get meta from mindrecord file & index file successfully.";
 
+  return SUCCESS;
+}
+
+MSRStatus ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
+  // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
+  auto rc = sqlite3_open_v2(common::SafeCStr(file + ".db"), db, SQLITE_OPEN_READONLY, nullptr);
+  if (rc != SQLITE_OK) {
+    MS_LOG(ERROR) << "Invalid file, failed to open database: " << file + ".db, error: " << sqlite3_errmsg(*db);
+    return FAILED;
+  }
+  MS_LOG(DEBUG) << "Opened database successfully";
+
+  string sql = "SELECT NAME from SHARD_NAME;";
+  std::vector<std::vector<std::string>> name;
+  char *errmsg = nullptr;
+  rc = sqlite3_exec(*db, common::SafeCStr(sql), SelectCallback, &name, &errmsg);
+  if (rc != SQLITE_OK) {
+    MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
+    sqlite3_free(errmsg);
+    sqlite3_close(*db);
+    return FAILED;
+  } else {
+    MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
+    string shardName = GetFileName(file).second;
+    if (name.empty() || name[0][0] != shardName) {
+      MS_LOG(ERROR) << "Invalid file, DB file can not match file: " << file;
+      sqlite3_free(errmsg);
+      sqlite3_close(*db);
+      return FAILED;
+    }
+  }
   return SUCCESS;
 }
 
@@ -443,7 +445,7 @@ MSRStatus ShardReader::GetAllClasses(const std::string &category_field,
 
 void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string &sql,
                                     std::shared_ptr<std::set<std::string>> category_ptr) {
-  if (nullptr == db) {
+  if (db == nullptr) {
     return;
   }
   std::vector<std::vector<std::string>> columns;
