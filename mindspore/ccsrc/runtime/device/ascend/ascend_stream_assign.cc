@@ -53,6 +53,10 @@ constexpr uint32_t kTaskNumPerWorldHcomNode = 250;
 constexpr uint32_t kTaskNumPerSameServerHcomNode = 125;
 constexpr uint32_t kTaskNumPerHcomSendRecvNode = 15;
 
+constexpr size_t kHcomNum = 2;
+constexpr size_t kLastGradHcomOffset = 2;
+constexpr size_t kLastGradAndStatusNum = 2;
+
 bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
   auto min_iter = min_element(rank_ids.begin(), rank_ids.end());
   uint32_t min = (min_iter != rank_ids.end()) ? *min_iter : 0;
@@ -314,7 +318,7 @@ void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> hcom_nodes;
   auto overflow_marker = GetHcomAndOverflowMarker(graph_ptr, &hcom_nodes);
-  if (hcom_nodes.size() < 2 || overflow_marker == nullptr) {
+  if (hcom_nodes.size() < kHcomNum || overflow_marker == nullptr) {
     MS_LOG(INFO) << "Current model isn't in distribute or mix-precision mode, no optimization needed";
     last_grad_and_status->clear();
     return;
@@ -323,7 +327,7 @@ void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
   auto overflow_marker_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), overflow_marker);
   auto last_hcom_ptr = hcom_nodes[hcom_nodes.size() - 1];
   auto last_hcom_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), last_hcom_ptr);
-  auto last_grad_hcom_ptr = hcom_nodes[hcom_nodes.size() - 2];
+  auto last_grad_hcom_ptr = hcom_nodes[hcom_nodes.size() - kLastGradHcomOffset];
   auto last_grad_hcom_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), last_grad_hcom_ptr);
   if (last_grad_hcom_pos > overflow_marker_pos || last_hcom_pos < overflow_marker_pos) {
     MS_LOG(INFO) << "Grads average done after overflow judgement or status aren't allgathered, no optimization needed";
@@ -366,7 +370,7 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
                                                   const vector<CNodePtr> &last_grad_and_status,
                                                   const NotNull<KernelGraphPtr> &graph_ptr) {
   auto cnode_ptr_list = graph_ptr->execution_order();
-  if (last_grad_and_status.size() != 2) {
+  if (last_grad_and_status.size() != kLastGradAndStatusNum) {
     return nullptr;
   }
   auto last_grad_ptr = last_grad_and_status[0];
@@ -609,7 +613,7 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
   auto independent_stream_num = resource_manager.get_cur_stream_num() - common_stream_num - hcom_stream_num;
   auto total_stream_num = resource_manager.get_cur_stream_num() + hcom_stream_num * kHcomSecondaryStreamNum;
   MS_LOG(INFO) << "Total stream number: " << total_stream_num << ", common stream number: " << common_stream_num
-               << ", hcom stream number: " << hcom_stream_num << "*" << kHcomSecondaryStreamNum + 1
+               << ", hcom stream number: " << hcom_stream_num << "*" << (kHcomSecondaryStreamNum + 1)
                << ", independent stream number: " << independent_stream_num << ".";
 
   if (total_stream_num > kMaxStreamNum) {
@@ -786,7 +790,7 @@ uint32_t AscendStreamAssign::AssignIndependentStreamId(const CNodePtr &cur_cnode
   return cur_independent_stream_id;
 }
 
-// section 3:
+// section 3
 void AscendStreamAssign::UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr) {
   MS_LOG(INFO) << "Start";
   auto cnode_ptr_list = graph_ptr->execution_order();

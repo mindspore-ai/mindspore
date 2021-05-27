@@ -20,7 +20,9 @@
 #include "frontend/optimizer/opt.h"
 
 namespace mindspore::opt {
-
+namespace {
+constexpr size_t kGetnextInputSize = 2;
+}
 const BaseRef GetnextMemcpyElimination::DefinePattern() const {
   auto prim_memcpy = std::make_shared<Primitive>(kMemCpyAsyncOpName);
   VarPtr x = std::make_shared<SeqVar>();
@@ -69,7 +71,7 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
       return nullptr;
     }
 
-    if (next_node->inputs().size() != 2) {
+    if (next_node->inputs().size() != kGetnextInputSize) {
       MS_LOG(DEBUG) << "next node has more than one input";
       return nullptr;
     }
