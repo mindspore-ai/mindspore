@@ -84,7 +84,7 @@ class ReshapeInfo : public OperatorInfo {
   Status GetParameterInput();
   Status ComputeReplaceOp();
   void InferTensorInfoByLayout();
-  void device_number(const StrategyPtr &strategy);
+  void device_number();
   Status InferDefaultLayout(const Shape &shape, TensorLayout *const layout);
 
   int64_t dev_num_;

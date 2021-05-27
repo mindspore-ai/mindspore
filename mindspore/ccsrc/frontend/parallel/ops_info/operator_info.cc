@@ -519,7 +519,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
   if (optimizer_weight_shard_size != -1) {
     // not fully use opt shard
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
-    int64_t repeated_size = group_devices.size();
+    int64_t repeated_size = SizeToLong(group_devices.size());
     if (repeated_size % optimizer_weight_shard_size != 0) {
       MS_LOG(WARNING) << "Parallel optimizer: optimizer_weight_shard_size " << optimizer_weight_shard_size
                       << " can not be applied. The repeated size of Operator " << name_ << " is " << repeated_size;
@@ -559,9 +559,10 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
   // save in tensor_layout for strategy ckpt
   auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_integrated_save();
   if (!integrated_save) {
-    tensor_layout->set_opt_weight_shard_size(optimizer_weight_shard_size);
-    int32_t opt_weight_shard_step = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
-    tensor_layout->set_opt_weight_shard_step(opt_weight_shard_step);
+    tensor_layout->set_opt_weight_shard_size(LongToInt(optimizer_weight_shard_size));
+    int64_t opt_weight_shard_step =
+      (group_devices.back() - group_devices.front()) / (SizeToLong(group_devices.size()) - 1);
+    tensor_layout->set_opt_weight_shard_step(LongToInt(opt_weight_shard_step));
     MS_LOG(INFO) << "Parallel optimizer: save opt_weight_shard_step " << opt_weight_shard_step << " in strategy ckpt";
   }
   return SUCCESS;

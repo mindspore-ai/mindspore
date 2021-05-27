@@ -55,7 +55,7 @@ class OneHotInfo : public OperatorInfo {
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 
-  int axis_ = -1;
+  int64_t axis_ = -1;
   int64_t rank_ = 0;
   int64_t total_class_number_ = 1;
   int64_t classes_each_device_ = 1;
