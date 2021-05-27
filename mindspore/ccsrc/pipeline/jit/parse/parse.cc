@@ -1748,7 +1748,8 @@ py::list ParseAst::GetArgsDefaultValues(const py::object &func_node) {
 
 AstNodeTypePtr ParseAst::GetNodeType(const py::object &node) {
   py::list list_value = python_adapter::CallPyModFn(module_, PYTHON_PARSE_GET_NODE_TYPE, node);
-  if (list_value.size() < 2) {
+  const size_t list_value_size = 2;
+  if (list_value.size() < list_value_size) {
     MS_LOG(ERROR) << "The node of python method must has 2 values.";
     return nullptr;
   }
