@@ -39,16 +39,13 @@ namespace dataset {
 Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, TensorShape out_shape,
                            uint32_t width, int32_t axis);
 
-/// \brief Helper method that convert vector to tensor
-/// \param[in] split - Result of tokens.
-/// \param[in] offset_start - Start position of each token
-/// \param[in] offset_limit - End position of each token.
-/// \param[in] with_offsets - Whether tensor contains offsets of each token.
-/// \param[out] output - Output tensor
+/// \brief Helper method that append offsets tensor to output TensorRow.
+/// \param[in] offsets_start - Offsets start index vector.
+/// \param[in] offsets_limit - Offsets length vector.
+/// \param[out] output - Output TensorRow
 /// \return Status return code
-Status TokenizerHelper(std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
-                       std::vector<uint32_t> *offsets_limit, bool with_offsets, TensorRow *output);
-
+Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std::vector<uint32_t> &offsets_limit,
+                           TensorRow *output);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_TEXT_DATA_UTILS_H_

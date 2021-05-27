@@ -45,6 +45,7 @@ Status CpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
       if (rc.IsError()) {
         std::string err_msg = "";
         std::string op_name = ops_[i]->Name();
+        // Need to remove the suffix "Op" which length is 2
         std::string abbr_op_name = op_name.substr(0, op_name.length() - 2);
         err_msg += "map operation: [" + abbr_op_name + "] failed. ";
         if (input_row.getPath().size() > 0 && !input_row.getPath()[0].empty()) {

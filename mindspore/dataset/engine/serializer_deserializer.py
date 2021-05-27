@@ -355,8 +355,10 @@ def construct_tensor_ops(operations):
         if op.get('is_python_front_end_op'):  # check if it's a py_transform op
             raise NotImplementedError("python function is not yet supported by de.deserialize().")
 
-        if op_name == "HwcToChw": op_name = "HWC2CHW"
-        if op_name == "UniformAug": op_name = "UniformAugment"
+        if op_name == "HwcToChw":
+            op_name = "HWC2CHW"
+        if op_name == "UniformAug":
+            op_name = "UniformAugment"
         op_module_vis = sys.modules["mindspore.dataset.vision.c_transforms"]
         op_module_trans = sys.modules["mindspore.dataset.transforms.c_transforms"]
 

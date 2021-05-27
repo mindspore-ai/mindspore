@@ -54,8 +54,8 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
   // and we suggest num_workers_ * queue_capacity_ not greater than 16, because
   // one worker one circular_pool with 1G pin memory, so num_workers_ * queue_capacity_
   // must limit to avoid memory overload
-  num_workers_ = 2;
-  queue_capacity_ = 8;
+  num_workers_ = kDeviceQueGpuNumThreads;
+  queue_capacity_ = kDeviceQueGpuQueueCapacity;
 #endif
 #ifdef ENABLE_TDTQUE
   ascend_keep_waiting_ = true;
@@ -340,7 +340,7 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
   // CircularPool may not safe under multi-threads scenario, so one worker with one pool
   for (int i = 0; i < num_workers_; i++) {
     std::shared_ptr<MemoryPool> pool;
-    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool, -1, 1024, false, true));
+    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool, -1, kDeviceQueGpuThreadMemory, false, true));
     pool_.push_back(pool);
   }
   gpu_item_connector_ = std::make_unique<GpuItemConnector>(num_workers_, 1, queue_capacity_);

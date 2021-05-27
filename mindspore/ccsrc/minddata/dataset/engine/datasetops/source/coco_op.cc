@@ -196,13 +196,6 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   return Status::OK();
 }
 
-// When task is Detection, user can get data with four columns:
-// column ["image"] with datatype=uint8
-// column ["bbox"] with datatype=float32
-// column ["category_id"] with datatype=uint32
-// column ["iscrowd"] with datatype=uint32
-// By the way, column ["iscrowd"] is used for some testcases, like fasterRcnn.
-// If "iscrowd" is not existed, user will get default value 0.
 Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                       std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd;
@@ -247,10 +240,6 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
   return Status::OK();
 }
 
-// When task is "Stuff"/"Keypoint", user can get data with three columns:
-// column ["image"] with datatype=uint8
-// column ["segmentation"]/["keypoints"] with datatype=float32
-// column ["iscrowd"]/["num_keypoints"] with datatype=uint32
 Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                    std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> item;
@@ -284,12 +273,6 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
   return Status::OK();
 }
 
-// When task is "Panoptic", user can get data with five columns:
-// column ["image"] with datatype=uint8
-// column ["bbox"] with datatype=float32
-// column ["category_id"] with datatype=uint32
-// column ["iscrowd"] with datatype=uint32
-// column ["area"] with datatype=uint32
 Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd, area;
