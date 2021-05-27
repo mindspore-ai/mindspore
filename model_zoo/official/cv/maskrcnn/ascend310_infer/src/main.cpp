@@ -101,9 +101,11 @@ int main(int argc, char* argv[]) {
             ret = aclProcess.Process(wholePath, &costTime_map);
             if (ret != OK) {
                 std::cout << "model process failed, errno = " << ret << std::endl;
+                closedir(dir);
                 return ret;
             }
         }
+        closedir(dir);
     } else {
         std::cout << " input image path error" << std::endl;
     }
