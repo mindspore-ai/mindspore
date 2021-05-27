@@ -30,6 +30,7 @@
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/switch_actor.h"
+#include "runtime/framework/actor/gather_actor.h"
 #include "runtime/framework/actor/copy_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/kernel_graph.h"
@@ -38,6 +39,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::session::KernelGraph;
 using mindspore::session::KernelWithIndex;
 using KernelMapPosition = std::map<KernelWithIndex, size_t, session::KernelWithIndexCmp>;
 using ActorInfo = std::string;
@@ -62,13 +64,15 @@ enum class GraphExecutionStrategy {
 // The control node is used to link graphs in the control flow scenario.
 // The origin parameters order is used to correspond to the input args.
 // The origin outputs order is used to correspond to the output args.
+// The front to backend parameters is used to build and link the host data source actor in the control flow scenario.
+// The front output_node is used to link the output actor in multi-branch output scenario.
 struct GraphCompilerInfo {
-  GraphCompilerInfo(const std::vector<KernelGraphPtr> &graphs, const std::vector<DeviceContext *> &device_contexts,
-                    const std::vector<std::vector<int64_t> *> &tensors_mask,
-                    const std::vector<std::vector<TensorPtr> *> &input_tensors,
-                    const std::vector<AnfNodePtr> &control_nodes,
-                    const std::vector<AnfNodePtr> &origin_parameters_order,
-                    const KernelMapPosition &origin_outputs_order, const std::string &name)
+  GraphCompilerInfo(
+    const std::vector<KernelGraphPtr> &graphs, const std::vector<DeviceContext *> &device_contexts,
+    const std::vector<std::vector<int64_t> *> &tensors_mask, const std::vector<std::vector<TensorPtr> *> &input_tensors,
+    const std::vector<AnfNodePtr> &control_nodes, const std::vector<AnfNodePtr> &origin_parameters_order,
+    const KernelMapPosition &origin_outputs_order, const FrontToBackendNodeWithContext &front_to_backend_parameters,
+    const std::vector<AnfNodePtr> &front_output_nodes, const size_t outputs_num, const std::string &name)
       : graphs_(graphs),
         device_contexts_(device_contexts),
         tensors_mask_(tensors_mask),
@@ -76,6 +80,9 @@ struct GraphCompilerInfo {
         control_nodes_(control_nodes),
         origin_parameters_order_(origin_parameters_order),
         origin_outputs_order_(origin_outputs_order),
+        front_to_backend_parameters_(front_to_backend_parameters),
+        front_output_nodes_(front_output_nodes),
+        outputs_num_(outputs_num),
         name_(name) {}
   std::vector<KernelGraphPtr> graphs_;
   std::vector<DeviceContext *> device_contexts_;
@@ -84,6 +91,9 @@ struct GraphCompilerInfo {
   std::vector<AnfNodePtr> control_nodes_;
   std::vector<AnfNodePtr> origin_parameters_order_;
   KernelMapPosition origin_outputs_order_;
+  FrontToBackendNodeWithContext front_to_backend_parameters_;
+  std::vector<AnfNodePtr> front_output_nodes_;
+  size_t outputs_num_;
   std::string name_;
 };
 
@@ -92,6 +102,9 @@ struct GraphCompilerInfo {
 // The data source actor is used to obtain data and process them into device tensors, and send them to kernel actor.
 // The kernel actor is used to receive the device tensors to luanch kernel. Specifically notice the no input
 // kernel actor, it means that this actor has no input device tensor, need be triggered externally.
+// The switch actor is used to run different branches in the control flow scenario.
+// The gather actor is used to collect the inputs of graph and send branch id to loop count actor in multi-branch
+// output scenario.
 // The copy actor is used to convert the device tensor between the different device kernel.
 // The loop count actor is used to receive the control of tail kernel actor to represent the end of one step
 // and decide whether to loop execution by loop count.
@@ -103,6 +116,7 @@ struct ActorSet {
   // No input kernel actors need be triggered specifically.
   std::vector<KernelActorPtr> no_input_kernel_actors_;
   std::vector<SwitchActorPtr> switch_actors_;
+  std::vector<GatherActorPtr> gather_actors_;
   std::vector<CopyActorPtr> copy_actors_;
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
@@ -160,6 +174,8 @@ class GraphScheduler {
   LoopCountActorPtr BuildLoopCountActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
   OutputActorPtr BuildOutputActor(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy);
   std::vector<KernelActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set);
+  std::vector<SwitchActorPtr> BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info);
+  std::vector<GatherActorPtr> BuildGatherActor(const GraphCompilerInfo &graph_compiler_info);
 
   // Cache the information of graph output node to actor between “build” and “link”, for linking between the tail of
   // previous graph and the head of next graph.

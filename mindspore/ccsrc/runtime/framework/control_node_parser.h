@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <tuple>
+#include <set>
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
@@ -32,100 +32,62 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::session::KernelWithIndex;
 
-// The meaning of switch node output tuple: 1. switch node 2. output branch id 3. output index.
-using SwitchNodeOutput = std::tuple<AnfNodePtr, size_t, size_t>;
-// The output arrow info: 1. from node index 2.to node 3. to node index.
-using NodeOutputInfo = std::tuple<size_t, AnfNodePtr, size_t>;
-// External input of kernel graph, the key means the front node of input
-// and value vector is pairs of from node and to node.
-using KernelGraphExternInput = std::unordered_map<AnfNodePtr, std::vector<std::pair<KernelWithIndex, KernelWithIndex>>>;
+using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 
-struct PairHash {
-  template <class T1, class T2>
-  std::size_t operator()(const std::pair<T1, T2> &p) const {
-    auto h1 = std::hash<T1>{}(p.first);
-    auto h2 = std::hash<T2>{}(p.second);
-    return h1 ^ h2;
-  }
-};
-
-// Get all possible outputs of funcgraph. Search recursively by the input of the return node of the funcgraph.
-// If the input is a call node, enter all the funcgraphs it called until the input of the non-call node is found
-// and return all of the output node.
-std::vector<AnfNodePtr> GetAllBranchOutputs(const FuncGraphPtr &func_graph);
-
-// ControlNodeParser is used to parse control nodes, and get the edges between nodes. Call node is used to
-// implement the call relationship between funcgraphs, the actual parameters are connected to the call node,
-// and the call node then calls the corresponding funcgraph, sends the actual parameters to next nodes
-// according to the relationship between the actual parameters and formal parameters.
-// From the function of the call node, the structure of the edge can be split into two parts:
-// the relationship between the output nodes and the formal parameters, and relationship between formal parameters
-//  and input nodes. And then they are connected to become the final edge.
-// Therefore, the analysis is mainly divided into 2 steps:
-// 1. Get all input and output relationship with formal parameters;
-// 2. Connect all input and output to edges.
+// ControlNodeParser is a series of tool functions used to parse control nodes.
 class ControlNodeParser {
  public:
-  ControlNodeParser() = default;
-  ~ControlNodeParser() = default;
-  ControlNodeParser(const ControlNodeParser &) = delete;
-  ControlNodeParser &operator=(const ControlNodeParser &) = delete;
+  // Fetch all the relationships between front parameters and backend parameters.The front parameters
+  // include two parts:
+  // 1. The parameter from kernel graph.
+  // 2. The parameter from control nodes.
+  static void FetchFrontToBackendParameterMap(const std::vector<KernelGraphPtr> &graphs,
+                                              const std::vector<DeviceContext *> &device_contexts,
+                                              const std::vector<AnfNodePtr> &control_nodes,
+                                              FrontToBackendNodeWithContext *front_to_backend_parameter);
 
-  // Analyze the relationship between switch and kernel nodes.
-  // Parameter kernel_graph_input_ indicates that in a multi-graph case, parameters of the subgraph
-  // should be the passed in when called by main graph, rather than directly sent by the input, so it
-  // needs to be connected when parsing the control node.
-  // The result of parse is the edge between nodes, which is stored in member variables.
-  void Parse(const std::vector<AnfNodePtr> &control_nodes, const KernelGraphExternInput &kernel_graph_input_);
+  // Get inputs of control node which come from the host actor. These inputs generally come from the partial
+  // nodes and call nodes of the root funcgraph.
+  static std::vector<AnfNodePtr> FetchControlNodeParameter(const std::vector<AnfNodePtr> &control_nodes);
+
+  // Get the output of funcgraph, usually there is only one output node, In the control flow, there are
+  // multiple branch outputs, there will be multiple output nodes.
+  static std::vector<AnfNodePtr> FetchAllBranchOutputs(const FuncGraphPtr &func_graph);
 
  private:
-  friend class GraphScheduler;
+  // Check whether node is a call node, there are two types of call nodes:
+  // 1. First input of node is a cnode.
+  // 2. First input of node is a funcgraph value node.
+  static bool IsCallNode(const AnfNodePtr &node);
 
-  void ParseCall(const AnfNodePtr &node);
-  void ParseSwitch(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs_on_call);
-  void ParseSwitchLayer(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs_on_call);
-  void ParsePartial(const AnfNodePtr &node, const std::vector<AnfNodePtr> &switch_inputs, const size_t branch_id,
-                    const std::vector<AnfNodePtr> &inputs_on_call);
-  void ParseInput(const AnfNodePtr &from_node, const AnfNodePtr &to_node, size_t to_index);
-  // Parse input which is a call node, This means that we need to find the output of the funcgraph called by
-  // the call node as the input of to_node.
-  void ParseCallInput(const CNodePtr &from_node, const AnfNodePtr &to_node, size_t to_index);
+  // Get the funcgraph in partial node.
+  static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node);
 
-  // Get all inputs of switch nodes, inputs_on_call is the inputs which was inputs of call node which the switch
-  // node connected.
-  std::vector<AnfNodePtr> GetSwitchInput(const AnfNodePtr &node, const std::vector<AnfNodePtr> &inputs_on_call);
+  // Find all funcgraphs that the call node will call.
+  static std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const CNodePtr &node);
 
-  // Connect the input and output of the call node to get the final edge.
-  void LinkInputAndOutput();
-  // Link the formal parameter to its final actual parameter in member variables parameter_to_arguments_.
-  // For example, if we have a map like {{a, b}, {b, c}, {c, d}}, final we will get {{a, d}, {b, d}, {c, d}}.
-  void LinkParameterAndArgument();
-  // Recursively find all inputs corresponding to node.
-  void GetOutputNode(const AnfNodePtr &node, std::vector<KernelWithIndex> *inputs);
+  // Find the output of the funcgraph, if the output is a call node, return the output of the funcgraph
+  // called by the call node.
+  static std::vector<AnfNodePtr> FetchFuncGraphOutput(const FuncGraphPtr &func_graph,
+                                                      std::vector<AnfNodePtr> *call_nodes);
 
-  // Relationship between formal parameter and actual parameter
-  std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> actual_to_formal_parameters_;
-  std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> formal_to_actual_parameters_;
+  // Find the corresponding backend parameter for the front_node. If the front_node does not have the corresponding
+  // backend parameter, then recursively find the backend parameters of other front parameters corresponding to the
+  // front_node.
+  static std::pair<AnfNodePtr, DeviceContext *> FetchBackendNodeByFrontNode(
+    const AnfNodePtr &front_node,
+    const std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> &front_to_front_parameter,
+    const std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>> &front_to_backend_parameter,
+    std::set<AnfNodePtr> *invalid_node);
 
-  // In control nodes, edge is a structure like kernel output --> formal parameter --> kernel input.
-  // In the parsing process, the edge is divided into two parts, input and output:
-  // input represents the relationship between formal parameters and kernel input,
-  // output represents the relationship between kernel output and formal parameters.
-  // In order to merge input and output into edge, both of them are stored in map and use parameter as the key.
-  // All inputs.
-  std::unordered_map<AnfNodePtr, std::vector<KernelWithIndex>> parameter_to_input_;
-  // Three kinds of output.
-  // output of switch node.
-  std::unordered_map<AnfNodePtr, std::vector<SwitchNodeOutput>> parameter_to_switch_out_;
-  // output of kernel node.
-  std::unordered_map<AnfNodePtr, std::vector<KernelWithIndex>> parameter_to_kernel_out_;
-  // parameters in root funcgraph.
-  std::vector<AnfNodePtr> parameters_;
-
-  // Final edges.
-  std::unordered_map<AnfNodePtr, std::vector<NodeOutputInfo>> kernel_outputs_;
-  std::unordered_map<std::pair<AnfNodePtr, size_t>, std::vector<NodeOutputInfo>, PairHash> switch_outputs_;
-  std::unordered_map<AnfNodePtr, std::vector<KernelWithIndex>> parameter_out_;
+  // The relationship between front parameters indicates that the parameter is directly used as the input of the
+  // funcgraph. There are two situations:
+  // 1. The parameter is used as the input of the call node,
+  // 2. The parameter is used as the input of the partial and will be input to the funcgraph of the partial in the
+  //    subsequent call node.
+  static void FetchFrontToFrontParameterMap(
+    const std::vector<AnfNodePtr> &control_nodes,
+    std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> *front_to_front_parameter);
 };
 }  // namespace runtime
 }  // namespace mindspore

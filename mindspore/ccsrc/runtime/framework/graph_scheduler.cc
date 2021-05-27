@@ -301,6 +301,20 @@ TensorPtr FetchInputTensor(const GraphCompilerInfo &graph_compiler_info, size_t 
   }
   return nullptr;
 }
+
+void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size_t> &data_node_position_map,
+                                       const AnfNodePtr &node, const TensorPtr &tensor,
+                                       std::vector<TensorPtr> *host_tensors) {
+  if (std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address()) != nullptr) {
+    return;
+  }
+
+  // Fill the host tensors for non weighted parameters.
+  const auto &iter = data_node_position_map.find(node);
+  if (iter != data_node_position_map.end()) {
+    (*host_tensors)[iter->second] = tensor;
+  }
+}
 }  // namespace
 
 GraphScheduler::~GraphScheduler() {
@@ -390,6 +404,10 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
     MS_EXCEPTION_IF_NULL(switch_actor);
     actors.emplace_back(static_cast<ActorReference>(switch_actor));
   }
+  for (auto &gather_actor : actor_set->gather_actors_) {
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    actors.emplace_back(static_cast<ActorReference>(gather_actor));
+  }
   for (auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
     actors.emplace_back(static_cast<ActorReference>(copy_actor));
@@ -444,11 +462,8 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
         PrepareDataForWeightNode(input_node, input_tensor, device_context, graph);
       } else if (IsHostQueueDSActor(input_node, graph, input_tensor)) {
         MS_EXCEPTION_IF_NULL(host_data_source_actor);
-        // Fill the host tensors for non weighted parameters.
-        const auto &iter = host_data_source_actor->data_node_position_map_.find(input_node);
-        if (iter != host_data_source_actor->data_node_position_map_.end()) {
-          host_tensors[iter->second] = input_tensor;
-        }
+        PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
+                                          &host_tensors);
       }
     }
 
@@ -461,7 +476,24 @@ void GraphScheduler::PrepareRun(const ActorSet *actor_set, const GraphCompilerIn
     }
   }
 
-  // 3.Prepare the data of host tensor queue(non weighted parameters of graph).
+  // 3.Fill host tensors for non weighted parameters which belongs to control node.
+  std::vector<AnfNodePtr> control_node_parameters =
+    ControlNodeParser::FetchControlNodeParameter(graph_compiler_info.control_nodes_);
+  const auto &tensors = input_tensors.back();
+  const auto &parameters = graph_compiler_info.origin_parameters_order_;
+  for (size_t j = 0; j < control_node_parameters.size(); ++j) {
+    const auto &input_node = control_node_parameters[j];
+    const auto &input_tensor = tensors[j];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (IsPersistentDeviceTensor(input_node)) {
+    } else if (find(parameters.begin(), parameters.end(), input_node) != parameters.end()) {
+      MS_EXCEPTION_IF_NULL(host_data_source_actor);
+      PrepareDataForHostDataSourceActor(host_data_source_actor->data_node_position_map_, input_node, input_tensor,
+                                        &host_tensors);
+    }
+  }
+
+  // 4.Prepare the data of host tensor queue(non weighted parameters of graph).
   if (host_data_source_actor != nullptr) {
     const auto &host_tensor_queue = FetchHostQueue(actor_set->name_);
     MS_EXCEPTION_IF_NULL(host_tensor_queue);
@@ -531,6 +563,8 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info, 
   actor_set->kernel_actors_ = BuildKernelActor(graph_compiler_info);
   actor_set->loop_count_actor_ = BuildLoopCountActor(graph_compiler_info, strategy);
   actor_set->output_actor_ = BuildOutputActor(graph_compiler_info, strategy);
+  actor_set->switch_actors_ = BuildSwitchActor(graph_compiler_info);
+  actor_set->gather_actors_ = BuildGatherActor(graph_compiler_info);
 
   return actor_set;
 }
@@ -705,6 +739,38 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
       device_queue_ds_actor->kernel_info_ = static_cast<device::KernelInfo *>((*iter)->kernel_info());
     }
   }
+
+  const auto &front_to_backend_parameter = graph_compiler_info.front_to_backend_parameters_;
+
+  // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
+  // the corresponding backend parameter from the map, and insert it into the host data source actor
+  std::vector<AnfNodePtr> control_node_parameters =
+    ControlNodeParser::FetchControlNodeParameter(graph_compiler_info.control_nodes_);
+  for (const auto parameter : control_node_parameters) {
+    auto backend_iter = front_to_backend_parameter.find(parameter);
+    if (backend_iter == front_to_backend_parameter.end()) {
+      MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
+    }
+
+    if (host_queue_ds_actor == nullptr) {
+      auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
+      MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
+      host_queue_ds_actor = std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, host_queue);
+      InsertActor(host_queue_ds_actor.get());
+      data_source_actors.emplace_back(host_queue_ds_actor);
+    }
+
+    const auto &backend_node = backend_iter->second.first;
+    auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
+
+    if (iter != host_queue_ds_actor->data_nodes_.end()) {
+      host_queue_ds_actor->data_node_position_map_.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
+    } else {
+      host_queue_ds_actor->data_node_position_map_.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
+      host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.first);
+      host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.second);
+    }
+  }
   return data_source_actors;
 }
 
@@ -771,6 +837,55 @@ std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorS
     }
   }
   return no_input_kernel_actors;
+}
+
+std::vector<SwitchActorPtr> GraphScheduler::BuildSwitchActor(const GraphCompilerInfo &graph_compiler_info) {
+  std::vector<SwitchActorPtr> switch_actors;
+
+  for (const auto &control_node : graph_compiler_info.control_nodes_) {
+    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
+        AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
+      auto actor_name = control_node->fullname_with_scope();
+      auto switch_actor = std::make_shared<SwitchActor>(actor_name, control_node->cast<CNodePtr>());
+      switch_actor->Initialize();
+      InsertActor(switch_actor.get());
+      switch_actors.emplace_back(switch_actor);
+    }
+  }
+  return switch_actors;
+}
+
+std::vector<GatherActorPtr> GraphScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
+  std::vector<GatherActorPtr> gather_actors;
+
+  bool is_main_return = true;
+  // Each funcgraph has a return node, get the funcgraph from the return node, and create a gather actor.
+  for (const auto &control_node : graph_compiler_info.control_nodes_) {
+    // Root funcgraph does not need to create a gather actor.
+    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+      if (is_main_return) {
+        is_main_return = false;
+        continue;
+      }
+
+      auto func_graph = control_node->func_graph();
+      auto actor_name = func_graph->ToString();
+      std::vector<AnfNodePtr> parameters;
+      std::copy_if(
+        func_graph->parameters().begin(), func_graph->parameters().end(), parameters.begin(),
+        [](const AnfNodePtr &parameter) { return !AnfAlgo::IsParameterWeight(parameter->cast<ParameterPtr>()); });
+
+      auto loop_count_actor_name = graph_compiler_info.name_ + "_LoopCountActor";
+      auto actor = FetchActor(loop_count_actor_name);
+      if (actor == nullptr) {
+        MS_LOG(EXCEPTION) << "Cannot find loop count actor by name:" << loop_count_actor_name;
+      }
+      auto gather_actor = std::make_shared<GatherActor>(actor_name, parameters, actor->GetAID());
+      InsertActor(gather_actor.get());
+      gather_actors.emplace_back(gather_actor);
+    }
+  }
+  return gather_actors;
 }
 
 void GraphScheduler::LinkDataArrow(KernelActor *to_actor, const ActorSet *actor_set, const KernelGraphPtr &graph,

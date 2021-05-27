@@ -22,18 +22,6 @@
 
 namespace mindspore {
 namespace runtime {
-constexpr size_t kSwitchInputNum = 4;
-constexpr size_t kSwitchCondPos = 1;
-constexpr size_t kSwitchPartialNum = 2;
-constexpr size_t kSwitchLayerCondPos = 1;
-constexpr size_t kSwitchLayerBranchPos = 2;
-constexpr size_t kSwitchLayerInputNum = 3;
-constexpr size_t kMaxSwitchCondSize = 8;
-constexpr size_t kSwitchTrueBranchPos = 2;
-constexpr size_t kSwitchFalseBranchPos = 3;
-constexpr size_t kPartialFuncGraphPos = 1;
-constexpr size_t kPartialInputStartPos = 2;
-
 void SwitchActor::Init() {
   // Init output data.
   output_data_.resize(output_branch_arrows_.size());

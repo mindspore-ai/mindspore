@@ -25,15 +25,13 @@
 #include <algorithm>
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"
+#include "runtime/framework/control_node_parser.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
 namespace runtime {
-using mindspore::device::DeviceContext;
-
-using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 
 // Gather actor is the entrance of sub funcgraph. Graph input is sent to it and sent to other actors by gather actor.
 class GatherActor : public OpActor<DeviceTensor> {
