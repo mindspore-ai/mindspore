@@ -50,6 +50,8 @@
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/optimizer/graph/while_pass.h"
 #include "tools/optimizer/graph/if_pass.h"
+#include "tools/optimizer/graph/reduce_same_act_pass.h"
+#include "tools/optimizer/graph/split_one_pass.h"
 #include "tools/optimizer/graph/unify_format_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
@@ -290,6 +292,22 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run plugin pass failed.";
     return nullptr;
+  }
+
+  auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
+  for (auto &fg : func_graphs_) {
+    if (!reduce_act_pass->Run(fg)) {
+      MS_LOG(ERROR) << "Run reduce same act pass failed.";
+      return nullptr;
+    }
+  }
+
+  auto split_one_pass = std::make_shared<opt::SplitOnePass>();
+  for (auto &fg : func_graphs_) {
+    if (!split_one_pass->Run(fg)) {
+      MS_LOG(ERROR) << "Run split one pass failed.";
+      return nullptr;
+    }
   }
 
   for (auto &fg : func_graphs_) {

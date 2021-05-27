@@ -96,6 +96,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/unify_format_pass.cc
         ../optimizer/graph/node_infershape.cc
         ../optimizer/graph/transpose_strategy.cc
+        ../optimizer/graph/reduce_same_act_pass.cc
+        ../optimizer/graph/split_one_pass.cc
         )
 
 add_subdirectory(../anf_exporter anf_exporter)
