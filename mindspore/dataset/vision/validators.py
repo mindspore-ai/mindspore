@@ -79,6 +79,8 @@ def check_mix_up_batch_c(method):
 
 
 def check_normalize_c_param(mean, std):
+    """Wrapper method to check the parameters of normalize op."""
+
     type_check(mean, (list, tuple), "mean")
     type_check(std, (list, tuple), "std")
     if len(mean) != len(std):
@@ -90,6 +92,8 @@ def check_normalize_c_param(mean, std):
 
 
 def check_normalize_py_param(mean, std):
+    """Wrapper method to check the parameters of normalize op."""
+
     if len(mean) != len(std):
         raise ValueError("Length of mean and std must be equal.")
     for mean_value in mean:
@@ -99,6 +103,8 @@ def check_normalize_py_param(mean, std):
 
 
 def check_fill_value(fill_value):
+    """Parsing the fill_value arguments and check if it is legal."""
+
     if isinstance(fill_value, int):
         check_uint8(fill_value)
     elif isinstance(fill_value, tuple) and len(fill_value) == 3:
@@ -110,6 +116,7 @@ def check_fill_value(fill_value):
 
 def check_padding(padding):
     """Parsing the padding arguments and check if it is legal."""
+
     type_check(padding, (tuple, list, numbers.Number), "padding")
     if isinstance(padding, numbers.Number):
         check_value(padding, (0, INT32_MAX), "padding")
@@ -153,6 +160,8 @@ def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT
 
 
 def check_erasing_value(value):
+    """Parsing the erase arguments and check if it is legal."""
+
     if not (isinstance(value, (numbers.Number,)) or
             (isinstance(value, (str,)) and value == "random") or
             (isinstance(value, (tuple, list)) and len(value) == 3)):

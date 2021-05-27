@@ -72,6 +72,7 @@ EXCEPTIONS = dict(
 
 )
 
+
 class MindRecordException(Exception):
     """MindRecord base error class."""
 
@@ -185,6 +186,7 @@ class DbConnectionError(MindRecordException):
     def __init__(self, error_detail):
         super(DbConnectionError, self).__init__()
         self.error_msg = 'Db connection is error. Detail: {}'.format(error_detail)
+
 
 class MRMOpenError(MindRecordException):
     """

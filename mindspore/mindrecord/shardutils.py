@@ -45,6 +45,7 @@ VALUE_TYPE_MAP = {"int": ["int32", "int64"], "float": ["float32", "float64"], "s
 VALID_ATTRIBUTES = ["int32", "int64", "float32", "float64", "string", "bytes"]
 VALID_ARRAY_ATTRIBUTES = ["int32", "int64", "float32", "float64"]
 
+
 class ExceptionThread(threading.Thread):
     """ class to pass exception"""
     def __init__(self, *args, **kwargs):

@@ -20,6 +20,7 @@ from mindspore import log as logger
 from .common.exceptions import MRMOpenError, MRMLaunchError
 __all__ = ['ShardReader']
 
+
 class ShardReader:
     """
     Wrapper class which is represent ShardReader class in c++ module.
