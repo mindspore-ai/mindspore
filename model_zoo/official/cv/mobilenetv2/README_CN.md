@@ -254,8 +254,8 @@ python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EX
 
 ### 在Ascend310执行推理
 
-在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
-目前仅支持batch_Size为1的推理。
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+目前仅支持batch_size为1的推理。
 
 ```shell
 # Ascend310 inference

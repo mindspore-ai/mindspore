@@ -247,8 +247,8 @@ The ckpt_file parameter is required,
 
 ### Infer on Ascend310
 
-Before performing inference, the mindir file must bu exported by `export.py` script. We only provide an example of inference using MINDIR model.
-Current batch_Size can only be set to 1.
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
 
 ```shell
 # Ascend310 inference

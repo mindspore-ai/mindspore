@@ -15,10 +15,15 @@
         - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
+        - [Training Performance](#training-performance)
         - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
     - [How to use](#how-to-use)
         - [Inference](#inference)
         - [Continue Training on the Pretrained Model](#continue-training-on-the-pretrained-model)
@@ -145,7 +150,11 @@ The entire code structure is as following:
     |---README.md    // descriptions about cnnctc
     |---train.py    // train scripts
     |---eval.py    // eval scripts
+    |---export.py    // export scripts
+    |---pstprocess.py    // postprocess scripts
+    |---ascend310_infer    // application for 310 inference
     |---scripts
+        |---run_infer_310.sh    // shell script for infer on ascend310
         |---run_standalone_train_ascend.sh    // shell script for standalone on ascend
         |---run_distribute_train_ascend.sh    // shell script for distributed on ascend
         |---run_eval_ascend.sh    // shell script for eval on ascend
@@ -251,6 +260,39 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 The model will be evaluated on the IIIT dataset, sample results and overall accuracy will be printed.
 
+## [Inference process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+```
+
+The ckpt_file parameter is required,
+The file_name parameter is file name after export.
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1, modify the parameter `TEST_BATCH_SIZE` in `config.py` to 1 before export the model
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. CNNCTC only support CPU mode .
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'Accuracy': 0.8546
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -285,6 +327,20 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | outputs             | Accuracy                 |
 | Accuracy            |  85%  |
 | Model for inference | 675M (.ckpt file)         |
+
+### Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | CNNCTC                      |
+| Resource            | Ascend 310; CentOS 3.10     |
+| Uploaded Date       | 19/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | IIIT5K                      |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | Accuracy=0.8546             |
+| Model for inference | 675M(.ckpt file)            |
 
 ## [How to use](#contents)
 

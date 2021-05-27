@@ -18,10 +18,15 @@
         - [训练结果](#训练结果)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
         - [评估性能](#评估性能)
+        - [推理性能](#推理性能)
     - [用法](#用法)
         - [推理](#推理)
         - [在预训练模型上继续训练](#在预训练模型上继续训练)
@@ -148,10 +153,14 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
     |---README.md    // CNN+CTC相关描述
     |---train.py    // 训练脚本
     |---eval.py    // 评估脚本
+    |---export.py    // 模型导出脚本
+    |---postprocess.py    // 推理后处理脚本
+    |---ascend310_infer    // 用于310推理
     |---scripts
         |---run_standalone_train_ascend.sh    // Ascend单机shell脚本
         |---run_distribute_train_ascend.sh    // Ascend分布式shell脚本
         |---run_eval_ascend.sh    // Ascend评估shell脚本
+        |---run_infer_310.sh    // Ascend310推理的shell脚本
     |---src
         |---__init__.py    // init文件
         |---cnn_ctc.py    // cnn_ctc网络
@@ -255,6 +264,39 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 在IIIT数据集上评估模型，并打印样本结果和总准确率。
 
+## 推理过程
+
+### 导出MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+```
+
+参数ckpt_file为必填项，
+参数file_name为导出后文件名，
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+目前仅支持batch_size为1的推理，导出模型前请修改`config.py`中的参数`TEST_BATCH_SIZE`为1。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。CNNCTC目前仅支持使用CPU算子进行推理。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'Accuracy':0.8546
+```
+
 # 模型描述
 
 ## 性能
@@ -288,6 +330,20 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 | batch_size | 192 |
 | 输出 |准确率 |
 | 准确率 | 85% |
+| 推理模型 | 675M（.ckpt文件） |
+
+### 推理性能
+
+| 参数 | Ascend |
+| -------------- | ---------------------------|
+| 模型版本 | CNNCTC |
+| 资源 | Ascend 310；系统 CentOS 3.10 |
+| 上传日期 | 2021-05-19 |
+| MindSpore版本 | 1.2.0 |
+| 数据集 | IIIT5K |
+| batch_size | 1 |
+| 输出 | Accuracy |
+| 准确率 | Accuracy=0.8546 |
 | 推理模型 | 675M（.ckpt文件） |
 
 ## 用法

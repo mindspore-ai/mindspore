@@ -25,7 +25,7 @@ from src.cnn_ctc import CNNCTC_Model
 parser = argparse.ArgumentParser(description="CNNCTC_export")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--file_name", type=str, default="cnn_ctc", help="CNN&CTC output air name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="AIR", help="file format")
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 parser.add_argument("--ckpt_file", type=str, default="./ckpts/cnn_ctc.ckpt", help="CNN&CTC ckpt file.")
