@@ -371,7 +371,7 @@ void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseSummaryRefCount(summary_outputs);
 }
 
-bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink) {
+bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   static_cast<CPUMemoryManager *>(mem_manager_.get())->IncreaseAddressRefCount(kernel_graph);
 
