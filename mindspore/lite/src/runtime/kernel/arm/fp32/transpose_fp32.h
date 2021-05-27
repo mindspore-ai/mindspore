@@ -46,8 +46,6 @@ class TransposeCPUKernel : public InnerKernel {
   float *in_data_ = nullptr;
   float *out_data_ = nullptr;
   int *out_shape_ = nullptr;
-  int *dim_size_ = nullptr;
-  int *position_ = nullptr;
   TransposeParameter *param_ = nullptr;
   TransposeFunc NHNCTransposeFunc_ = nullptr;
   int thread_count_ = 0;
