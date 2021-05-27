@@ -19,9 +19,8 @@
 #include "utils/ms_context.h"
 namespace mindspore {
 namespace kernel {
-bool HcomReceiveKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
-                               const std::vector<AddressPtr> & /*workspace*/,
-                               const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
+bool HcomReceiveKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                               const std::vector<AddressPtr> &, void *) {
   MS_LOG(INFO) << "HcomReceive launch";
   return true;
 }

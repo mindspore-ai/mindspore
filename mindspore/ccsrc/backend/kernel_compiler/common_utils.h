@@ -80,6 +80,7 @@ TypeId DtypeToTypeId(const std::string &dtypes);
 std::string Dtype2ShortType(const std::string &dtypes);
 std::string TypeId2String(TypeId type_id, bool unknown_as_default = false);
 size_t GetDtypeNbyte(const std::string &dtypes);
+bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int64_t *size_i);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
 void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path = kCceKernelMeta);
