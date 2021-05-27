@@ -1347,11 +1347,13 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     Returns the depth-wise convolution value for the input.
 
     Applies depthwise conv2d for the input, which will generate more channels with channel_multiplier.
-    Given an input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` where :math:`N` is the batch size and a
-    filter tensor with kernel size :math:`(ks_{h}, ks_{w})`, containing :math:`C_{in} * \text{channel_multiplier}`
+    Given an input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` where :math:`N` is the batch size,
+    :math:`C` is the channels, :math:`H` is height, :math:`W` is width and a filter tensor with kernel size
+    :math:`(ks_{h}, ks_{w})`, where :math:`ks_{h}` indicates the kernel_size of height,
+    :math:`ks_{w}` indicates the kernel_size of width, containing :math:`C_{in} * \text{channel_multiplier}`
     convolutional filters of depth 1; it applies different filters to each input channel (channel_multiplier channels
     for each input channel has the default value 1), then concatenates the results together. The output has
-    :math:`\text{in_channels} * \text{channel_multiplier}` channels.
+    :math:`C_{in} * \text{channel_multiplier}` channels.
 
     Args:
         channel_multiplier (int): The multiplier for the original output convolution. Its value must be greater than 0.
@@ -1369,8 +1371,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set the size of kernel as :math:`(K_1, K_2)`, then the shape is
-          :math:`(K, C_{in}, K_1, K_2)`, `K` must be 1.
+        - **weight** (Tensor) - Set the size of kernel as :math:`(ks_{h}, ks_{w})`, then the shape is
+          :math:`(K, C_{in}, ks_{h}, ks_{w})`, `K` must be 1.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
@@ -1907,15 +1909,15 @@ class Conv2DBackpropInput(Primitive):
             default is 'NCHW'.
 
     Inputs:
-        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
+          The shape conforms to the default. Data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
           :math:`(C_{out}, C_{in}, K_1, K_2)`.
         - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
+        Tensor, the gradients with respect to the input of convolution. It has the same shape as the input.
 
     Raises:
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
@@ -1993,7 +1995,6 @@ class Conv2DBackpropInput(Primitive):
             for x in pad_list:
                 validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
-
 
 class BiasAdd(PrimitiveWithCheck):
     r"""
@@ -2532,15 +2533,18 @@ class DataFormatDimMap(PrimitiveWithInfer):
     Returns the dimension index in the destination data format given in the source data format.
 
     Args:
-        src_format (string): An optional value for source data format. Default: 'NHWC'.
-        dst_format (string): An optional value for destination data format. Default: 'NCHW'.
+        src_format (string): An optional value for source data format. The format can be 'NHWC' and 'NCHW'.
+            Default: 'NHWC'.
+        dst_format (string): An optional value for destination data format. The format can be 'NHWC' and 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
         - **input_x** (Tensor) - A Tensor with each element as a dimension index in source data format.
-          The suggested values is in the range [-4, 4). It's type is int32.
+          The suggested values is in the range [-4, 4). Only supports int32.
 
     Outputs:
-        Tensor, has the same type as the `input_x`.
+        Tensor, Return the dimension index in the given target data format,
+        has the same data type and shape as the `input_x`.
 
     Raises:
         TypeError: If `src_format` or `dst_format` is not a str.
@@ -2550,9 +2554,9 @@ class DataFormatDimMap(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> x = Tensor([0, 1, 2, 3], mindspore.int32)
+        >>> input_x = Tensor([0, 1, 2, 3], mindspore.int32)
         >>> dfdm = ops.DataFormatDimMap()
-        >>> output = dfdm(x)
+        >>> output = dfdm(input_x)
         >>> print(output)
         [0 3 1 2]
     """
@@ -3048,6 +3052,13 @@ class DropoutGenMask(Primitive):
     """
     Generates the mask value for the input shape.
 
+    Droupt means tha neural network units are temporarily dropped from the network according to a certain probability
+    during the deep learning network training. Generally, The effect of Dropout is the same as that of DropoutGenMask
+    and DropoutDoMask. The DropoutGenMask generates a mask shape that is specified based on the input. Next,
+    The DropoutDoMask is a mask generated using DropoutGenMask.
+    The input tensor is randomly set to zero based on the probability p.
+
+
     Args:
         Seed0 (int): Seed0 value for random generating. Default: 0.
         Seed1 (int): Seed1 value for random generating. Default: 0.
@@ -3058,7 +3069,7 @@ class DropoutGenMask(Primitive):
           means dropping out 10% of input units.
 
     Outputs:
-        Tensor, the value of generated mask for input shape.
+        Tensor, the value of generated mask for Inputs `shape`.
 
     Raises:
         TypeError: If neither `seed0` nor `seed1` is an int.
@@ -3092,14 +3103,20 @@ class DropoutDoMask(Primitive):
 
     Take the mask output of DropoutGenMask as input, and apply dropout on the input.
 
+    Droupt means tha neural network units are temporarily dropped from the network according to a certain probability
+    during the deep learning network training. Generally, The effect of Dropout is the same as that of DropoutGenMask
+    and DropoutDoMask. The DropoutGenMask generates a mask shape that is specified based on the input. Next,
+    The DropoutDoMask is a mask generated using DropoutGenMask.
+    The input tensor is randomly set to zero based on the probability p.
+
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type should be float32, float16 or int32
         - **mask** (Tensor) - The mask to be applied on `input_x`, which is the output of `DropoutGenMask`. And the
           shape of `input_x` must be the same as the value of `DropoutGenMask`'s input `shape`. If input wrong `mask`,
           the output of `DropoutDoMask` are unpredictable.
         - **keep_prob** (Union[Tensor, float]) - The keep rate, greater than 0 and less equal than 1, e.g. keep_prob =
           0.9, means dropping out 10% of input units. The value of `keep_prob` is the same as the input `keep_prob` of
-          `DropoutGenMask`.
+          the operator `DropoutGenMask`.
 
     Outputs:
         Tensor, the value that applied dropout on.
@@ -3113,13 +3130,13 @@ class DropoutDoMask(Primitive):
         ``Ascend``
 
     Examples:
-        >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> shape = (2, 2, 3)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> dropout_gen_mask = ops.DropoutGenMask()
         >>> dropout_do_mask = ops.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
-        >>> output = dropout_do_mask(x, mask, keep_prob)
+        >>> output = dropout_do_mask(input_x, mask, keep_prob)
         >>> print(output.shape)
         (2, 2, 3)
     """
@@ -6798,11 +6815,11 @@ class Dropout2D(PrimitiveWithInfer):
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **input** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`.
-
+        - **input_x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`. The data type should be int8, int16,
+            int32, int64, float16 or float32
     Outputs:
-        - **output** (Tensor) - with the same shape and data type as the input tensor.
-        - **mask** (Tensor[bool]) - with the same shape as the input tensor.
+        - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
+        - **mask** (Tensor[bool]) - with the same shape as the `input_x` tensor.
 
     Raises:
         TypeError: If the data type of `keep_prob` is not float.
@@ -6814,8 +6831,8 @@ class Dropout2D(PrimitiveWithInfer):
 
     Examples:
         >>> dropout = ops.Dropout2D(keep_prob=0.5)
-        >>> x = Tensor(np.random.randn(2, 1, 2, 3), mindspore.float32)
-        >>> output, mask = dropout(x)
+        >>> input_x = Tensor(np.random.randn(2, 1, 2, 3), mindspore.float32)
+        >>> output, mask = dropout(input_x)
         >>> print(output)
         [[[[0. 0. 0.]
            [0. 0. 0.]]]
@@ -6854,11 +6871,12 @@ class Dropout3D(PrimitiveWithInfer):
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **input** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`.
+        - **input_x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`. The data type should be int8, int16,
+            int32, int64, float16 or float32
 
     Outputs:
-        - **output** (Tensor) - with the same shape and data type as the input tensor.
-        - **mask** (Tensor[bool]) - with the same shape as the input tensor.
+        - **output** (Tensor) - with the same shape and data type as the `input_x` tensor.
+        - **mask** (Tensor[bool]) - with the same shape as the `input_x` tensor.
 
     Raises:
         TypeError: If the data type of `keep_prob` is not float.
@@ -6870,8 +6888,8 @@ class Dropout3D(PrimitiveWithInfer):
 
     Examples:
         >>> dropout = ops.Dropout3D(keep_prob=0.5)
-        >>> x = Tensor(np.random.randn(2, 1, 2, 1, 2), mindspore.float32)
-        >>> output, mask = dropout(x)
+        >>> input_x = Tensor(np.random.randn(2, 1, 2, 1, 2), mindspore.float32)
+        >>> output, mask = dropout(input_x)
         >>> print(output)
         [[[[[0. 0.]]
            [[0. 0.]]]]
@@ -6937,6 +6955,7 @@ class CTCLoss(Primitive):
         TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs`
                    is not a bool.
         TypeError: If `inputs`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
+        ValueError: If rank of `labels_indices` is not equal 2.
         TypeError: If dtype of `inputs` is not one of the following: float16, float32 or float64.
         TypeError: If dtype of `labels_indices` is not int64.
         TypeError: If dtype of `labels_values` or `sequence_length` is not int32.
@@ -6950,7 +6969,7 @@ class CTCLoss(Primitive):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as ops
         >>> inputs = Tensor(np.array([[[0.3, 0.6, 0.6],
-        ...                            [0.4, 0.3, 0.9],
+        ...                            [0.4, 0.3, 0.9]],
         ...
         ...                           [[0.9, 0.4, 0.2],
         ...                            [0.9, 0.9, 0.1]]]).astype(np.float32))
@@ -7002,7 +7021,7 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
           Data type is int64.
         - **decoded_values** (Tensor) - A tensor with shape of (`total_decoded_outputs`),
           it stores the decoded classes. Data type is int64.
-        - **decoded_shape** (Tensor) - The value of tensor is [`batch_size`, `max_decoded_legth`].
+        - **decoded_shape** (Tensor) - A tensor with shape of (`batch_size`, `max_decoded_legth`).
           Data type is int64.
         - **log_probability** (Tensor) - A tensor with shape of (`batch_size`, 1),
           containing sequence log-probability, has the same type as `inputs`.
@@ -7019,8 +7038,9 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_greedy_decoder = ops.CTCGreedyDecoder()
-        >>> out1, out2, out3, out4 = ctc_greedy_decoder(inputs, sequence_length)
-        >>> print(out1, out2, out3, out4)
+        >>> decoded_indices, decoded_values, decoded_shape, log_probability
+        ... = ctc_greedy_decoder(inputs, sequence_length)
+        >>> print(decoded_indices, decoded_values, decoded_shape, log_probability)
         [[0 0] [0 1] [1 0]]
         [0 1 0]
         [2 2]
@@ -7268,6 +7288,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
     at time `t+1`, :math:`h_{t}` is the hidden state of the layer
     at time `t` or the initial hidden state at time `0`, and :math:`r_{t+1}`,
     :math:`z_{t+1}`, :math:`n_{t+1}` are the reset, update, and new gates, respectively.
+    :math:`W`, :math:`b` are the weight parameter and the deviation parameter respectively.
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:
@@ -7295,15 +7316,15 @@ class DynamicGRUV2(PrimitiveWithInfer):
         - **weight_hidden** (Tensor) - Hidden-hidden weight.
           Tensor of shape :math:`(\text{hidden_size}, 3 \times \text{hidden_size})`.
           The data type must be float16.
+        - **init_h** (Tensor) - Hidden state of initial time.
+          Tensor of shape :math:`(\text{batch_size}, \text{hidden_size})`.
+          The data type must be float16 or float32.
         - **bias_input** (Tensor) - Input-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
           Has the same data type with input `init_h`.
         - **bias_hidden** (Tensor) - Hidden-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`,
           or None. Has the same data type with input `init_h`.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(\text{batch_size})`.
           Only `None` is currently supported.
-        - **init_h** (Tensor) - Hidden state of initial time.
-          Tensor of shape :math:`(\text{batch_size}, \text{hidden_size})`.
-          The data type must be float16 or float32.
 
     Outputs:
         - **y** (Tensor) - A Tensor of shape :math:
@@ -7903,14 +7924,15 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
     Inputs:
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
-        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
+        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
+          The shape conforms to the default.
           data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
           and float32.
         - **input_size** (tuple(int)) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, the gradients w.r.t the input of convolution 3D. It has the same shape as the input.
+        Tensor, the gradients with respect to the input of convolution 3D. It has the same shape as the input.
 
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
@@ -7926,8 +7948,8 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)
-        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mindspore.float16)
+        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mstype.float16)
+        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mstype.float16)
         >>> x = Tensor(np.ones([16, 32, 13, 37, 33]))
         >>> conv3d_backprop_input = P.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
         >>> output = conv3d_backprop_input(dout, weight, F.shape(x))
@@ -8039,12 +8061,13 @@ def _deconv_output_length(input_length, kernel_size, stride_size, dilation_size)
 
 class Conv3DTranspose(PrimitiveWithInfer):
     r"""
-    Compute a 3D transposed convolution, which is also known as a deconvolution
+    Computes a 3D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
 
-    Input is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    Input is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
 
-    If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
+    If the 'pad_mode' is set to be "pad", the depth, height and width of output are defined as:
 
     .. math::
         D_{out} = (D_{in} - 1) \times \text{stride_d} - 2 \times \text{padding_d} + \text{dilation_d} \times
@@ -8056,11 +8079,17 @@ class Conv3DTranspose(PrimitiveWithInfer):
         W_{out} = (W_{in} - 1) \times \text{stride_w} - 2 \times \text{padding_w} + \text{dilation_w} \times
         (\text{kernel_size_w} - 1) + \text{output_padding_w} + 1
 
+    Where :math:`kernel_size_d` is kernel size of depth, :math:`kernel_size_h` is kernel size of height
+    and :math:`kernel_size_w` is kernel size of width. The same below:
+    :math:`dialtion` is Spacing between kernel elements,
+    :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
+
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
-        mode (int): Modes for different convolutions. Default is 1. Not currently used.
+        mode (int): Modes for different convolutions. Default is 1. It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "valid".
 
@@ -8085,19 +8114,22 @@ class Conv3DTranspose(PrimitiveWithInfer):
         dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
         group (int): Splits input into groups. Default: 1. Only 1 is currently supported.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
-        data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+        data_format (str): The optional value for data format. Currently only 'NCDHW' is supported.
 
     Inputs:
-        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
+        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
+          The shape conforms to the default.
+          data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only supports float16
           and float32.
-        - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
-          :math:`(C_{in}, C_{out}//groups, k_d, K_h, K_w)`. Currently weight data type only support float16
-          and float32.
+        - **weight** (Tensor) - Set size of kernel is :math:`(K_d, K_h, K_w)`, then the shape is
+          :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter.
+          Currently weight data type only supports float16 and float32.
         - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none.
 
     Outputs:
-        Tensor, the gradients w.r.t the input of convolution 3D. It has the same shape as the input.
+        Tensor, the gradients with respect to the input of convolution 3D.
+        Tensor of shape math:`(N, C_{out}//group, D_{out}, H_{out}, W_{out})`,
+        where :math:`group` is the Args parameter.
 
     Supported Platforms:
         ``Ascend``
@@ -8111,13 +8143,17 @@ class Conv3DTranspose(PrimitiveWithInfer):
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
-        TypeError: If dout and weight data type not float16.
-        ValueError: If bias not none. The rank of dout and weight is not 5.
+        TypeError: If dout and weight data type is not float16.
+        ValueError: If bias is not none. The rank of dout and weight is not 5.
 
     Examples:
-        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
-        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
-        >>> conv3d_transpose = P.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mstype.float16)
+        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mstype.float16)
+        >>> conv3d_transpose = ops.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
         >>> output = conv3d_transpose(input_x, weight)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)
