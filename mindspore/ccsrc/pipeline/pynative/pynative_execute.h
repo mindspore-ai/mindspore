@@ -59,8 +59,6 @@ using TensorIdWithTensorObject = std::unordered_map<std::string, std::vector<ten
 
 py::object RealRunOp(const py::args &args);
 
-void ClearPyNativeSession();
-
 struct GraphInfo {
   std::string cell_id;
   AnfNodePtr output;
@@ -175,11 +173,10 @@ class GradExecutor {
       GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
                    std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5));
     };
-  std::function<void(py::object *, const py::object &, const py::tuple &, const py::object &)> RunGraph =
-    [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
-      RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
-                   std::forward<decltype(PH4)>(PH4));
-    };
+  std::function<void(py::object *, const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2,
+                                                                                             auto &&PH3) {
+    RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
+  };
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
@@ -189,12 +186,10 @@ class GradExecutor {
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
-  bool grad_is_running() const { return grad_is_running_; }
+  void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
-  std::stack<std::string> &cell_stack() { return cell_stack_; }
-  std::vector<TopCellInfoPtr> &top_cell_list() { return top_cell_list_; }
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
@@ -207,8 +202,9 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource);
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args, const py::object &phase);
+  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
+  void GradMsFunction(const py::object &out, const py::args &args);
   void ClearGrad(const py::object &cell, const py::args &args);
   void ClearRes();
   void ClearCellRes(const std::string &cell_id = "");
@@ -230,7 +226,6 @@ class GradExecutor {
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   ResourcePtr GetResource(const std::string &cell_id = "");
   bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id);
-  bool IsTopGraph(const std::string &cell_id);
   bool IsBpropGraph(const std::string &cell_id);
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
@@ -250,7 +245,7 @@ class GradExecutor {
                                       const std::vector<int64_t> &index_sequence, bool is_param = false);
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
-
+  std::string &graph_phase() { return graph_phase_; }
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) {
@@ -274,6 +269,8 @@ class GradExecutor {
   int custom_bprop_cell_count_{0};
   size_t grad_order_{0};
 
+  // The graph phase is used to obtain backend graph that is complied by ms_function
+  std::string graph_phase_;
   // Only set in high grad
   FuncGraphPtr curr_g_{nullptr};
   // For clear pre top res
@@ -307,27 +304,28 @@ class ForwardExecutor {
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
-                       abstract::AbstractBasePtrList *args_spec_list);
+  AnfNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
 
  private:
   GradExecutorPtr grad() const;
   MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
   py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
+  void RunMixedPrecisionCastOp(const OpExecInfoPtr &op_exec_info, py::object *ret);
   py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
                                     PynativeStatusCode *status);
-  void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
-                   abstract::AbstractBasePtrList *args_spec_list);
+  void GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info, abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
                                             const abstract::AbstractBasePtr &abs, const std::string &id, size_t index);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
-                           bool *is_find);
-  py::object GetOpOutputObject(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
-                               const AnfNodePtr &CNode, bool out_abstract_existed);
-  // Mix precision
-  void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+                           bool *prim_cache_hit);
+  void GetOpOutput(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
+                   const AnfNodePtr &CNode, bool prim_cache_hit, py::object *ret);
+  // Mix precision and Implicit transform
+  void SetCastForInputs(const OpExecInfoPtr &op_exec_info);
+  void SetParameterMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+  void SetImplicitCast(const OpExecInfoPtr &op_exec_info);
   py::object DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name, size_t index);
   py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple &tuple, const std::string &op_name,
                                           size_t index);
@@ -362,22 +360,20 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   void EnterConstruct(const py::object &cell);
   void LeaveConstruct(const py::object &cell);
-  GradExecutorPtr grad_executor();
-  ForwardExecutorPtr forward_executor();
+  GradExecutorPtr grad_executor() const;
+  ForwardExecutorPtr forward_executor() const;
 
   void set_grad_flag(bool flag);
-  std::string graph_phase() const { return graph_phase_; }
-  void set_graph_phase(std::string graph_phase) { graph_phase_ = graph_phase; }
+  void set_graph_phase(const std::string &graph_phase);
   void GradMsFunction(const py::object &out, const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const py::object &cell, const py::args &args);
-  py::object Run(const py::object &cell, const py::tuple &args, const py::object &phase);
+  py::object Run(const py::object &cell, const py::tuple &args);
 
   // Used by graph clean
-  bool GetIsDynamicCell();
   // Cell destruct will call
   void ClearCell(const std::string &cell_id);
   void ClearGrad(const py::object &cell, const py::args &args);
@@ -389,8 +385,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
  private:
   PynativeExecutor() = default;
 
-  // The graph phase is used to obtain backend graph that is complied by ms_function
-  std::string graph_phase_;
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;

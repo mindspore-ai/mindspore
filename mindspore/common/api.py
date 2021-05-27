@@ -407,7 +407,7 @@ class _PynativeExecutor:
 
     def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())
-        return self._executor(obj, args, "")
+        return self._executor(obj, args)
 
 
 class _Executor:
