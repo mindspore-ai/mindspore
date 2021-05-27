@@ -54,7 +54,7 @@ class CsvToMR:
         else:
             raise ValueError("The parameter source must be str.")
 
-        self._check_columns(columns_list, "columns_list")
+        self.check_columns(columns_list, "columns_list")
         self.columns_list = columns_list
 
         if isinstance(destination, str):
@@ -72,14 +72,16 @@ class CsvToMR:
 
         self.writer = FileWriter(self.destination, self.partition_number)
 
-    def _check_columns(self, columns, columns_name):
-        if columns:
-            if isinstance(columns, list):
-                for col in columns:
-                    if not isinstance(col, str):
-                        raise ValueError("The parameter {} must be list of str.".format(columns_name))
-            else:
-                raise ValueError("The parameter {} must be list of str.".format(columns_name))
+    @staticmethod
+    def check_columns(columns, columns_name):
+        if not columns:
+            return
+        if isinstance(columns, list):
+            for col in columns:
+                if not isinstance(col, str):
+                    raise ValueError("The parameter {} must be list of str.".format(columns_name))
+        else:
+            raise ValueError("The parameter {} must be list of str.".format(columns_name))
 
     def _get_schema(self, df):
         """
@@ -106,11 +108,12 @@ class CsvToMR:
             raise RuntimeError("Failed to generate schema from csv file.")
         return schema
 
-    def _get_row_of_csv(self, df):
+    @staticmethod
+    def get_row_of_csv(df, columns_list):
         """Get row data from csv file."""
         for _, r in df.iterrows():
             row = {}
-            for col in self.columns_list:
+            for col in columns_list:
                 if str(df[col].dtype) == 'bool':
                     row[col] = int(r[col])
                 else:
@@ -146,7 +149,7 @@ class CsvToMR:
         # add the index
         self.writer.add_index(list(self.columns_list))
 
-        csv_iter = self._get_row_of_csv(df)
+        csv_iter = self.get_row_of_csv(df, self.columns_list)
         batch_size = 256
         transform_count = 0
         while True:
@@ -169,6 +172,10 @@ class CsvToMR:
         return ret
 
     def transform(self):
+        """
+        Encapsulate the run function to exit normally
+        """
+
         t = ExceptionThread(target=self.run)
         t.daemon = True
         t.start()

@@ -130,7 +130,8 @@ int32_t CheckParamater(std::pair<bool, std::string> rlt, uint32_t i) {
 }
 
 // Read the parameter set file and skip the comments in the file.
-int32_t ParseFileToVar(std::string *para_set_name, uint32_t yuv_scaler_paraset_size, YuvWPara *yuv_scaler_paraset) {
+int32_t ParseFileToVar(const std::string *para_set_name, uint32_t yuv_scaler_paraset_size,
+                       YuvWPara *yuv_scaler_paraset) {
   int32_t ret = dpSucc;
 
   VPC_CHECK_COND_FAIL_RETURN(para_set_name != nullptr, dpFail);

@@ -108,6 +108,10 @@ class Cifar100ToMR:
         return SUCCESS
 
     def transform(self, fields=None):
+        """
+        Encapsulate the run function to exit normally
+        """
+
         t = ExceptionThread(target=self.run, kwargs={'fields': fields})
         t.daemon = True
         t.start()

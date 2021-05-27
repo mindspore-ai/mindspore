@@ -68,5 +68,6 @@ Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std
   output->push_back(offsets_limit_tensor);
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

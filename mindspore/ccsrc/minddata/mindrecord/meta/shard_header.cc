@@ -742,12 +742,12 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
 MSRStatus ShardHeader::initialize(const std::shared_ptr<ShardHeader> *header_ptr, const json &schema,
                                   const std::vector<std::string> &index_fields, std::vector<std::string> &blob_fields,
                                   uint64_t &schema_id) {
-  if (nullptr == header_ptr) {
+  if (header_ptr == nullptr) {
     MS_LOG(ERROR) << "ShardHeader pointer is NULL.";
     return FAILED;
   }
   auto schema_ptr = Schema::Build("mindrecord", schema);
-  if (nullptr == schema_ptr) {
+  if (schema_ptr == nullptr) {
     MS_LOG(ERROR) << "Got unexpected error when building mindrecord schema.";
     return FAILED;
   }

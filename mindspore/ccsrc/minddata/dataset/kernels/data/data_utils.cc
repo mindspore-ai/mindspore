@@ -774,8 +774,8 @@ Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   auto uniq_size = uniq.size();
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({static_cast<int32_t>(uniq_size)}), input->type(), output));
   auto out_iter = (*output)->begin<T>();
-  for (const auto &it : uniq) {
-    *(out_iter + static_cast<ptrdiff_t>(it.second)) = it.first;
+  for (const auto &item : uniq) {
+    *(out_iter + static_cast<ptrdiff_t>(item.second)) = item.first;
   }
   RETURN_IF_NOT_OK(
     Tensor::CreateEmpty(TensorShape({static_cast<int32_t>(uniq_size)}), DataType(DataType::DE_INT32), output_cnt));

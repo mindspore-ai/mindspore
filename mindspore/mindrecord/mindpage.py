@@ -18,7 +18,7 @@ This module is to support reading page from mindrecord.
 
 from mindspore import log as logger
 from .shardsegment import ShardSegment
-from .shardutils import MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT, check_filename
+from .shardutils import check_parameter
 from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategoryError
 
 __all__ = ['MindPage']
@@ -37,24 +37,8 @@ class MindPage:
         ParamValueError: If `file_name`, `num_consumer` or columns is invalid.
         MRMInitSegmentError: If failed to initialize ShardSegment.
     """
-
+    @check_parameter
     def __init__(self, file_name, num_consumer=4):
-        if isinstance(file_name, list):
-            for f in file_name:
-                check_filename(f)
-        else:
-            check_filename(file_name)
-
-        if num_consumer is not None:
-            if isinstance(num_consumer, int):
-                if num_consumer < MIN_CONSUMER_COUNT or num_consumer > MAX_CONSUMER_COUNT():
-                    raise ParamValueError("Consumer number should between {} and {}."
-                                          .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
-            else:
-                raise ParamValueError("Consumer number is illegal.")
-        else:
-            raise ParamValueError("Consumer number is illegal.")
-
         self._segment = ShardSegment()
         self._segment.open(file_name, num_consumer)
         self._category_field = None

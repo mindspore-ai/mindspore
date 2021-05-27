@@ -244,6 +244,7 @@ class DatasetHelper:
         self.iter.continue_send()
 
     def get_data_info(self):
+        """Get the types and shape of current batch."""
         return self.iter.get_data_info()
 
 

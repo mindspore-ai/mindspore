@@ -200,5 +200,18 @@ uint32_t GetMaxThreadNum() {
   }
   return thread_num;
 }
+
+std::pair<MSRStatus, std::vector<std::string>> GetDatasetFiles(const std::string &path, const json &addresses) {
+  auto ret = GetParentDir(path);
+  if (SUCCESS != ret.first) {
+    return {FAILED, {}};
+  }
+  std::vector<std::string> abs_addresses;
+  for (const auto &p : addresses) {
+    std::string abs_path = ret.second + std::string(p);
+    abs_addresses.emplace_back(abs_path);
+  }
+  return {SUCCESS, abs_addresses};
+}
 }  // namespace mindrecord
 }  // namespace mindspore
