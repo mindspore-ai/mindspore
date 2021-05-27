@@ -14,6 +14,7 @@
 # ============================================================================
 """Utils of auto parallel"""
 
+import copy
 import numpy as np
 from mindspore import context, log as logger
 from mindspore.context import ParallelMode
@@ -239,7 +240,6 @@ def _check_same_layout(tensor_layout1, tensor_layout2):
 
 def _remove_repeated_slices(tensor_layout):
     """generate unrepeated tensor layout"""
-    import copy
     new_tensor_layout = copy.deepcopy(tensor_layout)
     dev_mat = tensor_layout[0][:]
     tensor_map = tensor_layout[1]

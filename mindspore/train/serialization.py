@@ -37,8 +37,9 @@ from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export
-from mindspore.parallel._tensor import _load_tensor
+from mindspore.parallel._tensor import _load_tensor, _reshape_param_data, _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from mindspore.parallel._cell_wrapper import get_allgather_cell
 from .._c_expression import load_mindir
 
 
@@ -498,8 +499,6 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     Returns:
         Tensor, the combined tensor which with the whole data value.
     """
-    from mindspore.parallel._cell_wrapper import get_allgather_cell
-    from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
     layout = net.parameter_layout_dict[param_name]
     if len(layout) < 6:
         logger.info("layout dict does not contain the key %s", param_name)
@@ -893,11 +892,9 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         all_gather_tensor = Tensor(np.concatenate(sliced_data))
 
         if field_size > 0:
-            from mindspore.parallel._tensor import _reshape_param_data_with_weight
             merged_tensor = _reshape_param_data_with_weight(all_gather_tensor, dev_mat, field_size)
 
         else:
-            from mindspore.parallel._tensor import _reshape_param_data
             merged_tensor = _reshape_param_data(all_gather_tensor, dev_mat, tensor_map)
 
     else:

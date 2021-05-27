@@ -49,6 +49,7 @@ class _MpiConfig:
 
     @property
     def enable_mpi(self):
+        """Get the attribute of mpi enable"""
         return self._mpiconfig_handle.get_enable_mpi()
 
     @enable_mpi.setter
