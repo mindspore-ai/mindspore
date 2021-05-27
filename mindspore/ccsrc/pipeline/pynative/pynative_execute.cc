@@ -883,7 +883,8 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   auto op_name = op_exec_info->op_name;
   auto prim = op_exec_info->py_primitive;
 
-  auto temp = prim_abs_list_.find(prim);
+  AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
+  auto temp = prim_abs_list_.find(key);
   if (temp != prim_abs_list_.end()) {
     MS_LOG(DEBUG) << "Match prim input args " << op_name << mindspore::ToString(args_spec_list);
     auto iter = temp->second.find(args_spec_list);
@@ -931,7 +932,8 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
 
   // Add output abstract info into cache, the const value needs to infer evert step
   if (!prim_cache_hit && !op_exec_info->is_dynamic_shape) {
-    auto &out = prim_abs_list_[prim];
+    AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
+    auto &out = prim_abs_list_[key];
     out[args_spec_list].abs = op_exec_info->abstract;
     out[args_spec_list].attrs = prim->evaluate_added_attrs();
   }
@@ -1475,7 +1477,7 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   }
 }
 
-void GradExecutor::SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource) {
+void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   // Get all tensors id belong to forward op
   std::unordered_set<std::string> forward_op_tensor_id;
@@ -1851,7 +1853,7 @@ FuncGraphPtr GradExecutor::GetDfbuilder(const std::string &cell_id) {
   return nullptr;
 }
 
-ResourcePtr GradExecutor::GetResource(const std::string &cell_id) {
+pipeline::ResourcePtr GradExecutor::GetResource(const std::string &cell_id) {
   // If top graph hold
   for (auto it = top_cell_list_.rbegin(); it != top_cell_list_.rend(); ++it) {
     if (cell_id.find((*it)->cell_id()) != std::string::npos) {
@@ -2210,7 +2212,7 @@ std::string GradExecutor::GetGradCellId(bool has_sens, const py::object &cell, c
   return cell_id;
 }
 
-void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, const py::object &cell,
+void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                                 const py::object &weights, const py::args &args) {
   MS_EXCEPTION_IF_NULL(grad);
   auto size = args.size();
@@ -2335,7 +2337,7 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
   return args_spec;
 }
 
-FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const py::object &cell,
+FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                                          const std::vector<AnfNodePtr> &weights, size_t arg_size,
                                          const py::args &args) {
   bool build_formal_param = false;
@@ -2361,7 +2363,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const py:
   (void)GetArgsSpec(args, bprop_graph);
 
   // Do opt for final bprop graph
-  ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -2512,7 +2514,7 @@ void GradExecutor::SwitchTopcell() {
 }
 
 void GradExecutor::MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::args &forward_args,
-                                   const ResourcePtr &resource, const py::object &out) {
+                                   const pipeline::ResourcePtr &resource, const py::object &out) {
   if (cell_stack_.empty()) {
     MS_LOG(DEBUG) << "No nested grad find";
     return;
@@ -2528,7 +2530,7 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const std::string &ce
   DumpGraphIR("first_grad_fg.ir", first_grad_fg);
 
   auto out_id = GetId(out);
-  ResourcePtr r = std::make_shared<pipeline::Resource>();
+  pipeline::ResourcePtr r = std::make_shared<pipeline::Resource>();
   r->manager()->AddFuncGraph(first_grad_fg);
   FuncGraphPtr second_grad_fg = ad::Grad(first_grad_fg, r);
   DumpGraphIR("second_grad_fg.ir", second_grad_fg);
@@ -2628,7 +2630,7 @@ void GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
   if (iter == ms_function_grad_cache.end()) {
     ms_func_graph = BasicClone(executor->GetFuncGraph(graph_phase()));
     MS_EXCEPTION_IF_NULL(ms_func_graph);
-    ResourcePtr res = std::make_shared<pipeline::Resource>();
+    pipeline::ResourcePtr res = std::make_shared<pipeline::Resource>();
     res->set_func_graph(ms_func_graph);
     res->manager()->AddFuncGraph(ms_func_graph, true);
     fprop_g = ad::Grad(ms_func_graph, res, true);
@@ -2750,7 +2752,7 @@ void PynativeExecutor::GradMsFunction(const py::object &out, const py::args &arg
   grad_executor()->GradMsFunction(out, args);
 }
 
-void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::args &args) {
   py::object *ret = nullptr;
   PynativeExecutorTry(grad_executor()->GradGraph, ret, grad, cell, weights, args);
