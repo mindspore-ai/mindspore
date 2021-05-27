@@ -60,7 +60,8 @@ class Geometric(Distribution):
         >>> probs_b = Tensor([0.2, 0.5, 0.4], dtype=mindspore.float32)
         >>>
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
-        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`,
+        >>> # have the same arguments as follows.
         >>> # Args:
         >>> #     value (Tensor): the value to be evaluated.
         >>> #     probs1 (Tensor): the probability of success of a Bernoulli trial. Default: self.probs.
@@ -96,7 +97,7 @@ class Geometric(Distribution):
         >>> # Args:
         >>> #     dist (str): the name of the distribution. Only 'Geometric' is supported.
         >>> #     probs1_b (Tensor): the probability of success of a Bernoulli trial of distribution b.
-        >>> #     probs1_a (Tensor): the probability of success of a Bernoulli trial of distribution a. Default: self.probs.
+        >>> #     probs1_a (Tensor): the probability of success of a Bernoulli trial of distribution a.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = g1.kl_loss('Geometric', probs_b)
         >>> print(ans.shape)

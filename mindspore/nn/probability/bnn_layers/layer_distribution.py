@@ -115,3 +115,8 @@ class NormalPosterior(Cell):
     def construct(self, *inputs):
         std = self.std_trans(self.untransformed_std)
         return self.normal(*inputs, mean=self.mean, sd=std)
+
+
+def normal_post_fn(name, shape):
+    """Provide normal posterior distribution."""
+    return NormalPosterior(name=name, shape=shape)

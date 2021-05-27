@@ -14,5 +14,5 @@
 # ============================================================================
 """ Zhusuan package: a probalistic programming library  """
 
-from .framework import *
-from .variational import *
+from .framework import BayesianNet
+from .variational import ELBO
