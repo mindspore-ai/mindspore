@@ -22,10 +22,9 @@ import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as CV
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_rank, get_group_size
-from .config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
 
 
-def create_dataset_cifar10(data_path, batch_size=32, repeat_size=1, status="train", target="Ascend"):
+def create_dataset_cifar10(cfg, data_path, batch_size=32, repeat_size=1, status="train", target="Ascend"):
     """
     create dataset for train or test
     """
@@ -40,7 +39,7 @@ def create_dataset_cifar10(data_path, batch_size=32, repeat_size=1, status="trai
                                      num_shards=device_num, shard_id=rank_id)
     rescale = 1.0 / 255.0
     shift = 0.0
-    cfg = alexnet_cifar10_cfg
+    # cfg = alexnet_cifar10_cfg
 
     resize_op = CV.Resize((cfg.image_height, cfg.image_width))
     rescale_op = CV.Rescale(rescale, shift)
@@ -65,7 +64,7 @@ def create_dataset_cifar10(data_path, batch_size=32, repeat_size=1, status="trai
     return cifar_ds
 
 
-def create_dataset_imagenet(dataset_path, batch_size=32, repeat_num=1, training=True,
+def create_dataset_imagenet(cfg, dataset_path, batch_size=32, repeat_num=1, training=True,
                             num_parallel_workers=None, shuffle=None, sampler=None, class_indexing=None):
     """
     create a train or eval imagenet2012 dataset for resnet50
@@ -82,7 +81,7 @@ def create_dataset_imagenet(dataset_path, batch_size=32, repeat_num=1, training=
     """
 
     device_num, rank_id = _get_rank_info()
-    cfg = alexnet_imagenet_cfg
+    # cfg = alexnet_imagenet_cfg
 
     num_parallel_workers = 16
     if device_num == 1:

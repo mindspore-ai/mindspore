@@ -100,7 +100,12 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         │   ├──aipp.cfg               // aipp config
         │   ├──dataset.py             // creating dataset
         │   ├──lenet.py               // lenet architecture
-        │   ├──config.py              // parameter configuration
+        │   └──model_utils
+        │       ├──config.py               // Processing configuration parameters
+        │       ├──device_adapter.py       // Get cloud ID
+        │       ├──local_adapter.py        // Get local ID
+        │       └──moxing_adapter.py       // Parameter processing
+        ├── default_config.yaml            // Training parameter profile(ascend)
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
         ├── postprocess.py        //  postprocess script

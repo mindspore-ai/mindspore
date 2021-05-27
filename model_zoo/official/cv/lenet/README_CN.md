@@ -102,12 +102,17 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         │   ├──run_standalone_eval_ascend.sh          //  Ascend评估
         ├── src
         │   ├──aipp.cfg             // aipp配置文件
-        │   ├──dataset.py           // 创建数据集
-        │   ├──lenet.py             // Lenet架构
-        │   ├──config.py            // 参数配置
-        ├── train.py                // 训练脚本
-        ├── eval.py                //  评估脚本
-        ├── postprocess.py         //  310推理后处理脚本
+        │   ├──dataset.py             // 创建数据集
+        │   ├──lenet.py              // Lenet架构
+        |   └──model_utils
+        |      ├──config.py          // 训练配置
+        |      ├──device_adapter.py  // 获取云上id
+        |      ├──local_adapter.py   // 获取本地id
+        |      └──moxing_adapter.py  // 参数处理
+        ├── default_config.yaml      // 训练参数配置文件
+        ├── train.py                 // 训练脚本
+        ├── eval.py                  //  评估脚本  
+        ├── postprocess.py           //  310推理后处理脚本
 ```
 
 ## 脚本参数

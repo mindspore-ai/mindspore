@@ -82,9 +82,9 @@ def train_alexnet():
         context.set_context(device_id=get_device_id())
 
     if config.dataset_name == "cifar10":
-        ds_train = create_dataset_cifar10(config.data_path, config.batch_size, target=config.device_target)
+        ds_train = create_dataset_cifar10(config, config.data_path, config.batch_size, target=config.device_target)
     elif config.dataset_name == "imagenet":
-        ds_train = create_dataset_imagenet(config.data_path, config.batch_size)
+        ds_train = create_dataset_imagenet(config, config.data_path, config.batch_size)
     else:
         raise ValueError("Unsupported dataset.")
 
