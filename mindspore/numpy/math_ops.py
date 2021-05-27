@@ -3370,8 +3370,10 @@ def log10(x, dtype=None):
         [1. 2. 3.]
     """
     tensor_10 = _make_tensor(10, x.dtype)
+
     def _log10(x):
         return F.log(x) / F.log(tensor_10)
+
     return _apply_tensor_op(_log10, x, dtype=dtype)
 
 
