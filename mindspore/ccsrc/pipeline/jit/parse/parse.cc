@@ -561,20 +561,16 @@ AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &nod
   py::object obj = python_adapter::GetPyObjAttr(node, "value");
   if (py::isinstance<py::bool_>(obj)) {
     MS_LOG(INFO) << "The Constant is bool:" << (std::string)py::str(obj);
-    auto data = py::cast<bool>(obj);
-    return NewValueNode(data);
+    return NewValueNode(py::cast<bool>(obj));
   } else if (py::isinstance<py::int_>(obj)) {
     MS_LOG(INFO) << "The Constant is int64_t:" << (std::string)py::str(obj);
-    auto data = py::cast<int64_t>(obj);
-    return NewValueNode(data);
+    return NewValueNode(py::cast<int64_t>(obj));
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Constant is float:" << (std::string)py::str(obj);
-    auto data = py::cast<float>(obj);
-    return NewValueNode(data);
+    return NewValueNode(py::cast<float>(obj));
   } else if (py::isinstance<py::str>(obj)) {
     MS_LOG(INFO) << "The Constant is string:" << (std::string)py::str(obj);
-    auto data = py::cast<std::string>(obj);
-    return NewValueNode(data);
+    return NewValueNode(py::cast<std::string>(obj));
   } else if (py::isinstance<py::none>(obj)) {
     MS_LOG(INFO) << "The Constant is none:" << (std::string)py::str(obj);
     return NewValueNode(kNone);

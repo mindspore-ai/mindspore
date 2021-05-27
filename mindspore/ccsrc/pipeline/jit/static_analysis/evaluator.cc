@@ -164,39 +164,39 @@ AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBa
         MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);
         MS_LOG(DEBUG) << "Last eval args: " << ::mindspore::ToString(last_context->args_spec_list());
         // Join the last eval arguments and current arguments to check if there are loop variant.
-        auto joined_args_spec_list = AbstractJoin(args_spec_list, last_context->args_spec_list());
-        MS_LOG(DEBUG) << "Joined args: " << ::mindspore::ToString(joined_args_spec_list);
+        auto joined_args_spec_list_1 = AbstractJoin(args_spec_list, last_context->args_spec_list());
+        MS_LOG(DEBUG) << "Joined args: " << ::mindspore::ToString(joined_args_spec_list_1);
         // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
-        if (!(joined_args_spec_list == args_spec_list)) {
+        if (!(joined_args_spec_list_1 == args_spec_list)) {
           func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
           func_graph_->joined_shapes_.clear();
-          std::transform(joined_args_spec_list.begin(), joined_args_spec_list.end(),
+          std::transform(joined_args_spec_list_1.begin(), joined_args_spec_list_1.end(),
                          std::back_inserter(func_graph_->joined_shapes_),
                          [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
-          joined_args_spec_list = NormalizeArgs(joined_args_spec_list);
+          joined_args_spec_list_1 = NormalizeArgs(joined_args_spec_list_1);
           MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
         }
-        return joined_args_spec_list;
+        return joined_args_spec_list_1;
       }
     }
     if (trace_.size() != 0) {
       MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);
       MS_LOG(DEBUG) << "Last eval args: " << ::mindspore::ToString(trace_.back());
       // Join the last eval arguments and current arguments to check if there are loop variant.
-      auto joined_args_spec_list = AbstractJoin(args_spec_list, trace_.back());
+      auto joined_args_spec_list_2 = AbstractJoin(args_spec_list, trace_.back());
       // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
-      if (!(joined_args_spec_list == args_spec_list)) {
-        trace_.push_back(joined_args_spec_list);
+      if (!(joined_args_spec_list_2 == args_spec_list)) {
+        trace_.push_back(joined_args_spec_list_2);
         func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
         func_graph_->joined_shapes_.clear();
-        std::transform(joined_args_spec_list.begin(), joined_args_spec_list.end(),
+        std::transform(joined_args_spec_list_2.begin(), joined_args_spec_list_2.end(),
                        std::back_inserter(func_graph_->joined_shapes_),
                        [](const AbstractBasePtr &arg_spec) { return arg_spec->GetShapeTrack(); });
-        joined_args_spec_list = NormalizeArgs(joined_args_spec_list);
+        joined_args_spec_list_2 = NormalizeArgs(joined_args_spec_list_2);
         MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
       }
-      MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list);
-      return joined_args_spec_list;
+      MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list_2);
+      return joined_args_spec_list_2;
     } else {
       trace_.push_back(args_spec_list);
     }
