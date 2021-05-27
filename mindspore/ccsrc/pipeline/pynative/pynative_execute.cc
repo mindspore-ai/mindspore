@@ -289,7 +289,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::v
   for (size_t index = 0; index < input_tensors.size(); ++index) {
     MS_EXCEPTION_IF_NULL(input_tensors[index]);
     auto tensor_shape = input_tensors[index]->shape();
-    (void)std::for_each(tensor_shape.begin(), tensor_shape.end(), [&](const auto &dim) {
+    (void)std::for_each(tensor_shape.begin(), tensor_shape.end(), [&graph_info](const auto &dim) {
       (void)graph_info.append(std::to_string(dim));
       graph_info += "_";
     });
@@ -324,7 +324,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::v
   const auto &op_prim = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
   const auto &attr_map = op_prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(), [&](const auto &element) {
+  (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
     graph_info += (element.second->ToString());
     graph_info += "_";
   });
@@ -588,7 +588,7 @@ py::tuple ConvertArgs(const py::tuple &args) {
 void ResetTopCellInfo(const TopCellInfoPtr &top_cell, const py::args &args) {
   MS_EXCEPTION_IF_NULL(top_cell);
   top_cell->set_op_num(0);
-  top_cell->set_all_op_info("");
+  top_cell->all_op_info().clear();
   top_cell->set_forward_already_run(true);
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
@@ -607,7 +607,9 @@ void SaveOpInfo(const TopCellInfoPtr &top_cell, const std::string &op_info,
   }
   // Record the relationship between the forward op and its output tensor id
   std::for_each(op_out_tensors.begin(), op_out_tensors.end(),
-                [&](const tensor::TensorPtr &tensor) { op_info_with_tensor_id[op_info].emplace_back(tensor->id()); });
+                [&op_info_with_tensor_id, &op_info](const tensor::TensorPtr &tensor) {
+                  op_info_with_tensor_id[op_info].emplace_back(tensor->id());
+                });
 }
 
 void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<tensor::TensorPtr> &pre_tensors) {
@@ -1289,10 +1291,9 @@ void GradExecutor::RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) {
     input_args_info += "d";
   }
   // Record op name and index
-  size_t curr_op_num = top_cell()->op_num();
-  op_exec_info->op_info = op_exec_info->op_name + "-" + std::to_string(curr_op_num) + "-" + input_args_info;
-  std::string curr_op_info = top_cell()->all_op_info() + "_" + op_exec_info->op_info;
-  top_cell()->set_all_op_info(curr_op_info);
+  const auto &curr_op_num = top_cell()->op_num();
+  op_exec_info->op_info += op_exec_info->op_name + "-" + std::to_string(curr_op_num) + "-" + input_args_info;
+  top_cell()->all_op_info() += "_" + op_exec_info->op_info;
   top_cell()->set_op_num(curr_op_num + 1);
 }
 
@@ -1485,7 +1486,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const ResourcePtr &resource
   const auto &op_info_with_tensor_id = top_cell()->op_info_with_tensor_id();
   for (const auto &e : op_info_with_tensor_id) {
     std::for_each(e.second.begin(), e.second.end(),
-                  [&](const std::string &tensor_id) { forward_op_tensor_id.emplace(tensor_id); });
+                  [&forward_op_tensor_id](const std::string &tensor_id) { forward_op_tensor_id.emplace(tensor_id); });
   }
   auto &tensor_id_with_tensor_object_ = top_cell()->tensor_id_with_tensor_object();
   if (!tensor_id_with_tensor_object_.empty()) {
@@ -1869,7 +1870,7 @@ ResourcePtr GradExecutor::GetResource(const std::string &cell_id) {
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args) {
-  auto bprop_fn = [&]() {
+  auto bprop_fn = [this, &cell_id, &args]() {
     if (IsBpropGraph(cell_id)) {
       MS_LOG(DEBUG) << "Run bprop cell";
       curr_g_ = std::make_shared<FuncGraph>();
@@ -2111,7 +2112,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
 
   DoGradForCustomBprop(cell, out, args);
   PopCellStack();
-  auto set_fg_fn = [&]() {
+  auto set_fg_fn = [this, &out, &out_id]() {
     AnfNodePtr output_node = GetObjNode(out, out_id);
     MS_EXCEPTION_IF_NULL(output_node);
     curr_g_->set_output(output_node);
@@ -2338,10 +2339,10 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
 FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const py::object &cell,
                                          const std::vector<AnfNodePtr> &weights, size_t arg_size,
                                          const py::args &args) {
-  bool build_formal_param_ = false;
+  bool build_formal_param = false;
   if ((!py::hasattr(cell, parse::CUSTOM_BPROP_NAME) && !cell_stack_.empty() && IsNestedGrad()) ||
       top_cell()->ms_function_flag()) {
-    build_formal_param_ = true;
+    build_formal_param = true;
     need_renormalize_ = true;
   }
 
@@ -2349,7 +2350,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const py:
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
   MS_EXCEPTION_IF_NULL(grad);
   FuncGraphPtr bprop_graph = ad::GradPynativeCellEnd(k_pynative_cell_ptr, weights, grad->get_all_, grad->get_by_list_,
-                                                     grad->sens_param_, build_formal_param_);
+                                                     grad->sens_param_, build_formal_param);
   MS_EXCEPTION_IF_NULL(bprop_graph);
 
   MS_LOG(DEBUG) << "Top graph input params size " << arg_size;
@@ -2503,8 +2504,7 @@ void GradExecutor::SwitchTopcell() {
   // Get outer top cell
   auto outer_top_cell = PopHighOrderGraphStack();
   MS_EXCEPTION_IF_NULL(outer_top_cell);
-  std::string cur_all_op_info = outer_top_cell->all_op_info() + inner_top_cell_all_op_info;
-  outer_top_cell->set_all_op_info(cur_all_op_info);
+  outer_top_cell->all_op_info() += inner_top_cell_all_op_info;
   // If inner is dynamic, outer set dynamic too
   if (inner_top_cell_is_dynamic) {
     outer_top_cell->set_is_dynamic(inner_top_cell_is_dynamic);

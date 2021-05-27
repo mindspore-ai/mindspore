@@ -101,9 +101,8 @@ class TopCellInfo {
   void set_op_num(size_t op_num) { op_num_ = op_num; }
   std::string &cell_id() { return cell_id_; }
   std::string &input_args_id() { return input_args_id_; }
-  std::string all_op_info() const { return all_op_info_; }
-  void set_all_op_info(std::string all_op_info) { all_op_info_ = std::move(all_op_info); }
-  void set_input_args_id(std::string input_args_id) { input_args_id_ = std::move(input_args_id); }
+  std::string &all_op_info() { return all_op_info_; }
+  void set_input_args_id(const std::string &input_args_id) { input_args_id_ = std::move(input_args_id); }
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
