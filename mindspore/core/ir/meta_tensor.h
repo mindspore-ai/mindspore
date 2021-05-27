@@ -144,7 +144,7 @@ class MetaTensor : public Value {
                      const std::string &host_format = "DefaultFormat");
 
   // Get the size of a given dimension by its index number.
-  int DimensionSize(size_t index) const;
+  int64_t DimensionSize(size_t index) const;
 
   // Get total number of elements in a tensor.
   int ElementsNum() const;

@@ -413,9 +413,8 @@ abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &
   return shape;
 }
 
-void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
-                                 const string &value_name, int64_t value, const string &prim_name,
-                                 ExceptionType exception_type) {
+void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, const string &,
+                                 int64_t value, const string &prim_name, ExceptionType exception_type) {
   auto iter = kCompareMap<float>.find(compare_type);
   if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "the compare type :" << compare_type << " is not in the compare map";

@@ -196,7 +196,7 @@ AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape));
 }
 
-AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplBinaryBase(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   constexpr size_t args_size = 2;
@@ -337,8 +337,8 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector x_max_shape = x->shape()->max_shape();
   ShapeVector y_min_shape = y->shape()->min_shape();
   ShapeVector y_max_shape = y->shape()->max_shape();
-  (void)CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  (void)CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
+  CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
+  CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn = std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
@@ -394,8 +394,8 @@ AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitiveP
   ShapeVector x_max_shape = x->shape()->max_shape();
   ShapeVector y_min_shape = y->shape()->min_shape();
   ShapeVector y_max_shape = y->shape()->max_shape();
-  (void)CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  (void)CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
+  CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
+  CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn = std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
