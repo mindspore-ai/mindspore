@@ -1606,7 +1606,7 @@ class ReLU6Grad(PrimitiveWithInfer):
         return x_dtype
 
 
-class ReluGradV2(PrimitiveWithInfer):
+class ReluGradV2(Primitive):
     """Performs grad of ReLUV2 operation."""
 
     @prim_attr_register
@@ -1615,14 +1615,6 @@ class ReluGradV2(PrimitiveWithInfer):
 
     def __call__(self, gradients, mask):
         raise NotImplementedError
-
-    def infer_shape(self, gradients_shape, mask_shape):
-        return gradients_shape
-
-    def infer_dtype(self, gradients_dtype, mask_dtype):
-        validator.check_tensor_dtype_valid('gradients', gradients_dtype, mstype.number_type, self.name)
-        validator.check_tensor_dtype_valid('mask', mask_dtype, (mstype.uint8,), self.name)
-        return gradients_dtype
 
 
 class EluGrad(PrimitiveWithInfer):

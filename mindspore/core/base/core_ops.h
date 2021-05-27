@@ -60,6 +60,7 @@ constexpr auto kReLU = "ReLU";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kReLUV2 = "ReLUV2";
 constexpr auto kReLUGrad = "ReluGrad";
+constexpr auto kReLUGradV2 = "ReluGradV2";
 constexpr auto kGeLUGrad = "GeLUGrad";
 constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
