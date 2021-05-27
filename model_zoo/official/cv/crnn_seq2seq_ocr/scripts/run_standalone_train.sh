@@ -16,7 +16,7 @@
 
 if [ $# -ne 1 ]
 then
-    echo "Usage: sh run_standalone_train_ascend.sh [DATASET_PATH]"
+    echo "Usage: sh run_standalone_train_ascend.sh [TRAIN_DATA_DIR]"
 exit 1
 fi
 
@@ -31,9 +31,9 @@ get_real_path(){
 PATH1=$(get_real_path $1)
 echo $PATH1
 
-if [ ! -f $PATH1 ]
+if [ ! -d $PATH1 ]
 then
-    echo "error: DATASET_PATH=$PATH1 is not a file"
+    echo "error: TRAIN_DATA_DIR=$PATH1 is not a folder"
 exit 1
 fi
 
@@ -50,9 +50,11 @@ fi
 mkdir ./train
 cp ../*.py ./train
 cp *.sh ./train
+cp ../*.yaml ./train
+cp ../*.txt ./train
 cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --device_id=$DEVICE_ID --mindrecord_file=$PATH1 --is_distributed=0 &> log &
+python train.py --train_data_dir=$PATH1 --is_distributed=0 &> log &
 cd ..

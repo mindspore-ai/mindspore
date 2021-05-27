@@ -24,7 +24,7 @@ import mindspore.dataset.vision.py_transforms as P
 import mindspore.dataset.transforms.c_transforms as ops
 import mindspore.common.dtype as mstype
 
-from src.config import config
+from src.model_utils.config import config
 
 
 class AugmentationOps():

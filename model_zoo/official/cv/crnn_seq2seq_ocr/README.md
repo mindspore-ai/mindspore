@@ -48,24 +48,73 @@ For training and evaluation, we use the French Street Name Signs (FSNS) released
 ## [Quick Start](#contents)
 
 - After the dataset is prepared, you may start running the training or the evaluation scripts as follows:
-
     - Running on Ascend
 
     ```shell
     # distribute training example in Ascend
-    $ bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+    $ bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
     # evaluation example in Ascend
-    $ bash run_eval_ascend.sh [DATASET_PATH] [CHECKPOINT_PATH]
+    $ bash run_eval_ascend.sh [TEST_DATA_DIR] [CHECKPOINT_PATH]
 
     # standalone training example in Ascend
-    $ bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+    $ bash run_standalone_train.sh [TRAIN_DATA_DIR]
     ```
 
     For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
     Please follow the instructions in the link below:
     [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+
+    - Running on ModelArts
+
+        If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows.
+
+        - Training with 8 cards on ModelArts
+
+        ```python
+        # (1) Upload the code folder to S3 bucket.
+        # (2) Click to "create training task" on the website UI interface.
+        # (3) Set the code directory to "/{path}/crnn_seq2seq_ocr" on the website UI interface.
+        # (4) Set the startup file to /{path}/crnn_seq2seq_ocr/train.py" on the website UI interface.
+        # (5) Perform a or b.
+        #     a. setting parameters in /{path}/crnn_seq2seq_ocr/default_config.yaml.
+        #         1. Set ”is_distributed=1“
+        #         2. Set ”enable_modelarts=True“
+        #         3. Set ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+        #     b. adding on the website UI interface.
+        #         1. Add ”is_distributed=1“
+        #         2. Add ”enable_modelarts=True“
+        #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+        # (6) Upload the dataset or the zip package of dataset to S3 bucket.
+        # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+        # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+        # (9) Under the item "resource pool selection", select the specification of 8 cards.
+        # (10) Create your job.
+        ```
+
+        - evaluating with single card on ModelArts
+
+        ```python
+        # (1) Upload the code folder to S3 bucket.
+        # (2) Click to "create training task" on the website UI interface.
+        # (3) Set the code directory to "/{path}/crnn_seq2seq_ocr" on the website UI interface.
+        # (4) Set the startup file to /{path}/crnn_seq2seq_ocr/eval.py" on the website UI interface.
+        # (5) Perform a or b.
+        #     a. setting parameters in /{path}/crnn_seq2seq_ocr/default_config.yaml.
+        #         1. Set ”enable_modelarts=True“
+        #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+        #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+        #     b. adding on the website UI interface.
+        #         1. Set ”enable_modelarts=True“
+        #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+        #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+        # (6)  Upload the dataset or the zip package of dataset to S3 bucket.
+        # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+        # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+        # (9) Under the item "resource pool selection", select the specification of a single card.
+        # (10) Create your job.
+        ```
 
 ## [Script Description](#contents)
 
@@ -79,9 +128,13 @@ crnn-seq2seq-ocr
 │   ├── run_eval_ascend.sh                      # Launch Ascend evaluation
 │   └── run_standalone_train.sh                 # Launch standalone training on Ascend(1 pcs)
 ├── src
+|   |── scripts
+│   |   ├── config.py                           # parsing parameter configuration file of "*.yaml"
+│   |   ├── device_adapter.py                   # local or ModelArts training
+│   |   ├── local_adapter.py                    # get related environment variables in local training
+│   |   └── moxing_adapter.py                   # get related environment variables in ModelArts training
 │   ├── attention_ocr.py                        # CRNN-Seq2Seq-OCR training wrapper
 │   ├── cnn.py                                  # VGG network
-│   ├── config.py                               # Parameter configuration
 │   ├── create_mindrecord_files.py              # Create mindrecord files from images and ground truth
 │   ├── dataset.py                              # Data preprocessing for training and evaluation
 │   ├── gru.py                                  # GRU cell wrapper
@@ -90,8 +143,9 @@ crnn-seq2seq-ocr
 │   ├── seq2seq.py                              # CRNN-Seq2Seq-OCR model structure
 │   └── utils.py                                # Utility functions for training and data pre-processing
 │   ├── weight_init.py                          # weight initialization of LSTM and GRU
-└── train.py                                    # Training script
 ├── eval.py                                     # Evaluation Script
+├── general_chars.txt                           # general chars
+└── train.py                                    # Training script
 ```
 
 ### [Script Parameters](#contents)
@@ -100,10 +154,10 @@ crnn-seq2seq-ocr
 
 ```shell
 # distributed training on Ascend
-Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 
 # standalone training
-Usage: bash run_standalone_train.sh [DATASET_PATH]
+Usage: bash run_standalone_train.sh [TRAIN_DATA_DIR]
 ```
 
 #### Parameters Configuration
@@ -116,14 +170,14 @@ Parameters for both training and evaluation can be set in config.py.
 
 ## [Training Process](#contents)
 
-- Set options in `config.py`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
+- Set options in `default_config.yaml`, including learning rate and other network hyperparameters. Click [MindSpore dataset preparation tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
 ### [Training](#contents)
 
 - Run `run_standalone_train.sh` for non-distributed training of CRNN-Seq2Seq-OCR model, only support Ascend now.
 
 ``` bash
-bash run_standalone_train.sh [DATASET_PATH]
+bash run_standalone_train.sh [TRAIN_DATA_DIR]
 ```
 
 #### [Distributed Training](#contents)
@@ -131,7 +185,7 @@ bash run_standalone_train.sh [DATASET_PATH]
 - Run `run_distribute_train.sh` for distributed training of CRNN-Seq2Seq-OCR model on Ascend.
 
 ``` bash
-bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]
 ```
 
 Check the `train_parallel0/log.txt` and you will get outputs as following:
@@ -149,7 +203,7 @@ epoch time: 1559886.096 ms, per step time: 382.231 ms
 - Run `run_eval_ascend.sh` for evaluation on Ascend.
 
 ``` bash
-bash run_eval_ascend.sh [DATASET_PATH] [CHECKPOINT_PATH]
+bash run_eval_ascend.sh [TEST_DATA_DIR] [CHECKPOINT_PATH]
 ```
 
 Check the `eval/log` and you will get outputs as following:
