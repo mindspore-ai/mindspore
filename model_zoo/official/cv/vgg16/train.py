@@ -126,7 +126,9 @@ def merge_args(args_opt, cloud_args):
 if __name__ == '__main__':
     args = parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+    _enable_graph_kernel = args.device_target == "GPU"
+    context.set_context(mode=context.GRAPH_MODE,
+                        enable_graph_kernel=_enable_graph_kernel, device_target=args.device_target)
     device_num = int(os.environ.get("DEVICE_NUM", 1))
     if args.is_distributed:
         if args.device_target == "Ascend":
