@@ -46,6 +46,9 @@ constexpr size_t kAssignSubInputTensorNum = 2;
 constexpr size_t kDropoutInputTensorNum = 1;
 constexpr size_t kAssignInputTensorNum = 2;
 
+constexpr size_t kGradIndex = 3;
+constexpr size_t kAddNInputNum = 2;
+
 constexpr size_t kConvBn1OutputNum = 3;
 constexpr size_t kBn2ReluOutputNum = 4;
 
