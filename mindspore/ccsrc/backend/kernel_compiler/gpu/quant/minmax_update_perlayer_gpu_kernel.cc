@@ -23,6 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kFakeQuantPerLayerInputNum = 3;
+constexpr size_t kFakeQuantPerLayerOutputNum = 2;
+}  // namespace
+
 MinMaxUpdatePerLayerGpuKernel::MinMaxUpdatePerLayerGpuKernel()
     : input_size_(0), quant_num_(1), ema_(false), ema_decay_(0) {}
 
@@ -34,13 +39,13 @@ const std::vector<size_t> &MinMaxUpdatePerLayerGpuKernel::GetWorkspaceSizeList()
 
 bool MinMaxUpdatePerLayerGpuKernel::Init(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
+  if (input_num != kFakeQuantPerLayerInputNum) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuant GpuKernel OP needs 3 output.";
   }
 
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuant GpuKernel OP needs 1 output.";
+  if (output_num != kFakeQuantPerLayerOutputNum) {
+    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuant GpuKernel OP needs 2 output.";
   }
 
   ema_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema"));

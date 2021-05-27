@@ -125,7 +125,7 @@ def get_bprop_batchnorm_fold2(self):
 
 
 @bprop_getters.register(Q.BatchNormFoldD)
-def get_bprop_BatchNormFold(self):
+def get_bprop_batchnorm_fold_d(self):
     """Generate bprop for BatchNormFold for Ascend"""
     op = Q.BatchNormFoldGradD(self.epsilon, self.is_training, self.freeze_bn)
 
@@ -137,7 +137,7 @@ def get_bprop_BatchNormFold(self):
 
 
 @bprop_getters.register(P.BNTrainingReduce)
-def get_bprop_BNTrainingReduce(self):
+def get_bprop_bn_training_reduce(self):
     def bprop(x, out, dout):
         return (zeros_like(x),)
 
