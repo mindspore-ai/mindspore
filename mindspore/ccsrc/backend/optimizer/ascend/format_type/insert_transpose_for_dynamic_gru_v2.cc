@@ -26,6 +26,9 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kInputIndex1 = 1;
+constexpr size_t kInputIndex2 = 2;
+
 const BaseRef InsertTransposeForDynamicGRUV2::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
   VarPtr X1 = std::make_shared<Var>();
@@ -42,7 +45,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
 
   for (size_t index = 0; index < cnode->inputs().size(); index++) {
-    if (index == 1 || index == 2) {
+    if (index == kInputIndex1 || index == kInputIndex2) {
       AnfNodePtr new_node = nullptr;
       AnfNodePtr new_transdata_node = nullptr;
       AnfNodePtr new_transpose_node = nullptr;

@@ -25,6 +25,10 @@ namespace mindspore {
 namespace opt {
 constexpr size_t kInputNum = 3;
 constexpr size_t kFloat16Len = 2;  // size of float16;
+constexpr size_t kKernelSizeNum = 5;
+constexpr size_t DIM2 = 2;
+constexpr size_t DIM3 = 3;
+constexpr size_t DIM4 = 4;
 namespace {
 tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 get attr ksize
@@ -35,10 +39,12 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   if (data_format != kOpFormat_NCDHW) {
     MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW.";
   }
-  MS_LOG(DEBUG) << "ksize of MaxPool3DGradGrad:" << ksize;
-  int64_t d = ksize[2];
-  int64_t h = ksize[3];
-  int64_t w = ksize[4];
+  if (ksize.size() != kKernelSizeNum) {
+    MS_LOG(EXCEPTION) << "kernel_size of MaxPool3DGradGrad must be five, but got :" << ksize;
+  }
+  int64_t d = ksize[DIM2];
+  int64_t h = ksize[DIM3];
+  int64_t w = ksize[DIM4];
 
   // 1 create tensor
   std::vector<int64_t> assist_shape = {1, 1, d, h, w};  // shape:NCDHW
@@ -59,21 +65,21 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
     counter--;
   }
 
-  int64_t elem_num = dims * kFloat16Len;
+  auto elem_num = LongToSize(dims) * kFloat16Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()), half_data.data(), elem_num);
   if (ret_code != 0) {
-    MS_LOG(ERROR) << "Failed to copy data into Tensor.";
+    MS_LOG(ERROR) << "Failed to copy data into Tensor while creating assist input for MaxPool3dGradGrad op.";
     return nullptr;
   }
   return assist_tensor;
 }
 
 ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
-  tensor::TensorPtr assist_tensor = CreateTensor(node);
-  MS_EXCEPTION_IF_NULL(assist_tensor);
-  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
+  tensor::TensorPtr assist_input_tensor = CreateTensor(node);
+  MS_EXCEPTION_IF_NULL(assist_input_tensor);
+  auto assist_const = std::make_shared<ValueNode>(assist_input_tensor);
   MS_EXCEPTION_IF_NULL(assist_const);
-  auto assist_abstract = assist_tensor->ToAbstract();
+  auto assist_abstract = assist_input_tensor->ToAbstract();
   assist_const->set_abstract(assist_abstract);
   auto assist_kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(assist_kernel_info);
