@@ -11,6 +11,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
+# run as sh scripts/run_standalone_train.sh DEVICE_ID DATA_DIR
 # limitations under the License.
 # ============================================================================
 
@@ -18,6 +19,5 @@ export DEVICE_ID=$1
 DATA_DIR=$2
 python ./train.py  \
     --device_target=Ascend \
-    --device_id=$DEVICE_ID \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --train_dataset_path=$DATA_DIR > log.txt 2>&1 &
 
