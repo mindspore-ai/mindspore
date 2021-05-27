@@ -46,12 +46,9 @@ class TransposeInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
-  Strategys GetOutputsStrategy();
 
  private:
   Status ComputeAxis();

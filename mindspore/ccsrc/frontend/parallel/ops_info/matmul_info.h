@@ -50,7 +50,7 @@ class MatMulBase : public OperatorInfo {
 
  protected:
   Status InferForwardCommunication() override;
-  Status InferTensorInfo() override;
+  Status InferTensorInfo() override;  // the forward_reduce_scatter mode need to override this function
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);

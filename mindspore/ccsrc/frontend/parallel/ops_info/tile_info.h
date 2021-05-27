@@ -49,7 +49,6 @@ class TileInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
 

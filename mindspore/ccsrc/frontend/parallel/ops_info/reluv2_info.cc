@@ -81,30 +81,6 @@ Status ReLUV2Info::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status ReLUV2Info::InferMirrorOps() {
-  mirror_ops_.clear();
-
-  Shape tensor_map = inputs_tensor_map_[0];
-  std::vector<Group> group;
-  if (CreateGroupByTensorMap(tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
-    return FAILED;
-  }
-
-  OperatorVector mirror_op;
-  if (group.empty()) {
-    MS_LOG(INFO) << name_ << " : The mirror ops is empty.";
-    return SUCCESS;
-  } else {
-    mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
-    mirror_ops_.push_back(mirror_op);
-    std::string group_name = group[0].name();
-    MS_LOG(INFO) << name_ << " : Create the mirror ops success, the group name is " << group_name;
-  }
-
-  return SUCCESS;
-}
-
 Status ReLUV2Info::InferForwardCommunication() {
   // do nothing
   return SUCCESS;
@@ -126,37 +102,6 @@ Status ReLUV2Info::InferTensorMap() {
   // mask format NC1HWC0
   tensor_map_mask.push_back(MAP_NONE);
   outputs_tensor_map_.push_back(tensor_map_mask);
-  return SUCCESS;
-}
-
-Status ReLUV2Info::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-
-  TensorLayout input_layout, output_layout, mask_layout;
-  // infer tensor layout
-  if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo input_tensor_info(input_layout);
-  inputs_tensor_info_.push_back(input_tensor_info);
-
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  if (mask_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[1], outputs_shape_[1]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo output_tensor_info(output_layout);
-  TensorInfo mask_tensor_info(mask_layout);
-  // output and mask
-  outputs_tensor_info_.push_back(output_tensor_info);
-  outputs_tensor_info_.push_back(mask_tensor_info);
   return SUCCESS;
 }
 

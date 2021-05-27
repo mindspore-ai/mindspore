@@ -112,56 +112,6 @@ Status BroadcastToInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status BroadcastToInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-  if (inputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
-    return FAILED;
-  }
-
-  Shape input_tensor_map = inputs_tensor_map_[0];
-  std::vector<Group> group;
-  if (CreateGroupByTensorMap(input_tensor_map, &group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create group for input failed.";
-    return FAILED;
-  }
-
-  if (group.empty()) {
-    MS_LOG(INFO) << name_ << ": The mirror group is empty.";
-    return SUCCESS;
-  }
-
-  OperatorVector input_op;
-  input_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
-  mirror_ops_.push_back(input_op);
-
-  return SUCCESS;
-}
-
-Status BroadcastToInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-
-  TensorLayout input_layout, output_layout;
-  // infer tensor layout
-  if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo input_tensor_info(input_layout);
-  inputs_tensor_info_.push_back(input_tensor_info);
-
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-  TensorInfo output_tensor_info(output_layout);
-  outputs_tensor_info_.push_back(output_tensor_info);
-  return SUCCESS;
-}
-
 Status BroadcastToInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status BroadcastToInfo::GenerateStrategies(int64_t stage_id) {

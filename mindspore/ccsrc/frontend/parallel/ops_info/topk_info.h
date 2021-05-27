@@ -47,7 +47,6 @@ class TopKInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferMirrorOps() override;  // can not use OperatorInfo::InferMirrorOps(), since the 'k' of topk is scalar
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;

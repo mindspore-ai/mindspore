@@ -148,31 +148,6 @@ Status SliceInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status SliceInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
-  // infer tensor layout
-  TensorLayout input_layout, output_layout;
-  if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed.";
-    return FAILED;
-  }
-  if (output_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], outputs_shape_[0]) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer output tensor layout failed.";
-    return FAILED;
-  }
-
-  TensorInfo input_tensor_info(input_layout);
-  TensorInfo output_tensor_info(output_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
-
-  return SUCCESS;
-}
-
 // Note: if the batch dimension is not fully fetched, the batch strategy may not work.
 std::shared_ptr<Strategys> SliceInfo::GenerateBatchStrategies() {
   split_flag_list_ = {true};

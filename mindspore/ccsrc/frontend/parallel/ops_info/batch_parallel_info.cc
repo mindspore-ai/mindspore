@@ -107,28 +107,6 @@ Strategys BatchParallelInfo::GetOutputsStrategy() {
   return outputs_strategy;
 }
 
-Status BatchParallelInfo::InferTensorInfo() {
-  for (size_t i = 0; i < strategy_->GetInputNumber(); i++) {
-    MS_LOG(INFO) << name_ << " : The input size is " << strategy_->GetInputNumber();
-    TensorLayout tensor_layout_in;
-    if (tensor_layout_in.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(i), inputs_shape_.at(i)) != SUCCESS) {
-      return FAILED;
-    }
-    TensorInfo tensor_info_in(tensor_layout_in);
-    inputs_tensor_info_.push_back(tensor_info_in);
-  }
-  for (size_t i = 0; i < outputs_shape_.size(); i++) {
-    TensorLayout tensor_layout_out;
-    if (tensor_layout_out.InitFromVector(dev_matrix_shape_, outputs_tensor_map_.at(i), outputs_shape_.at(i)) !=
-        SUCCESS) {
-      return FAILED;
-    }
-    TensorInfo tensor_info_out(tensor_layout_out);
-    outputs_tensor_info_.push_back(tensor_info_out);
-  }
-  return SUCCESS;
-}
-
 Status BatchParallelInfo::GetAttrs() { return SUCCESS; }
 
 Status BatchParallelInfo::Init(const StrategyPtr &strategy) {

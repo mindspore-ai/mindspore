@@ -62,28 +62,6 @@ Status L2NormalizeInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status L2NormalizeInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-  Shape input_tensor_map = inputs_tensor_map_.at(0);
-  std::vector<Group> input_group;
-  if (CreateGroupByTensorMap(input_tensor_map, &input_group) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Create group failed.";
-    return FAILED;
-  }
-
-  OperatorVector op_for_weight;
-  if (input_group.empty()) {
-    MS_LOG(INFO) << name_ << " : The mirror ops is empty.";
-    return SUCCESS;
-  } else {
-    op_for_weight = CreateMirrorOps(input_group[0].name(), input_group[0].GetDevNum());
-    mirror_ops_.push_back(op_for_weight);
-    MS_LOG(INFO) << name_ << " : Create the mirror ops success, the group is " << input_group[0].name();
-  }
-
-  return SUCCESS;
-}
-
 Status L2NormalizeInfo::GenerateStrategies(int64_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : GetAttrs failed.";

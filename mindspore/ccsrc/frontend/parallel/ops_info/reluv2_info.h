@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace parallel {
 /*
- * The second dimension is not splitable, as mask is caculated along it.
+ * The second dimension is not splitable, as mask is calculated along it.
  * The input and output have the same tensormap (3, 2, 1, 0), mask's tensormap is (3, 2, 1, 0, -1)
  */
 class ReLUV2Info : public OperatorInfo {
@@ -46,10 +46,8 @@ class ReLUV2Info : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
-  Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
