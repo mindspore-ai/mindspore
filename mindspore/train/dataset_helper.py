@@ -338,7 +338,7 @@ class _DatasetIterGE(_DatasetIter):
 
 
 class _DatasetIterPyNative(_DatasetIter):
-    """Iter for MS(enable_loop_sink=False)."""
+    """Iter for context (mode=PYNATIVE_MODE)."""
 
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
