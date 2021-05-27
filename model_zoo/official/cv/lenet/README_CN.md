@@ -113,6 +113,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         ├── train.py                 // 训练脚本
         ├── eval.py                  //  评估脚本  
         ├── postprocess.py           //  310推理后处理脚本
+        ├── preprocess.py           //  310推理前处理脚本
 ```
 
 ## 脚本参数
