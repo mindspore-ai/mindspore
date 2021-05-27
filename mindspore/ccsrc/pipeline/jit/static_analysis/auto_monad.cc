@@ -213,7 +213,7 @@ using SccMap = std::unordered_map<FuncGraphPtr, SccPtr>;
 // ---------------------------------------------------------------------
 class SccFinder {
  public:
-  explicit SccFinder(FuncGraphPtr root) : root_(root) {}
+  explicit SccFinder(const FuncGraphPtr &root) : root_(root) {}
   ~SccFinder() = default;
   void Run() { (void)Search(root_); }
   const SccMap &scc_map() const { return scc_map_; }
@@ -279,7 +279,6 @@ class SccFinder {
     return state;
   }
 
- private:
   // The root graph.
   FuncGraphPtr root_;
 
@@ -740,7 +739,7 @@ class SideEffectFinder {
     return info;
   }
 
-  void ForEachRealArguments(const ParameterPtr &para, std::function<void(const AnfNodePtr &)> handler) {
+  void ForEachRealArguments(const ParameterPtr &para, const std::function<void(const AnfNodePtr &)> &handler) {
     auto func_graph = para->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     // Find index of the parameter, starts from 0.
@@ -988,7 +987,6 @@ class SideEffectFinder {
     }
   }
 
- private:
   // The root graph.
   FuncGraphPtr root_;
 
@@ -1381,7 +1379,6 @@ class AutoMonadConverter {
     return (info.memory || info.load || info.io);
   }
 
- private:
   // The func graph to be converted.
   const FuncGraphPtr &func_graph_;
 

@@ -628,7 +628,7 @@ AnfNodePtr DFunctor::MapParameterToK(const AnfNodePtr &primal) {
   return ret;
 }
 
-bool DFunctor::IsInScope(const AnfNodePtr &node) {
+bool DFunctor::IsInScope(const AnfNodePtr &node) const {
   return std::any_of(scope_.begin(), scope_.end(),
                      [&](const FuncGraphPtr &graph) { return node->func_graph() == graph; });
 }
