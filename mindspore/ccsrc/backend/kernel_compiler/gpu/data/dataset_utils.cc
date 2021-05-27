@@ -15,6 +15,8 @@
  */
 
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
+#include <algorithm>
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -63,6 +65,25 @@ int ElementNums(const std::vector<int> &shape) {
   }
 
   return nums;
+}
+
+void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> *shapes, std::vector<TypePtr> *types) {
+  MS_EXCEPTION_IF_NULL(shapes);
+  MS_EXCEPTION_IF_NULL(types);
+  std::vector<std::vector<int64_t>> shapes_me =
+    AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+  (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(*shapes),
+                       [](const std::vector<int64_t> &values) {
+                         std::vector<int> shape;
+                         (void)std::transform(values.begin(), values.end(), std::back_inserter(shape),
+                                              [](const int64_t &value) { return static_cast<int>(value); });
+                         return shape;
+                       });
+
+  *types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
+  if (shapes->size() != types->size()) {
+    MS_LOG(EXCEPTION) << "Invalid shapes: " << *shapes << ", types: " << *types;
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore

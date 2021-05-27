@@ -25,6 +25,8 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/broadcast_impl.cuh"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
+#include "backend/session/anf_runtime_algorithm.h"
+
 namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
@@ -68,7 +70,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
     auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    need_broadcast_ = IsBroadcast(shape1, shape2);
+    need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > 7) {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
     }
@@ -163,18 +165,6 @@ class BroadcastOpGpuKernel : public GpuKernel {
     }
 
     MS_LOG(EXCEPTION) << "operation " << kernel_name << " is not supported.";
-  }
-
-  bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-    if (lhs.size() != rhs.size()) {
-      return true;
-    }
-    for (size_t i = 0; i < lhs.size(); i++) {
-      if (lhs[i] != rhs[i]) {
-        return true;
-      }
-    }
-    return false;
   }
 
   BroadcastOpType op_type_;
