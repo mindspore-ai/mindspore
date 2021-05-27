@@ -28,7 +28,7 @@
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 namespace {
-constexpr uint32_t kProfilingDeviceNum = 1;
+constexpr int32_t kProfilingDeviceNum = 1;
 constexpr auto kRtSetDeviceRegName = "profiling";
 constexpr Status PROF_SUCCESS = 0;
 constexpr Status PROF_FAILED = 0xFFFFFFFF;
@@ -38,7 +38,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 ProfilingManager &ProfilingManager::GetInstance() {
-  static ProfilingManager inst;
+  static ProfilingManager inst{};
   return inst;
 }
 
@@ -93,9 +93,8 @@ Status ProfilingManager::PluginInit() const {
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
     return PROF_FAILED;
   }
-  return prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                         static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_INIT),
-                                         nullptr, 0);
+  return prof_cb_.msprofReporterCallback(IntToUint(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                         IntToUint(MsprofReporterCallbackType::MSPROF_REPORTER_INIT), nullptr, 0);
 }
 
 void ProfilingManager::PluginUnInit() const {
@@ -180,7 +179,7 @@ bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) c
   int32_t cb_ret =
     prof_cb_.msprofCtrlCallback(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_INIT_GE_OPTIONS),
                                 static_cast<void *>(prof_conf.get()), sizeof(MsprofGeOptions));
-  if (cb_ret != PROF_SUCCESS) {
+  if (cb_ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
     return false;
   }
@@ -203,7 +202,7 @@ bool ProfilingManager::StopProfiling() {
   uint32_t device_ids[kProfilingDeviceNum] = {GetCurrentDeviceId()};
 
   auto rt_ret = rtProfilerStop(module, kProfilingDeviceNum, device_ids);
-  if (rt_ret != RT_ERROR_NONE) {
+  if (rt_ret != UintToInt(RT_ERROR_NONE)) {
     MS_LOG(ERROR) << "Call rtProfilerStop failed";
     return false;
   }
@@ -228,8 +227,8 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
     return PROF_FAILED;
   }
-  return prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                         static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
+  return prof_cb_.msprofReporterCallback(IntToUint(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                         IntToUint(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
                                          static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
 }
 
@@ -255,10 +254,10 @@ Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
   ProfilingManager::GetInstance().SetMsprofSetDeviceCallback(func);
   // Pass MsprofSetDeviceCallback to runtime
   MS_LOG(INFO) << "GE pass setdevice callback to runtime.";
-  Status rt_ret = rtRegDeviceStateCallback(kRtSetDeviceRegName, static_cast<rtDeviceStateCallback>(func));
-  if (rt_ret != PROF_SUCCESS) {
+  rtError_t rt_ret = rtRegDeviceStateCallback(kRtSetDeviceRegName, static_cast<rtDeviceStateCallback>(func));
+  if (rt_ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(WARNING) << "Pass MsprofSetDeviceCallback to runtime failed.";
-    return rt_ret;
+    return IntToUint(rt_ret);
   }
   return PROF_SUCCESS;
 }
@@ -274,10 +273,10 @@ Status RegProfReporterCallback(MsprofReporterCallback func) {
     MS_LOG(INFO) << "GE register Msprof reporter callback.";
     ProfilingManager::GetInstance().SetMsprofReporterCallback(func);
     // Pass MsprofReporterCallback to runtime
-    Status rt_ret = rtSetMsprofReporterCallback(func);
-    if (rt_ret != PROF_SUCCESS) {
+    rtError_t rt_ret = rtSetMsprofReporterCallback(func);
+    if (rt_ret != UintToInt(PROF_SUCCESS)) {
       MS_LOG(WARNING) << "Pass MsprofReporterCallback to runtime failed, ret: " << rt_ret;
-      return rt_ret;
+      return IntToUint(rt_ret);
     }
     // Pass MsprofReporterCallback to hccl
   }

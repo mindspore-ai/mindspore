@@ -37,7 +37,7 @@ class TaskDescReporter : public DescReporter {
  private:
   std::vector<uint32_t> task_ids_;
   std::vector<uint32_t> stream_ids_;
-  void CheckStreamTaskValid(uint32_t task_id, uint32_t stream_id);
+  void CheckStreamTaskValid(size_t task_id, size_t stream_id) const;
   std::vector<CNodePtr> cnode_list_;
 };
 }  // namespace ascend

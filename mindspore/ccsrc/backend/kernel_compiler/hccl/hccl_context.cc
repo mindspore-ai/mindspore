@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/hccl/hccl_context.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 #include "hccl/hccl.h"
 
 constexpr auto kHcclConfigFile = "MINDSPORE_HCCL_CONFIG_PATH";
@@ -54,7 +55,7 @@ bool HcclContext::InitHccl() {
     return false;
   }
 
-  auto hccl_result = HcclCommInitClusterInfo(config_file, rank_id_, &hccl_comm_);
+  auto hccl_result = HcclCommInitClusterInfo(config_file, IntToUint(rank_id_), &hccl_comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclCommInitClusterInfo failed, ret:" << hccl_result;
     return false;

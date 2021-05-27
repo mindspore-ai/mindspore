@@ -20,11 +20,11 @@
 #include <vector>
 
 namespace mindspore {
-int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fds) {
+int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool append_fds) {
   DP_EXCEPTION << "Not support for Windows by now.";
 }
 
-void DuplexPipe::Write(const std::string &buf, bool flush) { DP_EXCEPTION << "Not support for Windows by now."; }
+void DuplexPipe::Write(const std::string &buf, bool flush) const { DP_EXCEPTION << "Not support for Windows by now."; }
 
 std::string DuplexPipe::Read() { DP_EXCEPTION << "Not support for Windows by now."; }
 
@@ -40,9 +40,9 @@ DuplexPipe &DuplexPipe::operator>>(std::string &buf) { DP_EXCEPTION << "Not supp
 
 void DuplexPipe::Close() { DP_EXCEPTION << "Not support for Windows by now."; }
 
-void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) {
+void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) const {
   DP_EXCEPTION << "Not support for Windows by now.";
 }
 
-void DuplexPipe::SignalHandler::CancelAlarm() { DP_EXCEPTION << "Not support for Windows by now."; }
+void DuplexPipe::SignalHandler::CancelAlarm() const { DP_EXCEPTION << "Not support for Windows by now."; }
 }  // namespace mindspore
