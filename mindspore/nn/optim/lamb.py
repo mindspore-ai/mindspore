@@ -114,6 +114,7 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
 
 _lamb_opt_ascend = C.MultitypeFuncGraph("lamb_opt_ascend")
 
+
 @_lamb_opt_ascend.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
                            "Tensor", "Bool", "Bool")
 def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag,
