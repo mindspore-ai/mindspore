@@ -51,7 +51,7 @@ def normal(shape, mean, stddev, seed=None):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.Tensor
+        >>> from mindspore import Tensor
         >>> import mindspore.ops.composite as C
         >>> from mindspore.common import dtype as mstype
         >>> shape = (3, 1, 2)
@@ -156,9 +156,9 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore.Tensor
         >>> import mindspore.ops.composite as C
         >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import Tensor
         >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
         >>> minval = Tensor(1, mstype.int32)
@@ -216,7 +216,7 @@ def gamma(shape, alpha, beta, seed=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore.Tensor
+        >>> from mindspore import Tensor
         >>> import mindspore.ops.composite as C
         >>> from mindspore.common import dtype as mstype
         >>> shape = (3, 1, 2)
@@ -260,7 +260,8 @@ def poisson(shape, mean, seed=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore.Tensor
+        >>> import numpy as np
+        >>> from mindspore import Tensor
         >>> import mindspore.ops.composite as C
         >>> from mindspore.common import dtype as mstype
         >>> shape = (4, 1)
@@ -306,7 +307,7 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         ``GPU``
 
     Examples:
-        >>> import mindspore.Tensor
+        >>> from mindspore import Tensor
         >>> import mindspore.ops.composite as C
         >>> from mindspore.common import dtype as mstype
         >>> input = Tensor([0, 9, 4, 0], mstype.float32)
