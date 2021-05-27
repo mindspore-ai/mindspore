@@ -205,7 +205,9 @@ Status CifarOp::ReadCifar10BlockData() {
 Status CifarOp::ReadCifar100BlockData() {
   // CIFAR 100 has 2 bin files. train.bin (60K imgs)  153,700KB and test.bin (30,740KB) (10K imgs)
   // each img has two labels. Each row then is 32 * 32 *5 + 2 = 3,074 Bytes
-  uint32_t num_cifar100_records = 0;                                  // test:10000, train:50000
+  uint32_t num_cifar100_records = 0;  // test:10000, train:50000
+  constexpr uint32_t num_cifar100_test_records = 10000;
+  constexpr uint32_t num_cifar100_train_records = 50000;
   uint32_t block_size = (kCifarImageSize + 2) * kCifarBlockImageNum;  // about 2M
   std::vector<unsigned char> image_data(block_size * sizeof(unsigned char), 0);
   for (auto &file : cifar_files_) {
@@ -220,9 +222,9 @@ Status CifarOp::ReadCifar100BlockData() {
     if (usage_ == "test" && file_name.find("test") == std::string::npos) continue;
 
     if (file_name.find("test") != std::string::npos) {
-      num_cifar100_records = 10000;
+      num_cifar100_records = num_cifar100_test_records;
     } else if (file_name.find("train") != std::string::npos) {
-      num_cifar100_records = 50000;
+      num_cifar100_records = num_cifar100_train_records;
     } else {
       RETURN_STATUS_UNEXPECTED("Invalid file, Cifar100 train/test file not found in: " + file_name);
     }

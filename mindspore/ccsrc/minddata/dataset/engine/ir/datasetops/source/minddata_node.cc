@@ -81,7 +81,8 @@ void MindDataNode::Print(std::ostream &out) const { out << Name() + "(file:" + d
 
 Status MindDataNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (!search_for_pattern_ && dataset_files_.size() > 4096) {
+  constexpr size_t max_len = 4096;
+  if (!search_for_pattern_ && dataset_files_.size() > max_len) {
     std::string err_msg =
       "MindDataNode: length of dataset_file must be less than or equal to 4096, dataset_file length: " +
       std::to_string(dataset_file_.size());

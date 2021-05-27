@@ -60,7 +60,8 @@ Status ValidateVectorColorAttribute(const std::string &op_name, const std::strin
   for (auto &attr_val : attr) {
     RETURN_IF_NOT_OK(ValidateScalar(op_name, attr_name, attr_val, range, false, false));
   }
-  if (attr.size() == 2 && (attr[0] > attr[1])) {
+  constexpr size_t attr_size_two = 2;
+  if (attr.size() == attr_size_two && (attr[0] > attr[1])) {
     std::string err_msg = op_name + ":" + attr_name +
                           " lower bound must be less or equal to upper bound, got lb: " + std::to_string(attr[0]) +
                           ", ub: " + std::to_string(attr[1]);

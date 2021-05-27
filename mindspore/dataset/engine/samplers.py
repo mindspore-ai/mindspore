@@ -121,6 +121,7 @@ class BuiltinSampler:
         self.child_sampler = sampler
 
     def get_child(self):
+        """ add a child sampler """
         return self.child_sampler
 
     def parse_child(self):
@@ -136,9 +137,11 @@ class BuiltinSampler:
         return c_child_sampler
 
     def is_shuffled(self):
+        """ not implemented """
         raise NotImplementedError("Sampler must implement is_shuffled.")
 
     def is_sharded(self):
+        """ not implemented """
         raise NotImplementedError("Sampler must implement is_sharded.")
 
     def get_num_samples(self):

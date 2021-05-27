@@ -109,7 +109,7 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
         std::make_shared<CsvOp::Record<float>>(CsvOp::FLOAT, std::dynamic_pointer_cast<CsvRecord<float>>(v)->value));
     } else if (v->type == CsvType::STRING) {
       column_default_list.push_back(std::make_shared<CsvOp::Record<std::string>>(
-        CsvOp::STRING, std::dynamic_pointer_cast<CsvRecord<std::string>>(v)->value));
+        CsvOp::STRING, (std::dynamic_pointer_cast<CsvRecord<std::string>>(v))->value));
     }
   }
 

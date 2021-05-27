@@ -53,12 +53,12 @@ from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterato
     ITERATORS_LIST, _unset_iterator_cleanup
 from .queue import _SharedQueue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
-    check_rename, check_numpyslicesdataset, check_device_send, \
-    check_take, check_project, check_imagefolderdataset, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
-    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
-    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
+    check_rename, check_numpyslicesdataset, check_device_send, check_take, check_project, check_imagefolderdataset, \
+    check_mnist_cifar_dataset, check_manifestdataset, check_tfrecorddataset, check_vocdataset, check_cocodataset, \
+    check_celebadataset, check_minddataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
+    check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
+    check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
+    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size, get_dynamic_columns
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -88,7 +88,7 @@ def shuffle_to_shuffle_mode(shuffle):
         if shuffle is None or shuffle:
             shuffle_mode = cde.ShuffleMode.GLOBAL  # Global shuffle
         else:
-            shuffle_mode = cde.ShuffleMode.FALSE   # No shuffle
+            shuffle_mode = cde.ShuffleMode.FALSE  # No shuffle
     else:
         shuffle_mode = ShuffleToShuffleMode[shuffle]
     return shuffle_mode
@@ -156,6 +156,7 @@ def _get_operator_process():
         fetched_all = fetched_all and item_full
     return op_process, fetched_all
 
+
 def _set_dataset_permissions(file_name, num_files):
     """
     set saved dataset files' permissions to 600
@@ -173,6 +174,7 @@ def _set_dataset_permissions(file_name, num_files):
             index_file = item + ".db"
             if os.path.exists(index_file):
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
+
 
 class Dataset:
     """
@@ -1593,7 +1595,7 @@ class Dataset:
             for col in data.keys():
                 if col in dynamic_columns:
                     shape_mismatch = "dynamic column [" + col + "] with shape " + str(dynamic_columns[col]) + \
-                        " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
+                    " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
                     if data[col].ndim != len(dynamic_columns[col]):
                         raise RuntimeError(shape_mismatch)
                     for dim in range(len(dynamic_columns[col])):
@@ -1850,6 +1852,7 @@ class MappableDataset(SourceDataset):
         self.sampler = samplers.select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
 
     def add_sampler(self, new_sampler):
+        """ add a sampler """
         # note: By adding a sampler, the sampled IDs will flow to new_sampler
         # after first passing through the current samplers attached to this dataset.
         self.dataset_size = None
@@ -2365,7 +2368,6 @@ def _pyfunc_worker_init(pyfunc_list, args_queue, ret_queue):
     _RET_QUEUE = ret_queue
 
 
-
 # Pyfunc worker execution function
 # All exceptions will be raised to main processes
 def _pyfunc_worker_exec(index, qid, *args):
@@ -2387,6 +2389,7 @@ def _pyfunc_worker_exec(index, qid, *args):
         return [qid]
     ## not using shared memory for passing arguments, call function directly
     return _GLOBAL_PYFUNC_LIST[index](*args)
+
 
 # PythonCallable wrapper for multiprocess pyfunc
 class _PythonCallable:
@@ -3413,11 +3416,10 @@ class SamplerFn:
             self.eof = threading.Event()
         # Create workers
 
-        #get default queue size and adjust queuesize per worker if there are large # workers
+        # get default queue size and adjust queuesize per worker if there are large # workers
         queue_size = get_prefetch_size()
         queue_size = min(queue_size, queue_size * 4 // num_worker)
         queue_size = max(2, queue_size)
-
 
         for _ in range(num_worker):
             if multi_process is True:

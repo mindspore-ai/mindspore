@@ -392,6 +392,7 @@ def construct_tensor_ops(operations):
 
 
 def to_policy(op_list):
+    """ op_list to policy """
     policy_tensor_ops = []
     for policy_list in op_list:
         sub_policy_tensor_ops = []
@@ -403,12 +404,17 @@ def to_policy(op_list):
 
 
 def to_shuffle_mode(shuffle):
-    if shuffle == 2: return "global"
-    if shuffle == 1: return "files"
-    return False
+    """ int to shuffle mode """
+    ret_val = False
+    if shuffle == 2:
+        ret_val = "global"
+    elif shuffle == 1:
+        ret_val = "files"
+    return ret_val
 
 
 def to_interpolation_mode(inter):
+    """ int to interpolation mode """
     return {
         0: Inter.LINEAR,
         1: Inter.NEAREST,
@@ -418,6 +424,7 @@ def to_interpolation_mode(inter):
 
 
 def to_border_mode(border):
+    """ int to border mode """
     return {
         0: Border.CONSTANT,
         1: Border.EDGE,
@@ -427,6 +434,7 @@ def to_border_mode(border):
 
 
 def to_mstype(data_type):
+    """ str to mstype """
     return {
         "bool": mstype.bool_,
         "int8": mstype.int8,
@@ -445,6 +453,7 @@ def to_mstype(data_type):
 
 
 def to_image_batch_format(image_batch_format):
+    """ int to image batch format """
     return {
         0: ImageBatchFormat.NHWC,
         1: ImageBatchFormat.NCHW
@@ -452,4 +461,5 @@ def to_image_batch_format(image_batch_format):
 
 
 def check_and_replace_input(input_value, expect, replace):
+    """ check and replace input arg """
     return replace if input_value == expect else input_value

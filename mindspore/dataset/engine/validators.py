@@ -465,7 +465,8 @@ def check_pad_info(key, val):
             for dim in val[0]:
                 if dim is not None:
                     type_check(dim, (int,), "dim in pad_shape")
-                    assert dim > 0, "pad shape should be positive integers"
+                    if dim <= 0:
+                        raise ValueError("pad shape should be positive integers")
         if val[1] is not None:
             type_check(val[1], (int, float, str, bytes), "pad_value")
 

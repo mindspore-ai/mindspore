@@ -165,10 +165,8 @@ Status ExecutionTree::Launch() {
     std::string err_msg = "Invalid thread number.";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  if (thread_num > 8)
-    cv::setNumThreads(8);
-  else
-    cv::setNumThreads(thread_num);
+  constexpr int32_t max_cv_threads_cnt = 8;
+  cv::setNumThreads(thread_num > max_cv_threads_cnt ? max_cv_threads_cnt : thread_num);
 #endif
 
   // Tree must be built and prepared before it can be launched!

@@ -63,13 +63,13 @@ Status BucketBatchByLengthOp::Builder::SanityCheck() const {
   return Status::OK();
 }
 
-Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLengthOp> *new_bucket_batch_by_length_op) {
+Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLengthOp> *bucket_batch_by_length_op) {
   RETURN_IF_NOT_OK(SanityCheck());
 
   // insert 0 for the first bucket
   (void)builder_bucket_boundaries_.insert(builder_bucket_boundaries_.begin(), 0);
 
-  *new_bucket_batch_by_length_op = std::make_shared<BucketBatchByLengthOp>(
+  *bucket_batch_by_length_op = std::make_shared<BucketBatchByLengthOp>(
     builder_length_dependent_columns_, builder_bucket_boundaries_, builder_bucket_batch_sizes_,
     builder_element_length_function_, builder_pad_info_, builder_pad_to_bucket_boundary_, builder_drop_remainder_,
     builder_op_connector_size_);
