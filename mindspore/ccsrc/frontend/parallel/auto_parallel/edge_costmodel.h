@@ -141,7 +141,7 @@ class Edge {
   Status CalculateMemoryCostForInference();
   void mark_output_critical() { is_output_critical_ = 1; }
   // Whether there exists any available strategy in 'cost_map_'
-  bool CheckStrategyCostPossibility();
+  bool CheckStrategyCostPossibility() const;
 
  private:
   std::string edge_name_;
@@ -153,7 +153,7 @@ class Edge {
   // the index of outputs of prev_op, and the index of inputs of next_op
   size_t prev_op_output_index_, next_op_input_index_;
 
-  // pre_op_output_indexs_ and next_op_input_indexs_ store the indexs of inputs and outputs if is_combined = true
+  // 'pre_op_output_indexs_' and 'next_op_input_indexs_' store the indexes of inputs and outputs if is_combined = true
   std::vector<size_t> pre_op_output_indexs_;
   std::vector<size_t> next_op_input_indexs_;
   // is this edge constructed by combining multiple edges? If is is, then is_combined = true, else is_combined = false

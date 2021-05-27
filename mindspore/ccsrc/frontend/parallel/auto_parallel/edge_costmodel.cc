@@ -343,6 +343,6 @@ void Edge::SetCostMapAndInputOutput(std::map<CostPtrKey, CostPtrList> &cost_map)
 }
 
 // Return true if there are available strategies in this edge.
-bool Edge::CheckStrategyCostPossibility() { return !cost_map_.empty(); }
+bool Edge::CheckStrategyCostPossibility() const { return !cost_map_.empty(); }
 }  // namespace parallel
 }  // namespace mindspore

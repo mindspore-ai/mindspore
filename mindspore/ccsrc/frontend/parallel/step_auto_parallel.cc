@@ -498,6 +498,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
       StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    return FAILED;
   }
   std::vector<std::string> last_forward_node_ids;
   if (!root->has_flag(TRAINING)) {
