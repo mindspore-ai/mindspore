@@ -22,6 +22,7 @@ from ..cell import Cell
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d']
 
+
 class _PoolNd(Cell):
     """N-D  AvgPool"""
 
@@ -31,6 +32,7 @@ class _PoolNd(Cell):
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
+
         def _check_int_or_tuple(arg_name, arg_value):
             validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
             error_msg = f'For \'{self.cls_name}\' the {arg_name} should be an positive int number or ' \
@@ -55,10 +57,13 @@ class _PoolNd(Cell):
 
     def extend_repr(self):
         return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
+
+
 @constexpr
 def _shape_check(in_shape):
     if len(in_shape) != 3:
         raise ValueError("The input must has 3 dim")
+
 
 class MaxPool2d(_PoolNd):
     r"""

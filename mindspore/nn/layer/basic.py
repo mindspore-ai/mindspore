@@ -202,11 +202,13 @@ class Flatten(Cell):
     def construct(self, x):
         return F.reshape(x, (F.shape(x)[0], -1))
 
+
 @constexpr
 def check_dense_input_shape(x):
     if len(x) < 2:
         raise ValueError('For Dense, the dimension of input should not be less than 2, while the input dimension is '
                          + f'{len(x)}.')
+
 
 class Dense(Cell):
     r"""

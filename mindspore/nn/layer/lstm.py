@@ -37,14 +37,17 @@ def _create_sequence_length(shape):
     sequence_length = Tensor(np.ones(batch_size, np.int32) * num_step, mstype.int32)
     return sequence_length
 
+
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
 
 @constexpr
 def _check_input_3d(input_shape, param_name, func_name):
     if len(input_shape) != 3:
         raise ValueError(f"{func_name} {param_name} should be 3d, but got shape {input_shape}")
+
 
 class LSTM(Cell):
     r"""

@@ -102,6 +102,7 @@ def _convert_img_dtype_to_float32(img, max_val):
         ret = ret * scale
     return ret
 
+
 @constexpr
 def _get_dtype_max(dtype):
     """get max of the dtype"""
@@ -118,19 +119,23 @@ def _check_input_4d(input_shape, param_name, func_name):
         raise ValueError(f"{func_name} {param_name} should be 4d, but got shape {input_shape}")
     return True
 
+
 @constexpr
 def _check_input_filter_size(input_shape, param_name, filter_size, func_name):
     _check_input_4d(input_shape, param_name, func_name)
     validator.check(param_name + " shape[2]", input_shape[2], "filter_size", filter_size, Rel.GE, func_name)
     validator.check(param_name + " shape[3]", input_shape[3], "filter_size", filter_size, Rel.GE, func_name)
 
+
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
+
 def _conv2d(in_channels, out_channels, kernel_size, weight, stride=1, padding=0):
     return Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride,
                   weight_init=weight, padding=padding, pad_mode="valid")
+
 
 def _create_window(size, sigma):
     x_data, y_data = np.mgrid[-size // 2 + 1:size // 2 + 1, -size // 2 + 1:size // 2 + 1]
@@ -142,11 +147,13 @@ def _create_window(size, sigma):
     g = np.exp(-(x_data + y_data) / sigma)
     return np.transpose(g / np.sum(g), (2, 3, 0, 1))
 
+
 def _split_img(x):
     _, c, _, _ = F.shape(x)
     img_split = P.Split(1, c)
     output = img_split(x)
     return output, c
+
 
 def _compute_per_channel_loss(c1, c2, img1, img2, conv):
     """computes ssim index between img1 and img2 per single channel"""
@@ -170,6 +177,7 @@ def _compute_per_channel_loss(c1, c2, img1, img2, conv):
     cs = v1 / v2
     return ssim, cs
 
+
 def _compute_multi_channel_loss(c1, c2, img1, img2, conv, concat, mean):
     """computes ssim index between img1 and img2 per color channel"""
     split_img1, c = _split_img(img1)
@@ -187,6 +195,7 @@ def _compute_multi_channel_loss(c1, c2, img1, img2, conv, concat, mean):
     ssim = mean(multi_ssim, (2, 3))
     cs = mean(multi_cs, (2, 3))
     return ssim, cs
+
 
 class SSIM(Cell):
     r"""
@@ -207,7 +216,8 @@ class SSIM(Cell):
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
           Default: 1.0.
         filter_size (int): The size of the Gaussian filter. Default: 11. The value must be greater than or equal to 1.
-        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5. The value must be greater than 0.
+        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.
+          The value must be greater than 0.
         k1 (float): The constant used to generate c1 in the luminance comparison function. Default: 0.01.
         k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
 
@@ -272,10 +282,12 @@ class SSIM(Cell):
 
         return loss
 
+
 def _downsample(img1, img2, op):
     a = op(img1)
     b = op(img2)
     return a, b
+
 
 class MSSSIM(Cell):
     r"""
@@ -390,6 +402,7 @@ class MSSSIM(Cell):
         loss = self.reduce_mean(ms_ssim, -1)
 
         return loss
+
 
 class PSNR(Cell):
     r"""

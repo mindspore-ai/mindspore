@@ -35,6 +35,15 @@ __all__ = ['ReduceLogSumExp',
            'MatDet',
            ]
 
+_BASE_LANCZOS_COEFF = 0.99999999999980993227684700473478
+_LANCZOS_COEFFICIENTS = [676.520368121885098567009190444019,
+                         -1259.13921672240287047156078755283,
+                         771.3234287776530788486528258894,
+                         -176.61502916214059906584551354,
+                         12.507343278686904814458936853,
+                         -0.13857109526572011689554707,
+                         9.984369578019570859563e-6,
+                         1.50563273514931155834e-7]
 
 @constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
@@ -204,15 +213,8 @@ class LGamma(Cell):
         super(LGamma, self).__init__()
         # const numbers
         self.k_lanczos_gamma = 7
-        self.k_base_lanczos_coeff = 0.99999999999980993227684700473478
-        self.k_lanczos_coefficients = [676.520368121885098567009190444019,
-                                       -1259.13921672240287047156078755283,
-                                       771.3234287776530788486528258894,
-                                       -176.61502916214059906584551354,
-                                       12.507343278686904814458936853,
-                                       -0.13857109526572011689554707,
-                                       9.984369578019570859563e-6,
-                                       1.50563273514931155834e-7]
+        self.k_base_lanczos_coeff = _BASE_LANCZOS_COEFF
+        self.k_lanczos_coefficients = _LANCZOS_COEFFICIENTS
         self.one_half = 0.5
         self.one = 1
         self.two = 2
@@ -322,15 +324,8 @@ class DiGamma(Cell):
         super(DiGamma, self).__init__()
         # const numbers
         self.k_lanczos_gamma = 7
-        self.k_base_lanczos_coeff = 0.99999999999980993227684700473478
-        self.k_lanczos_coefficients = [676.520368121885098567009190444019,
-                                       -1259.13921672240287047156078755283,
-                                       771.3234287776530788486528258894,
-                                       -176.61502916214059906584551354,
-                                       12.507343278686904814458936853,
-                                       -0.13857109526572011689554707,
-                                       9.984369578019570859563e-6,
-                                       1.50563273514931155834e-7]
+        self.k_base_lanczos_coeff = _BASE_LANCZOS_COEFF
+        self.k_lanczos_coefficients = _LANCZOS_COEFFICIENTS
         self.nan = np.nan
         self.pi = np.pi
         self.lanczos_gamma_plus_one_half = self.k_lanczos_gamma + 0.5
@@ -383,13 +378,14 @@ class DiGamma(Cell):
 
 eps_fp32 = Tensor(np.finfo(np.float32).eps, mstype.float32)
 
+
 def _while_helper_func(cond, body, vals):
     while cond(vals).any():
         vals = body(vals)
     return vals
 
 
-def _IgammaSeries(ax, x, a, enabled):
+def _igamma_series(ax, x, a, enabled):
     """Helper function for computing Igamma using a power series."""
 
     logicaland = P.LogicalAnd()
@@ -436,7 +432,7 @@ def _IgammaSeries(ax, x, a, enabled):
     return (ans * ax) / a
 
 
-def _IgammacContinuedFraction(ax, x, a, enabled):
+def _igammac_continued_fraction(ax, x, a, enabled):
     """Helper function for computing Igammac using a continued fraction."""
 
     abs_x = P.Abs()
@@ -632,8 +628,8 @@ class IGamma(Cell):
         ax = self.exp(ax)
         enabled = self.logicalnot(self.logicalor(self.logicalor(x_is_zero, domain_error), underflow))
         output = self.select(use_igammac,
-                             1 - _IgammacContinuedFraction(ax, x, a, self.logicaland(enabled, use_igammac)),
-                             _IgammaSeries(ax, x, a, self.logicaland(enabled, self.logicalnot(use_igammac))))
+                             1 - _igammac_continued_fraction(ax, x, a, self.logicaland(enabled, use_igammac)),
+                             _igamma_series(ax, x, a, self.logicaland(enabled, self.logicalnot(use_igammac))))
         output = self.select(x_is_zero, self.zeroslike(output), output)
         output = self.select(domain_error, self.fill(self.dtype(a), self.shape(a), np.nan), output)
         return output
