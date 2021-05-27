@@ -167,7 +167,7 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
   }
   ulong loop_size = hccl_data_type_list_.size();
   if (AnfAlgo::GetInputTensorNum(anf_node_) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
-    loop_size *= rank_size;
+    loop_size *= static_cast<ulong>(rank_size);
   }
   if (op_name == kReduceScatterOpName && fusion >= 1) {
     loop_size = AnfAlgo::GetOutputTensorNum(anf_node_);
