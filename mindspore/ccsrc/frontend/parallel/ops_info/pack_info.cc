@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace parallel {
 Status StackInfo::GetAttrs() {
-  int axis = 0;
+  int64_t axis = 0;
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
@@ -48,12 +48,12 @@ Status StackInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
   }
-  int dim = SizeToInt(inputs_shape_[0].size());
+  int64_t dim = SizeToLong(inputs_shape_[0].size());
 
   if (axis < 0) {
     axis = axis + dim;
   }
-  axis_ = SizeToInt(axis);
+  axis_ = LongToSize(axis);
   return SUCCESS;
 }
 
@@ -114,7 +114,7 @@ Status StackInfo::InferTensorMap() {
     inputs_tensor_map_.push_back(in_tensor_map);
   }
 
-  out_tensor_map.insert(out_tensor_map.begin() + axis_, MAP_NONE);
+  out_tensor_map.insert(out_tensor_map.begin() + SizeToLong(axis_), MAP_NONE);
   outputs_tensor_map_.push_back(out_tensor_map);
   return SUCCESS;
 }

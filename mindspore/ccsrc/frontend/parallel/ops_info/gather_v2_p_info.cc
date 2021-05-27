@@ -161,8 +161,6 @@ Status GatherPInfo::GetAttrs() {
     dynamic_shape_indices_ = true;
   }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   bool enable_sparse = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_SPARSE);
   if (ps::PsDataPrefetch::GetInstance().cache_enable() && enable_sparse) {
@@ -240,12 +238,12 @@ Status GatherPInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
 
   // param_strategy(axis) != 1, and axis != 0, don't support repeated calc
   auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int64_t>());
-  if ((product_p != stage_device_size_) && (param_strategy.at(IntToSize(axis_)) != 1) && (axis_ != 0)) {
+  if ((product_p != stage_device_size_) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ != 0)) {
     MS_LOG(DEBUG) << name_ << ": Invalid strategy. Don't support repeated calc.";
     return FAILED;
   }
 
-  if ((product_p != stage_device_size_) && (param_strategy.at(IntToSize(axis_)) != 1) && (axis_ == 0)) {
+  if ((product_p != stage_device_size_) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ == 0)) {
     if ((param_strategy.size() == 2) && (param_strategy[1] != 1)) {
       MS_LOG(DEBUG) << name_ << ": axis(0) is split, and param_strategy[1] != 1, don't support repeated calc.";
       return FAILED;
@@ -468,9 +466,12 @@ void GatherPInfo::InferOutputsTensorMap() {
 
 Status GatherPInfo::InferTensorMap() {
   if (manual_split_) {
-    inputs_tensor_map_.push_back({1, 0});
-    inputs_tensor_map_.push_back({-1, 1});
-    outputs_tensor_map_.push_back({-1, 1, 0});
+    Shape param_map = {1, 0};
+    Shape indices_map = {-1, 1};
+    Shape out_map = {-1, 1, 0};
+    inputs_tensor_map_.emplace_back(std::move(param_map));
+    inputs_tensor_map_.emplace_back(std::move(indices_map));
+    outputs_tensor_map_.emplace_back(std::move(out_map));
     return SUCCESS;
   }
   InferInputsTensorMap();
@@ -487,7 +488,7 @@ Status GatherPInfo::InferTensorInfo() {
   // infer tensor layout
   TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
   if (manual_split_) {
-    input_shape[0] = param_split_shapes_[rank / dev_matrix_shape_[1]];
+    input_shape[0] = param_split_shapes_[LongToSize(rank / dev_matrix_shape_[1])];
     input_shape[0] = input_shape[0] * dev_matrix_shape_[0];
   }
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(0), input_shape) != SUCCESS) ||
@@ -517,7 +518,7 @@ Status GatherPInfo::InferBias() {
   auto input_shape = inputs_shape_.at(0);
   auto params_strategy = strategy_->GetInputDim().at(0);
   // axis don't split
-  if (params_strategy.at(axis_) == 1) {
+  if (params_strategy.at(LongToSize(axis_) == 1)) {
     bias_ = 0;
     return SUCCESS;
   }
@@ -567,7 +568,7 @@ Status GatherPInfo::InferBias() {
 
 Status GatherPInfo::InferOffset() {
   CheckGlobalDeviceManager();
-  size_t rank = g_device_manager->rank_index_in_stage();
+  size_t rank = LongToSize(g_device_manager->rank_index_in_stage());
 
   MS_EXCEPTION_IF_NULL(strategy_);
   auto param_strategy = strategy_->GetInputDim()[0];
@@ -575,7 +576,7 @@ Status GatherPInfo::InferOffset() {
     MS_LOG(ERROR) << "The size of param strategy must be 2";
     return FAILED;
   }
-  size_t index = rank / param_strategy[1];
+  size_t index = rank / LongToSize(param_strategy[1]);
   if (index < index_offsets_.size()) {
     index_offset_ = index_offsets_[index];
     MS_LOG(INFO) << name_ << ": Device rank " << rank << ", Index Offset: " << index_offset_;
