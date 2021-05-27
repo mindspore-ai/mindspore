@@ -82,6 +82,7 @@ ForwardExecutorPtr PynativeExecutor::forward_executor_ = nullptr;
 GradExecutorPtr PynativeExecutor::grad_executor_ = nullptr;
 std::mutex PynativeExecutor::instance_lock_;
 constexpr auto implcast = "implcast";
+constexpr int zero = 0;
 
 template <typename T, typename... Args>
 void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &... args) {
@@ -708,28 +709,9 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   return op_exec_info;
 }
 
-bool ForwardExecutor::FindOpMask(py::object obj, std::vector<int64_t> *op_masks, const std::string &id) {
-  bool op_mask = false;
-  auto temp = op_mask_map_.find(id);
-  if (temp != op_mask_map_.end()) {
-    op_mask = temp->second;
-    (*op_masks).emplace_back(op_mask);
-  } else {
-    if (py::isinstance<tensor::MetaTensor>(obj)) {
-      auto meta_tensor = obj.cast<tensor::MetaTensorPtr>();
-      if (meta_tensor) {
-        op_mask = meta_tensor->is_parameter();
-      }
-    }
-    MS_LOG(DEBUG) << "Gen args op_mask " << op_mask;
-    op_mask_map_[id] = op_mask;
-    (*op_masks).emplace_back(op_mask);
-  }
-  return op_mask;
-}
-
 void ForwardExecutor::GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
                                   std::vector<AnfNodePtr> *inputs, abstract::AbstractBasePtrList *args_spec_list) {
+  MS_EXCEPTION_IF_NULL(op_masks);
   auto prim = op_exec_info->py_primitive;
   for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
     abstract::AbstractBasePtr abs = nullptr;
@@ -739,8 +721,16 @@ void ForwardExecutor::GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector
     if (it != node_abs_map_.end()) {
       abs = it->second;
     }
-    // Find the opmask of input obj
-    bool op_mask = FindOpMask(obj, op_masks, id);
+
+    bool op_mask = false;
+    if (py::isinstance<tensor::MetaTensor>(obj)) {
+      auto meta_tensor = obj.cast<tensor::MetaTensorPtr>();
+      if (meta_tensor) {
+        op_mask = meta_tensor->is_parameter();
+      }
+    }
+    MS_LOG(DEBUG) << "Gen args i " << i << op_mask;
+    (*op_masks).emplace_back(op_mask);
 
     // Construct grad graph
     if (grad()->need_construct_graph()) {
@@ -906,7 +896,8 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
       if (cast_struct_pair != cast_struct_map_.end()) {
         // Update input for cast struct
         auto cast_struct = cast_struct_pair->second;
-        cast_struct->op_inputs[0] = obj;
+
+        cast_struct->op_inputs[zero] = obj;
         auto grad = this->grad();
         MS_EXCEPTION_IF_NULL(grad);
         if (grad->grad_flag()) {
@@ -1540,7 +1531,6 @@ void ForwardExecutor::ClearRes() {
   prim_abs_list_.clear();
   node_abs_map_.clear();
   cast_struct_map_.clear();
-  op_mask_map_.clear();
   cell_op_index_with_tensor_id_.clear();
   cell_tensor_id_with_tensor_.clear();
 }
