@@ -45,13 +45,12 @@ void DumpIRProto(const std::string &real_path, const FuncGraphPtr &func_graph) {
 }
 #else
 void DumpIRProto(const std::string &, const FuncGraphPtr &) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
+  static bool is_printed = false;
+  if (!is_printed) {
+    is_printed = true;
+    MS_LOG(WARNING) << "The functionality of dumping function graph IR in protobuf format is disabled, "
+                    << "please recompile source to enable it. See help of building script.";
   }
-  already_printed = true;
-  MS_LOG(WARNING) << "The functionality of dumping function graph IR in protobuf format is disabled, "
-                  << "please recompile source to enable it. See help of building script.";
 }
 #endif
 }  // namespace protobuf
