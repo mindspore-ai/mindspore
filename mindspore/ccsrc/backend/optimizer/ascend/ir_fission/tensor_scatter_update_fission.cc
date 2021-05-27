@@ -61,7 +61,8 @@ const AnfNodePtr TensorScatterUpdateFission::Process(const FuncGraphPtr &func_gr
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto tensor_scatter_update = node->cast<CNodePtr>();
-  if (tensor_scatter_update == nullptr || tensor_scatter_update->size() != 4) {
+  constexpr size_t INPUT_NUM = 4;
+  if (tensor_scatter_update == nullptr || tensor_scatter_update->size() != INPUT_NUM) {
     return nullptr;
   }
   auto tensor_move = CreateTensorMove(func_graph, tensor_scatter_update);
