@@ -61,10 +61,10 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
     float_data.emplace_back(static_cast<float>(i));
   }
 
-  auto elem_num = assist_num * kFloat32Len;
+  auto elem_num = data_num * kFloat32Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()), float_data.data(), elem_num);
   if (ret_code != 0) {
-    MS_LOG(ERROR) << "Failed to copy data into Tensor.";
+    MS_LOG(ERROR) << "Failed to copy data into Tensor while creating assist input for LinSpace op.";
     return nullptr;
   }
   return assist_tensor;
