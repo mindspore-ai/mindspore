@@ -2060,6 +2060,10 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
             not provided, `range` is simply ``(a.min(), a.max())``. Values outside
             the range are ignored. The first element of the range must be less than
             or equal to the second.
+        weights(Union[int, float, bool, list, tuple, Tensor], optional):  An array of weights,
+            of the same shape as `a`. Each value in `a` only contributes its associated weight
+            towards the bin count (instead of 1). This is currently not used by any of the bin
+            estimators, but may be in the future.
 
     Returns:
         Tensor, the edges to pass into `histogram`.
@@ -2076,6 +2080,11 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
         >>> print(np.histogram_bin_edges(arr, bins=2))
         [0.  2.5 5. ]
     """
+    a = _to_tensor(a)
+    if weights is not None:
+        weights = _to_tensor(weights)
+        if F.shape(a) != F.shape(weights):
+            _raise_value_error('weights should have the same shape as a')
     if isinstance(bins, (tuple, list, Tensor)):
         bins = _to_tensor(bins)
         if F.rank(bins) != 1:
@@ -2084,12 +2093,15 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None): # pylint: disable
     if isinstance(bins, str):
         # linspace does not support Tensor for num
         _raise_unimplemented_error('string value for `bins` not implemented')
-    a = _to_tensor(a).ravel().astype(mstype.float32)
+    a = a.ravel().astype(mstype.float32)
     if range is None:
         start = F.reduce_min(a)
         end = F.reduce_max(a)
     else:
-        start, end = _to_tensor(*range)
+        start, end = range
+        if start > end:
+            _raise_value_error('max must be larger than min in range parameter')
+        start, end = _to_tensor(start, end)
     no_range = (end - start) == 0
     start = where(no_range, start - 0.5, start)
     end = where(no_range, end + 0.5, end)

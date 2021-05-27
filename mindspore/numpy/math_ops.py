@@ -32,7 +32,8 @@ from .dtypes import nan, pi, dtype_map, inf
 from .array_creations import asarray_const, ones, zeros, empty, full, full_like, diag, \
     arange, histogram_bin_edges, eye
 from .array_ops import where as where_
-from .array_ops import ravel, expand_dims, moveaxis, concatenate, flip, stack, atleast_1d
+from .array_ops import ravel, expand_dims, moveaxis, concatenate, flip, stack, atleast_1d, \
+    split
 
 from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
@@ -40,9 +41,9 @@ from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
     _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
-    _raise_unimplemented_error, _abs, _in
+    _raise_unimplemented_error, _abs, _in, _tuple_slice
 from .utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
-    _to_tensor, _isnan, _to_tensor_origin_dtype
+    _to_tensor, _to_tensor_origin_dtype, _isnan
 
 
 ZERO_TENSOR = asarray_const(0)
@@ -1244,6 +1245,9 @@ def log(x, dtype=None):
 
 def _prop_nan(fn, x1, x2):
     """Selects NaN if either element is NaN"""
+    if _get_device() == 'Ascend':
+        # F.isnan is not supported on Ascend
+        return fn(x1, x2)
     has_nan = F.logical_or(_isnan(x1), _isnan(x2))
     nan_tensor = F.fill(_promote(F.dtype(x1), F.dtype(x2)), F.shape(has_nan), nan)
     res = fn(x1, x2)
@@ -4132,9 +4136,15 @@ def multi_dot(arrays):
         [500000. 500000. 500000. ... 500000. 500000. 500000.]
         [500000. 500000. 500000. ... 500000. 500000. 500000.]]
     """
-    arrays = _to_tensor(*arrays)
     if len(arrays) < 2:
         _raise_value_error('Expecting at least 2 arrays')
+    if isinstance(arrays, (tuple, list)):
+        arrays = _to_tensor(*arrays)
+    else:
+        arrays = _to_tensor(arrays)
+        num = len(arrays)
+        arrays = F.reshape(arrays, (-1,) + _tuple_slice(F.shape(arrays), 2, None))
+        arrays = split(arrays, num)
     if len(arrays) == 2:
         return dot(*arrays)
 
@@ -5678,7 +5688,7 @@ def invert(x, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+        Tensor or scalar.
 
     Supported Platforms:
         ``Ascend``

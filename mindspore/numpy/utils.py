@@ -20,7 +20,7 @@ from ..ops import functional as F
 from ..common import dtype as mstype
 
 from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
-    _tuple_setitem, _callable_const
+    _tuple_setitem, _callable_const, _check_is_float
 
 
 def _deep_list(array_like):
@@ -154,11 +154,6 @@ def _get_dtype_from_scalar(*input_numbers):
     return mstype.float32
 
 
-def _isnan(x):
-    """Computes isnan."""
-    return F.not_equal(x, x)
-
-
 def _convert_bool_to_int(tensor):
     """Convert tensor with bool type to int32."""
     if tensor.dtype == mstype.bool_:
@@ -206,3 +201,9 @@ def _callable(tensor, obj):
     if F.isconstant(tensor):
         return isinstance(obj, types.FunctionType)
     return _callable_const(F.typeof(obj))
+
+
+def _isnan(x):
+    if _check_is_float(F.dtype(x)):
+        return F.isnan(x)
+    return F.fill(mstype.bool_, F.shape(x), False)
