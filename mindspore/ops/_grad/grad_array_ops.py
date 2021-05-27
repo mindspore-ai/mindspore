@@ -757,6 +757,18 @@ def get_bprop_tensor_scatter_update(self):
     return bprop
 
 
+@bprop_getters.register(P.TensorScatterAdd)
+def get_bprop_tensor_scatter_add(self):
+    """Generate bprop for TensorScatterAdd"""
+    gather_nd = P.GatherNd()
+
+    def bprop(x, indices, update, out, dout):
+        update_grad = gather_nd(dout, indices)
+        return dout, zeros_like(indices), update_grad
+
+    return bprop
+
+
 @bprop_getters.register(P.ScatterMax)
 def get_bprop_scatter_max(self):
     """Generate bprop for ScatterMax"""
