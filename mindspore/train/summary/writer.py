@@ -140,17 +140,16 @@ class ExportWriter(BaseWriter):
         }
 
         if export_option in options:
-            options[export_option](data, self._filepath, self._max_file_size)
+            options[export_option](data, self._filepath)
 
     @staticmethod
-    def _export_npy(data, export_dir, max_file_size):
+    def _export_npy(data, export_dir):
         """
         export the tensor data as npy.
 
         Args:
             data (dict): Export data info.
             export_dir (str): The path of export dir.
-            max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
         """
         tag = quote(data.get('tag'), safe="")
         step = int(data.get('step'))
