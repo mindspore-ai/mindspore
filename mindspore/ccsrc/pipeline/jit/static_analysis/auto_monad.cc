@@ -327,7 +327,7 @@ class SideEffectFinder {
     HandleSwitchLayerCalls();
   }
 
-  void UpdateOrderLists() {
+  void UpdateOrderLists() const {
     // Some cnodes used in current func graph but belong to other func graph, we have to
     // insert them into order list so that we can handle side effects for them.
     UpdateOrderList(root_);
@@ -1100,7 +1100,7 @@ class AutoMonadConverter {
   //          return output
   //
   //   To:    return output
-  void ClearIsolatedNodes() {
+  void ClearIsolatedNodes() const {
     auto output = GetGraphOutput();
     if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
         IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
@@ -1300,7 +1300,7 @@ class AutoMonadConverter {
     func_graph_->set_output(depend_cnode);
   }
 
-  AnfNodePtr GetGraphOutput() {
+  AnfNodePtr GetGraphOutput() const {
     auto output = func_graph_->output();
     if (output != nullptr) {
       return output;

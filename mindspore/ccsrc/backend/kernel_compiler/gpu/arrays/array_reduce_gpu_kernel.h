@@ -81,14 +81,14 @@ class ArrayReduceGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
-    auto type_id = TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
+    auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+    auto type_name = TypeIdLabel(type_id);
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
-    if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) &&
-        std::strncmp(type_id, "kNumberTypeBool", std::strlen(type_id)) != 0) {
-      MS_LOG(ERROR) << "Input data type of ReduceAny or ReduceAll should be bool, but got " << type_id;
+    if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) && type_id != kNumberTypeBool) {
+      MS_LOG(ERROR) << "Input data type of ReduceAny or ReduceAll should be bool, but got " << type_name;
       return false;
     }
-    data_type_ = GetCudnnDataType(type_id);
+    data_type_ = GetCudnnDataType(type_name);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but reduce op needs 1 inputs.";

@@ -112,8 +112,8 @@ static int GetSlogLevel(MsLogLevel level) {
 }
 #endif
 
-static const char *GetSubModuleName(SubModuleId module_id) {
-  static const char *sub_module_names[NUM_SUBMODUES] = {
+const std::string &GetSubModuleName(SubModuleId module_id) {
+  static const std::string sub_module_names[NUM_SUBMODUES] = {
     "UNKNOWN",     // SM_UNKNOWN
     "CORE",        // SM_CORE
     "ANALYZER",    // SM_ANALYZER
@@ -196,7 +196,7 @@ static std::string GetEnv(const std::string &envvar) {
   return std::string(value);
 }
 
-enum LogConfigToken {
+enum class LogConfigToken : size_t {
   INVALID,      // indicate invalid token
   LEFT_BRACE,   // '{'
   RIGHT_BRACE,  // '}'
@@ -208,7 +208,7 @@ enum LogConfigToken {
   NUM_LOG_CFG_TOKENS
 };
 
-static const char *g_tok_names[NUM_LOG_CFG_TOKENS] = {
+static const char *g_tok_names[(size_t)LogConfigToken::NUM_LOG_CFG_TOKENS] = {
   "invalid",        // indicate invalid token
   "{",              // '{'
   "}",              // '}'
@@ -225,10 +225,7 @@ static inline bool IsDigit(char ch) { return ch >= '0' && ch <= '9'; }
 
 class LogConfigLexer {
  public:
-  explicit LogConfigLexer(const std::string &text) : buffer_(text) {
-    cur_idx_ = 0;
-    cur_token_ = LogConfigToken::INVALID;
-  }
+  explicit LogConfigLexer(const std::string &text) : buffer_(text), cur_idx_(0) {}
   ~LogConfigLexer() = default;
 
   // skip white space, and return the first char after white space
@@ -302,9 +299,6 @@ class LogConfigLexer {
  private:
   std::string buffer_;
   size_t cur_idx_;
-
-  LogConfigToken cur_token_;
-  std::string cur_text_;
 };
 
 class LogConfigParser {
@@ -312,10 +306,10 @@ class LogConfigParser {
   explicit LogConfigParser(const std::string &cfg) : lexer(cfg) {}
   ~LogConfigParser() = default;
 
-  bool Expect(LogConfigToken expected, LogConfigToken tok) {
+  bool Expect(LogConfigToken expected, LogConfigToken tok) const {
     if (expected != tok) {
-      MS_LOG(WARNING) << "Parse submodule log configuration text error, expect `" << g_tok_names[expected]
-                      << "`, but got `" << g_tok_names[tok] << "`. The whole configuration will be ignored.";
+      MS_LOG(WARNING) << "Parse submodule log configuration text error, expect `" << g_tok_names[(size_t)expected]
+                      << "`, but got `" << g_tok_names[(size_t)tok] << "`. The whole configuration will be ignored.";
       return false;
     }
     return true;

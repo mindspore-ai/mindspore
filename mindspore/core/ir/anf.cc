@@ -450,8 +450,9 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     return GetAttrTarget(primitive, att_target, attr_input, primitive_target, default_target);
   }
   if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    const size_t depend_node_inputs_num = 3;
     auto &inputs = cnode->inputs();
-    if (inputs.size() == 3 && !IsPrimitiveCNode(inputs[1], prim::kPrimMakeTuple)) {
+    if (inputs.size() == depend_node_inputs_num && !IsPrimitiveCNode(inputs[1], prim::kPrimMakeTuple)) {
       return GetCNodeTarget(inputs[1]);
     }
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {

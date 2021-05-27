@@ -61,7 +61,7 @@ std::string GetMsIrPath(void) {
       MS_LOG(EXCEPTION) << "MS IR Path error, " << path_ptr;
     }
 #else
-    if (path.size() > PATH_MAX || nullptr == realpath(path.c_str(), real_path)) {
+    if (path.size() > PATH_MAX || realpath(path.c_str(), real_path) == nullptr) {
       MS_LOG(EXCEPTION) << "MS IR path error, " << path_ptr;
     }
 #endif
@@ -88,9 +88,9 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
-  if ((nullptr != shape) && (nullptr != type)) {
+  if ((shape != nullptr) && (type != nullptr)) {
     oss << type->DumpText() << shape->DumpText();
-  } else if (nullptr != type) {
+  } else if (type != nullptr) {
     oss << type->DumpText();
   } else {
     oss << "Undefined";
@@ -2067,42 +2067,47 @@ class IrParser {
     }
   }
   bool ParseValueBasicBasic(const std::string &id, ValuePtr *const val_ptr, Token *ret) {
+    constexpr size_t bits_per_byte = CHAR_BIT;
+    constexpr size_t bits_per_word = CHAR_BIT << 1;
+    constexpr size_t bits_double_word = bits_per_word << 1;
+    constexpr size_t bits_four_word = bits_double_word << 1;
+
     if (id == "Bool") {
       *ret = ParseScalar<BoolImm, bool, Bool>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "I8") {
-      *ret = ParseScalar<Int8Imm, int8_t, Int, 8>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<Int8Imm, int8_t, Int, bits_per_byte>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "I16") {
-      *ret = ParseScalar<Int16Imm, int16_t, Int, 16>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<Int16Imm, int16_t, Int, bits_per_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "I32") {
-      *ret = ParseScalar<Int32Imm, int32_t, Int, 32>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<Int32Imm, int32_t, Int, bits_double_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "I64") {
-      *ret = ParseScalar<Int64Imm, int64_t, Int, 64>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<Int64Imm, int64_t, Int, bits_four_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "U8") {
-      *ret = ParseScalar<UInt8Imm, uint8_t, UInt, 8>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<UInt8Imm, uint8_t, UInt, bits_per_byte>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "U16") {
-      *ret = ParseScalar<UInt16Imm, uint16_t, UInt, 16>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<UInt16Imm, uint16_t, UInt, bits_per_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "U32") {
-      *ret = ParseScalar<UInt32Imm, uint32_t, UInt, 32>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<UInt32Imm, uint32_t, UInt, bits_double_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "U64") {
-      *ret = ParseScalar<UInt64Imm, uint64_t, UInt, 64>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<UInt64Imm, uint64_t, UInt, bits_four_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "F16") {
       // Notice: Since there is no basic data type for storing fp16, just use float instead
-      *ret = ParseScalar<FP32Imm, float, Float, 16>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<FP32Imm, float, Float, bits_per_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "F32") {
-      *ret = ParseScalar<FP32Imm, float, Float, 32>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<FP32Imm, float, Float, bits_double_word>(val_ptr, lexer_.GetNextToken());
       return true;
     } else if (id == "F64") {
-      *ret = ParseScalar<FP64Imm, double, Float, 64>(val_ptr, lexer_.GetNextToken());
+      *ret = ParseScalar<FP64Imm, double, Float, bits_four_word>(val_ptr, lexer_.GetNextToken());
       return true;
     }
     return false;
