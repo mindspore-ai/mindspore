@@ -239,6 +239,13 @@ class Select(_Elemwise):
         return self.inputs[1].dtype
 
 
+def check_format_any(formats, checked_format):
+    if not isinstance(formats, (list, tuple)):
+        raise GKException("formats {} should be list or tuple, but got {}.".format(formats, type(formats)))
+    if checked_format not in formats:
+        raise GKException("Check {} failed in {}".format(checked_format, formats))
+
+
 def check_nd(data, nd):
     if not isinstance(data, (list, tuple)) or len(data) != nd:
         raise GKException("input should be {}D list or tuple, but got {}.".format(nd, data))
@@ -269,10 +276,8 @@ class Conv2D(OpInfer):
         check_nd(shape_0, 4)
         check_nd(shape_1, 4)
 
-        format_0 = self.inputs[0].data_format
-        format_1 = self.inputs[1].data_format
-        if format_0 != DF.NHWC or format_1 != DF.NHWC:
-            raise GKException("Conv2D's inputs format must be NHWC, but got {} and {}".format(format_0, format_1))
+        formats = [self.inputs[0].data_format, self.inputs[1].data_format, self.attrs["format"]]
+        check_format_any(formats, DF.NHWC)
 
         n, h, w, out_channel = shape_0[0], shape_0[1], shape_0[2], shape_1[0]
         pad_list = self.attrs["pad_list"]

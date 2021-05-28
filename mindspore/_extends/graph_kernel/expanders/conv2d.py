@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for Conv2D"""
-from mindspore._extends.graph_kernel.model.op_infer import check_nd, conv_had_pad
+from mindspore._extends.graph_kernel.model.op_infer import check_format_any, check_nd, conv_had_pad
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander, ExpanderInfoValidator as VLD
@@ -29,8 +29,9 @@ C_CHANNEL_ALIGN = 8
 OUT_NHW_ALIGN = 128
 
 
+@VLD.add_format(DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.NHWC, DF.NHWC)
-@VLD.check_attrs('pad_list', 'pad_mode', 'groups', 'group', 'kernel_size', 'stride', 'dilation')
+@VLD.check_attrs('format', 'pad_list', 'pad_mode', 'groups', 'group', 'kernel_size', 'stride', 'dilation')
 class Conv2D(Expander):
     """
     Conv2D expander
@@ -72,6 +73,9 @@ class Conv2D(Expander):
         type_1 = self.inputs[1]['data_type']
         if type_0 != "float16" or type_1 != "float16":
             raise GKException("inputs type should be float16, but got {} and {}".format(type_0, type_1))
+
+        formats = [self.inputs[0]['format'], self.inputs[1]['format'], self.attrs['format']]
+        check_format_any(formats, DF.NHWC)
 
         groups = self.attrs['groups']
         group = self.attrs['group']
