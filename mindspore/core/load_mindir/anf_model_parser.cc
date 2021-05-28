@@ -15,7 +15,7 @@
  */
 
 #include "load_mindir/anf_model_parser.h"
-#include <limits.h>
+#include <climits>
 #include <functional>
 #include <map>
 #include <memory>
@@ -170,7 +170,6 @@ std::string ParseCNodeName(const string &name) {
   string delimiter = ":";
   size_t pos = name.find(delimiter);
   size_t end_pos = name.find_last_of(delimiter);
-
   if (pos != string::npos && end_pos != string::npos && pos != end_pos) {
     return name.substr(pos + 1, end_pos - (pos + 1));
   }
@@ -765,7 +764,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   auto cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
-  if (0 == kv.size()) {
+  if (kv.size() == 0) {
     if (node_type == "UpdateState") {
       const ValuePtr kUMonad = std::make_shared<UMonad>();
       auto monad_abs = kUMonad->ToAbstract();
@@ -777,7 +776,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
       }
       cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     }
-  } else if (1 == kv.size()) {
+  } else if (kv.size() == 1) {
     std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
     cnode_ptr->set_abstract(iter->second);
   } else {

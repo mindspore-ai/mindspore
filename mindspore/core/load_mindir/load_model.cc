@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <cstring>
 #include <memory>
 #include <algorithm>
 #include <fstream>
@@ -134,7 +134,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   vector<string> files;
 
 #ifdef _WIN32
-  _fullpath(abs_path_buff, file_path, 1024);
+  _fullpath(abs_path_buff, file_path, PATH_MAX);
 #else
   if (!realpath(file_path, abs_path_buff)) {
     MS_LOG(ERROR) << "Load MindIR get absolute path failed";
@@ -224,5 +224,4 @@ std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(model_);
   return dstgraph_ptr;
 }
-
 }  // namespace mindspore

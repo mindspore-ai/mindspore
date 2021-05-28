@@ -16,7 +16,7 @@
 
 #include "transform/graph_ir/convert.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <algorithm>
 #include <stack>
 #include "utils/utils.h"
@@ -668,7 +668,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
   } else if (name == prim::kTupleGetItem) {
     TraceOutputFromTupleGetItem(anf_out);
   } else {
-    // add outputs;
+    // add outputs
     auto op = Convert(anf_out);
     std::string index;
     if (op != nullptr) {
@@ -762,7 +762,7 @@ void DfGraphConvertor::SetSubgraph(AnfNodePtr node) {
   }
 
   OpAdapterPtr adpt = FindAdapter(node, training_);
-  if (nullptr == adpt) {
+  if (adpt == nullptr) {
     MS_LOG(DEBUG) << "Not found adapter";
     return;
   }
@@ -1212,7 +1212,6 @@ void DfGraphConvertor::SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr 
     handler_vec_without_monad->push_back(handler);
   }
   int ret = adpt->setInput(src, index, handler_vec_without_monad);
-
   if ((ret == 0) && pred->isa<CNode>() && (pred->cast<CNodePtr>()->inputs().size() == handler_vec->size() + 1)) {
     for (unsigned int j = 0; j < handler_vec_without_monad->size(); j++) {
       AnfNodePtr input_node = pred->cast<CNodePtr>()->input(j + 1);
@@ -1367,7 +1366,7 @@ void DfGraphConvertor::ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNod
 
 // Update GE op's shape and type info
 void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
-  if (nullptr == node || !node->isa<CNode>()) {
+  if (node == nullptr || !node->isa<CNode>()) {
     return;
   }
 
@@ -1501,7 +1500,7 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack
     return OutHandler(Convert(node), "");
   } else {
     OpAdapterPtr adpt = FindAdapter(node, training_);
-    if (nullptr == adpt) {
+    if (adpt == nullptr) {
       MS_LOG(ERROR) << "Can not get node output as adpt is nullptr!";
       error_ = NOT_FOUND;
       return OutHandler(nullptr, "");
@@ -1969,7 +1968,7 @@ OperatorPtr DfGraphConvertor::ConvertValueNode(const ValueNodePtr node) {
 }
 
 void DfGraphConvertor::DrawCNode(const CNodePtr node, const OpAdapterPtr adpt) {
-  if (nullptr == adpt || nullptr == node) {
+  if (adpt == nullptr || node == nullptr) {
     MS_LOG(ERROR) << "Failed to draw apply node as adpt or node is nullptr!";
     return;
   }

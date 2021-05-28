@@ -61,7 +61,7 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>, const AnyTraits<std::string>) {
   MS_EXCEPTION_IF_NULL(value);
   auto vec = value->cast<ValueTuplePtr>();
-  if (nullptr == vec) {
+  if (vec == nullptr) {
     MS_LOG(EXCEPTION) << "not ValueTuplePtr";
   }
   std::ostringstream buffer;
@@ -79,7 +79,7 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<in
 std::vector<float> ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<float>>, const AnyTraits<float>) {
   MS_EXCEPTION_IF_NULL(value);
   auto vec = value->cast<ValueTuplePtr>();
-  if (nullptr == vec) {
+  if (vec == nullptr) {
     MS_LOG(EXCEPTION) << "not ValueTuplePtr";
   }
   std::vector<float> list;
@@ -93,7 +93,7 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &fo
                                     const AnyTraits<std::vector<int64_t>>, const AnyTraits<int64_t>) {
   MS_EXCEPTION_IF_NULL(value);
   auto vec = value->cast<ValueTuplePtr>();
-  if (nullptr == vec) {
+  if (vec == nullptr) {
     MS_LOG(EXCEPTION) << "not ValueTuplePtr";
   }
   std::vector<int64_t> list;
