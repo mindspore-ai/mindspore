@@ -525,7 +525,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
       if (attr.second->isa<BoolImm>()) {
         fout << GetValue<bool>(attr.second);
       } else if (attr.second->isa<StringImm>()) {
-        fout << GetValue<std::string>(attr.second);
+        fout << (GetValue<std::string>(attr.second));
       }
       fout << std::endl;
     }

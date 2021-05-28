@@ -282,7 +282,8 @@ AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: row tensor and tensor.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t args_size = 2;
+  CheckArgsSize(op_name, args_spec_list, args_size);
   auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
   auto tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(row_tensor->dense_shape());
