@@ -78,6 +78,72 @@ sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "ckpt_path='/cache/data'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Add "ckpt_path='/cache/data'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Upload the original mnist_data dataset to S3 bucket.
+    # (5) Set the code directory to "/path/lenet" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "ckpt_path='/cache/data'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Add "ckpt_path='/cache/data'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Upload the original mnist_data dataset to S3 bucket.
+    # (5) Set the code directory to "/path/lenet" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "data_path='/cache/data'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_path='/cache/data'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code.
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Upload the original mnist_data dataset to S3 bucket.
+    # (5) Set the code directory to "/path/lenet" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
@@ -115,7 +181,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ## [Script Parameters](#contents)
 
 ```python
-Major parameters in train.py and config.py as follows:
+Major parameters in train.py and default_config.yaml as follows:
 
 --data_path: The absolute full path to the train and evaluation datasets.
 --epoch_size: Total training epochs.
@@ -134,7 +200,7 @@ Major parameters in train.py and config.py as follows:
 ### Training
 
 ```bash
-python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
+python train.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_train_ascend.sh Data ckpt
 ```
@@ -160,7 +226,7 @@ The model checkpoint will be saved in the current directory.
 Before running the command below, please check the checkpoint path used for evaluation.
 
 ```bash
-python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
+python eval.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
@@ -177,7 +243,7 @@ You can view the results through the file "log.txt". The accuracy of the test da
 ### Export MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,

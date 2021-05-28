@@ -169,6 +169,119 @@ bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
 bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在 default_config.yaml 文件中设置 "base_lr=0.02"
+    #          在 default_config.yaml 文件中设置 "mindrecord_dir='./MindRecord_COCO'"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=12"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "base_lr=0.02"
+    #          在网页上设置 "mindrecord_dir='./MindRecord_COCO'"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在网页上设置 "epoch_size=12"
+    #          在网页上设置 "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (3) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "train.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (4) 在网页上设置你的代码路径为 "/path/maskrcnn"
+    # (5) 在网页上设置启动文件为 "train.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在 default_config.yaml 文件中设置 "mindrecord_dir='./MindRecord_COCO'"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=12"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在网页上设置 "mindrecord_dir='./MindRecord_COCO'"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在网页上设置 "epoch_size=12"
+    #          在网页上设置 "ckpt_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (3) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "train.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python train.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (4) 在网页上设置你的代码路径为 "/path/maskrcnn"
+    # (5) 在网页上设置启动文件为 "train.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "checkpoint_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          在 default_config.yaml 文件中设置 "mindrecord_file='/cache/data/cocodataset/MindRecord_COCO'"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='cocodataset'"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "checkpoint_path='./ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'"
+    #          在网页上设置 "mindrecord_file='/cache/data/cocodataset/MindRecord_COCO'"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ann_file='./annotations/instances_val2017.json'"
+    #          在网页上设置 其他参数
+    # (2) 上传你训练好的模型到 S3 桶上
+    # (3) 执行a或者b (推荐选择 a)
+    #       a. 第一, 根据以下方式在本地运行 "eval.py" 脚本来生成 MindRecord 格式的数据集。
+    #             "python eval.py --only_create_dataset=True --mindrecord_dir=$MINDRECORD_DIR --data_path=$DATA_PATH --ann_file=$ANNO_PATH \
+    #             --checkpoint_path=$CHECKPOINT_PATH"
+    #          第二, 将该数据集压缩为一个 ".zip" 文件。
+    #          最后, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (4) 在网页上设置你的代码路径为 "/path/maskrcnn"
+    # (5) 在网页上设置启动文件为 "eval.py"
+    # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (7) 创建训练作业
+    ```
+
 # 脚本说明
 
 ## 脚本和样例代码
@@ -501,7 +614,7 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ## 模型导出
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
 `EXPORT_FORMAT` 选项 ["AIR", "MINDIR"]

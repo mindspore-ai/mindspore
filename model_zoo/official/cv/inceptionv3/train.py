@@ -190,6 +190,5 @@ def train_inceptionv3():
         model.train(config.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=config.ds_sink_mode)
     print("train success")
 
-
 if __name__ == '__main__':
     train_inceptionv3()

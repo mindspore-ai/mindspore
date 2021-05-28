@@ -112,6 +112,27 @@
   sh run_train_ascend.sh [DATASET_NAME]
   ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+    # 在 ModelArts 上使用单卡训练验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "data_dir='/cache/data'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "data_dir='/cache/data'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 上传原始 Cora/Citeseer 数据集到 S3 桶上。
+    # (5) 在网页上设置你的代码路径为 "/path/gat"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
 ## 脚本说明
 
 ### 脚本及样例代码

@@ -38,7 +38,6 @@ def modelarts_process():
 @moxing_wrapper(pre_process=modelarts_process)
 def eval_alexnet():
     print("============== Starting Testing ==============")
-
     device_num = get_device_num()
     if device_num > 1:
         # context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
@@ -53,8 +52,7 @@ def eval_alexnet():
         network = AlexNet(config.num_classes, phase='test')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         opt = nn.Momentum(network.trainable_params(), config.learning_rate, config.momentum)
-        ds_eval = create_dataset_cifar10(config, config.data_path, config.batch_size, status="test", \
-            target=config.device_target)
+        ds_eval = create_dataset_cifar10(config, config.data_path, config.batch_size, target=config.device_target)
         param_dict = load_checkpoint(config.ckpt_path)
         print("load checkpoint from [{}].".format(config.ckpt_path))
         load_param_into_net(network, param_dict)
