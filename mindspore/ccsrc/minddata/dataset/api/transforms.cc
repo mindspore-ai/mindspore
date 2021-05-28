@@ -219,7 +219,7 @@ RandomChoice::RandomChoice(const std::vector<TensorTransform *> &transforms) : d
 RandomChoice::RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms)
     : data_(std::make_shared<Data>()) {
   (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                       [](const std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
                          return op != nullptr ? op->Parse() : nullptr;
                        });
 }

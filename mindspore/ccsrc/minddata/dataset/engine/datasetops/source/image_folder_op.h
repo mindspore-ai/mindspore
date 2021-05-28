@@ -229,7 +229,7 @@ class ImageFolderOp : public MappableLeafOp {
   std::map<std::string, int32_t> class_index_;
   std::unique_ptr<DataSchema> data_schema_;
   int64_t sampler_ind_;
-  int64_t dirname_offset_;
+  uint64_t dirname_offset_;
   std::vector<ImageLabelPair> image_label_pairs_;
   std::unique_ptr<Queue<std::string>> folder_name_queue_;
   std::unique_ptr<Queue<FolderImagesPair>> image_name_queue_;

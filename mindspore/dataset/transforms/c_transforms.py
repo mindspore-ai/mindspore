@@ -50,6 +50,7 @@ class TensorOperation:
         return output_tensor_list[0] if len(output_tensor_list) == 1 else tuple(output_tensor_list)
 
     def parse(self):
+        """parse function - not yet implemented"""
         raise NotImplementedError("TensorOperation has to implement parse() method.")
 
 
@@ -307,7 +308,8 @@ class Concatenate(TensorOperation):
 
     Args:
         axis (int, optional): Concatenate the tensors along given axis (Default=0).
-        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors (Default=None).
+        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors
+            (Default=None).
         append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
     Examples:
