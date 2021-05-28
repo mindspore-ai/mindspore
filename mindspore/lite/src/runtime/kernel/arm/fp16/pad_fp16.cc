@@ -71,9 +71,18 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
 }
 
 int PadFp16CPUKernel::Run() {
+  if (in_tensors_.size() == 3) {
+    auto pad_value = in_tensors_.at(2);
+    auto value_num = pad_value->ElementsNum();
+    if (value_num != 1) {
+      MS_LOG(ERROR) << "The number of padding value should be only one, but got " << value_num;
+      return RET_ERROR;
+    }
+    pad_param_->constant_value_ = *(reinterpret_cast<float16_t *>(pad_value->data_c()));
+  }
+
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-
   input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
   output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
