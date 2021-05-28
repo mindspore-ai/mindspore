@@ -47,7 +47,9 @@ namespace mindspore {
 namespace session {
 void CPUSession::Init(uint32_t device_id) {
   // Dump json config file if dump is enabled
-  DumpJsonParser::GetInstance().Parse();
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  json_parser.CopyMSCfgJsonToDir(device_id);
   InitExecutor(kCPUDevice, device_id);
 }
 

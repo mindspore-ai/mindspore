@@ -897,10 +897,12 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   MS_LOG(INFO) << "Finish!";
 }
 
-void DumpInit() {
+void DumpInit(uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
-  json_parser.CopyJsonToDir();
+  json_parser.CopyJsonToDir(device_id);
+  json_parser.CopyHcclJsonToDir(device_id);
+  json_parser.CopyMSCfgJsonToDir(device_id);
   if (json_parser.async_dump_enabled()) {
     if (AdxDataDumpServerInit() != 0) {
       MS_LOG(EXCEPTION) << "Adx data dump server init failed";
@@ -915,7 +917,7 @@ void AscendSession::InitRuntimeResource() {
   if (!runtime_instance->Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  DumpInit();
+  DumpInit(device_id_);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1240,16 +1242,8 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
       DumpIR("trace_code_graph", graph, true, kWholeStack);
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
-    if (json_parser.e2e_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id);
-      std::string target_dir = root_dir + "/graphs";
-      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
-      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
-      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
-      DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
-                        graph->execution_order());
-    } else if (json_parser.async_dump_enabled()) {
-      std::string root_dir = json_parser.path() + "/device_" + std::to_string(device_id);
+    if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+      std::string root_dir = json_parser.path() + "/rank_" + std::to_string(device_id);
       std::string target_dir = root_dir + "/graphs";
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);

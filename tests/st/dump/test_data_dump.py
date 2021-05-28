@@ -65,7 +65,7 @@ def test_async_dump():
     change_current_dump_json('async_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/async_dump.json"
     device_id = context.get_context("device_id")
-    dump_file_path = dump_path + '/device_{}/Net_graph_0/0/0/'.format(device_id)
+    dump_file_path = dump_path + '/rank_{}/Net/0/0/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
@@ -74,92 +74,49 @@ def test_async_dump():
     assert len(os.listdir(dump_file_path)) == 1
 
 
-def run_e2e_dump_bin():
+def run_e2e_dump():
     if sys.platform != 'linux':
         return
     pwd = os.getcwd()
     dump_path = pwd + '/e2e_dump'
-    change_current_dump_json('e2e_dump_bin.json', dump_path)
-    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_bin.json'
-    device_id = context.get_context("device_id")
-    dump_file_path = dump_path
+    change_current_dump_json('e2e_dump.json', dump_path)
+    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump.json'
+    if context.get_context("device_target") == "Ascend":
+        device_id = context.get_context("device_id")
+    else:
+        device_id = 0
+    dump_file_path = dump_path + '/rank_{}/Net/0/1/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
     add(Tensor(x), Tensor(y))
-    if context.get_context("device_target") == "Ascend":
-        dump_file_path += '/Net/device_{}/iteration_1/'.format(device_id)
-        output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.bin"
-    else:
-        dump_file_path += '/Net/iteration_1/'
-        output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.bin"
-    output_path = dump_file_path + output_name
-    real_path = os.path.realpath(output_path)
-    output = np.fromfile(real_path, dtype=np.float32)
-    expect = np.array([8, 10, 12, 14, 16, 18], np.float32)
-    assert output.dtype == expect.dtype
-    assert np.array_equal(output, expect)
-
-
-def run_e2e_dump_npy():
-    if sys.platform != 'linux':
-        return
-    pwd = os.getcwd()
-    dump_path = pwd + '/e2e_dump'
-    change_current_dump_json('e2e_dump_npy.json', dump_path)
-    os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + '/e2e_dump_npy.json'
-    device_id = context.get_context("device_id")
-    dump_file_path = dump_path
-    if os.path.isdir(dump_path):
-        shutil.rmtree(dump_path)
-    add = Net()
-    add(Tensor(x), Tensor(y))
-    if context.get_context("device_target") == "Ascend":
-        dump_file_path += '/Net/device_{}/iteration_1/'.format(device_id)
-        output_name = "Default--Add-op1_output_0_shape_2_3_Float32_DefaultFormat.npy"
-    else:
-        dump_file_path += '/Net/iteration_1/'
-        output_name = "Default--Add-op3_output_0_shape_2_3_Float32_DefaultFormat.npy"
-    output_path = dump_file_path + output_name
-    real_path = os.path.realpath(output_path)
-    output = np.load(real_path)
-    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
-    assert output.dtype == expect.dtype
-    assert np.array_equal(output, expect)
+    time.sleep(5)
+    assert len(os.listdir(dump_file_path)) == 5
+    if context.get_context("device_target") == "CPU":
+        output_name = "Default--Add-op3_output_0.DefaultFormat.npy"
+        output_path = dump_file_path + output_name
+        real_path = os.path.realpath(output_path)
+        output = np.load(real_path)
+        expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
+        assert output.dtype == expect.dtype
+        assert np.array_equal(output, expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_e2e_dump_bin():
+def test_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_e2e_dump_bin()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_e2e_dump_npy():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_e2e_dump_npy()
+    run_e2e_dump()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_cpu_e2e_dump_bin():
+def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    run_e2e_dump_bin()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cpu_e2e_dump_npy():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target="CPU")
-    run_e2e_dump_npy()
+    run_e2e_dump()
 
 
 class ReluReduceMeanDenseRelu(Cell):
@@ -216,7 +173,7 @@ def test_async_dump_net_multi_layer_mode1():
     label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
     net_dict = train_network(inputs, label)
 
-    dump_path = "/tmp/async_dump/{}/device_{}/test_graph_0/0/0/".format(test_name, device_id)
+    dump_path = "/tmp/async_dump/{}/rank_{}/test/0/0/".format(test_name, device_id)
     dump_file = os.listdir(dump_path)
     dump_file_name = ""
     for file in dump_file:
