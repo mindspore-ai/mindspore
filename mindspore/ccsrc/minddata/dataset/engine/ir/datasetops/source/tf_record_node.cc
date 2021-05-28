@@ -44,8 +44,8 @@ std::shared_ptr<DatasetNode> TFRecordNode::Copy() {
 }
 
 void TFRecordNode::Print(std::ostream &out) const {
-  out << Name() + "(num_samples:" + std::to_string(num_samples_) + ",num_shards:" + std::to_string(num_shards_) +
-           ",shard_id:" + std::to_string(shard_id_) + ",...)";
+  out << (Name() + "(num_samples:" + std::to_string(num_samples_) + ",num_shards:" + std::to_string(num_shards_) +
+          ",shard_id:" + std::to_string(shard_id_) + ",...)");
 }
 
 // Validator for TFRecordNode
@@ -167,14 +167,15 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
     return Status::OK();
   }
   int64_t num_rows;
+  constexpr int64_t kThreadCount = 8;
   if (!shard_equal_rows_) {
     // Data will be sharded by file
     std::vector<std::string> shard_file_list;
     RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, 8, estimate));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, kThreadCount, estimate));
   } else {
     // Data will be sharded by row
-    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, 8, estimate));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, kThreadCount, estimate));
     num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
   }
   *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;

@@ -50,8 +50,8 @@ std::shared_ptr<DatasetNode> TextFileNode::Copy() {
 }
 
 void TextFileNode::Print(std::ostream &out) const {
-  out << Name() + "(file:..." + ",num_shards:" + std::to_string(num_shards_) +
-           ",shard_id:" + std::to_string(shard_id_) + ",cache:" + ((cache_ != nullptr) ? "true" : "false") + ",...)";
+  out << (Name() + "(file:..." + ",num_shards:" + std::to_string(num_shards_) +
+          ",shard_id:" + std::to_string(shard_id_) + ",cache:" + ((cache_ != nullptr) ? "true" : "false") + ",...)");
 }
 
 Status TextFileNode::ValidateParams() {

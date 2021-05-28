@@ -88,6 +88,7 @@ DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBO
 
 
 def parse_padding(padding):
+    """ Parses and prepares the padding tuple"""
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
     if len(padding) == 2:
@@ -327,9 +328,9 @@ class Invert(ImageTensorOperation):
 
 class MixUpBatch(ImageTensorOperation):
     """
-    Apply MixUp transformation on input batch of images and labels. Each image is multiplied by a random weight (lambda)
-    and then added to a randomly selected image from the batch multiplied by (1 - lambda). The same formula is also
-    applied to the one-hot labels.
+    Apply MixUp transformation on input batch of images and labels. Each image is
+    multiplied by a random weight (lambda) and then added to a randomly selected image from the batch
+    multiplied by (1 - lambda). The same formula is also applied to the one-hot labels.
     Note that you need to make labels into one-hot format and batch before calling this function.
 
     Args:

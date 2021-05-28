@@ -124,12 +124,14 @@ class BuiltinSampler:
         return self.child_sampler
 
     def parse_child(self):
+        """Parse the child sampler."""
         c_child_sampler = None
         if self.child_sampler is not None:
             c_child_sampler = self.child_sampler.parse()
         return c_child_sampler
 
     def parse_child_for_minddataset(self):
+        """Parse the child sampler for MindRecord."""
         c_child_sampler = None
         if self.child_sampler is not None:
             c_child_sampler = self.child_sampler.parse_for_minddataset()
@@ -369,6 +371,7 @@ class DistributedSampler(BuiltinSampler):
         return c_sampler
 
     def parse_for_minddataset(self):
+        """ Parse the sampler for MindRecord."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle,
                                                      self.seed, num_samples, self.offset)
@@ -468,6 +471,7 @@ class PKSampler(BuiltinSampler):
         return self.child_sampler.is_sharded()
 
     def parse_for_minddataset(self):
+        """Parse the sampler for MindRecord."""
         if not self.class_column or not isinstance(self.class_column, str):
             raise ValueError("class_column should be a not empty string value, \
                     but got class_column: {}.".format(class_column))
@@ -524,6 +528,7 @@ class RandomSampler(BuiltinSampler):
         return c_sampler
 
     def parse_for_minddataset(self):
+        """Parse the sampler for MindRecord."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordRandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
         c_child_sampler = self.parse_child_for_minddataset()
@@ -585,6 +590,7 @@ class SequentialSampler(BuiltinSampler):
         return c_sampler
 
     def parse_for_minddataset(self):
+        """Parse the sampler for MindRecord."""
         start_index = self.start_index if self.start_index is not None else 0
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordSequentialSampler(num_samples, start_index)
@@ -677,6 +683,7 @@ class SubsetSampler(BuiltinSampler):
         return self.child_sampler.is_sharded()
 
     def parse_for_minddataset(self):
+        """Parse the sampler for MindRecord."""
         c_sampler = cde.MindrecordSubsetSampler(self.indices)
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)

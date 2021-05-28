@@ -36,7 +36,7 @@ std::shared_ptr<DatasetNode> RepeatNode::Copy() {
   return node;
 }
 
-void RepeatNode::Print(std::ostream &out) const { out << Name() + "(count:" + std::to_string(repeat_count_) + ") "; }
+void RepeatNode::Print(std::ostream &out) const { out << (Name() + "(count:" + std::to_string(repeat_count_) + ") "); }
 
 Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto new_op = std::make_shared<RepeatOp>(repeat_count_);

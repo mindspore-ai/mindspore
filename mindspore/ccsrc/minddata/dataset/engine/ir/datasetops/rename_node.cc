@@ -39,7 +39,7 @@ std::shared_ptr<DatasetNode> RenameNode::Copy() {
 }
 
 void RenameNode::Print(std::ostream &out) const {
-  out << Name() + "(input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) + ")";
+  out << (Name() + "(input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) + ")");
 }
 
 Status RenameNode::ValidateParams() {

@@ -39,15 +39,15 @@ void IndexGeneratorHelper(int8_t depth, std::vector<dsize_t> *numbers,
           IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
         }
       } else {
-        for (int i = slice_list[curr_ind].slice_.start_; i > slice_list[curr_ind].slice_.stop_;
-             i = i + slice_list[curr_ind].slice_.step_) {
-          (*numbers)[curr_ind] = i;
+        for (int j = slice_list[curr_ind].slice_.start_; j > slice_list[curr_ind].slice_.stop_;
+             j = j + slice_list[curr_ind].slice_.step_) {
+          (*numbers)[curr_ind] = j;
           IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
         }
       }
     } else {
-      for (int i = 0; i < slice_list[curr_ind].indices_.size(); i++) {
-        (*numbers)[curr_ind] = slice_list[curr_ind].indices_[i];
+      for (int k = 0; k < slice_list[curr_ind].indices_.size(); k++) {
+        (*numbers)[curr_ind] = slice_list[curr_ind].indices_[k];
         IndexGeneratorHelper(new_depth, numbers, slice_list, matrix);
       }
     }

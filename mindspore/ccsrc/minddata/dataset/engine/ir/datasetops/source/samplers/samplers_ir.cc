@@ -72,6 +72,21 @@ Status SamplerObj::AddChildSampler(std::shared_ptr<SamplerObj> child) {
   return Status::OK();
 }
 
+Status SamplerObj::to_json(nlohmann::json *const out_json) {
+  nlohmann::json args;
+  if (!children_.empty()) {
+    std::vector<nlohmann::json> children_args;
+    for (auto child : children_) {
+      nlohmann::json child_arg;
+      RETURN_IF_NOT_OK(child->to_json(&child_arg));
+      children_args.push_back(child_arg);
+    }
+    args["child_sampler"] = children_args;
+  }
+  *out_json = args;
+  return Status::OK();
+}
+
 /* ####################################### Derived Sampler classes ################################# */
 
 // DistributedSampler
@@ -135,21 +150,13 @@ std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDa
 
 Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "DistributedSampler";
   args["num_shards"] = num_shards_;
   args["shard_id"] = shard_id_;
   args["shuffle"] = shuffle_;
-  args["num_samples"] = num_samples_;
   args["offset"] = offset_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+  args["num_samples"] = num_samples_;
   *out_json = args;
   return Status::OK();
 }
@@ -172,19 +179,11 @@ Status PKSamplerObj::ValidateParams() {
 
 Status PKSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "PKSampler";
   args["num_val"] = num_val_;
   args["shuffle"] = shuffle_;
   args["num_samples"] = num_samples_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
   *out_json = args;
   return Status::OK();
 }
@@ -238,16 +237,16 @@ std::shared_ptr<mindrecord::ShardOperator> PreBuiltSamplerObj::BuildForMindDatas
 std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
 #ifndef ENABLE_ANDROID
   if (sp_minddataset_ != nullptr) {
-    auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
+    auto new_sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      new_sampler->AddChildSampler(child);
     }
-    return sampler;
+    return new_sampler;
   }
 #endif
   auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
-  for (auto child : children_) {
-    sampler->AddChildSampler(child);
+  for (auto a_child : children_) {
+    sampler->AddChildSampler(a_child);
   }
   return sampler;
 }
@@ -271,19 +270,11 @@ Status RandomSamplerObj::ValidateParams() {
 
 Status RandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "RandomSampler";
   args["replacement"] = replacement_;
-  args["num_samples"] = num_samples_;
   args["reshuffle_each_epoch"] = reshuffle_each_epoch_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+  args["num_samples"] = num_samples_;
   *out_json = args;
   return Status::OK();
 }
@@ -326,18 +317,10 @@ Status SequentialSamplerObj::ValidateParams() {
 
 Status SequentialSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "SequentialSampler";
   args["start_index"] = start_index_;
   args["num_samples"] = num_samples_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
   *out_json = args;
   return Status::OK();
 }
@@ -390,18 +373,10 @@ std::shared_ptr<mindrecord::ShardOperator> SubsetSamplerObj::BuildForMindDataset
 #endif
 Status SubsetSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "SubsetSampler";
   args["indices"] = indices_;
   args["num_samples"] = num_samples_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
   *out_json = args;
   return Status::OK();
 }
@@ -429,18 +404,10 @@ std::shared_ptr<mindrecord::ShardOperator> SubsetRandomSamplerObj::BuildForMindD
 
 Status SubsetRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "SubsetRandomSampler";
   args["indices"] = indices_;
   args["num_samples"] = num_samples_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
   *out_json = args;
   return Status::OK();
 }
@@ -475,19 +442,11 @@ Status WeightedRandomSamplerObj::ValidateParams() {
 
 Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "WeightedRandomSampler";
   args["weights"] = weights_;
-  args["num_samples"] = num_samples_;
   args["replacement"] = replacement_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+  args["num_samples"] = num_samples_;
   *out_json = args;
   return Status::OK();
 }

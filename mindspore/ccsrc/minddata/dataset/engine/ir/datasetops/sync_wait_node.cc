@@ -38,7 +38,7 @@ std::shared_ptr<DatasetNode> SyncWaitNode::Copy() {
 }
 
 void SyncWaitNode::Print(std::ostream &out) const {
-  out << Name() + "(cond_name:" + condition_name_ + "<pyfunc>" + ")";
+  out << (Name() + "(cond_name:" + condition_name_ + "<pyfunc>" + ")");
 }
 
 // Function to build the BarrierOp

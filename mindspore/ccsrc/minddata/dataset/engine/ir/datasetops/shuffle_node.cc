@@ -38,8 +38,8 @@ std::shared_ptr<DatasetNode> ShuffleNode::Copy() {
 }
 
 void ShuffleNode::Print(std::ostream &out) const {
-  out << Name() + "(shuffle_size:" + std::to_string(shuffle_size_) +
-           ",reset_every_epoch:" + (reset_every_epoch_ ? "true" : "false") + ")";
+  out << (Name() + "(shuffle_size:" + std::to_string(shuffle_size_) +
+          ",reset_every_epoch:" + (reset_every_epoch_ ? "true" : "false") + ")");
 }
 
 // Function to build the ShuffleOp

@@ -39,6 +39,7 @@
 #include "minddata/dataset/core/pybind_support.h"
 namespace py = pybind11;
 #endif
+
 #include "minddata/dataset/core/tensor_shape.h"
 
 namespace mindspore {
@@ -906,24 +907,24 @@ Status Tensor::GetSliceOption(const SliceOption &slice_option, const int32_t &sl
 Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> slice_options_) {
   std::vector<SliceOption> converted_slice_objects;
 
-  for (int i = 0; i < slice_options_.size(); i++) {
-    SliceOption slice_option = slice_options_[i];
+  for (int k = 0; k < slice_options_.size(); k++) {
+    SliceOption slice_option = slice_options_[k];
 
     if (slice_option.all_) {
-      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[i]);
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(shape_[k]);
       converted_slice_objects.push_back(SliceOption(slice));
       continue;
     }
 
     SliceOption slice_option_item(false);
-    RETURN_IF_NOT_OK(GetSliceOption(slice_option, i, &slice_option_item));
+    RETURN_IF_NOT_OK(GetSliceOption(slice_option, k, &slice_option_item));
     converted_slice_objects.emplace_back(slice_option_item);
   }
 
   // partial slices, pass in the rest
   if (slice_options_.size() != Rank()) {
-    for (int i = slice_options_.size(); i < Rank(); i++) {
-      mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[i]);
+    for (int j = slice_options_.size(); j < Rank(); j++) {
+      mindspore::dataset::Slice slice = mindspore::dataset::Slice(0, shape_[j]);
       converted_slice_objects.emplace_back(SliceOption(slice));
     }
   }
