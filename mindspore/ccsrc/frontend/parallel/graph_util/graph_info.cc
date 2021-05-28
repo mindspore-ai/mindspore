@@ -63,7 +63,7 @@ bool GetLoopIndexFromCNode(const CNodePtr &cnode, size_t *loop_index) {
     if (result.length() < 2) {
       MS_LOG(EXCEPTION) << "Wrong format of fullname_with_scope: " << cnode_fullname;
     }
-    *loop_index = std::stoi(result[1]);
+    *loop_index = IntToSize(std::stoi(result[1]));
     return true;
   }
   return false;

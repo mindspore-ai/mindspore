@@ -150,7 +150,7 @@ class CostGraph {
   // We merge 'op2' into op1. The returned value are '<Edges1, Edges2>'. 'Edges1' are newly updated edges for 'op1',
   // 'Edges2' are newly updated edges for 'op2'.
   std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> EliminationSources(
-    OperatorInfoPtr op1, OperatorInfoPtr op2);
+    const OperatorInfoPtr &op1, const OperatorInfoPtr &op2);
   // Calculate memory cost for training phase or inference phase.
   Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
