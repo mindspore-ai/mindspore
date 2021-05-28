@@ -336,8 +336,8 @@ class GraphMemoryParser:
             'fp_start': None,
             'bp_end': None
         }
-        fp_start = self._points.get('fp_start')
-        bp_end = self._points.get('bp_end')
+        fp_start = self._points.get('fp_start') if self._points else None
+        bp_end = self._points.get('bp_end') if self._points else None
         fp_name = fp_start.split('/')[-1] if fp_start else ""
         bp_name = bp_end.split('/')[-1] if bp_end else ""
         if fp_name in self.nodes:
@@ -357,14 +357,18 @@ class GraphMemoryParser:
                 if not source_node:
                     continue
                 node = self.nodes.get(source_node)
-                for i, output_id in enumerate(node.output_ids):
-                    if t_id == output_id:
-                        output = node.outputs[i] if i < len(node.outputs) else {}
-                        tensor.name = node.name + ':' + str(i)
-                        tensor.shape = output.get('shape')
-                        tensor.dtype = output.get('data_type')
-                        tensor.format = output.get('format')
-                        tensor.type = 'output'
-
-                tensor_dict = tensor.to_dict()
+                tensor_dict = self._get_tensor_dict(node, tensor, t_id)
                 self.breakdowns[index].append(tensor_dict)
+
+    def _get_tensor_dict(self, node, tensor, t_id):
+        """Update node outputs to assemble memory breakdowns."""
+        for i, output_id in enumerate(node.output_ids):
+            if t_id == output_id:
+                output = node.outputs[i] if i < len(node.outputs) else {}
+                tensor.name = node.name + ':' + str(i)
+                tensor.shape = output.get('shape')
+                tensor.dtype = output.get('data_type')
+                tensor.format = output.get('format')
+                tensor.type = 'output'
+
+        return tensor.to_dict()
