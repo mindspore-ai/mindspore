@@ -159,7 +159,7 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
   new_node_prim->set_instance_name(instance_name);
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
   new_node->set_scope(scope);
-  node_input[0]->set_scope(scope);
+  node_input[size_t(0)]->set_scope(scope);
   manager->SetEdge(node, SizeToLong(index), new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
 }
@@ -277,7 +277,7 @@ void InsertMirrorNode(const FuncGraphPtr &root, const Operator &op, const CNodeP
   new_node_prim->set_instance_name(instance_name);
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
   new_node->set_scope(scope);
-  node_input[0]->set_scope(scope);
+  node_input[size_t(0)]->set_scope(scope);
   manager->SetEdge(node, SizeToLong(index), new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
 }
@@ -1020,7 +1020,7 @@ static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &no
   return std::make_pair(nullptr, false);
 }
 
-static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
+static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node) {
   auto param_ptr = node->user_data<parallel::TensorLayout>();
   if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
     return std::make_pair(nullptr, false);
@@ -1035,7 +1035,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   }
 
   if (node->isa<Parameter>()) {
-    return FindParameterByParameter(node, func_graph);
+    return FindParameterByParameter(node);
   }
 
   if (node->isa<ValueNode>()) {
@@ -1471,7 +1471,6 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   Shapes shape_inputs, shape_outputs;
   std::vector<Shapes> shape_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
-  std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
 
   size_t inputs_size = all_inputs.size();
   Shapes input_shapes;
@@ -1488,7 +1487,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
         MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
       }
       std::pair<AnfNodePtr, int64_t> node_pair = std::make_pair(node, SizeToLong(i));
-      g_RefMap[parameters[0]] = node_pair;
+      g_RefMap[parameters[size_t(0)]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) &&
@@ -1603,16 +1602,16 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     if (cnode_prim->name() == CAST) {
       allgather = ReplaceMirrorNode(root, op, cnode, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
     } else {
-      InsertMirrorNode(root, op, cnode, res.second, node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
-      allgather = cnode->input(res.second)->cast<CNodePtr>();
+      InsertMirrorNode(root, op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER, param_name);
+      allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
     }
   } else {
     op = CreateAllGatherOp(group);
     if (cnode_prim->name() == CAST) {
       allgather = ReplaceNode(op, cnode, graph, PARALLEL_OPTIMIZER_ALLGATHER);
     } else {
-      InsertNode(op, cnode, res.second, node, graph, PARALLEL_OPTIMIZER_ALLGATHER);
-      allgather = cnode->input(res.second)->cast<CNodePtr>();
+      InsertNode(op, cnode, IntToSize(res.second), node, graph, PARALLEL_OPTIMIZER_ALLGATHER);
+      allgather = cnode->input(IntToSize(res.second))->cast<CNodePtr>();
     }
   }
   // add fusion flag
@@ -1651,7 +1650,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
       if (insert_flag) {
         auto next_cnode = FindCNode(parameter, op_name, cnode->func_graph());
         if (next_cnode.first) {
-          manager->SetEdge(cnode, SizeToLong(param_pair.second), next_cnode.second);
+          manager->SetEdge(cnode, param_pair.second, next_cnode.second);
           MS_LOG(INFO) << "Parallel optimizer is applied between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
         } else {
@@ -1865,7 +1864,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
     if (full_batch) {
       dev_num = 1;
     } else {
-      dev_num = SizeToLong(g_device_manager->stage_device_num());
+      dev_num = g_device_manager->stage_device_num();
     }
     auto attrs_temp = prim->attrs();
     std::vector<Shapes> shape_list = ExtractShape(node);
@@ -2812,11 +2811,11 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
   ParameterMap param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
     int64_t idx = index > i ? index : i;
-    auto input = node_inputs[i];
+    auto input = node_inputs[LongToSize(i)];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
-        param_names.push_back({input_parameter->name(), input_parameter});
+        param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
       }
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
@@ -2854,7 +2853,6 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
       if (operator_info->name().find(RESHAPEINFO) != std::string::npos) {
         continue;
       }
-      std::vector<TensorInfo> input_tensor_info = operator_info->inputs_tensor_info();
       std::string stratey_key_name = prim->name() + "_" + param_name;
       stra_map[stratey_key_name] = operator_info->strategy();
       for (auto param_name_pair : param_names) {
@@ -2870,7 +2868,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
         }
         std::vector<std::pair<int64_t, int64_t>> manual_shape;
         for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
-          manual_shape.push_back({param_split_shapes[i], index_offsets[i]});
+          manual_shape.push_back({param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]});
         }
         manual_shape_map[param_name] = manual_shape;
       }
@@ -3185,7 +3183,7 @@ RefKeyPair CNodeWithRefKeys(const AnfNodePtr &cnode) {
   return {nullptr, refkeys};
 }
 
-ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
+ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
   // In this case, node is a Parameter
   ParameterUsersInfo parameter_user_info;
   MS_EXCEPTION_IF_NULL(node->func_graph());
@@ -3275,7 +3273,7 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
     return FindRefKeyNodeUsers(cnode_with_refkeys, IsCareNode);
   } else if (node->isa<Parameter>()) {
     // the node is a parameter node
-    return FindParameterNodeUsers(node, IsCareNode);
+    return FindParameterNodeUsers(node);
   }
 
   return parameter_users_info;
@@ -3293,7 +3291,7 @@ Shape ParameterSliceShape(const std::pair<AnfNodePtr, int64_t> &param_info) {
     MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
                       << ", but the index is " << (user_input_index - 1);
   }
-  TensorInfo tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
+  TensorInfo tensor_info = op_info->inputs_tensor_info()[IntToSize(user_input_index - 1)];
   MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << (user_input_index - 1)
                 << ", the slice shape is " << ShapeToString(tensor_info.slice_shape()) << ", the origin shape is "
                 << ShapeToString(tensor_info.shape());
@@ -3353,7 +3351,7 @@ bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter, siz
     if (IsValueNode<FuncGraph>(use_node->input(0))) {
       auto graph_sub = GetValueNode<FuncGraphPtr>(use_node->input(0));
       auto parameters = graph_sub->parameters();
-      auto parameter_sub = parameters[node_user.second - 1];
+      auto parameter_sub = parameters[IntToSize(node_user.second - 1)];
       return IsUsedParameter(graph_sub, parameter_sub);
     }
     if (use_node->input(0)->isa<CNode>()) {
@@ -3363,7 +3361,7 @@ bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter, siz
       }
       auto graph_sub = GetValueNode<FuncGraphPtr>(cnode->input(1));
       auto parameters = graph_sub->parameters();
-      auto parameter_sub = parameters[node_user.second - 1];
+      auto parameter_sub = parameters[IntToSize(node_user.second - 1)];
       return IsUsedParameter(graph_sub, parameter_sub);
     }
     return true;
@@ -3460,7 +3458,7 @@ static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node
   OperatorAttrs attrs;
   auto py_instance = CreatOpInstance(attrs, "_VirtualAdd", "grad_accu");
   auto value_node = NewValueNode(py_instance);
-  std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(node_user.second), accu_parameter};
+  std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
   auto graph = cnode->func_graph();
   auto virtual_node = graph->NewCNode(virtual_node_input);
   manager->SetEdge(cnode, node_user.second, virtual_node);
