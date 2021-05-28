@@ -58,7 +58,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Register functor objects to form a global view.
   void Init(bool is_top = false);
   void Finish();
-  bool IsInScope(const AnfNodePtr &node);
+  bool IsInScope(const AnfNodePtr &node) const;
 
   // Clear resources.
   static void Clear();
