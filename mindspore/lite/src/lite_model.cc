@@ -373,6 +373,10 @@ int LiteModel::ConstructModel() {
   return ModelVerify() ? RET_OK : RET_ERROR;
 }
 
+namespace {
+constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;
+}
+
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model buf is nullptr";
@@ -386,8 +390,8 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   if (take_buf) {
     model->buf = const_cast<char *>(model_buf);
   } else {
-    if (size == 0) {
-      MS_LOG(ERROR) << "malloc size is equal to 0";
+    if (size == 0 || size > kMaxModelBufferSize) {
+      MS_LOG(ERROR) << "Input model buffer size invalid, require (0, 2GB].";
       delete (model);
       return nullptr;
     }
