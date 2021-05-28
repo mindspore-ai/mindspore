@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,13 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBiasAddGrad = "BiasAddGrad";
+constexpr auto kNameBiasAddGrad = prim::kBiasAddGrad;
 class BiasAddGrad : public PrimitiveC {
  public:
-  BiasAddGrad() : PrimitiveC(kNameBiasAddGrad) {}
+  BiasAddGrad() : PrimitiveC(prim::kPrimBiasAddGrad->name()) { InitIOName({"x"}, {"output"}); }
   ~BiasAddGrad() = default;
   MS_DECLARE_PARENT(BiasAddGrad, PrimitiveC);
-  void Init(const Format format);
-  void set_format(const Format format);
-  Format get_format() const;
+  void Init() {}
 };
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
