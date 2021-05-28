@@ -32,6 +32,7 @@ from ..quant.qat import QuantizationAwareTraining, _AddFakeQuantInput, _AddFakeQ
 
 __all__ = ["ExportToQuantInferNetwork", "ExportManualQuantNetwork"]
 
+
 class ExportToQuantInferNetwork:
     """
     Convert quantization aware network to infer network.
