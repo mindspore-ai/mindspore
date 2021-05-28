@@ -40,7 +40,7 @@ namespace mindspore {
 namespace ps {
 constexpr size_t kHostCacheScaleFactor = 10;
 constexpr size_t kMaxThreadNum = 16;
-constexpr size_t kMinIdsPerThread = 10000;
+constexpr size_t kMaxIdsPerThread = 10000;
 using mindspore::kernel::Address;
 
 struct HashTableInfo {
