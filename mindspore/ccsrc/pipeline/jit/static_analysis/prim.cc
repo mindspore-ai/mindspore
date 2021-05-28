@@ -1036,7 +1036,8 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
       return ret_abstract;
     }
     // Inputs: data, item
-    if (args_spec_list.size() != 2) {
+    constexpr size_t input_size = 2;
+    if (args_spec_list.size() != input_size) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
     EvalResultPtr ret = nullptr;

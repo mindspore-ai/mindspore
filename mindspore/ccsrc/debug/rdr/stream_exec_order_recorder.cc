@@ -64,7 +64,8 @@ void StreamExecOrderRecorder::Export() {
     MS_LOG(WARNING) << "Open file for saving stream execute order failed. File path: '" << real_file_path << "'.";
     return;
   }
-  fout << exec_order_json.dump(2);
+  const size_t space_num = 2;
+  fout << exec_order_json.dump(space_num);
   fout.close();
   ChangeFileMode(real_file_path, S_IRUSR);
 }

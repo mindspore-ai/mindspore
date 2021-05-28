@@ -356,7 +356,8 @@ class TensorDataImpl : public TensorData {
         ss << kEllipsis;
         // Ignored at this layer.
         ssize_t ignored = shape[depth + 1];
-        for (ssize_t i = depth + 2; i < static_cast<ssize_t>(ndim_); i++) {
+        const size_t offset = 2;
+        for (ssize_t i = depth + offset; i < static_cast<ssize_t>(ndim_); i++) {
           ignored *= shape[i];
         }
         // Multiple with ignored layers number.
