@@ -319,8 +319,8 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
         RETURN_STATUS_UNEXPECTED("Invalid parameter, column_name: " + column_name + "does not exist in dataset.");
       }
       if (rc.second == mindrecord::ColumnInRaw) {
-        auto has_column = shard_column->GetColumnFromJson(column_name, sample_json_, &data_ptr, &n_bytes);
-        if (has_column == MSRStatus::FAILED) {
+        auto column_in_raw = shard_column->GetColumnFromJson(column_name, sample_json_, &data_ptr, &n_bytes);
+        if (column_in_raw == MSRStatus::FAILED) {
           RETURN_STATUS_UNEXPECTED("Invalid data, failed to retrieve raw data from padding sample.");
         }
       } else if (rc.second == mindrecord::ColumnInBlob) {

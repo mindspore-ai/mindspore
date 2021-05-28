@@ -55,6 +55,7 @@ class ShardReader:
         ret = self._reader.open(file_name, load_dataset, num_consumer, columns, operator)
         if ret != ms.MSRStatus.SUCCESS:
             logger.error("Failed to open {}.".format(file_name))
+            self.close()
             raise MRMOpenError
         return ret
 

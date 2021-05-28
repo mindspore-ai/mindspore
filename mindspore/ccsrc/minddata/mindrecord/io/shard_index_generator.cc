@@ -42,17 +42,13 @@ MSRStatus ShardIndexGenerator::Build() {
   }
   auto json_header = ret.second;
 
-  auto ret2 = GetParentDir(file_path_);
+  auto ret2 = GetDatasetFiles(file_path_, json_header["shard_addresses"]);
   if (SUCCESS != ret2.first) {
     return FAILED;
   }
-  std::vector<std::string> real_addresses;
-  for (const auto &path : json_header["shard_addresses"]) {
-    std::string abs_path = ret2.second + string(path);
-    real_addresses.emplace_back(abs_path);
-  }
   ShardHeader header = ShardHeader();
-  if (header.BuildDataset(real_addresses) == FAILED) {
+  auto addresses = ret2.second;
+  if (header.BuildDataset(addresses) == FAILED) {
     return FAILED;
   }
   shard_header_ = header;

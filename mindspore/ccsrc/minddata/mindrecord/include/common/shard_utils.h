@@ -142,6 +142,10 @@ const std::unordered_map<std::string, std::string> kTypesMap = {
   {"bool", "int32"},      {"int8", "int32"},      {"uint8", "bytes"},     {"int16", "int32"},
   {"uint16", "int32"},    {"int32", "int32"},     {"uint32", "int64"},    {"int64", "int64"},
   {"float16", "float32"}, {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}};
+
+/// \brief the max number of samples to enable lazy load
+const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
+
 /// \brief split a string using a character
 /// \param[in] field target string
 /// \param[in] separator a character for splitting
@@ -182,8 +186,11 @@ std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const Dis
 /// \return max concurrency
 uint32_t GetMaxThreadNum();
 
-/// \brief the max number of samples to enable lazy load
-const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
+/// \brief get absolute path of all mindrecord files
+/// \param path path to one fo mindrecord files
+/// \param addresses relative path of all mindrecord files
+/// \return vector of absolute path
+std::pair<MSRStatus, std::vector<std::string>> GetDatasetFiles(const std::string &path, const json &addresses);
 }  // namespace mindrecord
 }  // namespace mindspore
 

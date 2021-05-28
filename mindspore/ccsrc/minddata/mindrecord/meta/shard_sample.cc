@@ -114,11 +114,11 @@ MSRStatus ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
       return FAILED;
     }
     int total_no = static_cast<int>(tasks.permutation_.size());
-    int count = 0;
+    int cnt = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-      if (no_of_samples_ != 0 && count == no_of_samples_) break;
+      if (no_of_samples_ != 0 && cnt == no_of_samples_) break;
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
-      count++;
+      cnt++;
     }
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   }

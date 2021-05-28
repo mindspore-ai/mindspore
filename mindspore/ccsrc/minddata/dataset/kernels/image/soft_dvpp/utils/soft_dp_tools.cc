@@ -43,7 +43,7 @@ std::pair<bool, std::string> GetRealpath(const std::string &path) {
 }
 
 bool IsDirectory(const std::string &path) {
-  struct stat buf;
+  struct stat buf {};
   if (stat(path.c_str(), &buf) != 0) {
     return false;
   }
