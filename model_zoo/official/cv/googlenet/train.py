@@ -178,6 +178,7 @@ def run_train():
                                               gradients_mean=True)
             init()
     elif cfg.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
         if device_num > 1:
             init()
             context.reset_auto_parallel_context()
