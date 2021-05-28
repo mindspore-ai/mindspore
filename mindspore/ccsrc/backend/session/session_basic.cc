@@ -2487,7 +2487,7 @@ void SessionBasic::GetBatchElements(const AnfNodePtr &kernel_node) const {
   size_t batch_elements = 1;
   const auto &shape = shapes[0];
   for (size_t i = 0; i < shape.size(); ++i) {
-    batch_elements *= shape[i];
+    batch_elements *= LongToSize(shape[i]);
   }
   ps::ps_cache_instance.set_batch_elements(batch_elements);
 }

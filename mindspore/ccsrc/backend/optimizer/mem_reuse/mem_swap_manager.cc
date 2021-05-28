@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace device {
 namespace memswap {
-bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph, size_t swap_mem_size) {
+bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   execution_order_ = kernel_graph->execution_order();
   kernel_graph_ = kernel_graph;
@@ -244,7 +244,7 @@ void MemSwapManager::SaveUserKernelTopoOrder() {
       }
 
       size_t user_kernel_topo_sort = SearchKernelExecutionInfo(user_kernel).topo_order_;
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user_kernel, node_pair.second - 1);
+      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user_kernel, IntToSize(node_pair.second - 1));
       auto &output_idx = kernel_with_index.second;
       if (kernel_with_index.first.get() != kernel.get()) {
         MS_LOG(EXCEPTION) << "Save user kernel topo order failed for op[" << AnfAlgo::GetCNodeName(kernel) << "]";
@@ -396,7 +396,7 @@ void MemSwapManager::CacheCurSwapInfoSet(const AnfNodePtr &kernel) {
   size_t swap_in_task_cnt = 0;
   for (auto &mem_swap_info : mem_swap_info_set) {
     if (mem_swap_info.swap_kind_ == SwapKind::kHostToDevice) {
-      (void)mem_swap_info_cache_list_.push_back(mem_swap_info);
+      mem_swap_info_cache_list_.push_back(mem_swap_info);
       kernel_first_move_cache_map_[kernel.get()].push_back(true);
       swap_in_task_cnt++;
     }
