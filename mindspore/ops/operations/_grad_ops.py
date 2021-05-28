@@ -224,7 +224,7 @@ class SyncBatchNormGrad(PrimitiveWithInfer):
         return (x_type, scale_type, scale_type)
 
 
-class BiasAddGrad(PrimitiveWithInfer):
+class BiasAddGrad(Primitive):
     """Computes gradients of BiasAdd."""
 
     @prim_attr_register
@@ -236,13 +236,6 @@ class BiasAddGrad(PrimitiveWithInfer):
         if self.format == "NCDHW":
             self.format = "NCHW"
         self.add_prim_attr('data_format', self.format)
-
-    def infer_shape(self, d_output):
-        channel = d_output[-1] if self.format == "NHWC" else d_output[1]
-        return (channel,)
-
-    def infer_dtype(self, dout_dtype):
-        return dout_dtype
 
 
 class KLDivLossGrad(PrimitiveWithInfer):
