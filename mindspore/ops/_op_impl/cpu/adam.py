@@ -35,6 +35,11 @@ adam_op_info = CpuRegOp("Adam") \
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
     .get_op_info()
 
 
