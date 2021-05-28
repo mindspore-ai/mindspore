@@ -16,7 +16,7 @@
 Inference algorithms in Probabilistic Programming.
 """
 
-from .variational import *
+from .variational import SVI, ELBO
 
 __all__ = []
 __all__.extend(variational.__all__)

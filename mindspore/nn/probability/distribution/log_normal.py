@@ -21,6 +21,7 @@ import mindspore.nn.probability.distribution as msd
 from ._utils.utils import check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
+
 class LogNormal(msd.TransformedDistribution):
     """
     LogNormal distribution.

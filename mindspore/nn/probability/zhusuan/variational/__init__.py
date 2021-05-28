@@ -15,4 +15,4 @@
 
 """ Variational inference related codes """
 
-from .elbo import *
+from .elbo import ELBO

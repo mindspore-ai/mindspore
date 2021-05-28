@@ -24,6 +24,7 @@ from .transformed_distribution import TransformedDistribution
 from ._utils.utils import check_distribution_name
 from ._utils.custom_ops import exp_generic, log_generic
 
+
 class Gumbel(TransformedDistribution):
     """
     Gumbel distribution.

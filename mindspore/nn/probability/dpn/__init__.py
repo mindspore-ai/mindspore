@@ -16,7 +16,7 @@
 Deep probability network such as BNN and VAE network.
 """
 
-from .vae import *
+from .vae import VAE, ConditionalVAE
 
 __all__ = []
 __all__.extend(vae.__all__)
