@@ -39,6 +39,141 @@ OP_BUILD = "compile"
 PLATFORM_FLAG = ["ascend310", "ascend910", "Hi3796CV300ES", "ascend710", "ascend610", "Hi3796CV300CS", "SD3403"]
 
 
+def get_finish_tasks():
+    """
+    Get finish task from parallel compilation framework
+    :return task info list
+    """
+    ret = get_finished_compilation_task(0)
+    return ret
+
+
+def single_ga_tune(task_id, json_info):
+    """
+    GA tune for single op
+    :param task_id: task id for this op to tune
+    :param json_info: op's info
+    """
+    converted_json = single_to_fusion(json.dumps(json_info), tune_mode="GA")
+    graph_id = 0
+    l1size = 0
+    kernel_name = json.loads(converted_json)["fusion_op_name"]
+    dispatch_autotune_task(graph_id, task_id, l1size, converted_json, [], kernel_name)
+
+
+def fusion_ga_tune(task_id, json_info):
+    """
+    GA tune for fusion op
+    :param task_id: task id for this op to tune
+    :param json_info: op's info
+    """
+    if 'fusion_op' not in json_info or not json_info['fusion_op']:
+        raise ValueError("Json string Errors, key:fusion_op not found.")
+    kernel_name = json_info["fusion_op"]["fusion_op_name"]
+    converted_json = fusion_to_fusion(json.dumps(json_info), tune_mode="GA")
+    graph_id = 0
+    l1size = 0
+    dispatch_autotune_task(graph_id, task_id, l1size, converted_json, [], kernel_name)
+
+
+def check_te_log(te_log_level):
+    """
+    Check te log level
+    :param te_log_level:
+    :return:
+    """
+    res = True
+    if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
+        log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
+                  f"{te_log_level}")
+        res = False
+    elif te_log_level.upper() not in TE_LOG_LEVEL:
+        log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
+                  f"if it is a string, but got :{te_log_level}")
+        res = False
+    return res
+
+
+def get_soc_info(json_info):
+    """
+    Get soc info
+    :param json_info: ori json
+    :return: soc info
+    """
+    soc_param = dict()
+    soc_param["op_impl_mode"] = json_info["SocInfo"]["op_impl_mode"]
+    soc_param["op_debug_level"] = json_info["SocInfo"]["op_debug_level"]
+    soc_param["op_impl_mode_list"] = json_info["SocInfo"]["op_impl_mode_list"]
+    soc_param["op_debug_dir"] = ''
+    soc_param["vector_fp_ceiling"] = ''
+    soc_param['mdl_bank_path'] = ''
+    soc_param['op_bank_path'] = ''
+
+    soc_info = list()
+    soc_info.append(json_info["SocInfo"]["socVersion"])
+    soc_info.append(json_info["SocInfo"]["coreType"])
+    soc_info.append(json_info["SocInfo"]["coreNum"])
+    soc_info.append(json_info["SocInfo"]["l1Fusion"])
+    soc_info.append(json_info["SocInfo"]["l2Mode"])
+    soc_info.append(json_info["SocInfo"]["l2Fusion"])
+    soc_info.append(soc_param)
+
+    return soc_info
+
+
+def __directory_creation(path, concat_path):
+    """
+    Create directory
+    """
+    path = os.path.join(path, concat_path)
+    if not os.path.isdir(path):
+        os.makedirs(path, 0o750)
+    return path
+
+
+def __creating_default_custom_path(tune_mode, base_custom_path):
+    """
+    Create default custom path
+    """
+    base_custom_path = __directory_creation(base_custom_path, "data")
+    tune_flag = []
+    if "RL" in tune_mode:
+        tune_flag.append("rl")
+    if "GA" in tune_mode:
+        tune_flag.append("tiling")
+
+    for tune_path in tune_flag:
+        real_path = __directory_creation(base_custom_path, tune_path)
+        for soc_version in PLATFORM_FLAG:
+            final_path = __directory_creation(real_path, soc_version)
+            final_path = __directory_creation(final_path, "custom")
+
+
+def _creating_custom_path(tune_mode):
+    """
+    Create custom path
+    """
+    if "NO_TUNE" in tune_mode:
+        return
+
+    base_custom_path = os.getenv("TUNE_BANK_PATH", None)
+    tune_bank_flag = True
+    if not base_custom_path:
+        base_custom_path = os.path.dirname(os.path.realpath(auto_tune.__file__))
+        base_custom_path = os.path.realpath(os.path.join(base_custom_path, "../../../"))
+        tune_bank_flag = False
+
+    if not os.path.isdir(base_custom_path):
+        log.error("Check whether the tuning path [{}] exists.".format(base_custom_path))
+        return
+    if not os.access(base_custom_path, os.R_OK | os.W_OK | os.X_OK):
+        log.error("Check whether the permission on the tuning path [{}] is correct.".format(base_custom_path))
+        return
+
+    if not tune_bank_flag:
+        __creating_default_custom_path(tune_mode, base_custom_path)
+
+
 class TbeTuner:
     """tbe tuner for ga tune or rl tune"""
 
@@ -50,7 +185,7 @@ class TbeTuner:
         self.offline_dump_path = "./tune_dump"
         if os.environ.get("TUNE_DUMP_PATH") is not None:
             self.offline_dump_path = os.getenv("TUNE_DUMP_PATH", "")
-        self._creating_custom_path(tune_mode)
+        _creating_custom_path(tune_mode)
         self.fusion_need_sync = 0
         self.module_list = {}
 
@@ -62,7 +197,7 @@ class TbeTuner:
         :return: bool True or False
         """
         json_info = json.loads(json_str)
-        soc_info = self.get_soc_info(json_info)
+        soc_info = get_soc_info(json_info)
         cur_cce_product_params = te_set_version(*soc_info)
         if cur_cce_product_params is None:
             log.warning("Set Soc Info failed.")
@@ -93,99 +228,6 @@ class TbeTuner:
         if self.offline_tune:
             tune_mode = "RL"
         return tune_mode
-
-    def __directory_creation(self, path, concat_path):
-        """
-        Create directory
-        """
-        path = os.path.join(path, concat_path)
-        if not os.path.isdir(path):
-            os.makedirs(path, 0o750)
-        return path
-
-    def __creating_default_custom_path(self, tune_mode, base_custom_path):
-        """
-        Create default custom path
-        """
-        base_custom_path = self.__directory_creation(base_custom_path, "data")
-        tune_flag = []
-        if "RL" in tune_mode:
-            tune_flag.append("rl")
-        if "GA" in tune_mode:
-            tune_flag.append("tiling")
-
-        for tune_path in tune_flag:
-            real_path = self.__directory_creation(base_custom_path, tune_path)
-            for soc_version in PLATFORM_FLAG:
-                final_path = self.__directory_creation(real_path, soc_version)
-                final_path = self.__directory_creation(final_path, "custom")
-
-    def _creating_custom_path(self, tune_mode):
-        """
-        Create custom path
-        """
-        if "NO_TUNE" in tune_mode:
-            return
-
-        base_custom_path = os.getenv("TUNE_BANK_PATH", None)
-        tune_bank_flag = True
-        if not base_custom_path:
-            base_custom_path = os.path.dirname(os.path.realpath(auto_tune.__file__))
-            base_custom_path = os.path.realpath(os.path.join(base_custom_path, "../../../"))
-            tune_bank_flag = False
-
-        if not os.path.isdir(base_custom_path):
-            log.error("Check whether the tuning path [{}] exists.".format(base_custom_path))
-            return
-        if not os.access(base_custom_path, os.R_OK | os.W_OK | os.X_OK):
-            log.error("Check whether the permission on the tuning path [{}] is correct.".format(base_custom_path))
-            return
-
-        if not tune_bank_flag:
-            self.__creating_default_custom_path(tune_mode, base_custom_path)
-
-    def get_soc_info(self, json_info):
-        """
-        Get soc info
-        :param json_info: ori json
-        :return: soc info
-        """
-        soc_param = {}
-        soc_param["op_impl_mode"] = json_info["SocInfo"]["op_impl_mode"]
-        soc_param["op_debug_level"] = json_info["SocInfo"]["op_debug_level"]
-        soc_param["op_impl_mode_list"] = json_info["SocInfo"]["op_impl_mode_list"]
-        soc_param["op_debug_dir"] = ''
-        soc_param["vector_fp_ceiling"] = ''
-        soc_param['mdl_bank_path'] = ''
-        soc_param['op_bank_path'] = ''
-
-        soc_info = []
-        soc_info.append(json_info["SocInfo"]["socVersion"])
-        soc_info.append(json_info["SocInfo"]["coreType"])
-        soc_info.append(json_info["SocInfo"]["coreNum"])
-        soc_info.append(json_info["SocInfo"]["l1Fusion"])
-        soc_info.append(json_info["SocInfo"]["l2Mode"])
-        soc_info.append(json_info["SocInfo"]["l2Fusion"])
-        soc_info.append(soc_param)
-
-        return soc_info
-
-    def check_te_log(self, te_log_level):
-        """
-        Check te log level
-        :param te_log_level:
-        :return:
-        """
-        res = True
-        if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
-            log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
-                      f"{te_log_level}")
-            res = False
-        elif te_log_level.upper() not in TE_LOG_LEVEL:
-            log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
-                      f"if it is a string, but got :{te_log_level}")
-            res = False
-        return res
 
     def parallel_compilation_init(self, soc_info, tune_mode, process_num):
         """
@@ -218,7 +260,7 @@ class TbeTuner:
             os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[2]
             global_loglevel = 3
         else:
-            if not self.check_te_log(te_log_level):
+            if not check_te_log(te_log_level):
                 return False
             global_loglevel = int(te_log_level) if te_log_level.isdigit() else TE_LOG_LEVEL.index(te_log_level.upper())
         ret = init_multi_process_env(embedding, soc_info, tune_mode, global_loglevel, enable_event, pid_ts)
@@ -285,9 +327,9 @@ class TbeTuner:
         json_info = json.loads(op_json)
         if "fusion_op" in json_info:
             self.sync_fusion_env()
-            self.fusion_ga_tune(task_id, json_info)
+            fusion_ga_tune(task_id, json_info)
         else:
-            self.single_ga_tune(task_id, json_info)
+            single_ga_tune(task_id, json_info)
 
     def single_rl_tune(self, task_id, json_info):
         """
@@ -303,7 +345,6 @@ class TbeTuner:
         full_name = json_info['op_info']['full_name']
         tune_mode = "RL"
         set_current_op_name(kernel_name)
-        # todo build with build_single_op_from_c
         base_kernel = './kernel_meta/' + kernel_name + '.o'
         job_type = RL_COMPILE
         compile_info = None
@@ -315,18 +356,19 @@ class TbeTuner:
             log.error(
                 "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
             return False, job_type, compile_info
-        if self.offline_tune:
-            job_type = RL_OFFLINE
-            dump_fusion_json(converted_json, self.offline_dump_path)
-        else:
-            job_type = RL_ONLINE
-        graph_id = 0
-        l1size = 0  # todo need to verify
-        ret = dispatch_single_tune_task(graph_id, task_id, l1size, base_kernel, kernel_name, full_name,
-                                        op_module_name + "@" + op_module_name, op_type, op_type, op_args)
+        finally:
+            if self.offline_tune:
+                job_type = RL_OFFLINE
+                dump_fusion_json(converted_json, self.offline_dump_path)
+            else:
+                job_type = RL_ONLINE
+            graph_id = 0
+            l1size = 0
+            ret = dispatch_single_tune_task(graph_id, task_id, l1size, base_kernel, kernel_name, full_name,
+                                            op_module_name + "@" + op_module_name, op_type, op_type, op_args)
 
-        self.module_list[op_module_name] = 1
-        self.fusion_need_sync += 1
+            self.module_list[op_module_name] = 1
+            self.fusion_need_sync += 1
         return ret, job_type, compile_info
 
     def fusion_rl_tune(self, task_id, json_info):
@@ -363,37 +405,3 @@ class TbeTuner:
         ret = dispatch_fusion_tune_task(graph_id, task_id, l1size, base_kernel, kernel_name, full_name,
                                         converted_json)
         return ret, job_type, compile_info
-
-    def fusion_ga_tune(self, task_id, json_info):
-        """
-        GA tune for fusion op
-        :param task_id: task id for this op to tune
-        :param json_info: op's info
-        """
-        if 'fusion_op' not in json_info or not json_info['fusion_op']:
-            raise ValueError("Json string Errors, key:fusion_op not found.")
-        kernel_name = json_info["fusion_op"]["fusion_op_name"]
-        converted_json = fusion_to_fusion(json.dumps(json_info), tune_mode="GA")
-        graph_id = 0
-        l1size = 0
-        dispatch_autotune_task(graph_id, task_id, l1size, converted_json, [], kernel_name)
-
-    def single_ga_tune(self, task_id, json_info):
-        """
-        GA tune for single op
-        :param task_id: task id for this op to tune
-        :param json_info: op's info
-        """
-        converted_json = single_to_fusion(json.dumps(json_info), tune_mode="GA")
-        graph_id = 0
-        l1size = 0
-        kernel_name = json.loads(converted_json)["fusion_op_name"]
-        dispatch_autotune_task(graph_id, task_id, l1size, converted_json, [], kernel_name)
-
-    def get_finish_tasks(self):
-        """
-        Get finish task from parallel compilation framework
-        :return task info list
-        """
-        ret = get_finished_compilation_task(0)
-        return ret

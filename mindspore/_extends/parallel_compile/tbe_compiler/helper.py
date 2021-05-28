@@ -34,22 +34,13 @@ def _op_select_format(kernel_info):
     try:
         op_name = kernel_info['op_info']['name']
         te_set_version(kernel_info["op_info"]["socVersion"])
-        impl_path = build_in_impl_path
-        custom_flag = False
-        if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
-            op_impl_path = os.path.realpath(kernel_info['impl_path'])
-            if os.path.isfile(op_impl_path):
-                path, file_name = os.path.split(op_impl_path)
-                op_name, _ = os.path.splitext(file_name)
-                impl_path = path
-                custom_flag = True
-        if impl_path not in sys.path:
-            sys.path.insert(0, impl_path)
+        custom_flag, op_name = _get_custom_flag(build_in_impl_path, kernel_info, op_name)
 
         if custom_flag:
             op_module = __import__(op_name)
         else:
             op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
+
         # get function
         if not hasattr(op_module, "op_select_format"):
             return ""
@@ -82,17 +73,7 @@ def _check_supported(kernel_info):
         op_name = kernel_info['op_info']['name']
         is_dynamic_shape = kernel_info['op_info']['is_dynamic_shape']
         te_set_version(kernel_info["op_info"]["socVersion"])
-        impl_path = build_in_impl_path
-        custom_flag = False
-        if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
-            op_impl_path = os.path.realpath(kernel_info['impl_path'])
-            if os.path.isfile(op_impl_path):
-                path, file_name = os.path.split(op_impl_path)
-                op_name, _ = os.path.splitext(file_name)
-                impl_path = path
-                custom_flag = True
-        if impl_path not in sys.path:
-            sys.path.insert(0, impl_path)
+        custom_flag, op_name = _get_custom_flag(build_in_impl_path, kernel_info, op_name)
 
         if custom_flag:
             op_module = __import__(op_name)
@@ -117,3 +98,18 @@ def _check_supported(kernel_info):
         raise TBEException(str(e))
 
     return ret
+
+
+def _get_custom_flag(impl_path, kernel_info, op_name):
+    """ Get custom flag """
+    custom_flag = False
+    if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
+        op_impl_path = os.path.realpath(kernel_info['impl_path'])
+        if os.path.isfile(op_impl_path):
+            path, file_name = os.path.split(op_impl_path)
+            op_name, _ = os.path.splitext(file_name)
+            impl_path = path
+            custom_flag = True
+    if impl_path not in sys.path:
+        sys.path.insert(0, impl_path)
+    return custom_flag, op_name

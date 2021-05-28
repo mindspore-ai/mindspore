@@ -80,27 +80,32 @@ def get_input_output(io_info, args):
     for item in io_info:
         arg = []
         for info in item:
-            if 'valid' not in info:
-                raise ValueError("Json string Errors, key:valid not found.")
-            if info['valid']:
-                _check_arg_info(info)
-                del info['valid']
-                del info['name']
-                if len(item) > 1:
-                    arg.append(info)
-                else:
-                    if info['param_type'] == 'dynamic':
-                        arg.append(info)
-                        args.append(arg)
-                    else:
-                        args.append(info)
-            else:
-                if len(item) > 1:
-                    arg.append(None)
-                else:
-                    args.append(None)
+            _parse_io_item(arg, args, info, item)
         if len(item) > 1:
             args.append(arg)
+
+
+def _parse_io_item(arg, args, info, item):
+    """ parse input/output info item """
+    if 'valid' not in info:
+        raise ValueError("Json string Errors, key:valid not found.")
+    if info['valid']:
+        _check_arg_info(info)
+        del info['valid']
+        del info['name']
+        if len(item) > 1:
+            arg.append(info)
+        else:
+            if info['param_type'] == 'dynamic':
+                arg.append(info)
+                args.append(arg)
+            else:
+                args.append(info)
+    else:
+        if len(item) > 1:
+            arg.append(None)
+        else:
+            args.append(None)
 
 
 def get_attr(attr_info, args):
@@ -149,6 +154,7 @@ def get_args(op_info, arg_type):
 
 
 def check_kernel_info(kernel_info):
+    """ check kernel info required element """
     if 'op_info' not in kernel_info or not kernel_info['op_info']:
         raise ValueError("Json string Errors, key:op_info not found.")
     if 'name' not in kernel_info['op_info'] or not kernel_info['op_info']['name']:
