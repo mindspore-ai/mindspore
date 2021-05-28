@@ -137,7 +137,8 @@ class AscendStreamAssign {
   void InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void ActiveRootGraphHcom(const NotNull<KernelGraphPtr> &graph_ptr, const std::set<uint32_t> &hcom_streams);
-  void ActiveRootGraphIndependent(const NotNull<KernelGraphPtr> &graph_ptr, std::set<uint32_t> independent_streams);
+  void ActiveRootGraphIndependent(const NotNull<KernelGraphPtr> &graph_ptr,
+                                  const std::set<uint32_t> &independent_streams);
   void ActiveOtherGraphParallel(const NotNull<KernelGraphPtr> &graph_ptr,
                                 std::map<uint32_t, std::set<uint32_t>> other_graph);
   void UpdateStreamSwitch(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &switch_ptr,
@@ -197,7 +198,7 @@ class AscendStreamAssign {
   void PrintStreamGroups();
   void FindEventRelations(const NotNull<KernelGraphPtr> &graph_ptr);
   bool IsSatisfiedEvent(uint32_t send_stream_id, uint32_t recv_stream_id) const;
-  vector<CNodePtr> GetInputKernels(const CNodePtr &node);
+  vector<CNodePtr> GetInputKernels(const CNodePtr &cnode);
 
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
