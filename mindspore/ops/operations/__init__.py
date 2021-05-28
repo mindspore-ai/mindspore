@@ -65,7 +65,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, U
                          LogUniformCandidateSampler)
 
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum,
-                     BatchNorm, BiasAdd, Conv2D, Conv3D, Conv3DTranspose,
+                     BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
@@ -143,6 +143,7 @@ __all__ = [
     'Xlogy',
     'Conv2D',
     'Conv3D',
+    'Conv2DTranspose',
     'Conv3DTranspose',
     'Flatten',
     'MaxPoolWithArgmax',

@@ -1909,7 +1909,7 @@ class AvgPool(_Pool):
         super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
-class Conv2DBackpropInput(Primitive):
+class Conv2DBackpropInput(PrimitiveWithInfer):
     """
     Computes the gradients of convolution with respect to the input.
 
@@ -2022,6 +2022,109 @@ class Conv2DBackpropInput(Primitive):
             for x in pad_list:
                 validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
+
+    def __infer__(self, doutput, w, x_size):
+        x_size_v = x_size['value']
+        validator.check_value_type('x_size', x_size_v, [tuple], self.name)
+        for i, dim_len in enumerate(x_size_v):
+            validator.check_value_type("x_size[%d]" % i, dim_len, [int], self.name)
+        args = {'doutput': doutput['dtype'], 'w': w['dtype']}
+        valid_dtypes = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
+
+        # infer shape
+        dout_shape = doutput['shape']
+        dout_shape_norm = dout_shape if self.format == "NCHW" else \
+            [dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]]
+        kernel_h = self.kernel_size[0]
+        kernel_w = self.kernel_size[1]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
+        # default pad mode is valid
+        pad_list = (0, 0, 0, 0)
+        if self.pad_list:
+            pad_list = tuple(self.pad_list)
+        elif self.pad_mode == "SAME":
+            pad_needed_h = max(0, (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2])
+            pad_top = math.floor(pad_needed_h / 2)
+            pad_bottom = pad_needed_h - pad_top
+
+            pad_needed_w = max(0, (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3])
+            pad_left = math.floor(pad_needed_w / 2)
+            pad_right = pad_needed_w - pad_left
+            pad_list = (pad_top, pad_bottom, pad_left, pad_right)
+        elif self.pad_mode == 'PAD':
+            pad_list = self.padding
+        self.add_prim_attr('pad_list', pad_list)
+        out = {
+            'value': None,
+            'shape': x_size_v,
+            'dtype': doutput['dtype'],
+        }
+        return out
+
+
+class Conv2DTranspose(Conv2DBackpropInput):
+    """
+    Compute a 2D transposed convolution, which is also known as a deconvolution
+    (although it is not an actual deconvolution).
+
+    Args:
+        out_channel (int): The dimensionality of the output space.
+        kernel_size (Union[int, tuple[int]]): The size of the convolution window.
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
+                       2 deconvolution, 3 depthwise convolution. Default: 1.
+        stride (Union[int. tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
+        dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
+            Default: 1.
+        group (int): Splits input into groups. Default: 1.
+        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+            default is 'NCHW'.
+
+    Inputs:
+        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
+          data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
+          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+        - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
+          :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
+
+    Raises:
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
+        TypeError: If `out_channel` or `group` is not an int.
+        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
+        >>> x = Tensor(np.ones([10, 32, 32, 32]))
+        >>> conv2d_transpose_input = ops.Conv2DTranspose(out_channel=32, kernel_size=3)
+        >>> output = conv2d_transpose_input(dout, weight, F.shape(x))
+        >>> print(output.shape)
+        (10, 32, 32, 32)
+    """
+    @prim_attr_register
+    def __init__(self, out_channel, kernel_size, pad_mode="valid", pad=0,
+                 pad_list=None, mode=1, stride=1, dilation=1, group=1, data_format="NCHW"):
+        super(Conv2DTranspose, self).__init__(out_channel, kernel_size, pad_mode, pad,
+                                              pad_list, mode, stride, dilation, group, data_format)
+
 
 class BiasAdd(PrimitiveWithCheck):
     r"""
