@@ -39,7 +39,6 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   if (mindspore::ps::PSContext::instance()->is_worker()) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
   }
-  std::vector<size_t> keys{key_, key_, key_};
   std::vector<float> values;
   std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(values),
                  [](size_t dim) -> float { return SizeToFloat(dim); });
