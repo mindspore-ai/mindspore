@@ -225,9 +225,8 @@ bool Debugger::CheckDebuggerDumpEnabled() const {
 
 bool Debugger::CheckDebuggerEnabled() const {
   // get env variables to configure debugger
-  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_char != nullptr) {
-    std::string env_enable_str = env_enable_char;
+  std::string env_enable_str = common::GetEnv("ENABLE_MS_DEBUGGER");
+  if (!env_enable_str.empty()) {
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if ((env_enable_str == "1" || env_enable_str == "true") && device_target_ != kCPUDevice) {
       return true;
@@ -238,9 +237,8 @@ bool Debugger::CheckDebuggerEnabled() const {
 
 void Debugger::CheckDebuggerEnabledParam() const {
   // check the value of env variable ENABLE_MS_DEBUGGER
-  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_char != nullptr) {
-    std::string env_enable_str = env_enable_char;
+  std::string env_enable_str = common::GetEnv("ENABLE_MS_DEBUGGER");
+  if (!env_enable_str.empty()) {
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if (env_enable_str != "0" && env_enable_str != "1" && env_enable_str != "false" && env_enable_str != "true") {
       MS_LOG(WARNING) << "Env variable ENABLE_MS_DEBUGGER should be True/False/1/0 (case insensitive), but get: "
@@ -713,7 +711,7 @@ void Debugger::ProcessKViewCMD(const EventReply &reply) {
     MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
   }
   EventReply send_tensors_reply = grpc_client_->SendTensors(tensors);
-  if (send_tensors_reply.status() != send_tensors_reply.OK) {
+  if (send_tensors_reply.status() != debugger::EventReply::OK) {
     MS_LOG(ERROR) << "Error: SendTensors failed";
   }
 }
@@ -1103,11 +1101,12 @@ bool Debugger::CheckPort(const std::string &port) const {
   int num = 0;
   const int min_port_num = 1;
   const int max_port_num = 65535;
+  const int decimal = 10;
   if (port[0] == '0' && port[1] != '\0') return false;
   int i = 0;
   while (port[i] != '\0') {
     if (port[i] < '0' || port[i] > '9') return false;
-    num = num * 10 + (port[i] - '0');
+    num = num * decimal + (port[i] - '0');
     if (num > max_port_num) return false;
     i++;
   }

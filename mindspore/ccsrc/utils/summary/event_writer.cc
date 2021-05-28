@@ -132,11 +132,6 @@ bool EventWriter::Shut() noexcept {
   return result;
 }
 
-// Summary Record Format:
-//  1 uint64 : data length
-//  2 uint32 : mask crc value of data length
-//  3 bytes  : data
-//  4 uint32 : mask crc value of data
 bool EventWriter::WriteRecord(const std::string &data) {
   if (event_file_ == nullptr) {
     MS_LOG(ERROR) << "Writer not initialized or previously closed.";
