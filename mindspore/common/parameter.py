@@ -42,6 +42,7 @@ def _is_in_parallel_mode():
     """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode() in ["semi_auto_parallel", "auto_parallel"]
 
+
 def init_to_value(init):
     """Get value of initializer."""
     if isinstance(init, str):

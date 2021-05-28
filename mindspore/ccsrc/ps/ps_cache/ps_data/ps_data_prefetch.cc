@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace ps {
 const size_t kTimeoutLoopCount = 10;
+const int64_t kLongestTimeToWait = 30;
 
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {
   if (cache_enable_ == false) {
@@ -73,7 +74,7 @@ bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, c
   }
 
   for (size_t i = 0; i < kTimeoutLoopCount; ++i) {
-    if (data_prefetch_.wait_for(locker, std::chrono::seconds(30),
+    if (data_prefetch_.wait_for(locker, std::chrono::seconds(kLongestTimeToWait),
                                 [this] { return data_ready_ == false || need_wait_ == false; })) {
       return true;
     } else {
@@ -99,7 +100,7 @@ bool PsDataPrefetch::FinalizeData(const std::string &channel_name) {
   }
 
   for (size_t i = 0; i < kTimeoutLoopCount; ++i) {
-    if (data_process_.wait_for(locker, std::chrono::seconds(30),
+    if (data_process_.wait_for(locker, std::chrono::seconds(kLongestTimeToWait),
                                [this] { return data_ready_ == true || need_wait_ == false; })) {
       return true;
     } else {
