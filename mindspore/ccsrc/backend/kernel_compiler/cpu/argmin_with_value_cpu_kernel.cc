@@ -53,7 +53,7 @@ void ArgMinWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  axis += shape_len;
+  axis += static_cast<int64_t>(shape_len);
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << (shape_len - 1) << "]";
   }
