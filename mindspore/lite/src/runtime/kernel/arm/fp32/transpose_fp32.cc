@@ -119,8 +119,7 @@ int TransposeCPUKernel::RunImpl(int task_id) {
   if (NHNCTransposeFunc_ != nullptr) {
     NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2], task_id, thread_count_);
   } else {
-    TransposeDimsFp32(in_data_, out_data_, out_shape_, dim_size_, position_ + dims_ * task_id, param_, task_id,
-                      thread_count_);
+    TransposeDimsFp32(in_data_, out_data_, out_shape_, param_, task_id, thread_count_);
   }
   return RET_OK;
 }
@@ -166,35 +165,12 @@ int TransposeCPUKernel::Run() {
 
   MS_ASSERT(out_shape_);
   dims_ = out_tensor->shape().size();
-  if (dims_ > DIMENSION_6D) {
-    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims_ * sizeof(int)));
-    if (dim_size_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_NULL_PTR;
-    }
-    *(dim_size_ + dims_ - 1) = 1;
-    for (int i = dims_ - 1; i > 0; --i) {
-      *(dim_size_ + i - 1) = *(dim_size_ + i) * out_shape_[i];
-    }
-    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims_ * sizeof(int) * thread_count_));
-    if (position_ == nullptr) {
-      context_->allocator->Free(dim_size_);
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_NULL_PTR;
-    }
-  }
   int ret;
   if (dims_ > DIMENSION_6D) {
     ret = static_cast<const lite::InnerContext *>(this->context_)
             ->thread_pool_->ParallelLaunch(TransposeImpl, this, thread_count_);
   } else {
     ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param_);
-  }
-  if (dims_ > DIMENSION_6D) {
-    context_->allocator->Free(dim_size_);
-    context_->allocator->Free(position_);
-    dim_size_ = nullptr;
-    position_ = nullptr;
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose run failed";
