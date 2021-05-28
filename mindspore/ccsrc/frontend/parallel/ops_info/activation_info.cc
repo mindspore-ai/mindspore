@@ -337,7 +337,7 @@ Status DropoutInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status DropoutInfo::InferReplaceOps(const StrategyPtr &) {
+Status DropoutInfo::InferReplaceOps() {
   if ((seed0_ != 0) || (seed1_ != 0) || (repeated_calc_num_ == 1)) {
     return SUCCESS;
   }
@@ -359,10 +359,8 @@ Status DropoutInfo::Init(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << " : Init failed";
     return FAILED;
   }
-  if (InferReplaceOps(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Infer replace Ops failed";
-    return FAILED;
-  }
+  (void)InferReplaceOps();
+
   MS_LOG(INFO) << name_ << " : Init success";
   return SUCCESS;
 }
@@ -572,7 +570,7 @@ Status SqueezeInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status SqueezeInfo::InferReplaceOps(const StrategyPtr &strategy) {
+Status SqueezeInfo::InferReplaceOps() {
   Attr attr = std::make_pair(AXIS, axis_);
   OperatorAttrs attrs = {attr};
   OperatorParams params;
@@ -612,9 +610,7 @@ Status SqueezeInfo::Init(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
   }
 
-  if (InferReplaceOps(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Infer replace ops failed";
-  }
+  (void)InferReplaceOps();
 
   MS_LOG(INFO) << name_ << " : Init success.";
   return SUCCESS;

@@ -54,7 +54,7 @@ Status ConcatInfo::GetAttrs() {
     axis = axis + dim;
   }
 
-  axis_ = SizeToLong(axis);
+  axis_ = LongToSize(axis);
   return SUCCESS;
 }
 
