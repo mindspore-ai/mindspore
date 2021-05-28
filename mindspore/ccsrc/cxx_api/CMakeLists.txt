@@ -5,7 +5,8 @@ set(LOAD_MINDIR_SRC
         )
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
-if(ENABLE_ACL)
+if(ENABLE_D OR ENABLE_ACL)
+    # build 910 and 310 code into one distro, files needed for 310 mode
     add_compile_definitions(ENABLE_ACL)
     include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
@@ -15,12 +16,15 @@ if(ENABLE_ACL)
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
-    list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+    if(NOT ENABLE_D)
+        list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+    endif()
 endif()
 
 if(ENABLE_D)
+    # for 910 mode
     file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-        "akg_kernel_register.cc" "model/ms/*.cc" "graph/ascend/*.cc")
+        "model/ms/*.cc" "graph/ascend/*.cc")
 endif()
 
 if(ENABLE_GPU)
@@ -69,34 +73,20 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_options(mindspore_shared_lib PRIVATE -Wl,-init,common_log_init)
 endif()
 
-if(ENABLE_ACL)
-    if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-        set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-    else()
-        set(ASCEND_PATH /usr/local/Ascend)
-    endif()
-    set(ACL_LIB_DIR ${ASCEND_PATH}/acllib/)
-    set(ATLAS_ACL_LIB_DIR ${ASCEND_PATH}/ascend-toolkit/latest/acllib)
-    set(ATC_DIR ${ASCEND_PATH}/atc/)
-    set(ATLAS_ATC_DIR ${ASCEND_PATH}/ascend-toolkit/latest/atc)
-    MESSAGE("acl lib dir " ${ACL_LIB_DIR} ", atc dir " ${ATC_DIR})
-    MESSAGE("atlas acl lib dir " ${ATLAS_ACL_LIB_DIR} ", atc dir " ${ATLAS_ATC_DIR})
-
-    include_directories(${ACL_LIB_DIR}/include/)
-    include_directories(${ATLAS_ACL_LIB_DIR}/include/)
+if(ENABLE_D OR ENABLE_ACL)
+    # 310 mode
     add_compile_definitions(ENABLE_DVPP_INTERFACE)
-    find_library(acl libascendcl.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
-    find_library(acl_retr libacl_retr.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
-    find_library(acl_cblas libacl_cblas.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
-    find_library(acl_dvpp libacl_dvpp.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
-    find_library(acl_runtime libruntime.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
-    find_library(ge_compiler libge_compiler.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(libplatform libplatform.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(libcompress libcompress.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(libopskernel libopskernel.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(libaicore_utils libaicore_utils.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(libaicpu_engine_common libaicpu_engine_common.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
-    find_library(atc_protobuf libascend_protobuf.so.3.8.0.0 ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(acl libascendcl.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(acl_cblas libacl_cblas.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(acl_dvpp libacl_dvpp.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(acl_runtime libruntime.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(ge_runner libge_runner.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(libplatform libplatform.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(libcompress libcompress.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(libopskernel libopskernel.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(libaicore_utils libaicore_utils.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(atc_protobuf libascend_protobuf.so.3.8.0.0 ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler} ${atc_protobuf}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
@@ -123,7 +113,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(MINDSPORE_RPATH $ORIGIN)
-    if(ENABLE_D)
+    if(ENABLE_D OR ENABLE_ACL)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
@@ -131,17 +121,13 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH
             ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-    elseif(ENABLE_ACL)
+
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/acllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/acllib/lib64)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH
-            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     endif()
 
     set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})

@@ -23,6 +23,8 @@
 #include "external/ge/ge_api_types.h"
 #include "hccl/hccl.h"
 
+constexpr const char *kHcclOpsKernelInfoStore = "ops_kernel_info_hccl";
+
 namespace ge {
 class OpsKernelBuilder;
 class OpsKernelInfoStore;

@@ -132,6 +132,8 @@ bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> 
 void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                           const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                           std::vector<CNodePtr> *exec_order) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(exec_order);
   device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
   CNodePtr independent_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kIndependentStreamSwitch);
   MS_EXCEPTION_IF_NULL(independent_switch_app);

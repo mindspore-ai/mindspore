@@ -107,6 +107,7 @@ checkopts()
   USE_GLOG="on"
   ENABLE_AKG="on"
   ENABLE_ACL="off"
+  ENABLE_D="off"
   ENABLE_DEBUGGER="on"
   ENABLE_IBVERBS="off"
   ENABLE_PYTHON="on"
@@ -380,10 +381,13 @@ checkopts()
     if [[ "X$DEVICE_VERSION" == "X" ]]; then
       DEVICE_VERSION=910
     fi
+    # building 310 package by giving specific -V 310 instruction
     if [[ "X$DEVICE_VERSION" == "X310" ]]; then
       ENABLE_ACL="on"
+    # universal ascend package
     elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
       ENABLE_D="on"
+      ENABLE_ACL="on"
       ENABLE_CPU="on"
     else
       echo "Invalid value ${DEVICE_VERSION} for option -V"
@@ -970,8 +974,12 @@ if [[ "X$ENABLE_MAKE_CLEAN" = "Xon" ]]; then
   make_clean
 fi
 
-cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
-cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
-
+if [[ "X$ENABLE_ACL" == "Xon" ]] && [[ "X$ENABLE_D" == "Xoff" ]]; then
+    echo "acl mode, skipping deploy phase"
+    rm -rf ${BASEPATH}/output/_CPack_Packages/
+  else
+    cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
+    cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
+fi
 
 echo "---------------- mindspore: build end   ----------------"

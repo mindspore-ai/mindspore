@@ -265,12 +265,19 @@ bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_
   // get ops_kernel_builder
   std::map<std::string, std::shared_ptr<ge::OpsKernelBuilder>> all_builders;
   get_all_kernel_builder_(&all_builders);
-  if (all_builders.size() != 1) {
-    MS_LOG(EXCEPTION) << "Builders size should be 1 (hccl builder), but is " << all_builders.size();
+  auto iter = all_builders.find(kHcclOpsKernelInfoStore);
+  if (iter == all_builders.end()) {
+    std::string all_builders_name = "[";
+    for (const auto &it : all_builders) {
+      all_builders_name += it.first + " ";
+    }
+    all_builders_name += "]";
+    MS_LOG(EXCEPTION) << "Builders size " << all_builders.size() << ", cannot find " << kHcclOpsKernelInfoStore
+                      << ", full list of builders: " << all_builders_name;
   }
 
-  MS_LOG(INFO) << "Get builder " << all_builders.begin()->first;
-  ops_kernel_builder_ = all_builders.begin()->second;
+  MS_LOG(INFO) << "Get builder " << iter->first;
+  ops_kernel_builder_ = iter->second;
   MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
   // init ops_kernel_builder
   auto options = GenHcclOptions(device_id, rank_id, rank_file);

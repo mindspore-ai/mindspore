@@ -22,13 +22,15 @@ PROJECT_PATH=${BASEPATH}/../../..
 usage()
 {
   echo "Usage:"
-  echo "sh runtests.sh [-e ascend310|ascend910] [-n testcase_name] [-d n]"
+  echo "sh runtests.sh [-e ascend310|ascend910] [-n testcase_name] [-d n] [-t cpp|python] [-r path]"
   echo ""
   echo "Options:"
   echo "    -h Print usage"
   echo "    -e Device target, default is ascend310"
   echo "    -d Device ID, default is 0"
   echo "    -n Run single tesecase, default off"
+  echo "    -t Type of MindSpore package to be tested, default is cpp"
+  echo "    -r Path of mindspore package to be tested, default is {PROJECT_PATH}/output"
   echo "to be continued ..."
 }
 
@@ -37,9 +39,12 @@ checkopts()
   DEVICE_TARGET_OPT="ascend310"
   DEVICE_ID_OPT=0
   TASECASE_NAME_OPT=""
+  TEST_PATH=${PROJECT_PATH}/tests/st/cpp
+  PACKAGE_PATH=${PROJECT_PATH}/output
+  PACKAGE_TYPE="cpp"
 
   # Process the options
-  while getopts 'he:d:n:' opt
+  while getopts 'he:d:n:t:r:' opt
   do
     case "${opt}" in
       h)
@@ -55,6 +60,19 @@ checkopts()
       n)
         TASECASE_NAME_OPT=$OPTARG
         ;;
+      t)
+        if [[ "X$OPTARG" == "Xcpp" || "X$OPTARG" == "Xpython" ]]; then
+          PACKAGE_TYPE="$OPTARG"
+        else
+          echo "Invalid value ${OPTARG} for option -t"
+          usage
+          exit 1
+        fi
+        ;;
+      r)
+        PACKAGE_PATH=$OPTARG
+        echo "package path set to: ${OPTARG}"
+        ;;
       *)
         echo "Undefined option: ${opt}"
         usage
@@ -64,11 +82,22 @@ checkopts()
 }
 checkopts "$@"
 
-cd ${PROJECT_PATH}/tests/st/cpp
+cd ${TEST_PATH}
 
-MINDSPORE_PKG_PATH=`python -m pip show mindspore-ascend | grep Location | awk '{print $2"/mindspore"}' | xargs realpath`
-if [[ "X${MINDSPORE_PKG_PATH}" == "X" ]]; then
-  MINDSPORE_PKG_PATH=${PROJECT_PATH}/build/package/mindspore:
+# using installed or compiled whl packages, set env path by pip
+if [[ "${PACKAGE_TYPE}" == "python" ]]; then
+    MINDSPORE_PKG_PATH=`python -m pip show mindspore-ascend | grep Location | awk '{print $2"/mindspore"}' | xargs realpath`
+  if [[ "X${MINDSPORE_PKG_PATH}" == "X" ]]; then
+    MINDSPORE_PKG_PATH=${PROJECT_PATH}/build/package/mindspore:
+  fi
+elif [[ "${PACKAGE_TYPE}" == "cpp" ]]; then
+# using acl tar package, extract tar package here
+  rm -rf mindspore_ascend*
+  PACKAGE_NAME_FULL=$(find "${PACKAGE_PATH}" -name "mindspore_ascend*.tar.gz")
+  PACKAGE_NAME=${PACKAGE_NAME_FULL##*/}
+
+  tar -xzf ${PACKAGE_PATH}/${PACKAGE_NAME}
+  MINDSPORE_PKG_PATH=$(find "${TEST_PATH}" -maxdepth 1 -name "mindspore_ascend*")
 fi
 
 export LD_LIBRARY_PATH=${MINDSPORE_PKG_PATH}:${MINDSPORE_PKG_PATH}/lib:${PROJECT_PATH}/tests/st/cpp:$LD_LIBRARY_PATH
