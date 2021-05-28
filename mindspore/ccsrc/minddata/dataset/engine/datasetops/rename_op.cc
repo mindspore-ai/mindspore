@@ -82,8 +82,7 @@ Status RenameOp::ComputeColMap() {
       std::string name = pair.first;
       int32_t id = pair.second;
       // find name
-      std::vector<std::string>::iterator it;
-      it = std::find(in_columns_.begin(), in_columns_.end(), name);
+      std::vector<std::string>::iterator it = std::find(in_columns_.begin(), in_columns_.end(), name);
       // for c input checks here we have to count the number of times we find the stuff in in_columns_
       // because we iterate over the mInputList n times
       if (it != in_columns_.end()) {

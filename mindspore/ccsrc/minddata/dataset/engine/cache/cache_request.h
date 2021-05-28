@@ -446,7 +446,7 @@ class AllocateSharedBlockRequest : public BaseRequest {
   /// the free block is located.
   /// \return
   int64_t GetAddr() {
-    auto addr = strtoll(reply_.result().data(), nullptr, 10);
+    auto addr = strtoll(reply_.result().data(), nullptr, kDecimal);
     return addr;
   }
 };

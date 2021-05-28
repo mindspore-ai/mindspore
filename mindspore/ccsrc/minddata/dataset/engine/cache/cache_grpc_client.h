@@ -59,6 +59,8 @@ class CacheClientGreeter : public Service {
   friend class CacheClient;
 
  public:
+  constexpr static int32_t kRequestTimeoutDeadlineInSec = 60;
+  constexpr static int32_t kWaitForNewEventDeadlineInSec = 1;
   explicit CacheClientGreeter(const std::string &hostname, int32_t port, int32_t num_connections);
   ~CacheClientGreeter();
 
@@ -85,6 +87,9 @@ class CacheClientGreeter : public Service {
   /// \brief This returns where we attach to the shared memory.
   /// \return Base address of the shared memory.
   const void *SharedMemoryBaseAddr() const { return mem_.SharedMemoryBaseAddr(); }
+
+  std::string GetHostname() const { return hostname_; }
+  int32_t GetPort() const { return port_; }
 
  private:
   std::shared_ptr<grpc::Channel> channel_;

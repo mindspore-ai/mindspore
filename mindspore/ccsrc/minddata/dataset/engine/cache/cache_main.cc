@@ -22,6 +22,7 @@
 #include <chrono>
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
+#include "minddata/dataset/include/dataset/constants.h"
 #include "mindspore/core/utils/log_adapter.h"
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
@@ -32,19 +33,30 @@ namespace ds = mindspore::dataset;
 ms::Status StartServer(int argc, char **argv) {
   ms::Status rc;
   ds::CacheServer::Builder builder;
-  if (argc != 8) {
+  const int32_t kTotalArgs = 8;
+  enum {
+    kProcessNameIdx = 0,
+    kRootDirArgIdx = 1,
+    kNumWorkersArgIdx = 2,
+    kPortArgIdx = 3,
+    kSharedMemorySizeArgIdx = 4,
+    kLogLevelArgIdx = 5,
+    kDemonizeArgIdx = 6,
+    kMemoryCapRatioArgIdx = 7
+  };
+  if (argc != kTotalArgs) {
     return ms::Status(ms::StatusCode::kMDSyntaxError);
   }
 
-  int32_t port = strtol(argv[3], nullptr, 10);
-  builder.SetRootDirectory(argv[1])
-    .SetNumWorkers(strtol(argv[2], nullptr, 10))
+  int32_t port = static_cast<int32_t>(strtol(argv[kPortArgIdx], nullptr, ds::kDecimal));
+  builder.SetRootDirectory(argv[kRootDirArgIdx])
+    .SetNumWorkers(static_cast<int32_t>(strtol(argv[kNumWorkersArgIdx], nullptr, ds::kDecimal)))
     .SetPort(port)
-    .SetSharedMemorySizeInGB(strtol(argv[4], nullptr, 10))
-    .SetLogLevel(strtol(argv[5], nullptr, 10))
-    .SetMemoryCapRatio(strtof(argv[7], nullptr));
+    .SetSharedMemorySizeInGB(static_cast<int32_t>(strtol(argv[kSharedMemorySizeArgIdx], nullptr, ds::kDecimal)))
+    .SetLogLevel(static_cast<int8_t>((strtol(argv[kLogLevelArgIdx], nullptr, ds::kDecimal))))
+    .SetMemoryCapRatio(strtof(argv[kMemoryCapRatioArgIdx], nullptr));
 
-  auto daemonize_string = argv[6];
+  auto daemonize_string = argv[kDemonizeArgIdx];
   bool daemonize = strcmp(daemonize_string, "true") == 0 || strcmp(daemonize_string, "TRUE") == 0 ||
                    strcmp(daemonize_string, "t") == 0 || strcmp(daemonize_string, "T") == 0;
 
@@ -68,8 +80,9 @@ ms::Status StartServer(int argc, char **argv) {
     if (rc.IsError()) {
       return rc;
     }
-    ms::g_ms_submodule_log_levels[SUBMODULE_ID] = strtol(argv[5], nullptr, 10);
-    google::InitGoogleLogging(argv[0]);
+    ms::g_ms_submodule_log_levels[SUBMODULE_ID] =
+      static_cast<int>(strtol(argv[kLogLevelArgIdx], nullptr, ds::kDecimal));
+    google::InitGoogleLogging(argv[kProcessNameIdx]);
 #undef google
 #endif
     rc = msg.Create();
@@ -94,9 +107,8 @@ ms::Status StartServer(int argc, char **argv) {
       }
       if (child_rc.IsError()) {
         return child_rc;
-      } else {
-        warning_string = child_rc.ToString();
       }
+      warning_string = child_rc.ToString();
       std::cout << "Cache server startup completed successfully!\n";
       std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
                 << ".\n";
@@ -116,9 +128,9 @@ ms::Status StartServer(int argc, char **argv) {
         std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
         return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
       }
-      close(0);
-      close(1);
-      close(2);
+      (void)close(STDIN_FILENO);
+      (void)close(STDOUT_FILENO);
+      (void)close(STDERR_FILENO);
     }
   }
 

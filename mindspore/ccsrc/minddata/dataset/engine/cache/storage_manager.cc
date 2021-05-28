@@ -55,7 +55,7 @@ Status StorageManager::AddOneContainer(int replaced_container_pos) {
 }
 
 Status StorageManager::DoServiceStart() {
-  containers_.reserve(1000);
+  containers_.reserve(kMaxNumContainers);
   writable_containers_pool_.reserve(pool_size_);
   if (root_.IsDirectory()) {
     // create multiple containers and store their index in a pool

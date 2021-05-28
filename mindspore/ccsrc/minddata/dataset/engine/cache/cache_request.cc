@@ -69,8 +69,7 @@ Status CacheRowRequest::SerializeCacheRowRequest(const CacheClient *cc, const Te
     WritableSlice all(p, sz_);
     auto offset = fbb->GetSize();
     ReadableSlice header(fbb->GetBufferPointer(), fbb->GetSize());
-    Status copy_rc;
-    copy_rc = WritableSlice::Copy(&all, header);
+    Status copy_rc = WritableSlice::Copy(&all, header);
     if (copy_rc.IsOk()) {
       for (const auto &ts : row) {
         WritableSlice row_data(all, offset, ts->SizeInBytes());
@@ -108,7 +107,7 @@ Status CacheRowRequest::SerializeCacheRowRequest(const CacheClient *cc, const Te
 
 Status CacheRowRequest::PostReply() {
   if (!reply_.result().empty()) {
-    row_id_from_server_ = strtoll(reply_.result().data(), nullptr, 10);
+    row_id_from_server_ = strtoll(reply_.result().data(), nullptr, kDecimal);
   }
   return Status::OK();
 }
@@ -116,11 +115,13 @@ Status CacheRowRequest::PostReply() {
 Status CacheRowRequest::Prepare() {
   if (BitTest(rq_.flag(), kDataIsInSharedMemory)) {
     // First one is cookie, followed by address and then size.
-    CHECK_FAIL_RETURN_UNEXPECTED(rq_.buf_data_size() == 3, "Incomplete rpc data");
+    constexpr int32_t kExpectedBufDataSize = 3;
+    CHECK_FAIL_RETURN_UNEXPECTED(rq_.buf_data_size() == kExpectedBufDataSize, "Incomplete rpc data");
   } else {
     // First one is cookie. 2nd one is the google flat buffers followed by a number of buffers.
     // But we are not going to decode them to verify.
-    CHECK_FAIL_RETURN_UNEXPECTED(rq_.buf_data_size() >= 3, "Incomplete rpc data");
+    constexpr int32_t kMinBufDataSize = 3;
+    CHECK_FAIL_RETURN_UNEXPECTED(rq_.buf_data_size() >= kMinBufDataSize, "Incomplete rpc data");
   }
   return Status::OK();
 }
@@ -161,7 +162,7 @@ Status BatchFetchRequest::RestoreRows(TensorTable *out, const void *baseAddr, in
   auto flag = reply_.flag();
   bool dataOnSharedMemory = support_local_bypass_ ? (BitTest(flag, kDataIsInSharedMemory)) : false;
   if (dataOnSharedMemory) {
-    auto addr = strtoll(reply_.result().data(), nullptr, 10);
+    auto addr = strtoll(reply_.result().data(), nullptr, kDecimal);
     ptr = reinterpret_cast<const char *>(reinterpret_cast<int64_t>(baseAddr) + addr);
     RETURN_UNEXPECTED_IF_NULL(out);
     *out_addr = addr;

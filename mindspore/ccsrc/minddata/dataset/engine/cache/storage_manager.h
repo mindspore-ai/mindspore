@@ -47,6 +47,7 @@ class StorageManager : public Service {
   using value_type = std::pair<int, std::pair<off_t, size_t>>;
   using storage_index = AutoIndexObj<value_type, std::allocator<value_type>, StorageBPlusTreeTraits>;
   using key_type = storage_index::key_type;
+  constexpr static int32_t kMaxNumContainers = 1000;
 
   explicit StorageManager(const Path &);
 
