@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.cell import Cell
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-from mindspore.context import ParallelMode
+from mindspore.context import ParallelMode, get_auto_parallel_context
+from mindspore.communication.management import get_group_size
 from mindspore import context
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 from src.config import params
@@ -59,7 +60,58 @@ def _clip_grad(clip_type, clip_value, grad):
         new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
-class openpose_loss(_Loss):
+class MyLoss(Cell):
+    """
+    Base class for other losses.
+    """
+    def __init__(self, reduction='mean'):
+        super(MyLoss, self).__init__()
+        if reduction is None:
+            reduction = 'none'
+
+        if reduction not in ('mean', 'sum', 'none'):
+            raise ValueError(f"reduction method for {reduction.lower()} is not supported")
+
+        self.average = True
+        self.reduce = True
+        if reduction == 'sum':
+            self.average = False
+        if reduction == 'none':
+            self.reduce = False
+
+        self.reduce_mean = P.ReduceMean()
+        self.reduce_sum = P.ReduceSum()
+        self.mul = P.Mul()
+        self.cast = P.Cast()
+
+    def get_axis(self, x):
+        shape = F.shape(x)
+        length = F.tuple_len(shape)
+        perm = F.make_range(0, length)
+        return perm
+
+    def get_loss(self, x, weights=1.0):
+        """
+        Computes the weighted loss
+        Args:
+            weights: Optional `Tensor` whose rank is either 0, or the same rank as inputs, and must be broadcastable to
+                inputs (i.e., all dimensions must be either `1`, or the same as the corresponding inputs dimension).
+        """
+        input_dtype = x.dtype
+        x = self.cast(x, mstype.float32)
+        weights = self.cast(weights, mstype.float32)
+        x = self.mul(weights, x)
+        if self.reduce and self.average:
+            x = self.reduce_mean(x, self.get_axis(x))
+        if self.reduce and not self.average:
+            x = self.reduce_sum(x, self.get_axis(x))
+        x = self.cast(x, input_dtype)
+        return x
+
+    def construct(self, base, target):
+        raise NotImplementedError
+
+class openpose_loss(MyLoss):
     def __init__(self):
         super(openpose_loss, self).__init__()
         self.expand_dims = P.ExpandDims()
@@ -130,12 +182,12 @@ class TrainOneStepWithClipGradientCell(nn.Cell):
         self.sens = sens
         self.reducer_flag = False
         self.grad_reducer = None
-        parallel_mode = _get_parallel_mode()
+        parallel_mode = get_auto_parallel_context("parallel_mode")
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
+            mean = get_auto_parallel_context("gradients_mean")
+            degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 
     def construct(self, *inputs):

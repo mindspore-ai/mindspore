@@ -271,13 +271,19 @@ def run_train():
         keep_checkpoint_max = config.max_ckpts
     config.logger.info('keep_checkpoint_max: %d', keep_checkpoint_max)
 
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=save_checkpoint_steps, keep_checkpoint_max=keep_checkpoint_max)
-    config.logger.info('max_epoch_train: %d', config.max_epoch)
-    ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=config.ckpt_path, prefix='{}'.format(config.local_rank))
+    callback_list = []
     config.epoch_cnt = 0
     progress_cb = ProgressMonitor(config)
+    callback_list.append(progress_cb)
+    if config.local_rank % 8 == 0:
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=save_checkpoint_steps,
+                                       keep_checkpoint_max=keep_checkpoint_max)
+        config.logger.info('max_epoch_train: %d', config.max_epoch)
+        ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=config.ckpt_path, prefix='{}'.format(config.local_rank))
+        callback_list.append(ckpt_cb)
+
     new_epoch_train = config.max_epoch * steps_per_epoch // config.log_interval
-    model.train(new_epoch_train, de_dataset, callbacks=[progress_cb, ckpt_cb], sink_size=config.log_interval)
+    model.train(new_epoch_train, de_dataset, callbacks=callback_list, sink_size=config.log_interval)
 
 
 if __name__ == "__main__":

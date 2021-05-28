@@ -19,10 +19,10 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.ops.operations import NPUGetFloatStatus, NPUAllocFloatStatus, NPUClearFloatStatus, ReduceSum, \
     LessEqual
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore import Tensor
-from mindspore.context import ParallelMode
+from mindspore.context import ParallelMode, get_auto_parallel_context
+from mindspore.communication.management import get_group_size
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -74,14 +74,14 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.reducer_flag = False
         self.less_equal = LessEqual()
         self.allreduce = P.AllReduce()
-        self.parallel_mode = _get_parallel_mode()
+        self.parallel_mode = get_auto_parallel_context("parallel_mode")
         self.grad_reducer = None
-        parallel_mode = _get_parallel_mode()
+        parallel_mode = self.parallel_mode
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
+            mean = get_auto_parallel_context("gradients_mean")
+            degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
 
