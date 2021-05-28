@@ -2894,6 +2894,9 @@ class _ToDevice:
         self._to_device.ContinueSend()
 
     def get_data_info(self):
+        """
+        Get type and shape of current batch.
+        """
         return self._to_device.GetDataInfo()
 
     def release(self):
