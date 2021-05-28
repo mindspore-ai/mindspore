@@ -131,12 +131,12 @@ void MinimumCPUKernel<T>::InitTensorBroadcastShape() {
   for (size_t i = 0; i < output_shape_.size(); i++) {
     broadcast_output_shape_[i] = output_shape_[i];
   }
-  int input_x_dim_offset = output_shape_.size() - input_x_shape_.size();
+  size_t input_x_dim_offset = output_shape_.size() - input_x_shape_.size();
   for (size_t j = 0; j < input_x_shape_.size(); j++) {
     broadcast_input_x_shape_[j + input_x_dim_offset] = input_x_shape_[j];
     input_x_num_ *= input_x_shape_[j];
   }
-  int input_y_dim_offset = output_shape_.size() - input_y_shape_.size();
+  size_t input_y_dim_offset = output_shape_.size() - input_y_shape_.size();
   for (size_t k = 0; k < input_y_shape_.size(); k++) {
     if (need_broadcast_) {
       broadcast_input_y_shape_[k + input_y_dim_offset] = input_y_shape_[k];
