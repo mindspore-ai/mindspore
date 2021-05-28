@@ -164,7 +164,6 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
 #endif
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
-  // 1024 is for the initial capacity of deque
   std::deque<AnfNodePtr> todo;
   todo.emplace_back(func_graph->output());
   bool changes = false;
@@ -205,7 +204,6 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
 #endif
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
-  // 1024 is for the initial capacity of deque
   std::deque<AnfNodePtr> todo;
   todo.emplace_back(root_node);
   bool changes = false;

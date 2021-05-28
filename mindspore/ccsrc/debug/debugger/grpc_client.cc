@@ -28,8 +28,6 @@ using debugger::Metadata;
 using debugger::TensorProto;
 using debugger::WatchpointHit;
 
-constexpr int CHUNK_SIZE = 1024 * 1024 * 3;
-
 namespace mindspore {
 GrpcClient::GrpcClient(const std::string &host, const std::string &port) : stub_(nullptr) { Init(host, port); }
 
@@ -71,10 +69,11 @@ EventReply GrpcClient::SendMetadata(const Metadata &metadata) {
 
 std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size) {
   std::vector<std::string> buf;
+  constexpr auto l_chunk_size = 1024 * 1024 * 3;
   int size_iter = 0;
   while (size_iter < graph_size) {
-    int chunk_size = CHUNK_SIZE;
-    if (graph_size - size_iter < CHUNK_SIZE) {
+    int chunk_size = l_chunk_size;
+    if (graph_size - size_iter < l_chunk_size) {
       chunk_size = graph_size - size_iter;
     }
     std::string buffer;
@@ -84,7 +83,7 @@ std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size
       MS_LOG(EXCEPTION) << "memcpy_s failed. errorno is: " << err;
     }
     buf.push_back(buffer);
-    size_iter += CHUNK_SIZE;
+    size_iter += l_chunk_size;
   }
   return buf;
 }

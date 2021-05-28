@@ -516,12 +516,14 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
     return nullptr;
   }
 
+  // one vararg + kwarg so the min param num is 2;
+  constexpr size_t min_param_num = 2;
   if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + 2) {
+    if (parameters_.size() < hyper_param_count_ + min_param_num) {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - 2];
+    return parameters_[parameters_.size() - hyper_param_count_ - min_param_num];
   }
 
   if (parameters_.size() < hyper_param_count_ + 1) {
@@ -536,12 +538,14 @@ std::string FuncGraph::GetVariableArgName() {
     return "";
   }
 
+  // one vararg + kwarg so the min param num is 2;
+  constexpr size_t min_param_num = 2;
   if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + 2) {
+    if (parameters_.size() < hyper_param_count_ + min_param_num) {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - 2]->cast<ParameterPtr>()->name();
+    return parameters_[parameters_.size() - hyper_param_count_ - min_param_num]->cast<ParameterPtr>()->name();
   }
 
   if (parameters_.size() < hyper_param_count_ + 1) {
