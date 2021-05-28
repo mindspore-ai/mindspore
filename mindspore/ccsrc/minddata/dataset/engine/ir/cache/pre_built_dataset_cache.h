@@ -21,37 +21,27 @@
 #include <utility>
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
-#include "minddata/dataset/engine/ir/cache/dataset_cache.h"
+#include "minddata/dataset/engine/ir/cache/dataset_cache_impl.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 
 namespace mindspore {
 namespace dataset {
 /// DatasetCache is the IR of CacheClient
-class PreBuiltDatasetCache : public DatasetCache {
+class PreBuiltDatasetCache : public DatasetCacheImpl {
  public:
   /// \brief Constructor
   /// \param cc a pre-built cache client
-  explicit PreBuiltDatasetCache(std::shared_ptr<CacheClient> cc) : cache_client_(std::move(cc)) {}
+  explicit PreBuiltDatasetCache(std::shared_ptr<CacheClient> cc)
+      : DatasetCacheImpl(cc->session_id(), cc->GetCacheMemSz(), cc->isSpill(), StringToChar(cc->GetHostname()),
+                         cc->GetPort(), cc->GetNumConnections(), cc->GetPrefetchSize()) {
+    cache_client_ = std::move(cc);
+  }
 
   ~PreBuiltDatasetCache() = default;
 
   /// Method to initialize the DatasetCache by creating an instance of a CacheClient
   /// \return Status Error code
   Status Build() override;
-
-  Status CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *const ds) override;
-
-  Status CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
-                             std::shared_ptr<SamplerObj> sampler) override;
-
-  Status CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
-
-  Status ValidateParams() override { return Status::OK(); }
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  std::shared_ptr<CacheClient> cache_client_;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -68,6 +68,7 @@ class CacheMergeOp : public ParallelOp {
     std::shared_ptr<CacheRowRequest> cleaner_copy_;
   };
 
+  constexpr static int kNumChildren = 2;        // CacheMergeOp has 2 children
   constexpr static int kCacheHitChildIdx = 0;   // Cache hit stream
   constexpr static int kCacheMissChildIdx = 1;  // Cache miss stream
 

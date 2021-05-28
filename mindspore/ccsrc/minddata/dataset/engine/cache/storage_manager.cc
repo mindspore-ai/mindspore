@@ -49,7 +49,7 @@ Status StorageManager::AddOneContainer() {
 }
 
 Status StorageManager::DoServiceStart() {
-  containers_.reserve(1000);
+  containers_.reserve(kMaxNumContainers);
   if (root_.IsDirectory()) {
     RETURN_IF_NOT_OK(AddOneContainer());
   } else {

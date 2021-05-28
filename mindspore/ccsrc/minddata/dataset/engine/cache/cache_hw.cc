@@ -101,7 +101,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
     auto p = it->next();
     const std::string entry = p.Basename();
     const char *name = entry.data();
-    if (strncmp(name, kNodeName, 4) == 0 && isdigit_string(name + strlen(kNodeName))) {
+    if (strncmp(name, kNodeName, strlen(kNodeName)) == 0 && isdigit_string(name + strlen(kNodeName))) {
       numa_nodes_.insert(p);
     }
   }
@@ -116,7 +116,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
   auto r = std::regex("[0-9]*-[0-9]*");
   for (Path p : numa_nodes_) {
     auto node_dir = p.Basename();
-    numa_id_t numa_node = strtol(node_dir.data() + strlen(kNodeName), nullptr, 10);
+    numa_id_t numa_node = strtol(node_dir.data() + strlen(kNodeName), nullptr, kDecimal);
     Path f = p / kCpuList;
     std::ifstream fs(f.toString());
     CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.toString());
@@ -134,8 +134,8 @@ Status CacheServerHW::GetNumaNodeInfo() {
         CHECK_FAIL_RETURN_UNEXPECTED(pos != std::string::npos, "Failed to parse numa node file");
         std::string min = match.substr(0, pos);
         std::string max = match.substr(pos + 1);
-        cpu_id_t cpu_min = strtol(min.data(), nullptr, 10);
-        cpu_id_t cpu_max = strtol(max.data(), nullptr, 10);
+        cpu_id_t cpu_min = strtol(min.data(), nullptr, kDecimal);
+        cpu_id_t cpu_max = strtol(max.data(), nullptr, kDecimal);
         MS_LOG(DEBUG) << "Numa node " << numa_node << " CPU(s) : " << cpu_min << "-" << cpu_max;
         for (int i = cpu_min; i <= cpu_max; ++i) {
           CPU_SET(i, &cpuset);

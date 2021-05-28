@@ -26,7 +26,7 @@ CacheClientGreeter::CacheClientGreeter(const std::string &hostname, int32_t port
   // message limit is 4MB which is not big enough.
   args.SetMaxReceiveMessageSize(-1);
   MS_LOG(INFO) << "Hostname: " << hostname_ << ", port: " << std::to_string(port_);
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   // Try connect locally to the unix_socket first as the first preference
   // Need to resolve hostname to ip address rather than to do a string compare
   if (hostname == "127.0.0.1") {
@@ -36,7 +36,7 @@ CacheClientGreeter::CacheClientGreeter(const std::string &hostname, int32_t port
 #endif
     std::string target = hostname + ":" + std::to_string(port);
     channel_ = grpc::CreateCustomChannel(target, grpc::InsecureChannelCredentials(), args);
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   }
 #endif
   stub_ = CacheServerGreeter::NewStub(channel_);
@@ -44,7 +44,7 @@ CacheClientGreeter::CacheClientGreeter(const std::string &hostname, int32_t port
 
 Status CacheClientGreeter::AttachToSharedMemory(bool *local_bypass) {
   *local_bypass = false;
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   SharedMemory::shm_key_t shm_key;
   RETURN_IF_NOT_OK(PortToFtok(port_, &shm_key));
   // Attach to the shared memory
@@ -85,7 +85,7 @@ Status CacheClientGreeter::HandleRequest(std::shared_ptr<BaseRequest> rq) {
   auto seqNo = request_cnt_.fetch_add(1);
   auto tag = std::make_unique<CacheClientRequestTag>(std::move(rq), seqNo);
   // One minute timeout
-  auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(60);
+  auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kRequestTimeoutDeadline);
   tag->ctx_.set_deadline(deadline);
   tag->rpc_ = stub_->PrepareAsyncCacheServerRequest(&tag->ctx_, tag->base_rq_->rq_, &cq_);
   tag->rpc_->StartCall();
@@ -108,7 +108,7 @@ Status CacheClientGreeter::WorkerEntry() {
   do {
     bool success;
     void *tag;
-    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kWaitForNewEventDeadline);
     // Set a timeout for one second. Check for interrupt if we need to do early exit.
     auto r = cq_.AsyncNext(&tag, &success, deadline);
     if (r == grpc_impl::CompletionQueue::NextStatus::GOT_EVENT) {

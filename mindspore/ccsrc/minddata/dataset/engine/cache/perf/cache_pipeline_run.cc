@@ -15,10 +15,10 @@
 */
 
 #include "minddata/dataset/engine/cache/perf/cache_pipeline_run.h"
-#include <string.h>
 #include <sys/types.h>
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 #include "minddata/dataset/core/tensor.h"
@@ -182,7 +182,7 @@ Status CachePipelineRun::Run() {
   }
 
   // Log a warning level message so we can see it in the log file when it starts.
-  MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " successfully creating cache service." << std::endl;
+  MS_LOG(WARNING) << "Pipeline number " << (my_pipeline_ + 1) << " successfully creating cache service." << std::endl;
 
   // Spawn a thread to listen to the parent process
   RETURN_IF_NOT_OK(vg_.CreateAsyncTask("Queue listener", std::bind(&CachePipelineRun::ListenToParent, this)));
@@ -213,7 +213,7 @@ Status CachePipelineRun::RunFirstEpoch() {
   if (my_pipeline_ + 1 == num_pipelines_) {
     end_row_ = num_rows_ - 1;
   }
-  std::cout << "Pipeline number " << my_pipeline_ + 1 << " row id range: [" << start_row_ << "," << end_row_ << "]"
+  std::cout << "Pipeline number " << (my_pipeline_ + 1) << " row id range: [" << start_row_ << "," << end_row_ << "]"
             << std::endl;
 
   // Spawn the worker threads.
@@ -314,7 +314,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
       auto end_tick = std::chrono::steady_clock::now();
       if (rc.IsError()) {
         if (rc == StatusCode::kMDOutOfMemory || rc == StatusCode::kMDNoSpace) {
-          MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " worker id " << worker_id << ": "
+          MS_LOG(WARNING) << "Pipeline number " << (my_pipeline_ + 1) << " worker id " << worker_id << ": "
                           << rc.ToString();
           resource_err = true;
           cc_->ServerRunningOutOfResources();

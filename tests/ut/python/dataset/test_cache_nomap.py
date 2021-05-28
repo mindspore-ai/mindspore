@@ -153,7 +153,7 @@ def test_cache_nomap_basic3():
     assert num_iter == 12
 
     # Contact the server to get the statistics
-    stat = some_cache.GetStat()
+    stat = some_cache.get_stat()
     cache_sz = stat.avg_cache_sz
     num_mem_cached = stat.num_mem_cached
     num_disk_cached = stat.num_disk_cached
@@ -366,7 +366,7 @@ def test_cache_nomap_basic8():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic9():
     """
-    Testing the GetStat interface for getting some info from server, but this should fail if the cache is not created
+    Testing the get_stat interface for getting some info from server, but this should fail if the cache is not created
     in a pipeline.
     """
 
@@ -381,7 +381,7 @@ def test_cache_nomap_basic9():
     # Contact the server to get the statistics, this should fail because we have not used this cache in any pipeline
     # so there will not be any cache to get stats on.
     with pytest.raises(RuntimeError) as e:
-        stat = some_cache.GetStat()
+        stat = some_cache.get_stat()
         cache_sz = stat.avg_cache_sz
         logger.info("Average row cache size: {}".format(cache_sz))
     assert "Unexpected error" in str(e.value)
@@ -1239,7 +1239,7 @@ def test_cache_nomap_interrupt_and_rerun():
         assert num_iter == 10000
         epoch_count += 1
 
-    cache_stat = some_cache.GetStat()
+    cache_stat = some_cache.get_stat()
     assert cache_stat.num_mem_cached == 10000
 
     logger.info("test_cache_nomap_interrupt_and_rerun Ended.\n")
@@ -2349,7 +2349,7 @@ def test_cache_nomap_all_rows_cached():
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == num_total_rows
 
-    cache_stat = some_cache.GetStat()
+    cache_stat = some_cache.get_stat()
     assert cache_stat.num_mem_cached == num_total_rows
 
     logger.info("test_cache_nomap_all_rows_cached Ended.\n")

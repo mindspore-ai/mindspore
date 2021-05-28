@@ -30,5 +30,4 @@ def main():
     cache_server = os.path.join(cache_admin_dir, "cache_server")
     os.chmod(cache_admin, stat.S_IRWXU)
     os.chmod(cache_server, stat.S_IRWXU)
-    cmd = cache_admin + " " + " ".join(sys.argv[1:])
-    sys.exit(subprocess.call(cmd, shell=True))
+    sys.exit(subprocess.call([cache_admin] + sys.argv[1:], shell=False))

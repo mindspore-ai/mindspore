@@ -74,7 +74,7 @@ Status CacheServer::DoServiceStart() {
   } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());
   }
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   RETURN_IF_NOT_OK(CachedSharedMemory::CreateArena(&shm_, port_, shared_memory_sz_in_gb_));
   // Bring up a thread to monitor the unix socket in case it is removed. But it must be done
   // after we have created the unix socket.
@@ -173,7 +173,7 @@ Status CacheServer::GlobalMemoryCheck(uint64_t cache_mem_sz) {
     } else if (req_mem == 0) {
       // This cache request is specifying unlimited memory up to the memory cap. If we have consumed more than
       // 85% of our limit, fail this request.
-      if (static_cast<float>(max_avail) / static_cast<float>(avail_mem) <= 0.15) {
+      if (static_cast<float>(max_avail) / static_cast<float>(avail_mem) <= kMemoryBottomLineForNewService) {
         return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Please destroy some sessions");
       }
     }
@@ -331,14 +331,17 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   CacheService *cs = GetService(connection_id);
   auto *base = SharedMemoryBaseAddr();
   // Ensure we got 3 pieces of data coming in
-  CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data_size() >= 3, "Incomplete data");
+  constexpr int32_t kMinBufDataSize = 3;
+  CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data_size() >= kMinBufDataSize, "Incomplete data");
+  // First one is cookie, followed by data address and then size.
+  enum { kCookieIdx = 0, kAddrIdx = 1, kSizeIdx = 2 };
   // First piece of data is the cookie and is required
-  auto &cookie = rq->buf_data(0);
+  auto &cookie = rq->buf_data(kCookieIdx);
   // Second piece of data is the address where we can find the serialized data
-  auto addr = strtoll(rq->buf_data(1).data(), nullptr, 10);
+  auto addr = strtoll(rq->buf_data(kAddrIdx).data(), nullptr, kDecimal);
   auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
   // Third piece of data is the size of the serialized data that we need to transfer
-  auto sz = strtoll(rq->buf_data(2).data(), nullptr, 10);
+  auto sz = strtoll(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal);
   // Successful or not, we need to free the memory on exit.
   Status rc;
   if (cs == nullptr) {
@@ -380,7 +383,9 @@ Status CacheServer::InternalCacheRow(CacheRequest *rq, CacheReply *reply) {
     // This is an internal request and is not tied to rpc. But need to post because there
     // is a thread waiting on the completion of this request.
     try {
-      int64_t addr = strtol(rq->buf_data(3).data(), nullptr, 10);
+      constexpr int32_t kBatchWaitIdx = 3;
+      // Fourth piece of the data is the address of the BatchWait ptr
+      int64_t addr = strtol(rq->buf_data(kBatchWaitIdx).data(), nullptr, kDecimal);
       auto *bw = reinterpret_cast<BatchWait *>(addr);
       // Check if the object is still around.
       auto bwObj = bw->GetBatchWait();
@@ -405,11 +410,13 @@ Status CacheServer::InternalFetchRow(CacheRequest *rq) {
     std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
   }
-  rc = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq->buf_data(0).data()));
+  // First piece is a flatbuffer containing row fetch information, second piece is the address of the BatchWait ptr
+  enum { kFetchRowMsgIdx = 0, kBatchWaitIdx = 1 };
+  rc = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq->buf_data(kFetchRowMsgIdx).data()));
   // This is an internal request and is not tied to rpc. But need to post because there
   // is a thread waiting on the completion of this request.
   try {
-    int64_t addr = strtol(rq->buf_data(1).data(), nullptr, 10);
+    int64_t addr = strtol(rq->buf_data(kBatchWaitIdx).data(), nullptr, kDecimal);
     auto *bw = reinterpret_cast<BatchWait *>(addr);
     // Check if the object is still around.
     auto bwObj = bw->GetBatchWait();
@@ -747,17 +754,20 @@ Status CacheServer::ConnectReset(CacheRequest *rq) {
 }
 
 Status CacheServer::BatchCacheRows(CacheRequest *rq) {
-  CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data().size() == 3, "Expect three pieces of data");
+  // First one is cookie, followed by address and then size.
+  enum { kCookieIdx = 0, kAddrIdx = 1, kSizeIdx = 2 };
+  constexpr int32_t kExpectedBufDataSize = 3;
+  CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data().size() == kExpectedBufDataSize, "Expect three pieces of data");
   try {
-    auto &cookie = rq->buf_data(0);
+    auto &cookie = rq->buf_data(kCookieIdx);
     auto connection_id = rq->connection_id();
     auto client_id = rq->client_id();
     int64_t offset_addr;
     int32_t num_elem;
     auto *base = SharedMemoryBaseAddr();
-    offset_addr = strtoll(rq->buf_data(1).data(), nullptr, 10);
+    offset_addr = strtoll(rq->buf_data(kAddrIdx).data(), nullptr, kDecimal);
     auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
-    num_elem = strtol(rq->buf_data(2).data(), nullptr, 10);
+    num_elem = strtol(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal);
     auto batch_wait = std::make_shared<BatchWait>(num_elem);
     // Get a set of free request and push into the queues.
     for (auto i = 0; i < num_elem; ++i) {
@@ -1105,7 +1115,7 @@ Status CacheServer::AllocateSharedMemory(CacheRequest *rq, CacheReply *reply) {
   auto client_id = rq->client_id();
   CHECK_FAIL_RETURN_UNEXPECTED(client_id != -1, "Client ID not set");
   try {
-    auto requestedSz = strtoll(rq->buf_data(0).data(), nullptr, 10);
+    auto requestedSz = strtoll(rq->buf_data(0).data(), nullptr, kDecimal);
     void *p = nullptr;
     RETURN_IF_NOT_OK(AllocateSharedMemory(client_id, requestedSz, &p));
     auto *base = SharedMemoryBaseAddr();
@@ -1124,7 +1134,7 @@ Status CacheServer::FreeSharedMemory(CacheRequest *rq) {
   CHECK_FAIL_RETURN_UNEXPECTED(client_id != -1, "Client ID not set");
   auto *base = SharedMemoryBaseAddr();
   try {
-    auto addr = strtoll(rq->buf_data(0).data(), nullptr, 10);
+    auto addr = strtoll(rq->buf_data(0).data(), nullptr, kDecimal);
     auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
     DeallocateSharedMemory(client_id, p);
   } catch (const std::exception &e) {
@@ -1290,11 +1300,11 @@ int32_t CacheServer::Builder::AdjustNumWorkers(int32_t num_workers) {
 
 CacheServer::Builder::Builder()
     : top_(""),
-      num_workers_(std::thread::hardware_concurrency() / 2),
-      port_(50052),
+      num_workers_(kDefaultNumWorkers),
+      port_(kCfgDefaultCachePort),
       shared_memory_sz_in_gb_(kDefaultSharedMemorySize),
       memory_cap_ratio_(kDefaultMemoryCapRatio),
-      log_level_(1) {
+      log_level_(kDefaultLogLevel) {
   if (num_workers_ == 0) {
     num_workers_ = 1;
   }

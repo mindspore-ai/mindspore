@@ -35,18 +35,15 @@
 
 namespace mindspore {
 namespace dataset {
-const int32_t CacheAdminArgHandler::kDefaultNumWorkers = std::thread::hardware_concurrency() > 2
-                                                           ? std::thread::hardware_concurrency() / 2
-                                                           : 1;
 const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
 
 CacheAdminArgHandler::CacheAdminArgHandler()
     : port_(kCfgDefaultCachePort),
       session_id_(0),
       num_workers_(kDefaultNumWorkers),
-      shm_mem_sz_(kDefaultSharedMemorySizeInGB),
+      shm_mem_sz_(kDefaultSharedMemorySize),
       log_level_(kDefaultLogLevel),
-      memory_cap_ratio_(kMemoryCapRatio),
+      memory_cap_ratio_(kDefaultMemoryCapRatio),
       hostname_(kCfgDefaultCacheHost),
       spill_dir_(""),
       command_id_(CommandId::kCmdUnknown) {
@@ -57,7 +54,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
   }
   if (env_cache_port != nullptr) {
     char *end = nullptr;
-    port_ = strtol(env_cache_port, &end, 10);
+    port_ = strtol(env_cache_port, &end, kDecimal);
     if (*end != '\0') {
       std::cerr << "Cache port from env variable MS_CACHE_PORT is invalid\n";
       port_ = 0;  // cause the port range validation to generate an error during the validation checks
@@ -66,7 +63,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
   const char *env_log_level = std::getenv("GLOG_v");
   if (env_log_level != nullptr) {
     char *end = nullptr;
-    log_level_ = strtol(env_log_level, &end, 10);
+    log_level_ = strtol(env_log_level, &end, kDecimal);
     if (*end != '\0') {
       std::cerr << "Log level from env variable GLOG_v is invalid\n";
       log_level_ = -1;  // cause the log level range validation to generate an error during the validation checks
@@ -338,15 +335,17 @@ Status CacheAdminArgHandler::Validate() {
   }
 
   // Additional checks here
-  auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), 100);
+  auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), kMaxNumWorkers);
   if (used_args_[ArgValue::kArgNumWorkers] && (num_workers_ < 1 || num_workers_ > max_num_workers))
     // Check the value of num_workers only if it's provided by users.
     return Status(StatusCode::kMDSyntaxError,
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
-  if (log_level_ < 0 || log_level_ > 4) return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
+  if (log_level_ < MsLogLevel::DEBUG || log_level_ > MsLogLevel::EXCEPTION)
+    return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
   if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1)
     return Status(StatusCode::kMDSyntaxError, "Memory cap ratio should be positive and no greater than 1");
-  if (port_ < 1025 || port_ > 65535) return Status(StatusCode::kMDSyntaxError, "Port must be in range (1025..65535).");
+  if (port_ < kMinLegalPort || port_ > kMaxLegalPort)
+    return Status(StatusCode::kMDSyntaxError, "Port must be in range (1025..65535).");
 
   return Status::OK();
 }
@@ -500,7 +499,7 @@ Status CacheAdminArgHandler::StopServer(CommandId command_id) {
   // The server will send a message back and remove the queue and we will then wake up. But on the safe
   // side, we will also set up an alarm and kill this process if we hang on
   // the message queue.
-  alarm(60);
+  alarm(kAlarmDeadline);
   Status dummy_rc;
   (void)msg.ReceiveStatus(&dummy_rc);
   std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
@@ -537,8 +536,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   }
 
   // fork the child process to become the daemon
-  pid_t pid;
-  pid = fork();
+  pid_t pid = fork();
   // failed to fork
   if (pid < 0) {
     std::string err_msg = "Failed to fork process for cache server: " + std::to_string(errno);
@@ -546,7 +544,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   } else if (pid > 0) {
     // As a parent, we close the write end. We only listen.
     close(fd[1]);
-    dup2(fd[0], 0);
+    dup2(fd[0], STDIN_FILENO);
     close(fd[0]);
     int status;
     if (waitpid(pid, &status, 0) == -1) {
@@ -575,9 +573,9 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
     // Child here ...
     // Close all stdin, redirect stdout and stderr to the write end of the pipe.
     close(fd[0]);
-    dup2(fd[1], 1);
-    dup2(fd[1], 2);
-    close(0);
+    dup2(fd[1], STDOUT_FILENO);
+    dup2(fd[1], STDERR_FILENO);
+    close(STDIN_FILENO);
     close(fd[1]);
     // exec the cache server binary in this process
     // If the user did not provide the value of num_workers, we pass -1 to cache server to allow it assign the default.
