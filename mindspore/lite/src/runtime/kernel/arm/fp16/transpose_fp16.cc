@@ -57,9 +57,30 @@ int TransposeFp16CPUKernel::Run() {
     memcpy(out_data_fp16_, in_data_fp16_, in_tensor->ElementsNum() * sizeof(float16_t));
     return RET_OK;
   }
+  int dims = out_tensor->shape().size();
+  if (dims > DIMENSION_6D) {
+    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
+    if (dim_size_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
+    if (position_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      context_->allocator->Free(dim_size_);
+      dim_size_ = nullptr;
+      return RET_ERROR;
+    }
+  }
 
   MS_ASSERT(out_shape_);
-  auto ret = Fp16DoTranspose(in_data_fp16_, out_data_fp16_, out_shape_, param);
+  auto ret = Fp16DoTranspose(in_data_fp16_, out_data_fp16_, out_shape_, param, dim_size_, position_);
+  if (dims > DIMENSION_6D) {
+    context_->allocator->Free(dim_size_);
+    context_->allocator->Free(position_);
+    dim_size_ = nullptr;
+    position_ = nullptr;
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose run failed";
     return RET_ERROR;
