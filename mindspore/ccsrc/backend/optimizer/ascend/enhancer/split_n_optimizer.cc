@@ -108,7 +108,7 @@ bool InputCheck(const AnfNodePtr &node) {
         MS_LOG(INFO) << "Data->TransData->split, can not optimizer.";
         return false;
       }
-      if (in_node_name == prim::kPrimDepend->name()) {
+      if (in_node_name == prim::kPrimDepend->name() || in_node_name == prim::kPrimLoad->name()) {
         return false;
       }
       if ((AnfAlgo::HasNodeAttr("non_task", in_cnode) && AnfAlgo::GetNodeAttr<bool>(in_node, "non_task")) ||

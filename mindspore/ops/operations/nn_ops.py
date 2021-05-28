@@ -7736,18 +7736,20 @@ class AvgPool3D(Primitive):
             is an int number that represents depth, height and width are both kernel_size, or a tuple
             of three int numbers that represent depth, height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same", "valid", "pad", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
-              Otherwise, the last extra padding will be done from the bottom and the right side.
+            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
+              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+              If this mode is set, `pad` must be 0.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
-              will be returned without padding. Extra pixels will be discarded.
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `pad`
+              must be 0.
 
             - pad: Implicit paddings on both sides of the input in depth, height, width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
@@ -7778,7 +7780,7 @@ class AvgPool3D(Primitive):
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If element of `pad` is less than 0.
-        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to 0 or (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
@@ -7804,9 +7806,12 @@ class AvgPool3D(Primitive):
         self.add_prim_attr('strides', self.strides)
         if isinstance(pad, int):
             pad = (pad,) * 6
-        validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        if len(pad) != 6:
+            raise ValueError(f"For `AvgPool3D` attr 'pad' should be an positive int number or a tuple of "
+                             f"six positive int numbers, but got `{len(pad)}`.")
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME', 'PAD'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode)
 
@@ -7814,7 +7819,7 @@ class AvgPool3D(Primitive):
             raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
         if self.pad_mode == 'PAD':
             for item in pad:
-                validator.check_non_negative_int(item, 'pad item', self.name)
+                validator.check_non_negative_int(item, 'pad or item of pad', self.name)
         self.ceil_mode = validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
         self.count_include_pad = validator.check_value_type('count_include_pad', count_include_pad, bool, self.name)
         self.divisor_override = validator.check_non_negative_int(divisor_override, 'divisor_override', self.name)

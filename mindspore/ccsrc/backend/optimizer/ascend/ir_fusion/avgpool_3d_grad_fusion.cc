@@ -248,6 +248,8 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   new_3d_grad->set_scope(avg_pool_3d_grad_node->scope());
   new_3d_grad->set_abstract(avg_pool_3d_grad_node->abstract());
   AnfAlgo::CopyNodeAttrs(avg_pool_3d_grad_node, new_3d_grad);
+  AnfAlgo::SetNodeAttr("kernel_size", MakeValue(std::vector<int64_t>{kh, kw, kd}), new_3d_grad);
+  AnfAlgo::SetNodeAttr("strides", MakeValue(std::vector<int64_t>{strides[1], strides[2], strides[0]}), new_3d_grad);
   return new_3d_grad;
 }
 }  // namespace opt
