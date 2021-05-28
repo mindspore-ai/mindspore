@@ -269,12 +269,14 @@ class BertTrainOneStepCell(nn.TrainOneStepCell):
         network (Cell): The training network. Note that loss function should have been added.
         optimizer (Optimizer): Optimizer for updating the weights.
         sens (Number): The adjust parameter. Default: 1.0.
+        enable_clip_grad (boolean): If True, clip gradients in BertTrainOneStepCell. Default: False.
     """
 
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer, sens=1.0, enable_clip_grad=False):
         super(BertTrainOneStepCell, self).__init__(network, optimizer, sens)
         self.cast = P.Cast()
         self.hyper_map = C.HyperMap()
+        self.enable_clip_grad = enable_clip_grad
 
     def set_sens(self, value):
         self.sens = value
@@ -306,7 +308,8 @@ class BertTrainOneStepCell(nn.TrainOneStepCell):
                                                  masked_lm_weights,
                                                  self.cast(F.tuple_to_array((self.sens,)),
                                                            mstype.float32))
-        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        if self.enable_clip_grad:
+            grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         grads = self.grad_reducer(grads)
         succ = self.optimizer(grads)
         return F.depend(loss, succ)

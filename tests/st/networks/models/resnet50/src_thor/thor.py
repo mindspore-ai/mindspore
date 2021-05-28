@@ -24,7 +24,7 @@ from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
 from mindspore import context
 from mindspore.context import ParallelMode
-from mindspore.nn.layer import Dense_Thor, Conv2d_Thor, Embedding_Thor
+from mindspore.nn.layer import DenseThor, Conv2dThor, EmbeddingThor
 from mindspore.nn.wrap import DistributedGradReducer
 from mindspore.train.train_thor.convert_utils import ConvertNetUntils
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
@@ -106,11 +106,11 @@ def find_net_layertype_recur(net, layertype_map):
         subcell = cells[name]
         if subcell == net:
             continue
-        elif isinstance(subcell, Conv2d_Thor):
+        elif isinstance(subcell, Conv2dThor):
             layertype_map.append(Conv)
-        elif isinstance(subcell, Dense_Thor):
+        elif isinstance(subcell, DenseThor):
             layertype_map.append(FC)
-        elif isinstance(subcell, Embedding_Thor):
+        elif isinstance(subcell, EmbeddingThor):
             layertype_map.append(Embedding)
         elif isinstance(subcell, nn.LayerNorm):
             layertype_map.append(LayerNorm)
@@ -168,10 +168,10 @@ class THOR_Ascend(Optimizer):
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum()
         self.net = net
-        self.matrix_A_cov = ParameterTuple(filter(lambda x: 'matrix_A' in x.name, net.get_parameters()))
-        self.matrix_G_cov = ParameterTuple(filter(lambda x: 'matrix_G' in x.name, net.get_parameters()))
-        self.A_normalizer = ParameterTuple(filter(lambda x: 'A_normalizer' in x.name, net.get_parameters()))
-        self.G_normalizer = ParameterTuple(filter(lambda x: 'G_normalizer' in x.name, net.get_parameters()))
+        self.matrix_A_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
+        self.matrix_G_cov = ParameterTuple(filter(lambda x: 'matrix_g' in x.name, net.get_parameters()))
+        self.A_normalizer = ParameterTuple(filter(lambda x: 'a_normalizer' in x.name, net.get_parameters()))
+        self.G_normalizer = ParameterTuple(filter(lambda x: 'g_normalizer' in x.name, net.get_parameters()))
         self.cube_matmul_left = P.CusMatMulCubeFraczLeftCast()
         self.cube_matmul_left_fc = P.CusMatMulCubeDenseLeft()
         self.cube_matmul_right_fc = P.CusMatMulCubeDenseRight()
@@ -188,7 +188,7 @@ class THOR_Ascend(Optimizer):
         self.diag_block_dim = 128
         self.matrix_A = ()
         self.matrix_G = ()
-        print("matrix_A_cov len is", len(self.matrix_A_cov))
+        print("matrix_a_cov len is", len(self.matrix_A_cov))
         self.thor_layer_count = 0
         self.conv_layer_count = 0
         self.weight_fim_idx_map = ()

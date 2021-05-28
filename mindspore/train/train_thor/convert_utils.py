@@ -43,22 +43,22 @@ class ConvertNetUntils():
             if act_name == "fastgelu":
                 act_name = "fast_gelu"
         if subcell.out_channels == 1001:
-            new_subcell = nn.Dense_Thor(in_channels=subcell.in_channels,
-                                        out_channels=subcell.out_channels,
-                                        weight_init=weight,
-                                        has_bias=subcell.has_bias,
-                                        bias_init='zeros',
-                                        activation=act_name)
+            new_subcell = nn.DenseThor(in_channels=subcell.in_channels,
+                                       out_channels=subcell.out_channels,
+                                       weight_init=weight,
+                                       has_bias=subcell.has_bias,
+                                       bias_init='zeros',
+                                       activation=act_name)
         else:
             compute_type = mstype.float16
             if context.get_context("device_target") == "GPU":
                 compute_type = mstype.float32
-            new_subcell = nn.Dense_Thor(in_channels=subcell.in_channels,
-                                        out_channels=subcell.out_channels,
-                                        weight_init=weight,
-                                        has_bias=subcell.has_bias,
-                                        bias_init='zeros',
-                                        activation=act_name).to_float(compute_type)
+            new_subcell = nn.DenseThor(in_channels=subcell.in_channels,
+                                       out_channels=subcell.out_channels,
+                                       weight_init=weight,
+                                       has_bias=subcell.has_bias,
+                                       bias_init='zeros',
+                                       activation=act_name).to_float(compute_type)
 
         if subcell.has_bias:
             new_subcell.bias = subcell.bias
@@ -69,9 +69,9 @@ class ConvertNetUntils():
         """
         convert embedding cell to second_order cell
         """
-        new_subcell = nn.Embedding_Thor(vocab_size=subcell.vocab_size,
-                                        embedding_size=subcell.embedding_size,
-                                        use_one_hot=False)
+        new_subcell = nn.EmbeddingThor(vocab_size=subcell.vocab_size,
+                                       embedding_size=subcell.embedding_size,
+                                       use_one_hot=False)
         new_subcell.embedding_table = subcell.embedding_table
         return new_subcell
 
@@ -88,9 +88,9 @@ class ConvertNetUntils():
         pad_mode = subcell.pad_mode
         has_bias = subcell.has_bias
         weight = subcell.weight
-        new_subcell = nn.Conv2d_Thor(in_channel, out_channel,
-                                     kernel_size=kernel_size, stride=stride, padding=padding, pad_mode=pad_mode,
-                                     has_bias=has_bias, weight_init=weight)
+        new_subcell = nn.Conv2dThor(in_channel, out_channel,
+                                    kernel_size=kernel_size, stride=stride, padding=padding, pad_mode=pad_mode,
+                                    has_bias=has_bias, weight_init=weight)
         return new_subcell
 
 
@@ -104,7 +104,7 @@ class ConvertNetUntils():
             subcell = cells[name]
             if subcell == net:
                 continue
-            elif isinstance(subcell, (nn.Dense_Thor, nn.Conv2d_Thor, nn.Embedding_Thor)):
+            elif isinstance(subcell, (nn.DenseThor, nn.Conv2dThor, nn.EmbeddingThor)):
                 continue
             elif isinstance(subcell, (nn.Conv2dTranspose, nn.Conv1d, nn.Conv1dTranspose, nn.BatchNorm1d, nn.GroupNorm,
                                       nn.GlobalBatchNorm, nn.LayerNorm, nn.BatchNorm2d, nn.MaxPool2d)):
@@ -113,7 +113,7 @@ class ConvertNetUntils():
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_method_map[type(subcell)](subcell)
                 print("subcell name: ", name, "prefix is", prefix, flush=True)
-                if isinstance(new_subcell, (nn.Dense_Thor, nn.Embedding_Thor, nn.Conv2d_Thor)):
+                if isinstance(new_subcell, (nn.DenseThor, nn.EmbeddingThor, nn.Conv2dThor)):
                     print("convert to thor layer success.", flush=True)
                 new_subcell.update_parameters_name(prefix + '.')
                 net.insert_child_to_cell(name, new_subcell)
@@ -141,19 +141,19 @@ class ConvertModelUtils():
     """
 
     def convert_to_thor_model(self, model, network, loss_fn=None, optimizer=None, metrics=None, amp_level="O0",
-                              loss_scale_manager=None, keep_batchnorm_fp32=False, frequency=834):
+                              loss_scale_manager=None, keep_batchnorm_fp32=False):
 
         """
         api for convert model to thor model
         """
         optim_name = type(optimizer).__name__
-        if optim_name in ("THOR_Ascend", "THOR_GPU"):
-            from .model_thor import Model_Thor
+        if optim_name in ("ThorAscend", "ThorGpu"):
+            from .model_thor import ModelThor
             if isinstance(network, nn.TrainOneStepCell):
-                model = Model_Thor(network=network, frequency=frequency)
+                model = ModelThor(network=network)
             else:
-                model = Model_Thor(network=network, loss_fn=loss_fn, optimizer=optimizer, amp_level=amp_level,
-                                   loss_scale_manager=loss_scale_manager,
-                                   keep_batchnorm_fp32=keep_batchnorm_fp32, metrics=metrics, frequency=frequency)
+                model = ModelThor(network=network, loss_fn=loss_fn, optimizer=optimizer, amp_level=amp_level,
+                                  loss_scale_manager=loss_scale_manager,
+                                  keep_batchnorm_fp32=keep_batchnorm_fp32, metrics=metrics)
 
         return model
