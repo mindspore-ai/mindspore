@@ -174,24 +174,29 @@ void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, int *strid
 }
 
 void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int dims) {
-  for (size_t idx = 0; idx < (*out_strides) * output_shape[0]; ++idx) {
+                       const int *perm, const int *output_shape, int dims, int *size, int *position) {
+  *(size + dims - 1) = 1;
+  for (int i = dims - 1; i > 0; --i) {
+    *(size + i - 1) = *(size + i) * output_shape[i];
+  }
+
+  for (size_t idx = 0; idx < (*size) * output_shape[0]; ++idx) {
     int pos = idx;
     int output_idx = 0;
     int input_idx = 0;
     for (int i = 0; i < dims; ++i) {
-      int position = pos / *(out_strides + i);
+      *(position + i) = pos / *(size + i);
       int out_stride = i < dims - 1 ? out_strides[i] : 1;
-      output_idx += (position * out_stride);
-      input_idx += (position * strides[perm[i]]);
-      pos -= position * (*(out_strides + i));
+      output_idx += (*(position + i) * out_stride);
+      input_idx += (*(position + i) * strides[perm[i]]);
+      pos -= *(position + i) * (*(size + i));
     }
     out_data[output_idx] = in_data[input_idx];
   }
 }
 
 int Fp16DoTranspose(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    TransposeParameter *transpose_param) {
+                    TransposeParameter *transpose_param, int *size, int *position) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
@@ -230,7 +235,7 @@ int Fp16DoTranspose(const float16_t *in_data, float16_t *out_data, const int *ou
   } else if (num_axes == 6) {
     Fp16TransposeDim6(in_data, out_data, strides, out_strides, perm, output_shape);
   } else {
-    TransposeDimsFp16(in_data, out_data, strides, out_strides, perm, output_shape, num_axes);
+    TransposeDimsFp16(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position);
   }
   return NNACL_OK;
 }

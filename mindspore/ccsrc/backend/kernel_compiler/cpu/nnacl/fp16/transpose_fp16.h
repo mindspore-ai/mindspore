@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 int Fp16DoTranspose(const float16_t *in_data, float16_t *out_data, const int *output_shape,
-                    TransposeParameter *transpose_param);
+                    TransposeParameter *transpose_param, int *size, int *position);
 #ifdef __cplusplus
 }
 #endif
