@@ -1192,6 +1192,13 @@ void ClearResAtexit() {
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
+  g_args_cache.clear();
+  // clean static variable to prevent from crash. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
 }
 }  // namespace pipeline
 }  // namespace mindspore
