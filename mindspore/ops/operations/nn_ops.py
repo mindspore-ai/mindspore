@@ -965,7 +965,7 @@ class InstanceNorm(PrimitiveWithInfer):
 
 class BNTrainingReduce(PrimitiveWithInfer):
     """
-    For the BatchNorm operation this operator update the moving averages for training and is used in conjunction with
+    For the BatchNorm operation this operator updates the moving averages for training and is used in conjunction with
     BNTrainingUpdate.
 
     Inputs:
@@ -973,7 +973,7 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
     Outputs:
         - **sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
-        - **square_sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
+        - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type. Tensor of shape :math:`(C,)`.
 
     Raises:
         TypeError: If `x`, `sum` or `square_sum` is not a Tensor.
@@ -983,7 +983,11 @@ class BNTrainingReduce(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input_x = Tensor(np.ones([128, 3, 32, 3]), mindspore.float32)
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> from mindspore.common import dtype as mstype
+        >>> input_x = Tensor(np.ones([128, 3, 32, 3]), mstype.float32)
         >>> bn_training_reduce = ops.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
         >>> print(output)
@@ -1007,18 +1011,19 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
 class BNTrainingUpdate(PrimitiveWithInfer):
     """
-    For the BatchNorm operation, this operator update the moving averages for training and is used in conjunction with
-    BNTrainingReduce.
+    For the BatchNorm operation, this operator updates the moving averages for training and is used in conjunction with
+    BNTrainingReduce. Where the moving averages is a method of analyzing data points by creating a series of averages
+    of different subsets of the entire data set.
 
     Args:
-        isRef (bool): If a ref. Default: True.
+        isRef (bool): If a ref. Default: True. Ref indicates whether to enable the output multiplexing input address.
         epsilon (float): A small value added to variance avoid dividing by zero. Default: 1e-5.
         factor (float): A weight for updating the mean and variance. Default: 0.1.
 
     Inputs:
-        - **x** (Tensor) - A 4-D Tensor with float16 or float32 data type. Tensor of shape :math:`(N, C, A, B)`.
-        - **sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator
-          BNTrainingReduce. Tensor of shape :math:`(C,)`.
+        - **input_x** (Tensor) - A 4-D Tensor with float16 or float32 data type. Tensor of shape :math:`(N, C, A, B)`.
+        - **sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator BNTrainingReduce.
+          Tensor of shape :math:`(C,)`.
         - **square_sum** (Tensor) - A 1-D Tensor with float16 or float32 data type for the output of operator
           BNTrainingReduce. Tensor of shape :math:`(C,)`.
         - **scale** (Tensor) - A 1-D Tensor with float16 or float32, for the scaling factor.
@@ -1051,13 +1056,17 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
-        >>> sum = Tensor(np.ones([2]), mindspore.float32)
-        >>> square_sum = Tensor(np.ones([2]), mindspore.float32)
-        >>> scale = Tensor(np.ones([2]), mindspore.float32)
-        >>> offset = Tensor(np.ones([2]), mindspore.float32)
-        >>> mean = Tensor(np.ones([2]), mindspore.float32)
-        >>> variance = Tensor(np.ones([2]), mindspore.float32)
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mstype.float32)
+        >>> sum = Tensor(np.ones([2]), mstype.float32)
+        >>> square_sum = Tensor(np.ones([2]), mstype.float32)
+        >>> scale = Tensor(np.ones([2]), mstype.float32)
+        >>> offset = Tensor(np.ones([2]), mstype.float32)
+        >>> mean = Tensor(np.ones([2]), mstype.float32)
+        >>> variance = Tensor(np.ones([2]), mstype.float32)
         >>> bn_training_update = ops.BNTrainingUpdate()
         >>> output = bn_training_update(input_x, sum, square_sum, scale, offset, mean, variance)
         >>> print(output)
@@ -1110,16 +1119,17 @@ class BatchNorm(PrimitiveWithInfer):
     Batch Normalization for input data and updated parameters.
 
     Batch Normalization is widely used in convolutional neural networks. This operation
-    applies Batch Normalization over input to avoid internal covariate shift as described
+    applies Batch Normalization over inputs to avoid internal covariate shift as described
     in the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal
     Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
-    features using a mini-batch of data and the learned parameters which can be described
+    features using a mini-batch of data and the learned parameters can be described
     in the following formula,
 
     .. math::
         y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
-    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon, :math:`mean` is the mean of x,
+    :math:`variance` is the variance of x.
 
     Args:
         is_training (bool): If `is_training` is True, `mean` and `variance` are computed during training.
@@ -1149,7 +1159,7 @@ class BatchNorm(PrimitiveWithInfer):
         - **variance** (Parameter) - Parameter of shape :math:`(C,)`, has the same data type with `scale`.
 
     Outputs:
-        Tuple of 5 Tensor, the normalized inputs and the updated parameters.
+        Tuple of 5 Tensors, the normalized inputs and the updated parameters.
 
         - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
         - **updated_scale** (Tensor) - Tensor of shape :math:`(C,)`.
@@ -1168,11 +1178,15 @@ class BatchNorm(PrimitiveWithInfer):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
-        >>> scale = Tensor(np.ones([2]), mindspore.float32)
-        >>> bias = Tensor(np.ones([2]), mindspore.float32)
-        >>> mean = Tensor(np.ones([2]), mindspore.float32)
-        >>> variance = Tensor(np.ones([2]), mindspore.float32)
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> input_x = Tensor(np.ones([2, 2]), mstype.float32)
+        >>> scale = Tensor(np.ones([2]), mstype.float32)
+        >>> bias = Tensor(np.ones([2]), mstype.float32)
+        >>> mean = Tensor(np.ones([2]), mstype.float32)
+        >>> variance = Tensor(np.ones([2]), mstype.float32)
         >>> batch_norm = ops.BatchNorm()
         >>> output = batch_norm(input_x, scale, bias, mean, variance)
         >>> print(output)
@@ -1230,8 +1244,9 @@ class Conv2D(Primitive):
     2D convolution layer.
 
     Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
-    where :math:`N` is batch size and :math:`C_{in}` is channel number. For each batch of shape
-    :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+    where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is height, :math:`W` is width, :math:`X_i` is
+    the :math:`i^{th}` input value and :math:`b_i` indicates the deviation value of the :math:`i^{th}` input value.
+    For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
 
     .. math::
 
@@ -1250,6 +1265,8 @@ class Conv2D(Primitive):
     (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
+    Where :math:`dialtion` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
 
 
     The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
@@ -1272,8 +1289,8 @@ class Conv2D(Primitive):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
-          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(\text{ks_h}, \text{ks_w})`, then the shape is
+          :math:`(C_{out}, C_{in}, \text{ks_h}, \text{ks_w})`.
 
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -1291,8 +1308,12 @@ class Conv2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_tensor = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
-        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> input_tensor = Tensor(np.ones([10, 32, 32, 32]), mstype.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mstype.float32)
         >>> conv2d = ops.Conv2D(out_channel=32, kernel_size=3)
         >>> output = conv2d(input_tensor, weight)
         >>> print(output.shape)
@@ -1905,14 +1926,15 @@ class Conv2DBackpropInput(Primitive):
         dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
         group (int): Splits input into groups. Default: 1.
-        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，\
             default is 'NCHW'.
 
     Inputs:
-        - **dout** (Tensor) - the gradients with respect to the output of the convolution.
-          The shape conforms to the default. Data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
-        - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
-          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+        - **dout** (Tensor) - the gradients write respect to the output of the convolution. The shape conforms
+          to the default data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(\text{ks_w}, \text{ks_h})`, where :math:`\text{ks_w}`
+          and :math:`\text{ks_h}` are the height and width of the convolution kerenel, then the shape is
+          :math:`(C_{out}, C_{in}, \text{ks_w}, \text{ks_h})`.
         - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, H_{in}, W_{in})`.
 
@@ -1932,11 +1954,16 @@ class Conv2DBackpropInput(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
-        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
-        >>> x = Tensor(np.ones([10, 32, 32, 32]))
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops.functional as F
+        >>> import mindspore.ops as ops
+        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mstype.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mstype.float32)
+        >>> input_x = Tensor(np.ones([10, 32, 32, 32]))
         >>> conv2d_backprop_input = ops.Conv2DBackpropInput(out_channel=32, kernel_size=3)
-        >>> output = conv2d_backprop_input(dout, weight, F.shape(x))
+        >>> output = conv2d_backprop_input(dout, weight, F.shape(input_x))
         >>> print(output.shape)
         (10, 32, 32, 32)
     """
@@ -2004,16 +2031,16 @@ class BiasAdd(PrimitiveWithCheck):
     except for the channel axis.
 
     Args:
-        data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'，
-            default is 'NCHW'.
+        data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'.
+            Default is 'NCHW'.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
+        - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions. The data type should be Number
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. The shape of
-          `bias` must be the same as `input_x`'s channel dimension.
+          `bias` must be the same as `input_x`'s channel dimension. The data type should be Number
 
     Outputs:
-        Tensor, with the same shape and type as `input_x`.
+        Tensor, with the same shape and data type as `input_x`.
 
     Raises:
         TypeError: If `data_format`, `input_x` or `bias` is not a Tensor.
@@ -2022,8 +2049,12 @@ class BiasAdd(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
-        >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> from mindspore.common import dtype as mstype
+        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mstype.float32)
+        >>> bias = Tensor(np.random.random(3).reshape((3,)), mstype.float32)
         >>> bias_add = ops.BiasAdd()
         >>> output = bias_add(input_x, bias)
         >>> print(output.shape)
@@ -3699,7 +3730,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     .. math::
         L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
 
-    Then,
+    :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -3708,18 +3739,23 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
+    :math:`l` indicates the method of calculating the loss. There are three methods:
+    the first method is to provide the loss value directly,
+    the second method is to calculate the average value of all losses,
+    and the third method is to calculate the sum of all losses
+
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
             If 'none', do not perform reduction. Default:'mean'.
 
     Inputs:
         - **predict** (Tensor) - Input logits. Data type must be float16 or float32.
-        - **target** (Tensor) - Ground truth label. Has the same shape with `predict`.
+        - **target** (Tensor) - Ground truth label, has the same shape as `predict`.
           Data type must be float16 or float32.
-        - **weight** (Tensor) - A rescaling weight applied to the loss of each batch element. It must can be
+        - **weight** (Tensor) - A rescaling weight applied to the loss of each batch element. It can be
           broadcast to a tensor with shape of `predict`. Data type must be float16 or float32.
         - **pos_weight** (Tensor) - A weight of positive examples. Must be a vector with length equal to the
-          number of classes. It must can be broadcast to a tensor with shape of `predict`.
+          number of classes. It can be broadcast to a tensor with shape of `predict`.
           Data type must be float16 or float32.
 
     Outputs:
@@ -3734,10 +3770,14 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
-        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
-        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]).astype(np.float32))
-        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]).astype(np.float32))
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mstype.float32)
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mstype.float32)
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mstype.float32)
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mstype.float32)
         >>> loss = ops.BCEWithLogitsLoss()
         >>> output = loss(predict, target, weight, pos_weight)
         >>> print(output)
@@ -3927,12 +3967,12 @@ class MirrorPad(PrimitiveWithInfer):
 
 class ComputeAccidentalHits(PrimitiveWithCheck):
     """
-    Compute accidental hits of sampled classes which happen to match target classes.
+    Compute accidental hits of sampled classes which match target classes.
 
     When a target class matches the sample class, we call it "accidental hit".
-    The result of calculating accidental hit contains three parts (index, id, weight),
+    The result of calculating accidental hits contain three parts (index, id, weight),
     where index represents the row number in true_classes, and id represents the position in sampled_candidates,
-    the weight is -FLOAT_MAX.
+    the weight is -FLOAT_MAX. FLOAT_MAX indicates the max value in the type of Float
 
     Args:
         num_true (int): The number of target classes per training example.
@@ -3940,7 +3980,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
           and shape [batch_size, num_true].
-        - **sampled_candidates** (Tensor) - The sampled_candidates output of CandidateSampler,
+        - **sampled_candidates** (Tensor) - The Candidate sampling results of operators, types of training samples,
           with data type of int32 or int64 and shape [num_sampled].
 
     Outputs:
@@ -3959,11 +3999,14 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
-        >>> x = np.array([[1, 2], [0, 4], [3, 3]])
-        >>> y = np.array([0, 1, 2, 3, 4])
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> true_classes = np.array([[1, 2], [0, 4], [3, 3]])
+        >>> sampled_candidates = np.array([0, 1, 2, 3, 4])
         >>> sampler = ops.ComputeAccidentalHits(2)
-        >>> output1, output2, output3 = sampler(Tensor(x), Tensor(y))
-        >>> print(output1, output2, output3)
+        >>> indices, ids, weights = sampler(Tensor(true_classes), Tensor(sampled_candidates))
+        >>> print(indices, ids, weights)
         [0 0 1 1 2 2]
         [1 2 0 4 3 3]
         [-3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38]
@@ -4905,7 +4948,8 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    Then,
+    In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
+    and n indicates one batch_size in the 1-N range. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -4919,7 +4963,8 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
             Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor. The data type must be float16 or float32.
+        - **input_x** (Tensor) - The input Tensor. The data type must be float16 or float32,
+          ths shape should be in the range of [0,8].
         - **input_y** (Tensor) - The label Tensor which has same shape and data type as `input_x`.
         - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
           And it must have same shape and data type as `input_x`. Default: None.
@@ -7679,7 +7724,8 @@ class Conv3D(PrimitiveWithInfer):
 
     Applies a 3D convolution over an input tensor which is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
-    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
+    :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is depth, :math:`H` is height, :math:`W` is width.
     the formula is defined as:
 
     .. math::
@@ -7688,23 +7734,25 @@ class Conv3D(PrimitiveWithInfer):
         \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
         \operatorname{input}\left(N_{i}, k\right))
 
-    where :math:`ccor` is the cross-correlation operator.
+    where :math:`k` is kernel, :math:`ccor` is the cross-correlation operator.
 
-    If the 'pad_mode' is set to be "valid", the output height and width will be
+    If the 'pad_mode' is set to be "valid", the output depth, height and width will be
     :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
     (\text{ks_d} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{H_{in} + 2 \times \text{padding} - \text{ks_h} -
     (\text{ks_h} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` and
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
-    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
+    (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively. Where
+    :math:`dialtion` is Spacing between kernel elements, :math:`stride` is The step length of each step,
+    :math:`padding` is zero-padding added to both sides of the input.
 
     Args:
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth,
-            height and width of the 3D convolution window. Single int means the value is for the depth, height
-            and the width of the kernel. A tuple of 3 ints means the first value is for the depth, height and
-            the other is for the width of the kernel.
-        mode (int): Modes for different convolutions. Not currently used.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
+            and width of the 3D convolution window. Single int means the value is for the depth, height and the width
+            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
+            width of the kernel.
+        mode (int): Modes for different convolutions. It is currently not used
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
@@ -7732,7 +7780,7 @@ class Conv3D(PrimitiveWithInfer):
                                       : math:`(dilation_d, dilation_h, dilation_w)`.
                                       Currently, dilation on depth only supports the case of 1.
                                       Specifies the dilation rate to use for dilated convolution.
-                                      If set to be :math:`k > 1`, there will be :math:`k - 1` pixels skipped
+                                      If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped
                                       for each sampling location. Its value must be greater or equal to 1 and
                                       bounded by the height and width of the input. Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
@@ -7764,9 +7812,13 @@ class Conv3D(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
-        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
-        >>> conv3d = P.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> input_tensor = Tensor(np.ones([16, 3, 10, 32, 32]), mstype.float16)
+        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mstype.float16)
+        >>> conv3d = ops.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
         >>> output = conv3d(input_tensor, weight)
         >>> print(output.shape)
         (16, 32, 7, 30, 30)
@@ -7948,10 +8000,15 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops.functional as F
+        >>> import mindspore.ops as ops
         >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mstype.float16)
         >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mstype.float16)
         >>> x = Tensor(np.ones([16, 32, 13, 37, 33]))
-        >>> conv3d_backprop_input = P.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
+        >>> conv3d_backprop_input = ops.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
         >>> output = conv3d_backprop_input(dout, weight, F.shape(x))
         >>> print(output.shape)
         (16, 32, 13, 37, 33)
