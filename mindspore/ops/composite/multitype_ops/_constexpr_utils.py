@@ -455,21 +455,6 @@ def compute_multiples(origin_shape, broadcast_shape):
 
 
 @constexpr
-def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slice_shapes, fancy_position):
-    """Convert a slice to a tensor."""
-
-    shape = [1] * len(slice_shapes)
-    shape[slice_cnt] = slice_shapes[slice_cnt]
-    shape = shape[:fancy_position] + [1] * len(broadcast_shape) + shape[fancy_position:]
-
-    array = np.array(index, np.int64)
-    array = np.reshape(array, shape)
-    reps = compute_multiples(shape, final_shape)
-    slice_index_tensor = Tensor(np.tile(array, reps), mstype.int64)
-    return slice_index_tensor
-
-
-@constexpr
 def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_type):
     """Convert a scalar to a tensor."""
     if op_type == SET_ITEM_BY_ONE_TENSOR:
@@ -492,7 +477,8 @@ def generate_updates_shape(data_shape, index_shape, op_type):
 @constexpr
 def transform_slice_to_ele_list(slice_index, dim_len):
     slice_obj = slice(slice_index.start, slice_index.stop, slice_index.step)
-    slice_ele_list = list(range(dim_len))[slice_obj]
+    start, stop, end = normalize_slice(slice_obj, dim_len)
+    slice_ele_list = list(range(start, stop, end))
     if not slice_ele_list:
         raise IndexError(f"An empty slice is not supported, got {slice_obj}")
     return slice_ele_list
@@ -805,3 +791,12 @@ def real_axes(ndim_orig, ndim_out, axes_orig):
 
 
 check_axis_valid_const = constexpr(validator.check_axis_valid)
+
+
+@constexpr
+def compute_slice_shape(slice_shape, broadcast_shape_len, slice_cnt, fancy_position):
+    """Computes slice tensor shapes"""
+    shape = [1] * len(slice_shape)
+    shape[slice_cnt] = slice_shape[slice_cnt]
+    shape = shape[:fancy_position] + [1] * broadcast_shape_len + shape[fancy_position:]
+    return shape
