@@ -32,7 +32,7 @@ def _valid_index(cell_num, index):
 def _valid_cell(cell):
     if issubclass(cell.__class__, Cell):
         return True
-    raise TypeError('Cell {} is not subclass of Cell'.format(cell))
+    raise TypeError('`{}` is not a subclass of Cell. Please check your code'.format(cell))
 
 
 def _get_prefix_and_index(cells):

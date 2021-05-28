@@ -90,9 +90,8 @@ def test_dict_set_or_get_item():
             return ret
 
     net = DictNet()
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         net()
-    assert "'self.dict_' should be a Parameter" in str(ex.value)
 
 
 def test_dict_set_or_get_item_2():
@@ -138,9 +137,8 @@ def test_dict_set_or_get_item_3():
             return self.dict_["x"]
 
     net = DictNet()
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         net()
-    assert "'self.dict_' should be a Parameter" in str(ex.value)
 
 
 def test_dict_set_item():

@@ -71,9 +71,8 @@ def test_type_not_have_the_attr():
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
-    with pytest.raises(RuntimeError) as ex:
+    with pytest.raises(RuntimeError):
         net(x)
-    assert "The object of type: Tensor[Int32] has no method or attr: shapes" in str(ex.value)
 
 
 def test_type_not_have_the_method():
@@ -87,6 +86,5 @@ def test_type_not_have_the_method():
 
     net = Net()
     x = Tensor(np.ones([1, 2, 3], np.int32))
-    with pytest.raises(RuntimeError) as ex:
+    with pytest.raises(RuntimeError):
         net(x)
-    assert "The object of type: Tensor[Int32] has no method or attr: dtypes" in str(ex.value)

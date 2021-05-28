@@ -85,7 +85,7 @@ std::string AbstractBase::ToString() const {
   MS_EXCEPTION_IF_NULL(type_);
   MS_EXCEPTION_IF_NULL(shape_);
   buffer << type_name() << "("
-         << "Type: " << type_->ToString() << " Value: " << value << " Shape: " << shape_->ToString() << ")";
+         << "Type: " << type_->ToString() << ", Value: " << value << ", Shape: " << shape_->ToString() << ")";
   return buffer.str();
 }
 

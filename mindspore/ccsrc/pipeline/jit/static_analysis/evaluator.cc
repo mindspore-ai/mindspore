@@ -207,9 +207,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   MS_EXCEPTION_IF_NULL(fg);
   std::size_t nargs = fg->parameters().size();
   if (args_abs_list.size() != nargs) {
-    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
+    MS_EXCEPTION(TypeError) << "For function " << fg->ToString() << ", the number of parameters of this function is "
                             << fg->parameters().size() << ", but the number of provided arguments is "
-                            << args_abs_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+                            << args_abs_list.size() << ".";
   }
   MS_EXCEPTION_IF_NULL(parent_context_);
   context_ = parent_context_->NewFuncGraphContext(fg, args_abs_list);
