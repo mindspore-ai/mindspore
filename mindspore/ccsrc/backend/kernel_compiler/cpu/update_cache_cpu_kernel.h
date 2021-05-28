@@ -39,7 +39,7 @@ class UpdateCacheCPUKernel : public CPUKernel {
 
  private:
   size_t batch_size_{1};
-  size_t update_size_{1};
+  int64_t update_size_{1};
   size_t step_{0};
   size_t update_length_{1};
   int64_t max_num_ = 99999999;

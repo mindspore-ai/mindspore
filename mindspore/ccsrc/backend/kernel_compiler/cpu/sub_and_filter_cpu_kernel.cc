@@ -66,7 +66,7 @@ void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     T temp = input_x[i] - offset;
     if (temp < 0 || temp >= max_num) continue;
     filter_res[count] = temp;
-    filter_idx[count] = i;
+    filter_idx[count] = static_cast<T>(i);
     count++;
   }
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
