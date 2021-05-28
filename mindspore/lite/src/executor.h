@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_EXECUTOR_H_
 
 #include <vector>
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "src/lite_kernel.h"
 #include "include/lite_session.h"
 

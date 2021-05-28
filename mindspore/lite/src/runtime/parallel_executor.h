@@ -20,7 +20,7 @@
 #include <vector>
 #include <thread>
 #include <unordered_map>
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "src/lite_kernel.h"
 #include "include/lite_session.h"
 #include "src/executor.h"

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/executor.h"
 #include "include/lite_session.h"

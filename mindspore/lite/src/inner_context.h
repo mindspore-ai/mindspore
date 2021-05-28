@@ -20,7 +20,7 @@
 #include <string>
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "thread/inter_threadpool.h"
 #ifdef ENABLE_ARM
 #include "src/cpu_info.h"

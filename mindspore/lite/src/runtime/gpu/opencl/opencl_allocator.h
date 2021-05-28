@@ -24,7 +24,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "CL/cl2.hpp"
 
 namespace mindspore::lite::opencl {
@@ -52,7 +52,7 @@ class OpenCLAllocator : public mindspore::Allocator {
  public:
   explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;
-  void SetContext(const AllocatorContext &ctx) override;
+  void SetContext(const AllocatorContext &ctx);
   void *Malloc(size_t size, MemType type) { return _Malloc(type, nullptr, size); }
 
   // malloc shared
@@ -66,7 +66,7 @@ class OpenCLAllocator : public mindspore::Allocator {
   int SetRefCount(void *ptr, int ref_count) override;
   int DecRefCount(void *ptr, int ref_count) override;
   int IncRefCount(void *ptr, int ref_count) override;
-  size_t total_size() override;
+  size_t total_size();
 
   void Clear();
   void *GetImage(void *host_ptr);
