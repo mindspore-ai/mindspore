@@ -195,6 +195,40 @@ train.py和config.py中主要参数如下：
   'Accuracy': 0.88512
   ```
 
+## 推理过程
+
+### [导出MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+目前imagenet2012数据集仅支持batch_Size为1的推理。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `MINDIR_PATH` mindir文件路径
+- `DATASET_PATH` 推理数据集路径
+- `NEED_PREPROCESS` 表示数据集是否需要预处理，可在`y`或者`n`中选择，如果选择`y`，cifar10数据集将被处理为bin格式。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'acc': 0.88772
+```
+
 ## 模型描述
 
 ### 性能
