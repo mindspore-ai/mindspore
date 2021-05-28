@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <limits.h>
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 #include "lite_cv/lite_mat.h"
@@ -24,26 +24,30 @@
 #define BITS1 15
 #define TAB_SZ (1 << BITS)
 #define TAB_SZ2 (TAB_SZ * TAB_SZ)
-#define FLOATTOSHORT(value) (IntCastShort(round(value)))
 #define REMAP_SCALE (1 << 15)
-#define INTTOUCHAR(v) ((uint8_t)((unsigned)v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0))
-#define SrcValue(y, x) (reinterpret_cast<double *>(src + y * 3))[x]
-#define DstValue(y, x) (reinterpret_cast<double *>(dst + y * 3))[x]
+#define INTTOUCHAR(v) ((uint8_t)((unsigned)(v) <= UCHAR_MAX ? (v) : (v) > 0 ? UCHAR_MAX : 0))
+#define SrcValue(src, y, x) (reinterpret_cast<double *>((src) + (y)*3))[(x)]
+#define DstValue(dst, y, x) (reinterpret_cast<double *>((dst) + (y)*3))[(x)]
 
 namespace mindspore {
 namespace dataset {
 static int16_t BWBlock_i[TAB_SZ2][2][2];
 
 static double GetDet3(double *src) {
-  double a1 = SrcValue(0, 0) * (SrcValue(1, 1) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 1));
-  double a2 = SrcValue(0, 1) * (SrcValue(1, 0) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 0));
-  double a3 = SrcValue(0, 2) * (SrcValue(1, 0) * SrcValue(2, 1) - SrcValue(1, 1) * SrcValue(2, 0));
+  double a1 =
+    SrcValue(src, 0, 0) * (SrcValue(src, 1, 1) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 1));
+  double a2 =
+    SrcValue(src, 0, 1) * (SrcValue(src, 1, 0) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 0));
+  double a3 =
+    SrcValue(src, 0, 2) * (SrcValue(src, 1, 0) * SrcValue(src, 2, 1) - SrcValue(src, 1, 1) * SrcValue(src, 2, 0));
   return a1 - a2 + a3;
 }
 
 static int16_t IntCastShort(int value) {
   return (int16_t)((unsigned)(value - SHRT_MIN) <= (unsigned)USHRT_MAX ? value : value > 0 ? SHRT_MAX : SHRT_MIN);
 }
+
+static int16_t FloatToShort(float value) { return IntCastShort(round(value)); }
 
 static void InitWBlockInter(float *wBlock, int wBlockSz) {
   float scale = 1.f / wBlockSz;
@@ -54,10 +58,33 @@ static void InitWBlockInter(float *wBlock, int wBlockSz) {
   }
 }
 
+static void CalWBlock(const int &sum_i, const int &ks, int16_t *iWBlock) {
+  int df = sum_i - REMAP_SCALE;
+  int ks2 = 1;
+  int tk1 = ks2;
+  int tk2 = ks2;
+  int mtk1 = ks2;
+  int mtk2 = ks2;
+  for (int h1 = ks2; h1 < ks2 + 2; h1++) {
+    for (int h2 = ks2; h2 < ks2 + 2; h2++) {
+      if (iWBlock[h1 * ks + h2] < iWBlock[mtk1 * ks + mtk2]) {
+        mtk1 = h1, mtk2 = h2;
+      } else if (iWBlock[h1 * ks + h2] > iWBlock[tk1 * ks + tk2]) {
+        tk1 = h1, tk2 = h2;
+      }
+    }
+  }
+  if (df < 0) {
+    iWBlock[tk1 * ks + tk2] = static_cast<int16_t>(iWBlock[tk1 * ks + tk2] - df);
+  } else {
+    iWBlock[mtk1 * ks + mtk2] = static_cast<int16_t>(iWBlock[mtk1 * ks + mtk2] - df);
+  }
+}
+
 static const void *InitWBlock() {
   static bool initWB = false;
   int16_t *iWBlock = 0;
-  int ks = 2;
+  const int ks = 2;
 
   iWBlock = BWBlock_i[0][0];
 
@@ -72,30 +99,11 @@ static const void *InitWBlock() {
           float vy = _wblock[i * ks + h1];
           for (h2 = 0; h2 < ks; h2++) {
             float v = vy * _wblock[j * ks + h2];
-            sum_i += iWBlock[h1 * ks + h2] = FLOATTOSHORT(v * REMAP_SCALE);
+            sum_i += iWBlock[h1 * ks + h2] = FloatToShort(v * REMAP_SCALE);
           }
         }
         if (sum_i != REMAP_SCALE) {
-          int df = sum_i - REMAP_SCALE;
-          int ks2 = 1;
-          int tk1 = ks2;
-          int tk2 = ks2;
-          int mtk1 = ks2;
-          int mtk2 = ks2;
-          for (h1 = ks2; h1 < ks2 + 2; h1++) {
-            for (h2 = ks2; h2 < ks2 + 2; h2++) {
-              if (iWBlock[h1 * ks + h2] < iWBlock[mtk1 * ks + mtk2]) {
-                mtk1 = h1, mtk2 = h2;
-              } else if (iWBlock[h1 * ks + h2] > iWBlock[tk1 * ks + tk2]) {
-                tk1 = h1, tk2 = h2;
-              }
-            }
-          }
-          if (df < 0) {
-            iWBlock[tk1 * ks + tk2] = (int16_t)(iWBlock[tk1 * ks + tk2] - df);
-          } else {
-            iWBlock[mtk1 * ks + mtk2] = (int16_t)(iWBlock[mtk1 * ks + mtk2] - df);
-          }
+          CalWBlock(sum_i, ks, iWBlock);
         }
       }
     }
@@ -109,7 +117,7 @@ static const void *InitWBlock() {
 static uint8_t CastToFixed(int v) { return INTTOUCHAR(((v + (1 << (BITS1 - 1))) >> BITS1)); }
 
 static int BorderPolate(int value, int length, PaddBorderType borderType) {
-  if ((unsigned)value < (unsigned)length) {
+  if (static_cast<unsigned>(value) < static_cast<unsigned>(length)) {
     return value;
   } else if (borderType == 0) {
     value = -1;
@@ -188,6 +196,31 @@ static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *
     int v0 = t_src_ptr[k] * w_ptr[0] + t_src_ptr[k + cn] * w_ptr[1] + t_src_ptr[src_step + k] * w_ptr[2] +
              t_src_ptr[src_step + k + cn] * w_ptr[3];
     dst_ptr[k] = CastToFixed(v0);
+  }
+}
+
+static void RemapBilinearNotCur(const int &cn, const int &H1, int dx, const int16_t *HW, const uint16_t *FHW,
+                                const int16_t *wblock, size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  if (cn == 1) {
+    for (; dx < H1; dx++, dst_ptr++) {
+      RemapBilinearNotCur1C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
+    }
+  } else if (cn == 2) {
+    for (; dx < H1; dx++, dst_ptr += 2) {
+      RemapBilinearNotCur2C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
+    }
+  } else if (cn == 3) {
+    for (; dx < H1; dx++, dst_ptr += 3) {
+      RemapBilinearNotCur3C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
+    }
+  } else if (cn == 4) {
+    for (; dx < H1; dx++, dst_ptr += 4) {
+      RemapBilinearNotCur4C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
+    }
+  } else {
+    for (; dx < H1; dx++, dst_ptr += cn) {
+      RemapBilinearNotCurMoreC(dx, HW, FHW, wblock, src_step, cn, src_ptr, dst_ptr);
+    }
   }
 }
 
@@ -276,28 +309,7 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
         int length = 0;
         dst_ptr += length * cn;
         dx += length;
-
-        if (cn == 1) {
-          for (; dx < H1; dx++, dst_ptr++) {
-            RemapBilinearNotCur1C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
-          }
-        } else if (cn == 2) {
-          for (; dx < H1; dx++, dst_ptr += 2) {
-            RemapBilinearNotCur2C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
-          }
-        } else if (cn == 3) {
-          for (; dx < H1; dx++, dst_ptr += 3) {
-            RemapBilinearNotCur3C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
-          }
-        } else if (cn == 4) {
-          for (; dx < H1; dx++, dst_ptr += 4) {
-            RemapBilinearNotCur4C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
-          }
-        } else {
-          for (; dx < H1; dx++, dst_ptr += cn) {
-            RemapBilinearNotCurMoreC(dx, HW, FHW, wblock, src_step, cn, src_ptr, dst_ptr);
-          }
-        }
+        RemapBilinearNotCur(cn, H1, dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
       } else {
         if (cn == 1) {
           for (; dx < H1; dx++, dst_ptr++) {
@@ -445,27 +457,27 @@ static void PerspectiveInvert(double *src, double *dst) {
     value = 1. / value;
     double v[9];
 
-    v[0] = (SrcValue(1, 1) * SrcValue(2, 2) - SrcValue(1, 2) * SrcValue(2, 1)) * value;
-    v[1] = (SrcValue(0, 2) * SrcValue(2, 1) - SrcValue(0, 1) * SrcValue(2, 2)) * value;
-    v[2] = (SrcValue(0, 1) * SrcValue(1, 2) - SrcValue(0, 2) * SrcValue(1, 1)) * value;
+    v[0] = (SrcValue(src, 1, 1) * SrcValue(src, 2, 2) - SrcValue(src, 1, 2) * SrcValue(src, 2, 1)) * value;
+    v[1] = (SrcValue(src, 0, 2) * SrcValue(src, 2, 1) - SrcValue(src, 0, 1) * SrcValue(src, 2, 2)) * value;
+    v[2] = (SrcValue(src, 0, 1) * SrcValue(src, 1, 2) - SrcValue(src, 0, 2) * SrcValue(src, 1, 1)) * value;
 
-    v[3] = (SrcValue(1, 2) * SrcValue(2, 0) - SrcValue(1, 0) * SrcValue(2, 2)) * value;
-    v[4] = (SrcValue(0, 0) * SrcValue(2, 2) - SrcValue(0, 2) * SrcValue(2, 0)) * value;
-    v[5] = (SrcValue(0, 2) * SrcValue(1, 0) - SrcValue(0, 0) * SrcValue(1, 2)) * value;
+    v[3] = (SrcValue(src, 1, 2) * SrcValue(src, 2, 0) - SrcValue(src, 1, 0) * SrcValue(src, 2, 2)) * value;
+    v[4] = (SrcValue(src, 0, 0) * SrcValue(src, 2, 2) - SrcValue(src, 0, 2) * SrcValue(src, 2, 0)) * value;
+    v[5] = (SrcValue(src, 0, 2) * SrcValue(src, 1, 0) - SrcValue(src, 0, 0) * SrcValue(src, 1, 2)) * value;
 
-    v[6] = (SrcValue(1, 0) * SrcValue(2, 1) - SrcValue(1, 1) * SrcValue(2, 0)) * value;
-    v[7] = (SrcValue(0, 1) * SrcValue(2, 0) - SrcValue(0, 0) * SrcValue(2, 1)) * value;
-    v[8] = (SrcValue(0, 0) * SrcValue(1, 1) - SrcValue(0, 1) * SrcValue(1, 0)) * value;
+    v[6] = (SrcValue(src, 1, 0) * SrcValue(src, 2, 1) - SrcValue(src, 1, 1) * SrcValue(src, 2, 0)) * value;
+    v[7] = (SrcValue(src, 0, 1) * SrcValue(src, 2, 0) - SrcValue(src, 0, 0) * SrcValue(src, 2, 1)) * value;
+    v[8] = (SrcValue(src, 0, 0) * SrcValue(src, 1, 1) - SrcValue(src, 0, 1) * SrcValue(src, 1, 0)) * value;
 
-    DstValue(0, 0) = v[0];
-    DstValue(0, 1) = v[1];
-    DstValue(0, 2) = v[2];
-    DstValue(1, 0) = v[3];
-    DstValue(1, 1) = v[4];
-    DstValue(1, 2) = v[5];
-    DstValue(2, 0) = v[6];
-    DstValue(2, 1) = v[7];
-    DstValue(2, 2) = v[8];
+    DstValue(dst, 0, 0) = v[0];
+    DstValue(dst, 0, 1) = v[1];
+    DstValue(dst, 0, 2) = v[2];
+    DstValue(dst, 1, 0) = v[3];
+    DstValue(dst, 1, 1) = v[4];
+    DstValue(dst, 1, 2) = v[5];
+    DstValue(dst, 2, 0) = v[6];
+    DstValue(dst, 2, 1) = v[7];
+    DstValue(dst, 2, 2) = v[8];
   }
 }
 

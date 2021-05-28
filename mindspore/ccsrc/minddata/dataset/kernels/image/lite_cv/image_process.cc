@@ -29,27 +29,27 @@
 #include <arm_neon.h>
 #endif
 
-#define R2GRAY 9798
-#define G2GRAY 19235
-#define B2GRAY 3735
-#define GRAYSHIFT 15
-#define GRAYSHIFT_DELTA (1 << (GRAYSHIFT - 1))
 #define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
-
-#define YSCALE 0x0101
-#define UTOB (-128)
-#define UTOG 25
-#define VTOR (-102)
-#define VTOG 52
-#define YTOG 18997
-#define YTOGB (-1160)
-#define BTOB (UTOB * 128 + YTOGB)
-#define BTOG (UTOG * 128 + VTOG * 128 + YTOGB)
-#define BTOR (VTOR * 128 + YTOGB)
-#define Equ(a, b) ((std::fabs((a) - (b)) < 1e-6))
 
 namespace mindspore {
 namespace dataset {
+const uint32_t kR2Gray = 9798;
+const uint32_t kG2Gray = 19235;
+const uint32_t kB2Gray = 3735;
+const int32_t kGrayShift = 15;
+const int32_t kGrayShiftDelta = 1 << (kGrayShift - 1);
+const int32_t kYScale = 0x0101;
+const int32_t kUTob = -128;
+const int32_t kUTog = 25;
+const int32_t kVTor = -102;
+const int32_t kVTog = 52;
+const int32_t kYTog = 18997;
+const int32_t kYTogB = -1160;
+const int32_t kBTob = kUTob * 128 + kYTogB;
+const int32_t kBTog = kUTog * 128 + kVTog * 128 + kYTogB;
+const int32_t kBTor = kVTor * 128 + kYTogB;
+
+static bool Equal(const float &a, const float &b) { return std::fabs(a - b) < 1e-6; }
 
 static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
                                       int a) {
@@ -155,8 +155,8 @@ static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
     unsigned char *dst_ptr = dst + dst_width * 3 * (y);
 
     for (int k = 0; k < dst_width * 3; k++) {
-      int16_t t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
-      int16_t t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
+      int16_t t0 = static_cast<int16_t>((y_weight[0] * static_cast<int16_t>(*row0_ptr0++)) >> 16);
+      int16_t t1 = static_cast<int16_t>((y_weight[1] * static_cast<int16_t>(*row1_ptr1++)) >> 16);
       *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
     y_weight += 2;
@@ -230,8 +230,8 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     unsigned char *dst_ptr = dst + dst_width * (y);
 
     for (int k = 0; k < dst_width; k++) {
-      int16_t t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
-      int16_t t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
+      int16_t t0 = static_cast<int16_t>((y_weight[0] * static_cast<int16_t>(*row0_ptr0++)) >> 16);
+      int16_t t1 = static_cast<int16_t>((y_weight[1] * static_cast<int16_t>(*row1_ptr1++)) >> 16);
       *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
 
@@ -467,18 +467,18 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
           u = uv_buf[0];
           v = uv_buf[1];
         }
-        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
+        uint32_t tmp_y = static_cast<uint32_t>(y_buf[0] * kYScale * kYTog) >> 16;
         // b
-        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
+        bgr_buf[0] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
         // g
-        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
         // r
-        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
 
-        tmp_y = (uint32_t)(y_buf[1] * YSCALE * YTOG) >> 16;
-        bgr_buf[3] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
-        bgr_buf[4] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
-        bgr_buf[5] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        tmp_y = static_cast<uint32_t>(y_buf[1] * kYScale * kYTog) >> 16;
+        bgr_buf[3] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
+        bgr_buf[4] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
+        bgr_buf[5] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
 
         y_buf += 2;
         uv_buf += 2;
@@ -494,10 +494,10 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
           u = uv_buf[0];
           v = uv_buf[1];
         }
-        uint32_t tmp_y = (uint32_t)(y_buf[0] * YSCALE * YTOG) >> 16;
-        bgr_buf[0] = std::clamp((int32_t)(-(u * UTOB) + tmp_y + BTOB) >> 6, 0, 255);
-        bgr_buf[1] = std::clamp((int32_t)(-(u * UTOG + v * VTOG) + tmp_y + BTOG) >> 6, 0, 255);
-        bgr_buf[2] = std::clamp((int32_t)(-(v * VTOR) + tmp_y + BTOR) >> 6, 0, 255);
+        uint32_t tmp_y = (uint32_t)(y_buf[0] * kYScale * kYTog) >> 16;
+        bgr_buf[0] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
       }
 
       bgr_ptr += bgr_stride;
@@ -522,19 +522,20 @@ static uint8x8_t RGBToGray(const uint16x8_t &r_value, const uint16x8_t &g_value,
   dst0_value = vmlal_u16(dst0_value, vget_low_u16(b_value), b2y_value);
   dst1_value = vmlal_u16(dst1_value, vget_high_u16(b_value), b2y_value);
 
-  uint8x8_t v_gray = vqmovn_u16(vcombine_u16(vrshrn_n_u32(dst0_value, GRAYSHIFT), vrshrn_n_u32(dst1_value, GRAYSHIFT)));
+  uint8x8_t v_gray =
+    vqmovn_u16(vcombine_u16(vrshrn_n_u32(dst0_value, kGrayShift), vrshrn_n_u32(dst1_value, kGrayShift)));
 
   return v_gray;
 }
 
 static bool ConvertRGBAToGRAY_Neon(const uint8_t *srcBase, uint8_t *dstBase, int w, int h) {
-  const uint32_t r_to_gray = R2GRAY;
-  const uint32_t g_to_gray = G2GRAY;
-  const uint32_t b_to_gray = B2GRAY;
+  const uint32_t r_to_gray = kR2Gray;
+  const uint32_t g_to_gray = kG2Gray;
+  const uint32_t b_to_gray = kB2Gray;
 
-  uint16x4_t r2y_value = vdup_n_u16(R2GRAY);
-  uint16x4_t g2y_value = vdup_n_u16(G2GRAY);
-  uint16x4_t b2y_value = vdup_n_u16(B2GRAY);
+  uint16x4_t r2y_value = vdup_n_u16(kR2Gray);
+  uint16x4_t g2y_value = vdup_n_u16(kG2Gray);
+  uint16x4_t b2y_value = vdup_n_u16(kB2Gray);
 
   size_t w16b = w >= 15 ? w - 15 : 0;
   size_t w8b = w >= 7 ? w - 7 : 0;
@@ -576,7 +577,7 @@ static bool ConvertRGBAToGRAY_Neon(const uint8_t *srcBase, uint8_t *dstBase, int
 
     for (; dst_j < w; src_j += 4, dst_j++) {
       uint32_t val = src_ptr[src_j] * r_to_gray + src_ptr[src_j + 1] * g_to_gray + src_ptr[src_j + 2] * b_to_gray;
-      dst_ptr[dst_j] = U32TOU8CAST((val + GRAYSHIFT_DELTA) >> GRAYSHIFT);
+      dst_ptr[dst_j] = U32TOU8CAST((val + kGrayShiftDelta) >> kGrayShift);
     }
   }
   return true;
@@ -596,7 +597,7 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
 #else
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
-        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
+        *ptr = (data_ptr[2] * kB2Gray + data_ptr[1] * kG2Gray + data_ptr[0] * kR2Gray + kGrayShiftDelta) >> kGrayShift;
         ptr++;
         data_ptr += 4;
       }
@@ -742,7 +743,7 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
 
 static bool CheckZero(const std::vector<float> &vs) {
   for (int i = 0; i < vs.size(); i++) {
-    if (Equ(vs[i], 0.0f)) {
+    if (Equal(vs[i], 0.0f)) {
       return true;
     }
   }
@@ -1698,7 +1699,7 @@ bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, Lit
     const unsigned char *data_ptr = src;
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
-        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
+        *ptr = (data_ptr[2] * kB2Gray + data_ptr[1] * kG2Gray + data_ptr[0] * kR2Gray + kGrayShiftDelta) >> kGrayShift;
         ptr++;
         data_ptr += 3;
       }
