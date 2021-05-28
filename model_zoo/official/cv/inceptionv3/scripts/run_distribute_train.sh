@@ -15,9 +15,13 @@
 # ============================================================================
 
 DATA_DIR=$2
+CKPT_PATH=$3
 export RANK_TABLE_FILE=$1
 export RANK_SIZE=8
 export HCCL_CONNECT_TIMEOUT=600
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
 
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
 echo "the number of logical core" $cores
@@ -37,14 +41,16 @@ do
 
     rm -rf train_parallel$i
     mkdir ./train_parallel$i
-    cp  *.py ./train_parallel$i
+    cp  ../*.py ./train_parallel$i
+    cp  ../*.yaml ./train_parallel$i
+    cp  -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
 
     env > env.log
-    taskset -c $cmdopt python ../train.py  \
-    --is_distributed \
+    taskset -c $cmdopt python ./train.py --config_path=$CONFIG_FILE \
+    --is_distributed=True \
     --platform=Ascend \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+    --dataset_path=$DATA_DIR --ckpt_path=$CKPT_PATH  > log.txt 2>&1 &
     cd ../
 done

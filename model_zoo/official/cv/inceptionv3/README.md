@@ -86,16 +86,22 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─run_eval_gpu.sh                         # launch evaluation with gpu platform
     └─run_eval.sh                             # launch evaluating with ascend platform
   ├─src
-    ├─config.py                       # parameter configuration
     ├─dataset.py                      # data preprocessing
     ├─inception_v3.py                 # network definition
     ├─loss.py                         # Customized CrossEntropy loss function
     ├─lr_generator.py                 # learning rate generator
+    └─model_utils
+      ├─config.py               # Processing configuration parameters
+      ├─device_adapter.py       # Get cloud ID
+      ├─local_adapter.py        # Get local ID
+      └─moxing_adapter.py       # Parameter processing
+  ├─default_config.yaml             # Training parameter profile(ascend)
+  ├─default_config_cpu.yaml         # Training parameter profile(cpu)
+  ├─default_config_gpu.yaml         # Training parameter profile(gpu)
   ├─eval.py                           # eval net
   ├─export.py                         # convert checkpoint
   ├─postprogress.py                   # post process for 310 inference
   └─train.py                          # train net
-
 ```
 
 ## [Script Parameters](#contents)

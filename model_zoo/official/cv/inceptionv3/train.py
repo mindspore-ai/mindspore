@@ -13,10 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """train_imagenet."""
-import argparse
+import time
 import os
 
-import mindspore.nn as nn
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
+from src.dataset import create_dataset_imagenet, create_dataset_cifar10
+from src.inception_v3 import InceptionV3
+from src.lr_generator import get_lr
+from src.loss import CrossEntropy
+
 from mindspore import Tensor
 from mindspore import context
 from mindspore.context import ParallelMode
@@ -29,69 +36,110 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common.initializer import XavierUniform, initializer
 from mindspore.common import set_seed
 
-from src.config import config_gpu, config_ascend, config_cpu
-from src.dataset import create_dataset_imagenet, create_dataset_cifar10
-from src.inception_v3 import InceptionV3
-from src.lr_generator import get_lr
-from src.loss import CrossEntropy
 
 set_seed(1)
-
-CFG_DICT = {
-    "Ascend": config_ascend,
-    "GPU": config_gpu,
-    "CPU": config_cpu,
-}
-
 DS_DICT = {
     "imagenet": create_dataset_imagenet,
     "cifar10": create_dataset_cifar10,
 }
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='image classification training')
-    parser.add_argument('--dataset_path', type=str, default='', help='Dataset path')
-    parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
-    parser.add_argument('--is_distributed', action='store_true', default=False,
-                        help='distributed training')
-    parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU', 'CPU'), help='run platform')
-    args_opt = parser.parse_args()
 
-    cfg = CFG_DICT[args_opt.platform]
-    create_dataset = DS_DICT[cfg.ds_type]
+def modelarts_pre_process():
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),\
+                    int(int(time.time() - s_time) % 60)))
+                print("Extract Done")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-    if args_opt.platform == "GPU":
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+        print("#" * 200, os.listdir(save_dir_1))
+        print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
+
+    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.ckpt_path = config.output_path
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_inceptionv3():
+    print(config)
+
+    config.dataset_path = os.path.join(config.dataset_path, 'train')
+    create_dataset = DS_DICT[config.ds_type]
+
+    if config.platform == "GPU":
         context.set_context(enable_graph_kernel=True)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
-    if args_opt.is_distributed:
+    if config.is_distributed:
         init()
-        cfg.rank = get_rank()
-        cfg.group_size = get_group_size()
+        config.rank = get_rank()
+        config.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
-        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=cfg.group_size,
+        context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=config.group_size,
                                           gradients_mean=True)
     else:
-        cfg.rank = 0
-        cfg.group_size = 1
+        config.rank = 0
+        config.group_size = 1
 
     # dataloader
-    dataset = create_dataset(args_opt.dataset_path, True, cfg)
+    dataset = create_dataset(config.dataset_path, True, config)
     batches_per_epoch = dataset.get_dataset_size()
 
     # network
-    net = InceptionV3(num_classes=cfg.num_classes, dropout_keep_prob=cfg.dropout_keep_prob, has_bias=cfg.has_bias)
+    net = InceptionV3(num_classes=config.num_classes, dropout_keep_prob=config.dropout_keep_prob, \
+        has_bias=config.has_bias)
 
     # loss
-    loss = CrossEntropy(smooth_factor=cfg.smooth_factor, num_classes=cfg.num_classes, factor=cfg.aux_factor)
+    loss = CrossEntropy(smooth_factor=config.smooth_factor, num_classes=config.num_classes, factor=config.aux_factor)
 
     # learning rate schedule
-    lr = get_lr(lr_init=cfg.lr_init, lr_end=cfg.lr_end, lr_max=cfg.lr_max, warmup_epochs=cfg.warmup_epochs,
-                total_epochs=cfg.epoch_size, steps_per_epoch=batches_per_epoch, lr_decay_mode=cfg.decay_method)
+    lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max, warmup_epochs=config.warmup_epochs,
+                total_epochs=config.epoch_size, steps_per_epoch=batches_per_epoch, lr_decay_mode=config.decay_method)
     lr = Tensor(lr)
 
     # optimizer
@@ -103,41 +151,45 @@ if __name__ == '__main__':
         else:
             no_decayed_params.append(param)
 
-    if args_opt.platform == "Ascend":
+    if config.platform == "Ascend":
         for param in net.trainable_params():
             if 'beta' not in param.name and 'gamma' not in param.name and 'bias' not in param.name:
                 param.set_data(initializer(XavierUniform(), param.data.shape, param.data.dtype))
-    group_params = [{'params': decayed_params, 'weight_decay': cfg.weight_decay},
+    group_params = [{'params': decayed_params, 'weight_decay': config.weight_decay},
                     {'params': no_decayed_params},
                     {'order_params': net.trainable_params()}]
-    optimizer = RMSProp(group_params, lr, decay=0.9, weight_decay=cfg.weight_decay,
-                        momentum=cfg.momentum, epsilon=cfg.opt_eps, loss_scale=cfg.loss_scale)
-    eval_metrics = {'Loss': nn.Loss(),
-                    'Top1-Acc': nn.Top1CategoricalAccuracy(),
-                    'Top5-Acc': nn.Top5CategoricalAccuracy()}
+    optimizer = RMSProp(group_params, lr, decay=0.9, weight_decay=config.weight_decay,
+                        momentum=config.momentum, epsilon=config.opt_eps, loss_scale=config.loss_scale)
+    # eval_metrics = {'Loss': nn.Loss(), 'Top1-Acc': nn.Top1CategoricalAccuracy(), \
+    # 'Top5-Acc': nn.Top5CategoricalAccuracy()}
 
-    if args_opt.resume:
-        ckpt = load_checkpoint(args_opt.resume)
+    if config.resume:
+        ckpt = load_checkpoint(config.resume)
         load_param_into_net(net, ckpt)
-    if args_opt.platform == "Ascend":
-        loss_scale_manager = FixedLossScaleManager(cfg.loss_scale, drop_overflow_update=False)
-        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=cfg.amp_level,
+    if config.platform == "Ascend":
+        loss_scale_manager = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=config.amp_level,
                       loss_scale_manager=loss_scale_manager)
     else:
-        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=cfg.amp_level)
+        model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={'acc'}, amp_level=config.amp_level)
 
     print("============== Starting Training ==============")
     loss_cb = LossMonitor(per_print_times=batches_per_epoch)
     time_cb = TimeMonitor(data_size=batches_per_epoch)
     callbacks = [loss_cb, time_cb]
-    config_ck = CheckpointConfig(save_checkpoint_steps=batches_per_epoch, keep_checkpoint_max=cfg.keep_checkpoint_max)
-    save_ckpt_path = os.path.join(cfg.ckpt_path, 'ckpt_' + str(cfg.rank) + '/')
-    ckpoint_cb = ModelCheckpoint(prefix=f"inceptionv3-rank{cfg.rank}", directory=save_ckpt_path, config=config_ck)
-    if args_opt.is_distributed & cfg.is_save_on_master:
-        if cfg.rank == 0:
+    config_ck = CheckpointConfig(save_checkpoint_steps=batches_per_epoch, \
+        keep_checkpoint_max=config.keep_checkpoint_max)
+    save_ckpt_path = os.path.join(config.ckpt_path, 'ckpt_' + str(config.rank) + '/')
+    ckpoint_cb = ModelCheckpoint(prefix=f"inceptionv3-rank{config.rank}", directory=save_ckpt_path, config=config_ck)
+    if config.is_distributed & config.is_save_on_master:
+        if config.rank == 0:
             callbacks.append(ckpoint_cb)
-        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=cfg.ds_sink_mode)
+        model.train(config.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=config.ds_sink_mode)
     else:
         callbacks.append(ckpoint_cb)
-        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=cfg.ds_sink_mode)
+        model.train(config.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=config.ds_sink_mode)
     print("train success")
+
+
+if __name__ == '__main__':
+    train_inceptionv3()

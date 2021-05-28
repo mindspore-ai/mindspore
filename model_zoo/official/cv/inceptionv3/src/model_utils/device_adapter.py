@@ -1,4 +1,3 @@
-#!/bin/bash
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DATA_DIR=$1
-PATH_CHECKPOINT=$2
 
-BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
-CONFIG_FILE="${BASE_PATH}/../default_config_cpu.yaml"
+"""Device adapter for ModelArts"""
 
-python ../eval.py --config_path=$CONFIG_FILE --platform 'CPU' --dataset_path $DATA_DIR --checkpoint $PATH_CHECKPOINT > eval.log 2>&1 &
+from .config import config
+
+if config.enable_modelarts:
+    from .moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from .local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

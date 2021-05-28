@@ -97,16 +97,22 @@ InceptionV3的总体网络架构如下：
     ├─run_eval_gpu.sh                         # 启动GPU评估
     └─run_eval.sh                             # 启动Ascend评估
   ├─src
-    ├─config.py                       # 参数配置
     ├─dataset.py                      # 数据预处理
     ├─inception_v3.py                 # 网络定义
     ├─loss.py                         # 自定义交叉熵损失函数
     ├─lr_generator.py                 # 学习率生成器
+    └─model_utils
+      ├─config.py                     # 获取.yaml配置参数
+      ├─device_adapter.py             # 获取云上id
+      ├─local_adapter.py              # 获取本地id
+      └─moxing_adapter.py             # 云上数据准备
+  ├─default_config.yaml               # 训练配置参数(ascend)
+  ├─default_config_cpu.yaml           # 训练配置参数(cpu)
+  ├─default_config_gpu.yaml           # 训练配置参数(gpu)
   ├─eval.py                           # 评估网络
   ├─export.py                         # 导出 AIR,MINDIR模型的脚本
   ├─postprogress.py                   # 310推理后处理脚本
   └─train.py                          # 训练网络
-
 ```
 
 ## 脚本参数

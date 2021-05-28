@@ -41,6 +41,9 @@ elif [ $# == 3 ]; then
     fi
 fi
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
 echo $model
 echo $data_path
 echo $label_file
@@ -95,7 +98,7 @@ function infer()
 
 function cal_acc()
 {
-    python ../postprocess.py --label_file=$label_file --result_path=result_Files &> acc.log
+    python ../postprocess.py --config_path=$CONFIG_FILE --label_file=$label_file --result_path=result_Files &> acc.log
     if [ $? -ne 0 ]; then
         echo "calculate accuracy failed"
         exit 1
