@@ -46,6 +46,8 @@ if __name__ == '__main__':
     config = train_config
     data_sink = (args.device_target == "GPU")
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=False)
+    if args.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
     if args.is_distributed:
         init('nccl')
         rank_id = get_rank()
