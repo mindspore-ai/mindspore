@@ -28,7 +28,7 @@ from mindspore import log as logger
 from mindspore.train.callback import Callback
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn.optim import THOR
+from mindspore.nn.optim import thor
 from mindspore.train.model import Model
 from mindspore.train.train_thor import ConvertModelUtils
 import mindspore.dataset.transforms.c_transforms as C
@@ -166,10 +166,10 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
 
     lr = get_bert_thor_lr()
     damping = get_bert_thor_damping()
-    split_indices = [38, 77]
-    optimizer = THOR(net_with_loss, lr, damping, momentum, weight_decay, loss_scale, batch_size,
+    split_indices = None
+    optimizer = thor(net_with_loss, lr, damping, momentum, weight_decay, loss_scale, batch_size,
                      decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-                     split_indices=split_indices)
+                     split_indices=split_indices, enable_clip_grad=True, frequency=frequency)
     time_monitor_callback = TimeMonitor(data_sink_steps)
     loss_callback = LossCallback()
     callback = [time_monitor_callback, loss_callback]
@@ -178,10 +178,9 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
         param_dict = load_checkpoint(load_checkpoint_path)
         load_param_into_net(net_with_loss, param_dict)
 
-    net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
+    net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, sens=loss_scale, enable_clip_grad=False)
     model = Model(net_with_grads)
-    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer,
-                                                      frequency=frequency)
+    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)
     model.train(new_repeat_count, data_set, callbacks=callback, dataset_sink_mode=True, sink_size=data_sink_steps)
 
     loss_list = loss_callback.loss_list
