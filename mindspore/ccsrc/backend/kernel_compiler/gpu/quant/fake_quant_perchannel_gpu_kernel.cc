@@ -23,6 +23,12 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+}  // namespace
+
 FakeQuantPerChannelGpuKernel::FakeQuantPerChannelGpuKernel()
     : input_size_(0),
       num_channels_(0),
@@ -112,13 +118,13 @@ bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   (void)workspace;
-  float *output = GetDeviceAddress<float>(outputs, 0);
-  float *input = GetDeviceAddress<float>(inputs, 0);
-  float *input_min = GetDeviceAddress<float>(inputs, 1);
-  float *input_max = GetDeviceAddress<float>(inputs, 2);
-  float *scale = GetDeviceAddress<float>(workspace, 0);
-  float *nudge_min = GetDeviceAddress<float>(workspace, 1);
-  float *nudge_max = GetDeviceAddress<float>(workspace, 2);
+  float *output = GetDeviceAddress<float>(outputs, kIndex0);
+  float *input = GetDeviceAddress<float>(inputs, kIndex0);
+  float *input_min = GetDeviceAddress<float>(inputs, kIndex1);
+  float *input_max = GetDeviceAddress<float>(inputs, kIndex2);
+  float *scale = GetDeviceAddress<float>(workspace, kIndex0);
+  float *nudge_min = GetDeviceAddress<float>(workspace, kIndex1);
+  float *nudge_max = GetDeviceAddress<float>(workspace, kIndex2);
 
   if (input == nullptr) {
     MS_LOG(EXCEPTION) << "FakeQuantPerChannelGpuKernel input is null.";

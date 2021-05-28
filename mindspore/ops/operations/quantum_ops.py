@@ -62,7 +62,8 @@ class PQC(PrimitiveWithInfer):
             outputs=['results', 'encoder_gradient', 'ansatz_gradient'])
         self.n_hams = len(hams_pauli_coeff)
 
-    def check_shape_size(self, encoder_data, ansatz_data):
+    @staticmethod
+    def check_shape_size(encoder_data, ansatz_data):
         if len(encoder_data) != 2:
             raise ValueError(
                 "PQC input encoder_data should have dimension size \

@@ -71,7 +71,7 @@ class ExportToQuantInferNetwork:
         network = self.network
         if isinstance(network, _AddFakeQuantInput):
             network = network.network
-        network = self._convert_quant2deploy(network)
+        network = self.__convert_quant2deploy(network)
         return network
 
     def _get_quant_block(self, cell_core, activation, fake_quant_a_out):
@@ -204,7 +204,7 @@ class ExportToQuantInferNetwork:
             change = True
         return change
 
-    def _convert_quant2deploy(self, network):
+    def __convert_quant2deploy(self, network):
         """Convert network's all quant subcell to deploy subcell."""
         cells = network.name_cells()
         change = False
@@ -233,10 +233,11 @@ class ExportToQuantInferNetwork:
             elif isinstance(subcell, _AddFakeQuantAfterSubCell):
                 change = self._get_fake_name(network, subcell, name)
             else:
-                self._convert_quant2deploy(subcell)
+                self.__convert_quant2deploy(subcell)
         if isinstance(network, nn.SequentialCell) and change:
             network.cell_list = list(network.cells())
         return network
+
 
 class ExportManualQuantNetwork(ExportToQuantInferNetwork):
     """
@@ -260,7 +261,7 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
         self.upcell = None
         self.upname = None
 
-    def _convert_quant2deploy(self, network):
+    def __convert_quant2deploy(self, network):
         """Convert network's all quant subcell to deploy subcell."""
         cells = network.name_cells()
         change = False
@@ -285,7 +286,7 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
                 change = self._get_fake_name(network, subcell, name)
             else:
                 self.upcell, self.upname = None, None
-                self._convert_quant2deploy(subcell)
+                self.__convert_quant2deploy(subcell)
         if isinstance(network, nn.SequentialCell) and change:
             network.cell_list = list(network.cells())
         return network
