@@ -130,7 +130,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
         """Initialize CusFusedAbsMax1"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.origin_shape = origin_shape
-        from mindspore.ops._op_impl._custom_op.fused_abs_max1_impl import CusFusedAbsMax1
+        from mindspore.ops._op_impl._custom_op.fused_abs_max1_impl import cus_fused_abs_max1
 
     def infer_shape(self, data1_shape):
         ll = []
@@ -169,7 +169,7 @@ class CusImg2Col(PrimitiveWithInfer):
         self.strides = strides
         self.dilates = dilates
         self.mode = mode
-        from mindspore.ops._op_impl._custom_op.img2col_impl import CusImg2Col
+        from mindspore.ops._op_impl._custom_op.img2col_impl import cus_img2col
 
     def infer_shape(self, data1_shape):
         bs, c, h, w = data1_shape
