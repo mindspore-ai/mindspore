@@ -22,7 +22,7 @@
 #include <set>
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
-#include "tools/converter/registry/model_parser_registry.h"
+#include "include/registry/model_parser_registry.h"
 #include "proto/caffe.pb.h"
 #include "ops/primitive_c.h"
 

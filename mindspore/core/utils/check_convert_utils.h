@@ -27,6 +27,7 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
+#include "ir/format.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;
@@ -49,26 +50,6 @@ enum CompareRange {
   kIncludeLeft = 2,     // [a,b)
   kIncludeRight = 3,    // (a,b]
   kIncludeBoth = 4,     // [a,b]
-};
-enum Format : int64_t {
-  NCHW = 0,
-  NHWC = 1,
-  NHWC4 = 2,
-  HWKC = 3,
-  HWCK = 4,
-  KCHW = 5,
-  CKHW = 6,
-  KHWC = 7,
-  CHWK = 8,
-  HW = 9,
-  HW4 = 10,
-  NC = 11,
-  NC4 = 12,
-  NC4HW4 = 13,
-  NUM_OF_FORMAT = 14,
-  NCDHW = 15,
-  NWC = 16,
-  NCW = 17
 };
 enum ActivationType : int64_t {
   NO_ACTIVATION = 0,

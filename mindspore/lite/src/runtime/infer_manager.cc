@@ -23,7 +23,7 @@
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
 #include "src/tensorlist.h"
-#include "src/registry/kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {

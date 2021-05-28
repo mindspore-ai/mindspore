@@ -15,7 +15,7 @@
  */
 #include "src/registry/kernel_interface_registry.h"
 #include <memory>
-#include "src/registry/kernel_interface.h"
+#include "include/registry/kernel_interface.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"

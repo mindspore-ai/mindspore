@@ -106,6 +106,8 @@ getCommonFile() {
   cd "${MINDSPORE_HOME}" || exit 1
   include_h=()
   while IFS='' read -r line; do include_h+=("$line"); done < <(ls mindspore/lite/include/*.h)
+  regist_include_h=()
+  while IFS='' read -r line; do regist_include_h+=("$line"); done < <(ls mindspore/lite/include/registry/*kernel*.h)
   src_files_h=()
   while IFS='' read -r line; do src_files_h+=("$line"); done < <(ls mindspore/lite/src/*.h)
   common_files_h=()
@@ -132,7 +134,7 @@ getCommonFile() {
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.h
     mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
   )
-  all_files_h=("${include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
+  all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
 
   # concat regx
   REMOVE_LISTS_STR="${all_files_h[0]}"
@@ -152,6 +154,8 @@ getCommonFile() {
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/core/mindrt/src/actor/*.cc)
   src_files=()
   while IFS='' read -r line; do src_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.cc)
+  regist_files=()
+  while IFS='' read -r line; do regist_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/registry/*.cc)
   common_files=()
   while IFS='' read -r line; do common_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.cc)
   runtime_files_cc=()
@@ -169,7 +173,7 @@ getCommonFile() {
     "${MINDSPORE_HOME}"/mindspore/core/utils/status.cc
     "${MINDSPORE_HOME}"/mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/common_infer.c
   )
-  all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
+  all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
     "${cxx_api_files[@]}"
   )

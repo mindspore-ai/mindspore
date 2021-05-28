@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
-#include "src/registry/register_kernel.h"
+#include "include/registry/register_kernel.h"
 
 using mindspore::schema::PrimitiveType_MAX;
 using mindspore::schema::PrimitiveType_MIN;

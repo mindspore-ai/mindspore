@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/registry/register_kernel.h"
+#include "include/registry/register_kernel.h"
 #include <set>
 #include "src/registry/register_kernel_impl.h"
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/registry/register_kernel_impl.h"
-#include "src/registry/register_kernel.h"
+#include "include/registry/register_kernel.h"
 #include "include/errorcode.h"
 #include "src/common/version_manager.h"
 #include "src/common/log_adapter.h"

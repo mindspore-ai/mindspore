@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "tools/converter/registry/pass_registry.h"
-#include <iostream>
+#include "include/registry/pass_registry.h"
 #include <unordered_map>
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,7 +27,7 @@ PassRegistry *PassRegistry::GetInstance() {
 
 void PassRegistry::RegPass(int position, const PassPtr &pass) {
   if (pass == nullptr) {
-    std::cout << "pass is nullptr" << std::endl;
+    MS_LOG(ERROR) << "pass is nullptr.";
     return;
   }
   auto instance = PassRegistry::GetInstance();

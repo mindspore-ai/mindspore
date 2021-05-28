@@ -22,7 +22,7 @@
 #include <vector>
 #include <set>
 #include "tools/converter/model_parser.h"
-#include "tools/converter/registry/model_parser_registry.h"
+#include "include/registry/model_parser_registry.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
 

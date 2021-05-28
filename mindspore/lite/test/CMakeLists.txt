@@ -19,6 +19,7 @@ if(ENABLE_CONVERTER)
             ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
             )
 else()
+    set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
     add_compile_definitions(USE_ANDROID_LOG)
 endif()
 
@@ -106,6 +107,9 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/cpu_info.cc
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
+
+file(GLOB KERNEL_REG_SRC ${LITE_DIR}/src/registry/*.cc)
+set(TEST_LITE_SRC ${TEST_LITE_SRC} ${KERNEL_REG_SRC})
 
 if(ENABLE_TOOLS)
     set(TEST_LITE_SRC
@@ -393,9 +397,6 @@ if(ENABLE_CONVERTER)
             mindspore::glog
             )
 endif()
-
-target_link_libraries(lite-test mslite_kernel_reg)
-
 if(ENABLE_MODEL_OBF)
     target_link_libraries(lite-test ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()

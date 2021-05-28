@@ -16,7 +16,7 @@
 #include "src/kernel_registry.h"
 #include <utility>
 #include "include/errorcode.h"
-#include "src/registry/register_kernel.h"
+#include "include/registry/register_kernel.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "nnacl/pooling_parameter.h"

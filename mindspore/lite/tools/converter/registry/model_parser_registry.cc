@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/converter/registry/model_parser_registry.h"
+#include "include/registry/model_parser_registry.h"
 #include <string>
 #include <unordered_map>
 
