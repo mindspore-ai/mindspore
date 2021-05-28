@@ -2163,6 +2163,7 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     RunOpImpl(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
               input_tensor_info.input_tensors_mask);
 
+    graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
