@@ -120,7 +120,7 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
                       register_resp_message.ByteSizeLong());
 
-  if (node_manager_.CheckRegisterNum()) {
+  if (node_manager_.IsAllNodesRegistered()) {
     is_ready_ = true;
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
@@ -142,7 +142,7 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
   node_manager_.AddFinishNode(*finish_message);
   MS_LOG(INFO) << "Process finish message from node id:" << *finish_message;
   server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
-  if (node_manager_.CheckFinishNum()) {
+  if (node_manager_.IsAllNodesFinished()) {
     auto node_infos = node_manager_.nodes_info();
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
@@ -176,8 +176,6 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
 
   SendMetadataMessage send_metadata_message;
   std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
-
-  MS_LOG(ERROR) << "the list size:" << servers_meta_list.size();
 
   *send_metadata_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
@@ -238,7 +236,6 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     auto client = std::make_shared<TcpClient>(ip, port);
-    MS_LOG(ERROR) << "the ip:" << node_info.ip_ << ", the port:" << node_info.port_;
     client->SetMessageCallback([&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
                                    size_t size) { NotifyMessageArrival(meta); });
     client->Init();

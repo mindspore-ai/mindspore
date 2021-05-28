@@ -29,6 +29,8 @@ enum NodeCommand {
   COLLECTIVE_SEND_DATA = 6;
   // The scheduler actively sends metadata to the worker and server
   SEND_METADATA = 7;
+  SCALE_OUT = 8;
+  SCALE_IN = 9;
 }
 
 enum NodeRole {
@@ -119,4 +121,12 @@ message FinishMessage {
 message CommMessage {
   MessageMeta pb_meta = 1;
   bytes data = 2;
+}
+
+// The scheduler will broadcast the worker/server numbers after scale out/in to all nodes.
+message ScaleOutMessage {
+  // the worker number after scale out/in
+  int32 worker_num = 1;
+  // the server number after scale out/in
+  int32 server_num = 2;
 }

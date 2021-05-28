@@ -90,6 +90,16 @@ bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &mess
 
 void AbstractNode::set_event_callback(const OnNodeEventMessage &event) { on_node_event_message_ = event; }
 
+void AbstractNode::set_ready_for_scale_out() {
+  Register(client_to_scheduler_);
+  connected_nodes_.clear();
+}
+
+void AbstractNode::set_ready_for_scale_in() {
+  Register(client_to_scheduler_);
+  connected_nodes_.clear();
+}
+
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(data);
@@ -267,6 +277,10 @@ bool AbstractNode::CollectiveWait(std::pair<uint32_t, uint64_t> request_id, cons
   return res;
 }
 
+int32_t AbstractNode::worker_num() const { return worker_num_; }
+
+int32_t AbstractNode::server_num() const { return server_num_; }
+
 void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client) {
   MS_LOG(INFO) << "The node role: " << CommUtil::NodeRoleToString(node_info_.node_role_)
                << ", the node id:" << node_info_.node_id_ << ", the node rank id:" << node_info_.rank_id_
@@ -375,7 +389,6 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   SendMetadataMessage send_meta_message;
   send_meta_message.ParseFromArray(data, size);
   nodes_address_.clear();
-  MS_LOG(ERROR) << "send metadata size:" << send_meta_message.servers_meta().size();
   for (const auto &it : send_meta_message.servers_meta()) {
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
     MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port();
@@ -383,6 +396,16 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   is_ready_ = true;
   wait_start_cond_.notify_all();
+
+  if (current_cluster_state_ == ClusterState::CLUSTER_SCALE_OUT) {
+    MS_LOG(WARNING) << "Trigger cluster scale out done event.";
+    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_OUT_DONE);
+  }
+  if (current_cluster_state_ == ClusterState::CLUSTER_SCALE_IN) {
+    MS_LOG(WARNING) << "Trigger cluster scale in done event.";
+    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_IN_DONE);
+  }
+  current_cluster_state_ = ClusterState::CLUSTER_READY;
 }
 
 void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
@@ -393,6 +416,28 @@ void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::share
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   is_finish_ = true;
   wait_finish_cond_.notify_all();
+}
+
+void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                   const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  on_node_event_message_(ClusterEvent::READY_FOR_SCALE_OUT);
+  current_cluster_state_ = ClusterState::CLUSTER_SCALE_OUT;
+  is_ready_ = false;
+}
+
+void AbstractNode::ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                  const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  on_node_event_message_(ClusterEvent::READY_FOR_SCALE_IN);
+  current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
+  is_ready_ = false;
 }
 
 bool AbstractNode::Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout) {
@@ -613,9 +658,10 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::FINISH] = &AbstractNode::ProcessFinish;
   server_handler_[NodeCommand::SEND_DATA] = nullptr;
   server_handler_[NodeCommand::COLLECTIVE_SEND_DATA] = nullptr;
+  server_handler_[NodeCommand::SCALE_OUT] = &AbstractNode::ProcessScaleOut;
 }
 
-void AbstractNode::InitNode(const NodeRole &role) {
+void AbstractNode::InitNodeInfo(const NodeRole &role) {
   node_info_.node_id_ = CommUtil::GenerateUUID();
   node_info_.node_role_ = role;
   node_info_.ip_ = server_->BoundIp();
@@ -623,6 +669,11 @@ void AbstractNode::InitNode(const NodeRole &role) {
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " is generate uuid is:" << node_info_.node_id_ << ", the ip:" << server_->BoundIp()
                << ", the port:" << server_->BoundPort();
+}
+
+void AbstractNode::InitNodeNum() {
+  worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
+  server_num_ = PSContext::instance()->cluster_config().initial_server_num;
 }
 }  // namespace core
 }  // namespace ps

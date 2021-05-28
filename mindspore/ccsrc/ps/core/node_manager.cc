@@ -80,12 +80,9 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
 
 void NodeManager::UpdateHeartbeat(const std::string &node_id) {
   std::lock_guard<std::mutex> lock(heartbeat_mutex_);
-  NodeInfo node_info = nodes_info_[node_id];
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
   heartbeats_[node_id] = current_time;
-  MS_LOG(DEBUG) << "The node role: " << CommUtil::NodeRoleToString(node_info.node_role_) << ", the node id:" << node_id
-                << ", the node rank id:" << node_info.rank_id_ << " the current time is: " << current_time.tv_sec;
 }
 
 void NodeManager::UpdateNodeScaleInState(const std::string &node_id) { heartbeats_scale_in_nodes_.insert(node_id); }
@@ -116,7 +113,9 @@ void NodeManager::UpdateCluster() {
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
     if (it->second.tv_sec + PSContext::instance()->cluster_config().heartbeat_timeout < current_time.tv_sec) {
       MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
-      timeout_nodes_info_[it->first] = nodes_info_[it->first];
+      if (nodes_info_.count(it->first)) {
+        timeout_nodes_info_[it->first] = nodes_info_[it->first];
+      }
     }
   }
   if (!timeout_nodes_info_.empty()) {
@@ -146,9 +145,9 @@ void NodeManager::CheckClusterTimeout() {
 
 void NodeManager::AddFinishNode(const std::string &finish_message) { finish_nodes_id_.insert(finish_message); }
 
-bool NodeManager::CheckRegisterNum() { return SizeToInt(nodes_info_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesRegistered() { return SizeToInt(nodes_info_.size()) == total_node_num_; }
 
-bool NodeManager::CheckFinishNum() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
+bool NodeManager::IsAllNodesFinished() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
 
 std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
 
@@ -172,9 +171,24 @@ ClusterState NodeManager::GetClusterState() {
   return cluster_state_;
 }
 
+void NodeManager::ResetMetadata() {
+  MS_LOG(WARNING) << "Reset metadata.";
+  nodes_info_.clear();
+  next_worker_rank_id_ = -1;
+  next_server_rank_id_ = -1;
+}
+
 void NodeManager::set_total_node_num(const int32_t &node_num) { total_node_num_ = node_num; }
 
 const int32_t &NodeManager::total_node_num() { return total_node_num_; }
+
+void NodeManager::set_worker_num(const int32_t &worker_num) { meta_data_->worker_num = worker_num; }
+
+void NodeManager::set_server_num(const int32_t &server_num) { meta_data_->server_num = server_num; }
+
+int32_t NodeManager::worker_num() { return UintToInt(meta_data_->worker_num); }
+
+int32_t NodeManager::server_num() { return UintToInt(meta_data_->server_num); }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
