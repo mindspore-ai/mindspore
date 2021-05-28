@@ -32,7 +32,7 @@ class EltWiseCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const CNodePtr &kernel_node, dnnl::memory::desc src_desc);
+  dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const CNodePtr &kernel_node, const dnnl::memory::desc src_desc);
   dnnl::prop_kind DnnlForward = dnnl::prop_kind::forward_training;
 };
 

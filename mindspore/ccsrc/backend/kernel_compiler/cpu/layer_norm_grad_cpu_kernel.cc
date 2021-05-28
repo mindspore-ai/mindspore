@@ -33,30 +33,30 @@ void LayerNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (begin_params_axis < 0) {
     begin_params_axis += x_shape.size();
   }
-  for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
+  for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
   }
-  for (size_t i = IntToSize(begin_norm_axis); i < x_shape.size(); i++) {
+  for (size_t i = LongToSize(begin_norm_axis); i < x_shape.size(); i++) {
     block_size_ *= x_shape[i];
   }
-  for (size_t i = 0; i < IntToSize(begin_params_axis); i++) {
+  for (size_t i = 0; i < LongToSize(begin_params_axis); i++) {
     param_size_ *= x_shape[i];
   }
-  for (size_t i = begin_params_axis; i < x_shape.size(); i++) {
+  for (size_t i = LongToSize(begin_params_axis); i < x_shape.size(); i++) {
     param_num_ *= x_shape[i];
   }
-  if (block_num_ <= 0 || block_size_ <= 0) {
+  if (block_num_ == 0 || block_size_ == 0) {
     MS_LOG(EXCEPTION) << "LayerNormGradCPUKernel input shape error, input shape: " << x_shape;
   }
 }
 
 bool LayerNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
+                                    const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, workspace, outputs);
+    LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
-    LaunchKernel<float>(inputs, workspace, outputs);
+    LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "input dtype only support float16, float32, float64";
   }
@@ -65,7 +65,6 @@ bool LayerNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 
 template <typename T>
 void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs) {
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
   auto dy = reinterpret_cast<T *>(inputs[1]->addr);
@@ -123,7 +122,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
         auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
         auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
         auto dx2 = sum1 * (T)2.0 / block_size_ * (x[j] - mean[norm_shift]);
-        auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / block_size_) * sum1 * sum3) * ((T)1.0 / block_size_);
+        auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / (T)block_size_) * sum1 * sum3) * ((T)1.0 / (T)block_size_);
         dx[j] = dx1 + dx2 + dx3;
       }
     }

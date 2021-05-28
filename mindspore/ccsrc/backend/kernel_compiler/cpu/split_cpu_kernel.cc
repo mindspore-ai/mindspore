@@ -32,7 +32,7 @@ void SplitCPUKernel<T>::Reshape() {
   input_size_ = 1;
   dims_current_after_axis_ = 1;
   dims_after_axis_ = 1;
-  axis_step_ = input_shape_[axis_] / output_num_;
+  axis_step_ = SizeToLong(input_shape_[axis_]) / output_num_;
 
   for (int i = 0; i < SizeToInt(input_shape_.size()); i++) {
     input_size_ *= input_shape_[i];
@@ -49,7 +49,7 @@ void SplitCPUKernel<T>::Reshape() {
 template <typename T>
 void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back((sizeof(T *) * output_num_));
+  workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 
 template <typename T>
@@ -62,7 +62,7 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 template <typename T>
 void SplitCPUKernel<T>::LaunchSplit(const T *input, T **output, size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       int num = i % dims_current_after_axis_ / dims_after_axis_;
       int block = num / axis_step_;

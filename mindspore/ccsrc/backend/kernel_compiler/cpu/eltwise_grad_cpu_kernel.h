@@ -36,18 +36,18 @@ class EltWiseGradCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
-  void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void ReluGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void ReLU6Grad(const T *input1, const T *input2, T *out, size_t size) const;
+  void AbsGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void SigmoidGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void SqrtGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void TanhGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void GeluGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void AsinGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void ACosGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void AtanGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void AsinhGrad(const T *input1, const T *input2, T *out, size_t size) const;
+  void AcoshGrad(const T *input1, const T *input2, T *out, size_t size) const;
 
   std::string kernel_name_ = "";
 };

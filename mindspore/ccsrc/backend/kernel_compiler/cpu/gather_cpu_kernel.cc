@@ -27,7 +27,7 @@ void GatherV2CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (axis_ < 0) {
     axis_ = axis_ + SizeToLong(input_shape_.size());
   }
-  axis_ += 4 - input_shape_.size();
+  axis_ += 4 - static_cast<int64_t>(input_shape_.size());
   CPUKernelUtils::ExpandDimsTo4(&input_shape_);
   CPUKernelUtils::ExpandDimsTo4(&output_shape_);
 }
@@ -75,7 +75,7 @@ void GatherV2CPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &
     }
     size_t index = IntToSize(indices_addr[i]);
     if (index >= input_shape_[LongToSize(axis_)]) {
-      auto ret = memset_s(*output_addr, *buff_size, 0., num * sizeof(float));
+      auto ret = memset_s(*output_addr, *buff_size, 0, num * sizeof(float));
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "memset failed.";
       }

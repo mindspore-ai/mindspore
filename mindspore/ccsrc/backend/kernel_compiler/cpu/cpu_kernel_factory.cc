@@ -65,7 +65,8 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
   return std::make_pair(false, 0);
 }
 
-bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info) {
+bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr,
+                                                const KernelBuildInfo &kernel_info) const {
   for (size_t i = 0; i < kernel_info.GetInputNum(); ++i) {
     auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetInputAttr(0).first : kernel_attr.GetInputAttr(i).first;
     if (kernel_info.GetInputDeviceType(i) != dtype) {

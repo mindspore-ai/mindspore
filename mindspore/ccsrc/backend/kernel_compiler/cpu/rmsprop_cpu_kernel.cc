@@ -36,7 +36,7 @@ void RMSPropCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool RMSPropCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+                              const std::vector<kernel::AddressPtr> &) {
   if (!use_center_) {
     float *variable = reinterpret_cast<float *>(inputs[0]->addr);
     float *mean_square = reinterpret_cast<float *>(inputs[1]->addr);

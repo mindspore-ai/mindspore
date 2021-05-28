@@ -86,7 +86,7 @@ bool UnsortedSegmentSumCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
     if (index < 0 || index >= SizeToInt(output_dim0_)) {
       continue;
     }
-    size_t output_index = index * output_dim1_ + k;
+    size_t output_index = static_cast<size_t>(index) * output_dim1_ + k;
     output_addr[output_index] += input_addr[i];
   }
   return true;

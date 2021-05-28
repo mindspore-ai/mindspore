@@ -115,10 +115,12 @@ bool SliceCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
   int signstride[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
-  size_t in_start_offset[3] = {begin_[0] * input_element_num_[0], begin_[1] * input_element_num_[1],
-                               begin_[2] * input_element_num_[2]};
-  size_t in_step_size[3] = {strides_[0] * input_element_num_[0], strides_[1] * input_element_num_[1],
-                            strides_[2] * input_element_num_[2]};
+  size_t in_start_offset[3] = {IntToSize(begin_[0]) * input_element_num_[0],
+                               IntToSize(begin_[1]) * input_element_num_[1],
+                               IntToSize(begin_[2]) * input_element_num_[2]};
+  size_t in_step_size[3] = {IntToSize(strides_[0]) * input_element_num_[0],
+                            IntToSize(strides_[1]) * input_element_num_[1],
+                            IntToSize(strides_[2]) * input_element_num_[2]};
 
   auto in_n_offset = in_start_offset[0];
   auto out_n_offset = 0;
@@ -147,7 +149,7 @@ bool SliceCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
           continue;
         }
         for (int m = begin_[3]; signstride[3] * m < signstride[3] * end_[3]; m += strides_[3]) {
-          *output_addr++ = input_addr[in_n_offset + in_c_offset + in_h_offset + m];
+          *output_addr++ = input_addr[in_n_offset + in_c_offset + in_h_offset + IntToSize(m)];
         }
       }
     }
