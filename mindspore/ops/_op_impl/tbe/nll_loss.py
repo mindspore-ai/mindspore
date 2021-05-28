@@ -23,12 +23,13 @@ nll_loss_op_info = TBERegOp("NLLLoss") \
     .compute_cost(10) \
     .kernel_name("nll_loss") \
     .partial_flag(True) \
-    .attr("reduction", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "target", False, "required", "all") \
     .input(2, "weight", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .output(1, "total_weight", False, "optional", "all") \
+    .attr("reduction", "optional", "str", "all", "mean") \
+    .attr("ignore_index", "optional", "int", "all", "-100") \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()

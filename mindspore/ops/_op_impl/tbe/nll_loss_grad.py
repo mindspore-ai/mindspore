@@ -23,13 +23,14 @@ nll_loss_grad_op_info = TBERegOp("NLLLossGrad") \
     .compute_cost(10) \
     .kernel_name("nll_loss_grad") \
     .partial_flag(True) \
-    .attr("reduction", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "y_grad", False, "required", "all") \
     .input(2, "target", False, "required", "all") \
     .input(3, "weight", False, "required", "all") \
     .input(4, "total_weight", False, "required", "all") \
     .output(0, "x_grad", False, "required", "all") \
+    .attr("reduction", "optional", "str", "all", "mean") \
+    .attr("ignore_index", "optional", "int", "all", "-100") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.I32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
