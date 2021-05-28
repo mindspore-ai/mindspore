@@ -265,7 +265,8 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
 void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kInputOutput);
   input_output_ = content;
-  if (input_output_ < 0 || input_output_ > 2) {
+  const uint32_t max_inout_num = 2;
+  if (input_output_ < 0 || input_output_ > max_inout_num) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. input_output should be 0, 1, 2";
   }
 }

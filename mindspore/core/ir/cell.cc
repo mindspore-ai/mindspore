@@ -25,19 +25,7 @@
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;
 
-abstract::AbstractBasePtr Cell::ToAbstract() {
-  /*
-  std::vector<abstract::AbstractAttribute> abs_attrs;
-  std::transform(attrs_.begin(), attrs_.end(), std::back_inserter(abs_attrs),
-                 [](std::pair<std::string, ValuePtr> attr) -> abstract::AbstractAttribute {
-                   return std::make_pair(attr.first, attr.second->ToAbstract());
-                 });
-  auto abs = std::make_shared<abstract::AbstractCell>(shared_from_base<Named>(), abs_attrs);
-  abs->set_value(shared_from_base<Value>());
-  return abs;
-  */
-  return nullptr;
-}
+abstract::AbstractBasePtr Cell::ToAbstract() { return nullptr; }
 
 bool Cell::operator==(const Value &other) const {
   if (other.isa<Cell>()) {

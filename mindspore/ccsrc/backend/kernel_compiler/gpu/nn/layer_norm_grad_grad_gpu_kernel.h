@@ -89,8 +89,8 @@ class LayerNormGradGradGpuKernel : public GpuKernel {
     }
 
     epsilon_ = 1e-12;
-    auto type_id = TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
-    if (std::strncmp(type_id, "kNumberTypeFloat16", std::strlen(type_id)) == 0) {
+    auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+    if (type_id == kNumberTypeFloat16) {
       epsilon_ = 1e-7;
     }
 

@@ -135,6 +135,8 @@ enum SubModuleId : int {
   NUM_SUBMODUES    // number of submodules
 };
 
+const std::string &GetSubModuleName(SubModuleId module_id);
+
 #ifndef SUBMODULE_ID
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif

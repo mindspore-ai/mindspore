@@ -326,9 +326,9 @@ class TensorDataImpl : public TensorData {
     if (depth == static_cast<ssize_t>(ndim_) - 1) {  // Bottom dimension
       ssize_t num = shape[depth];
       if (num > kThreshold && ndim_ > 1) {
-        OutputDataString(ss, *cursor, 0, kThreshold / 2, use_comma, max_width);
+        OutputDataString(ss, *cursor, 0, kThreshold >> 1, use_comma, max_width);
         ss << ' ' << kEllipsis << ' ';
-        OutputDataString(ss, *cursor, num - kThreshold / 2, num, use_comma, max_width);
+        OutputDataString(ss, *cursor, num - (kThreshold >> 1), num, use_comma, max_width);
       } else {
         OutputDataString(ss, *cursor, 0, num, use_comma, max_width);
       }
@@ -336,7 +336,7 @@ class TensorDataImpl : public TensorData {
     } else {  // Middle dimension
       ssize_t num = shape[depth];
       // Handle the first half.
-      for (ssize_t i = 0; i < std::min(static_cast<ssize_t>(kThreshold / 2), num); i++) {
+      for (ssize_t i = 0; i < std::min(static_cast<ssize_t>(kThreshold >> 1), num); i++) {
         if (i > 0) {
           if (use_comma) {
             ss << ',';
@@ -365,8 +365,9 @@ class TensorDataImpl : public TensorData {
         *cursor += ignored;
       }
       // Handle the second half.
-      if (num > kThreshold / 2) {
-        ssize_t iter_times = std::min(static_cast<ssize_t>(num - kThreshold / 2), static_cast<ssize_t>(kThreshold / 2));
+      if (num > (kThreshold >> 1)) {
+        ssize_t iter_times =
+          std::min(static_cast<ssize_t>(num - (kThreshold >> 1)), static_cast<ssize_t>(kThreshold >> 1));
         for (ssize_t i = 0; i < iter_times; i++) {
           if (use_comma && i != 0) {
             ss << ',';

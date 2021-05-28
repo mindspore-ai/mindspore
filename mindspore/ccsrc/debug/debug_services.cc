@@ -175,9 +175,9 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
         is_hit = (std::find(op_overflows.begin(), op_overflows.end(), tensor_name_no_slot) != op_overflows.end());
       } else if (base_summary_ptr != nullptr) {
         auto item = base_summary_ptr->IsWatchpointHit(wp);
-        is_hit = std::get<0>(item);
-        error_code = std::get<1>(item);
-        parameter_list = std::get<2>(item);
+        is_hit = std::get<ITensorSummary::eHitPos>(item);
+        error_code = std::get<ITensorSummary::eErrorCodePos>(item);
+        parameter_list = std::get<ITensorSummary::eParamListPos>(item);
       }
       // add analyzed tensor to cache
       if (!recheck) {
