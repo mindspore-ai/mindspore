@@ -52,7 +52,6 @@ class MS_API RegisterKernelInterface {
  public:
   static int CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
   static int Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
-  static bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
   static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
                                                                      const schema::Primitive *primitive);
 };

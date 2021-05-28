@@ -29,10 +29,6 @@ int RegisterKernelInterface::CustomReg(const std::string &provider, const std::s
   return lite::KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 }
 
-bool RegisterKernelInterface::CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers) {
-  return lite::KernelInterfaceRegistry::Instance()->CheckReg(node, std::forward<std::set<std::string>>(providers));
-}
-
 std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(
   const std::string &provider, const schema::Primitive *primitive) {
   return lite::KernelInterfaceRegistry::Instance()->GetKernelInterface(provider, primitive);

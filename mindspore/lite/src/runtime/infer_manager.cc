@@ -47,12 +47,11 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     }
   }
   if (kernel_interface == nullptr) {
-    MS_LOG(ERROR) << "Can't find kernel_interface!op_type: " << PrimitiveTypeName(prim_type);
-    return RET_ERROR;
+    return RET_NOT_SUPPORT;
   }
   auto ret = kernel_interface->Infer(in_tensors, out_tensors, static_cast<const schema::Primitive *>(primitive));
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!";
+    MS_LOG(ERROR) << "op_type: " << PrimitiveTypeName(prim_type) << " infer fail!ret: " << ret;
     return ret;
   }
   return RET_OK;
