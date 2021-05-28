@@ -118,6 +118,8 @@ void DepthwiseSWWxKKernel(float *dst, const float *src, const float *weight, con
 #endif
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *bias_data, int width, int ori_channel,
+                   bool relu, bool relu6);
 void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
                const float *bias_data, const ConvParameter *conv_param, int start_oh, int end_oh);
 
