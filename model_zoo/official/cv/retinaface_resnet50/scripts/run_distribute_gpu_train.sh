@@ -23,5 +23,5 @@ echo "==========================================================================
 RANK_SIZE=$1
 export CUDA_VISIBLE_DEVICES="$2"
 
-mpirun --allow-run-as-root -n $RANK_SIZE \
+mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python train.py > train.log 2>&1 &
