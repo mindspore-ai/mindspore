@@ -379,7 +379,10 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategys>(strategy);
 }
 
-Status TensorDotInfo::GenerateStrategies(int64_t) { return SUCCESS; }
+std::vector<StrategyPtr> TensorDotInfo::GenerateOpStrategies(int64_t) {
+  std::vector<StrategyPtr> sp_vector;
+  return sp_vector;
+}
 
 Status TensorDotInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &) { return SUCCESS; }
 }  // namespace parallel

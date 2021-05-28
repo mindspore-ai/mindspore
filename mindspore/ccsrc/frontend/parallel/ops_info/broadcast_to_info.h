@@ -41,7 +41,7 @@ class BroadcastToInfo : public OperatorInfo {
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 

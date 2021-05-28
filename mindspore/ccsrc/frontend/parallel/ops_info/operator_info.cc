@@ -1641,5 +1641,25 @@ void OperatorInfo::CheckSelectedStrategy(const StrategyPtr &s_strategy) {
 void OperatorInfo::SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &stra_cost) {
   strategy_cost_ = stra_cost;
 }
+
+Status OperatorInfo::GenerateStrategies(int64_t stage_id) {
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
+    return FAILED;
+  }
+
+  std::vector<StrategyPtr> sp_vector = GenerateOpStrategies(stage_id);
+
+  size_t success = 0;
+  for (auto &sp : sp_vector) {
+    PrintStrategy(sp);
+    if (SetCostUnderStrategy(sp) == SUCCESS) {
+      success++;
+      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
+      PrintStrategy(sp);
+    }
+  }
+  return SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore

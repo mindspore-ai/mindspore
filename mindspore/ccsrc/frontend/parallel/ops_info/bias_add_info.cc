@@ -75,7 +75,7 @@ Status BiasAddInfo::InferTensorMap() {
 
 Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status BiasAddInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split, input0_split};
 
@@ -84,9 +84,9 @@ Status BiasAddInfo::GenerateStrategies(int64_t stage_id) {
   Shapes tmp_splittable_inputs = {splittable_inputs[0], splittable_inputs[0]};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, tmp_splittable_inputs, &sp_vector) !=
       SUCCESS) {
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies failed.";
   }
-  MS_LOG(INFO) << name_ << " : Generate strategies with broadcast success.";
+  MS_LOG(INFO) << name_ << " : Generate strategies success.";
 
   for (auto &sp : sp_vector) {
     Strategys tmp_strategy;
@@ -99,16 +99,7 @@ Status BiasAddInfo::GenerateStrategies(int64_t stage_id) {
     tmp_strategy.push_back(input1_strategy);  // input1
     sp->ResetInputs(tmp_strategy);
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status BiasAddInfo::Init(const StrategyPtr &strategy) {

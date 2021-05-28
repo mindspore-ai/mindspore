@@ -150,16 +150,7 @@ Status TopKInfo::InferMirrorOps() {
 
 Status TopKInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status TopKInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
-  if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
-  }
-
+std::vector<StrategyPtr> TopKInfo::GenerateOpStrategies(int64_t stage_id) {
   // to generate the first input's strategy
   Shape input_split(inputs_shape_[0].size(), 1);
   input_split.back() = 0;  // the last dimension can not be split
@@ -168,20 +159,10 @@ Status TopKInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status TopKInfo::Init(const StrategyPtr &strategy) {

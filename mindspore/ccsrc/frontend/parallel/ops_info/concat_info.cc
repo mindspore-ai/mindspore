@@ -145,14 +145,9 @@ void ConcatInfo::ReComputeBatchSplitFlagList() {
 
 Status ConcatInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status ConcatInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
+std::vector<StrategyPtr> ConcatInfo::GenerateOpStrategies(int64_t stage_id) {
   if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": The inputs shape is empty";
   }
   Shape input_split;
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
@@ -169,15 +164,13 @@ Status ConcatInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
   }
 
   // the others strategies are equal to the first input's strategy
   for (auto &sp : sp_vector) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
-      MS_LOG(ERROR) << name_ << ": The strategy is null or empty";
-      return FAILED;
+      MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
     Strategys tmp_strategy;
     Dimensions first_input_strategy = sp->GetInputDim()[0];
@@ -187,16 +180,7 @@ Status ConcatInfo::GenerateStrategies(int64_t stage_id) {
     sp->ResetInputs(tmp_strategy);
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status ConcatInfo::Init(const StrategyPtr &strategy) {

@@ -62,11 +62,7 @@ Status L2NormalizeInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status L2NormalizeInfo::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
-    return FAILED;
-  }
+std::vector<StrategyPtr> L2NormalizeInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size() - 1, 1);
   int64_t axis_index = axis_;
   if (axis_ < 0) {
@@ -78,18 +74,9 @@ Status L2NormalizeInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 }  // namespace parallel
 }  // namespace mindspore

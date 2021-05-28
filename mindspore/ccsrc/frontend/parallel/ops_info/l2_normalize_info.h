@@ -35,7 +35,7 @@ class L2NormalizeInfo : public Activation {
                   const PrimitiveAttrs &attrs)
       : Activation(name, inputs_shape, outputs_shape, attrs, std::make_shared<L2NormalizeCost>()) {}
   ~L2NormalizeInfo() override = default;
-  Status GenerateStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
 
  protected:
   Status GetAttrs() override;

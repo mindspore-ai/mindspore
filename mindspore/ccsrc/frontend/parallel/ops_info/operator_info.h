@@ -86,7 +86,8 @@ class OperatorInfo {
 
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
-  virtual Status GenerateStrategies(int64_t stage_id) = 0;
+  virtual Status GenerateStrategies(int64_t stage_id);
+  virtual std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) = 0;
   const OperatorCostPtr &operator_cost() const { return operator_cost_; }
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
