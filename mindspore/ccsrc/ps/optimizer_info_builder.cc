@@ -84,11 +84,12 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
     EXC_IF_VEC_IDX_OOB(ps_lens, ps_index);
     addr_data_size = IntToSize(ps_lens[ps_index]);
   }
-  addr_data_offset = IntToSize(std::accumulate(ps_lens.begin(), ps_lens.begin() + ps_index, 0, std::plus<int>()));
+  addr_data_offset =
+    IntToSize(std::accumulate(ps_lens.begin(), ps_lens.begin() + SizeToInt(ps_index), 0, std::plus<int>()));
 
   // The size in ps_lens instead of addr_data_size is the size of real data.
   T *buffer = new T[addr_data_size];
-  addr_ptr->size = IntToSize(ps_lens[ps_index] * sizeof(T));
+  addr_ptr->size = IntToSize(ps_lens[ps_index]) * sizeof(T);
   addr_ptr->addr = buffer;
 
   size_t dst_size = addr_ptr->size;

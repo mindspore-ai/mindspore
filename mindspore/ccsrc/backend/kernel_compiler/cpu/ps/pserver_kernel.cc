@@ -20,7 +20,8 @@ namespace mindspore {
 namespace kernel {
 namespace ps {
 void PServerKernel::Shard(std::vector<size_t> *shape, int axis) {
-  (*shape)[axis] = Util::LocalShard((*shape)[axis], rank_id_, pserver_num_);
+  (*shape)[axis] =
+    LongToSize(Util::LocalShard(SizeToLong((*shape)[axis]), SizeToLong(rank_id_), SizeToLong(pserver_num_)));
 }
 }  // namespace ps
 }  // namespace kernel
