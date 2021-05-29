@@ -35,6 +35,15 @@ void PassManager::AddPass(const PassPtr &pass) {
   }
 }
 
+// not implement for lite, just for api compatible
+bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const { return false; }
+
+// not implement for lite, just for api compatible
+std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const { return ""; }
+
+// not implement for lite, just for api compatible
+void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {}
+
 bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
   if (func_graph == nullptr) {
     return false;
