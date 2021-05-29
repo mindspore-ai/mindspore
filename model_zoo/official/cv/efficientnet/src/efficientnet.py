@@ -20,7 +20,6 @@ from copy import deepcopy
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import ms_function
 from mindspore.common.initializer import (Normal, One, Uniform, Zero)
 from mindspore.ops import operations as P
 from mindspore.ops.composite import clip_by_value
@@ -346,7 +345,6 @@ def _decode_arch_def(arch_def, depth_multiplier=1.0, depth_trunc='ceil'):
     return arch_args
 
 
-@ms_function
 def hard_swish(x):
     x = P.Cast()(x, ms.float32)
     y = x + 3.0

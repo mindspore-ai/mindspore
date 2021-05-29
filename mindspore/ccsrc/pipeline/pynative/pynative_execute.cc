@@ -1432,10 +1432,6 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   MS_LOG(DEBUG) << "Current op info: " << op_info;
 
   std::vector<tensor::TensorPtr> all_op_tensors;
-  // Get input tensors
-  for (size_t i = 0; i < op_exec_info->op_inputs.size(); ++i) {
-    TensorValueToTensor(parse::data_converter::PyDataToValue(op_exec_info->op_inputs[i]), &all_op_tensors);
-  }
   // Get output tensors
   TensorValueToTensor(parse::data_converter::PyDataToValue(out_real), &all_op_tensors);
   // Save all tensors info of current op
@@ -1949,22 +1945,24 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
   if (top_cell_ != nullptr && cell_stack_.empty()) {
-    // non-first step
+    // Non-first step
     if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
-      // top cell
+      // Top cell forward run.
       const auto &pre_top_cell = already_run_top_cell_.at(cell_id);
       if (!pre_top_cell->is_dynamic()) {
-        MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic or ms_function, no need to run NewGraphInner again";
+        MS_LOG(DEBUG) << "Top cell " << cell_id << " is not dynamic, no need to run NewGraphInner again";
         ResetTopCellInfo(pre_top_cell, args);
         set_top_cell(pre_top_cell);
+        cached_top_cell_forward_running_ = true;
         return;
       }
-    } else if (top_cell()->IsSubCell(cell_id) && !top_cell()->is_dynamic()) {
-      // non-top cell
-      MS_LOG(DEBUG) << "no need to run NewGraphInner again";
+    } else if (top_cell()->IsSubCell(cell_id) || cached_top_cell_forward_running_) {
+      // Sub cell (may be a temporary cell) forward run in cache process.
+      MS_LOG(DEBUG) << "No need to run NewGraphInner again";
       return;
     }
   }
+
   // When the cell has custom bprop, in_custom_bprop_cell is lager than 0
   if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
     custom_bprop_cell_count_ += 1;
@@ -2092,6 +2090,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     MS_LOG(DEBUG) << "Current cell " << cell_id << " no need to run EndGraphInner again";
     if (top_cell()->is_topest() && cell_id == top_cell()->cell_id()) {
       set_grad_flag(false);
+      cached_top_cell_forward_running_ = false;
     }
     return;
   }
@@ -2441,7 +2440,7 @@ void GradExecutor::CheckNeedCompileGraph() {
   MS_LOG(DEBUG) << "Pre all op info : " << pre_all_op_info;
   MS_LOG(DEBUG) << "New all op info : " << new_all_op_info;
   if (pre_all_op_info != new_all_op_info) {
-    MS_LOG(DEBUG) << "The op info has been changed or new top cell has ms_function, need to compile graph again";
+    MS_LOG(DEBUG) << "The op info has been changed, need to compile graph again";
     EraseTopCellFromTopCellList(pre_top_cell);
     pre_top_cell->clear();
     already_run_top_cell_[top_cell_id] = new_top_cell;
@@ -2663,6 +2662,7 @@ void GradExecutor::ClearRes() {
   grad_flag_ = false;
   need_renormalize_ = false;
   grad_is_running_ = false;
+  cached_top_cell_forward_running_ = false;
   top_cell_ = nullptr;
   curr_g_ = nullptr;
   bprop_cell_list_.clear();
