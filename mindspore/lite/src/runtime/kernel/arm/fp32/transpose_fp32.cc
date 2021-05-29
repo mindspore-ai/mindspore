@@ -88,9 +88,17 @@ TransposeCPUKernel::~TransposeCPUKernel() {
   }
 }
 
-void TransposeCPUKernel::GetNchwToNhwcFunc() { NHNCTransposeFunc_ = PackNCHWToNHWCFp32; }
+void TransposeCPUKernel::GetNchwToNhwcFunc(TypeId dtype) {
+  if (dtype == kNumberTypeFloat32) {
+    NHNCTransposeFunc_ = PackNCHWToNHWCFp32;
+  }
+}
 
-void TransposeCPUKernel::GetNhwcToNchwFunc() { NHNCTransposeFunc_ = PackNHWCToNCHWFp32; }
+void TransposeCPUKernel::GetNhwcToNchwFunc(TypeId dtype) {
+  if (dtype == kNumberTypeFloat32) {
+    NHNCTransposeFunc_ = PackNHWCToNCHWFp32;
+  }
+}
 
 int TransposeCPUKernel::TransposeDim2to6() {
   return DoTransposeFp32(static_cast<const float *>(in_data_), static_cast<float *>(out_data_), out_shape_, param_);
@@ -111,17 +119,13 @@ void TransposeCPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Ten
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[1] * out_shape[2];
     nhnc_param_[2] = out_shape[3];
-    if (in_tensor->data_type() == kNumberTypeFloat32) {
-      GetNchwToNhwcFunc();
-    }
+    GetNchwToNhwcFunc(in_tensor->data_type());
   }
   if (param_->perm_[0] == 0 && param_->perm_[1] == 3 && param_->perm_[2] == 1 && param_->perm_[3] == 2) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[2] * out_shape[3];
     nhnc_param_[2] = out_shape[1];
-    if (in_tensor->data_type() == kNumberTypeFloat32) {
-      GetNhwcToNchwFunc();
-    }
+    GetNhwcToNchwFunc(in_tensor->data_type());
   }
 }
 

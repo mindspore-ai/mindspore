@@ -43,8 +43,8 @@ class TransposeCPUKernel : public InnerKernel {
   int RunImpl(int task_id);
 
  protected:
-  virtual void GetNchwToNhwcFunc();
-  virtual void GetNhwcToNchwFunc();
+  virtual void GetNchwToNhwcFunc(TypeId dtype);
+  virtual void GetNhwcToNchwFunc(TypeId dtype);
   virtual int TransposeDim2to6();
   virtual int TransposeDimGreaterThan6(int task_id);
 
