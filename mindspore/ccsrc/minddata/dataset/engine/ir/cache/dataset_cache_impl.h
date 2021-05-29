@@ -32,6 +32,7 @@ namespace dataset {
 /// DatasetCache is the IR of CacheClient
 class DatasetCacheImpl : public DatasetCache {
  public:
+  friend class PreBuiltDatasetCache;
   ///
   /// \brief Constructor
   /// \param id A user assigned session id for the current pipeline.
@@ -65,6 +66,8 @@ class DatasetCacheImpl : public DatasetCache {
   Status CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
 
   Status ValidateParams() override { return Status::OK(); }
+
+  Status to_json(nlohmann::json *out_json) override;
 
   ~DatasetCacheImpl() = default;
 

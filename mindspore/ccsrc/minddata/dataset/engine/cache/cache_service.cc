@@ -90,8 +90,9 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     if (generate_id_) {
       *row_id_generated = GetNextRowId();
       // Some debug information on how many rows we have generated so far.
-      if ((*row_id_generated) % 1000 == 0) {
-        MS_LOG(DEBUG) << "Number of rows cached: " << (*row_id_generated) + 1;
+      constexpr int32_t kDisplayInterval = 1000;
+      if ((*row_id_generated) % kDisplayInterval == 0) {
+        MS_LOG(DEBUG) << "Number of rows cached: " << ((*row_id_generated) + 1);
       }
     } else {
       if (msg->row_id() < 0) {
@@ -159,8 +160,9 @@ Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_
     if (generate_id_) {
       *row_id_generated = GetNextRowId();
       // Some debug information on how many rows we have generated so far.
-      if ((*row_id_generated) % 1000 == 0) {
-        MS_LOG(DEBUG) << "Number of rows cached: " << (*row_id_generated) + 1;
+      constexpr int32_t kDisplayInterval = 1000;
+      if ((*row_id_generated) % kDisplayInterval == 0) {
+        MS_LOG(DEBUG) << "Number of rows cached: " << ((*row_id_generated) + 1);
       }
     } else {
       auto msg = GetTensorRowHeaderMsg(src.GetPointer());

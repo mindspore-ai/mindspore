@@ -133,12 +133,12 @@ class CacheTransformPass : public IRTreePass {
  private:
   /// \brief Helper function to execute mappable cache transformation.
   ///
-  ///     Input:
+  ///     Input tree:
   ///       Sampler
   ///         |
   ///       LeafNode --> OtherNodes --> CachedNode (cache_ = DatasetCache)
   ///
-  ///     Transformed:
+  ///     Transformed tree:
   ///       Sampler --> CacheLookupNode ------------------------->
   ///                           |                                |
   ///                           |                           CacheMergeNode
@@ -153,10 +153,10 @@ class CacheTransformPass : public IRTreePass {
 
   /// \brief Helper function to execute non-mappable cache transformation.
   ///
-  ///     Input:
+  ///     Input tree:
   ///       LeafNode --> OtherNodes --> CachedNode (cache_ = DatasetCache)
   ///
-  ///     Transformed:
+  ///     Transformed tree:
   ///                                                   Sampler
   ///                                                      |
   ///       LeafNode --> OtherNodes --> CachedNode --> CacheNode

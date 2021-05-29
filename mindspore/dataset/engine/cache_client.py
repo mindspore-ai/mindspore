@@ -25,8 +25,8 @@ class DatasetCache:
     """
     A client to interface with tensor caching service.
 
-    For details, please check `Chinese tutorial <https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_cache.html>`_,
-    `Chinese programming guide <https://www.mindspore.cn/doc/programming_guide/zh-CN/master/cache.html?highlight=datasetcache>`_.
+    For details, please check `Tutorial <https://www.mindspore.cn/tutorial/training/en/master/advanced_use/
+    enable_cache.html>`_, `Programming guide <https://www.mindspore.cn/doc/programming_guide/en/master/cache.html>`_.
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.
@@ -75,7 +75,8 @@ class DatasetCache:
         self.num_connections = num_connections
         self.cache_client = CacheClient(session_id, size, spilling, hostname, port, num_connections, prefetch_size)
 
-    def GetStat(self):
+    def get_stat(self):
+        """Get the statistics from a cache."""
         return self.cache_client.GetStat()
 
     def __deepcopy__(self, memodict):

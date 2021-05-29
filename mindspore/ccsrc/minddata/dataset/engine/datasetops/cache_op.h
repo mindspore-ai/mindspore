@@ -34,6 +34,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   // assigns row id). No read access in the first phase. Once the cache is fully built,
   // we switch to second phase and fetch requests from the sampler.
   enum class Phase : uint8_t { kBuildPhase = 0, kFetchPhase = 1 };
+  constexpr static int32_t kPhaseCheckInterval = 100;
 
   /// \brief The nested builder class inside of the CacheOp is used to help manage all of
   /// the arguments for constructing it.  Use the builder by setting each argument

@@ -61,7 +61,7 @@ ConfigManager::ConfigManager()
   }
   if (env_cache_port != nullptr) {
     char *end = nullptr;
-    cache_port_ = strtol(env_cache_port, &end, 10);
+    cache_port_ = strtol(env_cache_port, &end, kDecimal);
     if (*end != '\0') {
       MS_LOG(WARNING) << "Cache port from env variable MS_CACHE_PORT is invalid\n";
       cache_port_ = 0;  // cause the port range validation to generate an error during the validation checks

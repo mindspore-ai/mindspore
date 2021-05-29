@@ -47,8 +47,8 @@ Status CacheClient::Builder::SanityCheck() {
   CHECK_FAIL_RETURN_SYNTAX_ERROR(num_connections_ > 0, "rpc connections must be positive");
   CHECK_FAIL_RETURN_SYNTAX_ERROR(prefetch_size_ > 0, "prefetch size must be positive");
   CHECK_FAIL_RETURN_SYNTAX_ERROR(!hostname_.empty(), "hostname must not be empty");
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ > 1024, "Port must be in range (1025..65535)");
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ <= 65535, "Port must be in range (1025..65535)");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ >= kMinLegalPort, "Port must be in range (1025..65535)");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ <= kMaxLegalPort, "Port must be in range (1025..65535)");
   CHECK_FAIL_RETURN_SYNTAX_ERROR(hostname_ == "127.0.0.1",
                                  "now cache client has to be on the same host with cache server");
   return Status::OK();
@@ -102,6 +102,9 @@ void CacheClient::Print(std::ostream &out) const {
       << "\n  Prefetch size: " << GetPrefetchSize() << "\n  Local client support: " << std::boolalpha
       << SupportLocalClient();
 }
+
+std::string CacheClient::GetHostname() const { return comm_->GetHostname(); }
+int32_t CacheClient::GetPort() const { return comm_->GetPort(); }
 
 Status CacheClient::WriteRow(const TensorRow &row, row_id_type *row_id_from_server) const {
   auto rq = std::make_shared<CacheRowRequest>(this);
@@ -475,36 +478,35 @@ Status CacheClient::AsyncBufferStream::SyncFlush(AsyncFlushFlag flag) {
     asyncWriter->rq.reset(
       new BatchCacheRowsRequest(cc_, offset_addr_ + cur_ * kAsyncBufferSize, asyncWriter->num_ele_));
     flush_rc_ = cc_->PushRequest(asyncWriter->rq);
-    if (flush_rc_.IsOk()) {
-      // If we are asked to wait, say this is the final flush, just wait for its completion.
-      bool blocking = (flag & AsyncFlushFlag::kFlushBlocking) == AsyncFlushFlag::kFlushBlocking;
-      if (blocking) {
-        // Make sure we are done with all the buffers
-        for (auto i = 0; i < kNumAsyncBuffer; ++i) {
-          if (buf_arr_[i].rq) {
-            Status rc = buf_arr_[i].rq->Wait();
-            if (rc.IsError()) {
-              flush_rc_ = rc;
-            }
-            buf_arr_[i].rq.reset();
-          }
+    RETURN_IF_NOT_OK(flush_rc_);
+
+    // If we are asked to wait, say this is the final flush, just wait for its completion.
+    bool blocking = (flag & AsyncFlushFlag::kFlushBlocking) == AsyncFlushFlag::kFlushBlocking;
+    if (blocking) {
+      // Make sure we are done with all the buffers
+      for (auto i = 0; i < kNumAsyncBuffer; ++i) {
+        if (buf_arr_[i].rq) {
+          Status rc = buf_arr_[i].rq->Wait();
+          if (rc.IsError()) flush_rc_ = rc;
+          buf_arr_[i].rq.reset();
         }
       }
-      // Prepare for the next buffer.
-      cur_ = (cur_ + 1) % kNumAsyncBuffer;
-      asyncWriter = &buf_arr_[cur_];
-      // Update the cur_ while we have the lock.
-      // Before we do anything, make sure the cache server has done with this buffer, or we will corrupt its content
-      // Also we can also pick up any error from previous flush.
-      if (asyncWriter->rq) {
-        // Save the result into a common area, so worker can see it and quit.
-        flush_rc_ = asyncWriter->rq->Wait();
-        asyncWriter->rq.reset();
-      }
-      asyncWriter->bytes_avail_ = kAsyncBufferSize;
-      asyncWriter->num_ele_ = 0;
     }
+    // Prepare for the next buffer.
+    cur_ = (cur_ + 1) % kNumAsyncBuffer;
+    asyncWriter = &buf_arr_[cur_];
+    // Update the cur_ while we have the lock.
+    // Before we do anything, make sure the cache server has done with this buffer, or we will corrupt its content
+    // Also we can also pick up any error from previous flush.
+    if (asyncWriter->rq) {
+      // Save the result into a common area, so worker can see it and quit.
+      flush_rc_ = asyncWriter->rq->Wait();
+      asyncWriter->rq.reset();
+    }
+    asyncWriter->bytes_avail_ = kAsyncBufferSize;
+    asyncWriter->num_ele_ = 0;
   }
+
   return flush_rc_;
 }
 

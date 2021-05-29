@@ -57,6 +57,7 @@ class CacheServer : public Service {
  public:
   friend class Services;
   using cache_index = std::map<connection_id_type, std::unique_ptr<CacheService>>;
+  constexpr static float kMemoryBottomLineForNewService = 0.15;
 
   class Builder {
    public:

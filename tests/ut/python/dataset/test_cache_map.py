@@ -2150,7 +2150,7 @@ def test_cache_map_interrupt_and_rerun():
         assert num_iter == 10000
         epoch_count += 1
 
-    cache_stat = some_cache.GetStat()
+    cache_stat = some_cache.get_stat()
     assert cache_stat.num_mem_cached == 10000
 
     logger.info("test_cache_map_interrupt_and_rerun Ended.\n")

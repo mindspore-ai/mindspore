@@ -237,6 +237,8 @@ class CacheClient {
   int32_t GetNumConnections() const { return num_connections_; }
   int32_t GetPrefetchSize() const { return prefetch_size_; }
   int32_t GetClientId() const { return client_id_; }
+  std::string GetHostname() const;
+  int32_t GetPort() const;
 
   /// MergeOp will notify us when the server can't cache any more rows.
   /// We will stop any attempt to fetch any rows that are most likely

@@ -30,10 +30,8 @@ namespace dataset {
 
 class CacheAdminArgHandler {
  public:
-  static const int32_t kDefaultNumWorkers;
-  static constexpr int32_t kDefaultSharedMemorySizeInGB = 4;
-  static constexpr int32_t kDefaultLogLevel = 1;
-  static constexpr float kMemoryCapRatio = 0.8;
+  static constexpr int32_t kAlarmDeadline = 60;
+  static constexpr int32_t kMaxNumWorkers = 100;
   static const char kServerBinary[];
 
   // These are the actual command types to execute

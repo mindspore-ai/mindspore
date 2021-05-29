@@ -22,6 +22,7 @@
 #include <chrono>
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
+#include "minddata/dataset/include/constants.h"
 #include "mindspore/core/utils/log_adapter.h"
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
@@ -36,12 +37,12 @@ ms::Status StartServer(int argc, char **argv) {
     return ms::Status(ms::StatusCode::kMDSyntaxError);
   }
 
-  int32_t port = strtol(argv[3], nullptr, 10);
+  int32_t port = strtol(argv[3], nullptr, ds::kDecimal);
   builder.SetRootDirectory(argv[1])
-    .SetNumWorkers(strtol(argv[2], nullptr, 10))
+    .SetNumWorkers(strtol(argv[2], nullptr, ds::kDecimal))
     .SetPort(port)
-    .SetSharedMemorySizeInGB(strtol(argv[4], nullptr, 10))
-    .SetLogLevel(strtol(argv[5], nullptr, 10))
+    .SetSharedMemorySizeInGB(strtol(argv[4], nullptr, ds::kDecimal))
+    .SetLogLevel(strtol(argv[5], nullptr, ds::kDecimal))
     .SetMemoryCapRatio(strtof(argv[7], nullptr));
 
   auto daemonize_string = argv[6];
@@ -68,7 +69,7 @@ ms::Status StartServer(int argc, char **argv) {
     if (rc.IsError()) {
       return rc;
     }
-    ms::g_ms_submodule_log_levels[SUBMODULE_ID] = strtol(argv[5], nullptr, 10);
+    ms::g_ms_submodule_log_levels[SUBMODULE_ID] = strtol(argv[5], nullptr, ds::kDecimal);
     google::InitGoogleLogging(argv[0]);
 #undef google
 #endif
@@ -116,9 +117,9 @@ ms::Status StartServer(int argc, char **argv) {
         std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
         return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
       }
-      close(0);
-      close(1);
-      close(2);
+      close(STDIN_FILENO);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
     }
   }
 
