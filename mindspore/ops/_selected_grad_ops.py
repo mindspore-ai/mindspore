@@ -22,29 +22,34 @@ op_selector = new_ops_selector(
 
 @op_selector
 class MaximumGrad:
+    """Operator selector for MaximumGrad."""
     def __call__(self, *args):
         pass
 
 
 @op_selector
 class MinimumGrad:
+    """Operator selector for MinimumGrad."""
     def __call__(self, *args):
         pass
 
 
 @op_selector
 class AbsGrad:
+    """Operator selector for AbsGrad."""
     def __call__(self, *args):
         pass
 
 
 @op_selector
 class BiasAddGrad:
+    """Operator selector for BiasAddGrad."""
     def __call__(self, *args):
         pass
 
 
 @op_selector
 class TanhGrad:
+    """Operator selector for TanhGrad."""
     def __call__(self, *args):
         pass

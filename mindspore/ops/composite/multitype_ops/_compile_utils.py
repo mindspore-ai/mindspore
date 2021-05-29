@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -462,6 +462,7 @@ def _tensor_setitem_by_int_tensor_with_scalar(data, index, value):
 
 
 def tensor_setitem_by_tensor_with_number(data, index, value):
+    """Assigns the tensor by tensor with number value."""
     index_dtype = F.dtype(index)
     tensor_dtype = const_utils.get_index_tensor_dtype(index_dtype)
     if tensor_dtype == const_utils.BOOL_:

@@ -383,13 +383,14 @@ class DiGamma(Cell):
 
 eps_fp32 = Tensor(np.finfo(np.float32).eps, mstype.float32)
 
+
 def _while_helper_func(cond, body, vals):
     while cond(vals).any():
         vals = body(vals)
     return vals
 
 
-def _IgammaSeries(ax, x, a, enabled):
+def _igamma_series(ax, x, a, enabled):
     """Helper function for computing Igamma using a power series."""
 
     logicaland = P.LogicalAnd()
@@ -436,7 +437,7 @@ def _IgammaSeries(ax, x, a, enabled):
     return (ans * ax) / a
 
 
-def _IgammacContinuedFraction(ax, x, a, enabled):
+def _igammac_continued_fraction(ax, x, a, enabled):
     """Helper function for computing Igammac using a continued fraction."""
 
     abs_x = P.Abs()
@@ -632,8 +633,8 @@ class IGamma(Cell):
         ax = self.exp(ax)
         enabled = self.logicalnot(self.logicalor(self.logicalor(x_is_zero, domain_error), underflow))
         output = self.select(use_igammac,
-                             1 - _IgammacContinuedFraction(ax, x, a, self.logicaland(enabled, use_igammac)),
-                             _IgammaSeries(ax, x, a, self.logicaland(enabled, self.logicalnot(use_igammac))))
+                             1 - _igammac_continued_fraction(ax, x, a, self.logicaland(enabled, use_igammac)),
+                             _igamma_series(ax, x, a, self.logicaland(enabled, self.logicalnot(use_igammac))))
         output = self.select(x_is_zero, self.zeroslike(output), output)
         output = self.select(domain_error, self.fill(self.dtype(a), self.shape(a), np.nan), output)
         return output

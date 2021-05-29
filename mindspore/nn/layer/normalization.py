@@ -39,6 +39,7 @@ __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm'
 
 SYNC_BN_GROUP_NAME = ""
 
+
 class _BatchNorm(Cell):
     """Batch Normalization base class."""
 
@@ -95,7 +96,7 @@ class _BatchNorm(Cell):
                 if self.rank_id in self.rank_list[i]:
                     self.is_global = True
                     if SYNC_BN_GROUP_NAME == "":
-                        SYNC_BN_GROUP_NAME = "sync_bn_group"+ str(i)
+                        SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
                         management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
         # for SyncBatchNorm
         if self.process_groups != 0:
@@ -105,7 +106,7 @@ class _BatchNorm(Cell):
                 validator.check_isinstance("process_groups", self.process_groups, list)
                 self._check_rank_ids(self.process_groups, self.rank_size)
                 for i in range(len(self.process_groups)):
-                    validator.check_isinstance("process_groups[" + str(i) +"]", self.process_groups[i], list)
+                    validator.check_isinstance("process_groups[" + str(i) + "]", self.process_groups[i], list)
                     self.group_device_num = len(self.process_groups[i])
                     if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
                         self.is_global = True
