@@ -23,9 +23,73 @@
 #include "ir/manager.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
+
+void CacheManager::Update(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto type_iter = type_map_.find(node);
+  auto shape_iter = shape_map_.find(node);
+  if (type_iter != type_map_.end()) {
+    type_map_.erase(type_iter);
+  }
+  if (shape_iter != shape_map_.end()) {
+    shape_map_.erase(shape_iter);
+  }
+}
+
+TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto iter = type_map_.find(node);
+  if (iter != type_map_.end()) {
+    auto types = iter->second;
+    auto type_iter = types.find(index);
+    if (type_iter != types.end()) {
+      return type_iter->second;
+    }
+    return kTypeUnknown;
+  }
+  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
+  std::map<size_t, TypeId> index_to_types;
+  TypeId result = kTypeUnknown;
+  for (size_t i = 0; i < output_nums; i++) {
+    auto output_type = AnfAlgo::GetOutputInferDataType(node, i);
+    index_to_types.emplace(i, output_type);
+    if (index == i) {
+      result = output_type;
+    }
+  }
+  type_map_.emplace(node, index_to_types);
+  return result;
+}
+
+std::vector<size_t> CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto iter = shape_map_.find(node);
+  if (iter != shape_map_.end()) {
+    auto shapes = iter->second;
+    auto shape_iter = shapes.find(index);
+    if (shape_iter != shapes.end()) {
+      return shape_iter->second;
+    }
+    return {};
+  }
+  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
+  std::map<size_t, std::vector<size_t>> index_to_shapes;
+  std::vector<size_t> result = {};
+  for (size_t i = 0; i < output_nums; i++) {
+    auto output_shape = AnfAlgo::GetOutputInferShape(node, i);
+    index_to_shapes.emplace(i, output_shape);
+    if (index == i) {
+      result = output_shape;
+    }
+  }
+  shape_map_.emplace(node, index_to_shapes);
+  return result;
+}
+
 const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
 
 void PassManager::AddPass(const PassPtr &pass) {
@@ -84,6 +148,7 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
   size_t num = 0;
   for (const auto &pass : passes) {
     if (pass != nullptr) {
+      pass->SetCacheManager(cache_manager_);
       changed = RunPass(func_graph, num, pass) || changed;
       DumpPassIR(func_graph, GetPassFullname(num, pass));
       num++;

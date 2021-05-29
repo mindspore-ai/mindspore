@@ -20,17 +20,32 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #include "backend/optimizer/common/pass.h"
 #include "backend/optimizer/common/node_pass.h"
 
 namespace mindspore {
 namespace opt {
+class CacheManager {
+ public:
+  CacheManager() {}
+  ~CacheManager() = default;
+  void Update(const AnfNodePtr &node);
+  TypeId GetOutputType(const AnfNodePtr &node, size_t index);
+  std::vector<size_t> GetOutputShape(const AnfNodePtr &node, size_t index);
+
+ private:
+  std::map<AnfNodePtr, std::map<size_t, TypeId>> type_map_;
+  std::map<AnfNodePtr, std::map<size_t, std::vector<size_t>>> shape_map_;
+};
+using CacheManagerPtr = std::shared_ptr<CacheManager>;
+
 // @brief For optimization passes management
 class PassManager {
  public:
   explicit PassManager(const std::string &name = "pm", bool run_only_once = true)
-      : name_(name), passes_{}, run_only_once_(run_only_once) {}
+      : name_(name), passes_{}, run_only_once_(run_only_once), cache_manager_(std::make_shared<CacheManager>()) {}
   virtual ~PassManager() = default;
   // Get all the passes added by AddPass
   const std::vector<PassPtr> &Passes() const;
@@ -57,6 +72,7 @@ class PassManager {
   const std::string name_;
   std::vector<PassPtr> passes_;
   bool run_only_once_;
+  CacheManagerPtr cache_manager_;
 };
 using PassManagerPtr = std::shared_ptr<PassManager>;
 }  // namespace opt

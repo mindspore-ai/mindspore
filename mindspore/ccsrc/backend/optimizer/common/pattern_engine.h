@@ -163,16 +163,12 @@ inline bool DefaultTypeEq(const BaseRef &x, const BaseRef &y) { return x.type() 
 
 class PatternEngine {
  public:
-  PatternEngine(const std::shared_ptr<Visitor> &visitor,
-                const std::function<bool(const BaseRef &, const BaseRef &)> &eq,
-                const std::function<bool(const BaseRef &, const BaseRef &)> &type_eq = DefaultTypeEq)
-      : visitor_(visitor), eq_(eq), type_eq_(type_eq) {}
+  explicit PatternEngine(const std::shared_ptr<Visitor> &visitor) : visitor_(visitor) {}
   ~PatternEngine() = default;
 
   EquivPtr Match(const BaseRef &pattern, const BaseRef &expr, const PrimitiveVarMap &primitive_vars,
                  EquivPtr equiv) const;
   // Replace pattern with equivalent
-  BaseRef Replace(const BaseRef &pattern, const EquivPtr &equiv) const;
 
  private:
   EquivPtr AlignSVar(const VectorRef &values_pattern, const VectorRef &values_expr,
@@ -181,9 +177,9 @@ class PatternEngine {
                 VectorRef *const values_expr) const;
   bool ToVector(const VectorRef &pattern_ref, const VectorRef &expr_ref, VectorRef *const values_pattern,
                 VectorRef *const values_expr) const;
+  static bool AnfNodeEqual(const BaseRef &a, const BaseRef &b);
+  static bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
   std::shared_ptr<Visitor> visitor_;
-  std::function<bool(const BaseRef &, const BaseRef &)> eq_;
-  std::function<bool(const BaseRef &, const BaseRef &)> type_eq_;
 };
 }  // namespace mindspore
 namespace std {

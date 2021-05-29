@@ -33,7 +33,7 @@ bool Equal(const BaseRef &a, const BaseRef &b) { return a == b; }
 class TestMatchEngine : public UT::Common {
  public:
   TestMatchEngine()
-      : TU(std::make_shared<DefaultVisitor>(), std::function<bool(const BaseRef &, const BaseRef &)>(Equal)) {
+      : TU(std::make_shared<Visitor>()) {
     equiv_null = std::make_shared<Equiv>();
   };
 
@@ -215,17 +215,4 @@ TEST_F(TestMatchEngine, Match_CondVar) {
                equiv_null);
   ASSERT_EQ(d, nullptr);
 }
-
-TEST_F(TestMatchEngine, Match_Reify) {
-  VarPtr v1 = std::make_shared<Var>();
-  VarPtr sv = std::make_shared<SeqVar>();
-
-  BaseRef t;
-
-  equiv_null->clear();
-  (*equiv_null)[sv] = BaseRef(std::make_shared<Seq>(PatternListType{3, 4}));
-  t = TU.Replace(VectorRef({1, 2, sv}), equiv_null);
-  ASSERT_EQ(t, BaseRef(VectorRef({1, 2, 3, 4})));
-}
-
 }  // namespace mindspore

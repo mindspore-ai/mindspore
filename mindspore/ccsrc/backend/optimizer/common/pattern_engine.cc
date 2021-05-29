@@ -25,6 +25,7 @@
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"
 #include "utils/overload.h"
+#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 static int GetNextTag() {
@@ -156,33 +157,13 @@ bool PatternEngine::ToVector(const VectorRef &pattern_ref, const VectorRef &expr
 bool PatternEngine::ToVector(const BaseRef &pattern_ref, const BaseRef &expr_ref, VectorRef *const values_pattern,
                              VectorRef *const values_expr) const {
   MS_EXCEPTION_IF_NULL(values_expr);
-  // visitor to visite the list
-  auto appender_pattern = [](VectorRef &values) {
-    std::function<BaseRef(const BaseRef &)> fn = [&](const BaseRef &u) {
-      values.push_back(GetVar(u));
-      return u;
-    };
-    return fn;
-  };
-
-  visitor_->SetFn(appender_pattern(*values_pattern));
   MS_LOG(DEBUG) << "visit pattern_ref";
-  bool success = visitor_->Visit(pattern_ref, nullptr);
+  bool success = visitor_->Visit(pattern_ref, values_pattern, nullptr);
   if (!success) {
     return false;
   }
-
-  auto appender_expr = [](VectorRef &values) {
-    std::function<BaseRef(const BaseRef &)> fn = [&](const BaseRef &u) {
-      values.push_back(u);
-      return u;
-    };
-    return fn;
-  };
-
-  visitor_->SetFn(appender_expr(*values_expr));
   MS_LOG(DEBUG) << "visit expr_ref";
-  return visitor_->Visit(expr_ref, nullptr);
+  return visitor_->Visit(expr_ref, values_expr, nullptr);
 }
 
 static int GetSVarStartIndex(const VectorRef &values) {
@@ -292,7 +273,7 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
   }
 
   // 2. check equal
-  if (eq_(pattern_ref, expr_ref)) {
+  if (PatternEngine::AnfNodeEqual(pattern_ref, expr_ref)) {
     return equiv;
   }
 
@@ -304,7 +285,7 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
 
   // 4. here the type can be std:vector, std:list,
   // or cnode.
-  if (!type_eq_(pattern_ref, expr_ref)) {
+  if (!PatternEngine::CNodeTypeEqual(pattern_ref, expr_ref)) {
     MS_LOG(DEBUG) << "Type mismatch";
     return nullptr;
   }
@@ -324,34 +305,62 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
   return equiv;
 }
 
-BaseRef PatternEngine::Replace(const BaseRef &pattern, const EquivPtr &equiv) const {
-  MS_EXCEPTION_IF_NULL(equiv);
-  MS_LOG(DEBUG) << "-----[in Replace]";
-  BaseRef ref = GetVar(pattern);
-  BaseRef out;
-  bool is_match = false;
+bool PatternEngine::AnfNodeEqual(const BaseRef &a, const BaseRef &b) {
+  if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
+    auto a_node = utils::cast<AnfNodePtr>(a);
+    auto b_node = utils::cast<AnfNodePtr>(b);
+    MS_EXCEPTION_IF_NULL(a_node);
+    MS_EXCEPTION_IF_NULL(b_node);
+    if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
+      auto a_value_node = a_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(a_value_node);
+      auto a_value = a_value_node->value();
+      MS_EXCEPTION_IF_NULL(a_value);
+      auto a_prim = a_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(a_prim);
 
-  // w is var
-  if (utils::isa<VarPtr>(ref)) {
-    const VarPtr &var = utils::cast<VarPtr>(ref);
-    auto iter = equiv->find(var);
-    if (iter != equiv->end()) {
-      out = iter->second;
-      is_match = true;
+      auto b_value_node = b_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(b_value_node);
+      auto b_value = b_value_node->value();
+      MS_EXCEPTION_IF_NULL(b_value);
+      auto b_prim = b_value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(b_prim);
+
+      return a_prim->name() == b_prim->name();
+    } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
+      auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
+      if (a_value_node_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+      }
+      auto a_value_ptr = a_value_node_ptr->value();
+      if (a_value_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+      }
+
+      auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
+      if (b_value_node_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "cast value node ptr fail";
+      }
+      auto b_value_ptr = b_value_node_ptr->value();
+      if (b_value_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "value ptr is nullptr";
+      }
+
+      return (*a_value_ptr) == (*b_value_ptr);
     }
+    MS_LOG(DEBUG) << "check AnfNodePtr equal";
   }
-  if (is_match) {
-    return out;
+  if (utils::isa<FuncGraphPtr>(a) && utils::isa<FuncGraphPtr>(b)) {
+    MS_LOG(DEBUG) << "check GraphPtr equal";
   }
+  return a == b;
+}
 
-  // visitor to visit the list
-  std::function<BaseRef(BaseRef)> fn = [&, this, equiv](const BaseRef &u) { return Replace(u, equiv); };
-
-  visitor_->SetFn(fn);
-  BaseRef visit_out;
-  if (!visitor_->Visit(pattern, &visit_out)) {
-    return pattern;
+bool PatternEngine::CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {
+  // To matchCNode and Kernel's type
+  if (utils::isa<CNode>(a) && utils::isa<CNode>(b)) {
+    return true;
   }
-  return visit_out;
+  return a.type() == b.type();
 }
 }  // namespace mindspore

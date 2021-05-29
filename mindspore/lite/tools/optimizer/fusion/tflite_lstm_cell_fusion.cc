@@ -199,9 +199,7 @@ EquivPtr TfliteLstmCellFusion::MatchGraph(const FuncGraphPtr &func_graph, const 
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(pattern != nullptr);
   auto return_node = func_graph->get_return();
-  PatternEngine pattern_engine(PatternEngine(std::make_shared<DefaultVisitor>(),
-                                             std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
-                                             std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual)));
+  PatternEngine pattern_engine(std::make_shared<Visitor>());
   auto empty_equiv = std::make_shared<Equiv>();
   EquivPtr equiv = pattern_engine.Match(pattern, return_node, *primitive_vars, empty_equiv);
   return equiv;
