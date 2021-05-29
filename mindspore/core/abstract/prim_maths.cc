@@ -66,7 +66,8 @@ AbstractBasePtr InferImplAdd(const AnalysisEnginePtr &, const PrimitivePtr &prim
                              const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  constexpr size_t size_expected = 2;
+  CheckArgsSize(op_name, args_spec_list, size_expected);
   ShapePtr shape_x = dyn_cast<Shape>(args_spec_list[0]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_x);
   std::vector<int64_t> x_dims = shape_x->shape();
@@ -408,7 +409,8 @@ AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(y->shape());
   auto x_shp = x->shape()->shape();
   auto y_shp = y->shape()->shape();
-  if (x_shp.size() != y_shp.size() || x_shp.size() < 3) {
+  constexpr size_t minimum_shape = 3;
+  if (x_shp.size() != y_shp.size() || x_shp.size() < minimum_shape) {
     MS_LOG(EXCEPTION)
       << "BatchMatMul input x, y should have the same dimension size and should be greater or equal to 3.";
   }

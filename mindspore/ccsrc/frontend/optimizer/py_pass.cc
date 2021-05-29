@@ -39,7 +39,7 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
                                 const FuncGraphPtr &top_graph);
 AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph, const FuncGraphPtr &top_graph,
                        const MatchResultPtr &res);
-void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
+void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name, const tensor::TensorPtr &default_input,
                               bool requires_grad, bool layerwise_parallel);
 
 bool IsTraversable(const AnfNodePtr &node) {
@@ -55,7 +55,7 @@ bool IsTraversable(const AnfNodePtr &node) {
   return false;
 }
 
-AnfNodePtr BuildPrimitive(const PatternPtr &pattern, const MatchResultPtr &res) {
+AnfNodePtr BuildPrimitive(const PatternPtr &pattern) {
   // Build up AnfNode from primitive
   auto prim_pattern = pattern->cast<PrimPtr>();
   MS_EXCEPTION_IF_NULL(prim_pattern);
@@ -65,7 +65,7 @@ AnfNodePtr BuildPrimitive(const PatternPtr &pattern, const MatchResultPtr &res) 
   return std::make_shared<ValueNode>(prim);
 }
 
-AnfNodePtr BuildNewTensor(const PatternPtr &pattern, const MatchResultPtr &res) {
+AnfNodePtr BuildNewTensor(const PatternPtr &pattern) {
   // Build a ValueNode from TensorPtr
   auto new_tensor_pattern = pattern->cast<NewTensorPtr>();
   MS_EXCEPTION_IF_NULL(new_tensor_pattern);
@@ -121,7 +121,7 @@ AnfNodePtr BuildNewParameter(const PatternPtr &pattern, const MatchResultPtr &re
   }
 }
 
-AnfNodePtr BuildImmNode(const PatternPtr &pattern, const MatchResultPtr &res) {
+AnfNodePtr BuildImmNode(const PatternPtr &pattern) {
   auto imm_pattern = pattern->cast<ImmPtr>();
   MS_EXCEPTION_IF_NULL(imm_pattern);
   auto value = imm_pattern->value();
@@ -141,16 +141,16 @@ AnfNodePtr ProcessSinglePattern(const PatternPtr &pattern, const MatchResultPtr 
   }
   // Build up new node from pattern
   if (pattern->isa<Prim>()) {
-    return BuildPrimitive(pattern, res);
+    return BuildPrimitive(pattern);
   } else if (pattern->isa<NewTensor>()) {
-    return BuildNewTensor(pattern, res);
+    return BuildNewTensor(pattern);
   } else if (pattern->isa<Call>()) {
     return BuildPrimitiveValueNode(pattern, res, func_graph, top_graph);
   } else if (pattern->isa<NewParameter>()) {
     // Add new parameter to top graph instead of current graph
     return BuildNewParameter(pattern, res, top_graph);
   } else if (pattern->isa<Imm>()) {
-    return BuildImmNode(pattern, res);
+    return BuildImmNode(pattern);
   } else {
     MS_LOG(EXCEPTION) << "Cannot find or build target node, pattern: " + pattern->unique_name() + "\n";
     return nullptr;
@@ -196,7 +196,7 @@ AnfNodePtr BuildTarget(const PatternPtr &pattern, const FuncGraphPtr &func_graph
   return new_c_node;
 }
 
-void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor::TensorPtr default_input,
+void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name, const tensor::TensorPtr &default_input,
                               bool requires_grad, bool layerwise_parallel) {
   // 1. Get current cell object
   auto ppm = opt::python_pass::PyPassManager::GetInstance();
@@ -206,6 +206,7 @@ void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor
     MS_LOG(EXCEPTION) << "Failed to get top cell from resource.";
   }
   // 2. Clone default_input tensor
+  MS_EXCEPTION_IF_NULL(default_input);
   auto default_tensor = std::make_shared<tensor::Tensor>(default_input->data_type(), default_input->shape_c(),
                                                          default_input->data_c(), (size_t)default_input->Size());
   // 3. New a Parameter object with the above-specified args
@@ -225,23 +226,19 @@ void ReflectParamBackToPython(const AnfNodePtr &param, string param_name, tensor
   param_node->set_default_param(param_value);
 }
 
-void Reset(PatternPtr pattern) {
+void Reset(const PatternPtr &pattern) {
   if (pattern->isa<Prim>()) {
     auto prim_pattern = pattern->cast<PrimPtr>();
     prim_pattern->reset();
-    return;
   } else if (pattern->isa<NewParameter>()) {
     auto new_param_pattern = pattern->cast<NewParameterPtr>();
     new_param_pattern->reset();
-    return;
   } else if (pattern->isa<Call>()) {
     auto call_with_pattern = pattern->cast<CallPtr>();
-    for (auto sub_pattern : call_with_pattern->inputs()) {
+    for (const auto &sub_pattern : call_with_pattern->inputs()) {
       Reset(sub_pattern);
     }
-    return;
   }
-  return;
 }
 }  // namespace internal
 
