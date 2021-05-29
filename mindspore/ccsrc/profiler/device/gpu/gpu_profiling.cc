@@ -16,10 +16,10 @@
 
 #include "profiler/device/gpu/gpu_profiling.h"
 
-#include <time.h>
 #include <cxxabi.h>
 #include <chrono>
 #include <cmath>
+#include <ctime>
 #include "profiler/device/gpu/cupti_interface.h"
 #include "profiler/device/gpu/gpu_data_saver.h"
 #include "pybind_api/api_register.h"
@@ -29,29 +29,29 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-#define BUF_SIZE (32 * 1024)
-#define ALIGN_SIZE (8)
-#define CHECK_CUPTI_RET_WITH_ERROR(expression, message)                   \
-  if (expression != CUPTI_SUCCESS) {                                      \
-    const char *errstr;                                                   \
-    CuptiGetResultString(expression, &errstr);                            \
-    MS_LOG(ERROR) << "CUPTI Error:" << errstr << " function:" << message; \
+const size_t BUF_SIZE = 32 * 1024;
+const size_t ALIGN_SIZE = 8;
+#define CHECK_CUPTI_RET_WITH_ERROR(expression, message)                     \
+  if ((expression) != CUPTI_SUCCESS) {                                      \
+    const char *errstr;                                                     \
+    CuptiGetResultString(expression, &errstr);                              \
+    MS_LOG(ERROR) << "CUPTI Error:" << errstr << " function:" << (message); \
   }
 
-#define CHECK_CUPTI_RET_WITH_EXCEPT(expression, message)                      \
-  if (expression != CUPTI_SUCCESS) {                                          \
-    const char *errstr;                                                       \
-    CuptiGetResultString(expression, &errstr);                                \
-    MS_LOG(EXCEPTION) << "CUPTI Error:" << errstr << " function:" << message; \
+#define CHECK_CUPTI_RET_WITH_EXCEPT(expression, message)                        \
+  if ((expression) != CUPTI_SUCCESS) {                                          \
+    const char *errstr;                                                         \
+    CuptiGetResultString(expression, &errstr);                                  \
+    MS_LOG(EXCEPTION) << "CUPTI Error:" << errstr << " function:" << (message); \
   }
-#define CHECK_CUDA_RET_WITH_ERROR(expression, message)                                   \
-  {                                                                                      \
-    cudaError_t status = (expression);                                                   \
-    if (status != cudaSuccess) {                                                         \
-      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " \
-                    << cudaGetErrorString(status);                                       \
-    }                                                                                    \
-  }
+#define CHECK_CUDA_RET_WITH_ERROR(expression, message)                                     \
+  do {                                                                                     \
+    cudaError_t status = (expression);                                                     \
+    if (status != cudaSuccess) {                                                           \
+      MS_LOG(ERROR) << "CUDA Error: " << (message) << " | Error Number: " << status << " " \
+                    << cudaGetErrorString(status);                                         \
+    }                                                                                      \
+  } while (0)
 #define PROFILER_ERROR_IF_NULLPTR(ptr)                           \
   do {                                                           \
     if ((ptr) == nullptr) {                                      \
@@ -113,6 +113,8 @@ bool IsMemcpyAsyncEvent(CUpti_CallbackId cb_id) {
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoAAsync_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeerAsync:
       return true;
+    default:
+      return false;
   }
   return false;
 }
@@ -133,6 +135,8 @@ bool IsMemcpySyncEvent(CUpti_CallbackId cb_id) {
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoA_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeer:
       return true;
+    default:
+      return false;
   }
   return false;
 }
@@ -208,7 +212,7 @@ std::string GetKernelFuncName(std::string kernel_name) {
 
 std::shared_ptr<GPUProfiler> GPUProfiler::GetInstance() {
   if (profiler_inst_ == nullptr) {
-    profiler_inst_ = std::shared_ptr<GPUProfiler>(new (std::nothrow) GPUProfiler());
+    profiler_inst_ = std::make_shared<GPUProfiler>();
   }
   return profiler_inst_;
 }

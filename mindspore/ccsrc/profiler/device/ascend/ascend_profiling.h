@@ -51,7 +51,7 @@ class AscendProfiler {
 
  private:
   std::vector<Event> events_;
-  std::atomic_int counter_;
+  std::atomic_uint32_t counter_;
 };
 }  // namespace ascend
 }  // namespace profiler

@@ -60,7 +60,7 @@ void AscendProfiler::Dump(std::ostream &output_stream) {
   std::vector<decltype(start)> prev_timestamps;
   prev_timestamps.resize(kMaxEventTypes, start);
 
-  for (int i = 0; i < counter_; ++i) {
+  for (uint32_t i = 0; i < counter_; ++i) {
     auto &evt = events_[i];
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(evt.timestamp - start).count();
     auto &prev_ts = prev_timestamps[evt.event_type];
