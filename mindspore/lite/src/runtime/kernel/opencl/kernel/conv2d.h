@@ -105,6 +105,8 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
 
  private:
   void SetBlockSize();
+  void SetMaliFp16BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1);
+  void SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1);
   struct {
     int H{1};
     int W{1};

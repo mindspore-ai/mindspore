@@ -143,8 +143,15 @@ void Conv2DOpenCLKernel::BuildKernel() {
   if (filter_type_ == MemType::IMG) {
     kernel_name << "_Img";
   }
+  if (KW_ == 1 && KH_ == 1) {
+    kernel_name << "_1x1";
+  }
   ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
+
+  std::string exceed_max_image_width_option =
+    (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
+  build_options_ext.push_back(exceed_max_image_width_option);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
 }
 
@@ -155,23 +162,61 @@ void Conv2DOpenCLKernel::SetBlockSize() {
   }
   auto task_size = static_cast<float>(batch_size_ * OH_ * OW_ * CO_SLICES_);
   auto task_size_per_cu = task_size / ocl_runtime_->DeviceComputeUnits();
+  bool w_kernel_is_1 =
+    KW_ == 1 && param_->stride_w_ == 1 && param_->dilation_w_ == 1 && param_->pad_l_ == 0 && param_->pad_r_ == 0;
+  bool h_kernel_is_1 =
+    KH_ == 1 && param_->stride_h_ == 1 && param_->dilation_h_ == 1 && param_->pad_u_ == 0 && param_->pad_d_ == 0;
+  if (use_fp16_) {
+    SetMaliFp16BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
+  } else {
+    SetMaliFp32BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
+  }
+}
+
+void Conv2DOpenCLKernel::SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
   int block_size;
   if (task_size_per_cu <= 256) {
     block_size = 1;
   } else if (task_size_per_cu <= 256 * 4) {
     block_size = 2;
-  } else if (task_size_per_cu <= (use_fp16_ ? 256 * 8 : FLT_MAX)) {
+  } else if (task_size_per_cu <= FLT_MAX) {
     block_size = 4;
   } else {
     block_size = 8;
   }
 
-  bool w_kernel_is_1 =
-    KW_ == 1 && param_->stride_w_ == 1 && param_->dilation_w_ == 1 && param_->pad_l_ == 0 && param_->pad_r_ == 0;
-  bool h_kernel_is_1 =
-    KH_ == 1 && param_->stride_h_ == 1 && param_->dilation_h_ == 1 && param_->pad_u_ == 0 && param_->pad_d_ == 0;
   if (!w_kernel_is_1 || !h_kernel_is_1) {
     block_size = std::min(block_size, 4);
+  }
+
+  if (block_size == 8) {
+    block_size_ = {2, 2, 2};
+  } else if (block_size == 4) {
+    block_size_ = {2, 2, 1};
+  } else if (block_size == 2) {
+    block_size_ = {2, 1, 1};
+  } else {
+    block_size_ = {1, 1, 1};
+  }
+}
+void Conv2DOpenCLKernel::SetMaliFp16BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
+  int block_size;
+  if (task_size_per_cu <= 256) {
+    block_size = 1;
+  } else if (task_size_per_cu <= 256 * 4) {
+    block_size = 2;
+  } else if (task_size_per_cu <= 256 * 8) {
+    block_size = 4;
+  } else {
+    block_size = 8;
+  }
+
+  if (!w_kernel_is_1 || !h_kernel_is_1) {
+    block_size = std::min(block_size, 4);
+  }
+
+  if (CO_SLICES_ >= 128 && OH_ >= 10 && OW_ >= 10) {
+    block_size = 8;
   }
 
   if (block_size == 8) {

@@ -244,13 +244,29 @@ void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   global_size_ = {CO4, (size_t)UP_DIV(out_info.W, block_size_.W),
                   (size_t)UP_DIV(out_info.H, block_size_.H) * out_info.N};
   // set local
-  const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  int z = global_size_[0];
-  int y = std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size_[2], 8));
-  int x = std::max(1, std::min(static_cast<int>(global_size_[1]), max_group_size / (y * z)));
-  local_size_ = std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
+  int local_max = filter_type_ == MemType::IMG ? 64 : 128;
+  if (ocl_runtime_->DeviceComputeUnits() > 16) {
+    local_max = 256;
+  }
+  const int local_c_max = 16;
+  const int OH_threshold = 100;
+  const int OW_threshold = 100;
+  const int OC_threshold = 64;
+  size_t local_c = GetMaxDivisor(global_size_[0], local_c_max);
+  local_c = std::max<size_t>(local_c, 1);
+  size_t local_hw = local_max / local_c;
+  size_t local_h;
+  size_t local_w;
+  if (out_info.H >= OH_threshold && out_info.W >= OW_threshold && out_info.C <= OC_threshold) {  // c -> w -> h
+    local_w = std::min(global_size_[1], local_hw);
+    local_h = std::min(local_hw / local_w, global_size_[2]);
+  } else {  // c -> h -> w
+    local_h = std::min(global_size_[2], local_hw);
+    local_w = std::min(local_hw / local_h, global_size_[1]);
+  }
 
-  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  local_size_ = {local_c, local_w, local_h};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int DepthwiseConv2dOpenCLKernel::StoreConstData() {
