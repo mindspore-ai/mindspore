@@ -25,7 +25,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
-from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import CheckpointConfig
 import mindspore as ms
 from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.common import set_seed
@@ -149,6 +149,16 @@ def build_quant_network(network):
     return network
 
 
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+
 def train():
     """Train function."""
     args = parse_args()
@@ -215,7 +225,7 @@ def train():
                                        keep_checkpoint_max=ckpt_max_num)
         save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
         ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=save_ckpt_path, prefix='{}'.format(args.rank))
-        cb_params = _InternalCallbackParam()
+        cb_params = InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = ckpt_max_num
         cb_params.cur_epoch_num = 1

@@ -28,8 +28,8 @@ from mindspore.nn.metrics import Metric
 from mindspore import nn, Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import Uniform, initializer
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
-from mindspore.context import ParallelMode
+from mindspore.context import ParallelMode, get_auto_parallel_context
+from mindspore.communication.management import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
 from src.callback import EvalCallBack, LossCallBack
@@ -276,12 +276,12 @@ class TrainStepWrap(nn.Cell):
 
         self.reducer_flag = False
         self.grad_reducer = None
-        parallel_mode = _get_parallel_mode()
+        parallel_mode = get_auto_parallel_context("parallel_mode")
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
+            mean = get_auto_parallel_context("gradients_mean")
+            degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(self.optimizer.parameters, mean, degree)
 
     def construct(self, batch_ids, batch_wts, label):
