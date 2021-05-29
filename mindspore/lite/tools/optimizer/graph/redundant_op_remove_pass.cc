@@ -17,9 +17,12 @@
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include <memory>
 #include <vector>
+#include <utility>
 #include "include/errorcode.h"
 #include "tools/converter/ops/ops_def.h"
 #include "ops/depend.h"
+#include "ops/fusion/pad_fusion.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -220,6 +223,40 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
   return lite::RET_OK;
 }
 
+int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  if (!utils::isa<CNodePtr>(anf_node)) {
+    MS_LOG(DEBUG) << "anf node is node a cnode.";
+    return lite::RET_NO_CHANGE;
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  auto primitive = mindspore::GetValueNode<mindspore::PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr:" << cnode->fullname_with_scope();
+    return lite::RET_NO_CHANGE;
+  }
+  auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
+  if (pad_prim->GetAttr(ops::kPadding) == nullptr) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto paddings = pad_prim->get_paddings();
+  auto is_invalid = true;
+  for (size_t i = 0; i < paddings.size(); i++) {
+    for (size_t j = 0; j < paddings[0].size(); j++) {
+      if (paddings[i][j] != 0) {
+        is_invalid = false;
+        break;
+      }
+    }
+    if (is_invalid == false) {
+      break;
+    }
+  }
+  if (is_invalid) {
+    return ReplaceOp(anf_node, manager);
+  }
+  return lite::RET_OK;
+}
+
 bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -244,6 +281,9 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     }
     if (CheckPrimitiveType(node, prim::kPrimDropout)) {
       status = RemoveDropoutOp(node, manager);
+    }
+    if (CheckPrimitiveType(node, prim::kPrimPadFusion)) {
+      status = RemoveInvalidPadOp(node, manager);
     }
     if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));
