@@ -74,16 +74,17 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
-#ifdef SUBGRAPH_SPLIT
-  auto search_sub_graph =
-    SearchSubGraph(context_, src_model_, this->src_tensors_, &(this->op_parameters_), this->graph_output_node_indexes_);
-  bool offline_parallel_enable = src_model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
-  if (offline_parallel_enable) {
-    search_sub_graph.SubGraphSplitByOffLineParallel();
-  } else {
-    search_sub_graph.SubGraphSplitByOutput();
+  if (context_->enable_parallel_) {
+    auto search_sub_graph =
+      SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
+
+    bool offline_parallel_enable = src_model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
+    if (offline_parallel_enable) {
+      search_sub_graph.SubGraphSplitByOffLineParallel();
+    } else {
+      search_sub_graph.SubGraphSplitByOutput();
+    }
   }
-#endif
 
   ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
   op_parameters_.clear();
@@ -154,6 +155,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
     return RET_ERROR;
   }
   parameter->quant_type_ = node->quant_type_;
+  parameter->thread_num_ = context_->thread_num_;
 
   op_parameters_[node->output_indices_.at(0)] = parameter;
   ret = KernelInferShape(inputs, outputs, parameter);
@@ -498,6 +500,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
+  int kernel_thread_count = op_parameter->thread_num_;
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #ifdef SUPPORT_GPU
@@ -512,6 +515,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
         auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
+          op_parameter->thread_num_ = kernel_thread_count;
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
@@ -532,6 +536,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
         auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
+          op_parameter->thread_num_ = kernel_thread_count;
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
@@ -551,6 +556,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
         auto ret = InferNodeShape(node);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
           op_parameter = op_parameters_[node->output_indices_.at(0)];
+          op_parameter->thread_num_ = kernel_thread_count;
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
@@ -740,7 +746,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
     (*is_kernel_finish)[kernel] = false;
   }
   while (true) {
-    std::vector<kernel::LiteKernel *> head_kernels;
+    std::vector<kernel::LiteKernel *> head_kernels; /* support one-head-kernel in subgraph */
     auto head_kernel_iter = std::find_if(src_kernel.begin(), src_kernel.end(), [&](const kernel::LiteKernel *kernel) {
       auto kernel_inputs = kernel->in_kernels();
       if ((*is_kernel_finish)[kernel]) {

@@ -99,7 +99,7 @@ int StackBaseCPUKernel::Run() {
     all_inputs_[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
   }
   // run stack
-  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), this->context_->thread_num_);
+  num_threads_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);
   auto ret =
     static_cast<const lite::InnerContext *>(this->context_)->thread_pool_->ParallelLaunch(StackRun, this, num_threads_);
   if (ret != RET_OK) {

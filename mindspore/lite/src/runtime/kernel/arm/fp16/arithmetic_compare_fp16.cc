@@ -121,7 +121,8 @@ int ArithmeticCompareFP16CPUKernel::BroadcastRun(float16_t *input0, float16_t *i
 }
 
 int ArithmeticCompareFP16CPUKernel::DoArithmetic(int task_id) {
-  int stride_per_thread = UP_DIV(param_->broadcasting_ ? outside_ : param_->out_elements_num_, context_->thread_num_);
+  int stride_per_thread =
+    UP_DIV(param_->broadcasting_ ? outside_ : param_->out_elements_num_, op_parameter_->thread_num_);
   int cur_offset = stride_per_thread * task_id;
   int cur_count = param_->broadcasting_ ? MSMIN(stride_per_thread, outside_ - cur_offset)
                                         : MSMIN(stride_per_thread, param_->out_elements_num_ - cur_offset);
@@ -168,7 +169,7 @@ int ArithmeticCompareFP16CPUKernel::Run() {
     return RET_ERROR;
   }
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(ArithmeticsRunFp16, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(ArithmeticsRunFp16, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRunFp16 run error error_code[" << ret << "]";
   }

@@ -79,7 +79,6 @@ int InstanceNormFp16CPUKernel::Init() {
 }
 
 int InstanceNormFp16CPUKernel::ReSize() {
-  param_->op_parameter_.thread_num_ = context_->thread_num_;
   auto shape = in_tensors_.front()->shape();
   param_->batch_ = shape[0];
   param_->inner_size_ = shape[2] * shape[3];

@@ -45,7 +45,7 @@ int OneHotCPUKernel::Init() {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
   }
-  thread_num_ = context_->thread_num_;
+  thread_num_ = op_parameter_->thread_num_;
 
   auto param = reinterpret_cast<OneHotParameter *>(op_parameter_);
   if (param == nullptr) {
@@ -181,7 +181,7 @@ int OneHotCPUKernel::GetParams() {
 
 int OneHotCPUKernel::Run() {
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(RunOneHot, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(RunOneHot, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "OneHot function error error_code[" << error_code << "]";
     return RET_ERROR;

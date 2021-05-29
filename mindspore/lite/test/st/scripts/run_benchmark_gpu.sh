@@ -263,6 +263,55 @@ function Run_gpu() {
     done < ${models_gpu_weightquant_config}
 }
 
+
+function Run_mindrt_parallel() {
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        limit=`echo ${line} | awk -F ';' '{print $2}'`
+        fp16=`echo ${line} | awk -F ';' '{print $3}'`
+
+        data_path="/data/local/tmp/input_output/"
+        output=${data_path}'output/'${model_name}'.ms.out'
+        input=${model_name}.ms.bin
+        model=${model_name}'.ms'
+        echo ${model_name} >> "${run_parallel_log_file}"
+        echo "run mindrt parallel test : ${model_name}"
+
+        ########## RUN CPU-GPU parallel
+        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' > adb_run_cmd.txt
+
+        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
+        echo './benchmark --enableParallel=true --device=GPU --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
+
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
+        if [ $? = 0 ]; then
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+        else
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+        fi
+
+        ########## RUN CPU-CPU parallel
+        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' > adb_run_cmd.txt
+
+        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> adb_run_cmd.txt
+        echo './benchmark --enableParallel=true --enableFp16='${fp16}' --accuracyThreshold='${limit}' --modelFile='${model}' --inDataFile='${input}' --benchmarkDataFile='${output} >> "${run_parallel_log_file}"
+
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_parallel_log_file}"
+        if [ $? = 0 ]; then
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_parallel_result_file}
+        else
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_parallel_result_file}; return 1
+        fi
+    done < ${models_mindrt_parallel_config}
+}
+
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
@@ -277,7 +326,7 @@ function MS_PRINT_TESTCASE_END_MSG() {
 }
 
 function Print_Converter_Result() {
-    MS_PRINT_TESTCASE_END_MSG
+    MS_PRINT_TESTCASE_START_MSG
     while read line; do
         arr=("${line}")
         printf "%-15s %-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]} ${arr[3]}
@@ -291,6 +340,15 @@ function Print_Benchmark_Result() {
         arr=("${line}")
         printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
     done < ${run_benchmark_result_file}
+    MS_PRINT_TESTCASE_END_MSG
+}
+
+function Print_Parallel_Result() {
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < ${run_parallel_result_file}
     MS_PRINT_TESTCASE_END_MSG
 }
 
@@ -334,6 +392,7 @@ version=${file_name_array[2]}
 models_gpu_fp32_config=${basepath}/../config/models_gpu_fp32.cfg
 models_gpu_fp16_config=${basepath}/../config/models_gpu_fp16.cfg
 models_gpu_weightquant_config=${basepath}/../config/models_gpu_weightquant.cfg
+models_mindrt_parallel_config=${basepath}/../config/models_mindrt_parallel.cfg
 
 ms_models_path=${basepath}/ms_models
 
@@ -409,4 +468,34 @@ Print_Benchmark_Result
 if [[ $isFailed == 1 ]]; then
     exit 1
 fi
+
+
+########## mindrt parallel test ##############
+run_parallel_result_file=${basepath}/run_parallel_result.txt
+echo ' ' > ${run_parallel_result_file}
+
+run_parallel_log_file=${basepath}/run_parallel_log.txt
+echo 'run parallel logs: ' > ${run_parallel_log_file}
+
+if [[ $backend == "all" || $backend == "gpu" ]]; then
+    echo "start Run Mindrt Parallel ... "
+    Run_mindrt_parallel
+    Run_mindrt_parallel_status=$?
+
+    sleep 1
+
+    if [[ ${Run_mindrt_parallel_status} != 0 ]];then
+        echo "Run_mindrt_parallel failed"
+        cat ${run_gpu_log_file}
+    fi
+
+    echo "Run_parallel is ended"
+    Print_Parallel_Result
+
+    if [[ ${Run_mindrt_parallel_status} != 0 ]];then
+        exit 1
+    fi
+fi
+########## mindrt parallel test end ##############
+
 exit 0

@@ -29,7 +29,7 @@ namespace {
 constexpr size_t kPadMaxInputSize = 2;
 }  // namespace
 int PadFp16CPUKernel::RunImpl(int task_id) {
-  PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+  PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
 
@@ -42,10 +42,10 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
   /* Fast Mirror pad */
   if (mirror_pad_block_.size() != 0) {
     /* copy center part */
-    PadFp16(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+    PadFp16(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
 
     /* calculate region part */
-    for (size_t i = task_id; i < mirror_pad_block_.size(); i += context_->thread_num_) {
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += op_parameter_->thread_num_) {
       auto block = mirror_pad_block_[i];
 
       for (int a = 0; a < block.size_[0]; a++) {
@@ -62,7 +62,7 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
     return RET_OK;
   }
 
-  int unit = UP_DIV(out_tensors_.at(0)->ElementsNum(), context_->thread_num_);
+  int unit = UP_DIV(out_tensors_.at(0)->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, out_tensors_.at(0)->ElementsNum());
   MirrorPadFp16(input_, output_, in_, pad_param_, begin, end);
@@ -111,7 +111,7 @@ int PadFp16CPUKernel::Run() {
     }
 
     ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(MirrorPadImpl, this, context_->thread_num_);
+            ->thread_pool_->ParallelLaunch(MirrorPadImpl, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << ret << "]";
     }

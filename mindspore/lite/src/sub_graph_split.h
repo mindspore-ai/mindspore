@@ -63,40 +63,33 @@ class SearchSubGraph {
     std::vector<uint32_t> ends_;
     bool search_terminate_ = false;
     DeviceType device_;
+    size_t thread_;
     CostModel cost_;
   };
 
  public:
   SearchSubGraph(const InnerContext *context, Model *model, std::vector<lite::Tensor *> *src_tensors,
-                 const std::map<int, OpParameter *> *op_parameters, std::vector<size_t> output_nodes)
-      : context_(context), src_tensors_(src_tensors), op_parameters_(op_parameters) {
-    output_nodes_.insert(output_nodes_.end(), output_nodes.begin(), output_nodes.end());
-    node_list_ = model->all_nodes_;
-    model_ = reinterpret_cast<LiteModel *>(model);
-    major_dt_ = DT_CPU;
-    minor_dt_ = DT_CPU;
-    if (context_->IsNpuEnabled()) {
-      major_dt_ = DT_NPU;
-    } else if (context_->IsGpuEnabled()) {
-      major_dt_ = DT_GPU;
-    }
-  }
+                 const std::map<int, OpParameter *> *op_parameters, std::vector<size_t> *output_nodes);
   ~SearchSubGraph() = default;
 
  public:
   void SubGraphSplitByOutput();
+  void SubGraphSplitByMiddle();
   void SubGraphSplitByOffLineParallel();
 
  private:
+  void InitSearchSubGraphByOutput();
+  void InitSearchSubGraphByMiddle();
+
+ private:
   void InitSearchTensor();
-  void InitSearchSubGraph();
   void InitSearchParallelSubGraph();
   void ConvertSubGraphToModel();
   void InsertNode(uint32_t index, Subgraph *subgraph);
   void InsertParallelNode(uint32_t index, Subgraph *subgraph);
   bool IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes);
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
-  void InitSubgraphDevice();
+  void InitSubgraphRuntimeInfo();
   void SubgraphFusion();
   void InitMainGraphDevice();
   void CalculateCostModel();
@@ -105,16 +98,18 @@ class SearchSubGraph {
            std::vector<bool> *cor_group);
 
  private:
+  std::vector<size_t> *output_nodes_ = nullptr;
   const InnerContext *context_ = nullptr;
-  LiteModel *model_ = nullptr;
   std::vector<lite::Tensor *> *src_tensors_ = nullptr;
   const std::map<int, OpParameter *> *op_parameters_ = nullptr;
+  LiteModel *model_ = nullptr;
   std::vector<Tensor> tensors_;
   std::vector<Subgraph> sub_graphs_;
-  std::vector<size_t> output_nodes_;
   std::vector<Model::Node *> node_list_;
   DeviceType major_dt_;
   DeviceType minor_dt_;
+  size_t major_thread_;
+  size_t minor_thread_;
   size_t total_cost_ = 0;
 };
 }  // namespace mindspore::lite

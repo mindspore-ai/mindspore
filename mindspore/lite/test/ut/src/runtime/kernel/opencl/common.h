@@ -88,6 +88,7 @@ T *CreateParameter(schema::PrimitiveType type) {
   }
   memset(param, 0, sizeof(T));
   (reinterpret_cast<OpParameter *>(param))->type_ = type;
+  (reinterpret_cast<OpParameter *>(param))->thread_num_ = 1;
   return param;
 }
 

@@ -60,7 +60,7 @@ int L2NormInt8CPUKernel::Run() {
     return RET_ERROR;
   }
   auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(L2NormInt8Run, this, context_->thread_num_);
+               ->thread_pool_->ParallelLaunch(L2NormInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
   }
@@ -70,7 +70,7 @@ int L2NormInt8CPUKernel::Run() {
 int L2NormInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = static_cast<lite::Tensor *>(in_tensors().front());
   int outer_size = input_tensor->ElementsNum() / input_tensor->shape().back();
-  int stride = UP_DIV(outer_size, context_->thread_num_);
+  int stride = UP_DIV(outer_size, op_parameter_->thread_num_);
   int begin = task_id * stride;
   int end = MSMIN(begin + stride, outer_size);
 

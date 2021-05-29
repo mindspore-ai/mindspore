@@ -95,7 +95,7 @@ int ConvolutionFP16CPUKernel::Init() {
 void ConvolutionFP16CPUKernel::AdjustNumberOfThread() {
   auto out_tensor = out_tensors_.front();
   int out_plane = out_tensor->Height() * out_tensor->Width();
-  thread_count_ = MSMIN(ctx_->thread_num_, UP_DIV(out_plane, row_tile_));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(out_plane, row_tile_));
   conv_param_->thread_num_ = thread_count_;
 }
 

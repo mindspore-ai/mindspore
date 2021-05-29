@@ -38,8 +38,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
  public:
   ConvolutionBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
-    op_parameter_->thread_num_ = ctx->thread_num_;
+      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(op_parameter_->thread_num_) {
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);
   }
   ~ConvolutionBaseCPUKernel() override;

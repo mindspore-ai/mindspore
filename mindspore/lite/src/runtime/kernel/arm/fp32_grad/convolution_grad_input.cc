@@ -53,7 +53,7 @@ int ConvolutionGradInputCPUKernel::ReSize() {
 
   int n = conv_param->kernel_w_ * conv_param->kernel_h_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = context_->thread_num_;
+  int thread_num = op_parameter_->thread_num_;
   mat_alloc_ = MatSizeTotal(chunk_, n, k, 0);
   set_workspace_size((ws_size_ + mat_alloc_) * sizeof(float) * thread_num);
   return RET_OK;
@@ -83,7 +83,7 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   int groups = conv_param->group_;
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
-  int thread_num = context_->thread_num_;
+  int thread_num = op_parameter_->thread_num_;
   int m = out_h * out_w;
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
@@ -144,7 +144,7 @@ int ConvolutionGradInputCPUKernel::Run() {
   auto dx_addr = reinterpret_cast<float *>(out_dx->MutableData());
   memset(dx_addr, 0, sizeof(float) * batch * in_ch * in_h * in_w);
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ConvolutionGradInputRun, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(ConvolutionGradInputRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias function error error_code[" << error_code << "]";
     return RET_ERROR;

@@ -548,7 +548,7 @@ int LiteSession::CompileGraph(Model *model) {
   }
   is_running_.store(false);
   return RET_OK;
-}  // namespace lite
+}
 
 int LiteSession::PrepareKernels(Model *model, bool use_mindrt_run) {
   std::vector<kernel::LiteKernel *> all_kernels;

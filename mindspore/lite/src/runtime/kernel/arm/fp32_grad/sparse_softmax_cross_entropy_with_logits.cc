@@ -140,7 +140,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   }
   inner_size_ = inner_size;
   outter_size_ = outter_size;
-  const std::vector<int> threads = {context_->thread_num_, context_->thread_num_, 1};
+  const std::vector<int> threads = {op_parameter_->thread_num_, op_parameter_->thread_num_, 1};
   for (int stage = 0; stage < static_cast<int>(threads.size()); stage++) {
     stage_ = stage;
     threads_ = threads.at(stage);

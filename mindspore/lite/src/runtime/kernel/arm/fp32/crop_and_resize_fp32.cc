@@ -77,8 +77,8 @@ int CropAndResizeCPUKernel::MallocTmpBuffer() {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  line_buffer_ =
-    reinterpret_cast<float *>(context_->allocator->Malloc(sizeof(float) * new_width_ * c * 2 * context_->thread_num_));
+  line_buffer_ = reinterpret_cast<float *>(
+    context_->allocator->Malloc(sizeof(float) * new_width_ * c * 2 * op_parameter_->thread_num_));
   if (line_buffer_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
@@ -125,7 +125,7 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
     return RET_NULL_PTR;
   }
   auto input_shape = input->shape();
-  int unit = UP_DIV(new_height_, context_->thread_num_);
+  int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = MSMIN(h_begin + unit, new_height_);
   if (h_end <= h_begin) {
@@ -159,7 +159,7 @@ int CropAndResizeCPUKernel::Run() {
   }
 
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(CropAndResizeImpl, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(CropAndResizeImpl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "CropAndResize run error, error_code[" << error_code << "]";
     FreeTmpBuffer();

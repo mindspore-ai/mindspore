@@ -65,8 +65,8 @@ int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *o
 int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
 
-  MS_ASSERT(context_->thread_num_ != 0);
-  int stride = UP_DIV(element_num, context_->thread_num_);
+  MS_ASSERT(op_parameter_->thread_num_ != 0);
+  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -79,7 +79,7 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
 
   int error_code;
   if (param_->broadcasting_) {  // need broadcast
-    stride = UP_DIV(outside_, context_->thread_num_);
+    stride = UP_DIV(outside_, op_parameter_->thread_num_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
     int out_thread_stride = stride * task_id;
     if (out_count <= 0) {

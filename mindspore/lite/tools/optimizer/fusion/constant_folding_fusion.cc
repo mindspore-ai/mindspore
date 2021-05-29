@@ -164,6 +164,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
   }
+  parameter->thread_num_ = 1;
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   if (ret != lite::RET_OK) {
     free(parameter);

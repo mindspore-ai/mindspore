@@ -137,7 +137,7 @@ int BNGradRun(void *cdata, int task_id) {
 
 int BNGradCPUKernel::Run() {
   stage_ = 0;
-  thread_num_ = context_->thread_num_;
+  thread_num_ = op_parameter_->thread_num_;
   int error_code;
   if (thread_num_ == 1) {
     error_code = static_cast<const lite::InnerContext *>(this->context_)

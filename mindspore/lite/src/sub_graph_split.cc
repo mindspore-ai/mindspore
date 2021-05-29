@@ -56,7 +56,7 @@ void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *m
   if (i == n) {
     if (abs(except_value - current_sum) < *min_value) {
       for (int i = 0; i < n; i++) {
-        cor_group[i] = tmp_group[i];
+        cor_group->at(i) = tmp_group->at(i);
       }
     }
     *min_value = MSMIN(*min_value, abs(except_value - current_sum));
@@ -149,9 +149,8 @@ void SearchSubGraph::ConvertSubGraphToModel() {
       continue;
     }
 
-#ifdef SUBGRAPH_SPLIT
     DeviceType device_type = subgraph.device_;
-#endif
+    size_t thread_num = subgraph.thread_;
     int new_sub_index = model_->sub_graphs_.size();
     int partial_index = model_->all_nodes_.size();
 
@@ -174,12 +173,12 @@ void SearchSubGraph::ConvertSubGraphToModel() {
 
     while (!subgraph.nodes_.empty()) {
       uint32_t node_index = subgraph.nodes_.front();
+      Model::Node *cur_node = model_->all_nodes_[node_index];
       new_sub_graph->node_indices_.push_back(node_index);
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
-#ifdef SUBGRAPH_SPLIT
-      model_->all_nodes_[node_index]->device_type_ = device_type;
-#endif
+      cur_node->device_type_ = device_type;
+      op_parameters_->at(cur_node->output_indices_.at(0))->thread_num_ = thread_num;
     }
 
     for (uint32_t head_index : subgraph.heads_) {
@@ -209,11 +208,13 @@ void SearchSubGraph::ConvertSubGraphToModel() {
     model_->all_nodes_.push_back(std::move(new_partial_node));
     model_->sub_graphs_.push_back(std::move(new_sub_graph));
   }
+
+  sub_graphs_.clear();
   return;
 }
 
 bool SearchSubGraph::IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes) {
-  std::vector<uint32_t> output_indexes = node_list_[node_index]->output_indices_;
+  std::vector<uint32_t> output_indexes = node_list_.at(node_index)->output_indices_;
   std::vector<uint32_t> output_nodes;
   for (uint32_t out_t : output_indexes) {
     std::vector<uint32_t> cur_nodes = tensors_[out_t].in_nodes_;
@@ -232,7 +233,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
     return;
   }
 
-  Model::Node *node = node_list_[index];
+  Model::Node *node = node_list_.at(index);
   if (node == nullptr) {
     return;
   }
@@ -267,13 +268,13 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
     return;
   }
 
-  if (find(output_nodes_.begin(), output_nodes_.end(), index) != output_nodes_.end()) {
+  if (find(output_nodes_->begin(), output_nodes_->end(), index) != output_nodes_->end()) {
     subgraph->ends_.push_back(index);
   }
 
   /* node insert in current subgraph */
   subgraph->nodes_.insert(subgraph->nodes_.begin(), index);
-  node_list_[index] = nullptr;
+  node_list_.at(index) = nullptr;
 
   /* search for next node */
   for (uint32_t in : input) {
@@ -285,8 +286,9 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph) {
   return;
 }
 
-void SearchSubGraph::InitSearchSubGraph() {
-  for (uint32_t out : output_nodes_) {
+void SearchSubGraph::InitSearchSubGraphByOutput() {
+  node_list_ = model_->all_nodes_;
+  for (uint32_t out : *output_nodes_) {
     Subgraph subgraph;
 
     InsertNode(out, &subgraph);
@@ -295,6 +297,8 @@ void SearchSubGraph::InitSearchSubGraph() {
   }
   return;
 }
+
+void SearchSubGraph::InitSearchSubGraphByMiddle() { return; }
 
 void SearchSubGraph::InitSearchTensor() {
   tensors_.resize(model_->all_tensors_.size());
@@ -329,7 +333,7 @@ void SearchSubGraph::InitSearchTensor() {
   return;
 }
 
-void SearchSubGraph::InitSubgraphDevice() {
+void SearchSubGraph::InitSubgraphRuntimeInfo() {
   std::vector<bool> tmp_group;
   std::vector<bool> cor_group;
 
@@ -356,20 +360,20 @@ void SearchSubGraph::InitSubgraphDevice() {
   for (size_t i = 0; i < sub_graphs_.size(); i++) {
     if (cor_group.at(i)) {
       sub_graphs_[i].device_ = major_dt_;
+      sub_graphs_[i].thread_ = major_thread_;
     } else {
       sub_graphs_[i].device_ = minor_dt_;
+      sub_graphs_[i].thread_ = minor_thread_;
     }
   }
 }
 
 void SearchSubGraph::InitMainGraphDevice() {
-#ifdef SUBGRAPH_SPLIT
   Model::SubGraph *main_graph = model_->sub_graphs_.front();
   for (uint32_t node_index : main_graph->node_indices_) {
     Model::Node *node = model_->all_nodes_[node_index];
     node->device_type_ = major_dt_;
   }
-#endif
 }
 
 void SearchSubGraph::SubgraphFusion() {
@@ -379,7 +383,8 @@ void SearchSubGraph::SubgraphFusion() {
     bool is_found = false;
     for (sub1_index = 0; sub1_index < sub_graphs_.size(); sub1_index++) {
       for (size_t tmp2 = sub1_index + 1; tmp2 < sub_graphs_.size(); tmp2++) {
-        if (sub_graphs_[sub1_index].device_ == sub_graphs_[tmp2].device_) {
+        if (sub_graphs_[sub1_index].device_ == sub_graphs_[tmp2].device_ &&
+            sub_graphs_[sub1_index].thread_ == sub_graphs_[tmp2].thread_) {
           sub2_index = tmp2;
           is_found = true;
           break;
@@ -393,6 +398,7 @@ void SearchSubGraph::SubgraphFusion() {
 
     Subgraph new_sub;
     new_sub.device_ = sub_graphs_[sub1_index].device_;
+    new_sub.thread_ = sub_graphs_[sub1_index].thread_;
 
     Subgraph &sub1 = sub_graphs_[sub1_index];
     Subgraph &sub2 = sub_graphs_[sub2_index];
@@ -426,19 +432,46 @@ void SearchSubGraph::CalculateCostModel() {
 }
 
 void SearchSubGraph::SubGraphSplitByOutput() {
-  InitSearchTensor();
-
-  InitSearchSubGraph();
-
+  InitSearchSubGraphByOutput();
   CalculateCostModel();
-
-  InitSubgraphDevice();
-
+  InitSubgraphRuntimeInfo();
   SubgraphFusion();
-
   ConvertSubGraphToModel();
+}
 
-  InitMainGraphDevice();
+void SearchSubGraph::SubGraphSplitByMiddle() {
+  InitSearchSubGraphByMiddle();
+  CalculateCostModel();
+  InitSubgraphRuntimeInfo();
+  SubgraphFusion();
+  ConvertSubGraphToModel();
+}
+
+SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::vector<lite::Tensor *> *src_tensors,
+                               const std::map<int, OpParameter *> *op_parameters, std::vector<size_t> *output_nodes)
+    : output_nodes_(output_nodes), context_(context), src_tensors_(src_tensors), op_parameters_(op_parameters) {
+  model_ = reinterpret_cast<LiteModel *>(model);
+
+  major_dt_ = DT_CPU;
+  minor_dt_ = DT_CPU;
+  if (context_->IsNpuEnabled()) {
+    major_dt_ = DT_NPU;
+  } else if (context_->IsGpuEnabled()) {
+    major_dt_ = DT_GPU;
+  }
+
+  if (major_dt_ == DT_GPU) {
+    major_thread_ = 1;
+    minor_thread_ = context_->thread_num_ - 1;
+  } else if (major_dt_ == DT_CPU) {
+    major_thread_ = UP_DIV(context_->thread_num_, 2);
+    minor_thread_ = context_->thread_num_ - major_thread_;
+  }
+  MS_ASSERT(major_thread_ > 0);
+  MS_ASSERT(minor_thread_ > 0);
+
+  InitSearchTensor();
+  return;
 }
 
 void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
@@ -511,7 +544,7 @@ void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
 
 void SearchSubGraph::InitSearchParallelSubGraph() {
   // for every graph output, find a parallel subgraph
-  for (uint32_t output : output_nodes_) {
+  for (uint32_t output : *output_nodes_) {
     Subgraph subgraph;
     InsertParallelNode(output, &subgraph);
     sub_graphs_.push_back(std::move(subgraph));
@@ -520,7 +553,6 @@ void SearchSubGraph::InitSearchParallelSubGraph() {
 
 void SearchSubGraph::SubGraphSplitByOffLineParallel() {
   MS_LOG(DEBUG) << "start to split offline parallel subgraph";
-  InitSearchTensor();
   InitSearchParallelSubGraph();
   ConvertSubGraphToModel();
   InitMainGraphDevice();

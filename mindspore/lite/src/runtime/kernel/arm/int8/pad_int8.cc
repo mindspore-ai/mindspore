@@ -126,7 +126,8 @@ int PadInt8CPUKernel::RunImpl(int task_id) {
   MS_ASSERT(out_data_);
   MS_ASSERT(in_dims_);
   MS_ASSERT(out_dims_);
-  return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id, context_->thread_num_);
+  return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id,
+                       op_parameter_->thread_num_);
 }
 
 int PadInt8Impl(void *cdata, int task_id) {
@@ -190,7 +191,7 @@ int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   auto output_data = reinterpret_cast<int8_t *>(output->MutableData());
   MS_ASSERT(output_data);
 
-  int unit = UP_DIV(output->ElementsNum(), context_->thread_num_);
+  int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
   MirrorPadInt8(input_data, output_data, in_dims_, pad_param_, begin, end);
@@ -266,7 +267,7 @@ int PadInt8CPUKernel::Run() {
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0], out_tensors_[0]->ElementsNum() * sizeof(int8_t));
     error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(PadInt8Impl, this, context_->thread_num_);
+                   ->thread_pool_->ParallelLaunch(PadInt8Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Resize run error, error_code[" << error_code << "]";
       return RET_ERROR;
@@ -280,7 +281,7 @@ int PadInt8CPUKernel::Run() {
     }
 
     error_code = static_cast<const lite::InnerContext *>(this->context_)
-                   ->thread_pool_->ParallelLaunch(MirrorPadImplInt8, this, context_->thread_num_);
+                   ->thread_pool_->ParallelLaunch(MirrorPadImplInt8, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << error_code << "]";
       return RET_ERROR;

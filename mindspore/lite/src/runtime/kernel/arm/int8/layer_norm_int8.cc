@@ -112,7 +112,7 @@ int LayerNormInt8CPUKernel::ReSize() {
   for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
     param_->params_inner_size_ *= shape.at(i);
   }
-  param_->op_parameter_.thread_num_ = MSMIN(param_->norm_outer_size_, context_->thread_num_);
+  param_->op_parameter_.thread_num_ = MSMIN(param_->norm_outer_size_, op_parameter_->thread_num_);
   return RET_OK;
 }
 

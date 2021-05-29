@@ -87,14 +87,14 @@ int L2NormCPUKernel::ReSize() {
 }
 
 int L2NormCPUKernel::CalcSquareSum(int task_id) {
-  int unit = UP_DIV(l2_norm_param_->data_num_, context_->thread_num_);
+  int unit = UP_DIV(l2_norm_param_->data_num_, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, l2_norm_param_->data_num_);
   return CalcThreadSquareSum(input_ptr_, tmp_sum_ + task_id, begin, end);
 }
 
 int L2NormCPUKernel::DivSqrtSum(int task_id) {
-  int unit = UP_DIV(l2_norm_param_->data_num_, context_->thread_num_);
+  int unit = UP_DIV(l2_norm_param_->data_num_, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, l2_norm_param_->data_num_);
   return ThreadDivSqrtSum(input_ptr_, output_ptr_, l2_norm_param_, sqrt_sum_, begin, end);
@@ -103,7 +103,7 @@ int L2NormCPUKernel::DivSqrtSum(int task_id) {
 int L2NormCPUKernel::CalcL2NormTrailingAxis(int task_id) {
   auto input = in_tensors_.at(0);
   int outer_size = input->ElementsNum() / input->shape().back();
-  int unit = UP_DIV(outer_size, context_->thread_num_);
+  int unit = UP_DIV(outer_size, op_parameter_->thread_num_);
   int begin = task_id * unit;
   int end = MSMIN(begin + unit, outer_size);
   return ThreadTrailingAxis(input_ptr_, output_ptr_, l2_norm_param_, begin, end);
@@ -147,25 +147,25 @@ int L2NormCPUKernel::Run() {
   if (l2_norm_param_->axis_num_ == 0 || l2_norm_param_->axis_num_ == input_shape.size()) {
     // all axis
     ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(SquareSumRun, this, context_->thread_num_);
+            ->thread_pool_->ParallelLaunch(SquareSumRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;
     }
     float sum = 0.0f;
-    for (int i = 0; i < context_->thread_num_; ++i) {
+    for (int i = 0; i < op_parameter_->thread_num_; ++i) {
       sum += tmp_sum_[i];
     }
     sqrt_sum_ = sqrt(sum > l2_norm_param_->epsilon_ ? sum : l2_norm_param_->epsilon_);
     ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(L2NormRun, this, context_->thread_num_);
+            ->thread_pool_->ParallelLaunch(L2NormRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;
     }
   } else if (l2_norm_param_->axis_num_ == 1 && l2_norm_param_->axis_[0] == static_cast<int>(input_shape.size()) - 1) {
     ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(L2NormTrailingAxisRun, this, context_->thread_num_);
+            ->thread_pool_->ParallelLaunch(L2NormTrailingAxisRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "L2Norm error: error_code[" << ret << "]";
       return RET_ERROR;

@@ -67,7 +67,7 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param->group_;
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = context_->thread_num_;
+  int thread_num = op_parameter_->thread_num_;
   mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
   set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float));
 
@@ -101,7 +101,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int m = out_h * out_w;
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
-  int thread_num = context_->thread_num_;
+  int thread_num = op_parameter_->thread_num_;
   float *workspace_temp = reinterpret_cast<float *>(workspace());
   float *mat_workspace = workspace_temp + ws_size_ * thread_num + task_id * (mat_alloc_ + k * n);
   float *mat_tmp = mat_workspace + mat_alloc_;
@@ -196,7 +196,7 @@ int ConvolutionGradFilterCPUKernel::Run() {
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
   memset(dw_addr, 0, out_dw->Size());
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                     ->thread_pool_->ParallelLaunch(ConvolutionGradFilterRun, this, context_->thread_num_);
+                     ->thread_pool_->ParallelLaunch(ConvolutionGradFilterRun, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
     return RET_ERROR;

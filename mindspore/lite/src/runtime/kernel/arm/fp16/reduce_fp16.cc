@@ -63,7 +63,7 @@ int ReduceFp16CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceFp16CPUKernel::CallReduceUnit(int task_id) {
   auto ret =
-    reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id, context_->thread_num_);
+    reducer_(outer_size_, inner_size_, axis_size_, fp16_src_data_, fp16_dst_data_, task_id, op_parameter_->thread_num_);
   return ret;
 }
 
@@ -92,7 +92,7 @@ int ReduceFp16CPUKernel::Run() {
     inner_size_ = inner_sizes_.at(i);
     axis_size_ = axis_sizes_.at(i);
     auto error_code = static_cast<const lite::InnerContext *>(this->context_)
-                        ->thread_pool_->ParallelLaunch(ReduceFp16Impl, this, context_->thread_num_);
+                        ->thread_pool_->ParallelLaunch(ReduceFp16Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {
       FreeTmpBuffer();
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
@@ -108,7 +108,7 @@ int ReduceFp16CPUKernel::Run() {
   inner_size_ = inner_sizes_.back();
   axis_size_ = axis_sizes_.back();
   auto error_code = static_cast<const lite::InnerContext *>(this->context_)
-                      ->thread_pool_->ParallelLaunch(ReduceFp16Impl, this, context_->thread_num_);
+                      ->thread_pool_->ParallelLaunch(ReduceFp16Impl, this, op_parameter_->thread_num_);
   if (error_code != RET_OK) {
     FreeTmpBuffer();
     MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
