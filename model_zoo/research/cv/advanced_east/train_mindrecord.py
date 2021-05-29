@@ -18,6 +18,7 @@
 import argparse
 import datetime
 import os
+import ast
 
 from mindspore import context, Model
 from mindspore.common import set_seed
@@ -40,12 +41,13 @@ def parse_args(cloud_args=None):
     parser = argparse.ArgumentParser('mindspore adveast training')
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
-    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend. (Default: None)')
+    parser.add_argument('--device_id', type=int, default=0, help='device id of GPU or Ascend.')
 
     # network related
-    parser.add_argument('--pre_trained', default=False, type=bool, help='model_path, local pretrained model to load')
-    parser.add_argument('--data_path', default='/disk1/ade/icpr/advanced-east-val_256.mindrecord', type=str)
-    parser.add_argument('--pre_trained_ckpt', default='/disk1/adeast/scripts/1.ckpt', type=str)
+    parser.add_argument('--pre_trained', default=False, type=ast.literal_eval,
+                        help='model_path, local pretrained model to load')
+    parser.add_argument('--data_path', type=str)
+    parser.add_argument('--pre_trained_ckpt', type=str)
 
     # logging and checkpoint related
     parser.add_argument('--ckpt_path', type=str, default='outputs/', help='checkpoint save location')
@@ -58,19 +60,12 @@ def parse_args(cloud_args=None):
     parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
     args_opt = parser.parse_args()
 
-    args_opt.initial_epoch = cfg.initial_epoch
     args_opt.epoch_num = cfg.epoch_num
-    args_opt.learning_rate = cfg.learning_rate
-    args_opt.decay = cfg.decay
     args_opt.batch_size = cfg.batch_size
-    args_opt.total_train_img = cfg.total_img * (1 - cfg.validation_split_ratio)
-    args_opt.total_valid_img = cfg.total_img * cfg.validation_split_ratio
     args_opt.ckpt_save_max = cfg.ckpt_save_max
     args_opt.data_dir = cfg.data_dir
     args_opt.mindsrecord_train_file = cfg.mindsrecord_train_file
     args_opt.mindsrecord_test_file = cfg.mindsrecord_test_file
-    args_opt.train_image_dir_name = cfg.train_image_dir_name
-    args_opt.train_label_dir_name = cfg.train_label_dir_name
     args_opt.results_dir = cfg.results_dir
     args_opt.last_model_name = cfg.last_model_name
     args_opt.saved_model_file_path = cfg.saved_model_file_path
@@ -123,16 +118,18 @@ if __name__ == '__main__':
         args.rank_save_ckpt_flag = 1
 
     # get network and init
-    loss_net, train_net = get_AdvancedEast_net()
+    loss_net, train_net = get_AdvancedEast_net(args)
     loss_net.add_flags_recursive(fp32=True)
     train_net.set_train(True)
     # pre_trained
     if args.pre_trained:
         load_param_into_net(train_net, load_checkpoint(args.pre_trained_ckpt))
-    # define callbacks
 
-    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=cfg.learning_rate
-                                          , eps=1e-7, weight_decay=cfg.decay)
+    learning_rate = cfg.learning_rate_ascend if args.device_target == 'Ascend' else cfg.learning_rate_gpu
+    decay = cfg.decay_ascend if args.device_target == 'Ascend' else cfg.decay_gpu
+
+    train_net.optimizer = AdamWeightDecay(train_net.weights, learning_rate=learning_rate
+                                          , eps=1e-7, weight_decay=decay)
     model = Model(train_net)
     time_cb = TimeMonitor(data_size=batch_num)
     loss_cb = LossMonitor(per_print_times=batch_num)

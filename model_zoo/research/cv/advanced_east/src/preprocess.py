@@ -72,7 +72,6 @@ def reorder_vertexes(xy_list):
     b_mid = xy_list[first_v, 1] - k[k_mid] * xy_list[first_v, 0]
     second_v, fourth_v = 0, 0
     for index, i in zip(others, range(len(others))):
-        # delta = y - (k * x + b)
         delta_y = xy_list[index, 1] - (k[k_mid] * xy_list[index, 0] + b_mid)
         if delta_y > 0:
             second_v = index
@@ -140,7 +139,7 @@ def preprocess():
             if os.path.exists(os.path.join(train_image_dir, o_img_fname)) and \
                     os.path.exists(os.path.join(show_gt_image_dir, o_img_fname)):
                 continue
-            # d_wight, d_height = resize_image(im)
+
             d_wight, d_height = cfg.max_train_img_size, cfg.max_train_img_size
             scale_ratio_w = d_wight / im.width
             scale_ratio_h = d_height / im.height
@@ -242,7 +241,7 @@ def preprocess_size(width=256):
             if os.path.exists(os.path.join(train_image_dir, o_img_fname)) and \
                     os.path.exists(os.path.join(show_gt_image_dir, o_img_fname)):
                 continue
-            # d_wight, d_height = resize_image(im)
+
             d_wight, d_height = width, width
             scale_ratio_w = d_wight / im.width
             scale_ratio_h = d_height / im.height
@@ -303,7 +302,6 @@ def preprocess_size(width=256):
     train_label_list = os.listdir(train_label_dir)
     print('found %d train labels.' % len(train_label_list))
 
-    # random.shuffle(train_val_set)
     val_count = int(cfg.validation_split_ratio * len(train_val_set))
     with open(os.path.join(data_dir, cfg.val_fname_var + str(width) + '.txt'), 'a') as f_val:
         f_val.writelines(train_val_set[:val_count])

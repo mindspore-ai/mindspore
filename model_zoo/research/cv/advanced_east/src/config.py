@@ -18,10 +18,11 @@ configs
 from easydict import EasyDict
 
 config = EasyDict({
-    'initial_epoch': 2,
     'epoch_num': 6,
-    'learning_rate': 1e-4,
-    'decay': 3e-5,
+    'learning_rate_ascend': 1e-4,
+    'learning_rate_gpu': 1e-3,
+    'decay_ascend': 3e-5,
+    'decay_gpu': 5e-4,
     'epsilon': 1e-4,
     'batch_size': 2,
     'ckpt_interval': 2,
@@ -36,7 +37,6 @@ config = EasyDict({
     'validation_split_ratio': 0.1,
     'total_img': 10000,
     'data_dir': './icpr/',
-    'val_data_dir': './icpr/images/',
     'train_fname': 'train.txt',
     'train_fname_var': 'train_',
     'val_fname': 'val.txt',
@@ -71,5 +71,33 @@ config = EasyDict({
     'gen_origin_img': True,
     'draw_gt_quad': False,
     'draw_act_quad': False,
-    'vgg_npy': '/disk1/ade/vgg16.npy',
+    'vgg_npy': './vgg16.npy',
+    'vgg_weights': './src/0-150_5004.ckpt',
+    'ds_sink_mode': False
+})
+
+cifar_cfg = EasyDict({
+    "num_classes": 10,
+    "lr": 0.01,
+    "lr_init": 0.01,
+    "lr_max": 0.1,
+    "lr_epochs": '30,60,90,120',
+    "lr_scheduler": "step",
+    "warmup_epochs": 5,
+    "batch_size": 64,
+    "max_epoch": 70,
+    "momentum": 0.9,
+    "weight_decay": 5e-4,
+    "loss_scale": 1.0,
+    "label_smooth": 0,
+    "label_smooth_factor": 0,
+    "buffer_size": 10,
+    "image_size": '224,224',
+    "pad_mode": 'same',
+    "padding": 0,
+    "has_bias": False,
+    "batch_norm": True,
+    "keep_checkpoint_max": 10,
+    "initialize_mode": "XavierUniform",
+    "has_dropout": False
 })
