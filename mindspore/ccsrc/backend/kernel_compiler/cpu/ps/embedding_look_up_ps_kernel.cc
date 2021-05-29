@@ -41,9 +41,9 @@ void EmbeddingLookUpPSKernel::InitKernel(
   }
   auto output_shape = *(shape_vec[2]);
 
-  size_t offset = 0;
+  int64_t offset = 0;
   for (size_t i = 0; i < rank_id_; i++) {
-    offset += LongToSize(Util::LocalShard(SizeToLong(input_shape_[kAxis]), SizeToLong(i), SizeToLong(pserver_num_)));
+    offset += Util::LocalShard(SizeToLong(input_shape_[kAxis]), SizeToLong(i), SizeToLong(pserver_num_));
   }
   offset_ = offset;
 
