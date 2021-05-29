@@ -259,9 +259,10 @@ python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EX
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 ```
 
+- `LABEL_PATH` label.txt存放的路径，写一个py脚本对数据集下的类别名进行排序，对类别下的文件名和类别排序值做映射，例如[文件名:排序值]，将映射结果写到labe.txt文件中。
 - `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。Mobilenetv2执行推理的图片尺寸为[224, 224]，DVPP硬件限制宽为16整除，高为2整除，网络符合标准，网络可以通过DVPP对图像进行前处理。
 - `DEVICE_ID` 可选，默认值为0。
 

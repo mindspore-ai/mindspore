@@ -117,11 +117,11 @@ int main(int argc, char **argv) {
       auto resizeShape = {FLAGS_image_height, FLAGS_image_width};
       std::shared_ptr<TensorTransform> resize(new Resize(resizeShape));
       auto crop_size = {224, 224};
-      std::shared_ptr<TensorTransform> center_crop(new CenterCrop(center_crop));
+      std::shared_ptr<TensorTransform> center_crop(new CenterCrop(crop_size));
       Execute transform({decode, resize, center_crop, normalize, hwc2chw});
       auto img = MSTensor();
       auto image = ReadFileToTensor(all_files[i]);
-      composeDecode(image, &img);
+      transform(image, &img);
       std::vector<MSTensor> model_inputs = model.GetInputs();
       inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
                        img.Data().get(), img.DataSize());

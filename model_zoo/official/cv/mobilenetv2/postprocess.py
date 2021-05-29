@@ -28,24 +28,30 @@ def calcul_acc(labels, preds):
     return sum(1 for x, y in zip(labels, preds) if x == y) / len(labels)
 
 
+def read_label(label_path):
+    label_dict = {}
+    with open(label_path, 'r') as f:
+        lines = f.readlines()
+    for line in lines:
+        file_name = line.split(':')[0]
+        label = line.split(':')[1]
+        label_dict[file_name] = label
+    return label_dict
+
+
 def get_result(result_path, label_path):
     files = os.listdir(result_path)
     preds = []
     labels = []
-    label_dict = {}
-    with open(label_path, 'w') as f:
-        lines = f.readlines()
-        for line in lines:
-            label_dict[line.split(',')[0]] = line.split(',')[1]
+    label_dict = read_label(label_path)
     for file in files:
         file_name = file.split('.')[0]
-        label = int(label_dict[file_name + '.JEPG'])
+        label = int(label_dict[file_name])
         labels.append(label)
-        resultPath = os.path.join(result_path, file)
-        output = np.fromfile(resultPath, dtype=np.float32)
+        output = np.fromfile(os.path.join(result_path, file), dtype=np.float32)
         preds.append(np.argmax(output, axis=0))
     acc = calcul_acc(labels, preds)
-    print("accuracy: {}".format(acc))
+    print("total{}, accuracy: {}".format(len(labels), acc))
 
 
 if __name__ == '__main__':
