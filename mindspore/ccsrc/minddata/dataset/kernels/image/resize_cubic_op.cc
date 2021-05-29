@@ -250,6 +250,9 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
       return false;
     }
   }
+  if (!horizontal_interp && !vertical_interp) {
+    output = input;
+  }
   return true;
 }
 

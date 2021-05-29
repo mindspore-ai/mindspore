@@ -132,7 +132,7 @@ LiteMat::LiteMat(const LiteMat &m) {
   dims_ = m.dims_;
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
-  size_ = 0;
+  size_ = m.size_;
   setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
   if (ref_count_) {
     addRef(ref_count_, 1);

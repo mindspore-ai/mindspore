@@ -118,7 +118,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     imOut.Init(output_width, output_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
     imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[2], input_cv->mat().data, LDataType::UINT8);
-    ResizeCubic(imIn, imOut, output_width, output_height);
+    if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
+      RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
+    }
     *output = output_tensor;
     return Status::OK();
   }
@@ -595,7 +597,9 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       imOut.Init(target_width, target_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
       imIn.Init(input_image->shape()[1], input_image->shape()[0], input_image->shape()[2], input_image->mat().data,
                 LDataType::UINT8);
-      ResizeCubic(imIn, imOut, target_width, target_height);
+      if (ResizeCubic(imIn, imOut, target_width, target_height) == false) {
+        RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
+      }
       *output = output_tensor;
       return Status::OK();
     }
