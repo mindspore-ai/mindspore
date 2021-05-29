@@ -35,21 +35,25 @@ class PassManager {
   // Get all the passes added by AddPass
   const std::vector<PassPtr> &Passes() const;
   // Add graph pass, the pass object will be freed when pass manager freed.
-  void AddPass(const PassPtr &pass);
+  virtual void AddPass(const PassPtr &pass);
   // Run passes added in pass manager on the input graph
-  // @param [inout] graph The graph to be optimized
+  // @param [in out] graph The graph to be optimized
   // @return true, graph changed
   // @return false, graph not changed
-  bool Run(const FuncGraphPtr &func_graph) const;
+  virtual bool Run(const FuncGraphPtr &func_graph) const;
   // Run the given graph passes on the input graph
-  // @param [inout] graph The graph to be optimized
+  // @param [in out] graph The graph to be optimized
   // @param [in] passes The given graph passes
   // @return true, graph changed
   // @return false, graph not changed
-  bool Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const;
+  virtual bool Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const;
   std::string name() const { return name_; }
 
- private:
+ protected:
+  virtual bool RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const;
+  virtual std::string GetPassFullname(size_t pass_id, const PassPtr &pass) const;
+  virtual void DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const;
+
   const std::string name_;
   std::vector<PassPtr> passes_;
   bool run_only_once_;

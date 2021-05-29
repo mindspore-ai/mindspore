@@ -637,7 +637,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyProcess] = GetStrProcessorFromContext();
   (*kernel_json)[kJsonKeyComposite] = true;
-  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
+  (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
 
   GenStitchJson(anf_nodes, &node_json_map, kernel_json);
 

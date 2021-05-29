@@ -28,7 +28,6 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/insert_pad.h"
-#include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 #include "backend/optimizer/graph_kernel/cast_matmul_fusion.h"
@@ -43,124 +42,122 @@
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 #include "backend/optimizer/graph_kernel/axis_normalizer.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_pass_manager.h"
 
 namespace mindspore {
 namespace opt {
+using OptLevel::OptLevel_1;
+using OptLevel::OptLevel_2;
+using OptLevel::OptLevel_3;
+
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage1_preprocess");
+  auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
   // Do cse before all passes of graphkernel
-  pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  pm->AddPass(std::make_shared<CommonSubexpressionElimination>("cse1"), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->AddPass(std::make_shared<SplitAssign>());
+  pm->AddPass(std::make_shared<SplitAssign>(), OptLevel_1);
 
-  if (is_ascend) {
-    // Remove redundant Cast(bias, fp16) for Matmul input
-    pm->AddPass(std::make_shared<CastMatmulFusion>());
-  }
+  // Remove redundant Cast(bias, fp16) for Matmul input
+  pm->AddPass(std::make_shared<CastMatmulFusion>(), OptLevel_2, is_ascend);
 
   // Spread the MakeTuple input of UpdateState
-  pm->AddPass(std::make_shared<SpreadUpdateState>());
+  pm->AddPass(std::make_shared<SpreadUpdateState>(), OptLevel_1);
   // Eliminate the common nodes that generated in SpreadUpdateState
-  pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  pm->AddPass(std::make_shared<CommonSubexpressionElimination>("cse2"), OptLevel_1);
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage2_cluster");
+  auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
   // Expand complex basic kernels to composite kernels
-  pm->AddPass(std::make_shared<GraphKernelExpander>());
+  pm->AddPass(std::make_shared<GraphKernelExpander>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
-  pm->AddPass(std::make_shared<GraphKernelCluster>());
+  pm->AddPass(std::make_shared<GraphKernelCluster>(), OptLevel_1);
 
   // Eliminate the outputs without external user
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage3_highlevelopt1");
+  auto pm = std::make_shared<GraphKernelPassManager>(OptLevel_2, "highlevelopt1");
   // Reorder Cast and Type-insensitive node
-  pm->AddPass(std::make_shared<ReorderOps>());
+  pm->AddPass(std::make_shared<ReorderOps>(), OptLevel_2);
 
   // normalize the Reduce axis
-  pm->AddPass(std::make_shared<AxisNormalizer>());
+  pm->AddPass(std::make_shared<AxisNormalizer>(), OptLevel_1);
 
   // Replace Assign with InplaceAssign, and replace original output with overridden parameters
-  pm->AddPass(std::make_shared<OptimizeAssign>());
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<OptimizeAssign>(), OptLevel_2);
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_2);
 
   // Cast the input of ReduceSum from float16 to float32 for higher precision
-  pm->AddPass(std::make_shared<RaiseReductionPrecision>());
+  pm->AddPass(std::make_shared<RaiseReductionPrecision>(), OptLevel_2);
 
-  if (is_gpu) {
-    // Universal arithmetic simplify
-    pm->AddPass(std::make_shared<ArithmeticSimplify>());
-    // Insert PadAkg and UnPadAkg Ops for MatMul
-    pm->AddPass(std::make_shared<InsertPadOps>());
-  }
+  // Insert PadAkg and UnPadAkg Ops for MatMul
+  pm->AddPass(std::make_shared<InsertPadOps>(), OptLevel_1, is_gpu);
+
+  // Universal arithmetic simplify
+  pm->AddPass(std::make_shared<ArithmeticSimplify>(), OptLevel_2, is_gpu);
 
   // Common subexpression elimination
-  pm->AddPass(std::make_shared<GraphKernelCSE>());
+  pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::Split() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage4_split");
-
-  // Move the non-scalar tensor (in composite node) to parameter list
-  pm->AddPass(std::make_shared<TensorPromotion>());
-
+  auto pm = std::make_shared<GraphKernelPassManager>(3, "split");
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
-
   // preprocess for ShapeOpsSplitter
-  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>());
+  pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
-  pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops));
+  pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
 
   // Split kernel according to costmodel
-  pm->AddPass(std::make_shared<GraphKernelSplitter>());
+  pm->AddPass(std::make_shared<GraphKernelSplitter>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
-  pm->AddPass(std::make_shared<GetitemTuple>());
+  pm->AddPass(std::make_shared<GetitemTuple>(), OptLevel_1);
 
   // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
-  pm->AddPass(std::make_shared<MergeOutputForUpdateState>());
-  pm->AddPass(std::make_shared<GraphKernelCSE>());
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
+  pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_1);
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage5_highlevelopt2");
+  auto pm = std::make_shared<GraphKernelPassManager>(4, "highlevelopt2");
   // Enable atomic add
-  pm->AddPass(std::make_shared<AtomicCleanInsertter>());
-  if (is_gpu) {
-    pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>());
-  }
+  pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2);
+
+  // Enable atomic add for stitch nodes.
+  auto level = context::GraphKernelFlags::GetInstance().enable_stitch_fusion ? OptLevel_1 : OptLevel_3;
+  pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
+
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::Combine() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage6_combine");
-  // Enable parallel fusion
-  if (is_gpu && context::GraphKernelFlags::GetInstance().enable_parallel_fusion) {
-    // Do parallel fusion for gpu device
-    pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)));
-  }
+  auto pm = std::make_shared<GraphKernelPassManager>(5, "combine");
+  // Enable parallel fusion for gpu device
+  auto level = context::GraphKernelFlags::GetInstance().enable_parallel_fusion ? OptLevel_1 : OptLevel_3;
+  pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)), level, is_gpu);
+
   return pm;
 }
 
 PassManagerPtr GraphKernelOptimizer::PostProcess() const {
-  auto pm = std::make_shared<PassManager>("graphkernel_stage7_postprocess");
+  auto pm = std::make_shared<GraphKernelPassManager>(6, "postprocess");
   // Add the new tensors to the kernel_graph
-  pm->AddPass(std::make_shared<BindValueToGraph>());
+  pm->AddPass(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
   // Make Tuple for the inputs of UpdateState. (the reverse of SpreadUpdateState)
-  pm->AddPass(std::make_shared<ShrinkUpdateState>());
+  pm->AddPass(std::make_shared<ShrinkUpdateState>(), OptLevel_1);
   return pm;
 }
 
