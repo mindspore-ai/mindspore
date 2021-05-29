@@ -113,6 +113,7 @@ def _get_dtype_max(dtype):
         dtype_max = 1.0
     return dtype_max
 
+
 @constexpr
 def _check_input_4d(input_shape, param_name, func_name):
     if len(input_shape) != 4:
@@ -470,6 +471,7 @@ class PSNR(Cell):
 def _raise_dims_rank_error(input_shape, param_name, func_name):
     """raise error if input is not 3d or 4d"""
     raise ValueError(f"{func_name} {param_name} should be 3d or 4d, but got shape {input_shape}")
+
 
 @constexpr
 def _get_bbox(rank, shape, central_fraction):

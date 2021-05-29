@@ -461,6 +461,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
     OPERATOR_SUM = 'SUM'
     OPERATOR_MEAN = 'MEAN'
     OPERATOR_MAX = 'MAX'
+
     def __init__(self, vocab_size, embedding_size, field_size, param_init='normal', target='CPU',
                  slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM'):
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,

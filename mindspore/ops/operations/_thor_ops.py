@@ -19,7 +19,6 @@ from ..primitive import prim_attr_register, PrimitiveWithInfer
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
 from ..operations.nn_ops import _check_positive_int_or_tuple
-from ..._checkparam import Rel
 
 __all__ = ["CusBatchMatMul",
            "CusCholeskyTrsm",
@@ -362,6 +361,7 @@ class CusTranspose02314(PrimitiveWithInfer):
         from mindspore.ops._op_impl._custom_op.transpose02314_impl import cus_transpose02314
 
     def get_bprop(self):
+        """Get backprop for CusTranspose02314."""
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
 

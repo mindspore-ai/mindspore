@@ -5293,6 +5293,7 @@ class Range(PrimitiveWithCheck):
         validator.check_tensors_dtypes_same_and_valid(inputs, valid_dtypes, self.name)
 
     def infer_value(self, start_value, limit_value, delat_value):
+        """Infer the value of input for Range."""
         if start_value is not None and limit_value is not None and delat_value is not None:
             start = np.asscalar(start_value.asnumpy())
             limit = np.asscalar(limit_value.asnumpy())

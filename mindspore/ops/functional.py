@@ -134,6 +134,7 @@ stack = P.Stack()
 
 
 def pack(x):
+    """Call stack in this pack function."""
     print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
           ".")
     return stack(x)

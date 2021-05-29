@@ -88,6 +88,7 @@ dout_cast = C.MultitypeFuncGraph("dout_cast")
 
 @dout_cast.register("Tensor", "Tensor")
 def dout_cast_tensor(dout, x):
+    """Casts dout to the dtype of x for Tensor."""
     cast = P.Cast()
     get_dtype = P.DType()
     dx = cast(dout, get_dtype(x))
@@ -96,6 +97,7 @@ def dout_cast_tensor(dout, x):
 
 @dout_cast.register("Number", "Number")
 def dout_cast_number(dout, x):
+    """Casts dout to the dtype of x for Number."""
     cast = P.Cast()
     get_dtype = P.DType()
     dx = cast(dout, get_dtype(x))
@@ -104,6 +106,7 @@ def dout_cast_number(dout, x):
 
 @dout_cast.register("RowTensor", "Tensor")
 def dout_cast_row_tensor(dout, x):
+    """Casts dout values to the dtype of x for RowTensor."""
     cast = P.Cast()
     get_dtype = P.DType()
     values = cast(dout.values, get_dtype(x))
@@ -275,6 +278,7 @@ def get_bprop_embedding_lookup(self):
 
 @constexpr
 def make_begin(shp):
+    """Creates a tuple with zero according to the shape."""
     begin = tuple([0 for _ in shp])
     return begin
 
