@@ -42,16 +42,14 @@ class BaseRecorder {
     if (!filename_.empty() && !Common::IsFilenameValid(filename_, MAX_FILENAME_LENGTH, err_msg)) {
       filename_ = "";
     }
-
-    auto sys_time = std::chrono::system_clock::now();
-    auto t_time = std::chrono::system_clock::to_time_t(sys_time);
-    std::tm *l_time = std::localtime(&t_time);
-    if (l_time == nullptr) {
-      timestamp_ = "";
-    } else {
-      std::stringstream ss;
-      ss << std::put_time(l_time, "%Y%m%d%H%M%S");
-      timestamp_ = ss.str();
+    auto sys_time = GetTimeString();
+    for (auto ch : sys_time) {
+      if (ch == '.') {
+        break;
+      }
+      if (ch != '-' && ch != ':') {
+        timestamp_.push_back(ch);
+      }
     }
   }
   ~BaseRecorder() {}

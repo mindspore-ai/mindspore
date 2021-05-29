@@ -172,8 +172,8 @@ std::optional<std::string> Common::GetEnvConfigFile() {
   return config_file;
 }
 
-bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message) {
-  const int len_str = str.length();
+bool Common::IsStrLengthValid(const std::string &str, size_t length_limit, const std::string &error_message) {
+  auto len_str = str.length();
   if (len_str > length_limit) {
     MS_LOG(WARNING) << error_message << "The length is " << str.length() << ", exceeding the limit of " << length_limit
                     << ".";
@@ -182,17 +182,17 @@ bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, c
   return true;
 }
 
-bool Common::IsEveryFilenameValid(const std::string &path, const int &length_limit, const std::string &error_message) {
-  int left_pos = 0;
+bool Common::IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message) {
   if (path.empty()) {
     MS_LOG(WARNING) << error_message << "The path is empty.";
     return false;
   }
-  int len_path = path.length();
-  for (int i = 0; i < len_path; i++) {
+  size_t len_path = path.length();
+  size_t left_pos = 0;
+  for (size_t i = 0; i < len_path; i++) {
     if (i != 0) {
       if (path[i] == '\\' || path[i] == '/') {
-        int cur_len = i - left_pos;
+        auto cur_len = i - left_pos;
         if (cur_len > length_limit) {
           MS_LOG(WARNING) << error_message << "The name length of '" << path.substr(left_pos, cur_len) << "' is "
                           << cur_len << ". It is out of the limit which is " << length_limit << ".";
@@ -203,7 +203,7 @@ bool Common::IsEveryFilenameValid(const std::string &path, const int &length_lim
     }
   }
   if (!(path[len_path - 1] == '\\' || path[len_path - 1] == '/')) {
-    int cur_len = len_path - left_pos;
+    auto cur_len = len_path - left_pos;
     if (cur_len > length_limit) {
       MS_LOG(WARNING) << error_message << "The name length of '" << path.substr(left_pos, cur_len) << "' is " << cur_len
                       << ". It is out of the limit which is " << length_limit << ".";
@@ -213,7 +213,7 @@ bool Common::IsEveryFilenameValid(const std::string &path, const int &length_lim
   return true;
 }
 
-bool Common::IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message) {
+bool Common::IsPathValid(const std::string &path, size_t length_limit, const std::string &error_message) {
   std::string err_msg = "Detail: ";
   if (!error_message.empty()) {
     err_msg = error_message + " " + err_msg;
@@ -245,7 +245,7 @@ bool Common::IsPathValid(const std::string &path, const int &length_limit, const
   return true;
 }
 
-bool Common::IsFilenameValid(const std::string &filename, const int &length_limit, const std::string &error_message) {
+bool Common::IsFilenameValid(const std::string &filename, size_t length_limit, const std::string &error_message) {
   std::string err_msg = "Detail: ";
   if (!error_message.empty()) {
     err_msg = error_message + " " + err_msg;
