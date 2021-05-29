@@ -50,7 +50,7 @@ constexpr size_t kNopNodeRealInputIndex = 1;
 
 using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 
-PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
+const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
 
 bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
@@ -170,8 +170,8 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
-    auto item_with_index_tmp = VisitKernelWithReturnType(GetTupleGetItemRealInput(cnode),
-                                                         GetTupleGetItemOutIndex(cnode), visit_nop_node, return_types);
+    auto item_with_index_tmp = VisitKernelWithReturnType(
+      GetTupleGetItemRealInput(cnode), SizeToInt(GetTupleGetItemOutIndex(cnode)), visit_nop_node, return_types);
     if (CheckPrimitiveType(item_with_index_tmp.first, prim::kPrimMakeTuple)) {
       MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
       auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
