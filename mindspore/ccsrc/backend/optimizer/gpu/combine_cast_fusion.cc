@@ -46,20 +46,20 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
       if (dst == kNumberTypeFloat16 && src == kNumberTypeFloat32) {
         cast_32to16_list.push_back(cast_node);
         if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
-          auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
+          auto &monad_32to16 = input0->cast<CNodePtr>()->inputs().at(second_input_index);
           if (cast_32to16_load_monad == nullptr) {
-            cast_32to16_load_monad = monad;
-          } else if (cast_32to16_load_monad != monad) {
+            cast_32to16_load_monad = monad_32to16;
+          } else if (cast_32to16_load_monad != monad_32to16) {
             return false;
           }
         }
       } else if (dst == kNumberTypeFloat32 && src == kNumberTypeFloat16) {
         cast_16to32_list.push_back(cast_node);
         if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
-          auto &monad = input0->cast<CNodePtr>()->inputs().at(second_input_index);
+          auto &monad_16to32 = input0->cast<CNodePtr>()->inputs().at(second_input_index);
           if (cast_16to32_load_monad == nullptr) {
-            cast_16to32_load_monad = monad;
-          } else if (cast_16to32_load_monad != monad) {
+            cast_16to32_load_monad = monad_16to32;
+          } else if (cast_16to32_load_monad != monad_16to32) {
             return false;
           }
         }
