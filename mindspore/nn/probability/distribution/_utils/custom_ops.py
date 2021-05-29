@@ -17,6 +17,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
+
 def exp_generic(input_x):
     """
     Log op on Ascend doesn't support int types.
@@ -65,6 +66,7 @@ def log1p_generic(x):
     Log1p ops on GPU device or when device_target == GPU.
     """
     return log_generic(x + 1.0)
+
 
 def broadcast_to(x, target):
     """

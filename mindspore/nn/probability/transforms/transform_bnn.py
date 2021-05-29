@@ -83,8 +83,10 @@ class TransformToBNN:
 
     def transform_to_bnn_model(self,
                                get_dense_args=lambda dp: {"in_channels": dp.in_channels, "has_bias": dp.has_bias,
-                                                          "out_channels": dp.out_channels, "activation": dp.activation},
-                               get_conv_args=lambda dp: {"in_channels": dp.in_channels, "out_channels": dp.out_channels,
+                                                          "out_channels": dp.out_channels,
+                                                          "activation": dp.activation},
+                               get_conv_args=lambda dp: {"in_channels": dp.in_channels,
+                                                         "out_channels": dp.out_channels,
                                                          "pad_mode": dp.pad_mode, "kernel_size": dp.kernel_size,
                                                          "stride": dp.stride, "has_bias": dp.has_bias,
                                                          "padding": dp.padding, "dilation": dp.dilation,

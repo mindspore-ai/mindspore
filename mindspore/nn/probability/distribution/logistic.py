@@ -61,7 +61,8 @@ class Logistic(Distribution):
         >>> scale_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
         >>>
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
-        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`,
+        >>> # have the same arguments as follows.
         >>> # Args:
         >>> #     value (Tensor): the value to be evaluated.
         >>> #     loc (Tensor): the location of the distribution. Default: self.loc.

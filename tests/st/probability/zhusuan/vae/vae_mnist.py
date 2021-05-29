@@ -67,13 +67,13 @@ class Generator(zs.BayesianNet):
 
         z_mean = self.zeros((self.batch_size, self.z_dim))
         z_std = self.ones((self.batch_size, self.z_dim))
-        z, log_prob_z = self.Normal('latent', observation=z, mean=z_mean, std=z_std, shape=(), reparameterize=False)
+        z, log_prob_z = self.normal('latent', observation=z, mean=z_mean, std=z_std, shape=(), reparameterize=False)
 
         x_mean = self.sigmoid(self.fc3(self.act2(self.fc2(self.act1(self.fc1(z))))))
         if x is None:
             #x = self.bernoulli_dist('sample', (), x_mean)
             x = x_mean
-        x, log_prob_x = self.Bernoulli('data', observation=x, shape=(), probs=x_mean)
+        x, log_prob_x = self.bernoulli('data', observation=x, shape=(), probs=x_mean)
 
         return x, log_prob_x, z, log_prob_z
 
@@ -109,7 +109,7 @@ class Variational(zs.BayesianNet):
         z_mean = self.fc3(z_logit)
         z_std = self.exp(self.fc4(z_logit))
         #z, log_prob_z = self.reparameterization(z_mean, z_std)
-        z, log_prob_z = self.Normal('latent', observation=z, mean=z_mean, std=z_std, shape=(), reparameterize=True)
+        z, log_prob_z = self.normal('latent', observation=z, mean=z_mean, std=z_std, shape=(), reparameterize=True)
         return z, log_prob_z
 
 def main():
