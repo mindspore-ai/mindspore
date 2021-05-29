@@ -356,7 +356,8 @@ bool PsCacheManager::ProcessData() {
   if (data == nullptr) {
     MS_LOG(INFO) << "No data process, channel name:" << channel_name_;
     std::unique_lock<std::mutex> locker(data_mutex_);
-    (void)data_prase_.wait_for(locker, std::chrono::milliseconds(100));
+    const int64_t longest_time_to_wait = 100;
+    (void)data_prase_.wait_for(locker, std::chrono::milliseconds(longest_time_to_wait));
     return true;
   }
   RETURN_IF_FALSE(IncreaseStep());
@@ -367,7 +368,7 @@ bool PsCacheManager::ProcessData() {
   }
   auto batch_ids = reinterpret_cast<int *>(data);
   auto batch_ids_len = data_size / sizeof(int);
-  std::unique_ptr<int[]> hash_index(new int[batch_ids_len]);
+  std::unique_ptr<int[]> hash_index = std::make_unique<int[]>(batch_ids_len);
   if (memset_s(&statistics_info_, sizeof(statistics_info_), 0, sizeof(statistics_info_))) {
     MS_LOG(ERROR) << "Process data memset failed.";
     return false;
@@ -399,9 +400,10 @@ bool PsCacheManager::ProcessData() {
   (void)gettimeofday(&end_time, nullptr);
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  const uint64_t milli_second_ratio = 1000;
   MS_LOG(DEBUG) << "Ps cache completes processing data(data step:" << data_step_
                 << ",graph step:" << graph_running_step_ << " channel name:" << channel_name_
-                << ", time cost:" << cost / 1000 << "ms).";
+                << ", time cost:" << (cost / milli_second_ratio) << "ms).";
   return true;
 }
 
@@ -447,7 +449,7 @@ bool PsCacheManager::CheckCacheHitOrOutRange(const int *batch_ids, const size_t 
   MS_ERROR_IF_NULL(in_device);
   MS_ERROR_IF_NULL(out_range);
 
-  size_t thread_num = batch_ids_len / kMinIdsPerThread + 1;
+  size_t thread_num = batch_ids_len / kMaxIdsPerThread + 1;
   thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
   std::thread threads[kMaxThreadNum];
   size_t hash_hit_count[kMaxThreadNum] = {0};
@@ -495,8 +497,8 @@ bool PsCacheManager::ParseData(const int *batch_ids, const size_t batch_ids_len,
   MS_ERROR_IF_NULL(batch_ids);
   MS_ERROR_IF_NULL(hash_index);
   statistics_info_.batch_id_count_ = batch_ids_len;
-  std::unique_ptr<bool[]> in_device(new bool[batch_ids_len]);
-  std::unique_ptr<bool[]> out_range(new bool[batch_ids_len]);
+  std::unique_ptr<bool[]> in_device = std::make_unique<bool[]>(batch_ids_len);
+  std::unique_ptr<bool[]> out_range = std::make_unique<bool[]>(batch_ids_len);
   if (memset_s(in_device.get(), batch_ids_len * sizeof(bool), 0, batch_ids_len * sizeof(bool))) {
     MS_LOG(EXCEPTION) << "Initialize in_device array failed.";
   }
@@ -527,7 +529,9 @@ bool PsCacheManager::ParseData(const int *batch_ids, const size_t batch_ids_len,
 bool PsCacheManager::WaitGraphRun() {
   MS_LOG(INFO) << "Hash table has no space to insert new data and retries within 2 minutes.";
   std::unique_lock<std::mutex> locker(data_mutex_);
-  if (!data_prase_.wait_for(locker, std::chrono::seconds(120), [this] { return graph_step_ > graph_running_step_; })) {
+  const int64_t longest_time_to_wait = 120;
+  if (!data_prase_.wait_for(locker, std::chrono::seconds(longest_time_to_wait),
+                            [this] { return graph_step_ > graph_running_step_; })) {
     MS_LOG(ERROR) << "Ps cache data parse timeout, suggest to enlarge the cache size(graph step:" << graph_step_
                   << ", graph running step:" << graph_running_step_ << ").";
     return false;
@@ -690,7 +694,7 @@ bool PsCacheManager::LookUpHostHashTable(size_t embedding_size, size_t indices_l
   size_t first_dim_size = host_vocab_cache_size_;
   size_t outer_dim_size = embedding_size;
 
-  size_t thread_num = indices_lens / 10000 + 1;
+  size_t thread_num = indices_lens / kMaxIdsPerThread + 1;
   thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
   std::thread threads[kMaxThreadNum];
   size_t task_proc_lens = (indices_lens + thread_num - 1) / thread_num;
@@ -718,7 +722,7 @@ bool PsCacheManager::LookUpHostHashTable(size_t embedding_size, size_t indices_l
 bool PsCacheManager::InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
                                          const float *insert_data, float *hash_table_addr) {
   size_t first_dim_size = host_vocab_cache_size_;
-  size_t thread_num = insert_indices_size / 10000 + 1;
+  size_t thread_num = insert_indices_size / kMaxIdsPerThread + 1;
   thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
   std::thread threads[kMaxThreadNum];
   size_t task_proc_lens = (insert_indices_size + thread_num - 1) / thread_num;

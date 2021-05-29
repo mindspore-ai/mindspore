@@ -64,7 +64,8 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(relu_grad);
 
   auto outlist = GetRealNodeUsedList(graph, relu_grad);
-  if (outlist->size() >= 2) {
+  const size_t node_user_num_upper_bound = 2;
+  if (outlist->size() >= node_user_num_upper_bound) {
     return nullptr;
   }
 
