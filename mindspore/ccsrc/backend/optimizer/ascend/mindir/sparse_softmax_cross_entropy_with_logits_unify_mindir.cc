@@ -58,9 +58,9 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
 
   std::vector<size_t> logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0);
   int64_t depth = 0;
-  if (logits_shape.size() >= 1) {
+  if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
-    depth = logits_shape[index];
+    depth = SizeToLong(logits_shape[index]);
   } else {
     MS_LOG(EXCEPTION) << "logits's shape of sparse_softmax_cross_entropy_with_logits is empty.";
   }

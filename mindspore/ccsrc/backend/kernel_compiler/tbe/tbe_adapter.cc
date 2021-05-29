@@ -108,15 +108,15 @@ void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vect
     (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
   } else {
     if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
-      reorder_data_layer->emplace_back(data_layer[INPUT2]);
-      reorder_data_layer->emplace_back(data_layer[INPUT0]);
-      reorder_data_layer->emplace_back(data_layer[INPUT1]);
+      (void)reorder_data_layer->emplace_back(data_layer[INPUT2]);
+      (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
+      (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
       for (size_t i = 3; i < data_layer.size(); ++i) {
-        reorder_data_layer->emplace_back(data_layer[i]);
+        (void)reorder_data_layer->emplace_back(data_layer[i]);
       }
     } else {
-      reorder_data_layer->emplace_back(data_layer[INPUT1]);
-      reorder_data_layer->emplace_back(data_layer[INPUT0]);
+      (void)reorder_data_layer->emplace_back(data_layer[INPUT1]);
+      (void)reorder_data_layer->emplace_back(data_layer[INPUT0]);
       for (size_t i = 2; i < data_layer.size(); ++i) {
         reorder_data_layer->emplace_back(data_layer[i]);
       }
@@ -169,24 +169,32 @@ void TbeAdapter::MaxiOrMinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
 }
 
 static int TypeStrToDstType(const std::string &type_str) {
+  constexpr int kInvalid = -1;
+  constexpr int kFloat = 0;
+  constexpr int kFloat16 = 1;
+  constexpr int kInt8 = 2;
+  constexpr int kInt32 = 3;
+  constexpr int kUint8 = 4;
+  constexpr int kUint64 = 10;
+  constexpr int kBool = 12;
   if (type_str == "Float" || type_str == "Float32") {
-    return 0;
+    return kFloat;
   } else if (type_str == "Float16") {
-    return 1;
+    return kFloat16;
   } else if (type_str == "Int8") {
-    return 2;
+    return kInt8;
   } else if (type_str == "Int32") {
-    return 3;
+    return kInt32;
   } else if (type_str == "UInt8") {
-    return 4;
+    return kUint8;
   } else if (type_str == "UInt64") {
-    return 10;
+    return kUint64;
   } else if (type_str == "Bool") {
-    return 12;
+    return kBool;
   } else {
     MS_LOG(INFO) << "Error type str is invailed: " << type_str;
   }
-  return -1;
+  return kInvalid;
 }
 
 void TbeAdapter::CastAttrJsonPass(const mindspore::AnfNodePtr &anf_node,

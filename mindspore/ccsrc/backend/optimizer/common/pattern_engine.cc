@@ -202,7 +202,7 @@ static int GetSVarStartIndex(const VectorRef &values) {
 }
 
 void UpdateEquivMap(const VectorRef &values_pattern, const BaseRef &expr_ref, const PrimitiveVarMap &primitive_vars,
-                    EquivPtr equiv) {
+                    const EquivPtr &equiv) {
   if (equiv == nullptr || values_pattern.empty() || !utils::isa<AnfNodePtr>(values_pattern[0]) ||
       !utils::isa<AnfNodePtr>(expr_ref)) {
     return;
