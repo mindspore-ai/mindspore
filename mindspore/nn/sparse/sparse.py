@@ -19,15 +19,20 @@ from ..cell import Cell
 
 class SparseToDense(Cell):
     """
-    Convert a sparse tensor into dense.
+    Converts a sparse representation into a dense tensor.
 
     Not yet supported by any backend at the moment.
 
-    Args:
+    Inputs:
         sparse_tensor (SparseTensor): the sparse tensor to convert.
 
-    Returns:
+    Outputs:
         Tensor, the tensor converted.
+
+    Raises:
+        TypeError: If `sparse_tensor.indices` is neither int32 nor int64.
+        TypeError: If 'sparse_tensor.values' is not a Number.
+        TypeError: If 'sparse_tensor.dense_shape' is not a tuple.
 
     Supported Platforms:
         ``CPU``
@@ -36,7 +41,6 @@ class SparseToDense(Cell):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, SparseTensor
         >>> import mindspore.nn as nn
-
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.int32)
         >>> dense_shape = (3, 4)
