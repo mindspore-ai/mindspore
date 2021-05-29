@@ -68,6 +68,10 @@ struct InnerContext : public Context {
   virtual ~InnerContext();
 
  private:
+  bool IsAllDeviceTypeValid() const;
+
+  bool IsCpuBindModeInvalid() const;
+
   bool IsUserSetCpu() const;
 
   bool IsUserSetGpu() const;
