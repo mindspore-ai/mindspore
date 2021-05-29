@@ -113,10 +113,12 @@ const AnfNodePtr UnsortSegmentSumFission::Process(const FuncGraphPtr &graph, con
   }
   size_t pad_dim_size;
   auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  constexpr auto PADSIZE32 = 8;
+  constexpr auto PADSIZE16 = 16;
   if (input_dtype == kNumberTypeFloat32) {
-    pad_dim_size = 8;
+    pad_dim_size = PADSIZE32;
   } else if (input_dtype == kNumberTypeFloat16) {
-    pad_dim_size = 16;
+    pad_dim_size = PADSIZE16;
   } else {
     MS_LOG(DEBUG) << "UnsortedSegmentSum data type not in (float32, float16), no need change";
     return nullptr;

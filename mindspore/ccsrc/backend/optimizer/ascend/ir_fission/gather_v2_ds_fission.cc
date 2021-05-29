@@ -129,7 +129,8 @@ bool CheckInputs(const CNodePtr &origin_node) {
   auto param_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
   auto indice_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
   // this optimizer only support embedding_table has dynamic shape
-  if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(2))) {
+  constexpr size_t DIM2 = 2;
+  if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(DIM2))) {
     return false;
   }
   if (param_shape[param_shape.size() - 1] != 1) {
@@ -157,10 +158,12 @@ const AnfNodePtr GatherV2DsFission::Process(const FuncGraphPtr &graph, const Anf
   }
   size_t pad_dim_size;
   auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  constexpr auto PADSIZE32 = 8;
+  constexpr auto PADSIZE16 = 16;
   if (input_dtype == kNumberTypeFloat32) {
-    pad_dim_size = 8;
+    pad_dim_size = PADSIZE32;
   } else if (input_dtype == kNumberTypeFloat16) {
-    pad_dim_size = 16;
+    pad_dim_size = PADSIZE16;
   } else {
     MS_LOG(DEBUG) << "GatherV2 data type not in (float32, float16), no need change";
     return nullptr;
