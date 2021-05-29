@@ -26,7 +26,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.communication.management import get_group_size, init, get_rank
 from mindspore.nn import TrainOneStepCell
 from mindspore.context import ParallelMode
-from mindspore.train.callback import ModelCheckpoint, RunContext, _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import ModelCheckpoint, RunContext, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
@@ -41,6 +41,15 @@ from src.config import config
 devid = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
+
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, _key):
+        return self[_key]
+
+    def __setattr__(self, _key, _value):
+        self[_key] = _value
 
 class BuildTrainNetwork(nn.Cell):
     '''Build train network.'''
@@ -171,7 +180,7 @@ if __name__ == "__main__":
         ckpt_max_num = args.max_epoch
         train_config = CheckpointConfig(save_checkpoint_steps=args.steps_per_epoch, keep_checkpoint_max=ckpt_max_num)
         ckpt_cb = ModelCheckpoint(config=train_config, directory=args.outputs_dir, prefix='{}'.format(args.local_rank))
-        cb_params = _InternalCallbackParam()
+        cb_params = InternalCallbackParam()
         cb_params.train_network = train_net
         cb_params.epoch_num = ckpt_max_num
         cb_params.cur_epoch_num = 0

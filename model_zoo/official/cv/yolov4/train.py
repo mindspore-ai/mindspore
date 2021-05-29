@@ -24,7 +24,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
-from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import CheckpointConfig
 import mindspore as ms
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
@@ -95,6 +95,16 @@ def set_default():
 def convert_training_shape(args_training_shape):
     training_shape = [int(args_training_shape), int(args_training_shape)]
     return training_shape
+
+
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
 
 
 class BuildTrainNetwork(nn.Cell):
@@ -224,7 +234,7 @@ def run_train():
     network.set_train(True)
 
     if config.rank_save_ckpt_flag or config.run_eval:
-        cb_params = _InternalCallbackParam()
+        cb_params = InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
         cb_params.cur_epoch_num = 1

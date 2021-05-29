@@ -14,8 +14,7 @@
 # ============================================================================
 """Face Recognition loss."""
 from mindspore import Tensor
-from mindspore.nn import Cell
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.cell import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
@@ -24,7 +23,58 @@ __all__ = ['get_loss']
 
 eps = 1e-24
 
-class CrossEntropy(_Loss):
+class MyLoss(Cell):
+    """
+    Base class for other losses.
+    """
+    def __init__(self, reduction='mean'):
+        super(MyLoss, self).__init__()
+        if reduction is None:
+            reduction = 'none'
+
+        if reduction not in ('mean', 'sum', 'none'):
+            raise ValueError(f"reduction method for {reduction.lower()} is not supported")
+
+        self.average = True
+        self.reduce = True
+        if reduction == 'sum':
+            self.average = False
+        if reduction == 'none':
+            self.reduce = False
+
+        self.reduce_mean = P.ReduceMean()
+        self.reduce_sum = P.ReduceSum()
+        self.mul = P.Mul()
+        self.cast = P.Cast()
+
+    def get_axis(self, x):
+        shape = F.shape(x)
+        length = F.tuple_len(shape)
+        perm = F.make_range(0, length)
+        return perm
+
+    def get_loss(self, x, weights=1.0):
+        """
+        Computes the weighted loss
+        Args:
+            weights: Optional `Tensor` whose rank is either 0, or the same rank as inputs, and must be broadcastable to
+                inputs (i.e., all dimensions must be either `1`, or the same as the corresponding inputs dimension).
+        """
+        input_dtype = x.dtype
+        x = self.cast(x, mstype.float32)
+        weights = self.cast(weights, mstype.float32)
+        x = self.mul(weights, x)
+        if self.reduce and self.average:
+            x = self.reduce_mean(x, self.get_axis(x))
+        if self.reduce and not self.average:
+            x = self.reduce_sum(x, self.get_axis(x))
+        x = self.cast(x, input_dtype)
+        return x
+
+    def construct(self, base, target):
+        raise NotImplementedError
+
+class CrossEntropy(MyLoss):
     '''CrossEntropy'''
     def __init__(self, args):
         super(CrossEntropy, self).__init__()

@@ -17,11 +17,61 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.nn.loss.loss import _Loss
+from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 
+class MyLoss(Cell):
+    """
+    Base class for other losses.
+    """
+    def __init__(self, reduction='mean'):
+        super(MyLoss, self).__init__()
+        if reduction is None:
+            reduction = 'none'
+
+        if reduction not in ('mean', 'sum', 'none'):
+            raise ValueError(f"reduction method for {reduction.lower()} is not supported")
+
+        self.average = True
+        self.reduce = True
+        if reduction == 'sum':
+            self.average = False
+        if reduction == 'none':
+            self.reduce = False
+
+        self.reduce_mean = P.ReduceMean()
+        self.reduce_sum = P.ReduceSum()
+        self.mul = P.Mul()
+        self.cast = P.Cast()
+
+    def get_axis(self, x):
+        shape = F.shape(x)
+        length = F.tuple_len(shape)
+        perm = F.make_range(0, length)
+        return perm
+
+    def get_loss(self, x, weights=1.0):
+        """
+        Computes the weighted loss
+        Args:
+            weights: Optional `Tensor` whose rank is either 0, or the same rank as inputs, and must be broadcastable to
+                inputs (i.e., all dimensions must be either `1`, or the same as the corresponding inputs dimension).
+        """
+        input_dtype = x.dtype
+        x = self.cast(x, mstype.float32)
+        weights = self.cast(weights, mstype.float32)
+        x = self.mul(weights, x)
+        if self.reduce and self.average:
+            x = self.reduce_mean(x, self.get_axis(x))
+        if self.reduce and not self.average:
+            x = self.reduce_sum(x, self.get_axis(x))
+        x = self.cast(x, input_dtype)
+        return x
+
+    def construct(self, base, target):
+        raise NotImplementedError
 
 class PtLinspace(Cell):
     '''PtLinspace'''
@@ -38,7 +88,7 @@ class PtLinspace(Cell):
         return lin_x
 
 
-class MSELoss(_Loss):
+class MSELoss(MyLoss):
     '''MSELoss'''
     def __init__(self):
         super(MSELoss, self).__init__()
@@ -156,9 +206,7 @@ class YoloLoss(Cell):
         self.iou = P.IOU()
 
     def construct(self, output, coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, t_coord, t_conf, t_cls, gt_list):
-        """
-        Compute Yolo loss.
-        """
+        """Compute Yolo loss."""
         output_d = self.shape(output)
         num_batch = output_d[0]
         num_anchors = self.num_anchors
@@ -241,7 +289,6 @@ class YoloLoss(Cell):
         t_coord_wh = t_coord[:, :, 2:]
 
         one_hot_label = None
-        shape_cls_mask = None
         if num_classes > 1:
             shape_t_cls = self.shape(t_cls)
             t_cls = self.reshape(t_cls, (shape_t_cls[0] * shape_t_cls[1] * shape_t_cls[2],))
@@ -263,7 +310,6 @@ class YoloLoss(Cell):
 
         loss_conf = loss_conf_pos + loss_conf_neg
 
-        loss_cls = None
         if num_classes > 1:
             loss_cls = self.class_scale * 1.0 * self.sum(cls_mask * self.ce(cls, one_hot_label)[0], ())
         else:

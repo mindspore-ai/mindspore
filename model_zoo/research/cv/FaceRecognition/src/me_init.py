@@ -16,7 +16,6 @@
 import math
 import numpy as np
 from mindspore.common import initializer as init
-from mindspore.common.initializer import _assignment
 
 def calculate_gain(nonlinearity, param=None):
     r"""Return the recommended gain value for the given nonlinearity function.
@@ -172,6 +171,19 @@ def xavier_uniform_(arr, gain=1.):
 
     return np.random.uniform(-a, a, arr.shape)
 
+def assignment(arr, num):
+    """Assign the value of `num` to `arr`."""
+    if arr.shape == ():
+        arr = arr.reshape((1))
+        arr[:] = num
+        arr = arr.reshape(())
+    else:
+        if isinstance(num, np.ndarray):
+            arr[:] = num[:]
+        else:
+            arr[:] = num
+    return arr
+
 
 class ReidXavierUniform(init.Initializer):
     def __init__(self, gain=1.):
@@ -180,7 +192,7 @@ class ReidXavierUniform(init.Initializer):
 
     def _initialize(self, arr):
         tmp = xavier_uniform_(arr, self.gain)
-        _assignment(arr, tmp)
+        assignment(arr, tmp)
 
 
 class ReidKaimingUniform(init.Initializer):
@@ -192,7 +204,7 @@ class ReidKaimingUniform(init.Initializer):
 
     def _initialize(self, arr):
         tmp = kaiming_uniform_(arr, self.a, self.mode, self.nonlinearity)
-        _assignment(arr, tmp)
+        assignment(arr, tmp)
 
 
 class ReidKaimingNormal(init.Initializer):
@@ -204,4 +216,4 @@ class ReidKaimingNormal(init.Initializer):
 
     def _initialize(self, arr):
         tmp = kaiming_normal_(arr, self.a, self.mode, self.nonlinearity)
-        _assignment(arr, tmp)
+        assignment(arr, tmp)

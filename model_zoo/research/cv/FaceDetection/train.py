@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.communication.management import init
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, RunContext
-from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import CheckpointConfig
 from mindspore.common import dtype as mstype
 
 from src.logging import get_logger
@@ -35,6 +35,15 @@ from model_utils.config import config
 from model_utils.moxing_adapter import moxing_wrapper
 from model_utils.device_adapter import get_device_id, get_device_num, get_rank_id
 
+
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
 
 def modelarts_pre_process():
     '''modelarts pre process function.'''
@@ -127,7 +136,7 @@ def run_train():
     ckpt_max_num = config.max_epoch * config.steps_per_epoch // config.ckpt_interval
     train_config = CheckpointConfig(save_checkpoint_steps=config.ckpt_interval, keep_checkpoint_max=ckpt_max_num)
     ckpt_cb = ModelCheckpoint(config=train_config, directory=config.outputs_dir, prefix='{}'.format(config.local_rank))
-    cb_params = _InternalCallbackParam()
+    cb_params = InternalCallbackParam()
     cb_params.train_network = train_net
     cb_params.epoch_num = ckpt_max_num
     cb_params.cur_epoch_num = 1
