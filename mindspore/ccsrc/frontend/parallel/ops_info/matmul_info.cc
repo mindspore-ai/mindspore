@@ -464,6 +464,11 @@ Status MatMulBase::GenerateStrategies(int64_t stage_id) {
   return Status::SUCCESS;
 }
 
+std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t) {
+  std::vector<StrategyPtr> sp_vector;
+  return sp_vector;
+}
+
 Status MatMulBase::PrepareStrategy(int64_t stage_id, size_t dev_num,
                                    mindspore::parallel::Dimensions combined_partitions, size_t input0_shape_size,
                                    size_t input1_shape_size, mindspore::parallel::StrategyPtr *const sp) {

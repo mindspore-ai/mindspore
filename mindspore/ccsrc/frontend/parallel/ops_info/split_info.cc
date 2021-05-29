@@ -135,15 +135,7 @@ Status SplitInfo::InferTensorMap() {
 
 Status SplitInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status SplitInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
-  if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
-  }
+std::vector<StrategyPtr> SplitInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input_split;
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
     if (i == axis_) {
@@ -158,20 +150,10 @@ Status SplitInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 std::shared_ptr<Strategys> SplitInfo::GenerateBatchStrategies() {

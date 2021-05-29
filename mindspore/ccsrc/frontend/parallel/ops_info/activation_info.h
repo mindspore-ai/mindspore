@@ -52,7 +52,7 @@ class Activation : public ActivationBase {
              const PrimitiveAttrs &attrs, OperatorCostPtr cost)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~Activation() override = default;
-  Status GenerateStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -103,7 +103,7 @@ class Softmax : public ActivationBase {
                    const PrimitiveAttrs &attrs)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>()) {}
   ~Softmax() override = default;
-  Status GenerateStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -262,7 +262,7 @@ class DropoutInfo : public ActivationOther {
               const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>()) {}
   ~DropoutInfo() override = default;
-  Status GenerateStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status Init(const StrategyPtr &strategy) override;
 
  protected:

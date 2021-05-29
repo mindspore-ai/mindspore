@@ -231,17 +231,12 @@ Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status GetNextInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> GetNextInfo::GenerateOpStrategies(int64_t stage_id) {
   Strategys stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
-  if (SetCostUnderStrategy(sp) == SUCCESS) {
-    MS_LOG(INFO) << name_ << " : Successfully generated strategy.";
-    PrintStrategy(sp);
-  } else {
-    MS_LOG(ERROR) << name_ << " : Generating strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
+  std::vector<StrategyPtr> sp_vector;
+  sp_vector.push_back(sp);
+  return sp_vector;
 }
 }  // namespace parallel
 }  // namespace mindspore

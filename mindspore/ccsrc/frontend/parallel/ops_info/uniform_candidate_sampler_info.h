@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
@@ -44,7 +45,7 @@ class UniformCandidateSamplerInfo : public OperatorInfo {
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   Status InferAsLossDivisor() override;
