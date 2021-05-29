@@ -32,6 +32,7 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, 
   "InvertPermutation", "DropoutGenMask", "embed", "create_instance", "RefToEmbed",
   "stop_gradient", "Send", "UpdateState", "Load"};
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather};
+static const std::set<PrimitivePtr> TRIVIAL_NODE_LIST_ = {prim::kPrimCast, prim::kPrimDepend};
 // clang-format on
 
 bool IsInParallelBlackList(const PrimitivePtr &prim) {
@@ -41,6 +42,15 @@ bool IsInParallelBlackList(const PrimitivePtr &prim) {
 
 bool IsInAllGatherNodeList(const CNodePtr &cnode) {
   for (auto &value : ALLGATHER_NODE_LIST_) {
+    if (IsPrimitiveCNode(cnode, value)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool IsInTrivialNodeList(const CNodePtr &cnode) {
+  for (auto &value : TRIVIAL_NODE_LIST_) {
     if (IsPrimitiveCNode(cnode, value)) {
       return true;
     }

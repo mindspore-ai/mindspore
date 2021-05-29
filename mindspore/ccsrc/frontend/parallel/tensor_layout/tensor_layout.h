@@ -116,6 +116,10 @@ class TensorLayout {
 
   int32_t opt_weight_shard_size() { return opt_weight_shard_size_; }
 
+  void set_is_shared_param(bool is_shared_param) { is_shared_param_ = is_shared_param; }
+
+  bool is_shared_param() { return is_shared_param_; }
+
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -145,6 +149,7 @@ class TensorLayout {
   std::string opt_shard_mirror_group_ = "";  // for mirror ops
   int32_t opt_weight_shard_step_ = 0;
   int32_t opt_weight_shard_size_ = 0;
+  bool is_shared_param_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore
