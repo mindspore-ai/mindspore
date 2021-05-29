@@ -13,7 +13,11 @@ add_executable(benchmark
 add_dependencies(benchmark fbs_src)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    target_link_libraries(benchmark mindspore-lite mindspore::json)
+    if(SUPPORT_NPU AND ANDROID_STL STREQUAL "c++_static")
+        target_link_libraries(benchmark mindspore-lite mindspore::json c++_shared)
+    else()
+        target_link_libraries(benchmark mindspore-lite mindspore::json)
+    endif()
 else()
     target_link_libraries(benchmark mindspore-lite mindspore::json pthread)
 endif()
