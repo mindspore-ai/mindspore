@@ -24,7 +24,6 @@ from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 from mindspore.common import set_seed
-from mindspore.parallel._ps_context import _is_role_worker
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
@@ -124,7 +123,8 @@ def train_and_eval(config):
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
     callback = LossCallBack(config=config)
-    if _is_role_worker():
+    ms_role = os.getenv("MS_ROLE")
+    if ms_role == "MS_WORKER":
         if cache_enable:
             ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
                                           keep_checkpoint_max=1, integrated_save=False)
