@@ -34,6 +34,7 @@ safe_builtins = {
     'slice',
 }
 
+
 class RestrictedUnpickler(pickle.Unpickler):
     """
     Unpickle allowing only few safe classes from the builtins module or numpy
@@ -51,6 +52,7 @@ class RestrictedUnpickler(pickle.Unpickler):
             return getattr(np, name)
         # Forbid everything else.
         raise pickle.UnpicklingError("global '%s.%s' is forbidden" %(module, name))
+
 
 def restricted_loads(s):
     """Helper function analogous to pickle.loads()."""
@@ -98,11 +100,11 @@ class Cifar10:
         files = os.listdir(self.path)
         for file in files:
             if re.match("data_batch_*", file):
-                with open(os.path.join(self.path, file), 'rb') as f:       #load train data
+                with open(os.path.join(self.path, file), 'rb') as f:       # load train data
                     dic = restricted_loads(f.read())
                     images = np.r_[images, dic[b"data"].reshape([-1, 3, 32, 32])]
                     labels.append(dic[b"labels"])
-            elif re.match("test_batch", file):          #load test data
+            elif re.match("test_batch", file):          # load test data
                 with open(os.path.join(self.path, file), 'rb') as f:
                     dic = restricted_loads(f.read())
                     test_images = np.array(dic[b"data"].reshape([-1, 3, 32, 32]))

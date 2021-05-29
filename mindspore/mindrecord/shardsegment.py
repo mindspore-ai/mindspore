@@ -23,6 +23,7 @@ from .common.exceptions import MRMOpenError, MRMFetchCandidateFieldsError, MRMRe
 
 __all__ = ['ShardSegment']
 
+
 class ShardSegment:
     """
     Wrapper class which is represent ShardSegment class in c++ module.

@@ -21,6 +21,7 @@ from .common.exceptions import MRMIndexGeneratorError, MRMGenerateIndexError
 
 __all__ = ['ShardIndexGenerator']
 
+
 class ShardIndexGenerator:
     """
     Wrapper class which is represent ShardIndexGenerator class in c++ module.

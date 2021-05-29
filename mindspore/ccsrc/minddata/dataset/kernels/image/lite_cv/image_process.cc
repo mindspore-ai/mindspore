@@ -18,7 +18,7 @@
 
 #include <float.h>
 #include <limits.h>
-#include <string.h>
+#include <cstring>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -1954,7 +1954,7 @@ bool ResizePreserveARWithFiller(LiteMat &src, LiteMat &dst, int h, int w, float 
   if (dst.IsEmpty()) {
     dst.Init(w, h, src.channel_, LDataType::FLOAT32);
   }
-  //  uint8_t *dst_ptr = dst;
+
   float varM[2][3] = {{1.0, 0, 0}, {0, 1.0, 0}};
   const float divisor = 2.0;
   int rotationDstWidth = src.width_;
