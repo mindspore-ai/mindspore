@@ -18,6 +18,8 @@
 #include "runtime/framework/actor/data_source_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/recorder_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -34,26 +36,51 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
+    total_running_count_++;
     current_count_++;
     MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
-                 << ", current count: " << current_count_;
+                 << ", current count: " << current_count_ << ", total running count: " << total_running_count_;
 
-    // Send loop count to output actor.
-    Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
-
-    if (current_count_ == loop_count_) {
-      current_count_ = 0;
+    // Debug actor is blocked, must wait debug actor callback message to process continue.
+    if (debug_aid_ != nullptr) {
+      SendDebugReq(context);
       return;
     }
 
-    // Send output control.
-    for (auto &data_source_aid : data_source_aids_) {
-      Async(data_source_aid, &DataSourceActor::FetchData, context);
-    }
-    auto source_aid = const_cast<AID *>(&GetAID());
-    for (auto &kernel_aid : no_input_kernel_aids_) {
-      Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
-    }
+    SendOutput(context);
+  }
+}
+
+void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+  Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
+}
+
+void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  SendOutput(context);
+}
+
+void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
+  // Send recorder info.
+  if (recorder_aid_ != nullptr) {
+    Async(*recorder_aid_, &RecorderActor::ClearMemAddressInfo, context);
+  }
+
+  // Send loop count to output actor.
+  Async(output_aid_, &OutputActor::CollectLoopCount, current_count_, context);
+
+  if (current_count_ == loop_count_) {
+    current_count_ = 0;
+    return;
+  }
+
+  // Send output control.
+  for (auto &data_source_aid : data_source_aids_) {
+    Async(data_source_aid, &DataSourceActor::FetchData, context);
+  }
+  auto source_aid = const_cast<AID *>(&GetAID());
+  for (auto &kernel_aid : no_input_kernel_aids_) {
+    Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
   }
 }
 }  // namespace runtime

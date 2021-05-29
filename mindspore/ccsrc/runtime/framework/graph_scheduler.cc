@@ -16,6 +16,8 @@
 
 #include "runtime/framework/graph_scheduler.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
+#include "runtime/framework/actor/recorder_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
@@ -26,6 +28,9 @@
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "common/trans.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/recorder_manager.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -350,14 +355,26 @@ void GraphScheduler::Initialize() {
   thread_pool_ = InterThreadPool::CreateThreadPool(max_thread_num);
   MS_EXCEPTION_IF_NULL(thread_pool_);
 
-  // Create memory manager actor.
+  // Create and schedule memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
   MS_EXCEPTION_IF_NULL(memory_manager_actor);
   memory_manager_aid_ = memory_manager_actor->GetAID();
-  // Schedule memory manager actor, bind single thread to response to memory alloc and free quickly.
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   base_actor->set_thread_pool(thread_pool_);
+  // Bind single thread to response to memory alloc and free quickly.
   (void)actorMgr->Spawn(base_actor, false);
+
+// Create and schedule recorder actor.
+#ifdef ENABLE_DUMP_IR
+  if (mindspore::RecorderManager::Instance().RdrEnable()) {
+    auto recorder_actor = std::make_shared<RecorderActor>();
+    MS_EXCEPTION_IF_NULL(recorder_actor);
+    recorder_aid_ = &(recorder_actor->GetAID());
+    auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
+    base_recorder_actor->set_thread_pool(thread_pool_);
+    (void)actorMgr->Spawn(base_recorder_actor, true);
+  }
+#endif
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info, GraphExecutionStrategy strategy) {
@@ -702,8 +719,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         if (host_queue_ds_actor == nullptr) {
           auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
           MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
-          host_queue_ds_actor =
-            std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, host_queue);
+          host_queue_ds_actor = std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr,
+                                                                           nullptr, host_queue);
           InsertActor(host_queue_ds_actor.get());
           data_source_actors.emplace_back(host_queue_ds_actor);
         }
@@ -730,8 +747,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     if (iter != execution_order.end()) {
       auto actor_name = graph_compiler_info.name_ + "_DeviceDSActor" + "_" + std::to_string(graph->graph_id());
       MS_LOG(INFO) << "Create queue data source actor: " << actor_name;
-      auto device_queue_ds_actor =
-        std::make_shared<DeviceQueueDataSourceActor>(actor_name, 1, device_context, memory_manager_aid_);
+      auto device_queue_ds_actor = std::make_shared<DeviceQueueDataSourceActor>(
+        actor_name, 1, device_context, memory_manager_aid_, debug_aid_, recorder_aid_);
       MS_EXCEPTION_IF_NULL(device_queue_ds_actor);
       InsertActor(device_queue_ds_actor.get());
       data_source_actors.emplace_back(device_queue_ds_actor);
@@ -755,7 +772,8 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     if (host_queue_ds_actor == nullptr) {
       auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
       MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
-      host_queue_ds_actor = std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, host_queue);
+      host_queue_ds_actor =
+        std::make_shared<HostQueueDataSourceActor>(actor_name, 1, memory_manager_aid_, nullptr, nullptr, host_queue);
       InsertActor(host_queue_ds_actor.get());
       data_source_actors.emplace_back(host_queue_ds_actor);
     }
@@ -784,8 +802,8 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     auto execution_order = graph->execution_order();
     for (auto &kernel : execution_order) {
       if (IsKernelActor(kernel) && (!IsSkippedKernelActor(kernel))) {
-        auto kernel_actor =
-          std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_);
+        auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context,
+                                                          memory_manager_aid_, debug_aid_, recorder_aid_);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         kernel_actors.emplace_back(kernel_actor);
@@ -803,7 +821,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
   auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
-  auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count);
+  auto loop_count_actor = std::make_shared<LoopCountActor>(actor_name, loop_count, debug_aid_, recorder_aid_);
   MS_LOG(INFO) << "Create loop count actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
   InsertActor(loop_count_actor.get());

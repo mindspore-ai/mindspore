@@ -23,7 +23,7 @@
 #include <utility>
 #include <unordered_map>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/memory_aware_actor.h"
+#include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "backend/kernel_compiler/kernel.h"
@@ -35,20 +35,23 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
-using mindspore::kernel::AddressPtr;
+using mindspore::kernel::KernelLaunchInfo;
 using mindspore::tensor::TensorPtr;
 
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
 // The processing flow is RunOpData/RunOpControl -> CheckLaunchCondition -> SendMemoryAllocReq
 // -> OnMemoryAllocFinish -> LaunchKernel -> SendMemoryFreeReq -> SendOutput.
-class KernelActor : public MemoryAwareActor {
+class KernelActor : public DebugAwareActor {
  public:
-  KernelActor(std::string name, CNodePtr kernel, const DeviceContext *device_context, const AID memory_manager_aid)
-      : MemoryAwareActor(name),
+  KernelActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
+              const AID memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
+      : DebugAwareActor(name),
         kernel_(kernel),
         kernel_info_(nullptr),
         device_context_(device_context),
         memory_manager_aid_(memory_manager_aid),
+        debug_aid_(debug_aid),
+        recorder_aid_(recorder_aid),
         input_datas_num_(0),
         input_controls_num_(0),
         real_input_num_(0) {}
@@ -67,28 +70,34 @@ class KernelActor : public MemoryAwareActor {
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
-  // The real kernel launch processing after memory alloc finished.
+  // The callback after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
+
+  // The debug related operation interface.
+  void SendDebugReq(OpContext<DeviceTensor> *context) override;
+  // The callback after debug finished.
+  void OnDebugFinish(OpContext<DeviceTensor> *context) override;
 
  private:
   friend class GraphScheduler;
 
   // Check whether satisfy the condition for launch.
   bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
-  // Fetch the args of kernel launch.
-  void FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::vector<AddressPtr> *kernel_outputs,
-                       std::vector<AddressPtr> *kernel_workspaces) const;
+  // Fetch the device tensor for launch.
+  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
+  void FetchOutputDeviceTensor();
+  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
+  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
+
+  // The processing before kernel launch: update the info of kernel launch.
+  void PreLaunchKernel(OpContext<DeviceTensor> *context);
+  // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
+  void PostLaunchKernel(OpContext<DeviceTensor> *context);
+
   // Send output data and output controls when finish kernel launch.
   void SendOutput(OpContext<DeviceTensor> *context) const;
   // Erase input data and input controls when finish kernel launch.
   void EraseInput(OpContext<DeviceTensor> *context);
-
-  // Fetch the device tensor for launch.
-  void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
-  void FetchOutputDeviceTensor();
-
-  // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
-  void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
 
   // The info of kernel.
   CNodePtr kernel_;
@@ -99,6 +108,10 @@ class KernelActor : public MemoryAwareActor {
 
   // The id of memory manager actor. Send message to it for alloc and free memory during the kernel launch.
   const AID memory_manager_aid_;
+  // The id of debug actor. Send message to it for debug after the kernel launch.
+  const AID *debug_aid_;
+  // The id of recorder actor. Send message to it for recording kernel info after the kernel launch.
+  const AID *recorder_aid_;
 
   // The dependent input data number.
   size_t input_datas_num_;
@@ -120,6 +133,9 @@ class KernelActor : public MemoryAwareActor {
   std::vector<DeviceTensor *> memory_alloc_list_;
   // input + output + workspace
   std::vector<DeviceTensor *> memory_free_list_;
+
+  // The kernel launch info is fetched by the device tensors.
+  KernelLaunchInfo launch_info_;
 
   // The output result arrows of graph output.
   std::vector<DataArrowPtr> output_result_arrows_;

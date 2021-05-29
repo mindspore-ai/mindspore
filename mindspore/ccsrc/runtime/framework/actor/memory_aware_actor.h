@@ -29,9 +29,9 @@ class MemoryAwareActor : public OpActor<DeviceTensor> {
  public:
   explicit MemoryAwareActor(std::string name) : OpActor(name) {}
   virtual ~MemoryAwareActor() = default;
-  virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *context) = 0;
-  virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *context) = 0;
-  virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) = 0;
+  virtual void SendMemoryAllocReq(OpContext<DeviceTensor> *context) {}
+  virtual void SendMemoryFreeReq(OpContext<DeviceTensor> *context) {}
+  virtual void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {}
 };
 }  // namespace runtime
 }  // namespace mindspore

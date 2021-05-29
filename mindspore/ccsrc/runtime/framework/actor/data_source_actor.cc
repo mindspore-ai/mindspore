@@ -18,6 +18,8 @@
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/recorder_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "common/trans.h"
 #include "utils/log_adapter.h"
@@ -63,9 +65,6 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
 
-  // Send graph output result.
-  SendResult(context);
-
   // Send output data.
   const auto &output_device_tensors = buffers_.front();
   for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
@@ -78,6 +77,29 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
     }
     output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
     Async(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
+  }
+
+  // Send graph output result.
+  SendResult(context);
+
+  // Send recorder info.
+  if (recorder_aid_ != nullptr) {
+    SendRecorderInfo(context);
+  }
+}
+
+void DeviceQueueDataSourceActor::Init() {
+  // Init output data.
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+    output_data_.emplace_back(std::move(data));
+  }
+
+  // Init kernel launch info.
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  for (size_t i = 0; i < kernel_info_->output_address_list().size(); ++i) {
+    launch_info_.outputs_.emplace_back(std::make_shared<Address>());
   }
 }
 
@@ -112,18 +134,24 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Construct outputs of data kernel launching.
   auto &device_tensors = buffers_.back();
-  std::vector<AddressPtr> kernel_outputs;
-  for (auto &device_tensor : device_tensors) {
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    kernel_outputs.emplace_back(std::make_shared<Address>(device_tensor->GetMutablePtr(), device_tensor->GetSize()));
+  for (size_t i = 0; i < device_tensors.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(device_tensors[i]);
+    launch_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
+    launch_info_.outputs_[i]->size = device_tensors[i]->GetSize();
   }
 
   // Copy data from device queue by data kernel launching.
-  std::vector<AddressPtr> empty_address;
-  auto ret = device_context_->LaunchKernel(data_kernel_, empty_address, empty_address, kernel_outputs);
+  auto ret =
+    device_context_->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_);
   if (!ret) {
     std::string error_info = "Launch kernel failed: " + data_kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr) {
+    SendDebugReq(context);
+    return;
   }
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
@@ -134,11 +162,27 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   SendOutput(context);
 }
 
+void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+  Async(*debug_aid_, &DebugActor::Debug, data_kernel_, device_context_, context, &GetAID());
+}
+
+void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+  SendMemoryFreeReq(context);
+  SendOutput(context);
+}
+
 void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *context) {
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_, result_arrow->from_output_index_,
           result_arrow->to_input_index_, context);
+  }
+}
+
+void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *context) {
+  if (recorder_aid_ != nullptr) {
+    Async(*recorder_aid_, &RecorderActor::RecordMemAddressInfo, data_kernel_.get(), &launch_info_, device_context_,
+          context);
   }
 }
 
