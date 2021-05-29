@@ -279,7 +279,7 @@ Current batch_size can only be set to 1, modify the parameter `TEST_BATCH_SIZE` 
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 ```
 
 - `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. CNNCTC only support CPU mode .

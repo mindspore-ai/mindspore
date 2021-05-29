@@ -283,7 +283,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
 ```
 
 - `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。CNNCTC目前仅支持使用CPU算子进行推理。
