@@ -29,7 +29,7 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.train.train_thor import ConvertModelUtils
-from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay, THOR
+from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay, thor
 from mindspore import log as logger
 from mindspore.common import set_seed
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
@@ -106,20 +106,14 @@ def _get_optimizer(args_opt, network):
         damping = get_bert_thor_damping(cfg.Thor.damping_max, cfg.Thor.damping_min, cfg.Thor.damping_power,
                                         cfg.Thor.damping_total_steps)
         split_indices = None
-        if bert_net_cfg.num_hidden_layers == 12:
-            if bert_net_cfg.use_relative_positions:
-                split_indices = [29, 58, 87, 116, 145, 174, 203, 217]
-            else:
-                split_indices = [28, 55, 82, 109, 136, 163, 190, 205]
-        elif bert_net_cfg.num_hidden_layers == 24:
-            if bert_net_cfg.use_relative_positions:
-                split_indices = [30, 90, 150, 210, 270, 330, 390, 421]
-            else:
-                split_indices = [38, 93, 148, 203, 258, 313, 368, 397]
-        optimizer = THOR(network, lr, damping, cfg.Thor.momentum,
+        if bert_net_cfg.num_hidden_layers == 12 and not bert_net_cfg.use_relative_positions:
+            split_indices = [28, 55, 77]
+        elif bert_net_cfg.num_hidden_layers == 24 and not bert_net_cfg.use_relative_positions:
+            split_indices = [38, 93, 149]
+        optimizer = thor(network, lr, damping, cfg.Thor.momentum,
                          cfg.Thor.weight_decay, cfg.Thor.loss_scale, cfg.batch_size,
                          decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-                         split_indices=split_indices)
+                         split_indices=split_indices, enable_clip_grad=True, frequency=cfg.Thor.frequency)
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay, Thor]".
                          format(cfg.optimizer))
@@ -278,11 +272,10 @@ def run_pretrain():
                                                    accumulation_steps=accumulation_steps,
                                                    enable_global_norm=enable_global_norm)
     else:
-        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
+        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, enable_clip_grad=False)
 
     model = Model(net_with_grads)
-    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer,
-                                                      frequency=cfg.Thor.frequency)
+    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)
     model.train(new_repeat_count, ds, callbacks=callback,
                 dataset_sink_mode=(args_opt.enable_data_sink == "true"), sink_size=args_opt.data_sink_steps)
 

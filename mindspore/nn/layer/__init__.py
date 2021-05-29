@@ -32,7 +32,7 @@ from .quant import *
 from .math import *
 from .combined import *
 from .timedistributed import *
-from .thor_layer import *
+from .thor_layer import DenseThor, Conv2dThor, EmbeddingThor
 
 __all__ = []
 __all__.extend(activation.__all__)
