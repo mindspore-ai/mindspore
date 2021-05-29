@@ -53,7 +53,8 @@ tensor::TensorPtr CreateTensor() {
     half_data.emplace_back(float16(static_cast<float>(gap)));
   }
   auto elem_num = last_dim * kFloat16Len * 2;
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()), half_data.data(), elem_num);
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()),
+                           reinterpret_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data into Tensor.";
     return nullptr;
