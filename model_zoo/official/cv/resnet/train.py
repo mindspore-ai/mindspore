@@ -18,7 +18,7 @@ import argparse
 import ast
 from mindspore import context
 from mindspore import Tensor
-from mindspore.nn.optim import Momentum, THOR
+from mindspore.nn.optim import Momentum, thor
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.train_thor import ConvertModelUtils
@@ -215,12 +215,11 @@ if __name__ == '__main__':
         from src.lr_generator import get_thor_damping
         damping = get_thor_damping(0, config.damping_init, config.damping_decay, 70, step_size)
         split_indices = [26, 53]
-        opt = THOR(net, lr, Tensor(damping), config.momentum, config.weight_decay, config.loss_scale,
-                   config.batch_size, split_indices=split_indices)
+        opt = thor(net, lr, Tensor(damping), config.momentum, config.weight_decay, config.loss_scale,
+                   config.batch_size, split_indices=split_indices, frequency=config.frequency)
         model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
                                                           loss_scale_manager=loss_scale, metrics={'acc'},
-                                                          amp_level="O2", keep_batchnorm_fp32=False,
-                                                          frequency=config.frequency)
+                                                          amp_level="O2", keep_batchnorm_fp32=False)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)

@@ -30,7 +30,7 @@ from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.nn as nn
 import mindspore.dataset as ds
-from mindspore.nn.optim import THOR
+from mindspore.nn.optim import thor
 
 from tests.st.networks.models.resnet50.src.resnet import resnet50
 from tests.st.networks.models.resnet50.src.dataset import create_dataset
@@ -269,8 +269,8 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     damping = get_thor_damping(0, 0.02714, 0.50036, 70, 5004)
     # optimizer
     split_indices = [26, 53]
-    opt = THOR(net, Tensor(lr), Tensor(damping), thor_config.momentum, thor_config.weight_decay, thor_config.loss_scale,
-               thor_config.batch_size, split_indices=split_indices)
+    opt = thor(net, Tensor(lr), Tensor(damping), thor_config.momentum, thor_config.weight_decay, thor_config.loss_scale,
+               thor_config.batch_size, split_indices=split_indices, frequency=thor_config.frequency)
 
     # evaluation network
     dist_eval_network = ClassifyCorrectCell(net)

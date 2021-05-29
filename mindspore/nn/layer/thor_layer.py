@@ -26,9 +26,10 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 
 
-__all__ = ['Dense_Thor', 'Conv2d_Thor', 'Embedding_Thor']
+__all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor']
 
-class Dense_Thor(Cell):
+
+class DenseThor(Cell):
     r"""
     The dense connected layer.
 
@@ -76,7 +77,7 @@ class Dense_Thor(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  activation=None):
-        super(Dense_Thor, self).__init__()
+        super(DenseThor, self).__init__()
         self.thor = True
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
@@ -99,38 +100,43 @@ class Dense_Thor(Cell):
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
 
-        self.matrix_A = Parameter(Tensor(np.zeros([in_channels, in_channels]).astype(np.float32)),
-                                  name='matrix_A', requires_grad=False)
+        self.matrix_a = Parameter(Tensor(np.zeros([in_channels, in_channels]).astype(np.float32)),
+                                  name='matrix_a', requires_grad=False)
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
         self.mul = P.Mul()
         self.is_Ascend = True
         if context.get_context("device_target") == "Ascend":
-            if out_channels == 1001:
-                self.matrix_G = Parameter(Tensor(np.zeros([1024, 1024]).astype(np.float32)),
-                                          name='matrix_G', requires_grad=False)
-                self.pad = P.Pad(((0, 23), (0, 23)))
-                self.pad1 = P.Pad(((0, 7), (0, 7)))
-                self.slice = P.Slice()
-                self.add = P.TensorAdd()
-            else:
-                self.matrix_G = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
-                                          name="matrix_G", requires_grad=False)
-                self.abs = P.Abs()
-                self.reduce_max = P.ReduceMax(keep_dims=False)
-                self.neg = P.Neg()
-                self.reduce_sum = P.ReduceSum()
-            self.matmul = P.MatMul(transpose_b=True)
-            self.cube_matmul = P.CusMatMulCube(transpose_a=True)
-            self.cast = P.Cast()
-            self.is_nsp_layer = (out_channels == 2)
+            self._process_ascend_dense_thor(out_channels)
         else:
             self.is_Ascend = False
-            self.matrix_G = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
-                                      name="matrix_G", requires_grad=False)
+            self.matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
+                                      name="matrix_g", requires_grad=False)
             self.cube_matmul = P.MatMul(transpose_a=True)
         self.getG = P.InsertGradientOf(self.save_gradient)
+
+
+    def _process_ascend_dense_thor(self, out_channels):
+        """process ascend dense thor"""
+        if out_channels == 1001:
+            self.matrix_g = Parameter(Tensor(np.zeros([1024, 1024]).astype(np.float32)),
+                                      name='matrix_g', requires_grad=False)
+            self.pad = P.Pad(((0, 23), (0, 23)))
+            self.pad1 = P.Pad(((0, 7), (0, 7)))
+            self.slice = P.Slice()
+            self.add = P.TensorAdd()
+        else:
+            self.matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float32)),
+                                      name="matrix_g", requires_grad=False)
+            self.abs = P.Abs()
+            self.reduce_max = P.ReduceMax(keep_dims=False)
+            self.neg = P.Neg()
+            self.reduce_sum = P.ReduceSum()
+        self.matmul = P.MatMul(transpose_b=True)
+        self.cube_matmul = P.CusMatMulCube(transpose_a=True)
+        self.cast = P.Cast()
+        self.is_nsp_layer = (out_channels == 2)
 
 
     def save_gradient(self, dout):
@@ -143,17 +149,17 @@ class Dense_Thor(Cell):
             if not self.is_nsp_layer:
                 shape = self.shape(dout)
                 normalizer = self.cast(shape[0], mstype.float32)
-                matrix_G = self.cube_matmul(dout, dout)
-                matrix_G = self.mul(matrix_G, 1.0 / normalizer)
+                matrix_g = self.cube_matmul(dout, dout)
+                matrix_g = self.mul(matrix_g, 1.0 / normalizer)
                 if self.out_channels == 1001:
-                    matrix_G = P.Pad(((0, 23), (0, 23)))(matrix_G)
-                self.matrix_G = matrix_G
+                    matrix_g = P.Pad(((0, 23), (0, 23)))(matrix_g)
+                self.matrix_g = matrix_g
         else:
             dout_shape = self.shape(dout)
             normalizer = dout_shape[0]
-            matrix_G = self.cube_matmul(dout, dout)
-            matrix_G = self.mul(matrix_G, 1.0 / normalizer)
-            self.matrix_G = matrix_G
+            matrix_g = self.cube_matmul(dout, dout)
+            matrix_g = self.mul(matrix_g, 1.0 / normalizer)
+            self.matrix_g = matrix_g
         return out
 
     def construct(self, x):
@@ -162,14 +168,14 @@ class Dense_Thor(Cell):
                 inputs = self.cube_matmul(x, x)
                 shape = self.shape(x)
                 normalizer = self.cast(shape[0], mstype.float32)
-                matrix_A = self.mul(inputs, 1.0 / normalizer)
-                self.matrix_A = matrix_A
+                matrix_a = self.mul(inputs, 1.0 / normalizer)
+                self.matrix_a = matrix_a
             else:
                 inputs = self.cube_matmul(x, x)
                 inputs_shape = self.shape(inputs)
                 normalizer = inputs_shape[0]
-                matrix_A = self.mul(inputs, 1.0 / normalizer)
-                self.matrix_A = matrix_A
+                matrix_a = self.mul(inputs, 1.0 / normalizer)
+                self.matrix_a = matrix_a
             x = self.matmul(x, self.weight)
             x = self.getG(x)
         else:
@@ -184,9 +190,8 @@ class Dense_Thor(Cell):
         s = 'input_channels={}, output_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
             s += ', has_bias={}'.format(self.has_bias)
-        # if self.activation_flag:
-        #     s += ', activation={}'.format(self.activation)
         return s
+
 
 class _Conv(Cell):
     """
@@ -212,7 +217,6 @@ class _Conv(Cell):
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
-        # self.weight_init = weight_init
         self.bias_init = bias_init
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
@@ -227,19 +231,9 @@ class _Conv(Cell):
         self.dilation = dilation
         self.group = Validator.check_positive_int(group)
         self.has_bias = has_bias
-        if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
-                isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
-                kernel_size[0] < 1 or kernel_size[1] < 1:
-            raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
-                             + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
-        if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
-                isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
-            raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
-                             + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
-        if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
-                isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
-            raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
-                             + str(self.dilation) + ", should be a int or tuple and equal to or greater than 1.")
+        self._validate_kernel_size(kernel_size)
+        self._validate_stride(stride)
+        self._validate_dilation(dilation)
         if in_channels % group != 0:
             raise ValueError("Attr 'in_channels' of 'Conv2D' Op must be divisible by "
                              "attr 'group' of 'Conv2D' Op.")
@@ -259,12 +253,34 @@ class _Conv(Cell):
                 logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
             self.bias = None
 
+    def _validate_kernel_size(self, kernel_size):
+        """validate kernel size."""
+        if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
+                isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
+                kernel_size[0] < 1 or kernel_size[1] < 1:
+            raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
+                             + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
+
+    def _validate_stride(self, stride):
+        """validate stride."""
+        if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
+                isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
+            raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
+                             + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
+
+    def _validate_dilation(self, dilation):
+        """validate dilation."""
+        if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
+                isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
+            raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
+                             + str(self.dilation) + ", should be a int or tuple and equal to or greater than 1.")
+
     def construct(self, *inputs):
         """Must be overridden by all subclasses."""
         raise NotImplementedError
 
 
-class Conv2d_Thor(_Conv):
+class Conv2dThor(_Conv):
     r"""
     2D convolution layer.
 
@@ -371,7 +387,7 @@ class Conv2d_Thor(_Conv):
         stride = twice(stride)
         self._dilation = dilation
         dilation = twice(dilation)
-        super(Conv2d_Thor, self).__init__(
+        super(Conv2dThor, self).__init__(
             in_channels,
             out_channels,
             kernel_size,
@@ -396,55 +412,58 @@ class Conv2d_Thor(_Conv):
 
         self.thor = True
         self.hw = kernel_size[0] * kernel_size[1]
-        self.matrix_A_dim = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
-        self.matrix_G_dim = self.out_channels
+        self.matrix_a_dim = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
+        self.matrix_g_dim = self.out_channels
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.mul = P.Mul()
         self.cast = P.Cast()
-        self.A_normalizer = Parameter(initializer(0, [1], mstype.float32), name="A_normalizer", requires_grad=False)
-        self.G_normalizer = Parameter(initializer(0, [1], mstype.float32), name="G_normalizer", requires_grad=False)
+        self.a_normalizer = Parameter(initializer(0, [1], mstype.float32), name="a_normalizer", requires_grad=False)
+        self.g_normalizer = Parameter(initializer(0, [1], mstype.float32), name="g_normalizer", requires_grad=False)
         self.is_Ascend = True
         if context.get_context("device_target") == "Ascend":
-            ksizes = (1, kernel_size[0], kernel_size[1], 1)
-            strides = (1, stride[0], stride[1], 1)
-            self.img2col = P.CusImg2Col(ksizes=ksizes, strides=strides)
-            self.cube_matmul = P.CusMatMulCube(transpose_a=True)
-            self.transpose02314 = P.CusTranspose02314()
-            dampingA_dim = self.matrix_A_dim
-            self.diag_block_dim = 128
-            if (self.matrix_A_dim % self.diag_block_dim) != 0 and self.matrix_A_dim > self.diag_block_dim:
-                dampingA_dim = (self.matrix_A_dim // self.diag_block_dim + 1) * self.diag_block_dim
-            dampingG_dim = self.matrix_G_dim
-            if (self.matrix_G_dim % self.diag_block_dim) != 0 and self.matrix_G_dim > self.diag_block_dim:
-                dampingG_dim = (self.matrix_G_dim // self.diag_block_dim + 1) * self.diag_block_dim
-            self.matrix_A_cov = Parameter(Tensor(np.zeros([dampingA_dim, dampingA_dim]).astype(np.float32)),
-                                          name='matrix_A', requires_grad=False)
-            self.matrix_G_cov = Parameter(Tensor(np.zeros([dampingG_dim, dampingG_dim]).astype(np.float32)),
-                                          name='matrix_G', requires_grad=False)
-
-            self.channels_slice_flag = False
-            self.C0 = 16
-            if self.in_channels % self.C0 != 0:
-                self.channels_slice_flag = True
-            self.padA_flag = False
-            if (self.matrix_A_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_A_dim \
-                    and self.matrix_A_dim > self.diag_block_dim:
-                self.padA_flag = True
-                pad_dim = self.diag_block_dim - self.matrix_A_dim % self.diag_block_dim
-                self.padA = P.Pad(((0, pad_dim), (0, pad_dim)))
-            self.slice = P.Slice()
+            self._process_ascend_conv2d_thor(kernel_size, stride)
         else:
             self.is_Ascend = False
             self.img2col = P.Im2Col(kernel_size=kernel_size, stride=stride, pad_mode="same")
             self.matmul = P.MatMul(transpose_b=True)
             self.reduce_mean = P.ReduceMean(keep_dims=False)
-            self.matrix_A_cov = Parameter(Tensor(np.zeros([self.matrix_A_dim, self.matrix_A_dim]).astype(np.float32)),
-                                          name='matrix_A', requires_grad=False)
-            self.matrix_G_cov = Parameter(Tensor(np.zeros([self.matrix_G_dim, self.matrix_G_dim]).astype(np.float32)),
-                                          name='matrix_G', requires_grad=False)
+            self.matrix_a_cov = Parameter(Tensor(np.zeros([self.matrix_a_dim, self.matrix_a_dim]).astype(np.float32)),
+                                          name='matrix_a', requires_grad=False)
+            self.matrix_g_cov = Parameter(Tensor(np.zeros([self.matrix_g_dim, self.matrix_g_dim]).astype(np.float32)),
+                                          name='matrix_g', requires_grad=False)
         self.getG = P.InsertGradientOf(self.save_gradient)
 
+    def _process_ascend_conv2d_thor(self, kernel_size, stride):
+        """process ascend conv2d thor"""
+        ksizes = (1, kernel_size[0], kernel_size[1], 1)
+        strides = (1, stride[0], stride[1], 1)
+        self.img2col = P.CusImg2Col(ksizes=ksizes, strides=strides)
+        self.cube_matmul = P.CusMatMulCube(transpose_a=True)
+        self.transpose02314 = P.CusTranspose02314()
+        dampinga_dim = self.matrix_a_dim
+        self.diag_block_dim = 128
+        if (self.matrix_a_dim % self.diag_block_dim) != 0 and self.matrix_a_dim > self.diag_block_dim:
+            dampinga_dim = (self.matrix_a_dim // self.diag_block_dim + 1) * self.diag_block_dim
+        dampingg_dim = self.matrix_g_dim
+        if (self.matrix_g_dim % self.diag_block_dim) != 0 and self.matrix_g_dim > self.diag_block_dim:
+            dampingg_dim = (self.matrix_g_dim // self.diag_block_dim + 1) * self.diag_block_dim
+        self.matrix_a_cov = Parameter(Tensor(np.zeros([dampinga_dim, dampinga_dim]).astype(np.float32)),
+                                      name='matrix_a', requires_grad=False)
+        self.matrix_g_cov = Parameter(Tensor(np.zeros([dampingg_dim, dampingg_dim]).astype(np.float32)),
+                                      name='matrix_g', requires_grad=False)
+
+        self.channels_slice_flag = False
+        self.C0 = 16
+        if self.in_channels % self.C0 != 0:
+            self.channels_slice_flag = True
+        self.pada_flag = False
+        if (self.matrix_a_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_a_dim \
+                and self.matrix_a_dim > self.diag_block_dim:
+            self.pada_flag = True
+            pad_dim = self.diag_block_dim - self.matrix_a_dim % self.diag_block_dim
+            self.pada = P.Pad(((0, pad_dim), (0, pad_dim)))
+        self.slice = P.Slice()
 
     def _init_depthwise_conv2d(self, weight_init):
         """Initialize depthwise conv2d op"""
@@ -474,11 +493,11 @@ class Conv2d_Thor(_Conv):
             dout = self.transpose02314(dout)
             dout_shape = self.shape(dout)
             normalizer = dout_shape[0]
-            matrix_G = self.cube_matmul(dout, dout)
+            matrix_g = self.cube_matmul(dout, dout)
             normalizer = self.cast(normalizer, mstype.float32)
-            matrix_G = self.mul(matrix_G, 1.0 / normalizer)
-            self.G_normalizer = normalizer
-            self.matrix_G_cov = matrix_G
+            matrix_g = self.mul(matrix_g, 1.0 / normalizer)
+            self.g_normalizer = normalizer
+            self.matrix_g_cov = matrix_g
         else:
             dout = self.reduce_mean(dout, 0)
             dout_shape = self.shape(dout)
@@ -486,43 +505,42 @@ class Conv2d_Thor(_Conv):
             dout_shape = self.shape(dout)
             normalizer = dout_shape[1]
             dout = self.cast(dout, mstype.float32)
-            matrix_G = self.matmul(dout, dout)
-            matrix_G = self.mul(matrix_G, 1.0 / normalizer)
-            self.G_normalizer = normalizer
-            self.matrix_G_cov = matrix_G
+            matrix_g = self.matmul(dout, dout)
+            matrix_g = self.mul(matrix_g, 1.0 / normalizer)
+            self.g_normalizer = normalizer
+            self.matrix_g_cov = matrix_g
         return out
-
 
 
     def construct(self, x):
         if self.thor:
-            matrix_A = self.img2col(x)
-            matrix_A_shape = self.shape(matrix_A)
+            matrix_a = self.img2col(x)
+            matrix_a_shape = self.shape(matrix_a)
             if self.is_Ascend:
-                normalizer = matrix_A_shape[0]
-                matrix_A = self.cube_matmul(matrix_A, matrix_A)
+                normalizer = matrix_a_shape[0]
+                matrix_a = self.cube_matmul(matrix_a, matrix_a)
                 if self.channels_slice_flag:
-                    matrix_A = self.reshape(matrix_A, (self.hw, self.C0, self.hw, self.C0))
-                    matrix_A = self.slice(matrix_A, (0, 0, 0, 0),
+                    matrix_a = self.reshape(matrix_a, (self.hw, self.C0, self.hw, self.C0))
+                    matrix_a = self.slice(matrix_a, (0, 0, 0, 0),
                                           (self.hw, self.in_channels, self.hw, self.in_channels))
-                    matrix_A = self.reshape(matrix_A, (self.matrix_A_dim, self.matrix_A_dim))
+                    matrix_a = self.reshape(matrix_a, (self.matrix_a_dim, self.matrix_a_dim))
                 normalizer = self.cast(normalizer, mstype.float32)
-                matrix_A = self.mul(matrix_A, 1.0 / normalizer)
-                if self.padA_flag:
-                    matrix_A = self.padA(matrix_A)
-                self.A_normalizer = normalizer
-                self.matrix_A_cov = matrix_A
+                matrix_a = self.mul(matrix_a, 1.0 / normalizer)
+                if self.pada_flag:
+                    matrix_a = self.pada(matrix_a)
+                self.a_normalizer = normalizer
+                self.matrix_a_cov = matrix_a
             else:
-                matrix_A = self.reshape(matrix_A, (matrix_A_shape[0] * matrix_A_shape[1] * matrix_A_shape[2],
-                                                   matrix_A_shape[3], -1))
-                matrix_A = self.reduce_mean(matrix_A, 1)
-                matrix_A_shape = self.shape(matrix_A)
-                normalizer = matrix_A_shape[1]
-                matrix_A = self.cast(matrix_A, mstype.float32)
-                matrix_A = self.matmul(matrix_A, matrix_A)
-                matrix_A = self.mul(matrix_A, 1.0 / normalizer)
-                self.A_normalizer = normalizer
-                self.matrix_A_cov = matrix_A
+                matrix_a = self.reshape(matrix_a, (matrix_a_shape[0] * matrix_a_shape[1] * matrix_a_shape[2],
+                                                   matrix_a_shape[3], -1))
+                matrix_a = self.reduce_mean(matrix_a, 1)
+                matrix_a_shape = self.shape(matrix_a)
+                normalizer = matrix_a_shape[1]
+                matrix_a = self.cast(matrix_a, mstype.float32)
+                matrix_a = self.matmul(matrix_a, matrix_a)
+                matrix_a = self.mul(matrix_a, 1.0 / normalizer)
+                self.a_normalizer = normalizer
+                self.matrix_a_cov = matrix_a
             output = self.conv2d(x, self.weight)
             output = self.getG(output)
         else:
@@ -549,7 +567,8 @@ class Conv2d_Thor(_Conv):
                 self.bias_init)
         return s
 
-class Embedding_Thor(Cell):
+
+class EmbeddingThor(Cell):
     r"""
     A simple lookup table that stores embeddings of a fixed dictionary and size.
 
@@ -590,7 +609,7 @@ class Embedding_Thor(Cell):
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
                  dtype=mstype.float32, padding_idx=None):
-        super(Embedding_Thor, self).__init__()
+        super(EmbeddingThor, self).__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = Validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
         Validator.check_value_type('use_one_hot', use_one_hot, [bool], self.cls_name)
@@ -616,10 +635,10 @@ class Embedding_Thor(Cell):
         self.reshape = P.Reshape()
         self.get_shp = P.Shape()
         self.thor = True
-        self.matrix_A = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float32)),
-                                  name='matrix_A', requires_grad=False)
-        self.matrix_G = Parameter(Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float32)),
-                                  name="matrix_G", requires_grad=False)
+        self.matrix_a = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float32)),
+                                  name='matrix_a', requires_grad=False)
+        self.matrix_g = Parameter(Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float32)),
+                                  name="matrix_g", requires_grad=False)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.getG = P.InsertGradientOf(self.save_gradient)
         self.cast = P.Cast()
@@ -638,9 +657,9 @@ class Embedding_Thor(Cell):
         out = dout
         shape = self.get_shp(dout)
         normalizer = self.cast(shape[0], mstype.float32)
-        matrix_G = self.cube_matmul(dout, dout)
-        matrix_G = self.mul(matrix_G, 1.0 / normalizer)
-        self.matrix_G = matrix_G
+        matrix_g = self.cube_matmul(dout, dout)
+        matrix_g = self.mul(matrix_g, 1.0 / normalizer)
+        self.matrix_g = matrix_g
         return out
 
     def construct(self, ids):
@@ -654,8 +673,8 @@ class Embedding_Thor(Cell):
         else:
             if self.thor:
                 one_hot_ids = self.one_hot(flat_ids, self.vocab_size, self.on_value, self.off_value)
-                matrix_A = self.reduce_sum(one_hot_ids, 0)
-                self.matrix_A = matrix_A
+                matrix_a = self.reduce_sum(one_hot_ids, 0)
+                self.matrix_a = matrix_a
                 output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
                 output_for_reshape = self.getG(output_for_reshape)
             else:
