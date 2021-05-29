@@ -556,6 +556,8 @@ def set_context(**kwargs):
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE(1).
+        precompile_only (bool): Whether to only precompile the network. If set, the network will only be compiled and
+             not executed. Default: False.
         device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should be no more than 4096. Default: 0.
@@ -571,6 +573,10 @@ def set_context(**kwargs):
             compiled into a fused kernel automatically. Default: False.
         graph_kernel_flags (str): Set graph_kernel flags.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
+             Each node has a scope. A scope of a subnode is the name of its parent node. If reserve_class_name_in_scope
+             is set, the class name will be saved after keyword 'net-' in the scope. For example:
+             Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
+             Default/net/net (reserve_class_name_in_scope=False)
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
         save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
@@ -619,14 +625,16 @@ def set_context(**kwargs):
 
             The profiling_options is like '{"output":'/home/data/output','training_trace':'on'}'
 
-        check_bprop (bool): Whether to check bprop. Default: False.
+        check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
+             of back propagation node outputs is the same as input parameters. Default: False.
         max_device_memory (str): Sets the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
             a file by default, and turns off printing to the screen. If the file already exists, add a timestamp
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
-        max_call_depth (int): Specify the maximum depth of function call. Default: 1000.
+            For details of sparsity and sparse tensor, please check `<https://www.mindspore.cn/doc/programming_guide/zh-CN/master/tensor.html>`_.
+        max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
         env_config_path (str): Config path for DFX.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance,
             default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
@@ -635,7 +643,8 @@ def set_context(**kwargs):
             RL,GA: rl_tune/ga_tune(Automatic selection).
             - rl_tune: Reinforecement Learning tune.
             - ga_tune: Genetic Algorithm tune.
-        grad_for_scalar (bool): Whether to get gradient for scalar. Default: False.
+        grad_for_scalar (bool): Whether to get gradient for scalar. If set, the gradient of scalar input parameter
+            can be calculated. Now, only part of the scalar operators support this calculation. Default: False.
         save_compile_cache (bool): Experimental. Whether to cache the graph compiled by frontend. Default: False.
         load_compile_cache (bool): Experimental. Whether to use the cache of the graph compiled by frontend.
             When it is true, the graph compilation will skip the frontend compilation process. It means that
