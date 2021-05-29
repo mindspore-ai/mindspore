@@ -248,10 +248,10 @@ void Debugger::CheckDebuggerEnabledParam() const {
 }
 
 bool Debugger::CheckDebuggerPartialMemoryEnabled() const {
-  const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
-  if (env_partial_mem_str != nullptr) {
+  std::string env_partial_mem_str = common::GetEnv("MS_DEBUGGER_PARTIAL_MEM");
+  if (!env_partial_mem_str.empty()) {
     MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
-    if (std::strcmp(env_partial_mem_str, "1") == 0) {
+    if (env_partial_mem_str == "1") {
       return true;
     }
   }
@@ -1008,7 +1008,7 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 
 int32_t Debugger::step_num() const { return num_step_; }
 
-uint64_t BytestoInt64(const std::vector<char> &buffer) {
+uint64_t BytestoUInt64(const std::vector<char> &buffer) {
   uint64_t ret;
 
   ret = ((uint64_t)buffer[7] << 56) | ((uint64_t)buffer[6] << 48) | ((uint64_t)buffer[5] << 40) |
@@ -1048,15 +1048,17 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
             continue;
           }
           const uint32_t offset = 313;
-          infile.seekg(offset, std::ios::beg);
+          (void)infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
           const size_t buf_size = 256;
           buffer.resize(buf_size);
           infile.read(buffer.data(), buf_size);
           const uint8_t stream_id_offset = 8;
           const uint8_t task_id_offset = 16;
-          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
-          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
+          // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
+          // byte values currently.
+          uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
+          uint64_t task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
           MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
           auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
           if (op != debugger_->stream_task_to_opname_.end()) {
