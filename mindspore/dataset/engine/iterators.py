@@ -67,7 +67,7 @@ class Iterator:
         self._col_names = None
 
         # create a copy of tree and work on it.
-        self.ori_dataset = dataset
+        self._ori_dataset = dataset
 
         self.ir_tree, self.dataset = dataset.create_ir_tree()
 
@@ -125,8 +125,8 @@ class Iterator:
         if not data:
             if self._index == 0:
                 logger.warning("No records available.")
-            if self.ori_dataset.dataset_size is None:
-                self.ori_dataset.dataset_size = self._index
+            if self._ori_dataset.dataset_size is None:
+                self._ori_dataset.dataset_size = self._index
             raise StopIteration
         self._index += 1
         return data
