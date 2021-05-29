@@ -665,7 +665,7 @@ class Tensor {
 
   /// A function that prints info about the tensor
   /// \param[out] out output stream
-  void Print_data(std::ostream &out) const;
+  void PrintData(std::ostream &out) const;
 
   /// A function that print the value as specified by its index
   /// \param[in] index vector representing the index
