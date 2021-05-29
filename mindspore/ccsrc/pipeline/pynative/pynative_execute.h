@@ -189,8 +189,7 @@ class DynamicAnalysis {
                         const std::vector<std::string> &compare_prim = {});
   bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   bool ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
-  bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
-                              const std::vector<std::string> &compare_prim = {});
+  bool ParseAugAssignExprNode(const py::object &node, const std::vector<std::string> &compare_prim = {});
   bool ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   std::string ParseNodeName(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
                             parse::AstMainType type);
@@ -219,11 +218,10 @@ class GradExecutor {
       GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
                    std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5));
     };
-  std::function<void(py::object *, const py::object &, const py::tuple &, const py::object &)> RunGraph =
-    [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
-      RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
-                   std::forward<decltype(PH4)>(PH4));
-    };
+  std::function<void(py::object *, const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2,
+                                                                                             auto &&PH3) {
+    RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
+  };
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
@@ -239,7 +237,7 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void SaveAllResult(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &out_real);
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args, const py::object &phase);
+  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
   bool need_construct_graph() const { return !graph_stack_.empty() && grad_flag_; }
   void set_dynamic_analysis(DynamicAnalysisPtr dynamic_analysis) { dynamic_analysis_ = std::move(dynamic_analysis); }
   std::stack<FuncGraphPtr> &graph_stack() { return graph_stack_; }
@@ -269,11 +267,11 @@ class GradExecutor {
   void MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
                        const py::object &out, bool has_sens);
   void RecoverGraphParams(const FuncGraphPtr &newfg, const std::string &cell_id, std::vector<AnfNodePtr> *inputs);
-  bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
+  bool MakeBpropNestedCnode(const py::object &cell, const py::object &out);
 
   // Dynamic
   bool CheckDynamicCell(const std::string &cell_id);
-  bool CheckRealDynamicCell(const std::string &cell_id);
+  bool CheckRealDynamicCell();
   void ClearDynamicTopRes(const std::string &cell_id);
 
   void PushCurrentGraphToStack();
@@ -455,8 +453,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   void EnterConstruct(const py::object &cell);
   void LeaveConstruct(const py::object &cell);
-  GradExecutorPtr grad_executor();
-  ForwardExecutorPtr forward_executor();
+  GradExecutorPtr grad_executor() const;
+  ForwardExecutorPtr forward_executor() const;
 
   void set_grad_flag(bool flag);
   void NewGraph(const py::object &cell, const py::args &args);
@@ -464,7 +462,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const py::object &cell, const py::args &args);
-  py::object Run(const py::object &cell, const py::tuple &args, const py::object &phase);
+  py::object Run(const py::object &cell, const py::tuple &args);
 
   // Used by graph clean
   bool GetIsDynamicCell();

@@ -85,7 +85,7 @@ constexpr auto implcast = "implcast";
 constexpr int zero = 0;
 
 template <typename T, typename... Args>
-void PynativeExecutorTry(std::function<void(T *ret, const Args &...)> method, T *ret, const Args &... args) {
+void PynativeExecutorTry(const std::function<void(T *ret, const Args &...)> &method, T *ret, const Args &... args) {
   const auto inst = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
@@ -263,7 +263,7 @@ bool GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType
   return has_sig_dtype;
 }
 
-void PynativeInfer(const PrimitivePyPtr &prim, const py::list &py_args, OpExecInfo *const op_exec_info,
+void PynativeInfer(const PrimitivePyPtr &prim, OpExecInfo *const op_exec_info,
                    const abstract::AbstractBasePtrList &args_spec_list) {
   MS_LOG(DEBUG) << "Prim " << prim->name() << " input infer " << mindspore::ToString(args_spec_list);
   prim->BeginRecordAddAttr();
@@ -285,7 +285,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::v
   for (size_t index = 0; index < input_tensors.size(); ++index) {
     MS_EXCEPTION_IF_NULL(input_tensors[index]);
     auto tensor_shape = input_tensors[index]->shape();
-    (void)std::for_each(tensor_shape.begin(), tensor_shape.end(), [&](const auto &dim) {
+    (void)std::for_each(tensor_shape.begin(), tensor_shape.end(), [&graph_info](const auto &dim) {
       (void)graph_info.append(std::to_string(dim));
       graph_info += "_";
     });
@@ -318,7 +318,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::v
   const auto &op_prim = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(op_prim);
   const auto &attr_map = op_prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(), [&](const auto &element) {
+  (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
     graph_info += (element.second->ToString());
     graph_info += "_";
   });
@@ -840,7 +840,7 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   if (op_exec_info->abstract == nullptr || force_infer_prim.find(op_name) != force_infer_prim.end()) {
     // use python infer method
     if (ignore_infer_prim.find(op_name) == ignore_infer_prim.end()) {
-      PynativeInfer(prim, op_exec_info->op_inputs, op_exec_info.get(), args_spec_list);
+      PynativeInfer(prim, op_exec_info.get(), args_spec_list);
     }
   }
   // get output dynamic shape info
@@ -1123,7 +1123,7 @@ void ForwardExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exe
   if (cell_op_index_with_tensor_id()[grad()->top_cell_id()].find(op_index) ==
       cell_op_index_with_tensor_id()[grad()->top_cell_id()].end()) {
     // first step
-    std::for_each(output_tensors.begin(), output_tensors.end(), [&](const tensor::TensorPtr &tensor) {
+    std::for_each(output_tensors.begin(), output_tensors.end(), [this, &op_index](const tensor::TensorPtr &tensor) {
       cell_op_index_with_tensor_id()[grad()->top_cell_id()][op_index].emplace_back(tensor->id());
     });
     return;
@@ -1137,28 +1137,29 @@ void ForwardExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exe
         cell_tensor_id_with_tensor()[grad()->top_cell_id()].end()) {
       auto &new_tensor = output_tensors[i];
       auto &tensors_in_value_node = cell_tensor_id_with_tensor()[grad()->top_cell_id()][tensor_id];
-      std::for_each(tensors_in_value_node.begin(), tensors_in_value_node.end(), [&](tensor::TensorPtr &tensor) {
-        MS_LOG(DEBUG) << "Debug address: Replace forward old tensor obj " << tensor.get() << ", tensor id "
-                      << tensor->id() << ", device address " << tensor->device_address().get()
-                      << " with New tensor obj " << new_tensor.get() << ", tensor id " << new_tensor->id()
-                      << ", device address " << new_tensor->device_address().get();
-        tensor->set_shape(new_tensor->shape());
-        tensor->set_data_type(new_tensor->data_type());
-        if (target != kCPUDevice) {
-          tensor->set_device_address(new_tensor->device_address());
-        } else {
-          auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-          auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
-          auto old_ptr = old_device_address->GetMutablePtr();
-          auto new_ptr = new_device_address->GetPtr();
-          MS_EXCEPTION_IF_NULL(old_ptr);
-          MS_EXCEPTION_IF_NULL(new_ptr);
-          auto ret = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
-          if (ret != EOK) {
-            MS_LOG(EXCEPTION) << "Memory copy failed. ret: " << ret;
+      std::for_each(
+        tensors_in_value_node.begin(), tensors_in_value_node.end(), [&target, &new_tensor](tensor::TensorPtr &tensor) {
+          MS_LOG(DEBUG) << "Debug address: Replace forward old tensor obj " << tensor.get() << ", tensor id "
+                        << tensor->id() << ", device address " << tensor->device_address().get()
+                        << " with New tensor obj " << new_tensor.get() << ", tensor id " << new_tensor->id()
+                        << ", device address " << new_tensor->device_address().get();
+          tensor->set_shape(new_tensor->shape());
+          tensor->set_data_type(new_tensor->data_type());
+          if (target != kCPUDevice) {
+            tensor->set_device_address(new_tensor->device_address());
+          } else {
+            auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+            auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
+            auto old_ptr = old_device_address->GetMutablePtr();
+            auto new_ptr = new_device_address->GetPtr();
+            MS_EXCEPTION_IF_NULL(old_ptr);
+            MS_EXCEPTION_IF_NULL(new_ptr);
+            auto ret = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
+            if (ret != EOK) {
+              MS_LOG(EXCEPTION) << "Memory copy failed. ret: " << ret;
+            }
           }
-        }
-      });
+        });
     }
   }
 }
@@ -1272,7 +1273,7 @@ AnfNodePtr GradExecutor::GetObjNode(const py::object &obj, const std::string &ob
       node->set_forward(out_obj, "");
     }
     if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
-      auto prim_abs = dyn_cast<abstract::AbstractTuple>(abs)->elements()[idx];
+      auto prim_abs = dyn_cast<abstract::AbstractTuple>(abs)->elements()[static_cast<size_t>(idx)];
       MS_LOG(DEBUG) << "Set tuple getitem abs " << prim_abs->ToString();
       node->set_abstract(prim_abs);
     }
@@ -1304,7 +1305,7 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const py::object
     auto size = static_cast<int64_t>(value.size());
     if (size > 1) {
       for (int64_t i = 0; i < size; ++i) {
-        auto value_id = GetId(value[i]);
+        auto value_id = GetId(value[static_cast<size_t>(i)]);
         SetNodeMapInGraphInfoMap(curr_g_, value_id, cnode, i);
       }
     }
@@ -1609,7 +1610,6 @@ void GradExecutor::SetTopCellTensorId(const std::string &cell_id) {
   if (top_cell_id.find("NoShape") == std::string::npos) {
     return;
   }
-  std::string key = top_cell_id.substr(0, PTR_LEN);
   auto fn = [](const std::string &str, std::vector<std::string> &value) {
     size_t pos = 0;
     size_t pre_pos = 0;
@@ -1665,11 +1665,11 @@ bool GradExecutor::TopCellIsDynamic() {
   if (top_cell_ == nullptr) {
     return false;
   }
-  return CheckRealDynamicCell(top_cell_id());
+  return CheckRealDynamicCell();
 }
 
 TopCellInfoPtr GradExecutor::GetTopCell(const string &cell_id, bool find_nearest) {
-  auto find_top_cell = [&](const string &cell_id) -> TopCellInfoPtr {
+  auto find_top_cell = [this](const string &cell_id) -> TopCellInfoPtr {
     auto iter = std::find_if(
       top_cell_list_.rbegin(), top_cell_list_.rend(),
       [&cell_id](const TopCellInfoPtr &top_cell) { return cell_id == top_cell->cell_id() && top_cell->is_topest(); });
@@ -1757,7 +1757,7 @@ bool GradExecutor::CheckDynamicCell(const std::string &cell_id) {
     [&cell_id](const CellInfoPtr &value) { return value->cell_id() == cell_id && value->is_dynamic(); });
 }
 
-bool GradExecutor::CheckRealDynamicCell(const std::string &cell_id) {
+bool GradExecutor::CheckRealDynamicCell() {
   if (top_cell_ == nullptr) {
     return false;
   }
@@ -1799,7 +1799,7 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
         (*it)->clear();
         it = top_cell_list_.erase(it);
       } else {
-        it++;
+        ++it;
       }
     }
   } else {
@@ -1951,8 +1951,7 @@ bool DynamicAnalysis::ParseAssignExprNode(const std::shared_ptr<parse::ParseAst>
   return false;
 }
 
-bool DynamicAnalysis::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
-                                             const std::vector<std::string> &compare_prim) {
+bool DynamicAnalysis::ParseAugAssignExprNode(const py::object &node, const std::vector<std::string> &compare_prim) {
   MS_LOG(DEBUG) << "Parse augassign expr";
   bool ret = false;
   if (compare_prim.empty()) {
@@ -2017,7 +2016,7 @@ bool DynamicAnalysis::ParseBodyContext(const std::shared_ptr<parse::ParseAst> &a
     if (node_name == parse::NAMED_PRIMITIVE_ASSIGN) {
       ret = ParseAssignExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_AUGASSIGN) {
-      ret = ParseAugAssignExprNode(ast, node, compare_prim);
+      ret = ParseAugAssignExprNode(node, compare_prim);
     } else if (node_name == parse::NAMED_PRIMITIVE_FOR) {
       ret = ParseForExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_IF || node_name == parse::NAMED_PRIMITIVE_WHILE) {
@@ -2069,7 +2068,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   // check whether cell needed to construct grad graph
   if (graph_stack_.empty() && !top_cell_list_.empty() && CheckCellGraph(cell_id) && !CheckDynamicCell(cell_id)) {
     // Clear previous step resource
-    auto init_fn = [&](bool flag) {
+    auto init_fn = [this, &cell_id](bool flag) {
       CleanPreMemoryInValueNode();
       op_index_map_.clear();
       in_grad_process_ = true;
@@ -2215,7 +2214,7 @@ void GradExecutor::SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::o
   auto tuple = args.cast<py::tuple>();
   auto tuple_size = static_cast<int64_t>(tuple.size());
   for (int64_t i = 0; i < tuple_size; ++i) {
-    auto id = GetId(tuple[i]);
+    auto id = GetId(tuple[static_cast<size_t>(i)]);
     if (is_param && node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
@@ -2236,7 +2235,7 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
   for (int64_t i = 0; i < tuple_size; ++i) {
     std::vector<int64_t> tmp = index_sequence;
     tmp.emplace_back(i);
-    auto id = GetId(tuple[i]);
+    auto id = GetId(tuple[static_cast<size_t>(i)]);
     if (is_param && node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
@@ -2267,7 +2266,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
       std::vector<AnfNodePtr> inputs;
       inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
       for (int64_t i = 0; i < tuple_size; i++) {
-        inputs.emplace_back(GetInput(tuple[i], false));
+        inputs.emplace_back(GetInput(tuple[static_cast<size_t>(i)], false));
       }
       auto cnode = curr_g_->NewCNode(inputs);
       SetTupleArgsToGraphInfoMap(curr_g_, out, cnode);
@@ -2424,7 +2423,7 @@ void GradExecutor::UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g
     return;
   }
   FuncGraphPtr tmp = g;
-  if (!IsFirstGradStep() && CheckDynamicCell(cell_id) && !CheckRealDynamicCell(cell_id)) {
+  if (!IsFirstGradStep() && CheckDynamicCell(cell_id) && !CheckRealDynamicCell()) {
     MS_LOG(DEBUG) << "No need cloned";
     need_cloned = false;
   }
@@ -2604,7 +2603,7 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
   SetTopCellTensorId(cell_id);
   MS_LOG(DEBUG) << "GradNet start " << size << " " << cell_id;
   const auto &params_changed = CheckGradParamsChanged(cell_id, weights, sens);
-  if (!params_changed && IsGradBefore(cell_id) && !CheckRealDynamicCell(cell_id)) {
+  if (!params_changed && IsGradBefore(cell_id) && !CheckRealDynamicCell()) {
     UpdateTopCellInfo(cell_id, false);
     op_index_map_.clear();
     MS_LOG(INFO) << "Gradgraph already compiled";
@@ -2657,9 +2656,9 @@ void GradExecutor::ClearDynamicTopRes(const std::string &cell_id) {
   if (!CheckDynamicCell(cell_id)) {
     return;
   }
-  size_t count = std::count_if(top_cell_list_.begin(), top_cell_list_.end(),
-                               [&cell_id](const TopCellInfoPtr &value) { return value->cell_id() == cell_id; });
-  if (count < ARG_SIZE) {
+  auto count = std::count_if(top_cell_list_.begin(), top_cell_list_.end(),
+                             [&cell_id](const TopCellInfoPtr &value) { return value->cell_id() == cell_id; });
+  if (static_cast<size_t>(count) < ARG_SIZE) {
     return;
   }
   // Keep only one dynamic top cell
@@ -3031,8 +3030,7 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
   return BaseRefToPyData(forward_run);
 }
 
-void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args,
-                                const py::object &phase) {
+void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args) {
   MS_EXCEPTION_IF_NULL(ret);
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "Run start cell id " << cell_id;
@@ -3069,14 +3067,14 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
     top_cell_list_.begin(), top_cell_list_.end(),
     [&cell_id](const TopCellInfoPtr &value) { return value->cell_id() == cell_id && value->vm_compiled(); });
   if (do_vm_compiled) {
-    if (MakeBpropNestedCnode(cell, *ret, cell_id)) {
+    if (MakeBpropNestedCnode(cell, *ret)) {
       return;
     }
     MakeNestedCnode(cell_id, args, resource, *ret, has_sens);
   }
 }
 
-bool GradExecutor::MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id) {
+bool GradExecutor::MakeBpropNestedCnode(const py::object &cell, const py::object &out) {
   if (graph_stack_.empty() || !py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
     MS_LOG(DEBUG) << "No nested bprop grad find";
     return false;
@@ -3195,11 +3193,11 @@ void GradExecutor::ClearRes() {
   std::stack<std::string>().swap(cell_op_info_stack_);
 }
 
-GradExecutorPtr PynativeExecutor::grad_executor() {
+GradExecutorPtr PynativeExecutor::grad_executor() const {
   MS_EXCEPTION_IF_NULL(grad_executor_);
   return grad_executor_;
 }
-ForwardExecutorPtr PynativeExecutor::forward_executor() {
+ForwardExecutorPtr PynativeExecutor::forward_executor() const {
   MS_EXCEPTION_IF_NULL(forward_executor_);
   return forward_executor_;
 }
@@ -3217,9 +3215,9 @@ py::object PynativeExecutor::CheckGraph(const py::object &cell, const py::args &
   return grad_executor()->CheckGraph(cell, args);
 }
 
-py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args, const py::object &phase) {
+py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args) {
   py::object ret;
-  PynativeExecutorTry(grad_executor()->RunGraph, &ret, cell, args, phase);
+  PynativeExecutorTry(grad_executor()->RunGraph, &ret, cell, args);
   return ret;
 }
 
