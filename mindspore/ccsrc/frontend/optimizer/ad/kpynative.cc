@@ -748,12 +748,19 @@ bool KPynativeCellImpl::BackPropagateOneCNodeWithBPropFuncGraph(const CNodePtr &
   node_list.push_back(NewValueNode(bprop_fg));
 
   if (by_value) {
-    std::transform(adjoint->op_args().begin(), adjoint->op_args().end(), std::back_inserter(node_list),
-                   [](const ValuePtr &value) {
-                     auto v_node = NewValueNode(value);
-                     v_node->set_abstract(value->ToAbstract()->Broaden());
-                     return v_node;
-                   });
+    for (size_t i = 0; i < adjoint->op_args().size(); ++i) {
+      auto input_node = cnode->input(i + 1);
+      if (input_node->isa<Parameter>()) {
+        bool is_weight = input_node->cast<ParameterPtr>()->has_default();
+        if (!is_weight || need_grad_weights_.find(input_node) != need_grad_weights_.end()) {
+          node_list.push_back(input_node);
+          continue;
+        }
+      }
+      auto v_node = NewValueNode(adjoint->op_args()[i]);
+      v_node->set_abstract(adjoint->op_args()[i]->ToAbstract()->Broaden());
+      node_list.push_back(v_node);
+    }
     auto out_node = NewValueNode(adjoint->out());
     out_node->set_abstract(adjoint->out()->ToAbstract()->Broaden());
     node_list.push_back(out_node);

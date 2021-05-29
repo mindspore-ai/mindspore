@@ -1318,7 +1318,7 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const py::object
 
 // Run ad grad for curr op and connect grad graph with previous op
 void GradExecutor::DoOpGrad(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &op_out) {
-  if (grad_is_running_ && !bprop_grad_stack_.top()) {
+  if (grad_is_running_ && !bprop_grad_stack_.top().second) {
     MS_LOG(DEBUG) << "Custom bprop, no need do op grad";
     return;
   }
@@ -1883,10 +1883,10 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
         SetNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
         SetParamNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
       }
-      bprop_grad_stack_.push(false);
+      bprop_grad_stack_.push(std::make_pair(cell_id, false));
     } else if (top_cell()->grad_order() != grad_order_) {
       MakeNewTopGraph(cell_id, args, true);
-      bprop_grad_stack_.push(true);
+      bprop_grad_stack_.push(std::make_pair(cell_id, true));
     }
   };
 
@@ -1948,10 +1948,6 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
 void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const py::args &args) {
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
-  // When the cell has custom bprop, in_custom_bprop_cell is lager than 0
-  if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
-    custom_bprop_cell_count_ += 1;
-  }
   if (top_cell_ != nullptr && cell_stack_.empty()) {
     // non-first step
     if (already_run_top_cell_.find(cell_id) != already_run_top_cell_.end()) {
@@ -1968,6 +1964,10 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
       MS_LOG(DEBUG) << "no need to run NewGraphInner again";
       return;
     }
+  }
+  // When the cell has custom bprop, in_custom_bprop_cell is lager than 0
+  if (py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
+    custom_bprop_cell_count_ += 1;
   }
   // Init resource for resource and df_builder
   InitResourceAndDfBuilder(cell_id, args);
@@ -1996,7 +1996,8 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, 
     input_args_id += GetId(args[i]) + "_";
   }
 
-  if (top_cell_list_.empty() && grad_order_ == 0) {
+  // Run forward first need plus 1
+  if (grad_order_ == 0) {
     ++grad_order_;
   }
   curr_g_ = std::make_shared<FuncGraph>();
@@ -2075,7 +2076,7 @@ void GradExecutor::CreateMakeTupleNodeForMultiOut(const std::string &cell_id, co
   auto out_id = GetId(out);
   SetTupleArgsToGraphInfoMap(curr_g_, out, cnode);
   SetNodeMapInGraphInfoMap(curr_g_, out_id, cnode);
-  if (grad_is_running_ && !bprop_grad_stack_.top()) {
+  if (grad_is_running_ && !bprop_grad_stack_.top().second) {
     MS_LOG(DEBUG) << "Custom bprop, no need GradPynativeOp";
     return;
   }
@@ -2116,12 +2117,13 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     curr_g_->set_output(output_node);
   };
   if (grad_is_running_) {
-    if (!bprop_grad_stack_.top()) {
+    if (!bprop_grad_stack_.top().second) {
       bprop_grad_stack_.pop();
       set_fg_fn();
       return;
+    } else if (bprop_grad_stack_.top().first == cell_id) {
+      bprop_grad_stack_.pop();
     }
-    bprop_grad_stack_.pop();
   }
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     set_fg_fn();
@@ -2131,6 +2133,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
   if (cell_stack_.empty() && cell_id == top_cell()->cell_id()) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
     set_grad_flag(false);
+    PopHighOrderGraphStack();
     // Update real output node of top cell for generating bprop graph
     AnfNodePtr output_node = GetObjNode(out, out_id);
     MS_EXCEPTION_IF_NULL(output_node);
@@ -2435,8 +2438,8 @@ void GradExecutor::CheckNeedCompileGraph() {
   auto pre_top_cell = already_run_top_cell_.at(top_cell_id);
   auto pre_all_op_info = pre_top_cell->all_op_info();
   auto new_all_op_info = new_top_cell->all_op_info();
-  MS_LOG(DEBUG) << "Pre all op info " << pre_all_op_info;
-  MS_LOG(DEBUG) << "New all op info " << new_all_op_info;
+  MS_LOG(DEBUG) << "Pre all op info : " << pre_all_op_info;
+  MS_LOG(DEBUG) << "New all op info : " << new_all_op_info;
   if (pre_all_op_info != new_all_op_info) {
     MS_LOG(DEBUG) << "The op info has been changed or new top cell has ms_function, need to compile graph again";
     EraseTopCellFromTopCellList(pre_top_cell);
@@ -2513,10 +2516,6 @@ void GradExecutor::MakeNestedCnode(const py::object &cell, const std::string &ce
                                    const ResourcePtr &resource, const py::object &out) {
   if (cell_stack_.empty()) {
     MS_LOG(DEBUG) << "No nested grad find";
-    if (GetHighOrderStackSize() == 1) {
-      MS_LOG(DEBUG) << "High order stack size is 1, pop high order stack";
-      (void)PopHighOrderGraphStack();
-    }
     return;
   }
   FuncGraphPtr first_grad_fg = nullptr;
@@ -2668,7 +2667,7 @@ void GradExecutor::ClearRes() {
   curr_g_ = nullptr;
   bprop_cell_list_.clear();
   ClearCellRes();
-  std::stack<bool>().swap(bprop_grad_stack_);
+  std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<std::string>().swap(cell_stack_);
   std::stack<std::pair<FuncGraphPtr, TopCellInfoPtr>>().swap(high_order_stack_);
 }
