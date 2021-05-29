@@ -50,6 +50,8 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
         return nullptr;
       }
       prim->set_padding_mode(padding_mode);
+    } else if (attribute_name == "value") {
+      prim->set_constant_value(onnx_node_attr.f());
     }
   }
 

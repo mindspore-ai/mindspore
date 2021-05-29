@@ -27,6 +27,7 @@
 namespace mindspore::lite {
 namespace {
 constexpr uint32_t kTripleNum = 3;
+constexpr uint32_t kQuadraNum = 4;
 }  // namespace
 ParameterPtr OnnxPadAdjust::CreateNewParameter(const FuncGraphPtr &func_graph, const std::vector<int> &data) {
   MS_ASSERT(func_graph != nullptr);
@@ -88,7 +89,8 @@ bool OnnxPadAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) || cnode->inputs().size() != kTripleNum) {
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) ||
+        (cnode->inputs().size() != kTripleNum && cnode->inputs().size() != kQuadraNum)) {
       continue;
     }
     // get the second input node whose output is the padding parameter of pad.
