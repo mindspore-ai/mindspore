@@ -86,7 +86,11 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
   for (; i < length - 4; i += 4) {
     MS_FLOAT32X4 src_tmp = MS_LDQ_F32(src + i);
     MS_FLOAT32X4 mul_tmp = MS_MULQ_N_F32(src_tmp, alpha);
+#ifdef ENABLE_ARM
+    MS_UINT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+#else
     MS_FLOAT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+#endif
     MS_STQ_F32(dst + i, MS_BLENDQ_F32(mul_tmp, src_tmp, mask));
   }
 #endif
