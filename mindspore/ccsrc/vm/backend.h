@@ -38,7 +38,8 @@ using OpRunInfo = session::OpRunInfo;
 using DeviceContext = device::DeviceContext;
 using ActorInfo = runtime::ActorInfo;
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
-
+using ControlNodeParser = runtime::ControlNodeParser;
+using FrontToBackendNodeWithContext = runtime::FrontToBackendNodeWithContext;
 enum SwitchCondStatus {
   kCondOk = 0,
   kCondAlreadyRun,

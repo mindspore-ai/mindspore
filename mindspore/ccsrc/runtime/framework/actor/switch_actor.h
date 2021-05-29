@@ -30,6 +30,21 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::session::KernelWithIndex;
+
+constexpr size_t kSwitchInputNum = 4;
+constexpr size_t kSwitchCondPos = 1;
+constexpr size_t kSwitchPartialNum = 2;
+constexpr size_t kSwitchLayerCondPos = 1;
+constexpr size_t kSwitchLayerBranchPos = 2;
+constexpr size_t kSwitchLayerInputNum = 3;
+constexpr size_t kMaxSwitchCondSize = 8;
+constexpr size_t kSwitchTrueBranchPos = 2;
+constexpr size_t kSwitchFalseBranchPos = 3;
+constexpr size_t kPartialFuncGraphPos = 1;
+constexpr size_t kPartialInputStartPos = 2;
+constexpr size_t kCallInputStartPos = 1;
+constexpr size_t kMakeTupleInputStartPos = 1;
 
 // Switch actor is used to execute the branch according to the input condition.
 // Switch and SwitchLayer node will be converted to switch actor.

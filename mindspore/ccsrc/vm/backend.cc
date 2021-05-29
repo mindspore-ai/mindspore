@@ -151,6 +151,18 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs)
     MS_LOG(WARNING) << "Invalid input type.";
   }
 }
+
+// Insert the front_node related tensor in the input_tensor.
+void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
+                std::vector<tensor::TensorPtr> *input_tensor) {
+  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
+  if (iter == parameters.end()) {
+    (*input_tensor).emplace_back(nullptr);
+    return;
+  }
+  auto position = iter - parameters.begin();
+  PushInputTensor(args[position], input_tensor);
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -397,21 +409,27 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
 
   // Transform args to input tensors.
+  // Input tensors of the graph.
   std::vector<std::vector<tensor::TensorPtr>> input_tensors;
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
     std::vector<tensor::TensorPtr> input_tensor;
     for (const auto &input_node : kernel_graph->input_nodes()) {
       const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-      const auto &iter = std::find(origin_parameters.begin(), origin_parameters.end(), front_node);
-      if (iter == origin_parameters.end()) {
-        input_tensor.emplace_back(nullptr);
-        continue;
-      }
-      auto position = IntToSize(std::distance(origin_parameters.begin(), iter));
-      PushInputTensor(args[position], &input_tensor);
+      PushTensor(args, origin_parameters, front_node, &input_tensor);
     }
     input_tensors.emplace_back(input_tensor);
   }
+
+  // Input tensors of the control node.
+  std::vector<tensor::TensorPtr> input_tensor;
+
+  // Get inputs of control node which come from the host actor.
+  std::vector<AnfNodePtr> control_node_parameters =
+    ControlNodeParser::FetchControlNodeParameter(graph_compiler_info.control_nodes_);
+  for (const auto &parameter : control_node_parameters) {
+    PushTensor(args, origin_parameters, parameter, &input_tensor);
+  }
+  input_tensors.emplace_back(input_tensor);
 
   // Run in the pynative mode.
   VectorRef outputs;
@@ -465,19 +483,33 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     name.append("_").append(std::to_string(graph_id_to_context.first));
   }
 
+  // Get all the outputs. In control flow, there may be multiple branch output.
   runtime::KernelMapPosition outputs_order;
-  size_t position = 0;
-  const auto &outputs = AnfAlgo::GetAllOutput(root_graph->output(), {prim::kPrimTupleGetItem});
-  for (const auto &output : outputs) {
-    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, true);
-    MS_EXCEPTION_IF_NULL(output_with_index.first);
-    outputs_order.emplace(output_with_index, position++);
+  size_t outputs_num = 0;
+  const auto &all_branch_output = ControlNodeParser::FetchAllBranchOutputs(root_graph);
+  for (const auto &branch_output : all_branch_output) {
+    size_t position = 0;
+    const auto &outputs = AnfAlgo::GetAllOutput(branch_output, {prim::kPrimTupleGetItem});
+    outputs_num = outputs.size();
+
+    for (const auto &output : outputs) {
+      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
+      MS_EXCEPTION_IF_NULL(output_with_index.first);
+      outputs_order.emplace(output_with_index, position++);
+    }
   }
+
+  // Fetch all the relationships between front parameters and backend parameters which will be used to
+  // build and link actors.
+  FrontToBackendNodeWithContext front_to_backend_parameter;
+  ControlNodeParser::FetchFrontToBackendParameterMap(graphs, device_contexts, control_nodes_,
+                                                     &front_to_backend_parameter);
 
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
-                                             root_graph->parameters(), outputs_order, name);
+                                             root_graph->parameters(), outputs_order, front_to_backend_parameter,
+                                             all_branch_output, outputs_num, name);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
@@ -504,9 +536,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(tensors_mask));
   std::vector<std::vector<TensorPtr> *> input_tensors_list(1,
                                                            const_cast<std::vector<tensor::TensorPtr> *>(input_tensors));
-
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
-                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), outputs_order, name);
+                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), outputs_order,
+                                             FrontToBackendNodeWithContext(), std::vector<AnfNodePtr>(),
+                                             outputs_order.size(), name);
 }
 
 VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
