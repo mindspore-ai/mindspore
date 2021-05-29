@@ -20,6 +20,7 @@
 #include <memory>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,9 +34,9 @@ class BiasAddCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t data_shape_{0};
   std::vector<size_t> input_shape_;
   std::vector<size_t> bias_shape_;
+  ArithmeticParameter bias_param_;
 };
 MS_REG_CPU_KERNEL(BiasAdd, KernelAttr(), BiasAddCPUKernel);
 }  // namespace kernel

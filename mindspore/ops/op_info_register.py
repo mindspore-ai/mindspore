@@ -605,6 +605,7 @@ class DataType:
     BOOL_NHWC = ("bool", "NHWC")
     BOOL_HWCN = ("bool", "HWCN")
     BOOL_NDHWC = ("bool", "NDHWC")
+    BOOL_ChannelLast = ("bool", "ChannelLast")
 
     I8_None = ("int8", "")
     I8_Default = ("int8", "DefaultFormat")
@@ -616,6 +617,7 @@ class DataType:
     I8_NHWC = ("int8", "NHWC")
     I8_HWCN = ("int8", "HWCN")
     I8_NDHWC = ("int8", "NDHWC")
+    I8_ChannelLast = ("int8", "ChannelLast")
 
     U8_None = ("uint8", "")
     U8_Default = ("uint8", "DefaultFormat")
@@ -627,6 +629,7 @@ class DataType:
     U8_NHWC = ("uint8", "NHWC")
     U8_HWCN = ("uint8", "HWCN")
     U8_NDHWC = ("uint8", "NDHWC")
+    U8_ChannelLast = ("uint8", "ChannelLast")
 
     I16_None = ("int16", "")
     I16_Default = ("int16", "DefaultFormat")
@@ -638,6 +641,7 @@ class DataType:
     I16_NHWC = ("int16", "NHWC")
     I16_HWCN = ("int16", "HWCN")
     I16_NDHWC = ("int16", "NDHWC")
+    I16_ChannelLast = ("int16", "ChannelLast")
 
     U16_None = ("uint16", "")
     U16_Default = ("uint16", "DefaultFormat")
@@ -649,6 +653,7 @@ class DataType:
     U16_NHWC = ("uint16", "NHWC")
     U16_HWCN = ("uint16", "HWCN")
     U16_NDHWC = ("uint16", "NDHWC")
+    U16_ChannelLast = ("uint16", "ChannelLast")
 
     I32_None = ("int32", "")
     I32_Default = ("int32", "DefaultFormat")
@@ -660,6 +665,7 @@ class DataType:
     I32_NHWC = ("int32", "NHWC")
     I32_HWCN = ("int32", "HWCN")
     I32_NDHWC = ("int32", "NDHWC")
+    I32_ChannelLast = ("int32", "ChannelLast")
 
     U32_None = ("uint32", "")
     U32_Default = ("uint32", "DefaultFormat")
@@ -671,6 +677,7 @@ class DataType:
     U32_NHWC = ("uint32", "NHWC")
     U32_HWCN = ("uint32", "HWCN")
     U32_NDHWC = ("uint32", "NDHWC")
+    U32_ChannelLast = ("uint32", "ChannelLast")
 
     I64_None = ("int64", "")
     I64_Default = ("int64", "DefaultFormat")
@@ -682,6 +689,7 @@ class DataType:
     I64_NHWC = ("int64", "NHWC")
     I64_HWCN = ("int64", "HWCN")
     I64_NDHWC = ("int64", "NDHWC")
+    I64_ChannelLast = ("int64", "ChannelLast")
 
     U64_None = ("uint64", "")
     U64_Default = ("uint64", "DefaultFormat")
@@ -693,6 +701,7 @@ class DataType:
     U64_NHWC = ("uint64", "NHWC")
     U64_HWCN = ("uint64", "HWCN")
     U64_NDHWC = ("uint64", "NDHWC")
+    U64_ChannelLast = ("uint64", "ChannelLast")
 
     F16_None = ("float16", "")
     F16_Default = ("float16", "DefaultFormat")
@@ -709,6 +718,7 @@ class DataType:
     F16_NDC1HWC0 = ("float16", "NDC1HWC0")
     F16_FRACTAL_Z_3D = ("float16", "FRACTAL_Z_3D")
     F16_FracZNLSTM = ("float16", "FRACTAL_ZN_LSTM")
+    F16_ChannelLast = ("float16", "ChannelLast")
 
     F32_None = ("float32", "")
     F32_Default = ("float32", "DefaultFormat")
@@ -725,6 +735,7 @@ class DataType:
     F32_NDC1HWC0 = ("float32", "NDC1HWC0")
     F32_FRACTAL_Z_3D = ("float32", "FRACTAL_Z_3D")
     F32_FracZNLSTM = ("float32", "FRACTAL_ZN_LSTM")
+    F32_ChannelLast = ("float32", "ChannelLast")
 
     F64_None = ("float64", "")
     F64_Default = ("float64", "DefaultFormat")
@@ -736,3 +747,4 @@ class DataType:
     F64_NHWC = ("float64", "NHWC")
     F64_HWCN = ("float64", "HWCN")
     F64_NDHWC = ("float64", "NDHWC")
+    F64_ChannelLast = ("float64", "ChannelLast")
