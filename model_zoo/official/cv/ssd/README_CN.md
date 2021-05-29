@@ -40,6 +40,13 @@ SSD将边界框的输出空间离散成一组默认框，每个特征映射位�
 
 SSD方法基于前向卷积网络，该网络产生固定大小的边界框集合，并针对这些框内存在的对象类实例进行评分，然后通过非极大值抑制步骤进行最终检测。早期的网络层基于高质量图像分类的标准体系结构，被称为基础网络。后来通过向网络添加辅助结构进行检测。
 
+我们提供了4种不同的基础架构:
+
+- **ssd300**, 参考论文实现. 使用mobilenet-v2作为骨干网络, 并使用相同的bbox预测器.
+- ***ssd-mobilenet-v1-fpn**, 使用mobilenet-v1和FPN作为特征提取器, 并使用权重共享bbox预测器.
+- ***ssd-resnet50-fpn**, 使用resnet50和FPN作为特征提取器, 并使用权重共享bbox预测器.
+- **ssd-vgg16**, 参考论文实现. 使用vgg16作为骨干网络, 并使用相同的bbox预测器.
+
 # 数据集
 
 使用的数据集： [COCO2017](<http://images.cocodataset.org/>)
@@ -129,23 +136,39 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 └─ cv
   └─ ssd
     ├─ README.md                      ## SSD相关说明
+    ├─ ascend310_infer                ## 实现310推理源代码
     ├─ scripts
+      ├─ docker start.sh              ## 容器启动脚本
       ├─ run_distribute_train.sh      ## Ascend分布式shell脚本
       ├─ run_distribute_train_gpu.sh  ## GPU分布式shell脚本
       ├─ run_eval.sh                  ## Ascend评估shell脚本
-      └─ run_eval_gpu.sh              ## GPU评估shell脚本
+      ├─ run_eval_gpu.sh              ## GPU评估shell脚本
+      └─ run_infer_310.sh             ## 310推理脚本
     ├─ src
-      ├─ __init__.py                  ## 初始化文件
-      ├─ box_util.py                  ## bbox工具
-      ├─ coco_eval.py                 ## coco指标工具
-      ├─ config.py                    ## 总配置
-      ├─ dataset.py                   ## 创建并处理数据集
-      ├─ init_params.py               ## 参数工具
-      ├─ lr_schedule.py               ## 学习率生成器
-      └─ ssd.py                       ## SSD架构
-    ├─ eval.py                        ## 评估脚本
-    ├─ train.py                       ## 训练脚本
-    └─ mindspore_hub_conf.py          ## MindSpore Hub接口
+      ├─ __init__.py                      ## 初始化文件
+      ├─ anchor_generator.py              ## 锚点生成器
+      ├─ box_util.py                      ## bbox工具
+      ├─ config.py                        ## 总配置
+      ├─ config_ssd_mobilenet_v1_fpn.py   ## 特征提取网络使用mobilenet-v1 with fpn配置
+      ├─ config_ssd_resnet50_fpn.py       ## 特征提取网络使用resnet50 with fpn 配置
+      ├─ config_ssd_vgg16.py              ## 特征提取网络使用vgg16 配置
+      ├─ config_ssd300.py                 ## 特征提取网络使用mobilenet-v2 配置
+      ├─ dataset.py                       ## 创建并处理数据集
+      ├─ eval_callback.py                 ## eval回调方法定义
+      ├─ eval_utils.py                    ## eval工具
+      ├─ fpn.py                           ## 特征金字塔网络
+      ├─ init_params.py                   ## 参数工具
+      ├─ lr_schedule.py                   ## 学习率生成器
+      ├─ mobilenet_v1.py                  ## mobilenet-v1网络定义
+      ├─ resnet.py                        ## resnet网络定义
+      ├─ ssd.py                           ## SSD架构
+      └─ vgg16.py                         ## vgg16网络定义
+    ├─ Dockerfile                         ## docker文件
+    ├─ eval.py                            ## 评估脚本
+    ├─ export.py                          ## 导出 AIR,MINDIR模型的脚本
+    ├─ postprocess.py                     ## 310推理后处理脚本
+    ├─ train.py                           ## 训练脚本
+    └─ mindspore_hub_conf.py              ## MindSpore Hub接口
 ```
 
 ## 脚本参数
@@ -222,7 +245,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
     sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
-此脚本需要五或七个参数。
+此脚本需要四或六个参数。
 
 - `DEVICE_NUM`：分布式训练的设备数。
 - `EPOCH_NUM`：分布式训练的轮次数。

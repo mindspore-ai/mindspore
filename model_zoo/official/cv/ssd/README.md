@@ -192,26 +192,40 @@ Then you can run everything just like on ascend.
 .
 └─ cv
   └─ ssd
-    ├─ README.md                      # descriptions about SSD
+    ├─ README.md                      ## descriptions about SSD
+    ├─ ascend310_infer                ## source code of 310 inference
     ├─ scripts
-      ├─ run_distribute_train.sh      # shell script for distributed on ascend
-      ├─ run_distribute_train_gpu.sh  # shell script for distributed on gpu
-      ├─ run_eval.sh                  # shell script for eval on ascend
-      └─ run_eval_gpu.sh              # shell script for eval on gpu
+      ├─ docker start.sh              ## shell script for start docker container
+      ├─ run_distribute_train.sh      ## shell script for distributed on ascend
+      ├─ run_distribute_train_gpu.sh  ## shell script for distributed on gpu
+      ├─ run_eval.sh                  ## shell script for eval on ascend
+      ├─ run_eval_gpu.sh              ## shell script for eval on gpu
+      └─ run_infer_310.sh             ## shell script for 310 inference
     ├─ src
-      ├─ __init__.py                  # init file
-      ├─ box_utils.py                 # bbox utils
-      ├─ eval_callback.py             # evaluation callback when training
-      ├─ eval_utils.py                # metrics utils
-      ├─ config.py                    # total config
-      ├─ dataset.py                   # create dataset and process dataset
-      ├─ init_params.py               # parameters utils
-      ├─ lr_schedule.py               # learning ratio generator
-      └─ ssd.py                       # ssd architecture
-    ├─ eval.py                        # eval scripts
-    ├─ train.py                       # train scripts
-    ├─ export.py                      # export mindir script
-    └─ mindspore_hub_conf.py          # mindspore hub interface
+      ├─ __init__.py                      ## init file
+      ├─ anchor_generator.py              ## anchor generator
+      ├─ box_util.py                      ## bbox utils
+      ├─ config.py                        ## total config
+      ├─ config_ssd_mobilenet_v1_fpn.py   ## configuration for feature extraction network uses mobilenet-v1 with fpn
+      ├─ config_ssd_resnet50_fpn.py       ## configuration for feature extraction network uses resnet50 with fpn
+      ├─ config_ssd_vgg16.py              ## configuration for backbone of vgg16
+      ├─ config_ssd300.py                 ## configuration for backbone of mobilenet-v2
+      ├─ dataset.py                       ## create dataset and process dataset
+      ├─ eval_callback.py                 ## eval callback function definition
+      ├─ eval_utils.py                    ## eval utils
+      ├─ fpn.py                           ## feature pyramid network
+      ├─ init_params.py                   ## parameters utils
+      ├─ lr_schedule.py                   ## learning ratio generator
+      ├─ mobilenet_v1.py                  ## network definition for mobilenet-v1
+      ├─ resnet.py                        ## network definition for resnet
+      ├─ ssd.py                           ## ssd architecture
+      └─ vgg16.py                         ## network definition for vgg16
+    ├─ Dockerfile                         ## docker file
+    ├─ eval.py                            ## eval scripts
+    ├─ export.py                          ## export mindir script
+    ├─ postprocess.py                     ## post-processing script for 310 inference
+    ├─ train.py                           ## train scripts
+    └─ mindspore_hub_conf.py              ## mindspore hub interface
 ```
 
 ### [Script Parameters](#contents)
@@ -295,7 +309,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
     bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
-We need five or seven parameters for this scripts.
+We need four or six parameters for this scripts.
 
 - `DEVICE_NUM`: the device number for distributed train.
 - `EPOCH_NUM`: epoch num for distributed train.
