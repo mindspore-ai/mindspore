@@ -47,12 +47,13 @@ bool InitRandomNormal(float mean, float stddev, std::vector<size_t> out_shape, s
   seed = (seed == 0 && seed2 == 0) ? clock() : seed;
   PhiloxGenerator generator = PhiloxGenerator(seed, seed2);
   if (thread_num != 1) {
+    float *offset_ptr = nullptr;
     for (uint32_t i = 0; i < thread_num - 1; i++) {
-      float *offset_ptr = start_ptr + batchSize * i;
+      offset_ptr = start_ptr + batchSize * i;
       threads[i] =
         std::thread(FillRandoms<NormalDistribution<PhiloxGenerator, float>>, generator, offset_ptr, batchSize, i);
     }
-    float *offset_ptr = start_ptr + batchSize * (thread_num - 1);
+    offset_ptr = start_ptr + batchSize * (thread_num - 1);
     threads[thread_num - 1] = std::thread(FillRandoms<NormalDistribution<PhiloxGenerator, float>>, generator,
                                           offset_ptr, total_count - (thread_num - 1) * batchSize, thread_num - 1);
   } else {
