@@ -63,9 +63,9 @@ class HttpClient {
 
   virtual ~HttpClient();
 
-  Status Post(const std::string &url, const void *body, size_t len, std::shared_ptr<std::vector<char>> output,
+  Status Post(const std::string &url, const void *body, size_t len, const std::shared_ptr<std::vector<char>> &output,
               const std::map<std::string, std::string> &headers = {});
-  Status Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
+  Status Get(const std::string &url, const std::shared_ptr<std::vector<char>> &output,
              const std::map<std::string, std::string> &headers = {});
 
   void set_connection_timeout(const int &timeout);

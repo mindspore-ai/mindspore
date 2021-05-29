@@ -33,7 +33,8 @@ void HttpClient::Init() {
   MS_EXCEPTION_IF_NULL(dns_base_);
 }
 
-Status HttpClient::Post(const std::string &url, const void *body, size_t len, std::shared_ptr<std::vector<char>> output,
+Status HttpClient::Post(const std::string &url, const void *body, size_t len,
+                        const std::shared_ptr<std::vector<char>> &output,
                         const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(output);
@@ -64,7 +65,7 @@ Status HttpClient::Post(const std::string &url, const void *body, size_t len, st
   return CreateRequest(handler, connection, request, HttpMethod::HM_POST);
 }
 
-Status HttpClient::Get(const std::string &url, std::shared_ptr<std::vector<char>> output,
+Status HttpClient::Get(const std::string &url, const std::shared_ptr<std::vector<char>> &output,
                        const std::map<std::string, std::string> &headers) {
   MS_EXCEPTION_IF_NULL(output);
   auto handler = std::make_shared<HttpMessageHandler>();

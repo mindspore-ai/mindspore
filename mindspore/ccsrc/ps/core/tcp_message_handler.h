@@ -27,6 +27,7 @@
 #include "ps/core/message.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -48,7 +49,7 @@ class TcpMessageHandler {
   bool is_parsed_;
   std::unique_ptr<unsigned char> message_buffer_;
   size_t remaining_length_;
-  char header_[16]{0};
+  unsigned char header_[16]{0};
   int header_index_;
   size_t last_copy_len_;
   MessageHeader message_header_;
