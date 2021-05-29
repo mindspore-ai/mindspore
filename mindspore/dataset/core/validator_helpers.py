@@ -429,4 +429,5 @@ def check_c_tensor_op(param, param_name):
 
 
 def replace_none(value, default):
+    """Replace None value with default"""
     return value if value is not None else default

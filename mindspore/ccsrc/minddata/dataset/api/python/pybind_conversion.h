@@ -70,7 +70,7 @@ std::shared_ptr<TensorOperation> toTensorOperation(py::handle operation);
 
 std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetNode> self, py::list datasets);
 
-std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDataset = false);
+std::shared_ptr<SamplerObj> toSamplerObj(const py::handle py_sampler, bool isMindDataset = false);
 
 std::shared_ptr<DatasetCache> toDatasetCache(std::shared_ptr<CacheClient> cc);
 

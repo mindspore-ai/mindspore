@@ -160,7 +160,7 @@ std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetN
   return vector;
 }
 
-std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDataset) {
+std::shared_ptr<SamplerObj> toSamplerObj(const py::handle py_sampler, bool isMindDataset) {
   if (py_sampler.is_none()) {
     return nullptr;
   }

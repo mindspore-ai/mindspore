@@ -271,8 +271,9 @@ def check_random_apply(method):
 
         for i, transform in enumerate(transforms):
             if str(transform).find("c_transform") >= 0:
-                raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                    .format(i))
+                raise ValueError(
+                    "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
+                        .format(i))
 
         if prob is not None:
             type_check(prob, (float, int,), "prob")
@@ -293,8 +294,9 @@ def check_transforms_list(method):
         type_check(transforms, (list,), "transforms")
         for i, transform in enumerate(transforms):
             if str(transform).find("c_transform") >= 0:
-                raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                    .format(i))
+                raise ValueError(
+                    "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
+                        .format(i))
         return method(self, *args, **kwargs)
 
     return new_method

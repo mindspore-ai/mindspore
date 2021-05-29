@@ -30,6 +30,7 @@ class TensorOperation:
     """
     Base class Tensor Ops
     """
+
     def __call__(self, *input_tensor_list):
         tensor_row = []
         for tensor in input_tensor_list:
@@ -37,7 +38,7 @@ class TensorOperation:
                 tensor_row.append(cde.Tensor(np.asarray(tensor)))
             except RuntimeError:
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
-                      .format(type(tensor), tensor))
+                                .format(type(tensor), tensor))
         callable_op = cde.Execute(self.parse())
         output_tensor_list = callable_op(tensor_row)
         for i, element in enumerate(output_tensor_list):
@@ -46,9 +47,11 @@ class TensorOperation:
                 output_tensor_list[i] = np.char.decode(arr)
             else:
                 output_tensor_list[i] = arr
+
         return output_tensor_list[0] if len(output_tensor_list) == 1 else tuple(output_tensor_list)
 
     def parse(self):
+        """parse function - not yet implemented"""
         raise NotImplementedError("TensorOperation has to implement parse() method.")
 
 
@@ -291,7 +294,8 @@ class Concatenate(cde.ConcatenateOp):
 
     Args:
         axis (int, optional): Concatenate the tensors along given axis (Default=0).
-        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors (Default=None).
+        prepend (numpy.array, optional): NumPy array to be prepended to the already concatenated tensors
+            (Default=None).
         append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
     Examples:

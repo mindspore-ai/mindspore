@@ -232,7 +232,6 @@ PYBIND_REGISTER(UnicodeCharTokenizerOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
-// TODO(alexyuyue): Need to decouple WordpieceTokenizerOp to WordpieceTokenizerOperation after it's supported in C++
 PYBIND_REGISTER(WordpieceTokenizerOp, 1, ([](const py::module *m) {
                   (void)py::class_<WordpieceTokenizerOp, TensorOp, std::shared_ptr<WordpieceTokenizerOp>>(
                     *m, "WordpieceTokenizerOp")
