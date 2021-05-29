@@ -729,7 +729,7 @@ void CostGraph::CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, con
 std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes(
   OperatorInfoPtr op1, std::vector<EdgePtr> *op1_old_succ_edges,
   std::vector<std::map<CostPtrKey, CostPtrList>> *op1_new_edges_cost, std::vector<EdgePtr> *op1_new_succ_edges,
-  OperatorInfoPtr op2, std::vector<EdgePtr> *op2_old_succ_edges,
+  const OperatorInfoPtr op2, std::vector<EdgePtr> *op2_old_succ_edges,
   std::vector<std::map<CostPtrKey, CostPtrList>> *op2_new_edges_cost, std::vector<EdgePtr> *op2_new_succ_edges) {
   for (size_t i = 0; i < op1_old_succ_edges->size(); ++i) {
     auto &new_cost_map = op1_new_edges_cost->at(i);
@@ -754,8 +754,8 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     op1->ReplaceSuccEdge(ith_edge->next_operator(), new_edge);
     ith_edge->next_operator()->ReplacePreEdge(op1, new_edge);
-    op1_new_succ_edges->erase(op1_new_succ_edges->begin() + i);
-    op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + i, new_edge);
+    (void)op1_new_succ_edges->erase(op1_new_succ_edges->begin() + i);
+    (void)op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + i, new_edge);
   }
   for (size_t i = 0; i < op2_old_succ_edges->size(); ++i) {
     auto &new_cost_map = op2_new_edges_cost->at(i);
@@ -779,14 +779,14 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     destination->ReplacePreEdge(op2, new_edge);
     op1->AddSuccEdge(new_edge);
-    op2_new_succ_edges->erase(op2_new_succ_edges->begin() + i);
-    op2_new_succ_edges->emplace(op2_new_succ_edges->begin() + i, new_edge);
+    (void)op2_new_succ_edges->erase(op2_new_succ_edges->begin() + i);
+    (void)op2_new_succ_edges->emplace(op2_new_succ_edges->begin() + i, new_edge);
   }
   return std::make_pair(*op1_new_succ_edges, *op2_new_succ_edges);
 }
 
 std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> CostGraph::EliminationSources(
-  OperatorInfoPtr op1, OperatorInfoPtr op2) {
+  const OperatorInfoPtr op1, const OperatorInfoPtr op2) {
   MS_EXCEPTION_IF_NULL(op1);
   MS_EXCEPTION_IF_NULL(op2);
   MS_LOG(INFO) << "Now source eliminating node: " << op2->name() << " to node: " << op1->name();

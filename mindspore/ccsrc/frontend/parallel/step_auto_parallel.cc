@@ -493,6 +493,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn() &&
       StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    return FAILED;
   }
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
