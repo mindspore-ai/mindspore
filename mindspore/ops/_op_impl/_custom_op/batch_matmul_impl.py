@@ -43,8 +43,9 @@ def _get_flattern_shape(shape):
     return (flattern_shape,)
 
 
-def _inner_matmul_new(tik_instance, dtype, input1, input1_index, input2, input2_index, res, res_index):
+def _inner_matmul_new(tik_instance, dtype, input_info, res, res_index):
     """_inner_matmul_new"""
+    input1, input1_index, input2, input2_index = input_info
     input_1_local_ub = tik_instance.Tensor(dtype, [128], name="input_1_local_ub", scope=tik.scope_ubuf)
     t_1_0_local_ub = tik_instance.Tensor(dtype, [64 * 128], name="t_1_0_local_ub", scope=tik.scope_ubuf)
     tik_instance.data_move(input_1_local_ub, input1[input1_index], 0, 1, 16, 0, 0)
@@ -75,8 +76,9 @@ def _inner_matmul_new(tik_instance, dtype, input1, input1_index, input2, input2_
                                matmul_hybrid_f_t_local_ub, 0, 1, 8, 0, 0)
 
 
-def _inner_matmul_new_1_64_32_64(tik_instance, dtype, input1, input1_index, input2, input2_index, res, res_index):
+def _inner_matmul_new_1_64_32_64(tik_instance, dtype, input_info, res, res_index):
     """_inner_matmul_new_1_64_32_64"""
+    input1, input1_index, input2, input2_index = input_info
     input_1_local_ub = tik_instance.Tensor(dtype, [64], name="input_1_local_ub", scope=tik.scope_ubuf)
     tik_instance.data_move(input_1_local_ub, input1[input1_index], 0, 1, 8, 0, 0)
     with tik_instance.for_range(0, 2, thread_num=2) as thread_idx2:
@@ -94,8 +96,9 @@ def _inner_matmul_new_1_64_32_64(tik_instance, dtype, input1, input1_index, inpu
                                matmul_hybrid_f_t_local_ub, 0, 1, 4, 0, 0)
 
 
-def process_input_shape_640(input_shape, tik_instance, dtype, input1, input2, res):
+def process_input_shape_640(input_shape, tik_instance, dtype, total_input, res):
     """process input shape of 640"""
+    input1, input2 = total_input
     if input_shape == ((5, 128, 128), (5, 128, 128), "float32", False, True):
         with tik_instance.for_range(0, 30, block_num=30) as block_idx,\
                 tik_instance.for_range(0, 11) as cc1_db,\
@@ -144,25 +147,26 @@ def process_input_shape_640(input_shape, tik_instance, dtype, input1, input2, re
                     matmul_hybrid_f_t_local_ub, 0, 1, 8, 0, 0)
 
 
-def process_input_shape_1152(input_shape, tik_instance, dtype, input1, input2, res):
+def process_input_shape_1152(input_shape, tik_instance, dtype, total_input, res):
     """process input shape of 1152"""
+    input1, input2 = total_input
     if input_shape == ((9, 128, 128), (9, 128, 128), "float32", False, True):
         with tik_instance.for_range(0, 27, block_num=27) as block_idx:
             with tik_instance.for_range(0, 42, thread_num=2) as cc0:
                 input1_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + cc0 * 128
                 input2_index = (block_idx // 3) * 16384
                 res_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + cc0 * 128
+                input_info = input1, input1_index, input2, input2_index
                 _inner_matmul_new(tik_instance, dtype,
-                                  input1, input1_index,
-                                  input2, input2_index,
+                                  input_info,
                                   res, res_index)
             with tik_instance.if_scope((block_idx % 3) < 2):
                 input1_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + 42 * 128
                 input2_index = (block_idx // 3) * 16384
                 res_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + 42 * 128
+                input_info = input1, input1_index, input2, input2_index
                 _inner_matmul_new(tik_instance, dtype,
-                                  input1, input1_index,
-                                  input2, input2_index,
+                                  input_info,
                                   res, res_index)
 
 
@@ -216,12 +220,12 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
             input1_index = block_idx * 32768 + cc0 * 16384 + cc1 * 128
             input2_index = block_idx * 32768 + cc0 * 16384
             res_index = block_idx * 32768 + cc0 * 16384 + cc1 * 128
+            input_info = input1, input1_index, input2, input2_index
             _inner_matmul_new(tik_instance, dtype,
-                              input1, input1_index,
-                              input2, input2_index,
-                              res, res_index)
+                              input_info, res, res_index)
 
-    process_input_shape_640(input_shape, tik_instance, dtype, input1, input2, res)
+    total_input = input1, input2
+    process_input_shape_640(input_shape, tik_instance, dtype, total_input, res)
 
     if input_shape == ((18, 128, 128), (18, 128, 128), "float32", False, True):
         with tik_instance.for_range(0, 18, block_num=18) as block_idx, \
@@ -229,12 +233,11 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
             input1_index = block_idx * 16384 + cc0 * 128
             input2_index = block_idx * 16384
             res_index = block_idx * 16384 + cc0 * 128
+            input_info = input1, input1_index, input2, input2_index
             _inner_matmul_new(tik_instance, dtype,
-                              input1, input1_index,
-                              input2, input2_index,
-                              res, res_index)
+                              input_info, res, res_index)
 
-    process_input_shape_1152(input_shape, tik_instance, dtype, input1, input2, res)
+    process_input_shape_1152(input_shape, tik_instance, dtype, total_input, res)
 
     if input_shape == ((1, 64, 64), (1, 64, 64), "float32", False, True):
         with tik_instance.for_range(0, 32, block_num=32) as block_idx,\
@@ -242,9 +245,9 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
             input1_index = block_idx * 128 + cc0 * 64
             input2_index = 0
             res_index = block_idx * 128 + cc0 * 64
+            input_info = input1, input1_index, input2, input2_index
             _inner_matmul_new_1_64_32_64(tik_instance, dtype,
-                                         input1, input1_index,
-                                         input2, input2_index,
+                                         input_info,
                                          res, res_index)
 
     input_shape_list = [((1, 128, 128), (1, 128, 128), "float32", False, True),
@@ -271,9 +274,8 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
             else:
                 input2_index = 0
             res_index = block_idx * block_process_ele_num + cc0 * input1_unit_size
-            _inner_matmul_new(tik_instance, dtype,
-                              input1, input1_index,
-                              input2, input2_index,
+            input_info = input1, input1_index, input2, input2_index
+            _inner_matmul_new(tik_instance, dtype, input_info,
                               res, res_index)
 
     tik_instance.BuildCCE(kernel_name, inputs=[input1, input2], outputs=[res])

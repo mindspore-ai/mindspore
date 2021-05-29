@@ -31,21 +31,22 @@ __all__ = ['DenseThor', 'Conv2dThor', 'EmbeddingThor']
 
 class DenseThor(Cell):
     r"""
-    The dense connected layer.
+    The dense connected layer and saving the information needed for THOR.
 
-    Applies dense connected layer for the input. This layer implements the operation as:
+    Applies dense connected layer for the input and saves the information A and G in the dense connected layer
+    needed for THOR, the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+    This layer implements the operation as:
 
     .. math::
         \text{outputs} = \text{activation}(\text{inputs} * \text{kernel} + \text{bias}),
 
-    where :math:`\text{activation}` is the activation function passed as the activation
-    argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
+    where :math:`\text{activation}` is the activation function , :math:`\text{kernel}` is a weight matrix with the same
     data type as the inputs created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the inputs created by the layer (only if has_bias is True).
 
     Args:
-        in_channels (int): The number of channels in the input space.
-        out_channels (int): The number of channels in the output space.
+        in_channels (int): The number of the input channels.
+        out_channels (int): The number of the output channels.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
             is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
@@ -55,7 +56,7 @@ class DenseThor(Cell):
             Default: None.
 
     Raises:
-        ValueError: If weight_init or bias_init shape is incorrect.
+        ValueError: If weight_init shape or bias_init shape is incorrect.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
@@ -65,7 +66,7 @@ class DenseThor(Cell):
 
     Examples:
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> net = nn.Dense(3, 4)
+        >>> net = nn.DenseThor(3, 4)
         >>> net(input)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
@@ -193,40 +194,29 @@ class DenseThor(Cell):
         return s
 
 
-class _Conv(Cell):
+class _ConvThor(Cell):
     """
-    Applies a N-D convolution over an input signal composed of several input planes.
+    Applies a N-D convolution over an input signal composed of multiple input planes.
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride,
-                 pad_mode,
-                 padding,
-                 dilation,
-                 group,
-                 has_bias,
-                 weight_init,
-                 bias_init,
-                 transposed=False):
-        super(_Conv, self).__init__()
+    def __init__(self, in_channels, out_channels, kernel_size, stride, pad_mode,
+                 padding, dilation, group, has_bias, weight_init, bias_init, transposed=False):
+        super(_ConvThor, self).__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
         self.bias_init = bias_init
-        if isinstance(padding, int):
-            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
-            self.padding = padding
-        elif isinstance(padding, tuple):
+        if isinstance(padding, tuple):
             for pad in padding:
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
+        elif isinstance(padding, int):
+            Validator.check_non_negative_int(padding, 'padding', self.cls_name)
+            self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError("padding type must be int or tuple(int) cannot be {}!".format(type(padding)))
 
         self.dilation = dilation
         self.group = Validator.check_positive_int(group)
@@ -235,15 +225,15 @@ class _Conv(Cell):
         self._validate_stride(stride)
         self._validate_dilation(dilation)
         if in_channels % group != 0:
-            raise ValueError("Attr 'in_channels' of 'Conv2D' Op must be divisible by "
-                             "attr 'group' of 'Conv2D' Op.")
+            raise ValueError("Attr 'in_channels' of 'Conv2DThor' Op must be divisible by "
+                             "attr 'group' of 'Conv2DThor' Op.")
         if out_channels % group != 0:
-            raise ValueError("Attr 'out_channels' of 'Conv2D' Op must be divisible by "
-                             "attr 'group' of 'Conv2D' Op.")
-        if transposed:
-            shape = [in_channels, out_channels // group, *kernel_size]
-        else:
+            raise ValueError("Attr 'out_channels' of 'Conv2DThor' Op must be divisible by "
+                             "attr 'group' of 'Conv2DThor' Op.")
+        if not transposed:
             shape = [out_channels, in_channels // group, *kernel_size]
+        else:
+            shape = [in_channels, out_channels // group, *kernel_size]
         self.weight = Parameter(initializer(weight_init, shape), name='weight')
 
         if Validator.check_bool(has_bias):
@@ -275,18 +265,19 @@ class _Conv(Cell):
             raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
                              + str(self.dilation) + ", should be a int or tuple and equal to or greater than 1.")
 
-    def construct(self, *inputs):
-        """Must be overridden by all subclasses."""
-        raise NotImplementedError
 
-
-class Conv2dThor(_Conv):
+class Conv2dThor(_ConvThor):
     r"""
-    2D convolution layer.
+    2D convolution layer and saving the information needed for THOR.
+
 
     Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is channel number, and :math:`H_{in}, W_{in})` are height and width.
+    And saves the information A and G in the 2D convolution layer needed for THOR.
+    The detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
+
     For each batch of shape :math:`(C_{in}, H_{in}, W_{in})`, the formula is defined as:
+
 
     .. math::
 
@@ -306,55 +297,51 @@ class Conv2dThor(_Conv):
     :math:`\left \lfloor{1 + \frac{W_{in} + 2 \times \text{padding} - \text{ks_w} -
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
 
-    The first introduction can be found in paper `Gradient Based Learning Applied to Document Recognition
-    <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Args:
-        in_channels (int): The number of input channel :math:`C_{in}`.
-        out_channels (int): The number of output channel :math:`C_{out}`.
+        in_channels (int): The number of the input channel :math:`C_{in}`.
+        out_channels (int): The number of the output channel :math:`C_{out}`.
         kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the height
-            and width of the 2D convolution window. Single int means the value is for both the height and the width of
-            the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
-            width of the kernel.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+            and width of the 2D convolution window. Single int means that the value is not only the height, but also
+            the width of the kernel. A tuple of 2 integers means the height and the width of the kernel respectively.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number represents the height and width
+             of movement, or a tuple of two int numbers that represent height and width of movement, respectively.
+             Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "same".
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
+            - same: Adopts the way of completion. The shape of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
               directions and evenly distributed to top and bottom, left and right if possible. Otherwise, the
               last extra padding will be done from the bottom and the right side. If this mode is set, `padding`
               must be 0.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
-              without padding. Extra pixels will be discarded. If this mode is set, `padding`
-              must be 0.
+              without padding. Extra pixels will be discarded. If this mode is set, `padding` must be 0.
 
             - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is one integer,
+        padding (Union[int, tuple[int]]): Implicit paddings on both sides of the input. If `padding` is an integer,
                     the paddings of top, bottom, left and right are the same, equal to padding. If `padding` is a tuple
                     with four integers, the paddings of top, bottom, left and right will be equal to padding[0],
                     padding[1], padding[2], and padding[3] accordingly. Default: 0.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 2 integers. Specifies the dilation rate
                                       to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
-                                      be greater or equal to 1 and bounded by the height and width of the
-                                      input. Default: 1.
+                                      be greater or equal to 1 and bounded by the height and width of the  input.
+                                      Default: 1.
         group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
             divisible by the number of groups. If the group is equal to `in_channels` and `out_channels`,
             this 2D convolution layer also can be called 2D depthwise convolution layer. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializes the convolution kernel.
             It can be a Tensor, a string, an Initializer or a number. When a string is specified,
             values from 'TruncatedNormal', 'Normal', 'Uniform', 'HeUniform' and 'XavierUniform' distributions as well
             as constant 'One' and 'Zero' distributions are possible. Alias 'xavier_uniform', 'he_uniform', 'ones'
             and 'zeros' are acceptable. Uppercase and lowercase are both acceptable. Refer to the values of
             Initializer for more details. Default: 'normal'.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Possible
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializes the bias vector. Possible
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
 
@@ -365,48 +352,24 @@ class Conv2dThor(_Conv):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
+        >>> net = nn.Conv2dThor(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> net(input).shape
+        >>> print(net(input).shape)
         (1, 240, 1024, 640)
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 pad_mode='same',
-                 padding=0,
-                 dilation=1,
-                 group=1,
-                 has_bias=False,
-                 weight_init='normal',
-                 bias_init='zeros'):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1,
+                 pad_mode='same', padding=0, dilation=1, group=1, has_bias=False,
+                 weight_init='normal', bias_init='zeros'):
         kernel_size = twice(kernel_size)
         stride = twice(stride)
         self._dilation = dilation
         dilation = twice(dilation)
-        super(Conv2dThor, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size,
-            stride,
-            pad_mode,
-            padding,
-            dilation,
-            group,
-            has_bias,
-            weight_init,
-            bias_init)
-        self.conv2d = P.Conv2D(out_channel=self.out_channels,
-                               kernel_size=self.kernel_size,
-                               mode=1,
-                               pad_mode=self.pad_mode,
-                               pad=self.padding,
-                               stride=self.stride,
-                               dilation=self.dilation,
-                               group=self.group)
+        super(Conv2dThor, self).__init__(in_channels, out_channels, kernel_size,
+                                         stride, pad_mode, padding, dilation, group, has_bias, weight_init, bias_init)
+        self.conv2d = P.Conv2D(out_channel=self.out_channels, kernel_size=self.kernel_size,
+                               mode=1, pad_mode=self.pad_mode, pad=self.padding,
+                               stride=self.stride, dilation=self.dilation, group=self.group)
         self._init_depthwise_conv2d(weight_init)
         self.bias_add = P.BiasAdd()
 
@@ -550,40 +513,32 @@ class Conv2dThor(_Conv):
         return output
 
     def extend_repr(self):
-        s = 'input_channels={}, output_channels={}, kernel_size={},' \
-            'stride={},  pad_mode={}, padding={}, dilation={}, ' \
-            'group={}, has_bias={},' \
-            'weight_init={}, bias_init={}'.format(
-                self.in_channels,
-                self.out_channels,
-                self.kernel_size,
-                self.stride,
-                self.pad_mode,
-                self.padding,
-                self.dilation,
-                self.group,
-                self.has_bias,
-                self.weight_init,
-                self.bias_init)
+        s = 'input_channels={}, output_channels={}, kernel_size={},' 'stride={},  ' \
+            'pad_mode={}, padding={}, dilation={}, ' 'group={}, has_bias={},' \
+            'weight_init={}, bias_init={}'.format(self.in_channels, self.out_channels, self.kernel_size,
+                                                  self.stride, self.pad_mode, self.padding, self.dilation,
+                                                  self.group, self.has_bias, self.weight_init, self.bias_init)
         return s
 
 
 class EmbeddingThor(Cell):
     r"""
-    A simple lookup table that stores embeddings of a fixed dictionary and size.
+    A simple lookup table that stores embeddings of a fixed dictionary and size
+    and saving the information needed for THOR.
 
     This module is often used to store word embeddings and retrieve them using
     indices. The input to the module is a list of indices, and the output is
-    the corresponding word embeddings.
+    the corresponding word embeddings. And saves the information A and G in the dense connected layer
+    needed for THOR, the detail can be seen in paper: https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf
 
     Note:
         When 'use_one_hot' is set to True, the type of the input must be mindspore.int32.
 
     Args:
-        vocab_size (int): Size of the dictionary of embeddings.
+        vocab_size (int): The size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
         use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: False.
-        embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+        embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializes the embedding_table.
             Refer to class `initializer` for the values of string when a string
             is specified. Default: 'normal'.
         dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
