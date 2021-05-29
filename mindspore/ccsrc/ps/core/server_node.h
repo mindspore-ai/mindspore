@@ -46,14 +46,15 @@ class ServerNode : public AbstractNode {
                                             DataPtr data, size_t size)>;
 
   void set_handler(const RequestHandler &handler);
-  void Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta, const void *data,
+                size_t size);
 
  private:
   void CreateTcpServer();
   void Initialize();
-  void ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                       const void *data, size_t size);
-  void ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+  void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                       const Protos &protos, const void *data, size_t size);
+  void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                  const void *data, size_t size);
 
   std::shared_ptr<TcpServer> server_;

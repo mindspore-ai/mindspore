@@ -40,11 +40,11 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
                << " the node id:" << node_info_.node_id_ << "is registering to scheduler!";
 }
 
-void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessRegisterResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   RegisterRespMessage register_resp_message;
-  register_resp_message.ParseFromArray(data, size);
+  register_resp_message.ParseFromArray(data, SizeToInt(size));
   if (register_resp_message.node_id() != node_info_.node_id_) {
     MS_LOG(EXCEPTION) << "The node id received:" << register_resp_message.node_id()
                       << " is not match the current node id:" << node_info_.node_id_;
@@ -53,7 +53,7 @@ void AbstractNode::ProcessRegisterResp(std::shared_ptr<MessageMeta> meta, const 
   if (register_resp_message.rank_id() < 0) {
     MS_LOG(EXCEPTION) << "The rank id is wrong.";
   }
-  node_info_.rank_id_ = register_resp_message.rank_id();
+  node_info_.rank_id_ = IntToUint(register_resp_message.rank_id());
 
   MS_LOG(INFO) << "The node id is:" << node_info_.node_id_ << ", and the rank id is:" << node_info_.rank_id_
                << " registered scheduler success!";
@@ -332,7 +332,7 @@ bool AbstractNode::CheckSchedulerTimeout() const {
   return false;
 }
 
-void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   HeartbeatRespMessage heartbeat_resp_message;
@@ -373,11 +373,11 @@ void AbstractNode::FetchServers(const std::shared_ptr<TcpClient> &client) {
   }
 }
 
-void AbstractNode::ProcessFetchServersResp(std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void AbstractNode::ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   FetchServersRespMessage fetch_servers_resp_message;
-  fetch_servers_resp_message.ParseFromArray(data, size);
+  fetch_servers_resp_message.ParseFromArray(data, SizeToInt(size));
 
   for (const auto &it : fetch_servers_resp_message.servers_meta()) {
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
@@ -515,7 +515,7 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, std
   return Wait(request_id, timeout);
 }
 
-void AbstractNode::ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+void AbstractNode::ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                        size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -579,7 +579,7 @@ void AbstractNode::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta
   message_tracker_cond_.notify_all();
 }
 
-void AbstractNode::RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+void AbstractNode::RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                       size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);

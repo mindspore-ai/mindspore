@@ -38,8 +38,9 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   return true;
 }
 
-void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
+                                     const std::shared_ptr<TcpConnection> &conn,
+                                     const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -111,8 +112,9 @@ void SchedulerNode::CreateTcpServer() {
   });
 }
 
-void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                    std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
+                                    const std::shared_ptr<TcpConnection> &conn,
+                                    const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -139,8 +141,8 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
                       register_resp_message.ByteSizeLong());
 }
 
-void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                  std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessFinish(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                                  const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -151,8 +153,9 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
   server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 }
 
-void SchedulerNode::ProcessFetchServers(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+void SchedulerNode::ProcessFetchServers(const std::shared_ptr<TcpServer> &server,
+                                        const std::shared_ptr<TcpConnection> &conn,
+                                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);

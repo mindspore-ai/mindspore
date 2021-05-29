@@ -29,14 +29,14 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
 
   const std::string &node_id = register_message.node_id();
   if (nodes_info_.find(node_id) != nodes_info_.end()) {
-    rank_id = nodes_info_[node_id].rank_id_;
+    rank_id = UintToInt(nodes_info_[node_id].rank_id_);
     MS_LOG(INFO) << "The node id: " << node_id << " is already assigned!";
     return rank_id;
   }
 
   if (register_message.role() == NodeRole::SERVER) {
     const std::string &ip = register_message.ip();
-    uint32_t port = register_message.port();
+    uint32_t port = IntToUint(register_message.port());
 
     rank_id = ++next_server_rank_id_;
     if (IntToUint(rank_id) >= ClusterMetadata::instance()->total_server_num()) {
@@ -63,7 +63,7 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     NodeInfo node_info;
     node_info.node_role_ = NodeRole::WORKER;
     node_info.node_id_ = node_id;
-    node_info.rank_id_ = rank_id;
+    node_info.rank_id_ = IntToUint(rank_id);
     nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << " assign rank id:" << rank_id;
   }
@@ -89,7 +89,7 @@ std::vector<ServersMeta> NodeManager::FetchServersMeta() {
   for (auto it = nodes_info_.begin(); it != nodes_info_.end(); ++it) {
     if (it->second.node_role_ == NodeRole::SERVER) {
       ServersMeta servers_meta;
-      servers_meta.set_rank_id(it->second.rank_id_);
+      servers_meta.set_rank_id(UintToInt(it->second.rank_id_));
       servers_meta.set_ip(it->second.ip_);
       servers_meta.set_port(it->second.port_);
       servers_meta_list.push_back(servers_meta);
@@ -133,7 +133,7 @@ void NodeManager::CheckClusterTimeout() {
     MS_LOG(WARNING) << "The cluster is not ready after " << ClusterMetadata::instance()->cluster_available_timeout()
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
                     << nodes_info_.size();
-    current_node_num_ = nodes_info_.size();
+    current_node_num_ = SizeToInt(nodes_info_.size());
     is_cluster_timeout_ = true;
   }
 }
@@ -142,13 +142,13 @@ void NodeManager::AddFinishNode(const std::string &finish_message) { finish_node
 
 std::unordered_map<std::string, NodeInfo> NodeManager::nodes_info() { return nodes_info_; }
 
-bool NodeManager::is_cluster_finish() { return is_cluster_finish_.load(); }
+bool NodeManager::is_cluster_finish() const { return is_cluster_finish_.load(); }
 
-bool NodeManager::is_cluster_ready() { return is_cluster_ready_.load(); }
+bool NodeManager::is_cluster_ready() const { return is_cluster_ready_.load(); }
 
-bool NodeManager::is_cluster_timeout() { return is_cluster_timeout_.load(); }
+bool NodeManager::is_cluster_timeout() const { return is_cluster_timeout_.load(); }
 
-bool NodeManager::is_node_timeout() { return is_node_timeout_.load(); }
+bool NodeManager::is_node_timeout() const { return is_node_timeout_.load(); }
 
 void NodeManager::set_cluster_timeout(bool is_cluster_timeout) { is_cluster_timeout_ = is_cluster_timeout; }
 }  // namespace core

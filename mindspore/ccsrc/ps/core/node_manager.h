@@ -63,10 +63,10 @@ class NodeManager {
   void CheckClusterTimeout();
   void AddFinishNode(const std::string &finish_message);
   std::unordered_map<std::string, NodeInfo> nodes_info();
-  bool is_cluster_ready();
-  bool is_cluster_finish();
-  bool is_cluster_timeout();
-  bool is_node_timeout();
+  bool is_cluster_ready() const;
+  bool is_cluster_finish() const;
+  bool is_cluster_timeout() const;
+  bool is_node_timeout() const;
   void set_cluster_timeout(bool is_cluster_timeout);
 
  private:

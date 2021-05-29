@@ -36,40 +36,40 @@ void ClusterMetadata::Init(const uint32_t &worker_num, const uint32_t &server_nu
   scheduler_port_ = scheduler_port;
 }
 
-uint32_t ClusterMetadata::total_worker_num() { return worker_num_; }
+uint32_t ClusterMetadata::total_worker_num() const { return worker_num_; }
 
-uint32_t ClusterMetadata::total_server_num() { return server_num_; }
+uint32_t ClusterMetadata::total_server_num() const { return server_num_; }
 
-uint32_t ClusterMetadata::heartbeat_interval() { return heartbeat_interval_; }
+uint32_t ClusterMetadata::heartbeat_interval() const { return heartbeat_interval_; }
 
 void ClusterMetadata::set_heartbeat_interval(const uint32_t &heartbeat_interval) {
   heartbeat_interval_ = heartbeat_interval;
 }
 
-std::string ClusterMetadata::scheduler_host() {
+std::string ClusterMetadata::scheduler_host() const {
   MS_EXCEPTION_IF_NULL(scheduler_host_);
   return *scheduler_host_;
 }
 
-uint16_t ClusterMetadata::scheduler_port() { return scheduler_port_; }
+uint16_t ClusterMetadata::scheduler_port() const { return scheduler_port_; }
 
-uint32_t ClusterMetadata::heartbeat_timeout() { return heartbeat_timeout_; }
+uint32_t ClusterMetadata::heartbeat_timeout() const { return heartbeat_timeout_; }
 
 void ClusterMetadata::set_heartbeat_timeout(const uint32_t &heartbeat_timeout) {
   heartbeat_interval_ = heartbeat_timeout;
 }
 
-uint32_t ClusterMetadata::cluster_available_timeout() { return cluster_available_timeout_; }
+uint32_t ClusterMetadata::cluster_available_timeout() const { return cluster_available_timeout_; }
 
 void ClusterMetadata::set_cluster_available_timeout(const uint32_t &cluster_available_timeout) {
   cluster_available_timeout_ = cluster_available_timeout;
 }
 
-uint32_t ClusterMetadata::connect_interval() { return connect_interval_; }
+uint32_t ClusterMetadata::connect_interval() const { return connect_interval_; }
 
 void ClusterMetadata::set_connect_interval(const uint32_t &connect_interval) { connect_interval_ = connect_interval; }
 
-uint32_t ClusterMetadata::scheduler_timeout() { return scheduler_timeout_; }
+uint32_t ClusterMetadata::scheduler_timeout() const { return scheduler_timeout_; }
 
 void ClusterMetadata::set_scheduler_timeout(const uint32_t &scheduler_timeout) {
   scheduler_timeout_ = scheduler_timeout;

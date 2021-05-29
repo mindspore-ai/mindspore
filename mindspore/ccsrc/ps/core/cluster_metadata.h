@@ -36,19 +36,19 @@ class ClusterMetadata {
 
   void Init(const uint32_t &worker_num, const uint32_t &server_num, std::string scheduler_host,
             const uint16_t &scheduler_port);
-  uint32_t total_worker_num();
-  uint32_t total_server_num();
-  uint32_t heartbeat_interval();
+  uint32_t total_worker_num() const;
+  uint32_t total_server_num() const;
+  uint32_t heartbeat_interval() const;
   void set_heartbeat_interval(const uint32_t &heartbeat_interval);
-  std::string scheduler_host();
-  uint16_t scheduler_port();
-  uint32_t heartbeat_timeout();
+  std::string scheduler_host() const;
+  uint16_t scheduler_port() const;
+  uint32_t heartbeat_timeout() const;
   void set_heartbeat_timeout(const uint32_t &heartbeat_timeout);
-  uint32_t cluster_available_timeout();
+  uint32_t cluster_available_timeout() const;
   void set_cluster_available_timeout(const uint32_t &cluster_available_timeout);
-  uint32_t connect_interval();
+  uint32_t connect_interval() const;
   void set_connect_interval(const uint32_t &connect_interval);
-  uint32_t scheduler_timeout();
+  uint32_t scheduler_timeout() const;
   void set_scheduler_timeout(const uint32_t &scheduler_timeout);
 
  private:

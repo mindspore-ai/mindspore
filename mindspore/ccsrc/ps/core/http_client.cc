@@ -128,7 +128,7 @@ void HttpClient::ReadChunkDataCallback(struct evhttp_request *request, void *arg
   MS_EXCEPTION_IF_NULL(evbuf);
   int n = 0;
   while ((n = evbuffer_remove(evbuf, &buf, sizeof(buf))) > 0) {
-    handler->ReceiveMessage(buf, n);
+    handler->ReceiveMessage(buf, IntToSize(n));
   }
 }
 
@@ -151,7 +151,7 @@ void HttpClient::ConnectionCloseCallback(struct evhttp_connection *connection, v
 }
 
 void HttpClient::AddHeaders(const std::map<std::string, std::string> &headers, const struct evhttp_request *request,
-                            std::shared_ptr<HttpMessageHandler> handler) {
+                            const std::shared_ptr<HttpMessageHandler> &handler) {
   MS_EXCEPTION_IF_NULL(request);
   if (evhttp_add_header(evhttp_request_get_output_headers(const_cast<evhttp_request *>(request)), "Host",
                         handler->GetHostByUri()) != 0) {
