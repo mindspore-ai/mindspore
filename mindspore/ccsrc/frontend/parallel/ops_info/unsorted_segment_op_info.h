@@ -31,6 +31,13 @@ namespace mindspore {
 namespace parallel {
 constexpr size_t UNSORTEDSEGMENTOP_INPUTS_SIZE = 2;
 constexpr size_t UNSORTEDSEGMENTOP_OUTPUTS_SIZE = 1;
+
+// The operator UnsortedSegment accepts three inputs:
+// input0 : vector, the shape is x1,x2,x3,...,xr
+// input1 : segment id, the shape is x1,x2,..,xn
+// input2 : value, the number of the segments
+// For Sum:  r >= n
+// For Min:  r >=n, n=1
 class UnsortedSegmentOpInfo : public OperatorInfo {
  public:
   UnsortedSegmentOpInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

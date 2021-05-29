@@ -52,8 +52,8 @@ static std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
   }
 
   if (sequeue->isa<ValueTuple>()) {
-    auto val = sequeue->cast<ValueTuplePtr>();
-    return val->value();
+    auto val_tuple = sequeue->cast<ValueTuplePtr>();
+    return val_tuple->value();
   }
   auto val = sequeue->cast<ValueListPtr>();
   return val->value();

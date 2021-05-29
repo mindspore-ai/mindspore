@@ -30,12 +30,6 @@
 
 namespace mindspore {
 namespace parallel {
-// The operator UnsortedSegment accepts three inputs:
-// input0 : vector, the shape is x1,x2,x3,...,xr
-// input1 : segment id, the shape is x1,x2,..,xn
-// input2 : value, the number of the segments
-// For Sum:  r >= n
-// For Min:  r >=n, n=1
 Status UnsortedSegmentOpInfo::GetAttrs() {
   if (inputs_shape_.size() != UNSORTEDSEGMENTOP_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be 2, but is " << inputs_shape_.size();
@@ -239,9 +233,7 @@ Status UnsortedSegmentOpInfo::InferForwardCommunication() {
     return SUCCESS;
   }
 
-  Operator op;
-  op = CreateAllReduceOp(REDUCE_OP_SUM, group_list[0].name());
-
+  Operator op = CreateAllReduceOp(REDUCE_OP_SUM, group_list[0].name());
   forward_op_.push_back(op);
   MS_LOG(INFO) << name_ << " : The group name of forward communication is " << group_list[0].name();
   return SUCCESS;

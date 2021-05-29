@@ -141,12 +141,12 @@ Status GetNextInfo::GetAttrTypes() {
         types_.push_back(type->ToString());
       }
     } else if (iter->second->isa<ValueTuple>()) {
-      auto iter_cast = iter->second->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(iter_cast);
-      auto types = iter_cast->value();
-      for (auto &type : types) {
-        MS_EXCEPTION_IF_NULL(type);
-        types_.push_back(type->ToString());
+      auto iter_tuple = iter->second->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(iter_tuple);
+      auto tuple_types = iter_tuple->value();
+      for (auto &ele : tuple_types) {
+        MS_EXCEPTION_IF_NULL(ele);
+        types_.push_back(ele->ToString());
       }
     } else {
       MS_LOG(ERROR) << name_ << " : The value of types is not list.";

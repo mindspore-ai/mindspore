@@ -825,35 +825,35 @@ std::vector<std::shared_ptr<Edge>> OperatorInfo::GetAlivePrevEdges() {
   return ret;
 }
 
-void OperatorInfo::ReplacePreEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
+void OperatorInfo::ReplacePreEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplacePreEdge: the op is null.";
     return;
   }
   for (auto &edge : prev_edges_) {
     if (edge->prev_operator() == op) {
-      edge = new_edge;
+      edge = replace_edge;
       return;
     }
   }
   MS_LOG(EXCEPTION) << name_ << ": Replace edge failed: no edge has been replaced";
 }
 
-void OperatorInfo::ReplaceSuccEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
+void OperatorInfo::ReplaceSuccEdge(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplaceSuccEdge: the op is null.";
     return;
   }
   for (auto &edge : succ_edges_) {
     if (edge->next_operator() == op) {
-      edge = new_edge;
+      edge = replace_edge;
       return;
     }
   }
   MS_LOG(EXCEPTION) << name_ << ": Replace edge failed: no edge has been replaced";
 }
 
-void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
+void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &replace_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplacePreEdges: the op is null.";
     return;
@@ -864,11 +864,12 @@ void OperatorInfo::ReplacePreEdges(const std::shared_ptr<OperatorInfo> &op, cons
       new_pre_edges.push_back(edge);
     }
   }
-  new_pre_edges.push_back(new_edge);
+  new_pre_edges.push_back(replace_edge);
   prev_edges_ = new_pre_edges;
 }
 
-void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &new_edge) {
+void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
+                                    const std::shared_ptr<Edge> &replace_edge) {
   if (op == nullptr) {
     MS_LOG(ERROR) << name_ << ": ReplaceSuccEdges: the op is null";
     return;
@@ -879,7 +880,7 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op, con
       new_succ_edges.push_back(edge);
     }
   }
-  new_succ_edges.push_back(new_edge);
+  new_succ_edges.push_back(replace_edge);
   succ_edges_ = new_succ_edges;
 }
 
@@ -1503,7 +1504,7 @@ int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const S
     }
   }
 
-  return (int64_t)device_num;
+  return device_num;
 }
 
 Status OperatorInfo::InferAsLossDivisor() {
