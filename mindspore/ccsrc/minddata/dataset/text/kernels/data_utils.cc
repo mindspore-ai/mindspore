@@ -57,5 +57,16 @@ Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr
   (*output)->Reshape(out_shape);
   return Status::OK();
 }
+
+Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std::vector<uint32_t> &offsets_limit,
+                           TensorRow *output) {
+  std::shared_ptr<Tensor> offsets_start_tensor, offsets_limit_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
+
+  output->push_back(offsets_start_tensor);
+  output->push_back(offsets_limit_tensor);
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
