@@ -145,13 +145,22 @@ class SummaryRecord:
     def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
                  network=None, max_file_size=None, raise_exception=False, export_options=None):
 
-        self._closed, self._event_writer = False, None
+        self._event_writer = None
         self._mode, self._data_pool = 'train', defaultdict(list)
+        self._status = {
+            'closed': False,
+            'has_graph': False
+        }
+
+        self.file_info = {
+            'file_path': None,
+            'file_name': None
+        }
 
         Validator.check_str_by_regular(file_prefix)
         Validator.check_str_by_regular(file_suffix)
 
-        self.log_path = _make_directory(log_dir)
+        log_path = _make_directory(log_dir)
 
         if not isinstance(max_file_size, (int, type(None))):
             raise TypeError("The 'max_file_size' should be int type.")
@@ -165,24 +174,21 @@ class SummaryRecord:
 
         Validator.check_value_type(arg_name='raise_exception', arg_value=raise_exception, valid_types=bool)
 
-        self.prefix = file_prefix
-        self.suffix = file_suffix
         self.network = network
-        self.has_graph = False
 
         time_second = str(int(time.time()))
         # create the summary writer file
-        self.event_file_name = get_event_file_name(self.prefix, self.suffix, time_second)
-        self.full_file_name = os.path.join(self.log_path, self.event_file_name)
+        self.file_info['file_name'] = get_event_file_name(file_prefix, file_suffix, time_second)
+        self.file_info['file_path'] = os.path.join(log_path, self.file_info.get('file_name'))
 
         self._export_options = process_export_options(export_options)
         export_dir = ''
         if self._export_options is not None:
             export_dir = "export_{}".format(time_second)
 
-        filename_dict = dict(summary=self.event_file_name,
-                             lineage=get_event_file_name(self.prefix, '_lineage', time_second),
-                             explainer=get_event_file_name(self.prefix, '_explain', time_second),
+        filename_dict = dict(summary=self.file_info.get('file_name'),
+                             lineage=get_event_file_name(file_prefix, '_lineage', time_second),
+                             explainer=get_event_file_name(file_prefix, '_explain', time_second),
                              exporter=export_dir)
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
@@ -193,7 +199,7 @@ class SummaryRecord:
 
     def __enter__(self):
         """Enter the context manager."""
-        if self._closed:
+        if self._status.get('closed'):
             raise ValueError('SummaryRecord has been closed.')
         return self
 
@@ -314,11 +320,11 @@ class SummaryRecord:
         Validator.check_value_type(arg_name='step', arg_value=step, valid_types=int)
         Validator.check_value_type(arg_name='train_network', arg_value=train_network, valid_types=[Cell, type(None)])
 
-        if self._closed:
+        if self._status.get('closed'):
             logger.error("The record writer is closed.")
             return False
         # Set the current summary of train step
-        if self.network is not None and not self.has_graph:
+        if self.network is not None and not self._status.get('has_graph'):
             graph_proto = self.network.get_func_graph_proto()
             if graph_proto is None and train_network is not None:
                 graph_proto = train_network.get_func_graph_proto()
@@ -326,7 +332,7 @@ class SummaryRecord:
                 logger.error("Failed to get proto for graph")
             else:
                 self._event_writer.write({'graph': [{'step': step, 'value': graph_proto}]})
-                self.has_graph = True
+                self._status['has_graph'] = True
                 if not _summary_tensor_cache:
                     return True
 
@@ -377,7 +383,7 @@ class SummaryRecord:
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         log_dir = summary_record.log_dir
         """
-        return self.full_file_name
+        return self.file_info.get('file_path')
 
     def flush(self):
         """
@@ -391,7 +397,7 @@ class SummaryRecord:
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         summary_record.flush()
         """
-        if self._closed:
+        if self._status.get('closed'):
             logger.error("The record writer is closed and can not flush.")
         elif self._event_writer:
             self._event_writer.flush()
@@ -408,13 +414,13 @@ class SummaryRecord:
             ...     finally:
             ...         summary_record.close()
         """
-        if not self._closed and self._event_writer:
+        if not self._status.get('closed') and self._event_writer:
             # event writer flush and close
             logger.info('Please wait it may take quite some time to finish writing and closing.')
             atexit.unregister(self.close)
             self._event_writer.close()
             self._event_writer.join()
-            self._closed = True
+            self._status['closed'] = True
 
     @staticmethod
     def _parse_from(name: str = None):

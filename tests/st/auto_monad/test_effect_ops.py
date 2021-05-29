@@ -390,7 +390,7 @@ def test_summary():
         with SummaryRecord(tmp_dir) as test_writer:
             train_summary_record(test_writer, steps=steps)
 
-            file_name = os.path.realpath(test_writer.full_file_name)
+            file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as summary_writer:
             for _ in range(steps):
                 event = summary_writer.read_event()

@@ -55,8 +55,7 @@ def test_histogram_summary():
             test_data = _wrap_test_data(Tensor([[1, 2, 3], [4, 5, 6]]))
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
-
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             assert event.summary.value[0].histogram.count == 6
@@ -78,7 +77,7 @@ def test_histogram_multi_summary():
                 _cache_summary_tensor_data(test_data)
                 test_writer.record(step=i)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             for _ in range(num_step):
                 event = reader.read_event()
@@ -92,7 +91,7 @@ def test_histogram_summary_empty_tensor():
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             assert event.summary.value[0].histogram.count == 0
@@ -109,7 +108,7 @@ def test_histogram_summary_same_value():
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             LOG.debug(event)
@@ -129,7 +128,7 @@ def test_histogram_summary_high_dims():
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             LOG.debug(event)
@@ -153,7 +152,7 @@ def test_histogram_summary_nan_inf():
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             LOG.debug(event)
@@ -169,7 +168,7 @@ def test_histogram_summary_all_nan_inf():
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
 
-        file_name = os.path.join(tmp_dir, test_writer.event_file_name)
+        file_name = os.path.realpath(test_writer.log_dir)
         with SummaryReader(file_name) as reader:
             event = reader.read_event()
             LOG.debug(event)
