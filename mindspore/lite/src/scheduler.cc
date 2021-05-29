@@ -133,8 +133,9 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  if (kernel::RegisterKernelInterface::CheckReg(node, context_->GetProviders())) {
-    return KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
+  auto ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders());
+  if (ret != RET_NOT_SUPPORT) {
+    return ret;
   }
 
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
@@ -152,7 +153,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   parameter->quant_type_ = node->quant_type_;
 
   op_parameters_[node->output_indices_.at(0)] = parameter;
-  auto ret = KernelInferShape(inputs, outputs, parameter);
+  ret = KernelInferShape(inputs, outputs, parameter);
   if (ret == RET_OK) {
     for (auto &output : outputs) {
       if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {

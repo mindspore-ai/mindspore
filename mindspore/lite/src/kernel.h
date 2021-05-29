@@ -28,7 +28,7 @@ class Kernel {
 
   Kernel(const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
          const schema::Primitive *primitive, const lite::Context *ctx)
-      : inputs_(std::move(inputs)), outputs_(std::move(outputs)), context_(ctx) {
+      : inputs_(std::move(inputs)), outputs_(std::move(outputs)), primitive_(primitive), context_(ctx) {
     if (primitive != nullptr) {
       type_ = primitive->value_type();
     }
@@ -59,12 +59,14 @@ class Kernel {
 
   void set_name(const std::string &name) { this->name_ = name; }
   const lite::Context *context() const { return this->context_; }
+  const schema::Primitive *primitive() const { return this->primitive_; }
 
  protected:
   std::vector<mindspore::tensor::MSTensor *> inputs_;
   std::vector<mindspore::tensor::MSTensor *> outputs_;
   schema::PrimitiveType type_ = schema::PrimitiveType_NONE;
   std::string name_;
+  const schema::Primitive *primitive_ = nullptr;
   const lite::Context *context_ = nullptr;
 };
 }  // namespace mindspore::kernel

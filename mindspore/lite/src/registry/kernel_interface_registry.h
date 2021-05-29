@@ -33,7 +33,7 @@ class KernelInterfaceRegistry {
     static KernelInterfaceRegistry instance;
     return &instance;
   }
-  bool CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers);
+
   std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
                                                               const schema::Primitive *primitive);
   int CustomReg(const std::string &provider, const std::string &op_type, kernel::KernelInterfaceCreator creator);

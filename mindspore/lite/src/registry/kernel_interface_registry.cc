@@ -35,39 +35,6 @@ std::string GetCustomType(const schema::Primitive *primitive) {
 }
 }  // namespace
 
-bool KernelInterfaceRegistry::CheckReg(const lite::Model::Node *node, std::set<std::string> &&providers) {
-  if (VersionManager::GetInstance()->GetSchemaVersion() == SCHEMA_V0) {
-    return false;
-  }
-  auto primitive = static_cast<const schema::Primitive *>(node->primitive_);
-  if (primitive == nullptr) {
-    return false;
-  }
-
-  auto op_type = primitive->value_type();
-  if (op_type == schema::PrimitiveType_Custom) {
-    auto &&custom_type = GetCustomType(primitive);
-    return std::any_of(custom_creators_.begin(), custom_creators_.end(), [&custom_type](auto &&item) {
-      if (item.second[custom_type] != nullptr) {
-        return true;
-      }
-      return false;
-    });
-  }
-
-  return std::any_of(kernel_creators_.begin(), kernel_creators_.end(),
-                     [op_type, &providers, &mutex = this->mutex_](auto &&item) {
-                       std::unique_lock<std::mutex> lock(mutex);
-                       if (providers.find(item.first) == providers.end()) {
-                         return false;
-                       }
-                       if (item.second[op_type] != nullptr) {
-                         return true;
-                       }
-                       return false;
-                     });
-}
-
 int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
                                        KernelInterfaceCreator creator) {
   custom_creators_[provider][type] = creator;
@@ -76,6 +43,9 @@ int KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::s
 
 std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCacheInterface(const std::string &provider,
                                                                                     int op_type) {
+  if (provider.empty()) {
+    return nullptr;
+  }
   auto provider_iter = kernel_interfaces_.find(provider);
   if (provider_iter != kernel_interfaces_.end()) {
     auto kernel_iter = provider_iter->second.find(op_type);
@@ -88,6 +58,9 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCacheInterf
 
 std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomCacheInterface(const std::string &provider,
                                                                                           const std::string &type) {
+  if (provider.empty()) {
+    return nullptr;
+  }
   auto provider_iter = custom_kernels_.find(provider);
   if (provider_iter == custom_kernels_.end()) {
     return nullptr;

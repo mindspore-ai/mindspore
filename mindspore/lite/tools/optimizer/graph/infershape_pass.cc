@@ -408,24 +408,30 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       fbb.Clear();
       return false;
     }
-    auto parameter_gen =
-      lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
-    if (parameter_gen == nullptr) {
-      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
-      FreeTensors(&input_tensors);
-      FreeTensors(&output_tensors);
-      fbb.Clear();
-      return false;
+    status = KernelInferShape(input_tensors, output_tensors, prim, {});
+    if (status == lite::RET_NOT_SUPPORT) {
+      auto parameter_gen =
+        lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+      if (parameter_gen == nullptr) {
+        MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
+                      << schema::EnumNamePrimitiveType(prim->value_type());
+        FreeTensors(&input_tensors);
+        FreeTensors(&output_tensors);
+        fbb.Clear();
+        return false;
+      }
+      auto parameter = parameter_gen(prim);
+      if (parameter == nullptr) {
+        MS_LOG(ERROR) << "parameter is nullptr.";
+        FreeTensors(&input_tensors);
+        FreeTensors(&output_tensors);
+        fbb.Clear();
+        return false;
+      }
+      status = KernelInferShape(input_tensors, output_tensors, parameter);
+      free(parameter);
     }
-    auto parameter = parameter_gen(prim);
-    if (parameter == nullptr) {
-      MS_LOG(ERROR) << "parameter is nullptr.";
-      FreeTensors(&input_tensors);
-      FreeTensors(&output_tensors);
-      fbb.Clear();
-      return false;
-    }
-    status = KernelInferShape(input_tensors, output_tensors, parameter);
+
     if (status == RET_OK) {
       status = SetCNodeAbstract(output_tensors, cnode);
       if (status != RET_OK) {
@@ -434,7 +440,6 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     }
     FreeTensors(&input_tensors);
     FreeTensors(&output_tensors);
-    free(parameter);
     fbb.Clear();
   }
   return true;

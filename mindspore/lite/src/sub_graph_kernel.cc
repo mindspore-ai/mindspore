@@ -97,18 +97,23 @@ int SubGraphKernel::ReSize() {
       MS_LOG(ERROR) << "all nodes in should be kernel";
       return RET_ERROR;
     }
-    auto parameter = kernel->op_parameter();
-    if (parameter == nullptr) {
-      MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
-      return RET_ERROR;
-    }
     std::vector<lite::Tensor *> inputs = kernel->in_tensors();
     std::vector<lite::Tensor *> outputs = kernel->out_tensors();
     for (auto &output : outputs) {
       output->FreeData();
     }
+    auto ret =
+      lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(),
+                             static_cast<const lite::InnerContext *>(kernel->kernel()->context())->GetProviders());
+    if (ret == lite::RET_NOT_SUPPORT) {
+      auto parameter = kernel->op_parameter();
+      if (parameter == nullptr) {
+        MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
+        return RET_ERROR;
+      }
+      ret = lite::KernelInferShape(inputs, outputs, parameter);
+    }
 
-    auto ret = lite::KernelInferShape(inputs, outputs, parameter);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
