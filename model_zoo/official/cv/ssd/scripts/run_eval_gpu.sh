@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]
+if [ $# != 4 ]
 then
-    echo "Usage: sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]"
+    echo "Usage: sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]"
 exit 1
 fi
 
@@ -30,8 +30,10 @@ get_real_path(){
 
 DATASET=$1
 CHECKPOINT_PATH=$(get_real_path $2)
+CONFIG_PATH=$(get_real_path $4)
 echo $DATASET
 echo $CHECKPOINT_PATH
+echo $CONFIG_PATH
 
 if [ ! -f $CHECKPOINT_PATH ]
 then
@@ -54,13 +56,15 @@ fi
 
 mkdir ./eval$3
 cp ./*.py ./eval$3
+cp ./*.yaml ./eval$3
 cp -r ./src ./eval$3
 cd ./eval$3 || exit
 env > env.log
 echo "start inferring for device $DEVICE_ID"
 python eval.py \
     --dataset=$DATASET \
-    --checkpoint_path=$CHECKPOINT_PATH \
-    --run_platform="GPU" \
-    --device_id=$3 > log.txt 2>&1 &
+    --checkpoint_file_path=$CHECKPOINT_PATH \
+    --device_target="GPU" \
+    --device_id=$3 \
+    --config_path=$CONFIG_PATH > log.txt 2>&1 &
 cd ..

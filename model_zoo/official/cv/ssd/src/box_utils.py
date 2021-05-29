@@ -18,7 +18,7 @@
 import math
 import itertools as it
 import numpy as np
-from .config import config
+from src.model_utils.config import config
 from .anchor_generator import GridAnchorGenerator
 
 
@@ -62,7 +62,7 @@ class GeneratDefaultBoxes():
         self.default_boxes_tlbr = np.array(tuple(to_tlbr(*i) for i in self.default_boxes), dtype='float32')
         self.default_boxes = np.array(self.default_boxes, dtype='float32')
 
-if 'use_anchor_generator' in config and config.use_anchor_generator:
+if hasattr(config, 'use_anchor_generator') and config.use_anchor_generator:
     generator = GridAnchorGenerator(config.img_shape, 4, 2, [1.0, 2.0, 0.5])
     default_boxes, default_boxes_tlbr = generator.generate_multi_levels(config.steps)
 else:

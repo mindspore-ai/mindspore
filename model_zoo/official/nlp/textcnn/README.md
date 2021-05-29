@@ -57,14 +57,16 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
+  # need set config_path in config.py file and set data_path in yaml file
   python train.py > train.log 2>&1 &
   OR
-  sh scripts/run_train.sh
+  sh scripts/run_train.sh dataset
 
   # run evaluation example
+  # need set config_path in config.py file and set data_path, checkpoint_file_path in yaml file
   python eval.py > eval.log 2>&1 &
   OR
-  sh scripts/run_eval.sh ckpt_path
+  sh scripts/run_eval.sh checkpoint_file_path dataset
   ```
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
@@ -84,9 +86,11 @@ If you want to run in modelarts, please check the official documentation of [mod
 # run evaluation on modelarts example
 # (1) Copy or upload your trained model to S3 bucket.
 # (2) Perform a or b.
-#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#       a.Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
 #          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
-#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
 #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
 # (3) Set the code directory to "/path/textcnn" on the website UI interface.
 # (4) Set the startup file to "eval.py" on the website UI interface.
@@ -144,16 +148,17 @@ Parameters for both training and evaluation can be set in config.py
   'base_lr': 1e-3          # The base learning rate
   ```
 
-For more configuration details, please refer the script `config.py`.
+For more configuration details, please refer the script `*.yaml`.
 
 ## [Training Process](#contents)
 
 - running on Ascend
 
   ```python
+  # need set config_path in config.py file and set data_path in yaml file
   python train.py > train.log 2>&1 &
   OR
-  sh scripts/run_train.sh
+  sh scripts/run_train.sh dataset
   ```
 
   The python command above will run in the background, you can view the results through the file `train.log`.
@@ -176,9 +181,10 @@ For more configuration details, please refer the script `config.py`.
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/textcnn/ckpt/train_textcnn.ckpt".
 
   ```python
-  python eval.py --checkpoint_path=ckpt_path > eval.log 2>&1 &
+  # need set config_path in config.py file and set data_path, checkpoint_file_path in yaml file
+  python eval.py > eval.log 2>&1 &
   OR
-  sh scripts/run_eval.sh ckpt_path
+  sh scripts/run_eval.sh checkpoint_file_path dataset
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
@@ -191,7 +197,7 @@ For more configuration details, please refer the script `config.py`.
 ## [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,

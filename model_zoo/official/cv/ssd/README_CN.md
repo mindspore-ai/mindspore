@@ -97,7 +97,7 @@ SSD方法基于前向卷积网络，该网络产生固定大小的边界框集�
 
         ```
 
-        每行是按空间分割的图像标注，第一列是图像的相对路径，其余为[xmin,ymin,xmax,ymax,class]格式的框和类信息。我们从`IMAGE_DIR`（数据集目录）和`ANNO_PATH`（TXT文件路径）的相对路径连接起来的图像路径中读取图像。在`config.py`中设置`IMAGE_DIR`和`ANNO_PATH`。
+        每行是按空间分割的图像标注，第一列是图像的相对路径，其余为[xmin,ymin,xmax,ymax,class]格式的框和类信息。我们从`IMAGE_DIR`（数据集目录）和`ANNO_PATH`（TXT文件路径）的相对路径连接起来的图像路径中读取图像。在`*yaml`中设置`IMAGE_DIR`和`ANNO_PATH`。
 
 # 快速入门
 
@@ -107,24 +107,58 @@ SSD方法基于前向卷积网络，该网络产生固定大小的边界框集�
 
 ```shell script
 # Ascend分布式训练
-sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH]
 ```
 
 ```shell script
 # Ascend处理器环境运行eval
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 - GPU处理器环境运行
 
 ```shell script
 # GPU分布式训练
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH]
 ```
 
 ```shell script
 # GPU处理器环境运行eval
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
+```
+
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+```python
+# 在modelarts上使用分布式训练的示例：
+# (1) 选址a或者b其中一种方式。
+#       a. 设置 "enable_modelarts=True" 。
+#          在yaml文件上设置网络所需的参数。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          在modelarts的界面上设置网络所需的参数。
+# (2)设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (3) 在modelarts的界面上设置代码的路径 "/path/ssd"。
+# (4) 在modelarts的界面上设置模型的启动文件 "train.py" 。
+# (5) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (6) 开始模型的训练。
+
+# 在modelarts上使用模型推理的示例
+# (1) 把训练好的模型地方到桶的对应位置。
+# (2) 选址a或者b其中一种方式。
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
+# (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
+# (4) 在modelarts的界面上设置代码的路径 "/path/ssd"。
+# (5) 在modelarts的界面上设置模型的启动文件 "eval.py" 。
+# (6) 在modelarts的界面上设置模型的数据路径 "Dataset path" ,
+# 模型的输出路径"Output file path" 和模型的日志路径 "Job log path" 。
+# (7) 开始模型的推理。
 ```
 
 # 脚本说明
@@ -163,6 +197,15 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
       ├─ resnet.py                        ## resnet网络定义
       ├─ ssd.py                           ## SSD架构
       └─ vgg16.py                         ## vgg16网络定义
+      ├── model_utils
+      │   ├──config.py                     ## 参数配置
+      │   ├──device_adapter.py            ## 设备配置
+      │   ├──local_adapter.py             ## 本地设备配置
+      │   ├──moxing_adapter.py            ## modelarts设备配置
+    ├─ ssd_mobilenet_v1_fpn_config.yaml ## 参数配置
+    ├─ ssd_resnet50_fpn_config.yaml ## 参数配置
+    ├─ ssd_vgg16_config.yaml ## 参数配置
+    ├─ ssd300_config.yaml ## 参数配置
     ├─ Dockerfile                         ## docker文件
     ├─ eval.py                            ## 评估脚本
     ├─ export.py                          ## 导出 AIR,MINDIR模型的脚本
@@ -205,7 +248,7 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 - 分布式
 
 ```shell script
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 此脚本需要五或七个参数。
@@ -215,6 +258,7 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 - `LR`：分布式训练的学习率初始值。
 - `DATASET`：分布式训练的数据集模式。
 - `RANK_TABLE_FILE`：[rank_table.json](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)的路径。最好使用绝对路径。
+- `CONFIG_PATH`: 参数配置。
 - `PRE_TRAINED`：预训练检查点文件的路径。最好使用绝对路径。
 - `PRE_TRAINED_EPOCH_SIZE`：预训练的轮次数。
 
@@ -242,7 +286,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 - 分布式
 
 ```shell script
-    sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 此脚本需要四或六个参数。
@@ -251,6 +295,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 - `EPOCH_NUM`：分布式训练的轮次数。
 - `LR`：分布式训练的学习率初始值。
 - `DATASET`：分布式训练的数据集模式。
+- `CONFIG_PATH`: 参数配置。
 - `PRE_TRAINED`：预训练检查点文件的路径。最好使用绝对路径。
 - `PRE_TRAINED_EPOCH_SIZE`：预训练的轮次数。
 
@@ -272,7 +317,7 @@ epoch time: 150753.701, per step time: 329.157
 ### Ascend处理器环境评估
 
 ```shell script
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 此脚本需要两个参数。
@@ -280,6 +325,7 @@ sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 - `DATASET`：评估数据集的模式。
 - `CHECKPOINT_PATH`：检查点文件的绝对路径。
 - `DEVICE_ID`: 评估的设备ID。
+- `CONFIG_PATH`: 参数配置。
 
 > 在训练过程中可以生成检查点。
 
@@ -307,7 +353,7 @@ mAP: 0.23808886505483504
 ### GPU处理器环境评估
 
 ```shell script
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 此脚本需要两个参数。
@@ -315,6 +361,7 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 - `DATASET`：评估数据集的模式。
 - `CHECKPOINT_PATH`：检查点文件的绝对路径。
 - `DEVICE_ID`: 评估的设备ID。
+- `CONFIG_PATH`: 参数配置。
 
 > 在训练过程中可以生成检查点。
 
@@ -344,7 +391,7 @@ mAP: 0.2244936111705981
 ### [导出MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_PATH]
 ```
 
 参数ckpt_file为必填项，
@@ -357,7 +404,7 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 - `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。需要注意的是ssd_vgg16执行推理的图片尺寸为[300, 300]，由于DVPP硬件限制宽为16整除，高为2整除，因此，这个网络需要通过CPU算子对图像进行前处理。

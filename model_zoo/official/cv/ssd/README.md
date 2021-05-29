@@ -78,7 +78,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
     1. If coco dataset is used. **Select dataset to coco when run script.**
 
-        Change the `coco_root` and other settings you need in `src/config_xxx.py`. The directory structure is as follows:
+        Change the `coco_root` and other settings you need in `model_utils/ssd_xxx.yaml`. The directory structure is as follows:
 
         ```shell
         .
@@ -91,7 +91,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     2. If VOC dataset is used. **Select dataset to voc when run script.**
-        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config_xxx.py`. `voc_json` is the path of json file with coco format for evaluation, `voc_root` is the path of VOC dataset, the directory structure is as follows:
+        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `model_utils/ssd_xxx.yaml`. `voc_json` is the path of json file with coco format for evaluation, `voc_root` is the path of VOC dataset, the directory structure is as follows:
 
         ```shell
         .
@@ -117,15 +117,15 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config_xxx.py`.
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `model_utils/ssd_xxx.yaml`.
 
 ## [Quick Start](#contents)
 
 ### Prepare the model
 
-1. Chose the model by changing the `using_model` in `src/config.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`, `ssd_vgg16`, `ssd_resnet50_fpn`.
-2. Change the dataset config in the corresponding config. `src/config_xxx.py`, `xxx` is the corresponding backbone network name
-3. If you are running with `ssd_mobilenet_v1_fpn` or `ssd_resnet50_fpn`, you need a pretrained model for `mobilenet_v1` or `resnet50`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_xxx.py`. For more detail about training pre-trained model, please refer to the corresponding backbone network.
+1. Chose the model by changing the `using_model` in `model_utils/ssd_xxx.yaml`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`, `ssd_vgg16`, `ssd_resnet50_fpn`.
+2. Change the dataset config in the corresponding config. `model_utils/ssd_xxx.yaml`, `xxx` is the corresponding backbone network name
+3. If you are running with `ssd_mobilenet_v1_fpn` or `ssd_resnet50_fpn`, you need a pretrained model for `mobilenet_v1` or `resnet50`. Set the checkpoint path to `feature_extractor_base_param` in `model_utils/ssd_xxx.yaml`. For more detail about training pre-trained model, please refer to the corresponding backbone network.
 
 ### Run the scripts
 
@@ -135,23 +135,23 @@ After installing MindSpore via the official website, you can start training and 
 
 ```shell
 # distributed training on Ascend
-bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH]
 
 # run eval on Ascend
-bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 
 # run inference on Ascend310, MINDIR_PATH is the mindir model which you can export from checkpoint using export.py
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 - running on GPU
 
 ```shell
 # distributed training on GPU
-bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
+bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH]
 
 # run eval on GPU
-bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 - running on CPU(support Windows and Ubuntu)
@@ -160,10 +160,10 @@ bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 
 ```shell
 # training on CPU
-python train.py --run_platform=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[EPOCH_SIZE] --batch_size=[BATCH_SIZE] --pre_trained=[PRETRAINED_CKPT] --filter_weight=True --save_checkpoint_epochs=1
+python train.py --device_target=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[EPOCH_SIZE] --batch_size=[BATCH_SIZE] --config_path=[CONFIG_PATH] --pre_trained=[PRETRAINED_CKPT] --filter_weight=True --save_checkpoint_epochs=1
 
 # run eval on GPU
-python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAINED_CKPT]
+python eval.py --device_target=CPU --dataset=[DATASET] --checkpoint_file_path=[PRETRAINED_CKPT] --config_path=[CONFIG_PATH]
 ```
 
 - Run on docker
@@ -180,6 +180,40 @@ Create a container layer over the created image and start it
 ```shell
 # start docker
 bash scripts/docker_start.sh ssd:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+如果要在modelarts上进行模型的训练，可以参考modelarts的官方指导文档(https://support.huaweicloud.com/modelarts/)
+开始进行模型的训练和推理，具体操作如下：
+
+If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config directory to "config_path=/The path of config in S3/"
+# (3) Set the code directory to "/path/ssd" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a.  Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the config directory to "config_path=/The path of config in S3/"
+# (4) Set the code directory to "/path/ssd" on the website UI interface.
+# (5) Set the startup file to "eval.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
 ```
 
 Then you can run everything just like on ascend.
@@ -220,6 +254,15 @@ Then you can run everything just like on ascend.
       ├─ resnet.py                        ## network definition for resnet
       ├─ ssd.py                           ## ssd architecture
       └─ vgg16.py                         ## network definition for vgg16
+      ├── model_utils
+      │   ├── config.py                   ## parameter configuration
+      │   ├── device_adapter.py           ## device adapter
+      │   ├── local_adapter.py            ## local adapter
+      │   ├── moxing_adapter.py           ## moxing adapter
+    ├─ ssd_mobilenet_v1_fpn_config.yaml ## parameter configuration
+    ├─ ssd_resnet50_fpn_config.yaml ## parameter configuration
+    ├─ ssd_vgg16_config.yaml ## parameter configuration
+    ├─ ssd300_config.yaml ## parameter configuration
     ├─ Dockerfile                         ## docker file
     ├─ eval.py                            ## eval scripts
     ├─ export.py                          ## export mindir script
@@ -269,7 +312,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
 - Distribute mode
 
 ```shell
-    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.
@@ -279,6 +322,7 @@ We need five or seven parameters for this scripts.
 - `LR`: learning rate init value for distributed train.
 - `DATASET`：the dataset mode for distributed train.
 - `RANK_TABLE_FILE :` the path of [rank_table.json](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools), it is better to use absolute path.
+- `CONFIG_PATH`: parameter configuration.
 - `PRE_TRAINED :` the path of pretrained checkpoint file, it is better to use absolute path.
 - `PRE_TRAINED_EPOCH_SIZE :` the epoch num of pretrained.
 
@@ -306,7 +350,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 - Distribute mode
 
 ```shell
-    bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need four or six parameters for this scripts.
@@ -315,6 +359,7 @@ We need four or six parameters for this scripts.
 - `EPOCH_NUM`: epoch num for distributed train.
 - `LR`: learning rate init value for distributed train.
 - `DATASET`：the dataset mode for distributed train.
+- `CONFIG_PATH`: parameter configuration.
 - `PRE_TRAINED :` the path of pretrained checkpoint file, it is better to use absolute path.
 - `PRE_TRAINED_EPOCH_SIZE :` the epoch num of pretrained.
 
@@ -349,7 +394,7 @@ You can train your own model based on either pretrained classification model or 
 #### Evaluation on Ascend
 
 ```shell
-bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 We need two parameters for this scripts.
@@ -357,6 +402,7 @@ We need two parameters for this scripts.
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
 - `DEVICE_ID`: the device id for eval.
+- `CONFIG_PATH`: parameter configuration.
 
 > checkpoint can be produced in training process.
 
@@ -384,7 +430,7 @@ mAP: 0.23808886505483504
 #### Evaluation on GPU
 
 ```shell
-bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] [CONFIG_PATH]
 ```
 
 We need two parameters for this scripts.
@@ -392,6 +438,7 @@ We need two parameters for this scripts.
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
 - `DEVICE_ID`: the device id for eval.
+- `CONFIG_PATH`: parameter configuration.
 
 > checkpoint can be produced in training process.
 
@@ -421,7 +468,7 @@ mAP: 0.2244936111705981
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --config_path [CONFIG_PATH]
 ```
 
 The ckpt_file parameter is required,

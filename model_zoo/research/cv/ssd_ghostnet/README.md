@@ -80,7 +80,7 @@ python train.py
 sh run_distribute_train_ghostnet.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # run eval on Ascend
-python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.ckpt
+python eval.py --device_id 0 --dataset coco --checkpoint_file_path LOG4/ssd-500_458.ckpt
 ```
 
 If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:

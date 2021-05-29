@@ -65,20 +65,20 @@ python ./src/convert_nifti.py --input_path=/path/to/input_image/ --output_path=/
 
 ```
 
-Refer to `src/config.py`. We support some parameter configurations for quick start.
+Refer to `default_config.yaml`. We support some parameter configurations for quick start.
 
 - Run on Ascend
 
 ```python
 
 # run training example
-python train.py --data_url=/path/to/data/ --seg_url=/path/to/segment/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ > train.log 2>&1 &
 
 # run distributed training example
-bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [IMAGE_PATH] [SEG_PATH]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATA_PATH]
 
 # run evaluation example
-python eval.py --data_url=/path/to/data/ --seg_url=/path/to/segment/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ > eval.log 2>&1 &
 
 ```
 
@@ -92,22 +92,22 @@ If you want to run in modelarts, please check the official documentation of [mod
 #       b. Add "enable_modelarts=True" on the website UI interface.
 #          Add other parameters on the website UI interface.
 # (2) Download nibabel and set pip-requirements.txt to code directory
-# (3) Set the config directory to "config_path=/The path of config in S3/"
-# (4) Set the code directory to "/path/unet" on the website UI interface.
-# (5) Set the startup file to "train.py" on the website UI interface.
-# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
-# (7) Create your job.
+# (3) Set the code directory to "/path/unet3d" on the website UI interface.
+# (4) Set the startup file to "train.py" on the website UI interface.
+# (5) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (6) Create your job.
 
 # run evaluation on modelarts example
 # (1) Copy or upload your trained model to S3 bucket.
 # (2) Perform a or b.
-#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
 #          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
-#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
 #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
 # (3) Download nibabel and set pip-requirements.txt to code directory
-# (4) Set the config directory to "config_path=/The path of config in S3/"
-# (5) Set the code directory to "/path/unet" on the website UI interface.
+# (5) Set the code directory to "/path/unet3d" on the website UI interface.
 # (6) Set the startup file to "eval.py" on the website UI interface.
 # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
 # (8) Create your job.
@@ -128,7 +128,7 @@ If you want to run in modelarts, please check the official documentation of [mod
   │   ├──run_standalone_eval.sh       // shell script for evaluation on Ascend
   ├── src
   │   ├──dataset.py                   // creating dataset
-  │   ├──lr_schedule.py               // learning rate scheduler
+  │   ├──lr_schedule.py               // learning rate scheduler
   │   ├──transform.py                 // handle dataset
   │   ├──convert_nifti.py             // convert dataset
   │   ├──loss.py                      // loss
@@ -180,8 +180,7 @@ Parameters for both training and evaluation can be set in config.py
 #### running on Ascend
 
 ```shell
-
-python train.py --data_url=/path/to/data/ -seg_url=/path/to/segment/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ > train.log 2>&1 &
 
 ```
 
@@ -205,7 +204,7 @@ epoch time: 1180467.795 ms, per step time: 1380.664 ms
 #### Distributed Training
 
 > Notes:
-> RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html) , and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV4, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
+> RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html) , and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV4, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 >
 
 ```shell
@@ -241,8 +240,7 @@ epoch time: 140476.520 ms, per step time: 1312.865 ms
 Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/unet3d/Unet3d-10_110.ckpt".
 
 ```shell
-
-python eval.py --data_url=/path/to/data/ --seg_url=/path/to/segment/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ > eval.log 2>&1 &
 
 ```
 

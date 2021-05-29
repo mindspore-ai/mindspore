@@ -98,7 +98,7 @@ If set `split`=1.0, you should split train dataset and val dataset by directorie
 
 We support script to convert COCO and a Cell_Nuclei dataset used in used in [Unet++ original paper](https://arxiv.org/abs/1912.05074) to mulyi-class dataset format.
 
-1. Change `cfg_unet` in `src/config.py`, you can refer to `cfg_unet_nested_cell` and `cfg_unet_simple_coco` in `src/config.py` for detail.
+1. Select `*yaml` in `unet`.
 
 2. run script to convert to mulyi-class dataset format:
 
@@ -122,24 +122,24 @@ After installing MindSpore via the official website, you can start training and 
 
 - Select the network and dataset to use
 
-1. Select `cfg_unet` in `src/config.py`. We support unet and unet++, and we provide some parameter configurations for quick start.
-2. If you want other parameters, please refer to `src/config.py`. You can set `'model'` to `'unet_nested'` or `'unet_simple'` to select which net to use. We support `ISBI` and `Cell_nuclei` two dataset, you can set `'dataset'` to `'Cell_nuclei'` to use `Cell_nuclei` dataset, default is `ISBI`.
+1. Select `yaml` in `unet/`. We support unet and unet++, and we provide some parameter configurations for quick start.
+2. If you want other parameters, please refer to `unet/ *.yaml`. You can set `'model'` to `'unet_nested'` or `'unet_simple'` to select which net to use. We support `ISBI` and `Cell_nuclei` two dataset, you can set `'dataset'` to `'Cell_nuclei'` to use `Cell_nuclei` dataset, default is `ISBI`.
 
 - Run on Ascend
 
 ```python
 # run training example
-python train.py --data_url=/path/to/data/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
 OR
-bash scripts/run_standalone_train.sh [DATASET]
+bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
 
 # run distributed training example
-bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
 
 # run evaluation example
-python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
 OR
-bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
+bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
 ```
 
 - Run on docker
@@ -178,9 +178,11 @@ If you want to run in modelarts, please check the official documentation of [mod
 # run evaluation on modelarts example
 # (1) Copy or upload your trained model to S3 bucket.
 # (2) Perform a or b.
-#       a. Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#       a.  Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
 #          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
-#       b. Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
 #          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
 # (3) Set the config directory to "config_path=/The path of config in S3/"
 # (4) Set the code directory to "/path/unet" on the website UI interface.
@@ -309,9 +311,9 @@ Parameters for both training and evaluation can be set in config.py
 #### running on Ascend
 
 ```shell
-python train.py --data_url=/path/to/data/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
 OR
-bash scripts/run_standalone_train.sh [DATASET]
+bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
 ```
 
 The python command above will run in the background, you can view the results through the file `train.log`.
@@ -338,7 +340,7 @@ The model checkpoint will be saved in the current directory.
 #### Distributed Training
 
 ```shell
-bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]
+bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file `logs/device[X]/log.log`. The loss value will be achieved as follows:
@@ -365,9 +367,9 @@ You can add `run_eval` to start shell and set it True, if you want evaluation wh
 Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., "username/unet/ckpt_unet_medical_adam-48_600.ckpt".
 
 ```shell
-python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/unet.ckpt > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
 OR
-bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
+bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
 ```
 
 The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
@@ -412,10 +414,10 @@ If you need to use the trained model to perform inference on multiple hardware p
 Export MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
-The ckpt_file parameter is required,
+The checkpoint_file_path parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 Before performing inference, the MINDIR file must be exported by export script on the 910 environment.
@@ -436,11 +438,11 @@ Cross valid dice coeff is: 0.9054352151297033
 
 #### Continue Training on the Pretrained Model
 
-Set options `resume` to True in `config.py`, and set `resume_ckpt` to the path of your checkpoint. e.g.
+Set options `resume` to True in `*.yaml`, and set `resume_ckpt` to the path of your checkpoint. e.g.
 
 ```python
   'resume': True,
-  'resume_ckpt': 'ckpt_0/ckpt_unet_sample_adam_1-1_600.ckpt',
+  'resume_ckpt': 'ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': False,
   'filter_weight': ["final.weight"]
 ```
@@ -451,7 +453,7 @@ Do the same thing as resuming traing above. In addition, set `transfer_training`
 
 ```python
   'resume': True,
-  'resume_ckpt': 'ckpt_0/ckpt_unet_sample_adam_1-1_600.ckpt',
+  'resume_ckpt': 'ckpt_unet_sample_adam_1-1_600.ckpt',
   'transfer_training': True,
   'filter_weight': ["final.weight"]
 ```

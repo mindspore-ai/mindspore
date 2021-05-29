@@ -87,7 +87,7 @@ class CellNucleiDataset:
 
 
 if __name__ == '__main__':
-    if config.dataset == "Cell_nuclei":
+    if hasattr(config, 'dataset') and config.dataset == "Cell_nuclei":
         cell_dataset = CellNucleiDataset(config.data_path, 1, config.result_path, False, 0.8)
     else:
         preprocess_dataset(data_dir=config.data_path, cross_valid_ind=config.cross_valid_ind,

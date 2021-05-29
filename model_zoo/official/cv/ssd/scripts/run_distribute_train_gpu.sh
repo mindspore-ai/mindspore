@@ -21,17 +21,17 @@ echo "for example: sh run_distribute_train_gpu.sh 8 500 0.2 coco /opt/ssd-300.ck
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 4 ] && [ $# != 6 ]
+if [ $# != 5 ] && [ $# != 7 ]
 then
     echo "Usage: sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
-[PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
+[CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
 
 # Before start distribute train, first create mindrecord files.
 BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
-python train.py --only_create_dataset=True --run_platform="GPU" --dataset=$4
+python train.py --only_create_dataset=True --device_target="GPU" --dataset=$4
 
 echo "After running the script, the network runs in the background. The log will be generated in LOG/log.txt"
 
@@ -39,39 +39,45 @@ export RANK_SIZE=$1
 EPOCH_SIZE=$2
 LR=$3
 DATASET=$4
-PRE_TRAINED=$5
-PRE_TRAINED_EPOCH_SIZE=$6
+CONFIG_PATH=$5
+PRE_TRAINED=$6
+PRE_TRAINED_EPOCH_SIZE=$7
 
 rm -rf LOG
 mkdir ./LOG
 cp ./*.py ./LOG
+cp ./*.yaml ./LOG
 cp -r ./src ./LOG
 cd ./LOG || exit
 
-if [ $# == 4 ]
+if [ $# == 5 ]
 then
     mpirun -allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python train.py  \
-    --distribute=True  \
+    --run_distribute=True  \
     --lr=$LR \
     --dataset=$DATASET \
     --device_num=$RANK_SIZE  \
     --loss_scale=1 \
-    --run_platform="GPU" \
-    --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+    --device_target="GPU" \
+    --epoch_size=$EPOCH_SIZE \
+    --config_path=$CONFIG_PATH \
+    --output_path './output' > log.txt 2>&1 &
 fi
 
-if [ $# == 6 ]
+if [ $# == 7 ]
 then
     mpirun -allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
     python train.py  \
-    --distribute=True  \
+    --run_distribute=True  \
     --lr=$LR \
     --dataset=$DATASET \
     --device_num=$RANK_SIZE  \
     --pre_trained=$PRE_TRAINED \
     --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
     --loss_scale=1 \
-    --run_platform="GPU" \
-    --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+    --device_target="GPU" \
+    --epoch_size=$EPOCH_SIZE \
+    --config_path=$CONFIG_PATH \
+     --output_path './output' > log.txt 2>&1 &
 fi

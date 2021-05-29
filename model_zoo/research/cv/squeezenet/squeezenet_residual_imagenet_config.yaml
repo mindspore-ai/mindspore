@@ -11,6 +11,7 @@ data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
 device_num: 1
+device_id: 0
 device_target: 'Ascend'
 checkpoint_path: './checkpoint/'
 checkpoint_file_path: 'suqeezenet_residual_imagenet-300_5004.ckpt'

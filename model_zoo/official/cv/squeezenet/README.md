@@ -83,24 +83,57 @@ After installing MindSpore via the official website, you can start training and 
 
   ```bash
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # run evaluation example
-  Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+  Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
   ```
 
 - running on CPU
 
   ```bash
   # standalone training
-  Usage: bash scripts/run_train_cpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: bash scripts/run_train_cpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # run evaluation example
-  Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [CHECKPOINT_PATH]
+  Usage: bash scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATA_PATH] [CHECKPOINT_PATH]
   ```
+
+   If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training and evaluation as follows:
+
+```python
+# run distributed training on modelarts example
+# (1) First, Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set other parameters on yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (2) Set the config directory to "config_path=/The path of config in S3/"
+# (3) Set the Dataset directory in config file.
+# (4) Set the code directory to "/path/squeezenet" on the website UI interface.
+# (5) Set the startup file to "train.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+
+# run evaluation on modelarts example
+# (1) Copy or upload your trained model to S3 bucket.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on yaml file.
+#          Set "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on yaml file.
+#          Set "checkpoint_url=/The path of checkpoint in S3/" on yaml file.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" on the website UI interface.
+#          Add "checkpoint_url=/The path of checkpoint in S3/" on the website UI interface.
+# (3) Set the config directory to "config_path=/The path of config in S3/"
+# (4) Set the Dataset directory in config file.
+# (5) Set the code directory to "/path/squeezenet" on the website UI interface.
+# (6) Set the startup file to "eval.py" on the website UI interface.
+# (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (8) Create your job.
+```
 
 # [Script Description](#contents)
 
@@ -117,14 +150,22 @@ After installing MindSpore via the official website, you can start training and 
     ├── run_eval.sh                        # launch ascend evaluation
     ├── run_infer_310.sh                   # shell script for 310 infer
   ├── src
-    ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
     ├── CrossEntropySmooth.py              # loss definition for ImageNet dataset
     ├── lr_generator.py                    # generate learning rate for each step
     └── squeezenet.py                      # squeezenet architecture, including squeezenet and squeezenet_residual
-  ├── train.py                             # train net
-  ├── eval.py                              # eval net
-  └── export.py                            # export checkpoint files into geir/onnx
+  ├── model_utils
+  │   ├── device_adapter.py                    # device adapter
+  │   ├── local_adapter.py                     # local adapter
+  │   ├── moxing_adapter.py                    # moxing adapter
+  │   ├── config.py                            # parameter analysis
+  ├── squeezenet_cifar10_config.yaml            # parameter configuration
+  ├── squeezenet_imagenet_config.yaml           # parameter configuration
+  ├── squeezenet_residual_cifar10_config.yaml   # parameter configuration
+  ├── squeezenet_residual_imagenet_config.yaml  # parameter configuration
+  ├── train.py                                  # train net
+  ├── eval.py                                   # eval net
+  └── export.py                                 # export checkpoint files into geir/onnx
   ├── postprocess.py                       # postprocess script
   ├── preprocess.py                       # preprocess script
 ```
@@ -231,10 +272,10 @@ For more configuration details, please refer the script `config.py`.
 
   ```shell
   # distributed training
-  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
 
   # standalone training
-  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+  Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)
   ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -301,7 +342,7 @@ epoch: 5 step 5004, loss is 4.888848304748535
 
 ```shell
 # evaluation
-Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [CHECKPOINT_PATH]
 ```
 
 ```shell
@@ -344,7 +385,7 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 ### Export MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --batch_size [BATCH_SIZE] --net [NET] --dataset [DATASET] --file_format [EXPORT_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --batch_size [BATCH_SIZE] --net_name [NET] --dataset [DATASET] --file_format [EXPORT_FORMAT]
 ```
 
 The ckpt_file parameter is required,
@@ -604,7 +645,7 @@ If you need to use the trained model to perform inference on multiple hardware p
                       device_id=device_id)
 
   # Load unseen dataset for inference
-  dataset = create_dataset(dataset_path=args_opt.dataset_path,
+  dataset = create_dataset(dataset_path=config.data_path,
                            do_train=False,
                            batch_size=config.batch_size,
                            target='Ascend')
@@ -617,7 +658,7 @@ If you need to use the trained model to perform inference on multiple hardware p
                 metrics={'top_1_accuracy', 'top_5_accuracy'})
 
   # Load pre-trained model
-  param_dict = load_checkpoint(args_opt.checkpoint_path)
+  param_dict = load_checkpoint(config.checkpoint_file_path)
   load_param_into_net(net, param_dict)
   net.set_train(False)
 
@@ -632,7 +673,7 @@ If you need to use the trained model to perform inference on multiple hardware p
 
   ```py
   # Load dataset
-  dataset = create_dataset(dataset_path=args_opt.dataset_path,
+  dataset = create_dataset(dataset_path=config.data_path,
                            do_train=True,
                            repeat_num=1,
                            batch_size=config.batch_size,
@@ -643,8 +684,8 @@ If you need to use the trained model to perform inference on multiple hardware p
   net = squeezenet(num_classes=config.class_num)
 
   # load checkpoint
-  if args_opt.pre_trained:
-      param_dict = load_checkpoint(args_opt.pre_trained)
+  if config.pre_trained:
+      param_dict = load_checkpoint(config.pre_trained)
       load_param_into_net(net, param_dict)
 
   # init lr
@@ -679,7 +720,7 @@ If you need to use the trained model to perform inference on multiple hardware p
       save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
       keep_checkpoint_max=config.keep_checkpoint_max)
   time_cb = TimeMonitor(data_size=step_size)
-  ckpt_cb = ModelCheckpoint(prefix=args_opt.net + '_' + args_opt.dataset,
+  ckpt_cb = ModelCheckpoint(prefix=config.net_name + '_' + config.dataset,
                             directory=ckpt_save_dir,
                             config=config_ck)
   loss_cb = LossMonitor()
