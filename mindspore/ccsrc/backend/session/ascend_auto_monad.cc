@@ -1426,7 +1426,7 @@ class ExecuteOrderGenerator {
         continue;
       }
       (void)new_labels.emplace_back(++max_label_);
-      (void)labels_multimap->insert({*iter, max_label_});
+      (void)labels_multimap->emplace(*iter, max_label_);
       (void)labels->emplace_back(label_id);
       is_new_labels = true;
     }
@@ -1445,7 +1445,7 @@ class ExecuteOrderGenerator {
       return;
     }
     AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(++max_label_), node);
-    (void)labels_multimap->insert({*iter, max_label_});
+    (void)labels_multimap->emplace(*iter, max_label_);
     (void)labels->emplace_back(max_label_);
   }
 
