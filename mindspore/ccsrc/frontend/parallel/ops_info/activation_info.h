@@ -232,7 +232,7 @@ class SqueezeInfo : public ActivationOther {
  protected:
   Status InferAxis(const ValueTuplePtr &value_tuple);
   Status GetAttrs() override;
-  Status InferReplaceOps(const StrategyPtr &strategy);
+  Status InferReplaceOps();
   Status InferTensorMap() override;
   Status Init(const StrategyPtr &strategy) override;
 
@@ -268,7 +268,7 @@ class DropoutInfo : public ActivationOther {
  protected:
   Status GetAttrs() override;
   Status InferTensorMap() override;
-  Status InferReplaceOps(const StrategyPtr &strategy);
+  Status InferReplaceOps();
   Status InferAsLossDivisor() override;
 
  private:

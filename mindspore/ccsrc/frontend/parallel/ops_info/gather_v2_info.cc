@@ -56,7 +56,7 @@ Status GatherInfo::GetAttrs() {
     return FAILED;
   }
   int64_t axis = GetValue<int64_t>(input_value_.at(2));
-  if (axis >= SizeToLong(inputs_shape_.at(0).size()) || axis < 0 - SizeToLong(inputs_shape_.at(0).size())) {
+  if (axis >= SizeToLong(inputs_shape_.at(0).size()) || axis < -SizeToLong(inputs_shape_.at(0).size())) {
     MS_LOG(ERROR) << "Axis is " << axis << ", not in [-" << inputs_shape_.at(0).size() << ", "
                   << inputs_shape_.at(0).size() << ").";
   }
@@ -86,7 +86,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
-  axis_strategy_ = strategy->GetInputDim().at(0).at(axis_);
+  axis_strategy_ = strategy->GetInputDim().at(0).at(LongToSize(axis_));
   if (index_size_ != 1 && axis_strategy_ != 1) {
     MS_LOG(ERROR) << name_
                   << ": Invalid strategy. If the index is a scalar or a more than 1 dimension vector, the strategy "
@@ -147,7 +147,7 @@ Status GatherInfo::InferTensorMap() {
 
   Shape tensor_map_in_index;
   if (index_size_ >= 1) {
-    tensor_map_in_index.push_back(SizeToLong(size - axis_ - 1));
+    tensor_map_in_index.push_back(SizeToLong(size) - axis_ - 1);
   }
   for (size_t i = 1; i < index_size_; ++i) {
     tensor_map_in_index.push_back(-1);
@@ -231,7 +231,7 @@ Status GatherInfo::InferTensorSubOps() {
   if ((axis_ >= SizeToLong(dev_matrix_shape_.size())) || axis_ < 0) {
     MS_LOG(ERROR) << "Axis is " << axis_ << ", not in [0, " << dev_matrix_shape_.size() << ").";
   }
-  int64_t mod_p = mod_n * dev_matrix_shape_.at(axis_);
+  int64_t mod_p = mod_n * dev_matrix_shape_.at(LongToSize(axis_));
   int64_t rank = g_device_manager->rank_index_in_stage();
   int64_t mod_rank = rank % mod_p;
   mod_rank = static_cast<int64_t>(mod_rank / mod_n);
@@ -243,7 +243,7 @@ Status GatherInfo::InferTensorSubOps() {
   if ((axis_ >= SizeToLong(inputs_shape_.at(0).size())) || axis_ < 0) {
     MS_LOG(ERROR) << "Axis is " << axis_ << ", not in [0, " << inputs_shape_.at(0).size() << ").";
   }
-  int64_t sub_value = static_cast<int64_t>(inputs_shape_.at(0).at(axis_) / dev_matrix_shape_.at(axis_)) * mod_rank;
+  int64_t sub_value = static_cast<int64_t>(inputs_shape_[0][LongToSize(axis_)] / dev_matrix_shape_[axis_]) * mod_rank;
 
   OperatorVector sub_op;
   sub_ops_.emplace_back(std::move(sub_op));

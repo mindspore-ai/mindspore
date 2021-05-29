@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace parallel {
 Status SplitInfo::GetAttrs() {
-  int axis = 0;
-  int output_num = 0;
+  int64_t axis = 0;
+  int64_t output_num = 0;
 
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
@@ -54,7 +54,7 @@ Status SplitInfo::GetAttrs() {
   if (axis < 0) {
     axis = axis + dim;
   }
-  axis_ = SizeToInt(axis);
+  axis_ = LongToSize(axis);
 
   auto output_num_iter = attrs_.find(OUTPUT_NUM);
   if (output_num_iter != attrs_.end()) {
@@ -69,7 +69,7 @@ Status SplitInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Can not find the output_num attr";
     return FAILED;
   }
-  output_num_ = output_num;
+  output_num_ = LongToSize(output_num);
 
   return SUCCESS;
 }

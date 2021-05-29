@@ -43,7 +43,7 @@ static std::string AxesToString(const std::vector<int32_t> &shape) {
   return str + "]";
 }
 
-static std::vector<ValuePtr> GetValueSequeue(ValuePtr sequeue) {
+static std::vector<ValuePtr> GetValueSequeue(const ValuePtr &sequeue) {
   MS_EXCEPTION_IF_NULL(sequeue);
   std::vector<ValuePtr> ret;
   if (!sequeue->isa<ValueTuple>() && !sequeue->isa<ValueList>()) {
@@ -95,7 +95,7 @@ Status TensorDotInfo::GetAttrs() {
       if (var_tuple[i]->isa<Int32Imm>()) {
         int32_t ele_var = var_tuple[i]->cast<Int32ImmPtr>()->value();
         if (ele_var < 0) {
-          ele_var += inputs_shape_[i].size();
+          ele_var += SizeToInt(inputs_shape_[i].size());
         }
         axes_tuple_.push_back(ele_var);
       } else {
@@ -103,7 +103,7 @@ Status TensorDotInfo::GetAttrs() {
         for (auto &ele : var_ele) {
           if (ele < 0) {
             MS_LOG(DEBUG) << name_ << ": The element of axes is " << ele;
-            ele += inputs_shape_[i].size();
+            ele += SizeToInt(inputs_shape_[i].size());
           }
         }
         axes_tuple_tuple_.push_back(var_ele);
@@ -142,15 +142,16 @@ Status TensorDotInfo::CheckStrategy(const StrategyPtr &strategy) {
   Dimensions input_b_strategy = stra[1];
 
   if (axes_type_ == INT_TYPE) {  // for example: axes = 3, [a, b, c, d] and [b, c, d, e]
-    for (int32_t i = 0; i < axes_int_; ++i) {
-      if (input_a_strategy[input_a_strategy.size() - axes_int_ + i] != input_b_strategy[i]) {
+    for (size_t i = 0; i < IntToSize(axes_int_); ++i) {
+      if (input_a_strategy[input_a_strategy.size() - IntToSize(axes_int_) + i] != input_b_strategy[i]) {
         MS_LOG(ERROR) << name_ << ": The strategies of relevant dimensions are no equal";
         return FAILED;
       }
     }
   } else if (axes_type_ == TUPLE_TUPLE_TYPE) {
     for (size_t i = 0; i < axes_tuple_tuple_[0].size(); ++i) {
-      if (input_a_strategy[axes_tuple_tuple_[0][i]] != input_b_strategy[axes_tuple_tuple_[1][i]]) {
+      if (input_a_strategy[IntToSize(axes_tuple_tuple_[0][i])] !=
+          input_b_strategy[IntToSize(axes_tuple_tuple_[1][i])]) {
         MS_LOG(ERROR) << name_ << ": The strategies of relevant dimensions are no equal";
         return FAILED;
       }
@@ -169,7 +170,7 @@ Status TensorDotInfo::InferDevMatrixShape() {
 
   if (axes_type_ == INT_TYPE) {
     dev_matrix_shape_ = input_a_strategy;
-    for (size_t i = axes_int_; i < input_b_strategy.size(); i++) {
+    for (size_t i = IntToSize(axes_int_); i < input_b_strategy.size(); i++) {
       dev_matrix_shape_.push_back(input_b_strategy[i]);
     }
   } else if (axes_type_ == TUPLE_TUPLE_TYPE) {
@@ -229,7 +230,7 @@ Status TensorDotInfo::InferForwardCommunication() {
 void TensorDotInfo::InferTensorMapAxesInt(const TensorMap &tensor_map_index) {
   // infer input_b tensor map
   // for example: the dimension of input_b is 4, the tensor map is [3, 2, 1, 0]
-  TensorMap input_a_tensor_map, input_b_tensor_map, output_tensor_map;
+  TensorMap input_b_tensor_map, output_tensor_map;
   for (size_t i = 0; i < inputs_shape_[1].size(); i++) {
     input_b_tensor_map.push_back((int64_t)(inputs_shape_[1].size() - i - 1));
   }
@@ -259,7 +260,7 @@ void TensorDotInfo::InferTensorMapAxesTuple(size_t size, const TensorMap &input_
     for (size_t j = 0; j < axes_tuple_tuple_[1].size(); ++j) {
       if (i == IntToSize(axes_tuple_tuple_[1][j])) {
         found = true;
-        relevant_a_index = axes_tuple_tuple_[0][j];
+        relevant_a_index = IntToSize(axes_tuple_tuple_[0][j]);
         break;
       }
     }
@@ -368,7 +369,7 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
 
     if (found) {
       // find the relevant
-      input_b_strategy[axes_tuple_tuple_[1][relevant_index]] = stage_device_size_;
+      input_b_strategy[IntToSize(axes_tuple_tuple_[1][relevant_index])] = stage_device_size_;
     }
   } else {
     MS_LOG(EXCEPTION) << name_ << ": Now do not support TUPLE_TYPE";
@@ -378,8 +379,8 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategys>(strategy);
 }
 
-Status TensorDotInfo::GenerateStrategies(int64_t stage_id) { return SUCCESS; }
+Status TensorDotInfo::GenerateStrategies(int64_t) { return SUCCESS; }
 
-Status TensorDotInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) { return SUCCESS; }
+Status TensorDotInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &) { return SUCCESS; }
 }  // namespace parallel
 }  // namespace mindspore

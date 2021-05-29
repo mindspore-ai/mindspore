@@ -288,7 +288,7 @@ void ReshapeInfo::InferTensorInfoByLayout() {
  */
 Status ReshapeInfo::GetAttrs() { return GetParameterInput(); }
 
-void ReshapeInfo::device_number(const StrategyPtr &strategy) {
+void ReshapeInfo::device_number() {
   dev_num_ = stage_device_size_;
   MS_ASSERT(dev_num_ > 0);
 }
@@ -318,7 +318,7 @@ Status ReshapeInfo::Init(const StrategyPtr &strategy) {
   }
 
   ResetQueueMember();
-  device_number(strategy);
+  device_number();
   if (strategy) {
     if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": Init failed.";
@@ -451,7 +451,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
       MS_LOG(ERROR) << "out_index is out of range of the tensor_infos in setting reshape's input_layout";
       return FAILED;
     }
-    TensorInfo pre_out_tensor_info = pre_out_tensor_infos[out_index];
+    TensorInfo pre_out_tensor_info = pre_out_tensor_infos[LongToSize(out_index)];
     SetInputLayout(pre_out_tensor_info.tensor_layout());
     // infer pre_node output strategy from output_layout.
     Dimensions stra = pre_out_tensor_info.InferStrategy();
@@ -475,7 +475,7 @@ Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<Stra
         MS_LOG(ERROR) << "in_index is out of range of the tensor_infos in setting reshape's output_layout";
         return FAILED;
       }
-      TensorInfo next_in_tensor_info = next_in_tensor_infos[in_index];
+      TensorInfo next_in_tensor_info = next_in_tensor_infos[LongToSize(in_index)];
       SetOutputLayout(next_in_tensor_info.tensor_layout());
       ResetQueueMember();
       InferTensorInfoByLayout();
