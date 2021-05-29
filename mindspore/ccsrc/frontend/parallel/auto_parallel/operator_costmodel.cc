@@ -55,7 +55,7 @@ double OperatorCost::GetInputMemoryCost(const std::vector<TensorInfo> &inputs, c
   return result;
 }
 
-double OperatorCost::GetOutputMemoryCost(const std::vector<TensorInfo> &inputs,
+double OperatorCost::GetOutputMemoryCost(const std::vector<TensorInfo> &,
                                          const std::vector<TensorInfo> &outputs) const {
   double result = 0.0;
   if (is_output_should_in_memory_) {
@@ -243,7 +243,7 @@ double CastCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, con
 void CastCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void CastCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void CastCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -314,7 +314,7 @@ double SoftmaxCost::GetBackwardComputationCost(const std::vector<mindspore::para
 void SoftmaxCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
 
 // Not taking account of input
-void SoftmaxCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void SoftmaxCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -322,7 +322,7 @@ void SoftmaxCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_out
 void PackCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void PackCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void PackCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -351,7 +351,7 @@ void TileCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output
 // Not taking account of output
 void BroadcastToCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
-void BroadcastToCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void BroadcastToCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -418,7 +418,7 @@ double TmpIdentityCost::GetBackwardComputationCost(const std::vector<mindspore::
 void TmpIdentityCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void TmpIdentityCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void TmpIdentityCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -494,8 +494,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCost::CalculateOutputInMemory() {
   is_output_should_in_memory_ = is_parameter_involve_[0];
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(
-  const std::map<size_t, bool> &prev_output_in_mem) {
+void SparseSoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
@@ -614,7 +613,7 @@ double OneHotCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, c
 void OneHotCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void OneHotCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void OneHotCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
   is_inputs_should_in_memory_[ONEHOT_INPUTS_SIZE - 2] = is_parameter_[ONEHOT_INPUTS_SIZE - 2];
@@ -659,7 +658,7 @@ void SoftmaxCrossEntropyWithLogitsCost::CalculateOutputInMemory() {
   is_output_should_in_memory_ = is_parameter_involve_[0];
 }
 
-void SoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void SoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
@@ -727,7 +726,7 @@ double ReshapeCost::GetBackwardComputationCost(const std::vector<mindspore::para
 
 void ReshapeCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
-void ReshapeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void ReshapeCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
@@ -815,7 +814,7 @@ double SubCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const
 void SubCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void SubCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void SubCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
   is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
@@ -1336,7 +1335,7 @@ void GatherV2Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_ou
 
 void GetNextCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
-void GetNextCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void GetNextCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   if (is_inputs_should_in_memory_.size() == 0) {
     return;
   }
@@ -1345,7 +1344,7 @@ void GetNextCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_out
 
 void UniqueCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
 
-void UniqueCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void UniqueCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -1534,7 +1533,7 @@ double UniformCandidateSamplerCost::GetForwardComputationCost(const std::vector<
 
 void UniformCandidateSamplerCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
-void UniformCandidateSamplerCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void UniformCandidateSamplerCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
@@ -1746,7 +1745,7 @@ void UnsortedSegmentMinCost::CalculateInputsInMemory(const std::map<size_t, bool
 void VirtualDatasetCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
 
 // Not taking account of input
-void VirtualDatasetCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void VirtualDatasetCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   for (size_t i = 0; i < is_inputs_should_in_memory_.size(); ++i) {
     is_inputs_should_in_memory_[i] = is_parameter_[i];
   }

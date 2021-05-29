@@ -46,26 +46,65 @@ class _AlgoParameterConfig():
             raise ValueError("Config handle is none!!!")
 
     def set_fully_use_devices(self, not_fully):
+        """
+        Set the flag of whether ONLY generating strategies that fully use all available devices.
+        Default: True
+
+        Args:
+            not_fully (bool): The flag.
+        """
         self.check_config_handle()
         self._config_handle.set_fully_use_devices(not_fully)
 
     def get_fully_use_devices(self):
+        """
+        Get the flag of whether ONLY generating strategies that fully use all available devices.
+
+        Return:
+            The flag.
+        """
         self.check_config_handle()
         return self._config_handle.get_fully_use_devices()
 
     def set_elementwise_op_strategy_follow(self, element_strategy_follow):
+        """
+        Set the flag of whether the elementwise operator has the same strategies as its subsequent operators.
+        Default: False
+
+        Args:
+            element_strategy_follow (bool): The flag.
+        """
         self.check_config_handle()
         self._config_handle.set_elementwise_op_strategy_follow(element_strategy_follow)
 
     def get_elementwise_op_strategy_follow(self):
+        """
+        Get the flag of whether the elementwise operator has the same strategies as its subsequent operators.
+
+        Returns:
+            The flag.
+        """
         self.check_config_handle()
         return self._config_handle.get_elementwise_op_strategy_follow()
 
     def set_tensor_slice_align_enable(self, align_enable):
+        """
+        Set the flag of whether to check the shape of tensor slice of MatMul.
+        Default: False
+
+        Args:
+            align_enable (bool): The flag.
+        """
         self.check_config_handle()
         self._config_handle.set_tensor_slice_align_enable(align_enable)
 
     def get_tensor_slice_align_enable(self):
+        """
+        Get the flag of whether to check the shape of tensor slice of MatMul.
+
+        Returns:
+            The flag.
+        """
         self.check_config_handle()
         return self._config_handle.get_tensor_slice_align_enable()
 
@@ -85,26 +124,61 @@ class _AlgoParameterConfig():
         self._config_handle.set_tensor_slice_align_size(align_size)
 
     def get_tensor_slice_align_size(self):
+        """
+        Get the tensor slice align size.
+
+        Returns:
+            The size.
+        """
         self.check_config_handle()
         return self._config_handle.get_tensor_slice_align_size()
 
     def set_dp_algo_enable_approxi(self, enable_flag):
+        """
+        Set the flag of whether to enable the approximation in the DP algorithms.
+        Default: False.
+
+        Args:
+            enable_flag (bool): The flag.
+        """
         self.check_config_handle()
         self._config_handle.set_dp_algo_enable_approxi(enable_flag)
 
     def get_dp_algo_enable_approxi(self):
+        """
+        Get the flag of whether to enable the approximation in the DP algorithms.
+
+        Returns:
+            The flag.
+        """
         self.check_config_handle()
         return self._config_handle.get_dp_algo_enable_approxi()
 
     def set_dp_algo_approxi_epsilon(self, epsilon):
+        """
+        Set the epsilon value used in the approximation DP algorithm.
+        Default: 0.1.
+
+        Args:
+            epsilon (float): The epsilon value, should in the range dp_(0, 1].
+        """
         self.check_config_handle()
         self._config_handle.set_dp_algo_approxi_epsilon(epsilon)
 
     def get_dp_algo_approxi_epsilon(self):
+        """
+        Get the epsilon value used in the approximation DP algorithm.
+
+        Returns:
+            The epsilon value.
+        """
         self.check_config_handle()
         return self._config_handle.get_dp_algo_approxi_epsilon()
 
     def reset_algo_parameters(self):
+        """
+        Reset algorithm parameter attributes.
+        """
         self.check_config_handle()
         self._config_handle.reset_algo_parameters()
 
@@ -161,8 +235,8 @@ def set_algo_parameters(**kwargs):
             Default: True
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
             subsequent operators. Default: False
-        enable_algo_approxi (bool): Whether to enable the approximation in the DP algorithms.
-        algo_approxi_epsilon (float): The epsilon value used int the approximation DP algorithm.
+        enable_algo_approxi (bool): Whether to enable the approximation in the DP algorithms. Default: False.
+        algo_approxi_epsilon (float): The epsilon value used in the approximation DP algorithm. Default: 0.1.
 
     Raises:
         ValueError: If context keyword is not recognized.
