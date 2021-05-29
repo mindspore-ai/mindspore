@@ -44,7 +44,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   PackNCHWToNHWCFp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
-                     weight_tensor->Batch());
+                     weight_tensor->Batch(), 0, 0);
 
   bias_data_ = reinterpret_cast<float16_t *>(malloc(channel * sizeof(float16_t)));
   if (bias_data_ == nullptr) {

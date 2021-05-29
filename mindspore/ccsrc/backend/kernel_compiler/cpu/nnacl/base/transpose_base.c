@@ -196,34 +196,34 @@
     }                                                                                                   \
   }
 
-#define TRANSPOSE_DIMS(TYPE, NAME)                                                                                 \
-  void TransposeDims##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape, int *size, int *position, \
-                           TransposeParameter *transpose_param, int task_id, int thread_num) {                     \
-    int *perm = transpose_param->perm_;                                                                            \
-    int *strides = transpose_param->strides_;                                                                      \
-    int *out_strides = transpose_param->out_strides_;                                                              \
-    int num_axes = transpose_param->num_axes_;                                                                     \
-    size_t data_size = (*size) * output_shape[0];                                                                  \
-    size_t offset_size = UP_DIV(data_size, thread_num);                                                            \
-    size_t task_offset = offset_size * task_id;                                                                    \
-    int count = data_size - task_offset;                                                                           \
-    if (count <= 0) {                                                                                              \
-      return;                                                                                                      \
-    }                                                                                                              \
-    count = MSMIN(offset_size, count);                                                                             \
-    for (size_t idx = task_offset; idx < task_offset + count; ++idx) {                                             \
-      int pos = idx;                                                                                               \
-      int output_idx = 0;                                                                                          \
-      int input_idx = 0;                                                                                           \
-      for (int i = 0; i < num_axes; ++i) {                                                                         \
-        *(position + i) = pos / *(size + i);                                                                       \
-        int out_stride = i < num_axes - 1 ? out_strides[i] : 1;                                                    \
-        output_idx += (*(position + i) * out_stride);                                                              \
-        input_idx += (*(position + i) * strides[perm[i]]);                                                         \
-        pos -= *(position + i) * (*(size + i));                                                                    \
-      }                                                                                                            \
-      out_data[output_idx] = in_data[input_idx];                                                                   \
-    }                                                                                                              \
+#define TRANSPOSE_DIMS(TYPE, NAME)                                                             \
+  void TransposeDims##NAME(const TYPE *in_data, TYPE *out_data, const int *output_shape,       \
+                           TransposeParameter *transpose_param, int task_id, int thread_num) { \
+    int *perm = transpose_param->perm_;                                                        \
+    int *strides = transpose_param->strides_;                                                  \
+    int *out_strides = transpose_param->out_strides_;                                          \
+    int num_axes = transpose_param->num_axes_;                                                 \
+    size_t data_size = (*out_strides) * output_shape[0];                                       \
+    size_t offset_size = UP_DIV(data_size, thread_num);                                        \
+    size_t task_offset = offset_size * task_id;                                                \
+    int count = data_size - task_offset;                                                       \
+    if (count <= 0) {                                                                          \
+      return;                                                                                  \
+    }                                                                                          \
+    count = MSMIN(offset_size, count);                                                         \
+    for (size_t idx = task_offset; idx < task_offset + count; ++idx) {                         \
+      int pos = idx;                                                                           \
+      int output_idx = 0;                                                                      \
+      int input_idx = 0;                                                                       \
+      for (int i = 0; i < num_axes; ++i) {                                                     \
+        int position = pos / *(out_strides + i);                                               \
+        int out_stride = i < num_axes - 1 ? out_strides[i] : 1;                                \
+        output_idx += (position * out_stride);                                                 \
+        input_idx += (position * strides[perm[i]]);                                            \
+        pos -= position * (*(out_strides + i));                                                \
+      }                                                                                        \
+      out_data[output_idx] = in_data[input_idx];                                               \
+    }                                                                                          \
   }
 
 #define DOTRANSPOSE(TYPE, NAME)                                                                               \

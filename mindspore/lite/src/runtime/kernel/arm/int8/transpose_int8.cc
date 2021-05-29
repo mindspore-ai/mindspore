@@ -41,47 +41,6 @@ int TransposeInt8Run(void *cdata, int task_id) {
   return RET_OK;
 }
 
-void TransposeInt8CPUKernel::FreeTmpBuf() {
-  if (!extra_dims_) {
-    return;
-  }
-  if (dim_size_ != nullptr) {
-    context_->allocator->Free(dim_size_);
-    dim_size_ = nullptr;
-  }
-  if (position_ != nullptr) {
-    context_->allocator->Free(position_);
-    position_ = nullptr;
-  }
-  return;
-}
-
-int TransposeInt8CPUKernel::MallocTmpBuf() {
-  if (!extra_dims_) {
-    return RET_OK;
-  }
-
-  int dims = out_tensors_.at(0)->shape().size();
-
-  dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
-  if (dim_size_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc data failed";
-    return RET_ERROR;
-  }
-  *(dim_size_ + dims - 1) = 1;
-  for (int i = dims - 1; i > 0; --i) {
-    *(dim_size_ + i - 1) = *(dim_size_ + i) * out_shape_[i];
-  }
-  position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int) * op_parameter_->thread_num_));
-  if (position_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc data failed";
-    context_->allocator->Free(dim_size_);
-    dim_size_ = nullptr;
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int TransposeInt8CPUKernel::ReSize() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
@@ -105,20 +64,16 @@ int TransposeInt8CPUKernel::ReSize() {
     transpose_param_->strides_[i] = in_shape.at(i + 1) * transpose_param_->strides_[i + 1];
     transpose_param_->out_strides_[i] = out_shape.at(i + 1) * transpose_param_->out_strides_[i + 1];
   }
-
-  extra_dims_ = out_shape.size() > DIMENSION_6D;
   return RET_OK;
 }
 
 int TransposeInt8CPUKernel::DoTranspose(int task_id) {
-  int dims = out_tensors_.at(0)->shape().size();
   MS_ASSERT(in_ptr_);
   MS_ASSERT(out_ptr_);
   MS_ASSERT(in_shape_);
   MS_ASSERT(out_shape_);
   MS_ASSERT(transpose_param_);
-  TransposeDimsInt8(in_ptr_, out_ptr_, out_shape_, dim_size_, position_ + dims * task_id, transpose_param_, task_id,
-                    op_parameter_->thread_num_);
+  TransposeDimsInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
 
@@ -158,22 +113,12 @@ int TransposeInt8CPUKernel::Run() {
   memcpy(in_shape_, in_dims.data(), in_dims.size() * sizeof(int));
   memcpy(out_shape_, out_dims.data(), out_dims.size() * sizeof(int));
 
-  int ret = MallocTmpBuf();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "MallocTmpBuf error_code[" << ret << "]";
-  }
-  if (extra_dims_) {
-    ret = static_cast<const lite::InnerContext *>(this->context_)
-            ->thread_pool_->ParallelLaunch(TransposeInt8Run, this, op_parameter_->thread_num_);
+  if (out_tensor->shape().size() > DIMENSION_6D) {
+    return static_cast<const lite::InnerContext *>(this->context_)
+      ->thread_pool_->ParallelLaunch(TransposeInt8Run, this, op_parameter_->thread_num_);
   } else {
-    ret = DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_);
+    return DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_);
   }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
-  }
-
-  FreeTmpBuf();
-  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)

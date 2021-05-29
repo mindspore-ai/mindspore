@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp16/transpose_fp16.h"
 #include <vector>
+#include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -30,63 +30,19 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-int TransposeFp16CPUKernel::Init() {
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return TransposeCPUKernel::ReSize();
+void TransposeFp16CPUKernel::GetNchwToNhwcFunc() { NHNCTransposeFunc_ = PackNCHWToNHWCFp16; }
+
+void TransposeFp16CPUKernel::GetNhwcToNchwFunc() { NHNCTransposeFunc_ = PackNHWCToNCHWFp16; }
+
+int TransposeFp16CPUKernel::TransposeDim2to6() {
+  return DoTransposeFp16(static_cast<const float16_t *>(in_data_), static_cast<float16_t *>(out_data_), out_shape_,
+                         param_);
 }
 
-int TransposeFp16CPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  param->data_size_ = in_tensors_[0]->Size();
-  MS_ASSERT(out_tensors_.size() == 1);
-  auto &in_tensor = in_tensors_.front();
-  auto &out_tensor = out_tensors_.front();
-  if (in_tensor == nullptr || out_tensor == nullptr) {
-    MS_LOG(ERROR) << "null pointer referencing.";
-    return RET_ERROR;
-  }
-  in_data_fp16_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
-  out_data_fp16_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
-  MS_ASSERT(in_data_fp16_);
-  MS_ASSERT(out_data_fp16_);
-
-  if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
-    memcpy(out_data_fp16_, in_data_fp16_, in_tensor->ElementsNum() * sizeof(float16_t));
-    return RET_OK;
-  }
-  int dims = out_tensor->shape().size();
-  if (dims > DIMENSION_6D) {
-    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
-    if (dim_size_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
-    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
-    if (position_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      context_->allocator->Free(dim_size_);
-      dim_size_ = nullptr;
-      return RET_ERROR;
-    }
-  }
-
-  MS_ASSERT(out_shape_);
-  auto ret = Fp16DoTranspose(in_data_fp16_, out_data_fp16_, out_shape_, param, dim_size_, position_);
-  if (dims > DIMENSION_6D) {
-    context_->allocator->Free(dim_size_);
-    context_->allocator->Free(position_);
-    dim_size_ = nullptr;
-    position_ = nullptr;
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Transpose run failed";
-    return RET_ERROR;
-  }
-
-  return ret;
+int TransposeFp16CPUKernel::TransposeDimGreaterThan6(int task_id) {
+  TransposeDimsFp16(static_cast<const float16_t *>(in_data_), static_cast<float16_t *>(out_data_), out_shape_, param_,
+                    task_id, op_parameter_->thread_num_);
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Transpose, LiteKernelCreator<TransposeFp16CPUKernel>)
