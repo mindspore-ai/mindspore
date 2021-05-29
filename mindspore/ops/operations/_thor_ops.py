@@ -19,7 +19,6 @@ from ..primitive import prim_attr_register, PrimitiveWithInfer
 from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
 from ..operations.nn_ops import _check_positive_int_or_tuple
-from ..._checkparam import Rel
 
 __all__ = ["CusBatchMatMul",
            "CusCholeskyTrsm",
@@ -560,7 +559,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, split_dim=0):
+    def __init__(self, split_dim=1):
         """Initialize UpdateThorGradient"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
         self.split_dim = split_dim
