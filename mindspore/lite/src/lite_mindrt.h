@@ -47,14 +47,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
       return;
     }
 
-    InterThreadPool *thread_pool = kernel_->Context()->thread_pool_;
-    if (thread_pool == nullptr) {
-      MS_LOG(ERROR) << "ThreadPool is nullptr, kernel: " << kernel_->name();
-      return;
-    }
-    CpuBindMode cpu_bind_mode = kernel_->Context()->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_;
-    thread_pool->SetCpuAffinity(static_cast<BindMode>(cpu_bind_mode));
-
     int ret = CheckInputData();
     if (ret != RET_OK) {
       input_op_datas_.erase(op_uuid);
@@ -83,7 +75,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     inputs_data_.clear();
     AsyncOutput(context);
 
-    thread_pool->SetCpuAffinity(static_cast<BindMode>(NO_BIND));
     SetOutputData(context);
 
     for (auto &input_data : inputs_data_) {

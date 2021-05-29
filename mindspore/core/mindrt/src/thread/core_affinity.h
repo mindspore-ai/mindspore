@@ -39,10 +39,10 @@ class CoreAffinity {
   CoreAffinity() = default;
   ~CoreAffinity() = default;
 
-  int InitBindCoreId(size_t thread_num, BindMode bind_mode);
+  int InitHardwareCoreInfo();
 
   int BindThreads(const std::vector<Worker *> &workers, const std::vector<int> &core_list);
-  int BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode) const;
+  int BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode);
   int BindProcess(BindMode bind_mode) const;
 
  private:
@@ -50,10 +50,10 @@ class CoreAffinity {
   int SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) const;
 #endif  // BIND_CORE
 
+  int InitBindCoreId(size_t thread_num, BindMode bind_mode);
+
   int BindThreadsToCoreList(const std::vector<Worker *> &workers) const;
   int FreeScheduleThreads(const std::vector<Worker *> &workers) const;
-
-  int SortCPUProcessors();
 
   // bind_id contains the CPU cores to bind
   // the size of bind_id is equal to the size of workers
@@ -63,7 +63,6 @@ class CoreAffinity {
   std::vector<int> sorted_id_;
   size_t core_num_{0};
   size_t higher_num_{0};
-  size_t thread_num_{0};
 };
 
 }  // namespace mindspore

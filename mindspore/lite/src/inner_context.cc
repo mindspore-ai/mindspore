@@ -72,11 +72,16 @@ int InnerContext::Init() {
     return RET_NOT_SUPPORT;
   }
   if (this->thread_pool_ == nullptr && this->IsCpuEnabled()) {
-    thread_pool_ = InterThreadPool::CreateThreadPool(
-      1, this->thread_num_, static_cast<BindMode>(this->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_));
+    thread_pool_ = InterThreadPool::CreateThreadPool(1, this->thread_num_);
     if (thread_pool_ == nullptr) {
       MS_LOG(ERROR) << "Create ThreadPool failed";
       return RET_NULL_PTR;
+    }
+    if (this->affinity_core_list_.empty()) {
+      thread_pool_->SetCpuAffinity(
+        static_cast<BindMode>(this->device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_));
+    } else {
+      thread_pool_->SetCpuAffinity(this->affinity_core_list_);
     }
   }
   if (this->allocator == nullptr) {
@@ -110,6 +115,7 @@ int InnerContext::Init() {
 
 InnerContext::~InnerContext() {
   if (this->thread_pool_ != nullptr) {
+    thread_pool_->SetCpuAffinity(static_cast<BindMode>(NO_BIND));
     delete thread_pool_;
     this->thread_pool_ = nullptr;
   }
