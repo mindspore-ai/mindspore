@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export file."""
-import numpy as np
 
+"""export file."""
+
+import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import export
-from src.models import get_generator
-from src.utils import get_args, load_ckpt
+from src.models.cycle_gan import get_generator
+from src.utils.args import get_args
+from src.utils.tools import load_ckpt
 
 args = get_args("export")
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.platform)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, device_id=args.device_id)
 
 if __name__ == '__main__':
     G_A = get_generator(args)
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     G_B.set_train(True)
     load_ckpt(args, G_A, G_B)
 
-    input_shp = [1, 3, args.image_size, args.image_size]
+    input_shp = [args.batch_size, 3, args.image_size, args.image_size]
     input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp).astype(np.float32))
     G_A_file = f"{args.file_name}_BtoA"
     export(G_A, input_array, file_name=G_A_file, file_format=args.file_format)
