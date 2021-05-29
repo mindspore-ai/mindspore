@@ -23,13 +23,13 @@ from src.config import config_ascend, config_gpu
 
 parser = argparse.ArgumentParser(description="Image classification")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="xception ckpt file.")
 parser.add_argument("--width", type=int, default=299, help="input width")
 parser.add_argument("--height", type=int, default=299, help="input height")
 parser.add_argument("--file_name", type=str, default="xception", help="xception output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"],
-                    default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="GPU",
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="MINDIR", help="file format")
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 
 args = parser.parse_args()
@@ -52,5 +52,5 @@ if __name__ == "__main__":
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
-    image = Tensor(np.zeros([config.batch_size, 3, args.height, args.width], np.float32))
+    image = Tensor(np.zeros([args.batch_size, 3, args.height, args.width], np.float32))
     export(net, image, file_name=args.file_name, file_format=args.file_format)
