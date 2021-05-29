@@ -115,9 +115,11 @@ void MaximumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
   size_t y_tensor_len = GetTensorLen(y_shape_);
   size_t x_tensor_size = x_tensor_len * sizeof(T);
   size_t y_tensor_size = y_tensor_len * sizeof(T);
-  memset_s(dx_addr, x_tensor_size, 0, x_tensor_size);
-  memset_s(dy_addr, y_tensor_size, 0, y_tensor_size);
-
+  auto res_dx = memset_s(dx_addr, x_tensor_size, 0, x_tensor_size);
+  auto res_dy = memset_s(dy_addr, y_tensor_size, 0, y_tensor_size);
+  if (res_dx != EOK || res_dy != EOK) {
+    MS_LOG(EXCEPTION) << "MaximumGradCPUKernel LaunchKernel task memset failed.";
+  }
   std::vector<size_t> x_shape(dout_shape.size(), 1);
   std::vector<size_t> y_shape(dout_shape.size(), 1);
   std::vector<size_t> x_cargo(dout_shape.size(), 0);

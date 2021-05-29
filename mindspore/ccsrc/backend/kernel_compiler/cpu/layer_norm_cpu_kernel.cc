@@ -34,16 +34,16 @@ void LayerNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (begin_params_axis < 0) {
     begin_params_axis += x_shape.size();
   }
-  for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
+  for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
   }
-  for (size_t i = IntToSize(begin_norm_axis); i < x_shape.size(); i++) {
+  for (size_t i = LongToSize(begin_norm_axis); i < x_shape.size(); i++) {
     block_size_ *= x_shape[i];
   }
-  for (size_t i = IntToSize(begin_params_axis); i < x_shape.size(); i++) {
+  for (size_t i = LongToSize(begin_params_axis); i < x_shape.size(); i++) {
     param_num_ *= x_shape[i];
   }
-  if (block_num_ <= 0 || block_size_ <= 0) {
+  if (block_num_ == 0 || block_size_ == 0) {
     MS_LOG(EXCEPTION) << "LayerNormCPUKernel input shape error, input shape: " << x_shape;
   }
 }
@@ -93,8 +93,8 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
         sum += x[j];
         square_sum += x[j] * x[j];
       }
-      T block_mean = sum / block_size_;
-      T block_var = square_sum / block_size_ - block_mean * block_mean;
+      T block_mean = sum / static_cast<T>(block_size_);
+      T block_var = square_sum / static_cast<T>(block_size_) - block_mean * block_mean;
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
         y[j] = (x[j] - block_mean) / (T)std::sqrt(static_cast<double>(block_var) + eps_) * gamma[param_shift] +

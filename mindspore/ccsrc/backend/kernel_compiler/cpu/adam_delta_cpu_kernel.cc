@@ -103,8 +103,7 @@ void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inpu
   }
 }
 
-bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                const std::vector<kernel::AddressPtr> &workspace,
+bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
   CheckParams(inputs, outputs);
   auto m = reinterpret_cast<float *>(inputs[0]->addr);

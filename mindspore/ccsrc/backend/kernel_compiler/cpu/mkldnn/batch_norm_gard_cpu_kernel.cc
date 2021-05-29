@@ -84,7 +84,7 @@ bool BatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
   auto wksp_in = reinterpret_cast<float *>(workspace[0]->addr);
   auto scale_ret = memcpy_s(wksp_in, workspace[0]->size, inputs[2]->addr, inputs[2]->size);
   auto max_size = workspace[0]->size - inputs[2]->size;
-  auto bias_ret = memset_s(wksp_in + (inputs[2]->size / sizeof(float)), max_size, 0., max_size);
+  auto bias_ret = memset_s(wksp_in + (inputs[2]->size / sizeof(float)), max_size, 0, max_size);
   if (scale_ret != 0 && bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
     return false;

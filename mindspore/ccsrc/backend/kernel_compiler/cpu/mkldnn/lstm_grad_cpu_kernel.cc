@@ -159,14 +159,13 @@ void LSTMGradCPUKernel::SetArgumentHandleOp(const std::vector<kernel::AddressPtr
   SetArgumentHandle(DNNL_ARG_DIFF_DST_ITER_C, inputs[9]->addr);
 }
 
-void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, string name) {
+void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, const string name) const {
   if (memset_s(mem.get_data_handle(), mem.get_desc().get_size(), 0, mem.get_desc().get_size())) {
     MS_LOG(EXCEPTION) << name << " memset error";
   }
 }
 
-bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                               const std::vector<kernel::AddressPtr> &workspace,
+bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
   using dt = dnnl::memory::data_type;
   using tag = dnnl::memory::format_tag;

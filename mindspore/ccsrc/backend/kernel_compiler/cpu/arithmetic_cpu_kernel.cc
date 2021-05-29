@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] + input2[i];
       input1[i] = out[i];
@@ -34,7 +34,7 @@ void ArithmeticCPUKernel<T>::AssignAdd(T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] + input2[i];
     }
@@ -44,7 +44,7 @@ void ArithmeticCPUKernel<T>::Add(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] - input2[i];
     }
@@ -54,7 +54,7 @@ void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] * input2[i];
     }
@@ -64,7 +64,7 @@ void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto dividend = input1[i];
       auto divisor = input2[i];
@@ -89,7 +89,7 @@ void ArithmeticCPUKernel<T>::RealDiv(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto dividend = input1[i];
       auto divisor = input2[i];
@@ -114,7 +114,7 @@ void ArithmeticCPUKernel<T>::Div(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto dividend = input1[i];
       auto divisor = input2[i];
@@ -139,7 +139,7 @@ void ArithmeticCPUKernel<T>::FloorDiv(const T *input1, const T *input2, T *out) 
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto x = static_cast<double>(input1[i]);
       auto y = static_cast<double>(input2[i]);
@@ -157,7 +157,7 @@ void ArithmeticCPUKernel<T>::Mod(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto x = static_cast<double>(input1[i]);
       auto y = static_cast<double>(input2[i]);
@@ -170,7 +170,7 @@ void ArithmeticCPUKernel<T>::FloorMod(const T *input1, const T *input2, T *out) 
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto x = static_cast<double>(input1[i]);
       auto y = static_cast<double>(input2[i]);
@@ -182,7 +182,7 @@ void ArithmeticCPUKernel<T>::Pow(const T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       T diff = input1[i] - input2[i];
       out[i] = diff * diff;
@@ -193,7 +193,7 @@ void ArithmeticCPUKernel<T>::SquaredDifference(const T *input1, const T *input2,
 
 template <typename T>
 void ArithmeticCPUKernel<T>::Atan2(const T *input1, const T *input2, T *out) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = (T)atan2(static_cast<double>(input1[i]), static_cast<double>(input2[i]));
     }
