@@ -22,8 +22,8 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
-                                     const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
+bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &, const ShapeVector &host_shape,
+                                     TypeId host_type, bool) const {
   bool ret = false;
   if (filepath.empty()) {
     MS_LOG(ERROR) << "Dump file path is null!";
@@ -35,8 +35,7 @@ bool CPUDeviceAddress::DumpMemToFile(const std::string &filepath, const std::str
   return ret;
 }
 
-bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector & /* shape */, size_t size, TypeId type,
-                                        void *host_ptr) const {
+bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId type, void *host_ptr) const {
   if (ptr_ == nullptr) {
     MS_LOG(ERROR) << "The pointer ptr_ is null!";
     return false;
