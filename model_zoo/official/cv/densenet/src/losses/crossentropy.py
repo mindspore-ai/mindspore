@@ -16,7 +16,6 @@
 loss function CrossEntropy
 """
 
-from mindspore.nn.loss.loss import _Loss
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
@@ -24,7 +23,7 @@ from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 
 
-class CrossEntropy(_Loss):
+class CrossEntropy(nn.Cell):
     """
     loss function CrossEntropy
     """
