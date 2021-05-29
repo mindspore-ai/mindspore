@@ -32,14 +32,17 @@ constexpr size_t kMaxPoolInputNum = 2;
 constexpr size_t kMaxPoolAttrAxisNum = 4;
 constexpr size_t kMaxPoolGradInputNum = 4;
 constexpr size_t kMaxPoolWithArgmaxOutputNum = 2;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
 
 CNodePtr GetMaxPool(const CNodePtr &maxpool_grad) {
   MS_EXCEPTION_IF_NULL(maxpool_grad);
   if (maxpool_grad->inputs().size() != kMaxPoolGradInputNum) {
-    MS_LOG(EXCEPTION) << "MaxPoolGrad's input number should be " << kMaxPoolGradInputNum - 1 << ", but got "
-                      << maxpool_grad->inputs().size() - 1;
+    MS_LOG(EXCEPTION) << "MaxPoolGrad's input number should be " << (kMaxPoolGradInputNum - 1) << ", but got "
+                      << (maxpool_grad->inputs().size() - 1);
   }
-  auto maxpool_anf = maxpool_grad->input(2);
+  auto maxpool_anf = maxpool_grad->input(kIndex2);
   MS_EXCEPTION_IF_NULL(maxpool_anf);
   return maxpool_anf->cast<CNodePtr>();
 }
@@ -48,8 +51,8 @@ CNodePtr CreateMaxPoolWithArgmax(const FuncGraphPtr &graph, const CNodePtr &maxp
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(maxpool);
   if (maxpool->inputs().size() != kMaxPoolInputNum) {
-    MS_LOG(EXCEPTION) << "MaxPool's input number should be " << kMaxPoolInputNum - 1 << ", but got "
-                      << maxpool->inputs().size() - 1;
+    MS_LOG(EXCEPTION) << "MaxPool's input number should be " << (kMaxPoolInputNum - 1) << ", but got "
+                      << (maxpool->inputs().size() - 1);
   }
   std::vector<AnfNodePtr> maxpool_argmax_inputs = {NewValueNode(std::make_shared<Primitive>(kMaxPoolWithArgmaxOpName)),
                                                    maxpool->input(1)};
@@ -71,14 +74,14 @@ CNodePtr CreateMaxPoolGradWithArgmax(const FuncGraphPtr &graph, const CNodePtr &
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(maxpool_grad);
   if (maxpool_grad->inputs().size() != kMaxPoolGradInputNum) {
-    MS_LOG(EXCEPTION) << "MaxPoolGrad's input number should be " << kMaxPoolGradInputNum - 1 << ", but got "
-                      << maxpool_grad->inputs().size() - 1;
+    MS_LOG(EXCEPTION) << "MaxPoolGrad's input number should be " << (kMaxPoolGradInputNum - 1) << ", but got "
+                      << (maxpool_grad->inputs().size() - 1);
   }
   // MaxPoolGrad's inputs are {input, output, grad_input}, MaxPoolGradWithArgmax's inputs are
   // {input, grad_input, argmax_output}
   std::vector<AnfNodePtr> maxpool_grad_argmax_inputs = {
     NewValueNode(std::make_shared<Primitive>(kMaxPoolGradWithArgmaxOpName)), maxpool_grad->input(1),
-    maxpool_grad->input(3), maxpool_argmax_outputs[1]};
+    maxpool_grad->input(kIndex3), maxpool_argmax_outputs[1]};
   auto maxpool_grad_argmax = graph->NewCNode(maxpool_grad_argmax_inputs);
   MS_EXCEPTION_IF_NULL(maxpool_grad_argmax);
   maxpool_grad_argmax->set_scope(maxpool_grad->scope());
@@ -99,12 +102,13 @@ void SetNodeAttrs(const CNodePtr &maxpool, const CNodePtr &maxpool_grad, const C
                       << ksize.size();
   }
   // note that strides and ksize change from (1, 1, x, y) to (1, x, y, 1)
-  for (size_t i = 1; i <= 2; ++i) {
-    strides[i] = strides[i + 1];
-    ksize[i] = ksize[i + 1];
-  }
-  strides[3] = 1;
-  ksize[3] = 1;
+  strides[kIndex1] = strides[kIndex2];
+  strides[kIndex2] = strides[kIndex3];
+  strides[kIndex3] = 1;
+
+  ksize[kIndex1] = ksize[kIndex2];
+  ksize[kIndex2] = ksize[kIndex3];
+  ksize[kIndex3] = 1;
 
   AnfAlgo::CopyNodeAttrs(maxpool, maxpool_argmax);
   AnfAlgo::CopyNodeAttrs(maxpool_grad, maxpool_grad_argmax);

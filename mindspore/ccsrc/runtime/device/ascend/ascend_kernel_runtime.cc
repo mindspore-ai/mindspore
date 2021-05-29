@@ -83,8 +83,8 @@ std::string GetRankId() {
   MS_EXCEPTION_IF_NULL(mpi_config_ptr);
   if (mpi_config_ptr->enable_mpi()) {
     int rank_id = GetMPIRankId();
-    const char *offset = std::getenv("RANK_OFFSET");
-    if (offset != nullptr) {
+    const std::string offset = std::getenv("RANK_OFFSET");
+    if (offset.empty()) {
       try {
         int rank_offset = std::stoi(offset);
         rank_id += rank_offset;
@@ -596,6 +596,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
 }
 
 bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_sink) {
+  const uint64_t kUSecondInSecond = 1000000;
   SignalGuard sg;
   MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
@@ -613,11 +614,10 @@ bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_si
   }
 #if defined(_WIN32) || defined(_WIN64)
   auto end_time = std::chrono::steady_clock::now();
-  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+  std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
   MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
 #else
   (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
@@ -721,7 +721,6 @@ bool AscendKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
   }
-  FreeAndClearBufferPtrs();
   return true;
 }
 
@@ -732,11 +731,11 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
     return false;
   }
 
-  std::shared_ptr<char[]> buffer(new char[size]());
-  MS_EXCEPTION_IF_NULL(buffer);
-  std::copy(reinterpret_cast<const char *>(src), reinterpret_cast<const char *>(src) + size, buffer.get());
-  AddBufferPtr(buffer);
-  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, buffer.get(), size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
+  auto copy_kind = static_cast<rtMemcpyKind_t>(kind);
+  if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX) {
+    MS_LOG(EXCEPTION) << "Memory copy async not support cache host buffer in kind: " << kind;
+  }
+  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;
   }
@@ -798,8 +797,9 @@ bool AscendKernelRuntime::InitDevice() {
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   InnerSetContext();
+  int32_t ret;
   if (stream_ != nullptr) {
-    auto ret = rtStreamDestroy(stream_);
+    ret = rtStreamDestroy(stream_);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
     }
@@ -807,14 +807,14 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   }
 
   if (communication_stream_ != nullptr) {
-    auto ret = rtStreamDestroy(communication_stream_);
+    ret = rtStreamDestroy(communication_stream_);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
     }
     communication_stream_ = nullptr;
   }
 
-  auto ret = rtDeviceReset(device_id);
+  ret = rtDeviceReset(device_id);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
   }
