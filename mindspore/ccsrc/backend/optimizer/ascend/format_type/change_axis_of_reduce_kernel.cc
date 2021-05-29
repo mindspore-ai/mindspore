@@ -34,6 +34,7 @@ const size_t kAxis_H = 2;
 const size_t kAxis_W = 3;
 const size_t kAxis_6HD_H = 1;
 const size_t kAxis_6HD_W = 2;
+const int64_t kAxisDim = 4;
 const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
                                                                   {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD}};
 void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
@@ -46,7 +47,7 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
                       << "] is not single input or single output ";
   }
   for (auto elem : reduce_axis) {
-    if (elem > 4) {
+    if (elem > kAxisDim) {
       MS_LOG(INFO) << "reduce axis is larger than 4 dims reduce axis : [" << elem << "]";
     }
   }

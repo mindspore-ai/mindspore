@@ -20,12 +20,12 @@
 #include "runtime/device/ascend/ascend_label_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-static constexpr uint32_t kLabelGotoLabelId = 1;
-static constexpr uint32_t kLabelSwitchLabelId = 2;
-
 namespace mindspore {
 namespace device {
 namespace ascend {
+static constexpr uint32_t kLabelGotoLabelId = 1;
+static constexpr uint32_t kLabelSwitchLabelId = 2;
+
 static void UpdateLabelGoto(NotNull<CNodePtr> node) {
   if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
     return;
@@ -142,7 +142,7 @@ uint32_t AscendLabelAssign::GetLabelNum(NotNull<const session::KernelGraph *> gr
   std::lock_guard<std::mutex> lock(label_num_mutex_);
   auto iter = label_num_.find(graph.get());
   if (iter == label_num_.end()) {
-    MS_LOG(DEBUG) << "Graph " << graph->ToString() << " has not assigned label, defalut is 0.";
+    MS_LOG(DEBUG) << "Graph " << graph->ToString() << " has not assigned label, default is 0.";
     return 0;
   }
   return iter->second;

@@ -102,12 +102,13 @@ void RectifyDoMaskKernelInfo::RectifyKernelInfo(const std::vector<CNodePtr> &do_
 }
 
 std::string RectifyDoMaskKernelInfo::GetConvertFormat(const std::map<std::string, size_t> &format_counter) const {
+  constexpr size_t kFormatCount = 2;
   std::string convert_format = kOpFormat_DEFAULT;
   size_t counter = 0;
-  if (format_counter.size() > 2) {
+  if (format_counter.size() > kFormatCount) {
     return kOpFormat_DEFAULT;
   }
-  if (format_counter.size() == 2 && format_counter.find(kOpFormat_DEFAULT) == format_counter.end()) {
+  if (format_counter.size() == kFormatCount && format_counter.find(kOpFormat_DEFAULT) == format_counter.end()) {
     return kOpFormat_DEFAULT;
   }
   for (const auto &iter : format_counter) {
