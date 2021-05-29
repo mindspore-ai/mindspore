@@ -23,6 +23,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <NvInfer.h>
 #include "base/base.h"
 #include "ir/anf.h"
 
@@ -30,7 +31,7 @@ namespace mindspore {
 namespace opt {
 class LayerInput;
 class TrtConverterContext;
-using ConvertResult = std::pair<bool, std::vector<LayerInput>>;
+using ConvertResult = std::pair<bool, std::vector<nvinfer1::ITensor *>>;
 using ConvertFunc = std::function<ConvertResult(AnfNodePtr, std::shared_ptr<TrtConverterContext>)>;
 
 class TrtOpFactory {

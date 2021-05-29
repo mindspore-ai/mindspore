@@ -51,7 +51,7 @@ ConvertResult AddReshapeLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   const nvinfer1::Dims &dims = TrtUtils::MsDimsToTrtDims(output_shape, false);
   layer->setReshapeDimensions(dims);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 ConvertResult AddElementLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
@@ -97,7 +97,7 @@ ConvertResult AddElementLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
   auto *layer = context->network()->addElementWise(*x1, *x2, op_type);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 ConvertResult AddPoolingLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
@@ -129,7 +129,7 @@ ConvertResult AddPoolingLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
     layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   }
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 ConvertResult AddActivationLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
@@ -144,7 +144,7 @@ ConvertResult AddActivationLayer(AnfNodePtr node, std::shared_ptr<TrtConverterCo
   auto *layer = context->network()->addActivation(*inputs[0].tensor(), act_type);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 ConvertResult AddUnaryLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
@@ -159,7 +159,7 @@ ConvertResult AddUnaryLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext
   auto *layer = context->network()->addUnary(*inputs[0].tensor(), op_type);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 ConvertResult addReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
@@ -191,7 +191,7 @@ ConvertResult addReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContex
   // Skip reduce operator if reduce_axes == 0
   if (reduce_axes == 0) {
     MS_LOG(WARNING) << "No dimension be be reduced. " << node->DebugString();
-    return {true, {LayerInput(inputs[0].tensor())}};
+    return {true, {inputs[0].tensor()}};
   }
 
   bool keep_dims = AnfAlgo::GetNodeAttr<bool>(node, "keep_dims");
@@ -215,10 +215,10 @@ ConvertResult addReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContex
     dim.d[1] = 1;
     reshape_layer->setReshapeDimensions(dim);
 
-    return {true, {LayerInput(reshape_layer->getOutput(0))}};
+    return {true, {reshape_layer->getOutput(0)}};
   }
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 }  // namespace
 
@@ -265,7 +265,10 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2D) {
     layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[1]), LongToInt(pad_list[3])});
   }
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  const auto &group = AnfAlgo::GetNodeAttr<int64_t>(node, "group");
+  layer->setNbGroups(SizeToInt(group));
+
+  return {true, {layer->getOutput(0)}};
 }
 
 // Binary broadcast operators.
@@ -367,7 +370,7 @@ MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   layer = context->network()->addElementWise(*c1, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(MatMul) {
@@ -402,7 +405,7 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
     auto *squeeze_y = context->network()->addShuffle(*layer->getOutput(0));
     squeeze_y->setReshapeDimensions(y_dims);
 
-    return {true, {LayerInput(squeeze_y->getOutput(0))}};
+    return {true, {squeeze_y->getOutput(0)}};
   } else {
     // convert weight to tensor and appy addMatrixMultiply
     MS_LOG(ERROR) << "Operator not implemented: " << node->DebugString();
@@ -446,7 +449,7 @@ MS_TRT_CONVERTER_FUNC_REG(BatchMatMul) {
   auto *layer = context->network()->addMatrixMultiply(*tensor1, trt_transpose1, *tensor2, trt_transpose2);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
@@ -477,13 +480,14 @@ MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
   auto *layer = context->network()->addElementWise(*inputs[0].tensor(), *bias, nvinfer1::ElementWiseOperation::kSUM);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 // NoOp
 MS_TRT_CONVERTER_FUNC_REG(Reshape) { return AddReshapeLayer(node, context); }
 MS_TRT_CONVERTER_FUNC_REG(ExpandDims) { return AddReshapeLayer(node, context); }
 MS_TRT_CONVERTER_FUNC_REG(Squeeze) { return AddReshapeLayer(node, context); }
+MS_TRT_CONVERTER_FUNC_REG(Flatten) { return AddReshapeLayer(node, context); }
 
 MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   std::vector<LayerInput> inputs;
@@ -537,7 +541,7 @@ MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   auto *layer = context->network()->addScale(*inputs[0].tensor(), nvinfer1::ScaleMode::kCHANNEL, shift, scale, pow);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Concat) {
@@ -567,7 +571,7 @@ MS_TRT_CONVERTER_FUNC_REG(Concat) {
   }
   layer->setAxis(axis);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
@@ -608,7 +612,7 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
     layer->setPostPadding(nvinfer1::DimsHW{LongToInt(pad_list[1]), LongToInt(pad_list[3])});
   }
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Slice) {
@@ -632,7 +636,7 @@ MS_TRT_CONVERTER_FUNC_REG(Slice) {
   auto *layer = context->network()->addSlice(*inputs[0].tensor(), trt_start, trt_size, trt_stride);
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Transpose) {
@@ -653,7 +657,7 @@ MS_TRT_CONVERTER_FUNC_REG(Transpose) {
   MS_EXCEPTION_IF_NULL(layer);
   layer->setFirstTranspose(trt_perm);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Softmax) {
@@ -684,7 +688,7 @@ MS_TRT_CONVERTER_FUNC_REG(Softmax) {
   auto *layer = context->network()->addSoftMax(*inputs[0].tensor());
   MS_EXCEPTION_IF_NULL(layer);
   layer->setAxes(reduce_axes);
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(LogSoftmax) {
@@ -707,7 +711,7 @@ MS_TRT_CONVERTER_FUNC_REG(LogSoftmax) {
   auto *log_layer = context->network()->addUnary(*softmax_layer->getOutput(0), nvinfer1::UnaryOperation::kLOG);
   MS_EXCEPTION_IF_NULL(log_layer);
 
-  return {true, {LayerInput(log_layer->getOutput(0))}};
+  return {true, {log_layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Gather) {
@@ -729,7 +733,7 @@ MS_TRT_CONVERTER_FUNC_REG(Gather) {
   auto *layer = context->network()->addGather(*input, *indices, LongToInt(axis));
   MS_EXCEPTION_IF_NULL(layer);
 
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(Cast) {
@@ -744,7 +748,7 @@ MS_TRT_CONVERTER_FUNC_REG(Cast) {
   auto trt_type = TrtUtils::MsDtypeToTrtDtype(dst_type);
   auto *layer = context->network()->addIdentity(*inputs[0].tensor());
   layer->setOutputType(0, trt_type);
-  return {true, {LayerInput(layer->getOutput(0))}};
+  return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
@@ -810,7 +814,33 @@ MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
                                                  nvinfer1::ElementWiseOperation::kSUM);
   MS_EXCEPTION_IF_NULL(add);
 
-  return {true, {LayerInput(add->getOutput(0))}};
+  return {true, {add->getOutput(0)}};
+}
+
+MS_TRT_CONVERTER_FUNC_REG(Return) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret) {
+    return {false, {}};
+  }
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    nvinfer1::ITensor *input = nullptr;
+    if (inputs[i].IsTensor()) {
+      input = inputs[i].tensor();
+    } else {
+      std::vector<size_t> shape;
+      std::transform(inputs[i].shape().begin(), inputs[i].shape().end(), std::back_inserter(shape),
+                     [](int64_t d) { return LongToSize(d); });
+      input = ToTensor(&inputs[i], shape, context);
+    }
+
+    const std::string &name = "return_output_" + std::to_string(i);
+    input->setName(name.c_str());
+    context->network()->markOutput(*input);
+  }
+
+  return {true, {}};
 }
 }  // namespace opt
 }  // namespace mindspore
