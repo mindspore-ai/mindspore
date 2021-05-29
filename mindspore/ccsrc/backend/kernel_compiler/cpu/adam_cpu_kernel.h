@@ -28,10 +28,10 @@ class AdamCPUKernel : public CPUKernel {
   AdamCPUKernel() = default;
   ~AdamCPUKernel() override = default;
   template <typename T>
-  void LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
-                  size_t size);
-  void InitKernel(const CNodePtr &kernel_node) override;
+  void LaunchAdam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  void LaunchAdamNnacl(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -40,7 +40,7 @@ class AdamCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCPUKernel)
+MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
