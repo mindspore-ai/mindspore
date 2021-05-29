@@ -361,13 +361,11 @@ AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type) {
   ShapeVector min_shape_vec;
   ShapeVector max_shape_vec;
 
-  if (shape->IsDynamic()) {
-    if (!shape->min_shape().empty()) {
-      min_shape_vec = shape->min_shape();
-    }
-    if (!shape->max_shape().empty()) {
-      max_shape_vec = shape->max_shape();
-    }
+  if (!shape->min_shape().empty()) {
+    min_shape_vec = shape->min_shape();
+  }
+  if (!shape->max_shape().empty()) {
+    max_shape_vec = shape->max_shape();
   }
 
   auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);

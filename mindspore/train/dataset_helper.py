@@ -60,13 +60,18 @@ class _DataWrapper(nn.Cell):
     dataset channel 'queue_name' and performs the forward computation.
     """
 
-    def __init__(self, network, dataset_types, dataset_shapes, queue_name):
+    def __init__(self, network, dataset_types, dataset_shapes, queue_name, min_shapes=None, max_shapes=None):
         super(_DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
         # Also copy the flag in `network` construct
         flags = getattr(network.__class__.construct, "_mindspore_flags", {})
         self.info = (dataset_types, dataset_shapes)
         self.add_flags(**flags)
         self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
+        if min_shapes is not None and max_shapes is not None:
+            Validator.check_value_type("min_shapes", min_shapes, [list, tuple])
+            Validator.check_value_type("max_shapes", max_shapes, [list, tuple])
+            self.get_next.add_prim_attr("min_shapes", min_shapes)
+            self.get_next.add_prim_attr("max_shapes", max_shapes)
         self.network = network
 
     def construct(self):
@@ -74,9 +79,24 @@ class _DataWrapper(nn.Cell):
         return self.network(*outputs)
 
 
-def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name):
+def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name,
+                                    min_shapes=None, max_shapes=None):
     if not isinstance(network, _DataWrapper):
-        network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name)
+        network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name, min_shapes, max_shapes)
+    return network
+
+def has_dynamic_shape(dataset_shapes):
+    for shape in dataset_shapes:
+        if -1 in shape:
+            return True
+    return False
+
+def _generate_network_with_dataset(network, dataset_helper, queue_name):
+    dataset_types, dataset_shapes = dataset_helper.types_shapes()
+    (min_shapes, max_shapes) = (None, None) if not has_dynamic_shape(dataset_shapes) \
+        else dataset_helper.dynamic_min_max_shapes()
+    network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types,
+                                              queue_name, min_shapes, max_shapes)
     return network
 
 
@@ -151,8 +171,7 @@ def connect_network_with_dataset(network, dataset_helper):
        not context.get_context("enable_ge") and \
        context.get_context("device_target") in ("Ascend", "GPU"):
         dataset.__me_inited__ = True
-        dataset_types, dataset_shapes = dataset_helper.types_shapes()
-        network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
+        network = _generate_network_with_dataset(network, dataset_helper, queue_name)
 
     if hasattr(dataset_iter, "sink_size") and \
        dataset_iter.sink_size == 1 and \
@@ -286,7 +305,7 @@ class _DatasetIter:
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
-        self.dynamic_min_max_shapes = dataset.__transfer_dataset__.dynamic_min_max_shapes
+        self.dynamic_min_max_shapes = dataset.dynamic_min_max_shapes
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
 
     def __iter__(self):

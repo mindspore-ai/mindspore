@@ -165,10 +165,6 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
 }
 
 bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
-  if (input_num_ == 0) {
-    MS_LOG(WARNING) << "input num is 0";
-    return true;
-  }
   MS_LOG(INFO) << "UpdateOutputShapeFromExtInfo start";
   auto ret = rtMemcpy(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
                       ext_info_size_, RT_MEMCPY_DEVICE_TO_HOST);

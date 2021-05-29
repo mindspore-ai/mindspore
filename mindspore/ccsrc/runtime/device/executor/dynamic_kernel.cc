@@ -73,9 +73,6 @@ void DynamicKernel::RebuildDependTensor() {
 }
 
 void DynamicKernel::InferShape() {
-  if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
-    return;
-  }
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();

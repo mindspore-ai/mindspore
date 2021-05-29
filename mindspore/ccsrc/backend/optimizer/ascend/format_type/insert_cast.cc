@@ -54,7 +54,11 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
     auto imm = std::make_shared<Int64Imm>(output_idx);
     idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
     auto getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
-    AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, getitem.get());
+    auto abs = cnode->abstract()->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto abs_i = abs->elements()[output_idx];
+    MS_EXCEPTION_IF_NULL(abs_i);
+    getitem->set_abstract(abs_i);
     const auto dev_fmt = AnfAlgo::GetOutputFormat(cnode, output_idx);
     const auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_idx);
     if (origin_type != device_type) {

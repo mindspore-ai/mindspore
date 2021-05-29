@@ -3498,7 +3498,7 @@ class FastGeLU(PrimitiveWithInfer):
         return input_x
 
 
-class GetNext(PrimitiveWithInfer):
+class GetNext(Primitive):
     """
     Returns the next element in the dataset queue.
 
@@ -3544,12 +3544,6 @@ class GetNext(PrimitiveWithInfer):
         validator.check_value_type("shapes", shapes, [list, tuple], self.name)
         validator.check("types length", len(types), "shapes length", len(shapes), Rel.EQ, self.name)
         validator.check_value_type("output_num", output_num, [int], self.name)
-
-    def infer_shape(self):
-        return tuple(self.shapes)
-
-    def infer_dtype(self):
-        return tuple(self.types)
 
 
 class PReLU(PrimitiveWithInfer):

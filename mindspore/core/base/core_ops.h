@@ -32,6 +32,7 @@ inline const std::unordered_map<std::string, ValuePtr> kSideEffectPropagate = {
   {mindspore::GRAPH_FLAG_SIDE_EFFECT_PROPAGATE, kValueOne},
 };
 
+constexpr auto kGetNext = "GetNext";
 constexpr auto kGather = "Gather";
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
@@ -90,6 +91,9 @@ constexpr auto kDropoutGrad = "DropoutGrad";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
 
 // Here list all primitives used in backend or some special primitives used by core.
+// GetNext
+inline const PrimitivePtr kPrimGetNext = std::make_shared<Primitive>(kGetNext);
+
 // Arithmetic
 inline const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>(kScalarAdd);
 inline const PrimitivePtr kPrimScalarSub = std::make_shared<Primitive>(kScalarSub);
