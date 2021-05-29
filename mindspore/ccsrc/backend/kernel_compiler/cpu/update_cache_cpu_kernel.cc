@@ -81,9 +81,9 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     if (indices[i] < 0 || indices[i] >= max_num_) continue;
 
     char *tmp = update + i * one_length_size;
-    if (indices[i] * one_length_size + one_length_size <= max_size) {
-      int ret =
-        memcpy_s(input_x + indices[i] * one_length_size, max_size - indices[i] * one_length_size, tmp, one_length_size);
+    if (static_cast<size_t>(indices[i]) * one_length_size + one_length_size <= max_size) {
+      int ret = memcpy_s(input_x + static_cast<size_t>(indices[i]) * one_length_size,
+                         max_size - static_cast<size_t>(indices[i]) * one_length_size, tmp, one_length_size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
       }

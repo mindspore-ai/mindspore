@@ -149,8 +149,8 @@ void MemCopyFromHostToCache(void *hashmap_addr, void *host_addr, void *cache_add
   size_t single_col_bytes = param_type_size * col_size;
   for (size_t i = 0; i < hashmap_size; ++i) {
     if (!hashmap_data[i].IsEmpty()) {
-      size_t host_offset = single_col_bytes * hashmap_data[i].key_;
-      size_t cache_offset = single_col_bytes * hashmap_data[i].value_;
+      size_t host_offset = single_col_bytes * static_cast<size_t>(hashmap_data[i].key_);
+      size_t cache_offset = single_col_bytes * static_cast<size_t>(hashmap_data[i].value_);
       if (host_offset + single_col_bytes <= host_max) {
         auto ret =
           memcpy_s(cache_data + cache_offset, cache_max - cache_offset, host_data + host_offset, single_col_bytes);
@@ -186,8 +186,8 @@ void BindAndInitCacheTensor(const ParamMap &param_pair_list, const ParameterPtr 
       MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
                         << "host shape:" << host_shape << ", cache shape:" << cache_shape;
     }
-    auto host_data_max_size = host_tensor->Size();
-    auto cache_data_max_size = cache_tensor->Size();
+    auto host_data_max_size = static_cast<size_t>(host_tensor->Size());
+    auto cache_data_max_size = static_cast<size_t>(cache_tensor->Size());
     if (hashmap_data_type == TypeId::kNumberTypeInt32) {
       MemCopyFromHostToCache<int32_t>(hashmap_tensor->data_c(), host_tensor->data_c(), cache_tensor->data_c(),
                                       host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
@@ -212,12 +212,12 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
     MS_LOG(EXCEPTION) << "Memset failed.";
   }
   std::vector<T> host_range;
-  host_range.reserve(host_size);
+  host_range.reserve(static_cast<T>(host_size));
   for (int64_t i = 0; i < host_size; ++i) {
-    host_range.emplace_back(i);
+    host_range.emplace_back(static_cast<T>(i));
   }
   std::random_shuffle(host_range.begin(), host_range.end());
-  size_t size = cache_size;
+  size_t size = static_cast<size_t>(cache_size);
   size_t hashmap_count = 0;
   for (size_t i = 0; i < size; ++i) {
     auto random_key = host_range[i];
@@ -225,14 +225,14 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
     size_t count = 1;
     while (!hashmap_data[entry].IsEmpty() && !hashmap_data[entry].IsKey(random_key)) {
       count += 1;
-      entry = (entry + 1) % hashmap_size;
+      entry = (entry + 1) % static_cast<T>(hashmap_size);
     }
     if (hashmap_data[entry].IsEmpty()) {
       hashmap_count++;
       hashmap_data[entry].key_ = random_key;
-      hashmap_data[entry].value_ = i;
+      hashmap_data[entry].value_ = SizeToLong(i);
       hashmap_data[entry].step_ = kInitStep;
-      hashmap_data[entry].tag_ = count;
+      hashmap_data[entry].tag_ = SizeToLong(count);
     }
   }
   MS_LOG(INFO) << "Hashmap init success, with " << hashmap_count << " / " << hashmap_size;
@@ -241,7 +241,7 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
 AnfNodePtr InitHashMap(const FuncGraphPtr &func_graph, const int64_t host_size, const int64_t cache_size,
                        TypeId type_id) {
   // init new tensor
-  size_t hashmap_size = cache_size * kEmptyRate;
+  size_t hashmap_size = static_cast<size_t>(cache_size * kEmptyRate);
   std::vector<int64_t> host_shape{static_cast<int64_t>(hashmap_size), 4};
   auto new_tensor = std::make_shared<tensor::Tensor>(type_id, host_shape);
   size_t byte_size = new_tensor->Size();
@@ -294,10 +294,10 @@ AnfNodePtr CreateMapCacheIdx(const FuncGraphPtr &func_graph, const AnfNodePtr &i
     offset_value = rank_id * host_size;
   }
   auto offset = NewValueNode(MakeValue(offset_value));
-  auto max_num_imm = std::make_shared<Int64Imm>(SizeToLong(host_size));
+  auto max_num_imm = std::make_shared<Int64Imm>(host_size);
   auto max_num_abstract_scalar = std::make_shared<abstract::AbstractScalar>(max_num_imm);
   max_num->set_abstract(max_num_abstract_scalar);
-  auto offset_imm = std::make_shared<Int64Imm>(SizeToLong(offset_value));
+  auto offset_imm = std::make_shared<Int64Imm>(offset_value);
   auto offset_abstract_scalar = std::make_shared<abstract::AbstractScalar>(offset_imm);
   offset->set_abstract(offset_abstract_scalar);
 
@@ -391,7 +391,7 @@ AnfNodePtr CreateUpdateCache(const FuncGraphPtr &graph, ParameterPtr params, Anf
   auto params_shape = params_shp->shape();
   auto max_size = params_shape[0];
   auto max_size_node = NewValueNode(MakeValue(max_size));
-  auto max_num_imm = std::make_shared<Int64Imm>(SizeToLong(max_size));
+  auto max_num_imm = std::make_shared<Int64Imm>(max_size);
   auto max_num_abstract_scalar = std::make_shared<abstract::AbstractScalar>(max_num_imm);
   max_size_node->set_abstract(max_num_abstract_scalar);
 
@@ -511,7 +511,7 @@ void RemoveOriginParamFromSet(const CNodePtr &unique_node, AnfSet *no_ref_params
       if (input->isa<CNode>()) {
         que.push(input->cast<CNodePtr>());
       } else if (input->isa<Parameter>()) {
-        int num = no_ref_params->erase(input);
+        size_t num = no_ref_params->erase(input);
         if (num > 0) {
           MS_LOG(INFO) << "Erase unique_node input from set success.";
           return;
@@ -590,7 +590,6 @@ void ReplaceNoRefToParams(const FuncGraphPtr &graph, const AnfMap &no_ref_pipe_p
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto node_users = manager->node_users();
-  AnfNodePtrList control_depend_list;
   // add other no ref pipe param and unique index dense
   for (auto &ele : no_ref_pipe_param_map) {
     auto user_set = node_users[ele.first];
