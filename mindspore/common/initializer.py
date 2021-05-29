@@ -384,7 +384,7 @@ class Normal(Initializer):
     def _initialize(self, arr):
         seed, seed2 = self.seed
         output_tensor = Tensor(np.zeros(arr.shape, dtype=np.float32))
-        random_normal(0, self.sigma, arr.shape, seed, seed2, output_tensor)
+        random_normal(arr.shape, seed, seed2, output_tensor)
         output_data = output_tensor.asnumpy()
         output_data = output_data * self.sigma + self.mean
         _assignment(arr, output_data)

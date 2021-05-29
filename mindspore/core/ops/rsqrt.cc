@@ -31,7 +31,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  CheckAndConvertUtils::CheckInteger("input shape", in_shape.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(in_shape.size()), kEqual, 1, prim_name);
   return std::make_shared<abstract::Shape>(in_shape);
 }
 

@@ -44,7 +44,7 @@ void BatchNorm::set_format(const Format &format) {
 }
 
 void BatchNorm::set_momentum(const float momentun) {
-  CheckAndConvertUtils::CheckInRange<int64_t>(kMomentum, momentun, kIncludeBoth, {0.0, 1.0}, this->name());
+  CheckAndConvertUtils::CheckInRange<int64_t>(kMomentum, SizeToLong(momentun), kIncludeBoth, {0.0, 1.0}, this->name());
   this->AddAttr(kMomentum, MakeValue(momentun));
 }
 
@@ -73,7 +73,7 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   // Infer shape
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("batch_norm_infer", input_args.size(), kEqual, 5, prim_name);
+  CheckAndConvertUtils::CheckInteger("batch_norm_infer", SizeToLong(input_args.size()), kEqual, 5, prim_name);
 
   auto input_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
@@ -94,13 +94,13 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     input_shape_norm.push_back(input_x[1]);
     input_shape_norm.push_back(input_x[2]);
   }
-  CheckAndConvertUtils::CheckInteger("scale rank", scale.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale.size()), kEqual, 1, prim_name);
   CheckAndConvertUtils::Check("scale shape", scale, kEqual, "bias shape", bias, prim_name, TypeError);
   CheckAndConvertUtils::Check("scale shape[0]", scale[0], kEqual, "input_x channel", input_shape_norm[1], prim_name,
                               TypeError);
 
   if (!GetValue<bool>(primitive->GetAttr(kIsTraining))) {
-    CheckAndConvertUtils::CheckInteger("mean rank", mean.size(), kEqual, 1, prim_name);
+    CheckAndConvertUtils::CheckInteger("mean rank", SizeToLong(mean.size()), kEqual, 1, prim_name);
     CheckAndConvertUtils::Check("mean shape", mean, kEqual, "variance shape", variance, prim_name, TypeError);
     CheckAndConvertUtils::Check("mean shape", mean, kEqual, "scale shape", scale, prim_name, TypeError);
   }

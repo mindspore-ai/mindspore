@@ -30,7 +30,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("input shape", input_shape.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kEqual, 4, prim_name);
   std::vector<int64_t> output_shape(input_shape.size());
   auto block_shape_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
   auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
@@ -54,8 +54,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &paddings) {
   this->AddAttr(kPaddings, MakeValue(paddings));
-  int64_t h = paddings.size();
-  int64_t w = paddings[0].size();
+  int64_t h = SizeToLong(paddings.size());
+  int64_t w = SizeToLong(paddings[0].size());
   std::vector<int64_t> temp_w = {2, 2};
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
   for (size_t i = 0; i < LongToSize(h); i++) {
