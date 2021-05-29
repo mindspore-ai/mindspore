@@ -82,7 +82,7 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     max_height = max_height + (2 * (max_height - 1));
   }
 
-  if (output_shape_[(output_shape_.size() - 2) + 0] > max_height ||
+  if (output_shape_[(output_shape_.size() - 2)] > max_height ||
       output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
     MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more DIMS";
   }
@@ -136,26 +136,26 @@ void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T *dy, const T *interim_dy,
-                                                        const int dx_batches, const int dx_channels,
-                                                        const int dx_height, const int dx_width, const int dy_height,
-                                                        const int dy_width, const int padd_dim,
-                                                        const int64_t *paddings_arg, int mode, T *dx) {
+void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T *interim_dy, const int dx_height,
+                                                        const int dx_width, const int dy_height, const int dy_width,
+                                                        const int padd_dim, const int64_t *paddings_arg, int mode,
+                                                        T *dx) {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
   }
   extract_paddings_(paddings_arg, padd_dim, paddings);
   // Create required anchor points for non-mirrored data inside new tensor
-  int ap1_x = paddings[WIDTH + LEFT];
-  int ap2_x = paddings[WIDTH + LEFT] + dx_width - 1;
-  int ap1_y = paddings[HEIGHT + TOP];
-  int ap2_y = paddings[HEIGHT + TOP] + dx_height - 1;
+  int ap1_x = paddings[WIDTH];
+  int ap2_x = paddings[WIDTH] + dx_width - 1;
+  int ap1_y = paddings[HEIGHT];
+  int ap2_y = paddings[HEIGHT] + dx_height - 1;
 
   for (size_t pos = 0; pos < size; ++pos) {
-    int dx_block_num = (pos / dx_width) / dx_height;
-    const int grad_x = (pos % dx_width) + paddings[WIDTH + LEFT];
-    const int grad_y = ((pos / dx_width) % dx_height) + paddings[HEIGHT + TOP];
+    int dx_block_num = (SizeToLong(pos) / dx_width) / dx_height;
+    const int grad_x = (SizeToLong(pos) % dx_width) + paddings[WIDTH];
+    const int grad_y = ((SizeToLong(pos) / dx_width) % dx_height) + paddings[HEIGHT];
+
     // copy position's own value into output
     dx[pos] = interim_dy[(dx_block_num * dy_height + grad_y) * dy_width + grad_x];
 
@@ -202,33 +202,32 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
 
 template <typename T>
 void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int dx_batches,
-                                                       const int dx_channels, const int dx_height, const int dx_width,
-                                                       const int dy_height, const int dy_width, const int padd_dim,
-                                                       const int64_t *paddings_arg, int mode, T *dx) {
+                                                       const int dx_channels, const int dy_height, const int dy_width,
+                                                       const int padd_dim, const int64_t *paddings_arg, int mode) {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
   }
   extract_paddings_(paddings_arg, padd_dim, paddings);
   // Create anchor points for non mirrored data inside new tensor
-  int ap1_channel = paddings[CHANNEL + LEFT];
-  int ap2_channel = paddings[CHANNEL + LEFT] + dx_channels - 1;
-  int ap1_batch = paddings[BATCH + LEFT];
-  int ap2_batch = paddings[BATCH + LEFT] + dx_batches - 1;
-  int dy_channels = dx_channels + paddings[CHANNEL + LEFT] + paddings[CHANNEL + RIGHT];
-  int dy_batches = dx_batches + paddings[BATCH + LEFT] + paddings[BATCH + RIGHT];
+  int ap1_channel = paddings[CHANNEL];
+  int ap2_channel = paddings[CHANNEL] + dx_channels - 1;
+  int ap1_batch = paddings[BATCH];
+  int ap2_batch = paddings[BATCH] + dx_batches - 1;
+  int dy_channels = dx_channels + paddings[CHANNEL] + paddings[CHANNEL + RIGHT];
+  int dy_batches = dx_batches + paddings[BATCH] + paddings[RIGHT];
 
   for (size_t pos = 0; pos < size; ++pos) {
-    int block_num = (pos / dy_width) / dy_height;
+    int block_num = (SizeToLong(pos) / dy_width) / dy_height;
     // Select exact position inside the dy_interim array
-    const int interim_x = pos % dy_width;
-    const int interim_y = (pos / dy_width) % dy_height;
+    const int interim_x = SizeToLong(pos) % dy_width;
+    const int interim_y = (SizeToLong(pos) / dy_width) % dy_height;
     const int interim_channel = block_num % dx_channels;
     const int interim_batch = block_num / dx_channels;
     interim_dy[pos] = T(0);  // init
     // map cur interim channel and batch to equivalent in padded dy array
-    const int equiv_dy_channel = interim_channel + paddings[CHANNEL + LEFT];
-    const int equiv_dy_batch = interim_batch + paddings[BATCH + LEFT];
+    const int equiv_dy_channel = interim_channel + paddings[CHANNEL];
+    const int equiv_dy_batch = interim_batch + paddings[BATCH];
     int target_batch = 0;
     int target_channel = 0;
     int equiv_block_num = 0;
@@ -265,13 +264,11 @@ void MirrorPadGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto interim = reinterpret_cast<T *>(workspace[0]->addr);
   auto outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  MirrorPadGradBatchChannel(workspace_size_, inputs_addr, interim, output_shape_[0], output_shape_[1], output_shape_[2],
-                            output_shape_[3], input_shape_[2], input_shape_[3], num_paddings_, paddings, mode_,
-                            outputs_addr);
+  MirrorPadGradBatchChannel(workspace_size_, inputs_addr, interim, output_shape_[0], output_shape_[1], input_shape_[2],
+                            input_shape_[3], num_paddings_, paddings, mode_);
 
-  MirrorPadGrad_Width_Height(output_size_, inputs_addr, interim, output_shape_[0], output_shape_[1], output_shape_[2],
-                             output_shape_[3], input_shape_[2], input_shape_[3], num_paddings_, paddings, mode_,
-                             outputs_addr);
+  MirrorPadGrad_Width_Height(output_size_, interim, output_shape_[2], output_shape_[3], input_shape_[2],
+                             input_shape_[3], num_paddings_, paddings, mode_, outputs_addr);
 }
 
 void MirrorPadGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
