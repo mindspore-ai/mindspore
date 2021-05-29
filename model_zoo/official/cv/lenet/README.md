@@ -109,6 +109,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
         ├── postprocess.py        //  postprocess script
+        ├── preprocess.py        //  preprocess script
 ```
 
 ## [Script Parameters](#contents)

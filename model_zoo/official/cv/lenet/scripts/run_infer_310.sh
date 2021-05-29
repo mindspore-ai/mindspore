@@ -56,6 +56,16 @@ else
     export ASCEND_OPP_PATH=$ASCEND_HOME/opp
 fi
 
+function preprocess_data()
+{
+    if [ -d preprocess_Result ]; then
+        rm -rf ./preprocess_Result
+    fi
+    mkdir preprocess_Result
+    python ../preprocess.py --dataset_path=$data_path --output_path=./preprocess_Result &> preprocess.log
+    data_path=./preprocess_Result
+}
+
 function compile_app()
 {
     cd ../ascend310_infer || exit
@@ -88,6 +98,11 @@ function cal_acc()
     python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path &> acc.log &
 }
 
+preprocess_data
+if [ $? -ne 0 ]; then
+    echo "preprocess data failed"
+    exit 1
+fi
 compile_app
 if [ $? -ne 0 ]; then
     echo "compile app code failed"

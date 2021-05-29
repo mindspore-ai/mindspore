@@ -32,8 +32,7 @@ def get_result(result_path, img_path):
         file_name = file.split('.')[0]
         label = int(file_name.split('_')[-1])
         labels.append(label)
-        resultPath = os.path.join(result_path, file_name + '.bin')
-        output = np.fromfile(resultPath, dtype=np.float32)
+        output = np.fromfile(os.path.join(result_path, file_name + '.bin'), dtype=np.float32)
         preds.append(np.argmax(output, axis=0))
     acc = calcul_acc(labels, preds)
     print("accuracy: {}".format(acc))
