@@ -171,7 +171,7 @@ Status Softmax::GetAttrs() {
   auto it =
     std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return ((element >= dim) || (element < -dim)); });
   if (it != axis_.end()) {
-    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << -dim << ", " << dim - 1 << "].";
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
     return FAILED;
   }
 
@@ -399,7 +399,7 @@ Status ExpandDimsInfo::GetAttrs() {
 
   int64_t dim = SizeToLong(inputs_shape_[0].size());
   if ((axis > dim) || (axis < -dim - 1)) {
-    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << -dim - 1 << ", " << dim << "]";
+    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim - 1) << ", " << dim << "]";
     return FAILED;
   }
 
