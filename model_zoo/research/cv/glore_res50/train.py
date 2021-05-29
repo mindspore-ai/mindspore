@@ -178,3 +178,5 @@ if __name__ == '__main__':
 
     # copy train result from cache to obs
     mox.file.copy_parallel(src_url='/cache/train_output', dst_url=args_opt.train_url)
+    if args_opt.is_modelarts:
+        mox.file.copy_parallel(src_url='/cache/train_output', dst_url=args_opt.train_url)
