@@ -38,6 +38,10 @@ AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraph
   MS_EXCEPTION_IF_NULL(add3);
   MS_EXCEPTION_IF_NULL(add5);
   MS_EXCEPTION_IF_NULL(equiv);
+  constexpr size_t kOutputIndex0 = 0;
+  constexpr size_t kOutputIndex1 = 1;
+  constexpr size_t kOutputIndex2 = 2;
+  constexpr size_t kOutputIndex3 = 3;
   auto add0 = GetAnfNodeByVar(equiv, add0_var_);
   MS_EXCEPTION_IF_NULL(add0);
   auto add1 = GetAnfNodeByVar(equiv, add1_var_);
@@ -57,10 +61,10 @@ AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraph
   CreateMultipleOutputsOfAnfNode(func_graph, new_node, kLambNextMVWithDecayOutputNum, &new_node_outputs);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(add3, new_node_outputs[0]);
-  (void)manager->Replace(add0, new_node_outputs[1]);
-  (void)manager->Replace(add1, new_node_outputs[2]);
-  return new_node_outputs[3];
+  (void)manager->Replace(add3, new_node_outputs[kOutputIndex0]);
+  (void)manager->Replace(add0, new_node_outputs[kOutputIndex1]);
+  (void)manager->Replace(add1, new_node_outputs[kOutputIndex2]);
+  return new_node_outputs[kOutputIndex3];
 }
 
 AnfNodePtr LambNextMVWithDecayRule::CreateLambNextMVWithDecayNode(const FuncGraphPtr &func_graph,

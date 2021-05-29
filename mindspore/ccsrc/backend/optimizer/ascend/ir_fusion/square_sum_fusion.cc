@@ -101,6 +101,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   AnfNodePtr square_anf = nullptr;
   CNodePtr square = nullptr;
   std::tie(sum, square_anf, square) = GetPrevNodes(node);
+  constexpr size_t kShape2Dim = 2;
 
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -111,7 +112,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   AnfNodePtr ret_node = nullptr;
   if (manager->node_users()[square_anf].size() == 1) {
     ret_node = GenerateSquareSumV1(graph, square, sum);
-  } else if (manager->node_users()[square_anf].size() == 2) {
+  } else if (manager->node_users()[square_anf].size() == kShape2Dim) {
     auto square_sumv2 = GenerateSquareSumV2(graph, square, sum);
 
     std::vector<AnfNodePtr> square_sumv2_outputs;
