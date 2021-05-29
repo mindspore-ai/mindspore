@@ -35,7 +35,8 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
   auto binary_cross_entropy_prim = primitive->cast<PrimBinaryCrossEntropyPtr>();
   MS_EXCEPTION_IF_NULL(binary_cross_entropy_prim);
   auto prim_name = binary_cross_entropy_prim->name();
-  CheckAndConvertUtils::CheckInRange("binary_cross_entropy_infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
+  CheckAndConvertUtils::CheckInRange("binary_cross_entropy_infer", SizeToLong(input_args.size()), kIncludeBoth, {2, 3},
+                                     prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShape("y_shape", input_args[1]->BuildShape(), prim_name);
   auto weight_shape =
@@ -53,7 +54,8 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("binary_cross_entropy_infer", input_args.size(), kEqual, 3, prim->name());
+  CheckAndConvertUtils::CheckInteger("binary_cross_entropy_infer", SizeToLong(input_args.size()), kEqual, 3,
+                                     prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

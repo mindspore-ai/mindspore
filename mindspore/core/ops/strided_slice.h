@@ -45,8 +45,7 @@ class StridedSlice : public PrimitiveC {
   int64_t get_new_axis_mask() const;
   int64_t get_shrink_axis_mask() const;
   std::vector<int64_t> TenToTwo(int64_t num);
-  int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, std::vector<int64_t> x_shape,
-                                 int64_t i);
+  int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const;
 };
 AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);

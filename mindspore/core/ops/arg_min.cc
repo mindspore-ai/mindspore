@@ -43,7 +43,7 @@ AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto argmin_prim = primitive->cast<PrimArgMin>();
   MS_EXCEPTION_IF_NULL(argmin_prim);
   auto prim_name = argmin_prim->name();
-  CheckAndConvertUtils::CheckInteger("arg_min_infer", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("arg_min_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
   // Infer shape
   auto axis = argmin_prim->get_axis();

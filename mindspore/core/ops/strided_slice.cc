@@ -28,6 +28,76 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
+                        const std::vector<int64_t> &begin_v, const std::vector<int64_t> &end_v,
+                        const std::vector<int64_t> &strides_v, std::vector<int64_t> *infer_shape, size_t i, size_t j,
+                        bool has_ellipsis) {
+  if (!has_ellipsis) {
+    return;
+  }
+  auto strided_slice_prim = primitive->cast<PrimStridedSlicePtr>();
+  size_t x_rank = x_shape.size();
+  size_t slice_len = begin_v.size();
+  std::vector<int64_t> begin_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_begin_mask());
+  std::vector<int64_t> end_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_end_mask());
+  std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
+  std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
+
+  int64_t num = 0;
+  for (size_t n = j + 1; n < slice_len; n++) {
+    if (new_axis_pos[n] == 1) {
+      num++;
+    }
+  }
+
+  int64_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
+  infer_shape->insert(infer_shape->end(), x_shape.begin() + i, x_shape.begin() + i + ellipsis_occupied_dims);
+  j += 1;
+  i += ellipsis_occupied_dims;
+
+  while (i < x_rank || j < slice_len) {
+    int64_t x_dim_size = x_shape[i];
+    int64_t start = begin_v[j];
+    int64_t finish = end_v[j];
+    int64_t strides = strides_v[j];
+    if (j < begin_pos.size() || j < slice_len) {
+      start = strides_v[j] < 0 ? -1 : 0;
+    }
+    if (j < end_pos.size() && end_pos[j] == 1) {
+      finish = strides_v[j] < 0 ? -(x_shape[i] + 1) : x_shape[i];
+    }
+    if (j < new_axis_pos.size() && new_axis_pos[j] == 1) {
+      infer_shape->push_back(1);
+      j += 1;
+      continue;
+    }
+    if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
+      if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
+        MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
+      }
+      j += 1;
+      i += 1;
+      continue;
+    }
+    int64_t slicing_length = strided_slice_prim->compute_slicing_length(start, finish, strides, x_dim_size);
+    infer_shape->push_back(slicing_length);
+    i += 1;
+    j += 1;
+  }
+  return;
+}
+
+const std::vector<int64_t> CheckAndGetValidStrides(const AbstractBasePtr &stride_arg) {
+  MS_EXCEPTION_IF_NULL(stride_arg);
+  auto temp_strides = stride_arg->cast<abstract::AbstractTuplePtr>()->BuildValue();
+  MS_EXCEPTION_IF_NULL(temp_strides);
+  auto strides = GetValue<std::vector<int64_t>>(temp_strides);
+  if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride == 0; })) {
+    MS_EXCEPTION(ValueError) << "StridedSlice's input strides cannot contain 0.";
+  }
+  return strides;
+}
+
 abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -38,48 +108,48 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto begin_v = GetValue<std::vector<int64_t>>(temp_begin_v);
   auto temp_end_v = input_args[2]->cast<abstract::AbstractTuplePtr>()->BuildValue();
   auto end_v = GetValue<std::vector<int64_t>>(temp_end_v);
-  auto temp_strides_v = input_args[3]->cast<abstract::AbstractTuplePtr>()->BuildValue();
-  auto strides_v = GetValue<std::vector<int64_t>>(temp_strides_v);
+  auto strides_v = CheckAndGetValidStrides(input_args[3]);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  int64_t x_rank = x_shape.size();
-  int64_t slice_len = begin_v.size();
   std::vector<int64_t> begin_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_begin_mask());
   std::vector<int64_t> end_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_end_mask());
   std::vector<int64_t> ellipsis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_ellipsis_mask());
   std::vector<int64_t> new_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_new_axis_mask());
   std::vector<int64_t> shrink_axis_pos = strided_slice_prim->TenToTwo(strided_slice_prim->get_shrink_axis_mask());
 
-  int64_t i = 0;
-  int64_t j = 0;
+  size_t i = 0;
+  size_t j = 0;
   int64_t start;
   int64_t finish;
   int64_t strides;
   int64_t slicing_length;
   bool has_ellipsis = false;
   std::vector<int64_t> infer_shape;
+  size_t slice_len = begin_v.size();
+  size_t x_rank = x_shape.size();
   while (i < x_rank || j < slice_len) {
+    int64_t x_dim_size = x_shape[i];
     if (j < slice_len) {
       start = begin_v[j];
       finish = end_v[j];
       strides = strides_v[j];
-      if (j < (int64_t)ellipsis_pos.size() && ellipsis_pos[j] == 1) {
+      if (j < ellipsis_pos.size() && ellipsis_pos[j] == 1) {
         has_ellipsis = true;
         break;
       }
-      if (j < (int64_t)begin_pos.size() && begin_pos[j] == 1) {
+      if (j < begin_pos.size() && begin_pos[j] == 1) {
         start = strides_v[j] < 0 ? -1 : 0;
       }
-      if (j < (int64_t)end_pos.size() && end_pos[j] == 1) {
+      if (j < end_pos.size() && end_pos[j] == 1) {
         finish = strides_v[j] < 0 ? -(x_shape[i] + 1) : x_shape[i];
       }
-      if (j < (int64_t)new_axis_pos.size() && new_axis_pos[j] == 1) {
+      if (j < new_axis_pos.size() && new_axis_pos[j] == 1) {
         infer_shape.push_back(1);
         j += 1;
         continue;
       }
-      if (j < (int64_t)shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
-        if (((-x_shape[i] <= start && start < x_shape[i]) == false) || strides < 0) {
+      if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
+        if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
           MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
         }
         j += 1;
@@ -91,57 +161,17 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
       finish = x_shape[0];
       strides = 1;
     }
-    slicing_length = strided_slice_prim->compute_slicing_length(start, finish, strides, x_shape, i);
+    slicing_length = strided_slice_prim->compute_slicing_length(start, finish, strides, x_dim_size);
     infer_shape.push_back(slicing_length);
     i += 1;
     j += 1;
   }
 
-  int64_t num = 0;
-  for (int64_t n = j + 1; n < slice_len; n++) {
-    if (new_axis_pos[n] == 1) {
-      num++;
-    }
-  }
-  if (has_ellipsis) {
-    int64_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
-    infer_shape.insert(infer_shape.end(), x_shape.begin() + i, x_shape.begin() + i + ellipsis_occupied_dims);
-    j += 1;
-    i += ellipsis_occupied_dims;
-
-    while (i < x_rank || j < slice_len) {
-      start = begin_v[j];
-      finish = end_v[j];
-      strides = strides_v[j];
-      if (j < (int64_t)begin_pos.size() || j < slice_len) {
-        start = strides_v[j] < 0 ? -1 : 0;
-      }
-      if (j < (int64_t)end_pos.size() && end_pos[j] == 1) {
-        finish = strides_v[j] < 0 ? -(x_shape[i] + 1) : x_shape[i];
-      }
-      if (j < (int64_t)new_axis_pos.size() && new_axis_pos[j] == 1) {
-        infer_shape.push_back(1);
-        j += 1;
-        continue;
-      }
-      if (j < (int64_t)shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
-        if (((-x_shape[i] <= start && start < x_shape[i]) == false) || strides < 0) {
-          MS_EXCEPTION(ValueError) << "when shrink axis, the stride cannot be negative number";
-        }
-        j += 1;
-        i += 1;
-        continue;
-      }
-      slicing_length = strided_slice_prim->compute_slicing_length(start, finish, strides, x_shape, i);
-      infer_shape.push_back(slicing_length);
-      i += 1;
-      j += 1;
-    }
-  }
+  EllipsisInferShape(primitive, x_shape, begin_v, end_v, strides_v, &infer_shape, i, j, has_ellipsis);
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr StridedSliceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr StridedSliceInferType(const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -219,13 +249,7 @@ std::vector<int64_t> StridedSlice::TenToTwo(int64_t num) {
   return output;
 }
 
-int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides,
-                                             std::vector<int64_t> x_shape, int64_t i) {
-  if (i > (int64_t)x_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For 'StridedSlice', When their is no new axis, "
-                                "the index length must be less or equal than the dim of x.";
-  }
-  int64_t x_dim = x_shape[i];
+int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const {
   int64_t slicing_length = 0;
   if (strides > 0) {
     if ((start_pos >= x_dim) || end_pos < -x_dim) {
@@ -277,7 +301,7 @@ int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos,
 
 AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(primitive, input_args),
+  return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(input_args),
                                                     StridedSliceInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameStridedSlice, StridedSlice);

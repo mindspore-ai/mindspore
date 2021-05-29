@@ -150,7 +150,7 @@ AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, c
   auto group_prim = primitive->cast<PrimGroupConv2DGradInputPtr>();
   MS_EXCEPTION_IF_NULL(group_prim);
   auto prim_name = group_prim->name();
-  CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", input_args.size(), kGreaterEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("group_conv_2D_infer", SizeToLong(input_args.size()), kGreaterEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
 
   // Infer shape
