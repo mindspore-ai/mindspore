@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include <map>
+#include <cinttypes>
 #include <memory>
 #include <set>
 #include <string>
@@ -45,7 +46,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (defined ENABLE_CPU && ((defined ENABLE_D) || (defined ENABLE_GPU)))
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -54,8 +55,8 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
-static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
-static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
+const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
+const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 static std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
@@ -458,7 +459,7 @@ TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &
                                const OperatorInfoPtr &distribute_operator) {
   TensorInfo tensorinfo_in;
   if (middle_prim->name() == prim::kTupleGetItem) {
-    auto value_node = middle_node->input(2)->cast<ValueNodePtr>();
+    auto value_node = middle_node->input(SECOND_INPUT)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     size_t index_s = LongToSize(GetValue<int64_t>(value_node->value()));
     if (index_s >= distribute_operator->outputs_tensor_info().size()) {
@@ -526,7 +527,7 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
   }
 
   if (LongToSize(index - 1) >= next_distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(WARNING) << "The index is out of range, the index is " << index - 1 << ", the vector size is "
+    MS_LOG(WARNING) << "The index is out of range, the index is " << (index - 1) << ", the vector size is "
                     << next_distribute_operator->inputs_tensor_info().size() << "next operator name is "
                     << next_distribute_operator->name();
     return;
@@ -703,7 +704,7 @@ void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64_t inde
 
   // extract tensor layout
   if (LongToSize(index - 1) >= op_info->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << index - 1 << ", vector size is  "
+    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (index - 1) << ", vector size is  "
                       << op_info->inputs_tensor_info().size();
   }
   TensorInfo tensor_info = op_info->inputs_tensor_info()[LongToSize(index - 1)];
@@ -727,9 +728,9 @@ void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64_t inde
 void SplitTensorList(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(next_node);
-  if (next_node->inputs().size() != 2 || index != 1) {
+  if (next_node->inputs().size() != TWO_INPUT_INPUTS_SIZE || index != 1) {
     MS_LOG(INFO) << next_node->fullname_with_scope() << " Inputs must have only one input, get "
-                 << next_node->inputs().size() - 1 << " index should be 1, get " << index;
+                 << (next_node->inputs().size() - 1) << " index should be 1, get " << index;
     return;
   }
   OperatorInfoPtr op_info = next_node->user_data<OperatorInfo>();
@@ -810,7 +811,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreatOpInstance failed";
   }
   OperatorParams params = arg_replace_op.second;
-  if (node->inputs().size() < 2) {
+  if (node->inputs().size() < TWO_INPUT_INPUTS_SIZE) {
     // GetNext operator dose not has input
     if (node->inputs().size() == 1) {
       return {NewValueNode(pyop_instance)};
@@ -851,7 +852,7 @@ void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   std::vector<AnfNodePtr> replace_input;
   replace_input = ReplaceOpInput(replace_op, instance_name, node);
   if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
-    replace_input.push_back(node->input(3));
+    replace_input.push_back(node->input(THIRD_INPUT));
   }
   CNodePtr replace_node = func_graph->NewCNode(replace_input);
   MS_EXCEPTION_IF_NULL(replace_node);
@@ -962,15 +963,15 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
 
 int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != 3) {
+  if (cnode->inputs().size() != THREE_INPUT_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << cnode->ToString() << " size( " << cnode->inputs().size() << " ) is not 3";
   }
 
-  if (!cnode->input(2)->isa<ValueNode>()) {
+  if (!cnode->input(SECOND_INPUT)->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The index of tuple getitem is not a value node";
   }
 
-  ValuePtr tuple_index_value = GetValueNode(cnode->input(2));
+  ValuePtr tuple_index_value = GetValueNode(cnode->input(SECOND_INPUT));
   MS_EXCEPTION_IF_NULL(tuple_index_value);
   if (!tuple_index_value->isa<Int64Imm>()) {
     MS_LOG(EXCEPTION) << "The index of tuple getitem is not int32";
@@ -1143,7 +1144,7 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
     return false;
   }
 
-  if ((node->inputs().size() == 2) &&
+  if ((node->inputs().size() == TWO_INPUT_INPUTS_SIZE) &&
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return false;
@@ -1151,9 +1152,37 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
 
   if (mirror_ops.size() != node_size - 1) {
     MS_LOG(EXCEPTION) << "Mirrorops's size is wrong! mirror_ops size is " << mirror_ops.size() << ", node_size is "
-                      << node_size - 1;
+                      << (node_size - 1);
   }
   return true;
+}
+
+bool MirrorForNonRefKey(const AnfNodePtr &param_node, const CNodePtr &cnode, const FuncGraphPtr &fg, size_t index) {
+  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  std::string mirror_op_name;
+  auto manager = fg->manager();
+  if (grad_accumulation_step > 1) {
+    mirror_op_name = MIRROR_MINI_STEP_OPERATOR;
+  } else {
+    mirror_op_name = MIRROR_OPERATOR;
+  }
+  auto next_cnode = FindCNode(param_node, mirror_op_name, fg);
+  // if there is already a MirrorOp in the same graph, use MirrorOp CNode as a input instead
+  if (next_cnode.first) {
+    MS_EXCEPTION_IF_NULL(next_cnode.second);
+    // param->cast->op, insert mirror before cast
+    if (cnode->input(index)->isa<CNode>()) {
+      auto pre_cnode = cnode->input(index)->cast<CNodePtr>();
+      auto pre_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
+      if ((pre_prim->name() == CAST) || (pre_prim->name() == LOAD)) {
+        manager->SetEdge(pre_cnode, 1, next_cnode.second);
+        return true;
+      }
+    }
+    manager->SetEdge(cnode, SizeToLong(index), next_cnode.second);
+    return true;
+  }
+  return false;
 }
 
 void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
@@ -1197,30 +1226,8 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
       }
     }
     // not a RefKey
-    if (!param_node_pair.second) {
-      int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-      std::string mirror_op_name;
-      if (grad_accumulation_step > 1) {
-        mirror_op_name = MIRROR_MINI_STEP_OPERATOR;
-      } else {
-        mirror_op_name = MIRROR_OPERATOR;
-      }
-      auto next_cnode = FindCNode(param_node_pair.first, mirror_op_name, func_graph);
-      // if there is already a MirrorOp in the same graph, use MirrorOp CNode as a input instead
-      if (next_cnode.first) {
-        MS_EXCEPTION_IF_NULL(next_cnode.second);
-        // param->cast->op, insert mirror before cast
-        if (node->input(index)->isa<CNode>()) {
-          auto pre_cnode = node->input(index)->cast<CNodePtr>();
-          auto pre_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
-          if ((pre_prim->name() == CAST) || (pre_prim->name() == LOAD)) {
-            manager->SetEdge(pre_cnode, 1, next_cnode.second);
-            continue;
-          }
-        }
-        manager->SetEdge(node, SizeToLong(index), next_cnode.second);
-        continue;
-      }
+    if (!param_node_pair.second && MirrorForNonRefKey(param_node_pair.first, node, func_graph, index)) {
+      continue;
     }
     // if the parameter found is a RefKey, or no MirrorOp is found in the same graph, insert a new MirrorOp
     // only one MirrorOp in backward_op
@@ -1242,10 +1249,10 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
     }
     AnfNodePtr pre_node = node->input(index);
     InsertMirrorNode(root, op, node, index, pre_node, func_graph, instance_name, param_name);
-    auto comm_op = node->input(index)->cast<CNodePtr>();
+    auto mirror_op = node->input(index)->cast<CNodePtr>();
     // add fusion flag
     // pipeline mirror would not be set, which should be supported later
-    AddCommOpFusionType(comm_op, param_node_pair.first);
+    AddCommOpFusionType(mirror_op, param_node_pair.first);
   }
 }
 
@@ -1414,7 +1421,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
       }
     }
     if (cnode->input(0)->isa<CNode>()) {
-      if (cnode->inputs().size() < 2) {
+      if (cnode->inputs().size() < TWO_INPUT_INPUTS_SIZE) {
         MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " size is smaller than 2";
       }
       base_shape_ptr = cnode->input(1)->Shape();
@@ -1467,8 +1474,8 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
 
   size_t inputs_size = all_inputs.size();
+  Shapes input_shapes;
   for (size_t i = 1; i < inputs_size; ++i) {
-    Shapes input_shapes;
     AnfNodePtr input = all_inputs[i];
     if (HasAbstractMonad(input)) {
       continue;
@@ -1484,7 +1491,8 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       g_RefMap[parameters[0]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
+               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) &&
+                (inputs_size == TWO_INPUT_INPUTS_SIZE))) {
       input_shapes = GetNodeShape(input);
     } else {
       continue;
@@ -1566,7 +1574,7 @@ std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, const Anf
       FuncGraphPtr graph_sub = GetValueNode<FuncGraphPtr>(graph_value_node);
       auto parameters = graph_sub->parameters();
       if (LongToSize(param_pair.second - 1) >= parameters.size()) {
-        MS_LOG(EXCEPTION) << "The index is out of range, index is " << param_pair.second - 1 << ", vector size is "
+        MS_LOG(EXCEPTION) << "The index is out of range, index is " << (param_pair.second - 1) << ", vector size is "
                           << parameters.size();
       }
       std::pair<AnfNodePtr, int64_t> res = FindSubGraph(graph_sub, parameters[LongToSize(param_pair.second - 1)]);
@@ -1637,7 +1645,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
       if (distribute_operator == nullptr) {
         MS_LOG(WARNING) << "Parallel optimizer: " << GetPrimName(cnode) << " 's OperatorInfoPtr is nullptr";
       } else if (IntToSize(param_pair.second - 1) >= distribute_operator->inputs_tensor_info().size()) {
-        MS_LOG(EXCEPTION) << "The index is out of range, index is  " << param_pair.second - 1 << ", vector size is  "
+        MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (param_pair.second - 1) << ", vector size is  "
                           << distribute_operator->inputs_tensor_info().size();
       }
       if (insert_flag) {
@@ -1705,7 +1713,7 @@ std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNod
     MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " 's OperatorInfoPtr is nullptr";
   }
   if (LongToSize(res.second - 1) >= distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << res.second - 1 << ", vector size is  "
+    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (res.second - 1) << ", vector size is  "
                       << distribute_operator->inputs_tensor_info().size();
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(res.second - 1)];
@@ -2072,8 +2080,8 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   MS_EXCEPTION_IF_NULL(distribute_operator);
   int64_t index = node_pair.second;
   if (index > SizeToLong(distribute_operator->inputs_tensor_info().size())) {
-    MS_LOG(EXCEPTION) << "The index is out of range, the node_pair.second is  " << index - 1 << ", the vector size is  "
-                      << distribute_operator->inputs_tensor_info().size();
+    MS_LOG(EXCEPTION) << "The index is out of range, the node_pair.second is  " << (index - 1)
+                      << ", the vector size is  " << distribute_operator->inputs_tensor_info().size();
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
   TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
@@ -2313,7 +2321,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (StrategyFound(attrs)) {
       MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
     }
-    MS_ASSERT(cnode->inputs().size() == 3);
+    MS_ASSERT(cnode->inputs().size() == THREE_INPUT_INPUTS_SIZE);
     auto prev_layout_ptr = FindPrevLayout(cnode->input(1));
     if (prev_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
@@ -2348,7 +2356,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
-  if (return_node->size() < 2) {
+  if (return_node->size() < TWO_INPUT_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << "Failure: " << return_node->ToString() << " size is smaller than 2";
   }
   AnfNodePtr pre_node = return_node->input(1);
@@ -2383,7 +2391,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   }
 
   // size of common cnode is larger than 1
-  if (pre_cnode->size() < 2) {
+  if (pre_cnode->size() < TWO_INPUT_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << pre_cnode->ToString() << " size( " << pre_cnode->inputs().size() << " ) is smaller than 2";
   }
 
@@ -2568,7 +2576,7 @@ void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePt
 
 void HandleTileNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() < 3 || !IsValueNode<Primitive>(cnode->input(0))) {
+  if (cnode->size() < THREE_INPUT_INPUTS_SIZE || !IsValueNode<Primitive>(cnode->input(0))) {
     return;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -2596,7 +2604,7 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_no
     }
 
     auto cnode = node->cast<CNodePtr>();
-    if ((cnode->size() < 2) || !IsValueNode<Primitive>(cnode->input(0))) {
+    if ((cnode->size() < TWO_INPUT_INPUTS_SIZE) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
     auto expect_j_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -2943,7 +2951,7 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   // shape op doesn't have params and attrs.
   OperatorParams params;
   OperatorAttrs attrs;
-  auto shape_value = GetValueNode(node->input(2))->cast<ValueSequeuePtr>();
+  auto shape_value = GetValueNode(node->input(SECOND_INPUT))->cast<ValueSequeuePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto shape = shape_value->value();
   if (shape.empty()) {
@@ -2951,7 +2959,7 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   }
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op = std::make_pair(SHAPE_OP, args);
-  InsertNode(op, node, 2, pre_node, root, "shape");
+  InsertNode(op, node, SECOND_INPUT, pre_node, root, "shape");
 }
 
 static AnfNodePtr FindGrad(const CNodePtr &cnode, size_t accum = 0) {
@@ -3147,9 +3155,9 @@ void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes)
                    << ", no need to set operator info";
       continue;
     }
-    if (make_tuple_list_next_cnode->inputs().size() != 2) {
+    if (make_tuple_list_next_cnode->inputs().size() != TWO_INPUT_INPUTS_SIZE) {
       MS_LOG(EXCEPTION) << "Now the " << op_type << "'s user only support 1 input, but got "
-                        << make_tuple_list_next_cnode->inputs().size() - 1;
+                        << (make_tuple_list_next_cnode->inputs().size() - 1);
     }
 
     MS_LOG(INFO) << "Set the " << op_type << "'s operator info, and the op name is " << make_tuple__list_user_prim_name;
@@ -3283,10 +3291,10 @@ Shape ParameterSliceShape(const std::pair<AnfNodePtr, int64_t> &param_info) {
   size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
   if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
     MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
-                      << ", but the index is " << user_input_index - 1;
+                      << ", but the index is " << (user_input_index - 1);
   }
   TensorInfo tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
-  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << user_input_index - 1
+  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << (user_input_index - 1)
                 << ", the slice shape is " << ShapeToString(tensor_info.slice_shape()) << ", the origin shape is "
                 << ShapeToString(tensor_info.shape());
   return tensor_info.slice_shape();
@@ -3495,7 +3503,7 @@ static void HandleFullySplitParameters(const FuncGraphPtr &root) {
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if (defined ENABLE_CPU && ((defined ENABLE_D) || (defined ENABLE_GPU)))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }
