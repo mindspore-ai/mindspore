@@ -59,31 +59,41 @@ uint32_t parse_bytes(const uint8_t *buf, bool intel_align) {
 int parseExif(const uint8_t *buf, uint32_t len) {
   bool intel_align = true;
   uint32_t offset = 0;
-  if (!buf || len < 6) return UNKNOW_ORIENTATION;
+  if (!buf || len < 6) {
+    return UNKNOW_ORIENTATION;
+  }
 
-  if (!std::equal(buf, buf + 6, "Exif\0\0")) return UNKNOW_ORIENTATION;
+  if (!std::equal(buf, buf + 6, "Exif\0\0")) {
+    return UNKNOW_ORIENTATION;
+  }
   offset += 6;
 
-  if (offset + 8 > len) return UNKNOW_ORIENTATION;
+  if (offset + 8 > len) {
+    return UNKNOW_ORIENTATION;
+  }
   if (buf[offset] == 'I' && buf[offset + 1] == 'I') {
     intel_align = true;
+  } else if (buf[offset] == 'M' && buf[offset + 1] == 'M') {
+    intel_align = false;
   } else {
-    if (buf[offset] == 'M' && buf[offset + 1] == 'M')
-      intel_align = false;
-    else
-      return UNKNOW_ORIENTATION;
+    return UNKNOW_ORIENTATION;
   }
 
   offset += 2;
-  if (parse_bytes<uint16_t>(buf + offset, intel_align) != 0x2a) return UNKNOW_ORIENTATION;
+  if (parse_bytes<uint16_t>(buf + offset, intel_align) != 0x2a) {
+    return UNKNOW_ORIENTATION;
+  }
   offset += 2;
   uint32_t first_ifd_offset = parse_bytes<uint32_t>(buf + offset, intel_align);
   offset += first_ifd_offset - 4;
-  if (offset >= len) return UNKNOW_ORIENTATION;
+  if (offset >= len || offset + 2 > len) {
+    return UNKNOW_ORIENTATION;
+  }
 
-  if (offset + 2 > len) return UNKNOW_ORIENTATION;
   int num_entries = parse_bytes<uint16_t>(buf + offset, intel_align);
-  if (offset + 6 + 12 * num_entries > len) return UNKNOW_ORIENTATION;
+  if (offset + 6 + 12 * num_entries > len) {
+    return UNKNOW_ORIENTATION;
+  }
   offset += 2;
   while (num_entries > 0) {
     uint16_t tag = parse_bytes<uint16_t>(buf + offset, intel_align);
