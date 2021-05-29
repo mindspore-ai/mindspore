@@ -43,7 +43,7 @@ AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_
   auto output_shape = AnfAlgo ::GetOutputInferShape(origin_pack_cnode, 0);
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(new_pack, kAttrAxis);
   if (axis < 0) {
-    axis += output_shape.size();
+    axis += SizeToLong(output_shape.size());
   }
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
@@ -56,7 +56,7 @@ AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_
     } else if (i == LongToSize(axis)) {
       new_shape.push_back(offset);
     } else {
-      new_shape.push_back(output_shape[SizeToLong(i) - 1]);
+      new_shape.push_back(output_shape[i - 1]);
     }
   }
   new_shape.erase(new_shape.begin() + axis + 1);

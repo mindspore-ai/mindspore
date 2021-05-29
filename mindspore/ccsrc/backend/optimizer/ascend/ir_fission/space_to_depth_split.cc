@@ -60,11 +60,12 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
     for (int64_t channel_idx = 0; channel_idx < channel_size; channel_idx++) {
       int64_t stride_idx = channel_idx * (channel_size + 1) * window_size;
       int64_t fill_assist_idx = stride_idx + (window_idx * (channel_size * channel_size * window_size + 1));
-      half_data[fill_assist_idx] = assist_value;
+      half_data[static_cast<size_t>(fill_assist_idx)] = assist_value;
     }
   }
   auto elem_num = LongToSize(dest_size) * kFloat16Len;
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()), half_data.data(), elem_num);
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()),
+                           reinterpret_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data into Tensor while creating assist input for SpaceToDepth op.";
     return nullptr;
