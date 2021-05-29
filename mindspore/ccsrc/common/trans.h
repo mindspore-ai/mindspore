@@ -30,12 +30,31 @@
 
 namespace mindspore {
 namespace trans {
+constexpr size_t kDims2 = 2;
+constexpr size_t H_hw = 1;
+constexpr size_t W_hw = 2;
+constexpr size_t HW_hw = 3;
+constexpr size_t N0_fz = 1;
+constexpr size_t Ni_fz = 2;
+constexpr size_t C0_fz = 3;
+constexpr size_t W0_nz = 1;
+constexpr size_t H0_nz = 2;
+constexpr size_t H1_nz = 3;
+constexpr size_t W1_nz = 4;
+constexpr size_t NZ_nz = 4;
 enum Axis5D : int {
   N_ncdhw = 0,
   C_ncdhw,
   D_ncdhw,
   H_ncdhw,
   W_ncdhw,
+};
+enum AxisNc1hwc0 : int {
+  N_nc1hwc0 = 0,
+  C1_nc1hwc0,
+  H_nc1hwc0,
+  W_nc1hwc0,
+  C0_nc1hwc0,
 };
 
 enum AxisNdc1hwc0 : int {
@@ -45,6 +64,12 @@ enum AxisNdc1hwc0 : int {
   H_ndc1hwc0,
   W_ndc1hwc0,
   C0_ndc1hwc0,
+};
+enum AxisFZ3D : int {
+  Di_fz3d = 0,
+  Ni_fz3d = 1,
+  N0_fz3d = 2,
+  C0_fz3d = 3,
 };
 struct TypeIdArgs {
   const void *data;

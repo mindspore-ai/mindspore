@@ -32,6 +32,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int kRecurseLevel = 2;
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
 const std::unordered_map<std::string, TypeId> type_id_maps = {
@@ -536,7 +537,7 @@ void GetUsersInputIndex(const NodeUsersMap &users, const AnfNodePtr &input, cons
   MS_EXCEPTION_IF_NULL(found);
   auto input_users = users.find(input);
   if (input_users == users.end() || input_users->second.empty()) {
-    MS_EXCEPTION(ArgumentError) << "Input [" << idx << "][" << input->DebugString(2) << "] of ["
+    MS_EXCEPTION(ArgumentError) << "Input [" << idx << "][" << input->DebugString(kRecurseLevel) << "] of ["
                                 << input->func_graph()->ToString() << "] has no users.";
   }
   for (auto const &input_user : input_users->second) {
@@ -561,7 +562,7 @@ void GetUsersInputIndex(const NodeUsersMap &users, const AnfNodePtr &input, cons
         int accum_idx = 0;
         size_t dyn_i = 0;
         for (; dyn_i < dyn_input_sizes.size(); ++dyn_i) {
-          accum_idx += dyn_input_sizes[dyn_i];
+          accum_idx += static_cast<int>(dyn_input_sizes[dyn_i]);
           if (used_as_idx < accum_idx) {
             input_index->push_back(std::make_pair(
               anf_node, std::make_pair(dyn_i, IntToSize(used_as_idx - (accum_idx - dyn_input_sizes[dyn_i])))));
