@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,22 +18,8 @@ import shutil
 import subprocess
 import sys
 from multiprocessing import Pool, cpu_count
-import importlib
-
-def get_akg_path():
-    """get akg directory base path"""
-    search_res = importlib.util.find_spec("mindspore")
-    if search_res is None:
-        raise RuntimeError("Cannot find mindspore module!")
-
-    res_path = search_res.origin
-    find_pos = res_path.find("__init__.py")
-    if find_pos == -1:
-        raise RuntimeError("Find module mindspore origin file failed!")
-    akg_path = "{}_akg".format(res_path[:find_pos])
-    if not os.path.isdir(akg_path):
-        raise RuntimeError("Cannot find akg from mindspore module!")
-    return akg_path
+from mindspore import log as logger
+from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 
 def copy_json(pid_path, ppid_path):
     """
@@ -43,7 +29,8 @@ def copy_json(pid_path, ppid_path):
         os.mkdir(ppid_path)
     json_files = os.listdir(pid_path)
     for json_file in json_files:
-        shutil.move(pid_path + '/' + json_file, ppid_path)
+        shutil.move(os.path.join(pid_path, json_file), ppid_path)
+
 
 def _compile_akg_task_gpu(*json_strs):
     """
@@ -52,6 +39,7 @@ def _compile_akg_task_gpu(*json_strs):
     Parameters:
         json_strs: list. List contains multiple kernel infos, suitable for json compile api.
     """
+
     sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
@@ -66,6 +54,7 @@ def _compile_akg_task_gpu(*json_strs):
         copy_json(pid_path, os.path.realpath("./cuda_meta_" + str(os.getppid())))
         shutil.rmtree(pid_path)
 
+
 def _compile_akg_task_ascend(*json_strs):
     """
     compile func called in single process
@@ -76,11 +65,10 @@ def _compile_akg_task_ascend(*json_strs):
     akg_compiler = os.path.join(os.path.split(
         os.path.realpath(__file__))[0], "compiler.py")
     for json_str in json_strs:
-        res = subprocess.run([sys.executable, akg_compiler, json_str], text=True)
-
-        if res.returncode != 0:
-            raise ValueError("Failed, args: {}!".format(json_str))
-
+        try:
+            subprocess.run([sys.executable, akg_compiler, json_str], text=True, check=True)
+        except BaseException as e:
+            logger.error(e, "Failed, args: {}!".format(json_str))
 
 
 def create_akg_parallel_process(process_num, wait_time, platform=""):
@@ -91,6 +79,7 @@ def create_akg_parallel_process(process_num, wait_time, platform=""):
         AkgParallelCompiler
     """
     return AkgProcess(process_num, wait_time, platform)
+
 
 class AkgProcess:
     """akg kernel parallel process"""
