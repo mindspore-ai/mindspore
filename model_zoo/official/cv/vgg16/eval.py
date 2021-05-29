@@ -119,8 +119,9 @@ def merge_args(args, cloud_args):
 def test(cloud_args=None):
     """test"""
     args = parse_args(cloud_args)
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=args.device_target, save_graphs=False)
+    _enable_graph_kernel = args.device_target == "GPU"
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=_enable_graph_kernel,
+                        enable_auto_mixed_precision=True, device_target=args.device_target, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit() and args.device_target == "Ascend":
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
