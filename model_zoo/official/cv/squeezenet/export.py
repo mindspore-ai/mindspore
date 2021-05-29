@@ -31,7 +31,7 @@ parser.add_argument('--net', type=str, default='squeezenet', choices=['squeezene
                     help='Model.')
 parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'imagenet'], help='Dataset.')
 parser.add_argument("--file_name", type=str, default="squeezenet", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--file_format", type=str, choices=["AIR", "MINDIR"], default="AIR", help="file format")
 parser.add_argument("--device_target", type=str, default="Ascend",
                     choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
 args = parser.parse_args()
