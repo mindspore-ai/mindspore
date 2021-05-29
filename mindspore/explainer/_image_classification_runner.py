@@ -275,7 +275,7 @@ class ImageClassificationRunner:
             print("Start running and writing......")
             begin = time()
 
-            self._summary_timestamp = self._extract_timestamp(summary.event_file_name)
+            self._summary_timestamp = self._extract_timestamp(summary.file_info['file_name'])
             if self._summary_timestamp is None:
                 raise RuntimeError("Cannot extract timestamp from summary filename!"
                                    " It should contains a timestamp after 'summary.' .")

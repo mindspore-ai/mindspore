@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Generate the summary event which conform to proto format."""
+import io
 import platform
 import time
 
@@ -285,8 +286,7 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
     invalids = []
     for isfn in np.isnan, np.isposinf, np.isneginf:
         if total - valid > sum(invalids):
-            count = np.count_nonzero(isfn(np_value))
-            invalids.append(count)
+            invalids.append(np.count_nonzero(isfn(np_value)))
         else:
             invalids.append(0)
 
@@ -308,21 +308,33 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
             summary.min = ma_value.min()
             summary.max = ma_value.max()
         summary.sum = ma_value.sum(dtype=np.float64)
-        bins = _calc_histogram_bins(valid)
-        first_edge, last_edge = summary.min, summary.max
+        _fill_bucket(valid, np_value, summary)
 
-        if not first_edge < last_edge:
-            first_edge -= 0.5
-            last_edge += 0.5
 
-        bins = np.linspace(first_edge, last_edge, bins + 1, dtype=np_value.dtype)
-        hists, edges = np.histogram(np_value, bins=bins)
+def _fill_bucket(valid, np_value, summary):
+    """
+    Fill the bucket.
 
-        for hist, edge1, edge2 in zip(hists, edges, edges[1:]):
-            bucket = summary.buckets.add()
-            bucket.width = edge2 - edge1
-            bucket.count = hist
-            bucket.left = edge1
+    Args:
+        valid (int): The count of valid data.
+        np_value (np.ndarray): Summary data.
+        summary (summary_pb2.Summary.Histogram): Summary histogram data.
+    """
+    bins = _calc_histogram_bins(valid)
+    first_edge, last_edge = summary.min, summary.max
+
+    if not first_edge < last_edge:
+        first_edge -= 0.5
+        last_edge += 0.5
+
+    bins = np.linspace(first_edge, last_edge, bins + 1, dtype=np_value.dtype)
+    hists, edges = np.histogram(np_value, bins=bins)
+
+    for hist, edge1, edge2 in zip(hists, edges, edges[1:]):
+        bucket = summary.buckets.add()
+        bucket.width = edge2 - edge1
+        bucket.count = hist
+        bucket.left = edge1
 
 
 def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
@@ -386,7 +398,6 @@ def _make_image(tensor, rescale=1):
     scaled_width = int(width * rescale)
     image = Image.fromarray(tensor)
     image = image.resize((scaled_width, scaled_height), Image.ANTIALIAS)
-    import io
     output = io.BytesIO()
     image.save(output, format='PNG')
     image_string = output.getvalue()

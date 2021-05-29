@@ -286,6 +286,6 @@ bool GetMiVersionMatched(const EventReply &reply);
 // get the full name of a tensor, which is the name used in TensorLoader
 std::string GetTensorFullName(const TensorProto &tensor);
 
-uint64_t BytestoInt64(const std::vector<char> &buffer);
+uint64_t BytestoUInt64(const std::vector<char> &buffer);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_H_
