@@ -36,8 +36,7 @@ class BinaryCrossEntropyCpuKernel : public CPUKernel {
   template <typename T>
   void LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss);
   template <typename T>
-  void Launchkernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  void Launchkernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   size_t input_size_;

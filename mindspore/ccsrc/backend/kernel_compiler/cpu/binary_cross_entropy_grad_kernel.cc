@@ -47,8 +47,7 @@ void BinaryCrossEntropyGradCpuKernel::Launchkernel(const std::vector<AddressPtr>
   }
 }
 
-bool BinaryCrossEntropyGradCpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
+bool BinaryCrossEntropyGradCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
   if (input_size_ > 0) {
     if (dtype_ == kNumberTypeFloat32) {

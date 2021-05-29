@@ -44,8 +44,8 @@ class SplitCPUKernel : public CPUKernel {
   void Reshape();
   void LaunchSplit(const T *input, T **output, size_t size);
   int64_t axis_;
-  int64_t output_num_;
-  int64_t axis_step_;
+  size_t output_num_;
+  size_t axis_step_;
 
   size_t input_size_;
   size_t dims_after_axis_;
