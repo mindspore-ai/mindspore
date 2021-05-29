@@ -196,7 +196,7 @@ class ActorBase {
   void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> actorThread);
   void SetRunningStatus(bool start);
 
-  std::unique_ptr<ActorPolicy> actorThread;
+  std::unique_ptr<ActorPolicy> actorPolicy;
   InterThreadPool *pool_{nullptr};
 
   AID id;

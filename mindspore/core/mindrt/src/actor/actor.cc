@@ -22,7 +22,7 @@
 namespace mindspore {
 
 ActorBase::ActorBase(const std::string &name)
-    : actorThread(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
+    : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
 ActorBase::~ActorBase() {}
 
@@ -30,9 +30,9 @@ void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<A
   // lock here or await(). and unlock at Quit() or at aweit.
   waiterLock.lock();
 
-  actorThread = std::move(thread);
+  actorPolicy = std::move(thread);
 }
-void ActorBase::SetRunningStatus(bool start) { actorThread->SetRunningStatus(start); }
+void ActorBase::SetRunningStatus(bool start) { actorPolicy->SetRunningStatus(start); }
 
 void ActorBase::Await() {
   std::string actorName = id.Name();
@@ -59,18 +59,18 @@ void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
                     << ",m=" << msg->Name().c_str();
   }
 }
-int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> &&msg) { return actorThread->EnqueMessage(std::move(msg)); }
+int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> &&msg) { return actorPolicy->EnqueMessage(std::move(msg)); }
 
 void ActorBase::Quit() {
   Finalize();
-  actorThread->Terminate(this);
+  actorPolicy->Terminate(this);
   // lock at spawn(), unlock here.
   waiterLock.unlock();
 }
 
 void ActorBase::Run() {
   for (;;) {
-    auto msgs = actorThread->GetMsgs();
+    auto msgs = actorPolicy->GetMsgs();
     if (msgs == nullptr) {
       return;
     }
