@@ -24,11 +24,14 @@ from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor, LossMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.parallel import set_algo_parameters
+from mindspore.train.train_thor import ConvertModelUtils
+from mindspore.nn.optim import thor
+from mindspore.train.model import Model
 
-from src.model_thor import Model_Thor as Model
-from src.resnet_thor import resnet50
+from src.resnet import resnet50 as resnet
 from src.dataset import create_dataset
-from src.crossentropy import CrossEntropy
+from src.crossentropy import CrossEntropy as CrossEntropySmooth
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -38,16 +41,32 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num')
 args_opt = parser.parse_args()
 
 if args_opt.device_target == "Ascend":
-    from src.thor import THOR
     from src.config import config
 else:
-    from src.thor import THOR_GPU as THOR
     from src.config import config_gpu as config
 
 set_seed(1)
 
 
-def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, decay_epochs=100):
+def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
+    """remove useless parameters according to filter_list"""
+    for key in list(origin_dict.keys()):
+        for name in param_filter:
+            if name in key:
+                print("Delete parameter from checkpoint: ", key)
+                del origin_dict[key]
+                break
+
+
+def apply_eval(eval_param):
+    eval_model = eval_param["model"]
+    eval_ds = eval_param["dataset"]
+    metrics_name = eval_param["metrics_name"]
+    res = eval_model.eval(eval_ds)
+    return res[metrics_name]
+
+
+def get_thor_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, decay_epochs=100):
     """get_model_lr"""
     lr_each_step = []
     total_steps = steps_per_epoch * total_epochs
@@ -66,7 +85,7 @@ def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, dec
     return learning_rate
 
 
-def get_model_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
+def get_thor_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
     """get_model_damping"""
     damping_each_step = []
     total_steps = steps_per_epoch * total_epochs
@@ -88,46 +107,50 @@ if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
 
     if args_opt.run_distribute:
-        # Ascend target
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
             context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True, all_reduce_fusion_config=[107])
+                                              gradients_mean=True)
+            set_algo_parameters(elementwise_op_strategy_follow=True)
+            context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
             init()
         # GPU target
         else:
             init()
             context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True, all_reduce_fusion_config=[107])
-        ckpt_save_dir = ckpt_save_dir + "ckpt_" + str(get_rank()) + "/"
+                                              gradients_mean=True)
+            context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
+        ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
 
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
                              batch_size=config.batch_size, target=target)
+    step_size = dataset.get_dataset_size()
 
     # define net
-    step_size = dataset.get_dataset_size()
-    damping = get_model_damping(0, config.damping_init, config.damping_decay, 70, step_size)
-    lr = get_model_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
-    net = resnet50(class_num=config.class_num, damping=damping, loss_scale=config.loss_scale,
-                   frequency=config.frequency, batch_size=config.batch_size)
+    net = resnet(class_num=config.class_num)
 
-    # define loss, model
+    # init lr
+    lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
+    lr = Tensor(lr)
+
+    # define loss
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
-    loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
-    opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), config.momentum,
-               filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
-               filter(lambda x: 'matrix_G' in x.name, net.get_parameters()),
-               filter(lambda x: 'A_inv_max' in x.name, net.get_parameters()),
-               filter(lambda x: 'G_inv_max' in x.name, net.get_parameters()),
-               config.weight_decay, config.loss_scale)
+    loss = CrossEntropySmooth(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
     loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-    model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', loss_scale_manager=loss_scale,
-                  keep_batchnorm_fp32=False, metrics={'acc'}, frequency=config.frequency,
-                  use_dynamic_frequency=config.use_dynamic_frequency,
-                  first_stage_steps=config.first_stage_steps)
+    metrics = {"acc"}
+    damping = get_thor_damping(0, config.damping_init, config.damping_decay, 70, step_size)
+    split_indices = [26, 53]
+    opt = thor(net, lr, Tensor(damping), config.momentum, config.weight_decay, config.loss_scale,
+               config.batch_size, split_indices=split_indices, frequency=config.frequency)
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics=metrics,
+                  amp_level="O2", keep_batchnorm_fp32=False)
+
+    model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+                                                      loss_scale_manager=loss_scale, metrics={'acc'},
+                                                      amp_level="O2", keep_batchnorm_fp32=False)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)
@@ -140,4 +163,6 @@ if __name__ == '__main__':
         cb += [ckpt_cb]
 
     # train model
-    model.train(config.epoch_size, dataset, callbacks=cb)
+    dataset_sink_mode = True
+    model.train(config.epoch_size, dataset, callbacks=cb,
+                sink_size=dataset.get_dataset_size(), dataset_sink_mode=dataset_sink_mode)

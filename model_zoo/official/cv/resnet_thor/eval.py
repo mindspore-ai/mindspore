@@ -22,7 +22,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.crossentropy import CrossEntropy
 from src.config import config
 from src.dataset import create_dataset
-from src.resnet_thor import resnet50 as resnet
+from src.resnet import resnet50 as resnet
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
