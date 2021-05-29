@@ -77,13 +77,13 @@ int MatmulBaseFP16CPUKernel::InitBias() {
       return RET_ERROR;
     }
     memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
-    if (in_tensors_[2]->data_type() == kNumberTypeFloat32) {
+    if (bias_tensor->data_type() == kNumberTypeFloat32) {
       MS_LOG(ERROR) << "Matmul fp16 only support fp16 weight";
       return RET_ERROR;
-    } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16) {
-      memcpy(bias_ptr_, in_tensors_[2]->data_c(), max_bias_data * sizeof(float16_t));
+    } else if (bias_tensor->data_type() == kNumberTypeFloat16) {
+      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float16_t));
     } else {
-      MS_LOG(ERROR) << "Unsupported bias data type : " << in_tensors_[2]->data_type();
+      MS_LOG(ERROR) << "Unsupported bias data type : " << bias_tensor->data_type();
       return RET_ERROR;
     }
   }
