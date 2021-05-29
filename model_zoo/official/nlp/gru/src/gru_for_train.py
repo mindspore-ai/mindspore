@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
+from mindspore.communication.management import get_group_size
 from src.config import config
 from src.loss import NLLLoss
 
@@ -148,15 +148,15 @@ class GRUTrainOneStepWithLossScaleCell(nn.Cell):
         self.reducer_flag = False
         self.allreduce = P.AllReduce()
 
-        self.parallel_mode = _get_parallel_mode()
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode not in ParallelMode.MODE_LIST:
             raise ValueError("Parallel mode does not support: ", self.parallel_mode)
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         self.grad_reducer = None
         if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
+            mean = context.get_auto_parallel_context("gradients_mean")
+            degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.clip_gradients = ClipGradients()
