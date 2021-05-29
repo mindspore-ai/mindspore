@@ -19,7 +19,6 @@ CRNN-Seq2Seq-OCR Evaluation.
 
 import os
 import codecs
-import argparse
 import numpy as np
 
 import mindspore.ops.operations as P
@@ -29,11 +28,13 @@ from mindspore.common import set_seed
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.config import config
 from src.utils import initialize_vocabulary
 from src.dataset import create_ocr_val_dataset
 from src.attention_ocr import AttentionOCRInfer
 
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 set_seed(1)
 
@@ -75,30 +76,20 @@ def LCS_length(str1, str2):
 
     return lcs[len1 % 2][-1]
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="CRNN-Seq2Seq-OCR Evaluation")
-    parser.add_argument("--dataset_path", type=str, default="",
-                        help="Test Dataset path")
-    parser.add_argument("--checkpoint_path", type=str, default=None,
-                        help="Checkpoint of AttentionOCR (Default:None).")
-    parser.add_argument("--device_target", type=str, default="Ascend",
-                        help="device where the code will be implemented, default is Ascend")
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default: 0.")
-
-    args = parser.parse_args()
-
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
-
+@moxing_wrapper()
+def run_eval():
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
     prefix = "fsns.mindrecord"
-    mindrecord_dir = args.dataset_path
-    mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
+    if config.enable_modelarts:
+        mindrecord_file = os.path.join(config.data_path, prefix + "0")
+    else:
+        mindrecord_file = os.path.join(config.test_data_dir, prefix + "0")
     print("mindrecord_file", mindrecord_file)
     dataset = create_ocr_val_dataset(mindrecord_file, config.eval_batch_size)
     data_loader = dataset.create_dict_iterator(num_epochs=1, output_numpy=True)
     print("Dataset creation Done!")
 
-    #Network
+    # Network
     network = AttentionOCRInfer(config.eval_batch_size,
                                 int(config.img_width / 4),
                                 config.encoder_hidden_size,
@@ -106,15 +97,16 @@ if __name__ == '__main__':
                                 config.decoder_output_size,
                                 config.max_length,
                                 config.dropout_p)
-
-    ckpt = load_checkpoint(args.checkpoint_path)
+    checkpoint_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.checkpoint_path)
+    ckpt = load_checkpoint(checkpoint_path)
     load_param_into_net(network, ckpt)
     network.set_train(False)
     print("Checkpoint loading Done!")
 
-    vocab, rev_vocab = initialize_vocabulary(config.vocab_path)
-    eos_id = config.characters_dictionary.get("eos_id")
-    sos_id = config.characters_dictionary.get("go_id")
+    vocab_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.vocab_path)
+    _, rev_vocab = initialize_vocabulary(vocab_path)
+    eos_id = config.characters_dictionary.eos_id
+    sos_id = config.characters_dictionary.go_id
 
     num_correct_char = 0
     num_total_char = 0
@@ -125,20 +117,20 @@ if __name__ == '__main__':
     incorrect_file = 'result_incorrect.txt'
 
     with codecs.open(correct_file, 'w', encoding='utf-8') as fp_output_correct, \
-        codecs.open(incorrect_file, 'w', encoding='utf-8') as fp_output_incorrect:
+            codecs.open(incorrect_file, 'w', encoding='utf-8') as fp_output_incorrect:
 
         for data in data_loader:
             images = Tensor(data["image"])
             decoder_inputs = Tensor(data["decoder_input"])
-            decoder_targets = Tensor(data["decoder_target"])
+            # decoder_targets = Tensor(data["decoder_target"])
 
             decoder_hidden = Tensor(np.zeros((1, config.eval_batch_size, config.decoder_hidden_size),
                                              dtype=np.float16), mstype.float16)
-            decoder_input = Tensor((np.ones((config.eval_batch_size, 1))*sos_id).astype(np.int32))
+            decoder_input = Tensor((np.ones((config.eval_batch_size, 1)) * sos_id).astype(np.int32))
             encoder_outputs = network.encoder(images)
             batch_decoded_label = []
 
-            for di in range(decoder_inputs.shape[1]):
+            for _ in range(decoder_inputs.shape[1]):
                 decoder_output, decoder_hidden, _ = network.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 topi = P.Argmax()(decoder_output)
                 ni = P.ExpandDims()(topi, 1)
@@ -179,3 +171,5 @@ if __name__ == '__main__':
         print('\nnum of total words = %d' % (num_total_word))
         print('\ncharacter precision = %f' % (float(num_correct_char) / num_total_char))
         print('\nAnnotation precision precision = %f' % (float(num_correct_word) / num_total_word))
+if __name__ == '__main__':
+    run_eval()

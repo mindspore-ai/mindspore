@@ -16,7 +16,7 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_eval_ascend.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+    echo "Usage: sh run_eval_ascend.sh [TEST_DATA_DIR] [CHECKPOINT_PATH]"
 exit 1
 fi
 
@@ -34,7 +34,7 @@ echo $PATH2
 
 if [ ! -d $PATH1 ]
 then 
-    echo "error: DATASET_PATH=$PATH1 is not a folder"
+    echo "error: TEST_DATA_DIR=$PATH1 is not a folder"
 exit 1
 fi 
 
@@ -56,10 +56,11 @@ fi
 mkdir ./eval
 cp ../*.py ./eval
 cp ../*.txt ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
 cd ./eval || exit
 env > env.log
 echo "start eval for device $DEVICE_ID"
-python eval.py --device_target="Ascend" --device_id=$DEVICE_ID --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
+python eval.py --device_target="Ascend" --test_data_dir=$PATH1 --checkpoint_path=$PATH2 &> log &
 cd ..

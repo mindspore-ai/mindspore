@@ -16,7 +16,7 @@
 
 if [ $# -ne 2 ]
 then
-    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH]"
+    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [TRAIN_DATA_DIR]"
 exit 1
 fi
 
@@ -39,9 +39,9 @@ fi
 
 PATH2=$(get_real_path $2)
 echo $PATH2
-if [ ! -f $PATH2 ]
+if [ ! -d $PATH2 ]
 then
-    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+    echo "error: TRAIN_DATA_DIR=$PATH2 is not a folder"
 exit 1
 fi
 
@@ -58,9 +58,11 @@ do
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
     cp -r ../src ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
+    cp ../*.txt ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --device_id=$DEVICE_ID --rank_id=$RANK_ID --is_distribute=1 --device_num=$DEVICE_NUM --mindrecord_file=$PATH2 &> log &
+    python train.py --is_distribute=1 --train_data_dir=$PATH2 &> log &
     cd ..
 done

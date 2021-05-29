@@ -19,7 +19,7 @@ import numpy as np
 
 from mindspore.mindrecord import FileWriter
 
-from config import config
+from src.model_utils.config import config
 from utils import initialize_vocabulary
 
 
