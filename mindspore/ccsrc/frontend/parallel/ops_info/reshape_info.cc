@@ -436,6 +436,11 @@ Status ReshapeInfo::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
+std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t) {
+  std::vector<StrategyPtr> sp_vector;
+  return sp_vector;
+}
+
 Status ReshapeInfo::GenetateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                           const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs,
                                           int64_t out_index, int64_t in_index, bool is_prev_param) {

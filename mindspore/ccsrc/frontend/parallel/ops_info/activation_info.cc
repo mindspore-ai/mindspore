@@ -73,50 +73,32 @@ Status ActivationOther::GetAttrs() {
   return SUCCESS;
 }
 
-Status Activation::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> Activation::GenerateOpStrategies(int64_t stage_id) {
+  std::vector<StrategyPtr> sp_vector;
   if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
-    MS_LOG(ERROR) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
-                  << outputs_shape_.size() << "is wrong.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
+                      << outputs_shape_.size() << "is wrong.";
   }
 
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
-  std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+
+  return sp_vector;
 }
 
-Status DropoutInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> DropoutInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
@@ -198,14 +180,9 @@ Status Softmax::GetAttrs() {
 
 Status Softmax::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status Softmax::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
-    return FAILED;
-  }
+std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
-    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Inputs shape size or outputs shape size is wrong.";
   }
 
   Shape input0_split;
@@ -222,18 +199,9 @@ Status Softmax::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status ActivationBase::InferDevMatrixShape() {

@@ -151,15 +151,7 @@ Status UniformCandidateSamplerInfo::SetCostUnderStrategy(const StrategyPtr &stra
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status UniformCandidateSamplerInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
-  if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
-  }
+std::vector<StrategyPtr> UniformCandidateSamplerInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input_split = {};
   Shapes splittable_input = {};
   size_t splitable_value = 1;
@@ -173,20 +165,10 @@ Status UniformCandidateSamplerInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_input, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 std::shared_ptr<Strategys> UniformCandidateSamplerInfo::GenerateBatchStrategies() {

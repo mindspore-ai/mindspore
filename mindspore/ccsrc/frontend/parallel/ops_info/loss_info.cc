@@ -131,11 +131,7 @@ void SoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
-    return FAILED;
-  }
+std::vector<StrategyPtr> SoftmaxCrossEntropyWithLogitsInfo::GenerateOpStrategies(int64_t stage_id) {
   int64_t axis_index = axis_;
   if (axis_ < 0) {
     size_t input_dim = inputs_shape_[0].size();
@@ -148,20 +144,10 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int64_t stage_id) {
   Shapes splittable_inputs = {input0_split, input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies failed.";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status SoftmaxCrossEntropyWithLogitsInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {

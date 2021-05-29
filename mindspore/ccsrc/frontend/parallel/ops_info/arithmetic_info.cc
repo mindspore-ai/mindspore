@@ -178,28 +178,18 @@ Status ArithmeticBase::InferTensorMap() {
 
 Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status ArithmeticBase::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> ArithmeticBase::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shape input1_split(inputs_shape_[1].size(), 1);
   Shapes splittable_inputs = {input0_split, input1_split};
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies with broadcast failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies with broadcast failed.";
   }
   MS_LOG(INFO) << name_ << " : Generate strategies with broadcast success.";
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status ArithmeticBase::Init(const StrategyPtr &strategy) {

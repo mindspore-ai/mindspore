@@ -132,7 +132,7 @@ Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status BatchParallelInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> BatchParallelInfo::GenerateOpStrategies(int64_t stage_id) {
   StrategyPtr sp;
   Strategys strategy;
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
@@ -143,15 +143,9 @@ Status BatchParallelInfo::GenerateStrategies(int64_t stage_id) {
     strategy.push_back(temp);
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);
-
-  if (SetCostUnderStrategy(sp) == SUCCESS) {
-    MS_LOG(INFO) << name_ << " : Successfully generated batch-parallel-strategy.";
-    PrintStrategy(sp);
-  } else {
-    MS_LOG(ERROR) << name_ << " : Generating batch-parallel-strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
+  std::vector<StrategyPtr> sp_vector;
+  sp_vector.push_back(sp);
+  return sp_vector;
 }
 
 void SparseSoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {

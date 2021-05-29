@@ -380,29 +380,14 @@ Status ReduceMethod::InferTensorInfo() {
 
 Status ReduceMethod::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status ReduceMethod::GenerateStrategies(int64_t stage_id) {
-  if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 1)) {
-    MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong, " << inputs_shape_.size() << ", "
-                  << outputs_shape_.size();
-    return FAILED;
-  }
-
+std::vector<StrategyPtr> ReduceMethod::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status ReduceMethod::Init(const StrategyPtr &strategy) {
@@ -544,28 +529,15 @@ Status ArgMaxWithValueInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status ArgMaxWithValueInfo::GenerateStrategies(int64_t stage_id) {
-  if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 2)) {
-    MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong, " << inputs_shape_.size() << ", "
-                  << outputs_shape_.size();
-    return FAILED;
-  }
+std::vector<StrategyPtr> ArgMaxWithValueInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated strategy " << success;
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+
+  return sp_vector;
 }
 }  // namespace parallel
 }  // namespace mindspore
