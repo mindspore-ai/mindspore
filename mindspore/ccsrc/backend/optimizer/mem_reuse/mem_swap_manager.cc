@@ -211,7 +211,7 @@ bool MemSwapManager::IsInplaceRelevantOp(const TensorInfo &tensor) {
       continue;
     }
 
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user.first, user.second);
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user.first, IntToSize(user.second));
     if (tensor.output_idx_ == kernel_with_index.second) {
       MS_LOG(INFO) << " [inplace optimizer] tensor: " << tensor.kernel_->DebugString()
                    << "output idx: " << tensor.output_idx_ << " used by aggregate node: " << user.first->DebugString();
