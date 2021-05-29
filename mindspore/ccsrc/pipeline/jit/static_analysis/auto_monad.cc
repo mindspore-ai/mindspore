@@ -1049,7 +1049,7 @@ class AutoMonadConverter {
   }
 
   // Gets effect info for a cnode.
-  const EffectInfo &GetEffectInfo(const CNodePtr &cnode) {
+  const EffectInfo &GetEffectInfo(const CNodePtr &cnode) const {
     auto &effect_info = cnode->GetEffectInfo();
     if (effect_info.state != EffectInfo::kDetected) {
       // Effect info should have been set by SideEffectFinder.
@@ -1350,7 +1350,7 @@ class AutoMonadConverter {
   //   def side_effect_tail_call(args):
   //       a = pure_func(args)
   //       return side_effect_call(a)
-  bool NeedUpdateState() {
+  bool NeedUpdateState() const {
     // Search for the only one side effect cnode.
     CNodePtr side_effect_cnode = nullptr;
     for (auto &cnode : func_graph_->order_list()) {
@@ -1374,7 +1374,7 @@ class AutoMonadConverter {
     return func_graph_->output() != side_effect_cnode;
   }
 
-  bool HasSideEffect(const CNodePtr &cnode) {
+  bool HasSideEffect(const CNodePtr &cnode) const {
     const auto &info = GetEffectInfo(cnode);
     return (info.memory || info.load || info.io);
   }

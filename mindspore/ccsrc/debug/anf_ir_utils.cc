@@ -814,7 +814,7 @@ class Lexer {
     }
   }
 
-  bool IsSingleCharToken(char ch, Token *token_ptr) {
+  bool IsSingleCharToken(char ch, Token *token_ptr) const {
     // clang-format off
     std::unordered_map<char, Token> char_to_token = {
       {'(', TOK_LPARENTHESIS},
@@ -1358,7 +1358,6 @@ class IrParser {
     *ptr = std::make_shared<abstract::AbstractScalar>(dtype);
   }
 
-  // void SetBasicType(AbstractBasePtr *ptr, const SymbolicKeyTypePtr& dtype) {}
   void SetBasicType(AbstractBasePtr *const ptr, const TypeNonePtr &) const {
     if (ptr == nullptr) {
       return;
@@ -1524,7 +1523,7 @@ class IrParser {
   }
 
   template <typename T>
-  void ParseNumberType(const std::string &type, TypeId typeId, T *const ptr = nullptr) {
+  void ParseNumberType(const std::string &type, TypeId typeId, T *const ptr = nullptr) const {
     TypePtr dtype = nullptr;
 
     std::unordered_map<int, TypePtr> type_map = {
@@ -1784,7 +1783,7 @@ class IrParser {
   }
 
   template <typename T>
-  T StringToScalar(const std::string &text) {
+  T StringToScalar(const std::string &text) const {
     std::stringstream ss;
     T value;
     ss << text;

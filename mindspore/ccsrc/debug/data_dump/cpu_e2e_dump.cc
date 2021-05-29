@@ -19,7 +19,6 @@
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
-
 void CPUE2eDump::DumpCNodeData(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
