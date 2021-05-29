@@ -32,7 +32,7 @@ namespace ascend {
 struct ProfilingTraceInfo {
   // (trace_begin) -> FP -> BP -> (trace_bp_end) -> OPTIMIZER -> (trace_iter_end)
   std::string trace_begin;
-  std::string trace_bp_end;
+  std::set<std::string> trace_bp_end;
   std::set<std::string> trace_iter_end;
 
   // profiling specific op, such as AllReduce;
@@ -91,10 +91,13 @@ class ProfilingUtils {
                                                 NotNull<session::KernelGraph *> graph_ptr);
   static CNodePtr CreateProfilingCNodeWithStream(const AnfNodePtr &anf_node, const ProfilingContent &profiling_content,
                                                  NotNull<session::KernelGraph *> graph_ptr);
-  static std::string GetTraceBegin(const session::KernelGraph &kernel_graph, const nlohmann::json &option);
-  static std::string GetTraceBpEnd(const session::KernelGraph &kernel_graph, const nlohmann::json &option);
-  static std::set<std::string> GetTraceIterEnd(const session::KernelGraph &kernel_graph);
+  static void GetTraceBegin(const session::KernelGraph &kernel_graph, const nlohmann::json &option,
+                            ProfilingTraceInfo *trace_info);
+  static void GetTraceBpEnd(const session::KernelGraph &kernel_graph, const nlohmann::json &option,
+                            ProfilingTraceInfo *trace_info);
+  static void GetTraceIterEnd(const session::KernelGraph &kernel_graph, ProfilingTraceInfo *trace_info);
   static std::string GetGraphLastKernelName(const session::KernelGraph &kernel_graph);
+  static void GetTraceCustomNode(ProfilingTraceInfo *trace_info);
   static void GetTraceHccl(const session::KernelGraph &kernel_graph, NotNull<ProfilingTraceInfo *> profiling_trace);
   static void GetCNodeOutputRealNode(const std::string &node_name, const session::KernelGraph &kernel_graph,
                                      NotNull<std::set<std::string> *> getnext_outputs);
