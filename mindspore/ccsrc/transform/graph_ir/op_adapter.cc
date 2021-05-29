@@ -221,7 +221,7 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
       MS_EXCEPTION_IF_NULL(h.op);
       if (h.out.empty()) {
         MS_LOG(DEBUG) << "Link op " << h.op->GetName() << " to " << op->GetName() << ":" << it->second.name;
-        it->second.set_op(op, (i) /* index start from 0 */, h.op);
+        it->second.set_op(op, (i), h.op);
       } else {
         MS_LOG(DEBUG) << "Link op " << h.op->GetName() << ":" << h.out << " to " << op->GetName() << ":"
                       << it->second.name;
@@ -394,7 +394,7 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &no
 
   std::vector<int64_t> shape;
   auto shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
-  if (nullptr != shape_ptr) {
+  if (shape_ptr != nullptr) {
     shape = shape_ptr->shape();
   }
 
@@ -478,11 +478,11 @@ void OpAdapterImpl::updateOutputDesc(const OperatorPtr &op, const abstract::Base
   auto no_shape_ptr = dyn_cast<abstract::NoShape>(shp);
   std::string format = GetOpIOFormat(node);
 
-  if ((nullptr != normal_shape_ptr) || (nullptr != no_shape_ptr)) {
+  if ((normal_shape_ptr != nullptr) || (no_shape_ptr != nullptr)) {
     if (UpdateSingleOutputDesc(op, shp, type, format) != SUCCESS) {
       return;
     }
-  } else if (nullptr != dyn_cast<abstract::TupleShape>(shp)) {
+  } else if (dyn_cast<abstract::TupleShape>(shp) != nullptr) {
     if (UpdateMultiOutputDesc(op, shp, type, format) != SUCCESS) {
       return;
     }
