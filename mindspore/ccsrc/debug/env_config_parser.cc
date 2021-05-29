@@ -35,9 +35,8 @@ constexpr auto kMemReuse = "mem_reuse";
 namespace mindspore {
 std::optional<bool> GetRdrEnableFromEnv() {
   // get environment variable to configure RDR
-  const char *env_enable_char = std::getenv(ENV_RDR_ENABLE);
-  if (env_enable_char != nullptr) {
-    std::string env_enable_str = std::string(env_enable_char);
+  std::string env_enable_str = common::GetEnv(ENV_RDR_ENABLE);
+  if (!env_enable_str.empty()) {
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if (env_enable_str != "0" && env_enable_str != "1") {
       MS_LOG(WARNING) << "The environment variable '" << ENV_RDR_ENABLE << "' should be 0 or 1.";
@@ -52,11 +51,10 @@ std::optional<bool> GetRdrEnableFromEnv() {
 
 std::optional<std::string> GetRdrPathFromEnv() {
   // get environment variable to configure RDR
-  const char *path_char = std::getenv(ENV_RDR_PATH);
-  if (path_char != nullptr) {
+  std::string path = common::GetEnv(ENV_RDR_PATH);
+  if (!path.empty()) {
     std::string err_msg = "RDR path parse from environment variable failed. Please check the settings about '" +
                           std::string(ENV_RDR_PATH) + "' in environment variables.";
-    std::string path = std::string(path_char);
     if (!Common::IsPathValid(path, MAX_DIRECTORY_LENGTH, err_msg)) {
       return std::string("");
     }
@@ -235,7 +233,8 @@ void EnvConfigParser::ConfigToString() {
   cur_config.append("After parsed, rdr path: ");
   cur_config.append(rdr_path_);
   cur_config.append(", rdr_enable: ");
-  cur_config.append(std::to_string(rdr_enabled_));
+  std::string rdr_enable_flag = rdr_enabled_ ? "1" : "0";
+  cur_config.append(rdr_enable_flag);
   MS_LOG(INFO) << cur_config;
 }
 }  // namespace mindspore
