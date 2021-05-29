@@ -59,15 +59,15 @@ bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 }
 
 template <typename T>
-inline T LogSumExp(T logprob1, T logprob2) {
+inline T LogSumExp(const T logprob1, const T logprob2) {
   T kLogZero_ = -std::numeric_limits<T>::infinity();
   if (logprob1 == kLogZero_) {
     return logprob2;
   } else if (logprob2 == kLogZero_) {
     return logprob1;
   } else {
-    return (logprob1 > logprob2) ? logprob1 + log1p(exp(logprob2 - logprob1))
-                                 : logprob2 + log1p(exp(logprob1 - logprob2));
+    return (logprob1 > logprob2) ? logprob1 + static_cast<T>(log1p(exp(logprob2 - logprob1)))
+                                 : logprob2 + static_cast<T>(log1p(exp(logprob1 - logprob2)));
   }
 }
 
@@ -79,10 +79,10 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
   int T = (*log_alpha_b)[0].size();
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
 
-  (*log_alpha_b)[0][0] = log(y[blank_index_][0]);
+  (*log_alpha_b)[0][0] = static_cast<TT>(log(y[blank_index_][0]));
   auto label_0 = (label_with_blank.size() > 1) ? label_with_blank[1] : blank_index_;
   if (label_with_blank.size() > 1) {
-    (*log_alpha_b)[1][0] = log(y[label_0][0]);
+    (*log_alpha_b)[1][0] = static_cast<TT>(log(y[label_0][0]));
   }
 
   for (int t = 1; t < T; ++t) {
@@ -105,7 +105,7 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
         }
       }
 
-      (*log_alpha_b)[u][t] = log(y[label_with_blank[u]][t]) + sum_log_alpha_b;
+      (*log_alpha_b)[u][t] = static_cast<TT>(log(y[label_with_blank[u]][t])) + sum_log_alpha_b;
     }
   }
 }
@@ -176,7 +176,7 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
       prob_sum[l] = LogSumExp(prob_sum[l], log_alpha_b[u][t] + log_beta_b[u][t]);
     }
     for (size_t l = 0; l < L; ++l) {
-      (*dy_b)[l][t] = y[l][t] - exp(prob_sum[l] - log_pzx);
+      (*dy_b)[l][t] = y[l][t] - static_cast<TT>(exp(prob_sum[l] - log_pzx));
     }
   }
 }
@@ -229,8 +229,9 @@ void InnerSoftMax(T *inputs_addr, std::vector<std::vector<T>> *softmax_probs, co
     }
 
     for (size_t c = 0; c < num_class; ++c) {
-      sumCoeff += exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff);
-      (*softmax_probs)[c][t] = exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff);
+      sumCoeff += static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
+      (*softmax_probs)[c][t] =
+        static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
     }
 
     for (size_t c = 0; c < num_class; ++c) {
@@ -267,7 +268,7 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T kLogZero_ = -std::numeric_limits<T>::infinity();
   // check validation of sequence length
   for (size_t b = 0; b < batch_size_; ++b) {
-    if (sequence_length_addr[b] < uint32_t(0)) {
+    if (sequence_length_addr[b] == uint32_t(0)) {
       MS_LOG(EXCEPTION) << "Sequence length should > 0, but gets " << sequence_length_addr[b];
     }
 
