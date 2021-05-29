@@ -67,7 +67,7 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
       return std::nullopt;
     }
 #if defined(SYSTEM_ENV_POSIX)
-    if (nullptr == realpath(input_path.c_str(), real_path)) {
+    if (realpath(input_path.c_str(), real_path) == nullptr) {
       MS_LOG(ERROR) << "File " << input_path << " does not exist, it will be created.";
     }
 #elif defined(SYSTEM_ENV_WINDOWS)
