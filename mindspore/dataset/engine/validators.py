@@ -456,7 +456,8 @@ def check_pad_info(key, val):
     type_check(key, (str,), "key in pad_info")
 
     if val is not None:
-        assert len(val) == 2, "value of pad_info should be a tuple of size 2."
+        if len(val) != 2:
+            raise ValueError("value of pad_info should be a tuple of size 2.")
         type_check(val, (tuple,), "value in pad_info")
 
         if val[0] is not None:
@@ -464,9 +465,7 @@ def check_pad_info(key, val):
 
             for dim in val[0]:
                 if dim is not None:
-                    type_check(dim, (int,), "dim in pad_shape")
-                    if dim <= 0:
-                        raise ValueError("pad shape should be positive integers")
+                    check_pos_int32(dim, "dim in pad_shape")
         if val[1] is not None:
             type_check(val[1], (int, float, str, bytes), "pad_value")
 
