@@ -65,7 +65,7 @@
         - [GhostNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet_quant/Readme.md)
         - [SSD_GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_ghostnet/README.md)
         - [TinyNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/tinynet/README.md)
-        - [CycleGAN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/cycle_gan/README.md)
+        - [CycleGAN](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/research/cv/CycleGAN/README.md)
         - [人脸属性](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/FaceAttribute/README.md)
         - [人脸检测](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/FaceDetection/README.md)
         - [人脸图像质量评估](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/FaceQualityAssessment/README.md)

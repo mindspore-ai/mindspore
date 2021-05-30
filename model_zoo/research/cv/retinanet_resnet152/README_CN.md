@@ -291,7 +291,7 @@ mAP: 0.3571988469737286
 | 最终损失                    | 0.69                               |
 | 精确度 (8p)                 | mAP[0.3571]            |
 | 训练总时间 (8p)             | 41h32m20s                        |
-| 脚本                       | [Retianet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/Retinanet_resnet101) |
+| 脚本                       | [Retianet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/retinanet_resnet152) |
 
 #### 推理性能
 
