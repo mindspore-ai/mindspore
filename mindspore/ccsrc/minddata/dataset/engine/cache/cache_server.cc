@@ -1281,7 +1281,8 @@ int32_t CacheServer::Builder::AdjustNumWorkers(int32_t num_workers) {
   num_workers = std::max(num_numa_nodes, num_workers);
   // But also it shouldn't be too many more than the hardware concurrency
   int32_t num_cpus = hw_info_->GetCpuCount();
-  num_workers = std::min(2 * num_cpus, num_workers);
+  constexpr int32_t kThreadsPerCore = 2;
+  num_workers = std::min(kThreadsPerCore * num_cpus, num_workers);
   // Round up num_workers to a multiple of numa nodes.
   auto remainder = num_workers % num_numa_nodes;
   if (remainder > 0) num_workers += (num_numa_nodes - remainder);

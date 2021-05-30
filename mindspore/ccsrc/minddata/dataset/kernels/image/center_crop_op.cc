@@ -43,7 +43,8 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   int32_t left = crop_wid_ - input->shape()[1];
   std::shared_ptr<Tensor> pad_image;
 
-  CHECK_FAIL_RETURN_UNEXPECTED((top < input->shape()[0] * 3 && left < input->shape()[1] * 3),
+  constexpr int64_t pad_limit = 3;
+  CHECK_FAIL_RETURN_UNEXPECTED((top < input->shape()[0] * pad_limit && left < input->shape()[1] * pad_limit),
                                "CenterCrop: CenterCropOp padding size is more than 3 times the original size.");
 
   if (top > 0 && left > 0) {  // padding only

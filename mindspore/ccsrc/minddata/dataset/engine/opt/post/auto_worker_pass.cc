@@ -47,7 +47,8 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *con
   float max_weight = 0;
   for (const auto &p : pass.weight_profile_) max_weight = std::max(max_weight, p.second);
   RETURN_IF_NOT_OK(pass.Run(root_ir, modified));
-  if (pass.parallel_ops_.size() > 3) {
+  constexpr size_t max_num_ops = 3;
+  if (pass.parallel_ops_.size() > max_num_ops) {
     MS_LOG(WARNING) << "AutoNumWorker right now is only suitable for simple dataset pipelines that has at most, 1 leaf "
                     << "1 batch and 1 map. AutoNumWorker may not be optimal for usage on complex pipelines.";
   }

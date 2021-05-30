@@ -79,7 +79,7 @@ class Vocab(cde.Vocab):
             word_list(list): a list of string where each element is a word of type string.
             special_tokens(list, optional):  a list of strings, each one is a special token. for example
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-            special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
+            special_first(bool, optional): whether special_tokens is prepended or appended to vocab. If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:

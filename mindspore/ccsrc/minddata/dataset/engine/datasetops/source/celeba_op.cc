@@ -193,11 +193,15 @@ bool CelebAOp::CheckDatasetTypeValid() {
     return false;
   }
   // train:0, valid=1, test=2
-  if (usage_ == "train" && (type == 0)) {
+  constexpr int32_t train_type = 0;
+  constexpr int32_t valid_type = 1;
+  constexpr int32_t test_type = 2;
+
+  if (usage_ == "train" && (type == train_type)) {
     return true;
-  } else if (usage_ == "valid" && (type == 1)) {
+  } else if (usage_ == "valid" && (type == valid_type)) {
     return true;
-  } else if (usage_ == "test" && (type == 2)) {
+  } else if (usage_ == "test" && (type == test_type)) {
     return true;
   }
 
