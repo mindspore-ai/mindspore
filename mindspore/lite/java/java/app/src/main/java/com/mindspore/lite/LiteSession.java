@@ -63,6 +63,16 @@ public class LiteSession {
         }
     }
 
+    public static LiteSession createTrainSession(String modelname, final MSConfig config, boolean train_mode) {
+        LiteSession liteSession = new LiteSession();
+        liteSession.sessionPtr = liteSession.createTrainSession(modelname, config.getMSConfigPtr(), train_mode, 0);
+        if (liteSession.sessionPtr == 0) {
+            return null;
+        } else {
+            return liteSession;
+        }
+    }
+
     public long getSessionPtr() {
         return sessionPtr;
     }
@@ -145,9 +155,39 @@ public class LiteSession {
         return this.resize(this.sessionPtr, inputsArray, dims);
     }
 
+    public boolean export(String modelFilename, int model_type, int quantization_type) {
+        return this.export(this.sessionPtr, modelFilename, model_type, quantization_type);
+    }
+
+    public boolean train() {
+        return this.train(this.sessionPtr);
+    }
+
+    public boolean eval() {
+        return this.eval(this.sessionPtr);
+    }
+
+    public boolean isTrain() {
+        return this.isTrain(this.sessionPtr);
+    }
+
+    public boolean isEval() {
+        return this.isEval(this.sessionPtr);
+    }
+
+    public boolean setLearningRate(float learning_rate) {
+        return this.setLearningRate(this.sessionPtr, learning_rate);
+    }
+
+    public boolean setupVirtualBatch(int virtualBatchMultiplier, float learningRate, float momentum) {
+        return this.setupVirtualBatch(this.sessionPtr, virtualBatchMultiplier, learningRate, momentum);
+    }
+
     private native long createSession(long msConfigPtr);
 
     private native long createSessionWithModel(MappedByteBuffer buffer, long msConfigPtr);
+
+    private native long createTrainSession(String filename, long msContextPtr, boolean train_mode, long msTrainCfgPtr);
 
     private native boolean compileGraph(long sessionPtr, long modelPtr);
 
@@ -170,4 +210,19 @@ public class LiteSession {
     private native void free(long sessionPtr);
 
     private native boolean resize(long sessionPtr, long[] inputs, int[][] dims);
+
+    private native boolean export(long sessionPtr, String modelFilename, int model_type, int quantization_type);
+
+    private native boolean train(long sessionPtr);
+
+    private native boolean eval(long sessionPtr);
+
+    private native boolean isTrain(long sessionPtr);
+
+    private native boolean isEval(long sessionPtr);
+
+    private native boolean setLearningRate(long sessionPtr, float learning_rate);
+
+    private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
+
 }

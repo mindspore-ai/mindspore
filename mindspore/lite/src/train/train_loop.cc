@@ -20,7 +20,6 @@
 #include <memory>
 #include <algorithm>
 #include "include/errorcode.h"
-#include "include/train/train_session.h"
 #include "include/dataset/iterator.h"
 #include "src/common/log_adapter.h"
 
@@ -168,7 +167,7 @@ int TrainLoop::LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::
 
 }  // namespace lite
 
-session::TrainLoop *session::TrainLoop::CreateTrainLoop(session::TrainSession *train_session) {
+session::TrainLoop *session::TrainLoop::CreateTrainLoop(session::LiteSession *train_session) {
   auto loop = new (std::nothrow) lite::TrainLoop(train_session);
   return loop;
 }

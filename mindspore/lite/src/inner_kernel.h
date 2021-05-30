@@ -185,13 +185,11 @@ class InnerKernel : public Kernel {
 
   void set_registry_data_type(TypeId data_type) { registry_data_type_ = data_type; }
 
-#ifdef SUPPORT_TRAIN
   void set_workspace_size(size_t value) { workspace_size_ = value; }
   size_t workspace_size() { return workspace_size_; }
   static void AllocWorkspace(size_t size);
   static void FreeWorkspace();
   void *workspace() { return workspace_; }
-#endif
 
  protected:
   OpParameter *op_parameter_ = nullptr;
@@ -201,10 +199,8 @@ class InnerKernel : public Kernel {
   bool train_mode_ = false;
   bool trainable_ = false;  // parameters of this Kernel are trained in Train Session
   TypeId registry_data_type_ = kTypeUnknown;
-#ifdef SUPPORT_TRAIN
   size_t workspace_size_ = 0;
   static void *workspace_;
-#endif
 };
 }  // namespace mindspore::kernel
 

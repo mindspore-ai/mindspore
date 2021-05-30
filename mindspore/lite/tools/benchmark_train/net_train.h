@@ -34,7 +34,7 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "include/train/train_session.h"
+#include "include/lite_session.h"
 
 namespace mindspore::lite {
 enum MS_API DataType { kImage = 0, kBinary = 1 };
@@ -192,11 +192,11 @@ class MS_API NetTrain {
     return meanError;
   }
 
-  int MarkPerformance(session::TrainSession *session);
+  int MarkPerformance(session::LiteSession *session);
 
   int MarkAccuracy(session::LiteSession *lite_session, bool enforce_accuracy = true);
   int CompareOutput(const session::LiteSession &lite_session);
-  int SaveModels(session::TrainSession *session);
+  int SaveModels(session::LiteSession *session);
   int CheckExecutionOfSavedModels();
   NetTrainFlags *flags_;
 

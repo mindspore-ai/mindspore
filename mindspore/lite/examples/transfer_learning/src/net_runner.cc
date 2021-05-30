@@ -71,7 +71,7 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
   context.thread_num_ = 1;
 
-  session_ = mindspore::session::TrainSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
+  session_ = mindspore::session::LiteSession::CreateTransferSession(ms_backbone_file_, ms_head_file_, &context);
   MS_ASSERT(nullptr != session_);
 
   auto inputs = session_->GetInputs();

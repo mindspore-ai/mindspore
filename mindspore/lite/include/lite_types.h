@@ -32,5 +32,21 @@ typedef enum {
   DT_NPU  /**< NPU device type */
 } DeviceType;
 
+typedef enum {
+  FT_FLATBUFFERS, /**< Flatbuffers format */
+  FT_PROTOBUF     /**< Protobuf format */
+} FormatType;
+
+typedef enum {
+  QT_DEFAULT, /**< the quantization of the original model will apply */
+  QT_NONE,    /**< apply no quantization */
+  QT_WEIGHT   /**< apply weight quantization */
+} QuantizationType;
+
+typedef enum {
+  MT_TRAIN,    /**< Both Train and Inference part of the compiled model are serialized */
+  MT_INFERENCE /**< Only the Inference part of the compiled model is serialized */
+} ModelType;
+
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_TYPES_H_

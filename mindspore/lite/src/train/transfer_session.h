@@ -61,7 +61,7 @@ class TransferSession : public lite::TrainSession {
   mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override;
 
   int CompileTransferGraph();
-  int Export(const std::string &fb_name, ModelType model_type, QuantType quant_type, FormatType) override;
+  int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType) override;
 
  protected:
   lite::LiteSession *backbone_session_ = nullptr;

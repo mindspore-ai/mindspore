@@ -449,8 +449,9 @@ bool TrainSession::IsBN(kernel::LiteKernel *kernel) const {
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
-int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantType quant_type, FormatType format) {
-  if (format != FT_FLATBUFFER) {
+int TrainSession::Export(const std::string &file_name, ModelType model_type, QuantizationType quant_type,
+                         FormatType format) {
+  if (format != FT_FLATBUFFERS) {
     MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
     return RET_ERROR;
   }
@@ -481,8 +482,8 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
 
 }  // namespace lite
 
-session::TrainSession *session::TrainSession::CreateSession(const std::string &fn, const lite::Context *context,
-                                                            bool train_mode, const lite::TrainCfg *cfg) {
+session::LiteSession *session::LiteSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
+                                                               bool train_mode, const lite::TrainCfg *cfg) {
   auto session = new (std::nothrow) lite::TrainSession();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";

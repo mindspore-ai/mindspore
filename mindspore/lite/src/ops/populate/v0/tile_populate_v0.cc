@@ -36,13 +36,6 @@ OpParameter *PopulateTileParameter(const void *prim) {
   }
   memset(tile_param, 0, sizeof(TileParameter));
   tile_param->op_parameter_.type_ = schema::PrimitiveType_TileFusion;
-#ifdef SUPPORT_TRAIN
-  auto multiples = tile_prim->multiples();
-  tile_param->in_dim_ = multiples->size();
-  for (int i = 0; i < tile_param->in_dim_; ++i) {
-    tile_param->multiples_[i] = *(multiples->begin() + i);
-  }
-#else
   if (tile_prim->dims() != nullptr) {
     auto dims = tile_prim->dims();
     if (dims == nullptr) {
@@ -57,7 +50,6 @@ OpParameter *PopulateTileParameter(const void *prim) {
     tile_param->dims_size_ = dims->size();
   }
 
-#endif
   return reinterpret_cast<OpParameter *>(tile_param);
 }
 }  // namespace

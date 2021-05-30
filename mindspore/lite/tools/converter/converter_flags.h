@@ -72,7 +72,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   TypeId outputDataType;
   // used for quantization
   std::string quantTypeStr;
-  QuantType quantType;
+  schema::QuantType quantType;
   std::string inputDataTypeStr;
   std::string outputDataTypeStr;
   // used for post-trainning-weight

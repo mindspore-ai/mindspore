@@ -65,22 +65,6 @@ class TrainCfg {
   MixPrecisionCfg mix_precision_cfg_; /**< Mix precision configuration */
 };
 
-typedef enum {
-  FT_FLATBUFFER,  // Flatbuffer format
-  FT_MIBDIR       // MINDIR format
-} FormatType;
-
-typedef enum {
-  QT_DEFAULT,  // the quantization of the original model will apply
-  QT_NONE,     // apply no quantization
-  QT_WEIGHT    // apply weight quantization
-} QuantType;
-
-typedef enum {
-  MT_TRAIN,     // Both Train and Inference part of the compiled model are serialized
-  MT_INFERENCE  // Only the Inference part of the compiled model is serialized
-} ModelType;
-
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_CFG_H_

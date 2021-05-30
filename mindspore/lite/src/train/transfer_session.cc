@@ -179,9 +179,9 @@ std::unordered_map<size_t, size_t> TransferSession::ConnectionMap() {
   return map;
 }
 
-int TransferSession::Export(const std::string &filename, ModelType model_type, QuantType quant_type,
+int TransferSession::Export(const std::string &filename, ModelType model_type, QuantizationType quant_type,
                             FormatType format) {
-  if (format != FT_FLATBUFFER) {
+  if (format != FT_FLATBUFFERS) {
     MS_LOG(ERROR) << "Currently only flatbuffer format is supported";
     return RET_ERROR;
   }
@@ -228,10 +228,10 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
 
 }  // namespace lite
 
-static session::TrainSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
-                                                       const char *model_buf_head, size_t size_head,
-                                                       const lite::Context *context, bool train_mode,
-                                                       const lite::TrainCfg *cfg) {
+static session::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size_t size_backbone,
+                                                      const char *model_buf_head, size_t size_head,
+                                                      const lite::Context *context, bool train_mode,
+                                                      const lite::TrainCfg *cfg) {
   auto ValidModelSize = [](size_t size) -> bool {
     constexpr size_t MaxModelSize = 1024 * 1024 * 1024ULL;  // 1G B
     return size < MaxModelSize && size > 0;
@@ -295,10 +295,10 @@ static session::TrainSession *CreateTransferSessionInt(const char *model_buf_bac
   return session;
 }
 
-session::TrainSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,
-                                                                    const std::string &filename_head,
-                                                                    const lite::Context *ctxt, bool train_mode,
-                                                                    const lite::TrainCfg *cfg) {
+session::LiteSession *session::LiteSession::CreateTransferSession(const std::string &filename_backbone,
+                                                                  const std::string &filename_head,
+                                                                  const lite::Context *ctxt, bool train_mode,
+                                                                  const lite::TrainCfg *cfg) {
   size_t size_head = 0;
   size_t size_backbone = 0;
   auto buf_head = lite::ReadFileToBuf(filename_head, &size_head);

@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <memory>
 #include <map>
-#include "include/train/train_session.h"
+#include "include/train/train_cfg.h"
 #include "src/lite_session.h"
 
 /*
@@ -44,7 +44,7 @@ namespace mindspore {
 namespace lite {
 std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size);
 using CreatorOp = std::tuple<mindspore::kernel::KernelKey, mindspore::kernel::KernelCreator>;
-class TrainSession : virtual public session::TrainSession, virtual public lite::LiteSession {
+class TrainSession : virtual public lite::LiteSession {
  public:
   TrainSession();
   ~TrainSession();
@@ -89,7 +89,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     }
     return outputs;
   }
-  int Export(const std::string &fb_name, ModelType model_type, QuantType quant_type, FormatType) override;
+  int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType) override;
 
  protected:
   void AllocWorkSpace();
@@ -138,6 +138,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   std::map<Tensor *, Tensor *> restored_origin_tensors_;
   int virtual_batch_idx_ = 0;
   int virtual_batch_multiplier_ = 0;
+  bool train_mode_ = false;
 };
 
 }  // namespace lite

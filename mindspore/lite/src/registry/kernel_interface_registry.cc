@@ -139,7 +139,7 @@ int KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, Kerne
       MS_LOG(ERROR) << "malloc kernel dev delegate creator fail!";
       return RET_ERROR;
     }
-    memset(kernel_creators_[provider], 0, kMaxKernelNum * sizeof(KernelInterfaceCreator));
+    memset(reinterpret_cast<void *>(kernel_creators_[provider]), 0, kMaxKernelNum * sizeof(KernelInterfaceCreator));
   }
 
   kernel_creators_[provider][op_type] = creator;

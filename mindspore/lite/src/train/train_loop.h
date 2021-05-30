@@ -32,9 +32,9 @@ namespace lite {
 
 class TrainLoop : virtual public session::TrainLoop {
  public:
-  explicit TrainLoop(session::TrainSession *session) : train_session_(session) {}
+  explicit TrainLoop(session::LiteSession *session) : train_session_(session) {}
 
-  const session::TrainSession *train_session() override { return train_session_; }
+  const session::LiteSession *train_session() override { return train_session_; }
 
   int Reset() override {
     epoch_ = 0;
@@ -65,7 +65,7 @@ class TrainLoop : virtual public session::TrainLoop {
   static int LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
   static int LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
 
-  session::TrainSession *train_session_ = nullptr;
+  session::LiteSession *train_session_ = nullptr;
   unsigned int epoch_ = 0;
   KernelCallBack before_cb_ = nullptr;
   KernelCallBack after_cb_ = nullptr;

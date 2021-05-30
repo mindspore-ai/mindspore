@@ -20,11 +20,19 @@
 #ifndef NOT_USE_STL
 #include <unordered_map>
 #endif  // NOT_USE_STL
+#include <vector>
+#include <string>
 #include "include/ms_tensor.h"
 #include "include/model.h"
 #include "include/context.h"
+#include "include/errorcode.h"
+#include "include/lite_types.h"
 
 namespace mindspore {
+namespace lite {
+class TrainCfg;
+}
+
 namespace session {
 /// \brief LiteSession defined session in MindSpore Lite for compiling Model and forwarding model.
 class MS_API LiteSession {
@@ -119,6 +127,89 @@ class MS_API LiteSession {
   ///
   /// \return STATUS as an error code of resize inputs, STATUS is defined in errorcode.h.
   virtual int Resize(const Vector<tensor::MSTensor *> &inputs, const Vector<Vector<int>> &dims) = 0;
+
+  /// \brief Static method to create a TrainSession object
+  ///
+  /// \param[in] filename name of flatbuffer that holds the flatbuffer
+  /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
+  /// \param[in] cfg training configuration, set to null for default configuration
+  ///
+  /// \return Pointer of MindSpore LiteSession
+  static LiteSession *CreateTrainSession(const std::string &filename, const lite::Context *context,
+                                         bool train_mode = false, const lite::TrainCfg *cfg = nullptr);
+
+  /// \brief Static method to create a TransferSession object
+  ///
+  /// \param[in] filename_backbone Filename to read backbone net flatbuffer from
+  /// \param[in] filename_head Filename to read head net flatbuffer from
+  /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
+  ///
+  /// \return Pointer of MindSpore LiteSession
+  static LiteSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
+                                            const lite::Context *context, bool train_mode = false,
+                                            const lite::TrainCfg *cfg = nullptr);
+
+  /// \brief Set model to train mode
+  /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
+  virtual int Train() { return mindspore::lite::RET_ERROR; }
+
+  /// \brief Check mode of model
+  ///
+  /// \return boolean indication if model is in train mode
+  virtual bool IsTrain() { return false; }
+
+  /// \brief Set model to eval mode
+  /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
+  virtual int Eval() { return mindspore::lite::RET_OK; }
+
+  /// \brief Check mode of model
+  ///
+  /// \return boolean indication if model is in eval mode
+  virtual bool IsEval() { return true; }
+
+  /// \brief Sets the Learning Rate of the training
+  ///
+  /// \param[in] learning_rate to set
+  ///
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetLearningRate(float learning_rate) { return mindspore::lite::RET_ERROR; }
+
+  /// \brief Gets the Learning Rate of the training
+  ///
+  /// \return learning rate. 0.0 if no optimizer was found
+  virtual float GetLearningRate() { return 0.0; }
+
+  /// \brief Setup training with virtual batches
+  ///
+  /// \param[in] virtual_batch_multiplier - virtual batch multiplier, use any number < 1 to disable
+  /// \param[in] lr - learning rate to use for virtual batch, -1 for internal configuration
+  /// \param[in] momentum - batch norm momentum to use for virtual batch, -1 for internal configuration
+
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) {
+    return mindspore::lite::RET_ERROR;
+  }
+
+  /// \brief Get output MindSpore Lite MSTensors of Training model prediction
+  ///
+  /// \return a vector of output tensors (MindSpore Lite MSTensor).
+  virtual std::vector<tensor::MSTensor *> GetPredictions() const {
+    std::vector<tensor::MSTensor *> outputs;
+    return outputs;
+  }
+
+  /// \brief Save model
+  /// \param[in] file_name pretrained model file name prefix. '.ms' extenension is added if does not exist
+  /// \param[in] model_type indication whether to save full model or only the inference part
+  /// \param[in] quant_type indication whether to quantize exported model
+  /// \param[in] format of exported file (currently only FT_FLATBUFFERS is supported)
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
+                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS) {
+    return mindspore::lite::RET_ERROR;
+  }
 };
 }  // namespace session
 }  // namespace mindspore

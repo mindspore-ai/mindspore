@@ -52,7 +52,8 @@ int RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::stri
       MS_LOG(ERROR) << "malloc custom kernel creator fail!provider: " << provider << ", arch: " << arch;
       return RET_ERROR;
     }
-    memset(custom_kernel_creators_[provider][arch][type], 0, data_type_length_ * sizeof(CreateKernel));
+    memset(reinterpret_cast<void *>(custom_kernel_creators_[provider][arch][type]), 0,
+           data_type_length_ * sizeof(CreateKernel));
   }
 
   int data_type_index = data_type - kNumberTypeBegin - 1;
@@ -74,7 +75,7 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
       MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
       return RET_ERROR;
     }
-    memset(kernel_creators_[provider][arch], 0, kKernelMaxNum * sizeof(CreateKernel));
+    memset(reinterpret_cast<void *>(kernel_creators_[provider][arch]), 0, kKernelMaxNum * sizeof(CreateKernel));
   } else {
     auto iter_arch = iter->second.find(arch);
     if (iter_arch == iter->second.end()) {
@@ -83,7 +84,7 @@ int RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &pr
         MS_LOG(ERROR) << "malloc kernel creator buffer fail! provider: " << provider << ",arch:" << arch;
         return RET_ERROR;
       }
-      memset(iter->second[arch], 0, kKernelMaxNum * sizeof(CreateKernel));
+      memset(reinterpret_cast<void *>(iter->second[arch]), 0, kKernelMaxNum * sizeof(CreateKernel));
     }
   }
 
