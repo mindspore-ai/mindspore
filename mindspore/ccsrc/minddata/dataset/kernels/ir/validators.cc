@@ -60,7 +60,8 @@ Status ValidateVectorColorAttribute(const std::string &op_name, const std::strin
   for (auto &attr_val : attr) {
     RETURN_IF_NOT_OK(ValidateScalar(op_name, attr_name, attr_val, range, false, false));
   }
-  if (attr.size() == 2 && (attr[0] > attr[1])) {
+  constexpr size_t attr_size = 2;
+  if (attr.size() == attr_size && (attr[0] > attr[1])) {
     std::string err_msg = op_name + ":" + attr_name +
                           " lower bound must be less or equal to upper bound, got lb: " + std::to_string(attr[0]) +
                           ", ub: " + std::to_string(attr[1]);
@@ -73,12 +74,13 @@ Status ValidateVectorColorAttribute(const std::string &op_name, const std::strin
 
 Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float> &mean,
                              const std::vector<float> &std) {
-  if (mean.size() != 3) {
+  constexpr size_t mean_and_std_size = 3;
+  if (mean.size() != mean_and_std_size) {
     std::string err_msg = op_name + ": mean expecting size 3, got size: " + std::to_string(mean.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (std.size() != 3) {
+  if (std.size() != mean_and_std_size) {
     std::string err_msg = op_name + ": std expecting size 3, got size: " + std::to_string(std.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

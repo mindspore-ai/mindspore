@@ -41,7 +41,7 @@ BuildVocabOp::BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string
   // init two queues for thread sync
   distributor_queue_ = std::make_unique<Queue<TensorRow>>(num_workers * op_conn_size);
   collector_queue_ =
-    std::make_unique<Queue<std::unique_ptr<std::unordered_map<std::string, int64_t>>>>(num_workers * op_conn_size);
+    std::make_unique<Queue<std::unique_ptr<std::unordered_map<std::string, int64_t>>>>((num_workers * op_conn_size));
 }
 
 Status BuildVocabOp::WorkerEntry(int32_t worker_id) {

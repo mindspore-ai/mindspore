@@ -359,15 +359,16 @@ Status OperatorCpu::Analyze(std::string *name, double *utilization, std::string 
 
   // Only analyze the middle half of the samples
   // Starting and ending may be impacted by startup or ending pipeline activities
-  int start_analyze = total_samples / 4;
-  int end_analyze = total_samples - start_analyze;
+  constexpr int64_t sample_sections = 4;
+  int64_t start_analyze = total_samples / sample_sections;
+  int64_t end_analyze = total_samples - start_analyze;
   double op_util = 0;
   *utilization = 0;
 
   // start loop from 0 was as don't want to analyze op -1
   for (auto op_id = 0; op_id < id_count_; op_id++) {
-    int sum = 0;
-    int index = op_id + 1;
+    int64_t sum = 0;
+    int64_t index = op_id + 1;
     for (int i = start_analyze; i < end_analyze; i++) {
       sum += cpu_op_util_[i][index].user_utilization_;
       sum += cpu_op_util_[i][index].sys_utilization_;
@@ -515,14 +516,15 @@ Status ProcessCpu::Collect(const ExecutionTree *tree) {
 Status ProcessCpu::Analyze(std::string *name, double *utilization, std::string *extra_message) {
   name->clear();
   (void)name->append("process_info");
-  int total_samples = process_util_.size();
-  int sum = 0;
+  int64_t total_samples = process_util_.size();
+  int64_t sum = 0;
   // Only analyze the middle half of the samples
   // Starting and ending may be impacted by startup or ending pipeline activities
-  int start_analyze = total_samples / 4;
-  int end_analyze = total_samples - start_analyze;
+  constexpr int64_t sample_sections = 4;
+  int64_t start_analyze = total_samples / sample_sections;
+  int64_t end_analyze = total_samples - start_analyze;
 
-  for (int i = start_analyze; i < end_analyze; i++) {
+  for (int64_t i = start_analyze; i < end_analyze; i++) {
     sum += process_util_[i].user_utilization_;
     sum += process_util_[i].sys_utilization_;
   }
@@ -612,6 +614,8 @@ Status CpuSampling::SaveSamplingItervalToFile() {
 // Analyze profiling data and output warning messages
 Status CpuSampling::Analyze() const {
   std::string name;
+  constexpr double total_cpu_thold = 90;
+  constexpr double op_cpu_thold = 80;
   double utilization = 0;
 
   // Keep track of specific information returned by differentn CPU sampling types
@@ -632,7 +636,7 @@ Status CpuSampling::Analyze() const {
       detailed_op_cpu_message = extra_message;
     }
   }
-  if ((total_utilization < 90) && (max_op_utilization > 80)) {
+  if ((total_utilization < total_cpu_thold) && (max_op_utilization > op_cpu_thold)) {
     MS_LOG(WARNING) << "Operator " << max_op_name << " is using " << max_op_utilization << "% CPU per thread.  "
                     << "This operator may benefit from increasing num_parallel_workers."
                     << "Full Operator CPU utiliization for all operators: " << detailed_op_cpu_message << std::endl;

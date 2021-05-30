@@ -102,8 +102,8 @@ Status IteratorBase::GetNextAsOrderedPair(std::vector<std::pair<std::string, std
       column_order_[ind] = std::make_pair(itr.first, ind);
     }
     // error check, make sure the ids in col_name_id_map are continuous and starts from 0
-    for (const auto &col : column_order_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(col.second != invalid_col_id, "column ids are not continuous.");
+    for (const auto &pr : column_order_) {
+      CHECK_FAIL_RETURN_UNEXPECTED(pr.second != invalid_col_id, "column ids are not continuous.");
     }
   }
 

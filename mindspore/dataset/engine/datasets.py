@@ -51,12 +51,12 @@ from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
     ITERATORS_LIST, _unset_iterator_cleanup
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
-    check_rename, check_numpyslicesdataset, check_device_send, \
-    check_take, check_project, check_imagefolderdataset, check_mnist_cifar_dataset, check_manifestdataset, \
-    check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
-    check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
-    check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
-    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
+    check_rename, check_numpyslicesdataset, check_device_send, check_take, check_project, check_imagefolderdataset, \
+    check_mnist_cifar_dataset, check_manifestdataset, check_tfrecorddataset, check_vocdataset, check_cocodataset, \
+    check_celebadataset, check_minddataset, check_generatordataset, check_sync_wait, check_zip_dataset, \
+    check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
+    check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
+    check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..core.validator_helpers import replace_none
@@ -1713,6 +1713,7 @@ class MappableDataset(SourceDataset):
         self.sampler = samplers.select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
 
     def add_sampler(self, new_sampler):
+        """ add a sampler """
         # note: By adding a sampler, the sampled IDs will flow to new_sampler
         # after first passing through the current samplers attached to this dataset.
         self.dataset_size = None
