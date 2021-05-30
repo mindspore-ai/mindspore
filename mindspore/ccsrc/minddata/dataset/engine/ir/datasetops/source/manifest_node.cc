@@ -46,7 +46,7 @@ std::shared_ptr<DatasetNode> ManifestNode::Copy() {
 }
 
 void ManifestNode::Print(std::ostream &out) const {
-  out << Name() + "(file:" + dataset_file_;
+  out << (Name() + "(file:" + dataset_file_);
   if (sampler_ != nullptr) {
     out << ",sampler";
   }

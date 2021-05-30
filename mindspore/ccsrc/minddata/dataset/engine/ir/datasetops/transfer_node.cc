@@ -50,9 +50,8 @@ std::shared_ptr<DatasetNode> TransferNode::Copy() {
 }
 
 void TransferNode::Print(std::ostream &out) const {
-  out << Name() + "(prefetch_size:" + std::to_string(prefetch_size_) +
-           ",send_epoch_end:" + (send_epoch_end_ ? "true" : "false") + ",total_batch:" + std::to_string(total_batch_) +
-           ")";
+  out << (Name() + "(prefetch_size:" + std::to_string(prefetch_size_) + ",send_epoch_end:" +
+          (send_epoch_end_ ? "true" : "false") + ",total_batch:" + std::to_string(total_batch_) + ")");
 }
 
 // Validator for TransferNode

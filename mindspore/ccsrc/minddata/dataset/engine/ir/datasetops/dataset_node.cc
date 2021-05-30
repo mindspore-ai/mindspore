@@ -105,6 +105,7 @@ Status ValidateDatasetFilesParam(const std::string &dataset_name, const std::vec
     if (!dataset_file.Exists()) {
       std::string err_msg = dataset_name + ": dataset file: [" + f + "] is invalid or does not exist.";
       MS_LOG(ERROR) << err_msg;
+
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (access(dataset_file.toString().c_str(), R_OK) == -1) {
@@ -526,15 +527,15 @@ Status DatasetNode::Drop() {
   CHECK_FAIL_RETURN_UNEXPECTED(!(children_.size() > 1 && parent_->children_.size() > 1),
                                "This node to drop must not have more than one child and more than one sibling.");
   if (parent_->children_.size() == 1) {
-    auto parent = parent_;
+    auto my_parent = parent_;
     // Case 2: When the node has one child and no sibling, Drop() detaches the node from its tree and the node's child
     //         becomes its parent's child.
     // This is the most common use case.
     if (children_.size() == 1) {
       auto child = children_[0];
       // Move its child to be its parent's child
-      parent->children_[0] = child;
-      child->parent_ = parent;
+      my_parent->children_[0] = child;
+      child->parent_ = my_parent;
     } else if (children_.empty()) {
       // Case 1: When the node has no child and no sibling, Drop() detaches the node from its tree.
       // Remove this node from its parent's child
@@ -543,11 +544,11 @@ Status DatasetNode::Drop() {
       // Case 3: When the node has more than one child and no sibling, Drop() detaches the node from its tree and
       //         the node's children become its parent's children.
       // Remove this node from its parent's child
-      parent->children_.clear();
+      my_parent->children_.clear();
       // Move its child to be its parent's child
-      for (auto &child : children_) {
-        parent->children_.push_back(child);
-        child->parent_ = parent;
+      for (auto &my_child : children_) {
+        my_parent->children_.push_back(my_child);
+        my_child->parent_ = my_parent;
       }
     }
     // And mark itself as an orphan

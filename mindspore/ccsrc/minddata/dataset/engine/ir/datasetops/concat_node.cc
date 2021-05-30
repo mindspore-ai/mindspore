@@ -50,8 +50,9 @@ std::shared_ptr<DatasetNode> ConcatNode::Copy() {
 void ConcatNode::Print(std::ostream &out) const { out << Name(); }
 
 Status ConcatNode::ValidateParams() {
+  constexpr size_t kMinChildrenSize = 2;
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (children_.size() < 2) {
+  if (children_.size() < kMinChildrenSize) {
     std::string err_msg = "ConcatNode: concatenated datasets are not specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

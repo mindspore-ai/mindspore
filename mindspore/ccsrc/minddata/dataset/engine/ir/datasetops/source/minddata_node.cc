@@ -65,7 +65,7 @@ std::shared_ptr<DatasetNode> MindDataNode::Copy() {
   return node;
 }
 
-void MindDataNode::Print(std::ostream &out) const { out << Name() + "(file:" + dataset_file_ + ",...)"; }
+void MindDataNode::Print(std::ostream &out) const { out << (Name() + "(file:" + dataset_file_ + ",...)"); }
 
 Status MindDataNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());

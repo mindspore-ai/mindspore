@@ -41,7 +41,7 @@ Status RandomSolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     threshold_max = temp;
   }
   std::vector<uint8_t> inputs = {threshold_min, threshold_max};
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(inputs));
+  std::unique_ptr<SolarizeOp> op = std::make_unique<SolarizeOp>(inputs);
   return op->Compute(input, output);
 }
 }  // namespace dataset

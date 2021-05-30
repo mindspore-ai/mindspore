@@ -101,8 +101,9 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
       *crop_height = h_in;
     }
   }
-  *x = static_cast<int32_t>(std::round((w_in - *crop_width) / 2.0));
-  *y = static_cast<int32_t>(std::round((h_in - *crop_height) / 2.0));
+  constexpr float crop_ratio = 2.0;
+  *x = static_cast<int32_t>(std::round((w_in - *crop_width) / crop_ratio));
+  *y = static_cast<int32_t>(std::round((h_in - *crop_height) / crop_ratio));
   return Status::OK();
 }
 }  // namespace dataset

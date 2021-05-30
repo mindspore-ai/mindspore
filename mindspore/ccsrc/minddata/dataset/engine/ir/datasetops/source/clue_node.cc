@@ -48,8 +48,8 @@ std::shared_ptr<DatasetNode> CLUENode::Copy() {
 }
 
 void CLUENode::Print(std::ostream &out) const {
-  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ",..." +
-           ",num_shards:" + std::to_string(num_shards_) + ",shard_id:" + std::to_string(shard_id_) + ")";
+  out << (Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ",..." +
+          ",num_shards:" + std::to_string(num_shards_) + ",shard_id:" + std::to_string(shard_id_) + ")");
 }
 
 Status CLUENode::ValidateParams() {

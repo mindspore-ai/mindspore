@@ -46,7 +46,7 @@ std::shared_ptr<DatasetNode> AlbumNode::Copy() {
 }
 
 void AlbumNode::Print(std::ostream &out) const {
-  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+  out << (Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")");
 }
 
 Status AlbumNode::ValidateParams() {

@@ -54,7 +54,8 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
     }
 
     // solarize desired portion
-    output_cv_tensor->mat() = cv::Scalar::all(255) - mask_mat_tensor->mat();
+    constexpr int max_size = 255;
+    output_cv_tensor->mat() = cv::Scalar::all(max_size) - mask_mat_tensor->mat();
     input_cv->mat().copyTo(output_cv_tensor->mat(), mask_mat_tensor->mat() == 0);
     input_cv->mat().copyTo(output_cv_tensor->mat(), input_cv->mat() < threshold_min_);
 
@@ -62,7 +63,7 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
   }
 
   catch (const cv::Exception &e) {
-    const char *cv_err_msg = e.what();
+    const std::string cv_err_msg(e.what());
     std::string err_message = "Solarize: ";
     err_message += cv_err_msg;
     RETURN_STATUS_UNEXPECTED(err_message);

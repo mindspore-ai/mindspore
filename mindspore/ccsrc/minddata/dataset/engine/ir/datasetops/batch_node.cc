@@ -65,8 +65,8 @@ std::shared_ptr<DatasetNode> BatchNode::Copy() {
 }
 
 void BatchNode::Print(std::ostream &out) const {
-  out << Name() + "(batch_size:" + std::to_string(batch_size_) +
-           " drop_remainder:" + (drop_remainder_ ? "true" : "false") + ")";
+  out << (Name() + "(batch_size:" + std::to_string(batch_size_) +
+          " drop_remainder:" + (drop_remainder_ ? "true" : "false") + ")");
 }
 
 Status BatchNode::ValidateParams() {

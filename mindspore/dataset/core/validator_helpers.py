@@ -63,12 +63,26 @@ def is_iterable(obj):
 
 
 def pad_arg_name(arg_name):
+    """
+    Appends a space to the arg_name (if not empty)
+
+    :param arg_name: the input string
+    :return: the padded string
+    """
     if arg_name != "":
         arg_name = arg_name + " "
     return arg_name
 
 
 def check_value(value, valid_range, arg_name=""):
+    """
+    Validates a value is within a desired range [inclusive, inclusive].
+
+    :param value: the value to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if value < valid_range[0] or value > valid_range[1]:
         raise ValueError(
@@ -77,6 +91,14 @@ def check_value(value, valid_range, arg_name=""):
 
 
 def check_value_cutoff(value, valid_range, arg_name=""):
+    """
+    Validates a value is within a desired range [inclusive, exclusive).
+
+    :param value: the value to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if value < valid_range[0] or value >= valid_range[1]:
         raise ValueError(
@@ -85,6 +107,14 @@ def check_value_cutoff(value, valid_range, arg_name=""):
 
 
 def check_value_ratio(value, valid_range, arg_name=""):
+    """
+    Validates a value is within a desired range (exclusive, inclusive].
+
+    :param value: the value to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if value <= valid_range[0] or value > valid_range[1]:
         raise ValueError(
@@ -93,6 +123,14 @@ def check_value_ratio(value, valid_range, arg_name=""):
 
 
 def check_value_normalize_std(value, valid_range, arg_name=""):
+    """
+    Validates a value is within a desired range (exclusive, inclusive].
+
+    :param value: the value to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if value <= valid_range[0] or value > valid_range[1]:
         raise ValueError(
@@ -101,6 +139,14 @@ def check_value_normalize_std(value, valid_range, arg_name=""):
 
 
 def check_range(values, valid_range, arg_name=""):
+    """
+    Validates the boundaries a range are within a desired range [inclusive, inclusive].
+
+    :param values: the two values to be validated
+    :param valid_range: the desired range
+    :param arg_name: arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if not valid_range[0] <= values[0] <= values[1] <= valid_range[1]:
         raise ValueError(
@@ -109,64 +155,155 @@ def check_range(values, valid_range, arg_name=""):
 
 
 def check_positive(value, arg_name=""):
+    """
+    Validates the value of a variable is positive.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     arg_name = pad_arg_name(arg_name)
     if value <= 0:
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
 
 
 def check_2tuple(value, arg_name=""):
+    """
+    Validates a variable is a tuple with two entries.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     if not (isinstance(value, tuple) and len(value) == 2):
         raise ValueError("Value {0}needs to be a 2-tuple.".format(arg_name))
 
 
 def check_uint8(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of uint8.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [UINT8_MIN, UINT8_MAX])
 
 
 def check_uint32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of uint32.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [UINT32_MIN, UINT32_MAX])
 
 
 def check_pos_int32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of int32.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [POS_INT_MIN, INT32_MAX], arg_name)
 
 
 def check_uint64(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of uint64.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [UINT64_MIN, UINT64_MAX])
 
 
 def check_pos_int64(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of int64.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), arg_name)
     check_value(value, [UINT64_MIN, INT64_MAX])
 
 
 def check_float32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of float32.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     check_value(value, [FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER], arg_name)
 
 
 def check_float64(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of float64.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     check_value(value, [DOUBLE_MIN_INTEGER, DOUBLE_MAX_INTEGER], arg_name)
 
 
 def check_pos_float32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of positive float32.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name)
 
 
 def check_pos_float64(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of positive float64.
+
+    :param value: the value of the variable
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     check_value(value, [UINT64_MIN, DOUBLE_MAX_INTEGER], arg_name)
 
 
 def check_valid_detype(type_):
+    """
+    Validates if a type is a DE Type.
+
+    :param type_: the type_ to be validated
+    :return: Exception: when the type is not a DE type, True otherwise.
+    """
     if type_ not in valid_detype:
         raise TypeError("Unknown column type.")
     return True
 
 
 def check_valid_str(value, valid_strings, arg_name=""):
+    """
+    Validates the content stored in a string.
+
+    :param value: the value to be validated
+    :param valid_strings: a list/set of valid strings
+    :param arg_name: name of the variable to be validated
+    :return: Exception: when the type is not a DE type, nothing otherwise.
+    """
     type_check(value, (str,), arg_name)
     if value not in valid_strings:
         raise ValueError("Input {0} is not within the valid set of {1}.".format(arg_name, str(valid_strings)))
@@ -258,7 +395,7 @@ def type_check(arg, types, arg_name):
         arg_name (str): the name of arg.
 
     Returns:
-        Exception: when the type is not correct, otherwise nothing.
+        Exception: when the validation fails, otherwise nothing.
     """
     # handle special case of booleans being a subclass of ints
     print_value = '\"\"' if repr(arg) == repr('') else arg
@@ -299,11 +436,23 @@ def check_filename(path):
 
 
 def check_dir(dataset_dir):
+    """
+    Validates if the argument is a directory.
+.
+    :param dataset_dir: string containing directory path
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
         raise ValueError("The folder {} does not exist or permission denied!".format(dataset_dir))
 
 
 def check_file(dataset_file):
+    """
+    Validates if the argument is a valid file name.
+.
+    :param dataset_file: string containing file path
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     check_filename(dataset_file)
     if not os.path.isfile(dataset_file) or not os.access(dataset_file, os.R_OK):
         raise ValueError("The file {} does not exist or permission denied!".format(dataset_file))
@@ -368,12 +517,24 @@ def check_padding_options(param_dict):
 
 
 def check_num_parallel_workers(value):
+    """
+    Validates the value for num_parallel_workers.
+.
+    :param value: an integer corresponding to the number of parallel workers
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), "num_parallel_workers")
     if value < 1 or value > cpu_count():
         raise ValueError("num_parallel_workers exceeds the boundary between 1 and {}!".format(cpu_count()))
 
 
 def check_num_samples(value):
+    """
+    Validates number of samples are valid.
+.
+    :param value: an integer corresponding to the number of samples.
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     type_check(value, (int,), "num_samples")
     if value < 0 or value > INT64_MAX:
         raise ValueError(
@@ -381,6 +542,13 @@ def check_num_samples(value):
 
 
 def validate_dataset_param_value(param_list, param_dict, param_type):
+    """
+
+    :param param_list: a list of parameter names.
+    :param param_dict: a dcitionary containing parameter names and their values.
+    :param param_type: a tuple containing type of parameters.
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
     for param_name in param_list:
         if param_dict.get(param_name) is not None:
             if param_name == 'num_parallel_workers':
@@ -429,5 +597,5 @@ def check_c_tensor_op(param, param_name):
 
 
 def replace_none(value, default):
-    """Replace None value with default"""
+    """ replaces None with a default value."""
     return value if value is not None else default

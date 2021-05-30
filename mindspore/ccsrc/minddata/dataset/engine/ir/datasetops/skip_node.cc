@@ -35,7 +35,7 @@ std::shared_ptr<DatasetNode> SkipNode::Copy() {
   return node;
 }
 
-void SkipNode::Print(std::ostream &out) const { out << Name() + "(skip_count:" + std::to_string(skip_count_) + ")"; }
+void SkipNode::Print(std::ostream &out) const { out << (Name() + "(skip_count:" + std::to_string(skip_count_) + ")"); }
 
 // Function to build the SkipOp
 Status SkipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {

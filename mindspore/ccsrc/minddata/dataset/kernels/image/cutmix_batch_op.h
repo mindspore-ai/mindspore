@@ -41,6 +41,10 @@ class CutMixBatchOp : public TensorOp {
   std::string Name() const override { return kCutMixBatchOp; }
 
  private:
+  // a helper function to remove cyclomatic complexity from main Compute function
+  Status ComputeLabelsAndImages(const TensorRow &input, const std::shared_ptr<Tensor> &out_labels,
+                                const std::vector<int64_t> &image_shape, const std::vector<int64_t> &label_shape,
+                                std::vector<std::shared_ptr<Tensor>> *images);
   float alpha_;
   float prob_;
   ImageBatchFormat image_batch_format_;
