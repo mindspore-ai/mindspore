@@ -72,6 +72,8 @@ class BaseCpu {
   virtual Status Collect(const ExecutionTree *tree) = 0;
   virtual Status SaveToFile(const std::string &file_path) = 0;
   virtual Status Analyze(std::string *name, double *utilization, std::string *extra_message) = 0;
+  // Get the total CPU time of device
+  Status GetTotalCpuTime(uint64_t *total_stat);
 
  protected:
   std::vector<CpuUtil> cpu_util_;
@@ -128,9 +130,6 @@ class OperatorCpu : public BaseCpu {
   Status ParseCpuInfo(int32_t op_id, int64_t thread_id,
                       std::unordered_map<int32_t, std::unordered_map<int64_t, CpuOpStat>> *op_stat);
 
-  // Get the total CPU time of device
-  Status GetTotalCpuTime(uint64_t *total_stat);
-
   // Store the CPU utilization of each operator
   std::vector<std::vector<CpuOpUtil>> cpu_op_util_;
 
@@ -157,9 +156,6 @@ class ProcessCpu : public BaseCpu {
  private:
   // Get CPU information, include use/sys/idle/io utilization
   Status ParseCpuInfo();
-
-  // Get the total CPU time of device
-  Status GetTotalCpuTime(uint64_t *total_stat);
 
   bool first_collect_;
   std::vector<CpuProcessUtil> process_util_;

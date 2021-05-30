@@ -342,8 +342,6 @@ class TFRecordToMR:
                               self.tf.float64: "float64",
                               self.tf.double: "float64",
                               self.tf.bool: "int32"}
-        unsupport_tf_type_to_mr_type = {self.tf.complex64: "None",
-                                        self.tf.complex128: "None"}
 
         if value in tf_type_to_mr_type:
             return tf_type_to_mr_type[value]
