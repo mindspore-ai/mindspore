@@ -77,7 +77,7 @@ checkopts()
 get_version
 checkopts "$@"
 
-MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_imagenet/mobilenetv2.ms"
+MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
 
 mkdir -p build
 mkdir -p lib
