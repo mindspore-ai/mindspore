@@ -45,7 +45,7 @@ Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output
   }
   std::shared_ptr<Tensor> outSeq1;
   if (length1 != outLength1) {
-    std::unique_ptr<SliceOp> slice1(new SliceOp(Slice(outLength1 - length1)));
+    std::unique_ptr<SliceOp> slice1 = std::make_unique<SliceOp>(Slice(outLength1 - length1));
     RETURN_IF_NOT_OK(slice1->Compute(seq1, &outSeq1));
   } else {
     outSeq1 = std::move(seq1);
@@ -53,7 +53,7 @@ Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output
 
   std::shared_ptr<Tensor> outSeq2;
   if (length2 != outLength2) {
-    std::unique_ptr<SliceOp> slice2(new SliceOp(Slice(outLength2 - length2)));
+    std::unique_ptr<SliceOp> slice2 = std::make_unique<SliceOp>(Slice(outLength2 - length2));
     RETURN_IF_NOT_OK(slice2->Compute(seq2, &outSeq2));
   } else {
     outSeq2 = std::move(seq2);

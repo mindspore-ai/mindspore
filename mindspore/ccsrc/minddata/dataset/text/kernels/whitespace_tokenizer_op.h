@@ -16,29 +16,28 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_WHITESPACE_TOKENIZER_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_WHITESPACE_TOKENIZER_OP_H_
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
+
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class WhitespaceTokenizerOp : public TensorOp {
+class WhitespaceTokenizerOp : public TokenizerOp {
  public:
-  static const bool kDefWithOffsets;
-
-  explicit WhitespaceTokenizerOp(const bool &with_offsets = kDefWithOffsets) : with_offsets_(with_offsets) {}
+  explicit WhitespaceTokenizerOp(const bool &with_offsets = kDefWithOffsets) : TokenizerOp(with_offsets) {}
 
   ~WhitespaceTokenizerOp() override = default;
 
-  Status Compute(const TensorRow &input, TensorRow *output) override;
+  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+                  std::vector<uint32_t> *offsets_limit) override;
 
   std::string Name() const override { return kWhitespaceTokenizerOp; }
-
- private:
-  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

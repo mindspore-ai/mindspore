@@ -18,7 +18,6 @@
 #include <memory>
 #include <utility>
 namespace mindspore::dataset {
-
 void RuntimeContext::AssignConsumer(std::shared_ptr<TreeConsumer> tree_consumer) {
   tree_consumer_ = std::move(tree_consumer);
 }
