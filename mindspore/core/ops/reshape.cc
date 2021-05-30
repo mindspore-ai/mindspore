@@ -31,7 +31,7 @@ AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -72,8 +72,8 @@ AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
     ShapeVector max_shape = shape_v;
     ShapeVector min_shape = shape_v;
     if (neg_index != -1) {
-      max_shape[neg_index] = max_arr_prod / dim_prod;
-      min_shape[neg_index] = min_arr_prod / dim_prod;
+      max_shape[LongToSize(neg_index)] = max_arr_prod / dim_prod;
+      min_shape[LongToSize(neg_index)] = min_arr_prod / dim_prod;
     } else {
       MS_LOG(EXCEPTION) << "For dynamic shape, Reshape's shape input must have neg index";
     }
@@ -86,8 +86,8 @@ AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                         << arr_prod << ", product of input_shape is" << dim_prod;
     }
     if (neg_index != -1) {
-      shape_v[neg_index] = arr_prod / dim_prod;
-      dim_prod *= shape_v[neg_index];
+      shape_v[LongToSize(neg_index)] = arr_prod / dim_prod;
+      dim_prod *= shape_v[LongToSize(neg_index)];
     }
     if (arr_prod != dim_prod) {
       MS_LOG(EXCEPTION) << "The product of input_x's shape should be equal to product of input_shape, "

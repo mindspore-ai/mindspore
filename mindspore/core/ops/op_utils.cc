@@ -38,17 +38,17 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto length = x_length < y_length ? x_length : y_length;
   std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
-    std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
+    std::copy(y_shape.begin(), y_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   } else {
-    std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
+    std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   }
-  for (int64_t i = -length; i < 0; i++) {
-    if (x_shape[x_length + i] == 1) {
-      broadcast_shape.push_back(y_shape[y_length + i]);
-    } else if (y_shape[y_length + i] == 1) {
-      broadcast_shape.push_back(x_shape[x_length + i]);
-    } else if (x_shape[x_length + i] == y_shape[y_length + i]) {
-      broadcast_shape.push_back(x_shape[x_length + i]);
+  for (int64_t i = -SizeToLong(length); i < 0; i++) {
+    if (x_shape[x_length + LongToSize(i)] == 1) {
+      broadcast_shape.push_back(y_shape[y_length + LongToSize(i)]);
+    } else if (y_shape[y_length + LongToSize(i)] == 1) {
+      broadcast_shape.push_back(x_shape[x_length + LongToSize(i)]);
+    } else if (x_shape[x_length + LongToSize(i)] == y_shape[y_length + LongToSize(i)]) {
+      broadcast_shape.push_back(x_shape[x_length + LongToSize(i)]);
     } else {
       MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input can not broadcast";
     }

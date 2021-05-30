@@ -42,11 +42,11 @@ AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto dropout_prim = primitive->cast<PrimDropoutPtr>();
   MS_EXCEPTION_IF_NULL(dropout_prim);
   auto prim_name = dropout_prim->name();
-  CheckAndConvertUtils::CheckInteger("dropout_infer", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("dropout_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
   // Infer shape
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("x_shape", x_shape.size(), kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kGreaterEqual, 1, prim_name);
   std::vector<int64_t> out_shape;
   out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());
   out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end());

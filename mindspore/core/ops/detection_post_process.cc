@@ -125,7 +125,8 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
   auto detection_prim = primitive->cast<PrimDetectionPostProcessPtr>();
   MS_EXCEPTION_IF_NULL(detection_prim);
   auto prim_name = detection_prim->name();
-  CheckAndConvertUtils::CheckInteger("detection_post_process_infer", input_args.size(), kEqual, 3, prim_name);
+  CheckAndConvertUtils::CheckInteger("detection_post_process_infer", SizeToLong(input_args.size()), kEqual, 3,
+                                     prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   MS_EXCEPTION_IF_NULL(input_args[2]);

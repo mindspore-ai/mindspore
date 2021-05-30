@@ -35,23 +35,23 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto prim = primitive->cast<PrimConcatPtr>();
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto input_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto elements = input_tuple->elements();
-  CheckAndConvertUtils::CheckInteger("concat element num", elements.size(), kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
   auto element0_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("element0 shape", element0->BuildShape(), prim_name);
-  auto element0_rank = SizeToLong(element0_shape.size());
-  auto axis = prim->get_axis();
-  CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis, kIncludeBoth, {-element0_rank - 1, element0_rank},
-                                              prim_name);
-  axis = axis < 0 ? axis + element0_rank : axis;
+  auto element0_rank = element0_shape.size();
+  auto axis_temp = prim->get_axis();
+  CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis_temp, kIncludeBoth,
+                                              {-element0_rank - 1, element0_rank}, prim_name);
+  auto axis = axis_temp < 0 ? LongToSize(axis_temp) + element0_rank : LongToSize(axis_temp);
 
   std::map<std::string, TypePtr> types;
   types.emplace("element0", element0->BuildType());
@@ -60,9 +60,9 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
     std::string elementi = "element" + std::to_string(i);
     auto elementi_shape =
       CheckAndConvertUtils::ConvertShapePtrToShape(elementi + " shape", elements[i]->BuildShape(), prim_name);
-    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", elementi_shape.size(), kEqual, element0_shape.size(),
-                                       prim_name);
-    for (int64_t j = 0; j < element0_rank; ++j) {
+    CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
+                                       element0_shape.size(), prim_name);
+    for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
         MS_LOG(EXCEPTION) << "element " << i << " shape in input can not concat with first element.";
       }
