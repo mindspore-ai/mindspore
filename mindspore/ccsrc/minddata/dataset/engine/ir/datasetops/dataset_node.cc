@@ -126,7 +126,7 @@ Status ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_s
   }
 
   if (shard_id < 0 || shard_id >= num_shards) {
-    // num_shards;
+    // num_shards
     std::string err_msg = dataset_name + ": Invalid input, shard_id: " + std::to_string(shard_id) +
                           ", num_shards: " + std::to_string(num_shards);
     MS_LOG(ERROR) << err_msg;
@@ -150,9 +150,9 @@ Status ValidateDatasetSampler(const std::string &dataset_name, const std::shared
 Status ValidateStringValue(const std::string &dataset_name, const std::string &str,
                            const std::unordered_set<std::string> &valid_strings) {
   if (valid_strings.find(str) == valid_strings.end()) {
-    std::string mode;
-    mode = std::accumulate(valid_strings.begin(), valid_strings.end(), mode,
-                           [](std::string a, std::string b) { return std::move(a) + " " + std::move(b); });
+    std::string init;
+    std::string mode = std::accumulate(valid_strings.begin(), valid_strings.end(), init,
+                                       [](std::string a, std::string b) { return std::move(a) + " " + std::move(b); });
     std::string err_msg = dataset_name + ": " + str + " does not match any mode in [" + mode + " ]";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

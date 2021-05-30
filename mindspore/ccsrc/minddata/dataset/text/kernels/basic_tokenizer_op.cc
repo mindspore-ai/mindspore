@@ -31,7 +31,6 @@ const bool BasicTokenizerOp::kDefLowerCase = false;
 const bool BasicTokenizerOp::kDefKeepWhitespace = false;
 const NormalizeForm BasicTokenizerOp::kDefNormalizationForm = NormalizeForm::kNone;
 const bool BasicTokenizerOp::kDefPreserveUnusedToken = true;
-const bool BasicTokenizerOp::kDefWithOffsets = false;
 const char BasicTokenizerOp::kCommonPattern[] =
   "[!-/]"
   "|[:-@]"
@@ -52,10 +51,10 @@ const std::unordered_set<std::string> BasicTokenizerOp::kUnusedWords{"[CLS]", "[
 BasicTokenizerOp::BasicTokenizerOp(const bool &lower_case, const bool &keep_whitespace,
                                    const NormalizeForm &normalization_form, const bool &preserve_unused_token,
                                    const bool &with_offsets)
-    : lower_case_(lower_case),
+    : TokenizerOp(with_offsets),
+      lower_case_(lower_case),
       keep_whitespace_(keep_whitespace),
       preserve_unused_token_(preserve_unused_token),
-      with_offsets_(with_offsets),
       case_fold_(std::make_unique<CaseFoldOp>()),
       nfd_normalize_(std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfd)),
       normalization_form_(normalization_form),

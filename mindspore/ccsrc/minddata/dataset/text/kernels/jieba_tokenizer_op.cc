@@ -23,31 +23,18 @@
 namespace mindspore {
 namespace dataset {
 
-const bool JiebaTokenizerOp::kDefWithOffsets = false;
-
 JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::string &dict_path, const JiebaMode &mode,
                                    const bool &with_offsets)
-    : jieba_mode_(mode), hmm_model_path_(hmm_path), mp_dict_path_(dict_path), with_offsets_(with_offsets) {
+    : TokenizerOp(with_offsets), jieba_mode_(mode), hmm_model_path_(hmm_path), mp_dict_path_(dict_path) {
   jieba_parser_ = std::make_unique<cppjieba::Jieba>(mp_dict_path_, hmm_model_path_, "");
 }
 
-Status JiebaTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
-  IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "JiebaTokenizer: input only support one column data.");
-  RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
-
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("JiebaTokenizer: the input should be scalar with string datatype.");
-  }
-
-  std::string_view sentence_v;
-  RETURN_IF_NOT_OK(input[0]->GetItemAt(&sentence_v, {}));
+Status JiebaTokenizerOp::Tokenize(std::string_view sentence_v, std::vector<std::string> *words,
+                                  std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
   std::string sentence{sentence_v};
-  std::vector<std::string> words;
-  std::vector<uint32_t> offsets_start, offsets_limit;
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
+
   if (sentence == "") {
-    words.push_back("");
+    words->push_back("");
   } else {
     std::vector<cppjieba::Word> tmp;
     if (jieba_mode_ == JiebaMode::kMp) {
@@ -62,21 +49,13 @@ Status JiebaTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
         std::make_unique<cppjieba::MixSegment>(jieba_parser_->GetDictTrie(), jieba_parser_->GetHMMModel());
       mix_seg->Cut(sentence, tmp, true);
     }
-    GetStringsFromWords(tmp, words);
+    GetStringsFromWords(tmp, *words);
     for (auto item : tmp) {
-      offsets_start.push_back(static_cast<uint32_t>(item.offset));
-      offsets_limit.push_back(static_cast<uint32_t>(item.offset + item.word.length()));
+      offsets_start->push_back(static_cast<uint32_t>(item.offset));
+      offsets_limit->push_back(static_cast<uint32_t>(item.offset + item.word.length()));
     }
   }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(words, &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
 
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
-  }
   return Status::OK();
 }
 

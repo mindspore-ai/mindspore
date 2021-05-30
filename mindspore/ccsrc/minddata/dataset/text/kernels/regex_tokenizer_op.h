@@ -25,25 +25,25 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class RegexTokenizerOp : public TensorOp {
+class RegexTokenizerOp : public TokenizerOp {
  public:
-  static const bool kDefWithOffsets;
-
   RegexTokenizerOp(const std::string &delim_pattern, const std::string &keep_delim_pattern,
                    const bool &with_offsets = kDefWithOffsets)
-      : delim_pattern_(icu::UnicodeString::fromUTF8(delim_pattern)),
+      : TokenizerOp(with_offsets),
+        delim_pattern_(icu::UnicodeString::fromUTF8(delim_pattern)),
         keep_delim_pattern_(icu::UnicodeString::fromUTF8(keep_delim_pattern)),
-        with_offsets_(with_offsets),
         keep_delim_(!keep_delim_pattern.empty()) {}
 
   ~RegexTokenizerOp() override = default;
 
-  Status Compute(const TensorRow &input, TensorRow *output) override;
+  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+                  std::vector<uint32_t> *offsets_limit) override;
 
  protected:
   Status GetUnicodeSubstr(const icu::UnicodeString &input, const int &start, const int &len, std::string *out_utf8,
@@ -56,7 +56,6 @@ class RegexTokenizerOp : public TensorOp {
  private:
   const icu::UnicodeString delim_pattern_;
   const icu::UnicodeString keep_delim_pattern_;
-  bool with_offsets_;
   const bool keep_delim_;
 };
 }  // namespace dataset

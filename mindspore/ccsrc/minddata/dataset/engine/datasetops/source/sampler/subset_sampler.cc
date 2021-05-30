@@ -116,18 +116,10 @@ void SubsetSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
 
 Status SubsetSamplerRT::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerRT::to_json(&args));
   args["sampler_name"] = "SubsetSampler";
   args["indices"] = indices_;
-  args["num_samples"] = num_samples_;
-  if (this->HasChildSampler()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : child_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+
   *out_json = args;
   return Status::OK();
 }

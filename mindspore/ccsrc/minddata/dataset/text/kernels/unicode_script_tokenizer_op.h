@@ -16,34 +16,34 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/text/kernels/data_utils.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class UnicodeScriptTokenizerOp : public TensorOp {
+class UnicodeScriptTokenizerOp : public TokenizerOp {
  public:
   static const bool kDefKeepWhitespace;
-  static const bool kDefWithOffsets;
 
   explicit UnicodeScriptTokenizerOp(const bool &keep_whitespace = kDefKeepWhitespace,
                                     const bool &with_offsets = kDefWithOffsets)
-      : keep_whitespace_(keep_whitespace), with_offsets_(with_offsets) {}
+      : TokenizerOp(with_offsets), keep_whitespace_(keep_whitespace) {}
 
   ~UnicodeScriptTokenizerOp() override = default;
 
-  Status Compute(const TensorRow &input, TensorRow *output) override;
+  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+                  std::vector<uint32_t> *offsets_limit) override;
 
   std::string Name() const override { return kUnicodeScriptTokenizerOp; }
 
  private:
   bool keep_whitespace_;  // If or not keep whitespace tokens
-  bool with_offsets_;
 };
 }  // namespace dataset
 }  // namespace mindspore

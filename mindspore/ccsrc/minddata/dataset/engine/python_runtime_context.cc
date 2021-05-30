@@ -18,7 +18,6 @@
 #include "pybind11/pybind11.h"
 
 namespace mindspore::dataset {
-
 Status PythonRuntimeContext::Terminate() {
   MS_LOG(INFO) << "Terminating a PythonRuntime";
   if (tree_consumer_ != nullptr) {

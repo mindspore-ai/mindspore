@@ -2520,7 +2520,6 @@ class MapDataset(Dataset):
         #  If output_columns were not provided then use input_columns
         self.output_columns = self.input_columns if not self.output_columns else self.output_columns
 
-        # todo(crc): move to @check_map
         if self.input_columns and self.output_columns \
                 and len(self.input_columns) != len(self.output_columns) \
                 and not self.column_order:
@@ -3219,8 +3218,8 @@ class MnistDataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
-                 num_shards=None, shard_id=None, cache=None):
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
 
@@ -4106,8 +4105,8 @@ class Cifar10Dataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
-                 num_shards=None, shard_id=None, cache=None):
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
 
@@ -4210,8 +4209,8 @@ class Cifar100Dataset(MappableDataset):
     """
 
     @check_mnist_cifar_dataset
-    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
-                 num_shards=None, shard_id=None, cache=None):
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
 
@@ -4775,8 +4774,8 @@ class CelebADataset(MappableDataset):
 
     def parse(self, children=None):
         if self.usage != "all":
-            dir = os.path.realpath(self.dataset_dir)
-            partition_file = os.path.join(dir, "list_eval_partition.txt")
+            dataset_dir = os.path.realpath(self.dataset_dir)
+            partition_file = os.path.join(dataset_dir, "list_eval_partition.txt")
             if os.path.exists(partition_file) is False:
                 raise RuntimeError("Partition file can not be found when usage is not 'all'.")
         return cde.CelebANode(self.dataset_dir, self.usage, self.sampler, self.decode, self.extensions)
@@ -4844,82 +4843,7 @@ class CLUEDataset(SourceDataset):
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_files = self._find_files(dataset_files)
-
-        self.task_dict = {
-            'AFQMC': {
-                'train': {
-                    'sentence1': 'sentence1', 'sentence2': 'sentence2', 'label': 'label'
-                },
-                'test': {
-                    'id': 'id', 'sentence1': 'sentence1', 'sentence2': 'sentence2'
-                },
-                'eval': {
-                    'sentence1': 'sentence1', 'sentence2': 'sentence2', 'label': 'label'
-                }
-            },
-            'CMNLI': {
-                'train': {
-                    'sentence1': 'sentence1', 'sentence2': 'sentence2', 'label': 'label'
-                },
-                'test': {
-                    'id': 'id', 'sentence1': 'sentence1', 'sentence2': 'sentence2'
-                },
-                'eval': {
-                    'sentence1': 'sentence1', 'sentence2': 'sentence2', 'label': 'label'
-                }
-            },
-            'CSL': {
-                'train': {
-                    'id': 'id', 'abst': 'abst', 'keyword': 'keyword', 'label': 'label'
-                },
-                'test': {
-                    'id': 'id', 'abst': 'abst', 'keyword': 'keyword'
-                },
-                'eval': {
-                    'id': 'id', 'abst': 'abst', 'keyword': 'keyword', 'label': 'label'
-                }
-            },
-            'IFLYTEK': {
-                'train': {
-                    'label': 'label', 'label_des': 'label_des', 'sentence': 'sentence'
-                },
-                'test': {
-                    'id': 'id', 'sentence': 'sentence',
-                },
-                'eval': {
-                    'label': 'label', 'label_des': 'label_des', 'sentence': 'sentence'
-                }
-            },
-            'TNEWS': {
-                'train': {
-                    'label': 'label', 'label_desc': 'label_desc', 'sentence': 'sentence', 'keywords': 'keywords'
-                },
-                'test': {
-                    'id': 'id', 'sentence': 'sentence', 'keywords': 'keywords'
-                },
-                'eval': {
-                    'label': 'label', 'label_desc': 'label_desc', 'sentence': 'sentence', 'keywords': 'keywords'
-                }
-            },
-            'WSC': {
-                'train': {
-                    'span1_index': 'target/span1_index', 'span2_index': 'target/span2_index',
-                    'span1_text': 'target/span1_text', 'span2_text': 'target/span2_text', 'idx': 'idx',
-                    'label': 'label', 'text': 'text'
-                },
-                'test': {
-                    'span1_index': 'target/span1_index', 'span2_index': 'target/span2_index',
-                    'span1_text': 'target/span1_text', 'span2_text': 'target/span2_text', 'idx': 'idx', 'text': 'text'
-                },
-                'eval': {
-                    'span1_index': 'target/span1_index', 'span2_index': 'target/span2_index',
-                    'span1_text': 'target/span1_text', 'span2_text': 'target/span2_text', 'idx': 'idx',
-                    'label': 'label', 'text': 'text'
-                }
-            }
-        }
         self.usage = replace_none(usage, 'train')
-        self.cols_to_keyword = self.task_dict[task][self.usage]
         self.task = replace_none(task, 'AFQMC')
 
     def parse(self, children=None):
@@ -5024,7 +4948,8 @@ class TextFileDataset(SourceDataset):
         self.dataset_files.sort()
 
     def parse(self, children=None):
-        return cde.TextFileNode(self.dataset_files, self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+        return cde.TextFileNode(self.dataset_files, self.num_samples, self.shuffle_flag, self.num_shards,
+                                self.shard_id)
 
 
 class _NumpySlicesDataset:
