@@ -34,7 +34,7 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape_len = (int64_t)x_shape.size();
+  auto x_shape_len = x_shape.size();
   auto begin_v = input_args[1]->BuildValue();
   auto size_v = input_args[2]->BuildValue();
   auto x_type = input_args[0]->BuildType();
@@ -48,10 +48,10 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   }
   auto begin = GetValue<std::vector<int64_t>>(begin_v);
   auto size = GetValue<std::vector<int64_t>>(size_v);
-  CheckAndConvertUtils::Check("len of begin", (int64_t)begin.size(), kEqual, "len x's dim", x_shape_len);
-  CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, "len x's dim", x_shape_len);
+  CheckAndConvertUtils::Check("len of begin", (int64_t)begin.size(), kEqual, "len x's dim", SizeToLong(x_shape_len));
+  CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, "len x's dim", SizeToLong(x_shape_len));
 
-  for (int64_t i = 0; i < x_shape_len; i++) {
+  for (size_t i = 0; i < x_shape_len; i++) {
     CheckAndConvertUtils::CheckInteger("input size[" + std::to_string(i) + "]", size[i], kGreaterThan, 0, "");
     if (x_shape[i] < (begin[i] + size[i])) {
       auto y = begin[i] + size[i];

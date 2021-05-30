@@ -58,7 +58,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
+  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
   auto batch = in_shape[0];
@@ -74,11 +74,11 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   int64_t out_h = -1;
   int64_t out_w = -1;
   if (pad_mode == VALID) {
-    out_h = ceil((in_h - (kernel_h - 1)) / stride_h);
-    out_w = ceil((in_w - (kernel_w - 1)) / stride_w);
+    out_h = static_cast<int64_t>(ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
   } else if (pad_mode == SAME) {
-    out_h = ceil(in_h / stride_h);
-    out_w = ceil(in_w / stride_w);
+    out_h = static_cast<int64_t>(ceil(in_h / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(ceil(in_w / static_cast<float>(stride_w)));
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
   if (format == NHWC) {
@@ -91,7 +91,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr a) { return a == nullptr; })) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   return input_args[0]->BuildType();

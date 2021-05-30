@@ -21,9 +21,8 @@
 
 namespace mindspore {
 namespace ops {
-void Conv2DBackpropFilterFusion::Init(const int64_t in_channel, const int64_t out_channel,
-                                      const std::vector<int64_t> &kernel_size, const PadMode &pad_mode,
-                                      const std::vector<int64_t> &pad_list, const int64_t mode,
+void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size,
+                                      const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const int64_t mode,
                                       const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
                                       const int64_t group, const Format &format, const ActivationType activation_type) {
   set_out_channel(out_channel);

@@ -113,7 +113,8 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("detection_post_process_infer", input_args.size(), kEqual, 3, prim_name);
+  CheckAndConvertUtils::CheckInteger("detection_post_process_infer", SizeToLong(input_args.size()), kEqual, 3,
+                                     prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   MS_EXCEPTION_IF_NULL(input_args[2]);
