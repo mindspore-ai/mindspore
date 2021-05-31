@@ -36,6 +36,12 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
+#define CHANNEL_INDEX 2           // images are hwc, so index 2 represents number of channels
+#define DEFAULT_IMAGE_CHANNELS 3  // images are 3 channels in general
+#define DEFAULT_IMAGE_RANK 3      // images are hwc channels in general
+#define MAX_BIT_VALUE 255         // max bit value after decode is 256
+#define MIN_IMAGE_CHANNELS 1      // image ops support minimum of 1 channel
+#define MIN_IMAGE_DIMENSION 2     // images are at least 2 dimensional
 namespace mindspore {
 namespace dataset {
 void JpegErrorExitCustom(j_common_ptr cinfo);
