@@ -402,3 +402,6 @@ if(ENABLE_CONVERTER)
             mindspore::glog
             )
 endif()
+if(ENABLE_MODEL_OBF)
+    target_link_libraries(lite-test ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()

@@ -272,3 +272,8 @@ if(SUPPORT_TRAIN)
     set_target_properties(mindspore-lite PROPERTIES OUTPUT_NAME "mindspore-lite-train")
     set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
 endif()
+
+if(ENABLE_MODEL_OBF)
+    target_link_libraries(mindspore-lite ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+    target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
+endif()

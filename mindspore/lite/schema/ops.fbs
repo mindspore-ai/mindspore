@@ -206,6 +206,7 @@ union PrimitiveType {
     LayerNormGrad,
     ResizeGrad,
     Splice,
+    GenOP,
 }
 
 table Abs {
@@ -1093,4 +1094,39 @@ table Splice {
     context: [long];
     forward_indexes: [long];
     output_dim: long;
+}
+
+table GenOP {
+    activation_type: ActivationType = 0;
+    alpha: float;
+    min_val: float;
+    max_val: float;
+    is_training: bool;
+    format: Format = 0;
+    kernel_size: [long];
+    stride: [long];
+    dilation: [long];
+    pad_mode: PadMode;
+    pad_list: [long];
+    mode: long;
+    group: long;
+    in_channel: long;
+    out_channel: long;
+    eltwise_mode: EltwiseMode;
+    has_bias: bool;
+    use_axis: bool;
+    axis: long;
+    epsilon: float = 0.0001;
+    momentum: float = 0.9;
+    transpose_a: bool = false;
+    transpose_b: bool = false;
+    pad: [long];
+    round_mode: RoundMode;
+    global: bool;
+    channel_shared: bool;
+    axes: [long];
+    keep_dims: bool;
+    reduce_mode: ReduceMode;
+    reduce_to_end: bool;
+    coeff: float;
 }

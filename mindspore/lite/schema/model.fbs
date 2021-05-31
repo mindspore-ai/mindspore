@@ -92,6 +92,8 @@ table MetaGraph {
     nodes: [CNode];
     allTensors: [Tensor]; // weight + input + output
     subGraph : [SubGraph];
+    obfuscate: bool = false;
+    obfMetaData: [ubyte];
 }
 
 root_type MetaGraph;
