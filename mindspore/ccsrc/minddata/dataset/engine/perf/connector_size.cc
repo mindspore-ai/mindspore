@@ -39,10 +39,6 @@ Status ConnectorSize::Sample() {
 
 // JSON serializer helper function
 json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size) {
-  auto children = node.Children();
-  std::vector<int32_t> children_id;
-  std::transform(children.begin(), children.end(), std::back_inserter(children_id),
-                 [](std::shared_ptr<DatasetOp> op) -> int32_t { return op->id(); });
   json json_node;
   json_node["op_id"] = node.id();
   json_node["op_type"] = node.Name();
@@ -54,6 +50,11 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
     metrics["output_queue"] = {{"size", size}, {"length", node.ConnectorCapacity()}};
   }
   json_node["metrics"] = metrics;
+
+  auto children = node.Children();
+  std::vector<int32_t> children_id;
+  std::transform(children.begin(), children.end(), std::back_inserter(children_id),
+                 [](std::shared_ptr<DatasetOp> op) -> int32_t { return op->id(); });
   if (!children_id.empty()) {
     json_node["children"] = children_id;
   }
@@ -64,21 +65,10 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
 // Save profiling data to file
 // If the file is already exist (created by other sampling node), simply add the data to metrics field.
 Status ConnectorSize::SaveToFile() {
-  Path path = Path(file_path_);
   json output;
-  if (path.Exists()) {
-    MS_LOG(DEBUG) << file_path_ << " exists";
-    try {
-      std::ifstream file(file_path_);
-      file >> output;
-    } catch (const std::exception &err) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
-                               ", please delete it and try again!");
-    }
-  } else {
-    output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
-  }
+  RETURN_IF_NOT_OK(ReadJson(&output));
 
+  Path path = Path(file_path_);
   uint32_t idx = 0;
   // Traverse the ExecutionTree for JSON node generation
   for (auto &node : *tree_) {
