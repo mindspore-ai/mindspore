@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameExp = "Exp";
+constexpr auto kNameExp = prim::kExp;
 class Exp : public PrimitiveC {
  public:
-  Exp() : PrimitiveC(kNameExp) { InitIOName({"x"}, {"y"}); }
+  Exp() : PrimitiveC(prim::kPrimExp->name()) { InitIOName({"x"}, {"y"}); }
   explicit Exp(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }
   ~Exp() = default;
   MS_DECLARE_PARENT(Exp, PrimitiveC);
