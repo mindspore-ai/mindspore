@@ -60,7 +60,7 @@ static void InitWBlockInter(float *wBlock, int wBlockSz) {
 
 static void CalWBlock(const int &sum_i, const int &ks, int16_t *iWBlock) {
   int df = sum_i - REMAP_SCALE;
-  int ks2 = 1;
+  const int ks2 = 1;
   int tk1 = ks2;
   int tk2 = ks2;
   int mtk1 = ks2;
