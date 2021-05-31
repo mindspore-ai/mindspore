@@ -102,6 +102,10 @@ void GetMaxSubGraph(const FuncGraphManagerPtr &mng, std::unordered_set<CNodePtr>
     auto current_node = nodes_to_visit.front();
     nodes_to_visit.pop();
     recomputed_nodes->insert(current_node);
+    // No need to find nodes through side-effect dependency.
+    if (IsPrimitiveCNode(current_node, prim::kPrimUpdateState)) {
+      continue;
+    }
     if (get_inputs) {
       for (const auto &input : current_node->inputs()) {
         MS_EXCEPTION_IF_NULL(input);
@@ -242,6 +246,11 @@ void GetTupleGetItemOutputNodes(const FuncGraphManagerPtr &mng, const AnfNodePtr
   }
 }
 
+bool SetRecomputedScope(const CNodePtr &node) {
+  return WithRecomputedScope(node) ||
+         (IsPrimitiveCNode(node, prim::kPrimDepend) && WithRecomputedScope(node->input(kRealInputIndexInDepend)));
+}
+
 // Set 'recompute' cnode attr for the nodes according to its scope.
 // A node set 'recompute' cnode attr can become the candidate recomputed node.
 void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &origin_nodes_topological) {
@@ -276,7 +285,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>()) {
       prim_recompute_val = GetValue<bool>(prim_recompute_attr);
     }
-    if ((WithRecomputedScope(node) && prim_recompute_val != 0) || prim_recompute_val == 1) {
+    if ((SetRecomputedScope(cnode) && prim_recompute_val != 0) || prim_recompute_val == 1) {
       cnode->AddAttr(kAttrRecompute, MakeValue(true));
     }
     if (!HasRecomputeCNodeAttr(node)) {
@@ -327,7 +336,13 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
     }
     auto input_cnode = input->cast<CNodePtr>();
     if (recomputed_origin_nodes.find(input_cnode) == recomputed_origin_nodes.end()) {
-      new_inputs.emplace_back(input);
+      if (IsPrimitiveCNode(input_cnode, prim::kPrimUpdateState)) {
+        auto u = NewValueNode(kUMonad);
+        u->set_abstract(kUMonad->ToAbstract());
+        new_inputs.emplace_back(u);
+      } else {
+        new_inputs.emplace_back(input);
+      }
     } else {
       has_recomputed_inputs = true;
       new_inputs.emplace_back(NewRecomputedNode(graph, input_cnode, first_target_inputs, recomputed_origin_nodes,
