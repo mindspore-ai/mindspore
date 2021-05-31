@@ -101,7 +101,7 @@ class BuiltinSampler:
         self.num_samples = num_samples
 
     def parse(self):
-        pass
+        """ Parse the sampler."""
 
     def add_child(self, sampler):
         """
@@ -266,6 +266,7 @@ class Sampler(BuiltinSampler):
     # Instance fetcher
     # Do not override this method!
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.PreBuiltSamplerObj(num_samples, self)
         c_child_sampler = self.parse_child()
@@ -362,6 +363,7 @@ class DistributedSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         shuffle = self.shuffle if self.shuffle is not None else True
         offset = self.offset if self.offset is not None else -1
@@ -454,6 +456,7 @@ class PKSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         shuffle = self.shuffle if self.shuffle is not None else False
         c_sampler = cde.PKSamplerObj(self.num_val, shuffle, num_samples)
@@ -477,7 +480,7 @@ class PKSampler(BuiltinSampler):
         """Parse the sampler for MindRecord."""
         if not self.class_column or not isinstance(self.class_column, str):
             raise ValueError("class_column should be a not empty string value, \
-                    but got class_column: {}.".format(class_column))
+                    but got class_column: {}.".format(self.class_column))
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle, num_samples)
         c_child_sampler = self.parse_child_for_minddataset()
@@ -523,6 +526,7 @@ class RandomSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         replacement = self.replacement if self.replacement is not None else False
         c_sampler = cde.RandomSamplerObj(replacement, num_samples, self.reshuffle_each_epoch)
@@ -585,6 +589,7 @@ class SequentialSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         start_index = self.start_index if self.start_index is not None else 0
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.SequentialSamplerObj(start_index, num_samples)
@@ -670,6 +675,7 @@ class SubsetSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.SubsetSamplerObj(self.indices, num_samples)
         c_child_sampler = self.parse_child()
@@ -722,6 +728,7 @@ class SubsetRandomSampler(SubsetSampler):
     """
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.SubsetRandomSamplerObj(self.indices, num_samples)
         c_child_sampler = self.parse_child()
@@ -732,6 +739,7 @@ class SubsetRandomSampler(SubsetSampler):
         return True
 
     def parse_for_minddataset(self):
+        """Parse the sampler for MindRecord."""
         c_sampler = cde.MindrecordSubsetSampler(self.indices, ds.config.get_seed())
         c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
@@ -823,6 +831,7 @@ class WeightedRandomSampler(BuiltinSampler):
         super().__init__(num_samples)
 
     def parse(self):
+        """ Parse the sampler."""
         num_samples = self.num_samples if self.num_samples is not None else 0
         replacement = self.replacement if self.replacement is not None else True
         c_sampler = cde.WeightedRandomSamplerObj(self.weights, num_samples, replacement)
