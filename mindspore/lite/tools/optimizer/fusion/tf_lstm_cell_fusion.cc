@@ -35,14 +35,6 @@ constexpr size_t kBodyCNodesNum = 30;
 const auto &p1 = std::placeholders::_1;
 
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
-
-bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    return CheckPrimitiveType(anf_node, prim);
-  }
-  return false;
-}
 }  // namespace
 
 TfLstmCellFusion::TfLstmCellFusion(const std::string &name, bool multigraph)

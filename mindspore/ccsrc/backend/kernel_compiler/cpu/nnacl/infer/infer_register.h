@@ -218,8 +218,10 @@ enum PrimType {
   PrimType_Custom = 191,
   PrimType_CumSum = 192,
   PrimType_SplitWithOverlap = 193,
+  PrimType_GenOP = 194,
+  PrimType_Attention = 195,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_SplitWithOverlap + 1
+  PrimType_MAX = PrimType_Attention + 1
 };
 
 void RegInfer(int prim_type, InferShape func);

@@ -24,8 +24,7 @@
 #include "abstract/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 
-namespace mindspore {
-namespace ops {
+namespace mindspore::ops {
 constexpr auto kAlpha = "alpha";
 constexpr auto kActivation = "activation";
 constexpr auto kActivationType = "activation_type";
@@ -125,6 +124,9 @@ constexpr auto kNumElements = "num_elements";
 constexpr auto kNumBits = "num_bits";
 constexpr auto kNumDirections = "num_directions";
 constexpr auto kNumProj = "num_proj";
+constexpr auto kNumHeads = "num_heads";
+constexpr auto kKeyDim = "key_dim";
+constexpr auto kValueDim = "value_dim";
 constexpr auto kOffset = "offset";
 constexpr auto kNmsIouThreshold = "nms_iou_threshold";
 constexpr auto kNmsScoreThreshold = "nms_score_threshold";
@@ -253,6 +255,5 @@ const std::set<TypePtr> all_types = {
 };
 
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args);
-}  // namespace ops
-}  // namespace mindspore
+}  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H
