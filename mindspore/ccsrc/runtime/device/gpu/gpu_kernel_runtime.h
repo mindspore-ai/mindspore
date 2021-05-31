@@ -109,6 +109,10 @@ class GPUKernelRuntime : public KernelRuntime {
   DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
   session::KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &node, size_t i);
 
+  void LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
+                               const AddressPtrList &inputs, const AddressPtrList &workspaces,
+                               const AddressPtrList &outputs, bool profiling);
+
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
   std::unordered_map<uint32_t, bool> is_first_step_map_;

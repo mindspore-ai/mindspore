@@ -652,14 +652,6 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   mindspore::RDR::RecordGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, kernels.size());
   size_t id = 0;
 #endif
-  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_inst);
-
-  if (profiler_inst->GetEnableFlag() && profiler::gpu::ProfilingUtils::IsFirstStep(graph->graph_id())) {
-    profiler::gpu::ProfilingTraceInfo profiling_trace =
-      profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(graph));
-    profiler_inst->SetStepTraceOpName(profiling_trace);
-  }
   CNodePtr last_kernel = GetLastKernel(graph);
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -698,22 +690,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     mindspore::RDR::UpdateGPUMemAddressInfo(SubModuleId::SM_KERNEL, name, op_name, mem_info, id++);
 #endif
     if (!mock) {
-      if (!profiling) {
-        if (profiler_inst->GetEnableFlag()) {
-          profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), stream_);
-        }
-        if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_)) {
-          MS_LOG(EXCEPTION) << "Launch kernel failed: " << kernel->fullname_with_scope();
-        }
-        if (profiler_inst->GetEnableFlag()) {
-          profiler_inst->OpDataProducerEnd();
-          if (profiler_inst->GetSyncEnableFlag()) {
-            CHECK_OP_RET_WITH_ERROR(SyncStream(), "Profiler SyncStream failed.");
-          }
-        }
-      } else {
-        LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
-      }
+      LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
 
       if (gpu_kernel && dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
         gpu_kernel->PostExecute();
@@ -744,6 +721,37 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   }
   ClearSwapInfo(mock);
   return true;
+}
+
+void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph, const AnfNodePtr &kernel,
+                                               const AddressPtrList &inputs, const AddressPtrList &workspaces,
+                                               const AddressPtrList &outputs, bool profiling) {
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  if (profiler_inst->GetEnableFlag() && profiler::gpu::ProfilingUtils::IsFirstStep(graph->graph_id())) {
+    profiler::gpu::ProfilingTraceInfo profiling_trace =
+      profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(graph));
+    profiler_inst->SetStepTraceOpName(profiling_trace);
+  }
+
+  if (!profiling) {
+    if (profiler_inst->GetEnableFlag()) {
+      profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), stream_);
+    }
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    if (!kernel_mod->Launch(inputs, workspaces, outputs, stream_)) {
+      MS_LOG(EXCEPTION) << "Launch kernel failed: " << kernel->fullname_with_scope();
+    }
+    if (profiler_inst->GetEnableFlag()) {
+      profiler_inst->OpDataProducerEnd();
+      if (profiler_inst->GetSyncEnableFlag()) {
+        CHECK_OP_RET_WITH_ERROR(SyncStream(), "Profiler SyncStream failed.");
+      }
+    }
+  } else {
+    LaunchKernelWithTimeProfiling(kernel, inputs, workspaces, outputs);
+  }
 }
 
 bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *graph) {

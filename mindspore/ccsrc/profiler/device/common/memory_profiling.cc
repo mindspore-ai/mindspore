@@ -32,7 +32,7 @@ std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_
   return node;
 }
 
-std::shared_ptr<GraphMemory> MemoryProfiling::GetGraphMemoryNode(uint32_t graph_id) {
+std::shared_ptr<GraphMemory> MemoryProfiling::GetGraphMemoryNode(uint32_t graph_id) const {
   auto node = graph_memory_.find(graph_id);
   if (node != graph_memory_.end()) {
     return node->second;

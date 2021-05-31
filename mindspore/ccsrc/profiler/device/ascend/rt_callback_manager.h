@@ -40,8 +40,6 @@ class CallbackManager {
 
   ~CallbackManager() = default;
 
-  Status Init();
-
   Status Destroy();
 
   Status RegisterCallback(rtCallback_t callback, const void *user_data);
