@@ -23,68 +23,25 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from mindspore.nn.metrics import Accuracy
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore import load_checkpoint, load_param_into_net, export
 from mindspore.train import Model
 from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.compression.quant.quantizer import OptimizeOption
 from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
 from dataset import create_dataset
-from config import nonquant_cfg, quant_cfg
-from lenet import LeNet5
+from config import quant_cfg
 from lenet_fusion import LeNet5 as LeNet5Fusion
 import numpy as np
 
 device_target = 'GPU'
 data_path = "/home/workspace/mindspore_dataset/mnist"
-
-
-def train_lenet():
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
-    cfg = nonquant_cfg
-    ds_train = create_dataset(os.path.join(data_path, "train"),
-                              cfg.batch_size)
-
-    network = LeNet5(cfg.num_classes)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
-                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
-    ckpoint_cb = ModelCheckpoint(prefix="ckpt_lenet_noquant", config=config_ck)
-    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-
-    print("============== Starting Training Lenet==============")
-    model.train(cfg['epoch_size'], ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
-                dataset_sink_mode=True)
-
-
-def eval_lenet():
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
-    cfg = nonquant_cfg
-    ds_eval = create_dataset(os.path.join(data_path, "test"), cfg.batch_size, 1)
-    ckpt_path = './ckpt_lenet_noquant-10_1875.ckpt'
-    # define fusion network
-    network = LeNet5(cfg.num_classes)
-    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
-    # call back and monitor
-    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
-    # load quantization aware network checkpoint
-    param_dict = load_checkpoint(ckpt_path)
-    not_load_param = load_param_into_net(network, param_dict)
-    if not_load_param:
-        raise ValueError("Load param into net fail!")
-
-    print("============== Starting Testing ==============")
-    acc = model.eval(ds_eval, dataset_sink_mode=True)
-    print("============== {} ==============".format(acc))
-
+lenet_ckpt_path = "/home/workspace/mindspore_dataset/checkpoint/lenet/ckpt_lenet_noquant-10_1875.ckpt"
 
 def train_lenet_quant(optim_option="QAT"):
     context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     cfg = quant_cfg
-    ckpt_path = './ckpt_lenet_noquant-10_1875.ckpt'
+    ckpt_path = lenet_ckpt_path
     ds_train = create_dataset(os.path.join(data_path, "train"), cfg.batch_size, 1)
     step_size = ds_train.get_dataset_size()
 
@@ -211,8 +168,6 @@ def export_lenet(optim_option="QAT"):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lenet_quant():
-    train_lenet()
-    eval_lenet()
     train_lenet_quant()
     eval_quant()
     export_lenet()
