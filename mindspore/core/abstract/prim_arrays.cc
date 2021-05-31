@@ -591,16 +591,17 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
   int64_t axis_val = 0;
   // 3rd input is a Tensor when GatherV2 is a dynamic shape operator
-  if (args_spec_list[2]->isa<AbstractTensor>()) {
-    auto axis = args_spec_list[2]->cast<AbstractTensorPtr>();
+  constexpr size_t aixs_index = 2;
+  if (args_spec_list[aixs_index]->isa<AbstractTensor>()) {
+    auto axis = args_spec_list[aixs_index]->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis);
     auto axis_value_ptr = axis->BuildValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_tensor);
     axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
-  } else if (args_spec_list[2]->isa<AbstractScalar>()) {
-    auto axis = args_spec_list[2]->cast<AbstractScalarPtr>();
+  } else if (args_spec_list[aixs_index]->isa<AbstractScalar>()) {
+    auto axis = args_spec_list[aixs_index]->cast<AbstractScalarPtr>();
     axis_val = GetValue<int64_t>(axis->BuildValue());
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();

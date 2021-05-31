@@ -289,7 +289,6 @@ ValuePtr ConvertFuncGraph(const py::object &obj) {
 ValuePtr ConvertSlice(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting slice object";
 
-  auto slice_obj = obj.cast<py::slice>();
   auto convert_func = [obj](const std::string &attr) -> ValuePtr {
     auto py_attr = py::getattr(obj, attr.c_str());
     if (py::isinstance<py::none>(py_attr)) {
@@ -361,7 +360,7 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
 }
 
 template <typename T>
-ValuePtr ConvertNumberWithType(const T &obj, TypePtr dtype) {
+ValuePtr ConvertNumberWithType(const T &obj, const TypePtr &dtype) {
   ValuePtr data = nullptr;
   auto int_dypte = dyn_cast<Int>(dtype);
   if (int_dypte != nullptr) {

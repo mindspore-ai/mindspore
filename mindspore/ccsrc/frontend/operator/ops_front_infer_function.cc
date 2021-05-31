@@ -477,7 +477,8 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
     MS_LOG(EXCEPTION) << "Cannot make range from empty input.";
   }
 
-  if (args_spec_list.size() > 3) {
+  constexpr size_t max_args_size = 3;
+  if (args_spec_list.size() > max_args_size) {
     MS_LOG(EXCEPTION) << "Error args size of make range operational.";
   }
 

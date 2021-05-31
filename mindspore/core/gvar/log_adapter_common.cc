@@ -44,10 +44,11 @@ std::string GetTimeString() {
   buf[27] = '\0';
   int idx = 26;
   auto num = cur_time.tv_usec;
+  constexpr int interval_number = 3;
   for (int i = 5; i >= 0; i--) {
     buf[idx--] = static_cast<char>(num % 10 + '0');
     num /= 10;
-    if (i % 3 == 0) {
+    if (i % interval_number == 0) {
       buf[idx--] = '.';
     }
   }
