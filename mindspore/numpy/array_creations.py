@@ -1277,15 +1277,15 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
             grids.append(ravel(x))
     ndim = len(grids)
 
-    Cartesian = indexing == 'xy'
+    cartesian = indexing == 'xy'
     shape_out = ()
     for i in range(len(grids)):
-        grid_index = _index(i, ndim, cartesian=Cartesian)
+        grid_index = _index(i, ndim, cartesian=cartesian)
         shape_out += (F.shape(grids[grid_index])[0],)
 
     res = []
     for i, x in enumerate(grids):
-        grid_index = _index(i, ndim, cartesian=Cartesian)
+        grid_index = _index(i, ndim, cartesian=cartesian)
         shape_expanded = _expanded_shape(ndim, shape_out[grid_index], grid_index)
         x = x.reshape(shape_expanded)
         if not sparse:
@@ -1294,11 +1294,11 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
     return res
 
 
-class nd_grid:
+class NdGrid:
     """
     Construct a multi-dimensional "meshgrid".
 
-    ``grid = nd_grid()`` creates an instance which will return a mesh-grid
+    ``grid = NdGrid()`` creates an instance which will return a mesh-grid
     when indexed.
     If instantiated with an argument of ``sparse=True``, the mesh-grid is
     open (or not fleshed out) so that only one-dimension of each
@@ -1349,9 +1349,9 @@ class nd_grid:
         return res
 
 
-class MGridClass(nd_grid):
+class MGridClass(NdGrid):
     """
-    mgrid is an :class:`nd_grid` instance with ``sparse=False``.
+    mgrid is an :class:`NdGrid` instance with ``sparse=False``.
 
     The dimension and number of the output arrays are equal to the number
     of indexing dimensions. If the step length is not a complex number,
@@ -1397,9 +1397,9 @@ class MGridClass(nd_grid):
         super(MGridClass, self).__init__(sparse=False)
 
 
-class OGridClass(nd_grid):
+class OGridClass(NdGrid):
     """
-    ogrid is an :class:`nd_grid` instance with ``sparse=True``.
+    ogrid is an :class:`NdGrid` instance with ``sparse=True``.
 
     The dimension and number of the output arrays are equal to the number
     of indexing dimensions. If the step length is not a complex number,
