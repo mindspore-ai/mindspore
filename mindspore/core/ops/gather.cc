@@ -84,10 +84,10 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   if (ind_dyn || param_dyn) {
     ShapeVector min_shape = calc_shape(indices_shp_min, param_shp_min);
     ShapeVector max_shape = calc_shape(indices_shp_max, param_shp_max);
-    return std::make_shared<abstract::AbstractTensor>(
-      params->element(), std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape));
+    return abstract::MakeAbstract(std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape),
+                                  params->BuildType());
   }
-  return std::make_shared<abstract::AbstractTensor>(params->element(), std::make_shared<abstract::Shape>(out_shape));
+  return abstract::MakeAbstract(std::make_shared<abstract::Shape>(out_shape), params->BuildType());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Gather, prim::kPrimGather, GatherInfer, nullptr, true);
 }  // namespace ops

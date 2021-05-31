@@ -68,9 +68,7 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   std::set<TypePtr> valid_types = {kInt32, kInt64};
   CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[2]->BuildType(), valid_types, prim_name);
   CheckAndConvertUtils::CheckSubClass("dim_type", input_args[1]->BuildType(), valid_types, prim_name);
-  auto abs = std::make_shared<abstract::AbstractTensor>(GatherDInferType(primitive, input_args),
-                                                        GatherDInferShape(primitive, input_args));
-  return abs;
+  return abstract::MakeAbstract(GatherDInferShape(primitive, input_args), GatherDInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GatherD, prim::kPrimGatherD, GatherDInfer, nullptr, true);
 }  // namespace ops

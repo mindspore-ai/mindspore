@@ -72,7 +72,8 @@ TypePtr AddNInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   }
   std::set<TypePtr> valid_types = common_valid_types;
   valid_types.insert(kBool);
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  return elements[0]->BuildType();
 }
 }  // namespace
 AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -83,11 +84,7 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto abs_type = AddNInferType(primitive, input_args);
-  if (abs_type->type_id() == kObjectTypeUndeterminedType) {
-    return std::make_shared<abstract::AbstractUndetermined>();
-  }
-  return std::make_shared<abstract::AbstractTensor>(abs_type, AddNInferShape(primitive, input_args));
+  return abstract::MakeAbstract(AddNInferShape(primitive, input_args), AddNInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(AddN, prim::kPrimAddN, AddNInfer, nullptr, true);
 }  // namespace ops

@@ -49,9 +49,7 @@ TypePtr SoftplusInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 AbstractBasePtr SoftplusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto abs = std::make_shared<abstract::AbstractTensor>(SoftplusInferType(primitive, input_args),
-                                                        SoftplusInferShape(primitive, input_args));
-  return abs;
+  return abstract::MakeAbstract(SoftplusInferShape(primitive, input_args), SoftplusInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Softplus, prim::kPrimSoftplus, SoftplusInfer, nullptr, true);
 }  // namespace ops

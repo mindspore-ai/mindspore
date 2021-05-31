@@ -25,6 +25,7 @@
 #include <cfloat>
 
 #include "abstract/abstract_value.h"
+#include "abstract/utils.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "ir/value.h"
@@ -357,9 +358,8 @@ void SetValueRange(const AbstractBasePtr &tensor, const py::object &output) {
   }
 }
 
-AbstractBasePtr PyList2DynamicShapeTensor(const py::object &shape_obj, const py::object &type_obj,
-                                          const py::object &output) {
-  AbstractBasePtr tensor = nullptr;
+AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
+                                              const py::object &output) {
   auto ret_vec = shape_obj.cast<ShapeVector>();
   auto ret_dtype = type_obj.cast<TypePtr>();
   ShapeVector min_shape_vec;
@@ -379,15 +379,7 @@ AbstractBasePtr PyList2DynamicShapeTensor(const py::object &shape_obj, const py:
   }
 
   auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
-  if (ret_dtype->isa<TensorType>()) {
-    auto tensor_type = type_obj.cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_type);
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
-    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
-  } else {
-    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
-    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
-  }
+  AbstractBasePtr tensor = MakeAbstractTensor(ret_shape, ret_dtype);
 
   SetValueRange(tensor, output);
   return tensor;
@@ -404,18 +396,16 @@ static bool IsMonadType(const py::object &type_obj) {
 static AbstractBasePtr ToMonadAbstract(const py::object &type_obj) {
   if (py::isinstance<Type>(type_obj)) {
     auto type = type_obj.cast<Type *>();
-    if (type->isa<UMonadType>()) {
-      return kUMonad->ToAbstract();
+    if (!type->isa<MonadType>()) {
+      MS_LOG(EXCEPTION) << "Not a monad type object: " << py::str(type_obj);
     }
-    if (type->isa<IOMonadType>()) {
-      return kIOMonad->ToAbstract();
-    }
+    return abstract::MakeMonadAbstract(type->cast<MonadTypePtr>());
   }
-  MS_LOG(EXCEPTION) << "Not a monad type object: " << py::str(type_obj);
+  MS_LOG(EXCEPTION) << "Not a type object: " << py::str(type_obj);
 }
 
-AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                           const py::object &output) {
+AbstractBasePtr MakePyInferRes2Abstract(const py::object &shape_obj, const py::object &type_obj,
+                                        const py::object &output) {
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
     auto ret_vec = shape_obj.cast<ShapeVector>();
     auto ret_dtype = type_obj.cast<TypePtr>();
@@ -425,13 +415,13 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
       abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
       return abs_scalar;
     }
-    return PyList2DynamicShapeTensor(shape_obj, type_obj, output);
+    return MakePyInferRes2AbstractTensor(shape_obj, type_obj, output);
   } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
     auto shape_tuple = shape_obj.cast<py::tuple>();
     auto typeid_tuple = type_obj.cast<py::tuple>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_tuple.size(); ++it) {
-      auto tensor_it = PyListDtype2AbstractTensor(shape_tuple[it], typeid_tuple[it]);
+      auto tensor_it = MakePyInferRes2Abstract(shape_tuple[it], typeid_tuple[it]);
       ptr_list.push_back(tensor_it);
     }
     auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
@@ -441,7 +431,7 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     auto typeid_list = type_obj.cast<py::list>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_list.size(); ++it) {
-      auto tensor_it = PyListDtype2AbstractTensor(shape_list[it], typeid_list[it]);
+      auto tensor_it = MakePyInferRes2Abstract(shape_list[it], typeid_list[it]);
       ptr_list.push_back(tensor_it);
     }
     auto list = std::make_shared<abstract::AbstractList>(ptr_list);

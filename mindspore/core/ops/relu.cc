@@ -44,14 +44,15 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   CheckAndConvertUtils::CheckInteger("ReLU infer", input_args.size(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
+  return x_type;
 }
 }  // namespace
 AbstractBasePtr ReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   auto type = InferType(primitive, input_args);
   auto shape = InferShape(primitive, input_args);
-  return std::make_shared<abstract::AbstractTensor>(type, shape);
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLU, prim::kPrimRelu, ReLUInfer, nullptr, true);
 

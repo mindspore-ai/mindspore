@@ -51,8 +51,7 @@ std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape,
   }
   return mask_shape;
 }
-std::vector<abstract::ShapePtr> InferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 1, prim_name);
@@ -74,13 +73,13 @@ std::vector<abstract::ShapePtr> InferShape(const PrimitivePtr &primitive,
   if (min_shape.empty() || max_shape.empty()) {
     inputs_shape = std::make_shared<abstract::Shape>(input_shape);
     masks_shape = std::make_shared<abstract::Shape>(mask_shape);
-    return std::vector<abstract::ShapePtr>{inputs_shape, masks_shape};
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
   }
   auto min_mask_shape = GetOutputMaskShape(min_shape, x_dtype);
   auto max_mask_shape = GetOutputMaskShape(max_shape, x_dtype);
   inputs_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   masks_shape = std::make_shared<abstract::Shape>(mask_shape, min_mask_shape, max_mask_shape);
-  return std::vector<abstract::ShapePtr>{inputs_shape, masks_shape};
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -92,7 +91,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   MS_EXCEPTION_IF_NULL(x_type);
   std::set<TypePtr> valid_x_type = {kTensorType};
   CheckAndConvertUtils::CheckSubClass("input_x", x_type, valid_x_type, prim_name);
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
+  auto type = CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
+  return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -100,10 +100,7 @@ AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   auto types = InferType(primitive, input_args);
   auto shapes = InferShape(primitive, input_args);
-  auto input_dtype = std::make_shared<abstract::AbstractTensor>(types, shapes[0]);
-  auto mask_dtype = std::make_shared<abstract::AbstractTensor>(kUInt8, shapes[1]);
-  AbstractBasePtrList outputs = {input_dtype, mask_dtype};
-  return std::make_shared<abstract::AbstractTuple>(outputs);
+  return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUV2, prim::kPrimReluV2, ReLUV2Infer, nullptr, true);
 

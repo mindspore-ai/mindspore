@@ -505,12 +505,33 @@ py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrLi
   return py_args;
 }
 
+void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBasePtr &res_spec) {
+  const string kOutputNum = "output_num";
+  if (prim->IsCustomPrim()) {
+    // Raise error if output_num is not match the infer result.
+    auto output_num_value = prim->GetAttr(kOutputNum);
+    if (output_num_value == nullptr) {
+      MS_LOG(DEBUG) << "The output num may no need to check";
+      return;
+    }
+    int64_t output_num = GetValue<int64_t>(output_num_value);
+    if (res_spec->isa<AbstractTensor>() && output_num != 1) {
+      MS_LOG(EXCEPTION) << "Custom primitive " << prim->ToString() << " output_num " << output_num
+                        << " not matches the infer result.";
+    } else if (res_spec->isa<AbstractTuple>() &&
+               (res_spec->cast<AbstractTuplePtr>()->size() != LongToSize(output_num))) {
+      MS_LOG(EXCEPTION) << "Custom primitive " << prim->ToString() << " output_num " << output_num
+                        << " not matches the infer result.";
+    }
+  }
+}
+
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
   auto out_dtype = output[ATTR_DTYPE];
   if (output[ATTR_VALUE].is_none()) {
     auto out_shape = output[ATTR_SHAPE];
-    return PyListDtype2AbstractTensor(out_shape, out_dtype, output);
+    return MakePyInferRes2Abstract(out_shape, out_dtype, output);
   }
   // Convert pyobject to Value, then to AbstractValue
   ValuePtr converted_ret = nullptr;
@@ -527,18 +548,7 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
     res_tensor->set_value(converted_ret);
     SetValueRange(res_tensor, output);
   }
-  if (prim_py->IsCustomPrim()) {
-    // Raise error if output_num is not match the infer result.
-    int64_t output_num = GetValue<int64_t>(prim_py->GetAttr("output_num"));
-    if (res_spec->isa<AbstractTensor>() && output_num != 1) {
-      MS_LOG(EXCEPTION) << "Custom primitive " << prim_py->ToString() << " output_num " << output_num
-                        << " not matches the infer result.";
-    } else if (res_spec->isa<AbstractTuple>() &&
-               (res_spec->cast<AbstractTuplePtr>()->size() != LongToSize(output_num))) {
-      MS_LOG(EXCEPTION) << "Custom primitive " << prim_py->ToString() << " output_num " << output_num
-                        << " not matches the infer result.";
-    }
-  }
+  CheckCustomPrimOutputInferResult(prim_py, res_spec);
   return res_spec;
 }
 }  // end anonymous namespace

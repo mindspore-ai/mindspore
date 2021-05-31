@@ -91,8 +91,7 @@ TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 
 AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(TileInferType(primitive, input_args),
-                                                    TileInferShape(primitive, input_args)->shape());
+  return abstract::MakeAbstract(TileInferShape(primitive, input_args), TileInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameTile, Tile);
 

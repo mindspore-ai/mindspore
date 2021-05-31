@@ -145,9 +145,8 @@ AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const Prim
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInteger("BatchMatmul infer", input_args.size(), kGreaterEqual, 2, primitive->name());
-  auto abs = std::make_shared<abstract::AbstractTensor>(BatchMatmulInferType(primitive, input_args),
-                                                        BatchMatmulInferShape(primitive, input_args));
-  return abs;
+  return abstract::MakeAbstract(BatchMatmulInferShape(primitive, input_args),
+                                BatchMatmulInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BatchMatmul, prim::kPrimBatchMatMul, BatchMatmulInfer, nullptr, true);
 }  // namespace ops

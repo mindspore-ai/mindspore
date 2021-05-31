@@ -48,7 +48,7 @@ AbstractBasePtr ScalarSummaryInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   // check
   CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(kInt32, ScalarSummaryInferShape(primitive, input_args));
+  return abstract::MakeAbstract(ScalarSummaryInferShape(primitive, input_args), kInt32);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ScalarSummary, prim::kPrimScalarSummary, ScalarSummaryInfer, nullptr, true);
 }  // namespace ops

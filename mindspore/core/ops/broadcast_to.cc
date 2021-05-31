@@ -84,8 +84,8 @@ std::vector<int64_t> BroadcastTo::get_shape() const {
 }
 AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(BroadcastToInferType(primitive, input_args),
-                                                    BroadcastToInferShape(primitive, input_args));
+  return abstract::MakeAbstract(BroadcastToInferShape(primitive, input_args),
+                                BroadcastToInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BroadcastTo, prim::kPrimBroadcastTo, BroadcastToInfer, nullptr, true);
 }  // namespace ops

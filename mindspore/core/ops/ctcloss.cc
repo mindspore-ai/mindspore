@@ -56,8 +56,7 @@ void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const st
   }
 }
 
-std::vector<abstract::ShapePtr> InferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckCTCLossInputs(input_args, op_name);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -71,36 +70,33 @@ std::vector<abstract::ShapePtr> InferShape(const PrimitivePtr &primitive,
   if (min_shape.empty() || max_shape.empty()) {
     loss_shape = std::make_shared<abstract::Shape>(batch);
     gradient_shape = std::make_shared<abstract::Shape>(shape);
-    return std::vector<abstract::ShapePtr>{loss_shape, gradient_shape};
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape, gradient_shape});
   }
 
   ShapeVector batch_min = {min_shape[1]};
   ShapeVector batch_max = {max_shape[1]};
   loss_shape = std::make_shared<abstract::Shape>(batch, batch_min, batch_max);
   gradient_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
-  return std::vector<abstract::ShapePtr>{loss_shape, gradient_shape};
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape, gradient_shape});
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[1]->BuildType(), {kInt64}, op_name);
   CheckAndConvertUtils::CheckTensorTypeValid("labels_values", input_args[2]->BuildType(), {kInt32}, op_name);
   CheckAndConvertUtils::CheckTensorTypeValid("sequence_length", input_args[3]->BuildType(), {kInt32}, op_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), valid_types, op_name);
+  auto type = CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), valid_types, op_name);
+  return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
-
 }  // namespace
 
 AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto type = InferType(primitive, input_args);
+  auto types = InferType(primitive, input_args);
   auto shapes = InferShape(primitive, input_args);
-  auto loss = std::make_shared<abstract::AbstractTensor>(type, shapes[0]);
-  auto gradient = std::make_shared<abstract::AbstractTensor>(type, shapes[1]);
-  AbstractBasePtrList outputs = {loss, gradient};
-  return std::make_shared<abstract::AbstractTuple>(outputs);
+  return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(CTCLoss, prim::kPrimCTCLoss, CTCLossInfer, nullptr, true);
 }  // namespace ops
