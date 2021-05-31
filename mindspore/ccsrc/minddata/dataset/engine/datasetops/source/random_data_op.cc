@@ -25,6 +25,9 @@
 #include "minddata/dataset/util/wait_post.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
+#define TYPE_OFFSET 2
+#define UNI_MAX 255
+
 namespace mindspore {
 namespace dataset {
 // Builder constructor.  Creates the builder object.
@@ -115,7 +118,7 @@ void RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - 2));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - TYPE_OFFSET));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
@@ -318,7 +321,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
 
     // Generate a random byte of data.  This may cause some funny data for things like doubles,floats, bools
     // however the random data op is not too concerned about the physical data itself.
-    std::uniform_int_distribution<uint8_t> uniDist(0, 255);
+    std::uniform_int_distribution<uint8_t> uniDist(0, UNI_MAX);
     uint8_t random_byte = uniDist(rand_gen_);
 
     // Now, create a chunk of memory for the entire tensor and copy this byte in repeatedly.
