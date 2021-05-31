@@ -36,7 +36,7 @@ using mindspore::kernel::tbe::TbeUtils;
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
-  static set<std::string> processed_kernel;
+  static std::set<std::string> processed_kernel = {};
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
@@ -82,14 +82,14 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     (void)processed_kernel.insert(json_name);
     // op build
     TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json.dump());
-    auto task_id = build_manger->StartCompileOp(kernel_json);
+    auto task_id = ParallelBuildManager::StartCompileOp(kernel_json);
     build_manger->SaveTaskInfo(task_id, anf_node, json_name, input_size_list, output_size_list);
   }
   while (!build_manger->IsAllTaskFinish()) {
     int task_id = -1;
     std::string task_result;
     std::string build_result;
-    auto ret = build_manger->WaitOne(&task_id, &task_result, &build_result);
+    auto ret = ParallelBuildManager::WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id
                                   << " trace: " << trace::DumpSourceLines(build_manger->GetAnfNodeByTaskID(task_id));
@@ -108,7 +108,7 @@ ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
 
 void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNodePtr &anf_node,
                                         const std::string &json_name, const std::vector<size_t> &input_size_list,
-                                        const std::vector<size_t> &output_size_list, int32_t scope_id) {
+                                        const std::vector<size_t> &output_size_list, int64_t scope_id) {
   MS_LOG(INFO) << "SaveTaskInfo, task id: " << task_id;
   struct KernelBuildTaskInfo task_info;
   task_info.node = anf_node;
@@ -139,9 +139,9 @@ void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::stri
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
   std::string start_flag = "fusion_pattern_start";
   std::string end_flag = "fusion_pattern_end";
-  int start = pre_build_result.find(start_flag);
-  int end = pre_build_result.find(end_flag);
-  if (start != -1 && end != -1 && end >= start) {
+  auto start = pre_build_result.find(start_flag);
+  auto end = pre_build_result.find(end_flag);
+  if (start != std::string::npos && end != std::string::npos && end >= start) {
     std::string result = pre_build_result.substr(start + start_flag.size(), end - start - start_flag.size());
     if (result.empty()) {
       (void)pre_task_map_.erase(task_iter);
@@ -175,8 +175,7 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
       return fusion_kernel_mod;
     }
   }
-  auto kernel_mod = GenKernelMod(json_name, processor, task_iter->second.input_size_list,
-                                 task_iter->second.output_size_list, kernel_pack);
+  auto kernel_mod = GenKernelMod(task_iter->second.input_size_list, task_iter->second.output_size_list, kernel_pack);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   if (set_kernel_mod) {
     AnfAlgo::SetKernelMod(kernel_mod, task_iter->second.node.get());
@@ -231,8 +230,7 @@ bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModP
   for (const auto &task_info : same_op_list_) {
     auto kernel_pack = TbeUtils::SearchCache(task_info.json_name, tbe::kProcessorAiCore);
     if (kernel_pack != nullptr) {
-      auto kernel_mode = GenKernelMod(task_info.json_name, tbe::kProcessorAiCore, task_info.input_size_list,
-                                      task_info.output_size_list, kernel_pack);
+      auto kernel_mode = GenKernelMod(task_info.input_size_list, task_info.output_size_list, kernel_pack);
       if (kernel_mode != nullptr) {
         (*kernel_mode_ret)[task_info.scope_id] = kernel_mode;
         continue;
@@ -249,7 +247,7 @@ bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std
                                          const std::vector<size_t> &output_size_list, mindspore::AnfNode *node) const {
   auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
   if (cached_kernel_pack != nullptr) {
-    auto kernel_mod_ptr = GenKernelMod(json_name, processor, input_size_list, output_size_list, cached_kernel_pack);
+    auto kernel_mod_ptr = GenKernelMod(input_size_list, output_size_list, cached_kernel_pack);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node);
     return true;
@@ -258,8 +256,7 @@ bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std
   }
 }
 
-KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const string &processor,
-                                                const vector<size_t> &input_size_list,
+KernelModPtr ParallelBuildManager::GenKernelMod(const vector<size_t> &input_size_list,
                                                 const vector<size_t> &output_size_list,
                                                 const mindspore::kernel::KernelPackPtr &kernel_pack) const {
   MS_EXCEPTION_IF_NULL(kernel_pack);
@@ -282,7 +279,7 @@ bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::
   return AscendKernelBuildClient::Instance().TbeWait(task_id, task_result, pre_build_result);
 }
 
-void ParallelBuildManager::ResetTaskInfo() {
+void ParallelBuildManager::ResetTaskInfo() noexcept {
   if (task_map_.empty()) {
     MS_LOG(INFO) << "All tasks are compiled success.";
     return;

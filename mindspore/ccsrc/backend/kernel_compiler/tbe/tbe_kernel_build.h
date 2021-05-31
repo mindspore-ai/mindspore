@@ -97,7 +97,7 @@ class TbeKernelJsonCreator {
   ~TbeKernelJsonCreator() = default;
   bool GenTbeSingleKernelJson(const std::shared_ptr<AnfNode> &anf_node, nlohmann::json *kernel_json);
   std::string json_name() { return json_name_; }
-  bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
+  void GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                       nlohmann::json *attrs_json);
   static string GetSocVersion();
 
