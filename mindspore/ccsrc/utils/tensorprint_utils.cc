@@ -273,10 +273,7 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
 
 void TensorPrint::operator()() {
   prntpb::Print print;
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string print_file_path = ms_context->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
-  if (print_file_path == "") {
+  if (print_file_path_ == "") {
     while (true) {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -291,7 +288,7 @@ void TensorPrint::operator()() {
       }
     }
   } else {
-    std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
+    std::fstream output(print_file_path_, std::ios::out | std::ios::trunc | std::ios::binary);
     while (true) {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
@@ -301,14 +298,14 @@ void TensorPrint::operator()() {
         MS_LOG(ERROR) << "Acltdt failed to receive tensor.";
         break;
       }
-      if (SaveDataset2File(acl_dataset, print_file_path, print, &output)) {
+      if (SaveDataset2File(acl_dataset, print_file_path_, print, &output)) {
         break;
       }
     }
     output.close();
-    std::string path_string = print_file_path;
+    std::string path_string = print_file_path_;
     if (chmod(common::SafeCStr(path_string), S_IRUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << print_file_path << " fail.";
+      MS_LOG(ERROR) << "Modify file:" << print_file_path_ << " fail.";
       return;
     }
   }

@@ -109,21 +109,22 @@ bool MsContext::set_backend_policy(const std::string &policy) {
 }
 
 #ifdef ENABLE_TDTQUE
-namespace py = pybind11;
-acltdtChannelHandle *MsContext::CreateAclTdtChannelHandle() {
+void MsContext::CreateTensorPrintThread(PrintThreadCrt ctr) {
   uint32_t device_id = get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string kReceivePrefix = "TF_RECEIVE_";
   std::string channel_name = "_npu_log";
-  acltdtChannelHandle *acl_handle = acltdtCreateChannel(device_id, (kReceivePrefix + channel_name).c_str());
-  if (acl_handle != nullptr) {
-    MS_LOG(INFO) << "Success to create acltdt handle.";
-    acl_handle_ = acl_handle;
+  acl_handle_ = acltdtCreateChannel(device_id, (kReceivePrefix + channel_name).c_str());
+  if (acl_handle_ != nullptr) {
+    MS_LOG(INFO) << "Success to create acltdt handle, tsd reference = " << get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
     TdtHandle::AddHandle(&acl_handle_);
+  } else {
+    MS_LOG(EXCEPTION) << "Get acltdt handle failed";
   }
-  return acl_handle;
+  std::string print_file_path = get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
+  acl_tdt_print_ = ctr(print_file_path, acl_handle_);
 }
 
-void MsContext::DestroyAclTdtChannelHandle() {
+void MsContext::DestroyTensorPrintThread() {
   if (acl_handle_ == nullptr) {
     MS_LOG(INFO) << "The acl handle has been destroyed and the point is nullptr";
     return;
@@ -134,7 +135,14 @@ void MsContext::DestroyAclTdtChannelHandle() {
     return;
   }
   MS_LOG(INFO) << "Succeed stop acl data channel for host queue ";
-
+  try {
+    if (acl_tdt_print_.joinable()) {
+      MS_LOG(INFO) << "join acl tdt host receive process";
+      acl_tdt_print_.join();
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
+  }
   aclError destroydStatus = acltdtDestroyChannel(acl_handle_);
   if (destroydStatus != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Failed destroy acl channel and the destroyStatus is " << destroydStatus << std::endl;
@@ -143,6 +151,7 @@ void MsContext::DestroyAclTdtChannelHandle() {
   TdtHandle::DelHandle(&acl_handle_);
   MS_LOG(INFO) << "Succeed destroy acl channel";
 }
+
 #endif
 
 std::string MsContext::backend_policy() const {

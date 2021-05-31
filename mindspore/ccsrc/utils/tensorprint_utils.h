@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_UTILS_TENSORPRINT_UTILS_H_
 
 #include <map>
+#include <string>
 #include "ir/dtype/type.h"
 #ifndef NO_DLIB
 #include "acl/acl_tdt.h"
@@ -25,21 +26,19 @@
 #include "tdt/data_common.h"
 #include "tdt/tdt_host_interface.h"
 #include "proto/print.pb.h"
-#include "utils/ms_context.h"
-#endif
+
 namespace mindspore {
 class TensorPrint {
  public:
-  TensorPrint() {}
+  explicit TensorPrint(const std::string &path, acltdtChannelHandle *acl_handle)
+      : print_file_path_(path), acl_handle_(acl_handle) {}
   ~TensorPrint() = default;
-#ifndef NO_DLIB
-  explicit TensorPrint(acltdtChannelHandle *acl_handle) { acl_handle_ = acl_handle; }
   void operator()();
 
  private:
+  std::string print_file_path_;
   acltdtChannelHandle *acl_handle_ = nullptr;
-#endif
 };
 }  // namespace mindspore
-
+#endif
 #endif  // MINDSPORE_CCSRC_UTILS_TENSOR_PRINT_H_
