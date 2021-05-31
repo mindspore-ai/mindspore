@@ -52,8 +52,10 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
   if (input_shape->shape().size() != input_shape_size) {
     MS_LOG(EXCEPTION) << "Pooling input should be a 4-D tensor.";
   }
-  int64_t h_input = input_shape->shape()[2];
-  int64_t w_input = input_shape->shape()[3];
+  const size_t H_INDEX = 2;
+  const size_t W_INDEX = 3;
+  int64_t h_input = input_shape->shape()[H_INDEX];
+  int64_t w_input = input_shape->shape()[W_INDEX];
 
   int64_t window = primitive->GetAttr("window")->cast<Int64ImmPtr>()->value();
   int64_t stride = primitive->GetAttr("stride")->cast<Int64ImmPtr>()->value();

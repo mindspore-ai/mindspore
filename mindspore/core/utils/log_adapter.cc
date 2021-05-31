@@ -28,11 +28,11 @@ namespace mindspore {
 #define google mindspore_private
 static std::string GetProcName() {
 #if defined(__APPLE__) || defined(__FreeBSD__)
-  const char *appname = getprogname();
+  const std::string appname = getprogname();
 #elif defined(_GNU_SOURCE)
-  const char *appname = program_invocation_name;
+  const std::string appname = program_invocation_name;
 #else
-  const char *appname = "?";
+  const std::string appname = "?";
 #endif
   // some times, the appname is an absolute path, its too long
   std::string app_name(appname);
@@ -76,7 +76,7 @@ static int GetGlogLevel(MsLogLevel level) {
 }
 
 // get threshold level
-static int GetThresholdLevel(std::string threshold) {
+static int GetThresholdLevel(const std::string &threshold) {
   if (threshold.empty()) {
     return google::GLOG_WARNING;
   } else if (threshold == std::to_string(DEBUG) || threshold == std::to_string(INFO)) {

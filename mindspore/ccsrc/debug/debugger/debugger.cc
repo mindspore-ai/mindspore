@@ -1053,12 +1053,12 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 int32_t Debugger::step_num() const { return num_step_; }
 
 uint64_t BytestoInt64(const std::vector<char> &buffer) {
-  uint64_t ret;
-
-  ret = ((uint64_t)buffer[7] << 56) | ((uint64_t)buffer[6] << 48) | ((uint64_t)buffer[5] << 40) |
-        ((uint64_t)buffer[4] << 32) | ((uint64_t)buffer[3] << 24) | ((uint64_t)buffer[2] << 16) |
-        ((uint64_t)buffer[1] << 8) | ((uint64_t)buffer[0]);
-
+  uint64_t ret = (uint64_t)buffer[0];
+  const int SHIFT = 8;
+  const int MAX_INDEX = 8;
+  for (int i = 1; i < MAX_INDEX; i++) {
+    ret = ((uint64_t)buffer[i] << (i * SHIFT)) | ret;
+  }
   return ret;
 }
 

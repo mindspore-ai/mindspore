@@ -71,8 +71,7 @@ void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const
   }
 }
 
-void GetCNodeConstantId(const session::KernelGraph *graph, const CNodePtr &node,
-                        std::map<std::string, size_t> *const_map) {
+void GetCNodeConstantId(const CNodePtr &node, std::map<std::string, size_t> *const_map) {
   auto &inputs = node->inputs();
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
@@ -99,7 +98,7 @@ void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size
     }
     auto cnode = node->cast<CNodePtr>();
     if (cnode != graph->get_return()) {
-      GetCNodeConstantId(graph, cnode, const_map);
+      GetCNodeConstantId(cnode, const_map);
     } else {
       SetConstNodeId(cnode->input(1), const_map);
     }

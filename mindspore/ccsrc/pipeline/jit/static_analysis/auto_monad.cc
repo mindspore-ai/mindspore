@@ -562,12 +562,12 @@ class SideEffectFinder {
         return {EffectInfo::kDetected, false, false, false};
       }
       // Pop out tuple index.
-      auto index = tuple_indexes->top();
+      auto top_index = tuple_indexes->top();
       tuple_indexes->pop();
       // Follow the tuple item according the index.
-      size_t input_index = static_cast<size_t>(index) + 1;
+      size_t input_index = static_cast<size_t>(top_index) + 1;
       if (input_index >= cnode->size()) {
-        MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << index;
+        MS_LOG(EXCEPTION) << "Invalid make_tuple: " << cnode->DebugString() << " index=" << top_index;
       }
       if (tuple_indexes->empty()) {
         // Trace non-tuple.
@@ -734,12 +734,12 @@ class SideEffectFinder {
   }
 
   int GetParameterIndex(const FuncGraphPtr &func_graph, const ParameterPtr &para) {
-    int index = 0;
+    int parameter_index = 0;
     for (auto &parameter : func_graph->parameters()) {
       if (para == parameter) {
-        return index;
+        return parameter_index;
       }
-      ++index;
+      ++parameter_index;
     }
     MS_LOG(EXCEPTION) << "Parameter not found: " << (para ? para->DebugString() : "<null>");
   }
@@ -1130,9 +1130,9 @@ class AutoMonadConverter {
       (void)GetUniverse();
       bool load_with_primitive = (info.load && IsPrimitiveCNode(cnode));
       if (!cnode->IsEffectHandled() && !load_with_primitive) {
-        auto u = NewValueNode(kUMonad);
-        u->set_abstract(kUMonad->ToAbstract());
-        cnode->add_input(u);
+        auto u_node = NewValueNode(kUMonad);
+        u_node->set_abstract(kUMonad->ToAbstract());
+        cnode->add_input(u_node);
       }
     }
     if (info.io) {
@@ -1209,9 +1209,9 @@ class AutoMonadConverter {
       return;
     }
     // Current u monad.
-    auto u = GetUniverse();
+    auto current_u = GetUniverse();
     // Create Load cnodes.
-    auto loads = MakeLoads(cnode, ref_inputs, u);
+    auto loads = MakeLoads(cnode, ref_inputs, current_u);
     if (loads.empty() || !update_state) {
       // Skip UpdateState insertion.
       return;
@@ -1219,7 +1219,7 @@ class AutoMonadConverter {
     // Insert UpdateState if required.
     if (loads.size() == 1) {
       // One Load, no make_tuple needed.
-      u_ = UpdateState(u, loads.front());
+      u_ = UpdateState(current_u, loads.front());
       return;
     }
     // Multiple Loads, Create a MakeTuple before UpdateState.
@@ -1229,7 +1229,7 @@ class AutoMonadConverter {
     loads.insert(loads.begin(), NewValueNode(prim::kPrimMakeTuple));
     auto make_tuple = func_graph_->NewCNode(loads);
     make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(load_abstracts));
-    u_ = UpdateState(u, make_tuple);
+    u_ = UpdateState(current_u, make_tuple);
   }
 
   std::vector<AnfNodePtr> MakeLoads(const CNodePtr &cnode, const RefInputs &ref_inputs, const AnfNodePtr &u) {
@@ -1391,8 +1391,8 @@ class AutoMonadConverter {
   }
 
   bool HasSideEffect(const CNodePtr &cnode) const {
-    const auto &info = GetEffectInfo(cnode);
-    return (info.memory || info.load || info.io);
+    const auto &cnode_info = GetEffectInfo(cnode);
+    return (cnode_info.memory || cnode_info.load || cnode_info.io);
   }
 
   // The func graph to be converted.
