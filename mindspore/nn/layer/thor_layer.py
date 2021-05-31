@@ -221,9 +221,9 @@ class _ConvThor(Cell):
         self.dilation = dilation
         self.group = Validator.check_positive_int(group)
         self.has_bias = has_bias
-        self._validate_kernel_size(kernel_size)
-        self._validate_stride(stride)
-        self._validate_dilation(dilation)
+        self.__validate_kernel_size(kernel_size)
+        self.__validate_stride(stride)
+        self.__validate_dilation(dilation)
         if in_channels % group != 0:
             raise ValueError("Attr 'in_channels' of 'Conv2DThor' Op must be divisible by "
                              "attr 'group' of 'Conv2DThor' Op.")
@@ -243,7 +243,7 @@ class _ConvThor(Cell):
                 logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
             self.bias = None
 
-    def _validate_kernel_size(self, kernel_size):
+    def __validate_kernel_size(self, kernel_size):
         """validate kernel size."""
         if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
                 isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
@@ -251,14 +251,14 @@ class _ConvThor(Cell):
             raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
                              + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
 
-    def _validate_stride(self, stride):
+    def __validate_stride(self, stride):
         """validate stride."""
         if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
                 isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
             raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
                              + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
 
-    def _validate_dilation(self, dilation):
+    def __validate_dilation(self, dilation):
         """validate dilation."""
         if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
                 isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
