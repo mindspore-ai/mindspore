@@ -193,12 +193,14 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
   }
   if (input_tensor->data_type() == kNumberTypeInt16 && dst_data_type == kNumberTypeFloat32) {
     auto new_const_data = DequantData<int16_t, float>(input_tensor, channel_first);
+    input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
   } else if (input_tensor->data_type() == kNumberTypeInt16 && dst_data_type == kNumberTypeFloat16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     auto new_const_data = DequantData<int16_t, float16_t>(input_tensor, channel_first);
+    input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
@@ -208,12 +210,14 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
 #endif
   } else if (input_tensor->data_type() == kNumberTypeInt8 && dst_data_type == kNumberTypeFloat32) {
     auto new_const_data = DequantData<int8_t, float>(input_tensor, channel_first);
+    input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
   } else if (input_tensor->data_type() == kNumberTypeInt8 && dst_data_type == kNumberTypeFloat16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
     auto new_const_data = DequantData<int8_t, float16_t>(input_tensor, channel_first);
+    input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
@@ -242,6 +246,7 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
     return RET_NO_CHANGE;
   }
   std::string encode_str(data, src_tensor.data()->size());
+  dst_tensor->FreeData();
   dst_tensor->set_data(nullptr);
   auto ret = dst_tensor->MallocData();
   if (ret != RET_OK) {
