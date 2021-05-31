@@ -17,6 +17,7 @@
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,45 +37,40 @@ void GatherV2CPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-int GatherV2CPUKernel<T>::GatherLaunch(int8_t *input_data, int8_t *output_data, size_t size) {
-  int in_rank = input_shape_.size();
-  int indices_element_size = 1;
-  const int limit = input_shape_.at(axis_);
-  size_t data_size = sizeof(kNumberTypeFloat32);
+void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num) {
   int outer_size = 1, inner_size = 1;
-
-  for (int i = 0; i < axis_; ++i) {
+  for (int64_t i = 0; i < axis_; ++i) {
     outer_size *= input_shape_.at(i);
   }
-  for (int i = axis_ + 1; i < in_rank; ++i) {
+  for (size_t i = axis_ + 1; i < input_shape_.size(); ++i) {
     inner_size *= input_shape_.at(i);
   }
+  int indices_element_size = 1;
   for (size_t i = 0; i < indices_shape_.size(); i++) {
     indices_element_size *= indices_shape_.at(i);
   }
-  int stride = UP_DIV(outer_size, size);
-
-  auto task = [&](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      int8_t *int8_in = input_data;
-      int8_t *int8_out = output_data;
-      int count = MSMIN(stride, static_cast<int>(outer_size - stride * i));
-      if (count <= 0) {
-        return;
+  const int limit = input_shape_.at(axis_);
+  int stride = UP_DIV(outer_size, thread_num);
+  std::vector<common::Task> tasks;
+  int thread_index = 0;
+  while (thread_index < thread_num) {
+    int count = MSMIN(stride, outer_size - stride * thread_index);
+    if (count <= 0) break;
+    auto thread_stride = stride * thread_index;
+    int8_t *in = input_addr + thread_stride * limit * inner_size * sizeof(T);
+    int8_t *out = output_addr + thread_stride * indices_element_size * inner_size * sizeof(T);
+    auto block = [&, in, count, out]() {
+      int ret = Gather(in, count, inner_size, limit, indices_data_, indices_element_size, out, sizeof(T));
+      if (ret != 0) {
+        MS_LOG(ERROR) << "GatherRun error task_id[" << thread_index << "] error_code[" << ret << "]";
+        return common::FAIL;
       }
-      auto thread_stride = stride * i;
-      int8_in += thread_stride * limit * inner_size * data_size;
-      int8_out += thread_stride * indices_element_size * inner_size * data_size;
-      auto error_code =
-        Gather(int8_in, count, inner_size, limit, indices_data_, indices_element_size, int8_out, sizeof(T));
-      if (error_code != 0) {
-        MS_LOG(ERROR) << "GatherRun error task_id[" << i << "] error_code[" << error_code << "]";
-      }
-    }
-  };
-  CPUKernelUtils::ParallelFor(task, size);
-
-  return 0;
+      return common::SUCCESS;
+    };
+    tasks.emplace_back(block);
+    thread_index++;
+  }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 template <typename T>
@@ -84,9 +80,8 @@ bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   int8_t *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   indices_data_ = reinterpret_cast<int32_t *>(inputs[1]->addr);
   int8_t *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  size_t size = (outputs[0]->size > 0) ? static_cast<size_t>(outputs[0]->size / sizeof(int8_t)) : 1;
-
-  GatherLaunch(input_tensor, output_addr, size);
+  int max_thread_num = static_cast<int>(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
+  ParallelRun(input_tensor, output_addr, max_thread_num);
   return true;
 }
 

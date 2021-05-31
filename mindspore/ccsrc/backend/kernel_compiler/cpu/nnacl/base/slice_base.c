@@ -94,6 +94,13 @@ void DoSlice(const void *input, void *output, SliceParameter *param, int thread_
   }
 }
 
+static bool WhetherCopyByAxis(int begin[], int end[], int shape[], int dim) {
+  for (int i = dim + 1; i < DIMENSION_8D; ++i) {
+    if (begin[i] != 0 || end[i] != shape[i]) return false;
+  }
+  return true;
+}
+
 void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
@@ -104,20 +111,39 @@ void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, i
   for (int i = 6; i >= 0; --i) {
     in_stride[i] = param->shape_[i + 1] * in_stride[i + 1];
   }
-
+  bool axis_copy_flag[DIMENSION_8D] = {false};
+  for (int i = 0; i < DIMENSION_8D; ++i) {
+    axis_copy_flag[i] = WhetherCopyByAxis(param->begin_, param->end_, param->shape_, i);
+  }
   size_t out_offset = 0;
   for (int32_t dim0 = param->begin_[0]; dim0 < param->end_[0]; ++dim0) {
     size_t in_offset0 = dim0 * in_stride[0] + param->begin_[7];
+#define FAST_COPY_IF_NEED(rank)                                                      \
+  if (axis_copy_flag[rank]) {                                                        \
+    int left_block_num = param->end_[rank] - dim##rank;                              \
+    memcpy(int8_out + out_offset * data_size, int8_in + in_offset##rank * data_size, \
+           in_stride[rank] * left_block_num * data_size);                            \
+    out_offset += in_stride[rank] * left_block_num;                                  \
+    dim##rank += left_block_num;                                                     \
+    continue;                                                                        \
+  }
+    FAST_COPY_IF_NEED(0);
     for (size_t dim1 = param->begin_[1]; dim1 < param->end_[1]; ++dim1) {
       size_t in_offset1 = dim1 * in_stride[1] + in_offset0;
+      FAST_COPY_IF_NEED(1);
       for (int32_t dim2 = param->begin_[2]; dim2 < param->end_[2]; ++dim2) {
         size_t in_offset2 = in_offset1 + dim2 * in_stride[2];
+        FAST_COPY_IF_NEED(2);
         for (int32_t dim3 = param->begin_[3]; dim3 < param->end_[3]; ++dim3) {
           size_t in_offset3 = in_offset2 + dim3 * in_stride[3];
+          FAST_COPY_IF_NEED(3);
           for (int32_t dim4 = param->begin_[4]; dim4 < param->end_[4]; ++dim4) {
             size_t in_offset4 = in_offset3 + dim4 * in_stride[4];
+            FAST_COPY_IF_NEED(4);
             for (int32_t dim5 = param->begin_[5]; dim5 < param->end_[5]; ++dim5) {
               size_t in_offset5 = in_offset4 + dim5 * in_stride[5];
+              FAST_COPY_IF_NEED(5);
+#undef FAST_COPY_IF_NEED
               for (int32_t dim6 = param->begin_[6]; dim6 < param->end_[6]; ++dim6) {
                 size_t in_offset6 = in_offset5 + dim6 * in_stride[6];
                 memcpy(int8_out + out_offset * data_size, int8_in + in_offset6 * data_size, copy_size);
