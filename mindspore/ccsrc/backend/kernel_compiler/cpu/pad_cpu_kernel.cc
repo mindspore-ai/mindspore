@@ -51,14 +51,13 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   for (size_t i = 0; i < shape_size_; i++) {
-    size_t temp = input_shape[i] + (paddings_[i][0] + paddings_[i][1]);  // compute new dim size
+    size_t temp = input_shape[i] + LongToSize((paddings_[i][0] + paddings_[i][1]));  // compute new dim size
     output_size_ *= temp;
     output_shape_.push_back(temp);  // correct new dimension size
   }
 }
 
-bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                          const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                           const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -90,9 +89,9 @@ void PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std
   const int padded_width = output_shape_[3];
 
   for (size_t pos = 0; pos < output_size_; ++pos) {
-    int block_num = (pos / padded_width) / padded_height;
-    const int padded_w = pos % padded_width;                    // x coordinate referred to by cur 'pos'
-    const int padded_h = (pos / padded_width) % padded_height;  // y coordinate referred to by cur 'pos'
+    int block_num = (SizeToInt(pos) / padded_width) / padded_height;
+    const int padded_w = SizeToInt(pos) % padded_width;                    // x coordinate referred to by cur 'pos'
+    const int padded_h = (SizeToInt(pos) / padded_width) % padded_height;  // y coordinate referred to by cur 'pos'
 
     int channels_new = channels_orig + pad_channel_after + pad_channel_before;  // new number of channels from padding
     int channel_num = block_num % channels_new;                                 // current channel

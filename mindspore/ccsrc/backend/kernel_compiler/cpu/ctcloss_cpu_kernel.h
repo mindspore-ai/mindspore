@@ -36,7 +36,7 @@ class CTCLossCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  void GenLableWithBlank(uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
+  void GenLableWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
                          std::vector<std::vector<uint32_t>> *label_with_blank);
 
   template <typename T>
@@ -87,7 +87,6 @@ MS_REG_CPU_KERNEL(CTCLoss,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   CTCLossCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_CPU_KERNEL_H_
