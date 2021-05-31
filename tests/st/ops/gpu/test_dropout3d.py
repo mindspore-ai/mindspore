@@ -71,7 +71,6 @@ def dropout_3d(keep_prob, nptype):
 @pytest.mark.env_onecard
 def test_dropout3d_float16():
     dropout_3d(0.0, np.float16)
-    dropout_3d(0.5, np.float16)
     dropout_3d(1.0, np.float16)
 
 @pytest.mark.level2
@@ -79,7 +78,6 @@ def test_dropout3d_float16():
 @pytest.mark.env_onecard
 def test_dropout3d_float32():
     dropout_3d(0.0, np.float32)
-    dropout_3d(0.5, np.float32)
     dropout_3d(1.0, np.float32)
 
 @pytest.mark.level2
@@ -87,7 +85,6 @@ def test_dropout3d_float32():
 @pytest.mark.env_onecard
 def test_dropout3d_int8():
     dropout_3d(0.0, np.int8)
-    dropout_3d(0.5, np.int8)
     dropout_3d(1.0, np.int8)
 
 @pytest.mark.level2
@@ -95,7 +92,6 @@ def test_dropout3d_int8():
 @pytest.mark.env_onecard
 def test_dropout3d_int16():
     dropout_3d(0.0, np.int16)
-    dropout_3d(0.5, np.int16)
     dropout_3d(1.0, np.int16)
 
 @pytest.mark.level2
@@ -103,7 +99,6 @@ def test_dropout3d_int16():
 @pytest.mark.env_onecard
 def test_dropout3d_int32():
     dropout_3d(0.0, np.int32)
-    dropout_3d(0.5, np.int32)
     dropout_3d(1.0, np.int32)
 
 @pytest.mark.level2
@@ -111,5 +106,4 @@ def test_dropout3d_int32():
 @pytest.mark.env_onecard
 def test_dropout3d_int64():
     dropout_3d(0.0, np.int64)
-    dropout_3d(0.5, np.int64)
     dropout_3d(1.0, np.int64)
