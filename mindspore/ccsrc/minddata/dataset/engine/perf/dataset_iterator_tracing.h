@@ -38,16 +38,9 @@ class DatasetIteratorTracing : public Tracing {
 
   std::string Name() const override { return kDatasetIteratorTracingName; };
 
-  // Save tracing data to file
-  // @return Status The status code returned
-  Status SaveToFile() override;
-
   Status Init(const std::string &dir_path, const std::string &device_id) override;
 
   Status ChangeFileMode() override;
-
- private:
-  std::vector<std::string> value_;
 };
 }  // namespace dataset
 }  // namespace mindspore

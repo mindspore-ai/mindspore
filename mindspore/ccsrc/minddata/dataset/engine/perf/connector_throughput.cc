@@ -93,21 +93,10 @@ json ConnectorThroughput::ParseOpInfo(const DatasetOp &node, const std::vector<d
 // Save profiling data to file
 // If the file is already exist (created by other sampling node), simply add the data to metrics field.
 Status ConnectorThroughput::SaveToFile() {
-  Path path = Path(file_path_);
   json output;
-  if (path.Exists()) {
-    MS_LOG(DEBUG) << file_path_ << " exists";
-    try {
-      std::ifstream file(file_path_);
-      file >> output;
-    } catch (const std::exception &err) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
-                               ", please delete it and try again!");
-    }
-  } else {
-    output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
-  }
+  RETURN_IF_NOT_OK(ReadJson(&output));
 
+  Path path = Path(file_path_);
   // Traverse the ExecutionTree for JSON node generation
   int col = 0;
   for (auto &node : *tree_) {
