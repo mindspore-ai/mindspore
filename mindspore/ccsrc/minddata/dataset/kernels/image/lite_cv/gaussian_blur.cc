@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"

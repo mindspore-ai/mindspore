@@ -26,8 +26,11 @@
 #endif
 #endif
 
-#define ANGLE_22_5 0.39269908169872414
-#define ANGLE_67_5 1.1780972450961724
+constexpr float ANGLE_22_5 = 0.39269908169872414;
+constexpr float ANGLE_67_5 = 1.1780972450961724;
+constexpr int CERTAIN_BORDER = 2;
+constexpr int UNCERTAIN_BORDER = 1;
+constexpr int NOT_BORDER = 0;
 
 namespace mindspore {
 namespace dataset {
@@ -196,12 +199,12 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
       int pos = y * edges.width_ + x;
       float edge_value = edges_ptr[pos];
       if (edge_value > high_thresh) {
-        buffer[pos] = 2;
+        buffer[pos] = CERTAIN_BORDER;
         stack.push_back(pos);
       } else if (edge_value <= low_thresh) {
-        buffer[pos] = 0;
+        buffer[pos] = NOT_BORDER;
       } else {
-        buffer[pos] = 1;
+        buffer[pos] = UNCERTAIN_BORDER;
       }
     }
   }
@@ -220,8 +223,8 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
           continue;
         }
         int next = next_y * buffer_step + next_x;
-        if (buffer[next] == 1) {
-          buffer[next] = 2;
+        if (buffer[next] == UNCERTAIN_BORDER) {
+          buffer[next] = CERTAIN_BORDER;
           stack.push_back(next);
         }
       }
@@ -229,7 +232,7 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
   }
 
   for (int i = 0; i < size; i++) {
-    if (buffer[i] == 2) {
+    if (buffer[i] == CERTAIN_BORDER) {
       dst[i] = 255;
     } else {
       dst[i] = 0;

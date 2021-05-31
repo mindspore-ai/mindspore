@@ -240,7 +240,7 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
   delete[] data_buf;
 }
 
-static inline uint8_t clip(float value, int min = 0, int max = 255) {
+static inline uint8_t clip(float value) {
   int int_val = roundf(value);
   return std::max<int32_t>(std::numeric_limits<uint8_t>::min(),
                            std::min<int32_t>(std::numeric_limits<uint8_t>::max(), int_val));
@@ -882,6 +882,7 @@ static int PadFromPos(int p, int len, PaddBorderType pad_type) {
   if (pad_type == PaddBorderType::PADD_BORDER_REPLICATE) {
     return p < 0 ? 0 : len - 1;
   } else {
+    // calculate the position of pixel in reflect mode like edcb|abcdef|edcb
     return p < 0 ? -p : 2 * len - p - 2;
   }
 }
