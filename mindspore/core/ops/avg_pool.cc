@@ -101,7 +101,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (pool_prim->get_format() == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
-  CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
+  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, 4, op_name);
   auto kernel_size = pool_prim->get_kernel_size();
   auto pad_mode = pool_prim->get_pad_mode();
   auto batch = in_shape[0];
@@ -127,13 +127,13 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   if (pool_prim->get_format() == NHWC) {
     out_shape = {batch, out_h, out_w, channel};
   }
-  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
+  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t arg) { return arg <= 0; })) {
     MS_LOG(EXCEPTION) << "Kernel size is not valid.";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
@@ -143,8 +143,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameAvgPool, AvgPool);
 }  // namespace ops

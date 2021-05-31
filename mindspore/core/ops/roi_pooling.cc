@@ -57,7 +57,7 @@ AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto roi_prim = primitive->cast<PrimROIPoolingPtr>();
   MS_EXCEPTION_IF_NULL(roi_prim);
   auto prim_name = roi_prim->name();
-  CheckAndConvertUtils::CheckInteger("roi_pooling_infer", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("roi_pooling_infer", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
 

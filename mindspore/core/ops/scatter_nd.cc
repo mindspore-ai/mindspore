@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto shape_value = input_args[2]->BuildValue();
   auto shape_value_element = GetValue<std::vector<int64_t>>(shape_value);
   for (const auto &shape : shape_value_element) {
@@ -54,8 +54,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args), InferShape(input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameScatterNd, ScatterNd);
 }  // namespace ops

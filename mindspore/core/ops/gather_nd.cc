@@ -30,7 +30,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto gather_prim = primitive->cast<PrimGatherNd>();
   MS_EXCEPTION_IF_NULL(gather_prim);
   auto prim_name = gather_prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
