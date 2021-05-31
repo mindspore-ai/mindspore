@@ -412,13 +412,13 @@ Status GatherPInfo::InferDevMatrixShape() {
 
   dev_matrix_shape_ = param_strategy;
 
-  // param_strategy(axis)==1,
+  // param_strategy(axis) is 1
   if (param_strategy.at(LongToSize(axis_)) == 1) {
     dev_matrix_shape_.insert(dev_matrix_shape_.end(), index_strategy.begin(), index_strategy.end());
   }
 
   // infer out dev_matrix_shape
-  // axis!=0, split axis
+  // axis is not 0, split axis
   if (axis_ != 0 && param_strategy.at(LongToSize(axis_)) != 1) {
     for (size_t i = 1; i < param_strategy.size(); ++i) {
       if (i == LongToSize(axis_)) {
@@ -447,7 +447,7 @@ Status GatherPInfo::InferDevMatrixShape() {
 
 void GatherPInfo::InferInputsTensorMap() {
   // infer input tensor map
-  // param_strategy(axis) != 1
+  // param_strategy(axis) is not 1
   size_t param_size = inputs_shape_.at(0).size();
   size_t index_size = inputs_shape_.at(1).size();
   size_t total_size = param_size + index_size;
@@ -460,7 +460,7 @@ void GatherPInfo::InferInputsTensorMap() {
       tensor_map_params.push_back(SizeToLong(param_size - i - 1));
     }
   } else {
-    // param_strategy(axis) == 1
+    // param_strategy(axis) is 1
     for (size_t i = 0; i < param_size; ++i) {
       tensor_map_params.push_back(SizeToLong(total_size - i - 1));
     }
@@ -480,7 +480,7 @@ void GatherPInfo::InferOutputsTensorMap() {
   Shape tensor_map_out;
   auto param_strategy = strategy_->GetInputDim().at(0);
   if (param_strategy.at(LongToSize(axis_)) == 1) {
-    // param_strategy(axis) == 1
+    // param_strategy(axis) is 1
     for (size_t i = 0; i < param_size; ++i) {
       if (i == LongToSize(axis_)) {
         for (size_t j = 0; j < index_size; ++j) {
@@ -491,7 +491,7 @@ void GatherPInfo::InferOutputsTensorMap() {
       }
     }
   } else {
-    // param_strategy(axis) != 1
+    // param_strategy(axis) is not 1
     if (axis_ == 0) {
       if ((dynamic_shape_indices_ && target_ != CPU) || axis_split_forward_allreduce_) {
         // the output is repeat calculation
@@ -516,7 +516,7 @@ void GatherPInfo::InferOutputsTensorMap() {
       }
     }
   }
-  outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
+  (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
 }
 
 Status GatherPInfo::InferTensorMap() {
@@ -524,9 +524,9 @@ Status GatherPInfo::InferTensorMap() {
     Shape param_map = {1, 0};
     Shape indices_map = {-1, 1};
     Shape out_map = {-1, 1, 0};
-    inputs_tensor_map_.emplace_back(std::move(param_map));
-    inputs_tensor_map_.emplace_back(std::move(indices_map));
-    outputs_tensor_map_.emplace_back(std::move(out_map));
+    (void)inputs_tensor_map_.emplace_back(std::move(param_map));
+    (void)inputs_tensor_map_.emplace_back(std::move(indices_map));
+    (void)outputs_tensor_map_.emplace_back(std::move(out_map));
     return SUCCESS;
   }
 
@@ -589,7 +589,7 @@ Status GatherPInfo::InferBias() {
   }
 
   // axis don't split
-  if (params_strategy.at(LongToSize(axis_) == 1)) {
+  if (params_strategy.at(LongToSize(axis_)) == 1) {
     bias_ = 0;
     return SUCCESS;
   }
@@ -737,12 +737,14 @@ Status GatherPInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
       MS_LOG(ERROR) << name_ << ": Infer Bias failed.";
       return FAILED;
     }
-    auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
-    auto gather_v2 =
-      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub, CreatInt64Imm(axis_)});
-    std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 2), std::make_pair(gather_v2, 1)};
+    auto sub_node =
+      gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
+    auto gather_v2_node =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+    std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
+                                                               std::make_pair(gather_v2_node, 1)};
     replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
-      std::make_pair(input_nodes, gather_v2));
+      std::make_pair(input_nodes, gather_v2_node));
     return SUCCESS;
   }
   if (InferBias() != SUCCESS) {
