@@ -86,6 +86,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSubAndFilter, {InferImplSubAndFilter, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, true}},
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, true}},
+    {prim::kPrimMaskedSelect, {InferImplMaskedSelect, true}},
     {prim::kPrimDynamicAssign, {InferImplDynamicAssign, true}},
     {prim::kPrimCacheSwapTable, {InferImplCacheSwapTable, true}},
     {prim::kPrimUpdateCache, {InferImplUpdateCache, true}},

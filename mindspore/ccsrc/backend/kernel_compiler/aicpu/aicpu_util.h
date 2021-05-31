@@ -58,7 +58,9 @@ constexpr auto kPadAndShift = "PadAndShift";
 constexpr auto kCustRunApi = "RunCpuKernel";
 constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
-const std::set<std::string> kCustAiCpuKernelOps{kIdentity};
+constexpr auto kMaskedSelect = "MaskedSelect";
+constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
+const std::set<std::string> kCustAiCpuKernelOps{kIdentity, kMaskedSelect, kMaskedSelectGrad};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
                                             kPadAndShift, kDropout3D,      kDropout2D};
 

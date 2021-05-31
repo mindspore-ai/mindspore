@@ -15,7 +15,9 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
+#include <numeric>
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
@@ -1081,6 +1083,26 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
   ShapePtr shape = std::make_shared<Shape>(output_shape, min_shape, max_shape);
 
   return std::make_shared<AbstractTensor>(range_start_type, shape);
+}
+
+AbstractBasePtr InferImplMaskedSelect(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTensorPtr x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTensorPtr mask = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+
+  auto x_shape = x->shape();
+  auto mask_shape = mask->shape();
+  auto broadcast_shape = BroadcastShape(x_shape->shape(), mask_shape->shape());
+  ShapeVector y_shape = {Shape::SHP_ANY};
+  ShapeVector min_shape = {1};
+  int64_t max_size = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+  ShapeVector max_shape = {max_size};
+  if (max_shape.empty()) {
+    max_shape = x_shape->shape();
+  }
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(y_shape, min_shape, max_shape));
 }
 
 AbstractBasePtr InferImplArgMaxWithValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
