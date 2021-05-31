@@ -201,6 +201,7 @@ constexpr auto kStridedWriteOpName = "StridedWrite";
 constexpr auto kFusedAdamWeightDecayName = "FusedAdamWeightDecay";
 constexpr auto kFusedAdamName = "FusedAdam";
 constexpr auto kFusedSparseAdamName = "FusedSparseAdam";
+constexpr auto kFusedMatMulBiasAddName = "FusedMatMulBiasAdd";
 constexpr auto kApplyAdagradV2OpName = "ApplyAdagradV2";
 constexpr auto kSparseApplyAdagradV2OpName = "SparseApplyAdagradV2";
 constexpr auto kSparseApplyFtrlOpName = "SparseApplyFtrl";
