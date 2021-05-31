@@ -638,6 +638,7 @@ class RandomColorAdjust(ImageTensorOperation):
         self.hue = hue
 
     def expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
+        """Expand the value parameter to return 2 elements."""
         if isinstance(value, numbers.Number):
             value = [center - value, center + value]
             if non_negative:
