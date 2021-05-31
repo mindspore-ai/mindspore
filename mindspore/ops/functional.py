@@ -129,6 +129,7 @@ gather = P.Gather()
 gather_d = P.GatherD()
 gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
+tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
@@ -211,7 +212,7 @@ switch = Primitive('Switch')
 switch_layer = Primitive('switch_layer')
 # for sum bprop
 reduced_shape = Primitive("reduced_shape")
-# shape_mul:input mush be shape multiply elemts in tuple(shape)
+# shape_mul:input must be shape multiply elements in tuple(shape)
 shape_mul = Primitive("shape_mul")
 # a primitive to compare between tuple.
 stop_gradient = Primitive("stop_gradient")
