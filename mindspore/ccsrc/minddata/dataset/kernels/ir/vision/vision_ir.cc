@@ -91,8 +91,10 @@ namespace dataset {
 namespace vision {
 
 // Global constants for file
-#define FILL_VALUE_SIZE_THREE 3
-#define SIZE_PARAM_WITH_WIDTH_VALUE 2  // size parameter contains 2 values, both height and width
+constexpr uint8_t kFillValueSizeThree = 3;
+constexpr uint8_t kSizeParamWithWidthValue = 2;  // size parameter contains 2 values, both height and width
+constexpr uint8_t kRangeSizeTwo = 2;
+constexpr uint8_t kRangeSizeFour = 4;
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -157,7 +159,7 @@ AutoContrastOperation::AutoContrastOperation(float cutoff, std::vector<uint32_t>
     : cutoff_(cutoff), ignore_(ignore) {}
 
 Status AutoContrastOperation::ValidateParams() {
-  constexpr size_t kMaxAutoContrastCutoff = 100;
+  constexpr float kMaxAutoContrastCutoff = 100;
   if (cutoff_ < 0 || cutoff_ > kMaxAutoContrastCutoff) {
     std::string err_msg = "AutoContrast: cutoff has to be between 0 and 100, got: " + std::to_string(cutoff_);
     MS_LOG(ERROR) << err_msg;
@@ -165,7 +167,7 @@ Status AutoContrastOperation::ValidateParams() {
   }
 
   for (uint32_t single_ignore : ignore_) {
-    constexpr size_t kMaxAutoContrastIgnore = 255;
+    constexpr uint32_t kMaxAutoContrastIgnore = 255;
     if (single_ignore > kMaxAutoContrastIgnore) {
       std::string err_msg =
         "AutoContrast: invalid size, ignore has to be between 0 and 255, got: " + std::to_string(single_ignore);
@@ -227,7 +229,7 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified crop_width.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     crop_width = size_[1];
   }
 
@@ -272,7 +274,7 @@ std::shared_ptr<TensorOp> CropOperation::Build() {
   height = size_[0];
   width = size_[0];
   // User has specified crop_width.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -461,7 +463,7 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
   fill_g = fill_value_[0];
   fill_b = fill_value_[0];
 
-  if (fill_value_.size() == FILL_VALUE_SIZE_THREE) {
+  if (fill_value_.size() == kFillValueSizeThree) {
     fill_r = fill_value_[0];
     fill_g = fill_value_[1];
     fill_b = fill_value_[2];
@@ -540,7 +542,7 @@ Status RandomAffineOperation::ValidateParams() {
   // Scale
   RETURN_IF_NOT_OK(ValidateVectorScale("RandomAffine", scale_range_));
   // Shear
-  if (shear_ranges_.size() != 2 && shear_ranges_.size() != 4) {
+  if (shear_ranges_.size() != kRangeSizeTwo && shear_ranges_.size() != kRangeSizeFour) {
     std::string err_msg = "RandomAffine: shear_ranges expecting size 2 or 4, got: shear_ranges.size() = " +
                           std::to_string(shear_ranges_.size());
     MS_LOG(ERROR) << err_msg;
@@ -564,14 +566,14 @@ Status RandomAffineOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
-  if (shear_ranges_.size() == 2) {
+  if (shear_ranges_.size() == kRangeSizeTwo) {
     shear_ranges_.resize(4);
   }
-  if (translate_range_.size() == 2) {
+  if (translate_range_.size() == kRangeSizeTwo) {
     translate_range_.resize(4);
   }
   std::vector<uint8_t> fill_value = {fill_value_[0], fill_value_[0], fill_value_[0]};
-  if (fill_value_.size() == FILL_VALUE_SIZE_THREE) {
+  if (fill_value_.size() == kFillValueSizeThree) {
     fill_value[1] = fill_value_[1];
     fill_value[2] = fill_value_[2];
   }
@@ -709,7 +711,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified the crop_width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     crop_width = size_[1];
   }
 
@@ -739,7 +741,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   fill_g = fill_value_[0];
   fill_b = fill_value_[0];
 
-  if (fill_value_.size() == FILL_VALUE_SIZE_THREE) {
+  if (fill_value_.size() == kFillValueSizeThree) {
     fill_r = fill_value_[0];
     fill_g = fill_value_[1];
     fill_b = fill_value_[2];
@@ -772,7 +774,7 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified the crop_width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     crop_width = size_[1];
   }
 
@@ -828,7 +830,7 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
   int32_t crop_width = size_[0];
 
   // User has specified the crop_width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     crop_width = size_[1];
   }
 
@@ -858,7 +860,7 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
   fill_g = fill_value_[0];
   fill_b = fill_value_[0];
 
-  if (fill_value_.size() == FILL_VALUE_SIZE_THREE) {
+  if (fill_value_.size() == kFillValueSizeThree) {
     fill_r = fill_value_[0];
     fill_g = fill_value_[1];
     fill_b = fill_value_[2];
@@ -925,9 +927,9 @@ RandomPosterizeOperation::RandomPosterizeOperation(const std::vector<uint8_t> &b
     : TensorOperation(true), bit_range_(bit_range) {}
 
 Status RandomPosterizeOperation::ValidateParams() {
-  constexpr size_t kMinRandomPosterizeBitValue = 1;
-  constexpr size_t kMaxRandomPosterizeBitValue = 8;
-  if (bit_range_.size() != 2) {
+  constexpr uint8_t kMinRandomPosterizeBitValue = 1;
+  constexpr uint8_t kMaxRandomPosterizeBitValue = 8;
+  if (bit_range_.size() != kRangeSizeTwo) {
     std::string err_msg =
       "RandomPosterize: bit_range needs to be of size 2 but is of size: " + std::to_string(bit_range_.size());
     MS_LOG(ERROR) << err_msg;
@@ -977,7 +979,7 @@ std::shared_ptr<TensorOp> RandomResizeOperation::Build() {
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -1006,7 +1008,7 @@ std::shared_ptr<TensorOp> RandomResizeWithBBoxOperation::Build() {
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -1051,7 +1053,7 @@ std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
   int32_t height = size_[0];
   int32_t width = size_[0];
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
   std::shared_ptr<RandomCropAndResizeOp> tensor_op = std::make_shared<RandomCropAndResizeOp>(
@@ -1099,7 +1101,7 @@ std::shared_ptr<TensorOp> RandomResizedCropWithBBoxOperation::Build() {
   int32_t height = size_[0];
   int32_t width = size_[0];
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
   std::shared_ptr<RandomCropAndResizeWithBBoxOp> tensor_op = std::make_shared<RandomCropAndResizeWithBBoxOp>(
@@ -1176,7 +1178,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   fill_g = fill_value_[0];
   fill_b = fill_value_[0];
 
-  if (fill_value_.size() == FILL_VALUE_SIZE_THREE) {
+  if (fill_value_.size() == kFillValueSizeThree) {
     fill_r = fill_value_[0];
     fill_g = fill_value_[1];
     fill_b = fill_value_[2];
@@ -1309,7 +1311,7 @@ Status RandomSolarizeOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (int32_t i = 0; i < threshold_.size(); ++i) {
-    constexpr size_t kMaxRandomSolarizeThreshold = 255;
+    constexpr uint8_t kMaxRandomSolarizeThreshold = 255;
     if (threshold_[i] < 0 || threshold_[i] > kMaxRandomSolarizeThreshold) {
       std::string err_msg =
         "RandomSolarize: threshold has to be between 0 and 255, got:" + std::to_string(threshold_[i]);
@@ -1418,7 +1420,7 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -1478,7 +1480,7 @@ std::shared_ptr<TensorOp> ResizeWithBBoxOperation::Build() {
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -1549,7 +1551,7 @@ std::shared_ptr<TensorOp> SoftDvppDecodeRandomCropResizeJpegOperation::Build() {
   int32_t height = size_[0];
   int32_t width = size_[0];
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
 
@@ -1591,7 +1593,7 @@ std::shared_ptr<TensorOp> SoftDvppDecodeResizeJpegOperation::Build() {
   int32_t width = 0;
 
   // User specified the width value.
-  if (size_.size() == SIZE_PARAM_WITH_WIDTH_VALUE) {
+  if (size_.size() == kSizeParamWithWidthValue) {
     width = size_[1];
   }
   std::shared_ptr<SoftDvppDecodeResizeJpegOp> tensor_op = std::make_shared<SoftDvppDecodeResizeJpegOp>(height, width);
