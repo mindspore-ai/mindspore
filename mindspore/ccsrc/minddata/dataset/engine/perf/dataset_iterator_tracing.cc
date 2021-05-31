@@ -41,23 +41,6 @@ Status DatasetIteratorTracing::Record(const int32_t type, const int32_t extra_in
   return Status::OK();
 }
 
-Status DatasetIteratorTracing::SaveToFile() {
-  if (value_.empty()) {
-    return Status::OK();
-  }
-
-  std::ofstream handle(file_path_, std::ios::trunc);
-  if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Profiling file can not be opened.");
-  }
-  for (auto value : value_) {
-    handle << value << "\n";
-  }
-  handle.close();
-
-  return Status::OK();
-}
-
 Status DatasetIteratorTracing::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("dataset_iterator_profiling_" + device_id + ".txt")).toString();
   return Status::OK();

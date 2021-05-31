@@ -33,6 +33,40 @@
 namespace mindspore {
 namespace dataset {
 
+Status Tracing::SaveToFile() {
+  if (value_.empty()) {
+    return Status::OK();
+  }
+
+  std::ofstream handle(file_path_, std::ios::trunc);
+  if (!handle.is_open()) {
+    RETURN_STATUS_UNEXPECTED("Profiling file can not be opened.");
+  }
+  for (auto value : value_) {
+    handle << value << "\n";
+  }
+  handle.close();
+
+  return Status::OK();
+}
+
+Status Sampling::ReadJson(nlohmann::json *output) {
+  Path path = Path(file_path_);
+  if (path.Exists()) {
+    MS_LOG(DEBUG) << file_path_ << " exists";
+    try {
+      std::ifstream file(file_path_);
+      file >> (*output);
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
+                               ", please delete it and try again!");
+    }
+  } else {
+    (*output)["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
+  }
+  return Status::OK();
+}
+
 // Constructor
 ProfilingManager::ProfilingManager(ExecutionTree *tree) : tree_(tree), enabled_(true) {
   perf_monitor_ = std::make_unique<Monitor>(tree_);
