@@ -26,19 +26,19 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   auto paddings_attr = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  CheckAndConvertUtils::CheckInteger("paddings_size", paddings_attr.size(), kEqual, int64_t(2 * x_shape.size()),
-                                     prim_name);
-  int64_t size = paddings_attr.size();
+  CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual,
+                                     int64_t(2 * x_shape.size()), prim_name);
+  int64_t size = SizeToLong(paddings_attr.size());
   for (int64_t i = 0; i < size; i++) {
     for (int64_t j = 0; j < 2; j++) {
-      if (paddings_attr[i][j] < 0) {
+      if (paddings_attr[LongToSize(i)][LongToSize(j)] < 0) {
         MS_LOG_ERROR << "All elements of paddings must be >= 0.";
       }
     }
   }
   std::vector<int64_t> out_shape;
   for (int64_t i = 0; i < int64_t(paddings_attr.size() / 2); i++) {
-    out_shape.emplace_back(x_shape[i] + paddings_attr[i][0] + paddings_attr[i][1]);
+    out_shape.emplace_back(x_shape[LongToSize(i)] + paddings_attr[LongToSize(i)][0] + paddings_attr[LongToSize(i)][1]);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

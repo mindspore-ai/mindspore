@@ -23,12 +23,13 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("input args size", input_args.size(), kEqual, 1, "ConstantOfShape");
+  MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kEqual, 1, "ConstantOfShape");
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(input_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto data_type = TypeId(GetValue<int64_t>(primitive->GetAttr(kDataType)));
   return TypeIdToType(data_type);
@@ -55,8 +56,7 @@ std::vector<float> ConstantOfShape::get_value() const {
 }
 AbstractBasePtr ConstantOfShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(primitive), InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameConstantOfShape, ConstantOfShape);
 }  // namespace ops

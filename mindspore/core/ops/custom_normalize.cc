@@ -39,7 +39,8 @@ abstract::ShapePtr CustomNormalizeInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr CustomNormalizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr CustomNormalizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
