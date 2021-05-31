@@ -37,6 +37,9 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
 
 void DumpMemToFile(const std::string &file_path, NotNull<const device::DeviceAddress *> addr,
                    const ShapeVector &int_shapes, const TypeId &type, bool trans_flag = false);
+// Get time stamp since epoch in microseconds
+uint64_t GetTimeStamp();
+std::string GetOpNameWithoutScope(const std::string &fullname_with_scope);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_DUMP_UTILS_H_

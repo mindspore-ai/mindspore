@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import json
 import sys
 import time
 import shutil
+import glob
 
 import numpy as np
 import pytest
@@ -85,21 +86,23 @@ def run_e2e_dump():
         device_id = context.get_context("device_id")
     else:
         device_id = 0
-    dump_file_path = dump_path + '/rank_{}/Net/0/1/'.format(device_id)
+    dump_file_path = dump_path + '/rank_{}/Net/0/0/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
     add(Tensor(x), Tensor(y))
     time.sleep(5)
     assert len(os.listdir(dump_file_path)) == 5
-    if context.get_context("device_target") == "CPU":
-        output_name = "Default--Add-op3_output_0.DefaultFormat.npy"
-        output_path = dump_file_path + output_name
-        real_path = os.path.realpath(output_path)
-        output = np.load(real_path)
-        expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
-        assert output.dtype == expect.dtype
-        assert np.array_equal(output, expect)
+    if context.get_context("device_target") == "Ascend":
+        output_name = "Add.Add-op1.0.0.*.output.0.DefaultFormat.npy"
+    else:
+        output_name = "Add.Add-op3.0.0.*.output.0.DefaultFormat.npy"
+    output_path = glob.glob(dump_file_path + output_name)[0]
+    real_path = os.path.realpath(output_path)
+    output = np.load(real_path)
+    expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
+    assert output.dtype == expect.dtype
+    assert np.array_equal(output, expect)
 
 
 @pytest.mark.level0

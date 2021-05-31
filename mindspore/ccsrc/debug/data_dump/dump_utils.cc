@@ -42,9 +42,8 @@ std::string GenerateDumpPath(uint32_t graph_id, const uint32_t *device_id) {
   if (dump_path.back() != '/') {
     dump_path += "/";
   }
-  uint32_t physical_device = device_id == nullptr ? 0 : ConvertPhysicalDeviceId(*device_id);
   dump_path +=
-    ("rank_" + std::to_string(physical_device) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator);
+    ("rank_" + std::to_string(*device_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator);
   return dump_path;
 }
 
@@ -124,4 +123,20 @@ void DumpMemToFile(const std::string &file_path, NotNull<const device::DeviceAdd
                   << ".!";
   }
 }
+
+uint64_t GetTimeStamp() {
+  auto cur_sys_time = std::chrono::system_clock::now();
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
+  return timestamp;
+}
+
+std::string GetOpNameWithoutScope(const std::string &fullname_with_scope) {
+  std::size_t found = fullname_with_scope.rfind("--");
+  std::string op_name;
+  if (found != std::string::npos) {
+    op_name = fullname_with_scope.substr(found + 2);
+  }
+  return op_name;
+}
+
 }  // namespace mindspore

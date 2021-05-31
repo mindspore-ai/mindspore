@@ -1090,7 +1090,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
           }
           MS_LOG(INFO) << "Open overflow bin file " << file_name;
           const uint32_t offset = 321;
-          infile.seekg(offset, std::ios::beg);
+          (void)infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
           const size_t buf_size = 256;
           buffer.resize(buf_size);
