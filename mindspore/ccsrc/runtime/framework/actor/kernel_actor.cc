@@ -17,6 +17,8 @@
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "runtime/framework/actor/recorder_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 
@@ -27,10 +29,11 @@ void KernelActor::Init() {
   real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
 
-  // Init the device tensors.
+  // Init the device tensors and kernel launch info.
   input_device_tensors_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
     memory_free_list_.emplace_back(input_address);
+    launch_info_.inputs_.emplace_back(std::make_shared<Address>());
   }
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (auto &output_address : kernel_info_->output_address_list()) {
@@ -38,12 +41,14 @@ void KernelActor::Init() {
     output_device_tensors_.emplace_back(output_address.get());
     memory_alloc_list_.emplace_back(output_address.get());
     memory_free_list_.emplace_back(output_address.get());
+    launch_info_.outputs_.emplace_back(std::make_shared<Address>());
   }
   for (auto &workspace_address : kernel_info_->workspace_address_list()) {
     MS_EXCEPTION_IF_NULL(workspace_address);
     workspace_device_tensors_.emplace_back(workspace_address.get());
     memory_alloc_list_.emplace_back(workspace_address.get());
     memory_free_list_.emplace_back(workspace_address.get());
+    launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
   }
 
   // Init the output data.
@@ -112,26 +117,33 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *context) {
 void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
-  std::vector<AddressPtr> kernel_inputs;
-  std::vector<AddressPtr> kernel_outputs;
-  std::vector<AddressPtr> kernel_workspaces;
-  FetchLaunchArgs(&kernel_inputs, &kernel_outputs, &kernel_workspaces);
   MS_EXCEPTION_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(kernel_, kernel_inputs, kernel_workspaces, kernel_outputs);
+
+  PreLaunchKernel(context);
+
+  auto ret =
+    device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_);
   if (!ret) {
     std::string error_info = "Launch kernel failed: " + kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  // The input is invalid and needs to be erased when finish kernel launch.
-  EraseInput(context);
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr) {
+    SendDebugReq(context);
+    return;
+  }
 
-  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
-  // other is to ensure the execution order and avoid the illegal memory timing problem.
-  SendMemoryFreeReq(context);
-  SendOutput(context);
+  PostLaunchKernel(context);
+}
+
+void KernelActor::SendDebugReq(OpContext<DeviceTensor> *context) {
+  Async(*debug_aid_, &DebugActor::Debug, kernel_, device_context_, context, &GetAID());
+}
+
+void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  PostLaunchKernel(context);
 }
 
 bool KernelActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
@@ -225,42 +237,40 @@ void KernelActor::FetchOutputDeviceTensor() {
   }
 }
 
-void KernelActor::FetchLaunchArgs(std::vector<AddressPtr> *kernel_inputs, std::vector<AddressPtr> *kernel_outputs,
-                                  std::vector<AddressPtr> *kernel_workspaces) const {
-  MS_EXCEPTION_IF_NULL(kernel_inputs);
-  MS_EXCEPTION_IF_NULL(kernel_outputs);
-  MS_EXCEPTION_IF_NULL(kernel_workspaces);
-  for (auto &input : input_device_tensors_) {
-    MS_EXCEPTION_IF_NULL(input);
-    kernel_inputs->emplace_back(std::make_shared<Address>(input->GetMutablePtr(), input->GetSize()));
+void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
+    launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
+    launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
   }
 
-  for (auto &output : output_device_tensors_) {
-    MS_EXCEPTION_IF_NULL(output);
-    kernel_outputs->emplace_back(std::make_shared<Address>(output->GetMutablePtr(), output->GetSize()));
+  for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(output_device_tensors_[i]);
+    launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
+    launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
   }
 
-  for (auto &workspace : workspace_device_tensors_) {
-    MS_EXCEPTION_IF_NULL(workspace);
-    kernel_workspaces->emplace_back(std::make_shared<Address>(workspace->GetMutablePtr(), workspace->GetSize()));
+  for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(workspace_device_tensors_[i]);
+    launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
+    launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
   }
+}
+
+void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *context) {
+  // The input is invalid and needs to be erased when finish kernel launch.
+  EraseInput(context);
+
+  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
+  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
+  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
+  // other is to ensure the execution order and avoid the illegal memory timing problem.
+  SendMemoryFreeReq(context);
+  SendOutput(context);
 }
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (output_result_arrows_.size() == 0)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
-
-  // Send graph output result.
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
-  }
-
   // Send output data.
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
@@ -273,6 +283,24 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
     for (auto &output_control : output_control_arrows_) {
       Async(output_control, &OpActor::RunOpControl, source_aid, context);
     }
+  }
+
+  // Send graph output result.
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
+          result_arrow->to_input_index_, context);
+  }
+
+  // Send recorder info.
+  if (recorder_aid_ != nullptr) {
+    Async(*recorder_aid_, &RecorderActor::RecordMemAddressInfo, kernel_.get(), &launch_info_, device_context_, context);
+  }
+
+  // No output.
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
+      (output_result_arrows_.size() == 0)) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }
 

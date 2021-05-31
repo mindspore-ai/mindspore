@@ -24,7 +24,7 @@
 #include <queue>
 #include <utility>
 #include "runtime/framework/actor/actor_common.h"
-#include "runtime/framework/actor/memory_aware_actor.h"
+#include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/host_tensor_queue.h"
@@ -34,14 +34,20 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
+using mindspore::kernel::KernelLaunchInfo;
 
 // The data source actor is used to fetch data from data source and process them into device tensors,
 // and then send them to kernel actor. The processing flow is FetchData -> FillDataBuffer -> SendMemoryAllocReq
 // -> OnMemoryAllocFinish -> SendMemoryFreeReq -> SendOutput.
-class DataSourceActor : public MemoryAwareActor {
+class DataSourceActor : public DebugAwareActor {
  public:
-  DataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid)
-      : MemoryAwareActor(name), buffer_capacity_(buffer_capacity), memory_manager_aid_(memory_manager_aid) {}
+  DataSourceActor(const std::string &name, size_t buffer_capacity, const AID memory_manager_aid, const AID *debug_aid,
+                  const AID *recorder_aid)
+      : DebugAwareActor(name),
+        buffer_capacity_(buffer_capacity),
+        memory_manager_aid_(memory_manager_aid),
+        debug_aid_(debug_aid),
+        recorder_aid_(recorder_aid) {}
   virtual ~DataSourceActor() = default;
 
   void Init() override;
@@ -64,6 +70,9 @@ class DataSourceActor : public MemoryAwareActor {
   // Send output result of graph output to output actor.
   virtual void SendResult(OpContext<DeviceTensor> *context) = 0;
 
+  // Send recorder info to recorder actor, only the device queue data source actor need.
+  virtual void SendRecorderInfo(OpContext<DeviceTensor> *context) {}
+
   // Send output to downstream actors to trigger computing after fetching data finished.
   void SendOutput(OpContext<DeviceTensor> *context);
 
@@ -76,6 +85,10 @@ class DataSourceActor : public MemoryAwareActor {
 
   // The id of memory manager actor. Send message to it for alloc and free memory during the data processing.
   const AID memory_manager_aid_;
+  // The id of debug actor. Send message to it for debug after the kernel launch.
+  const AID *debug_aid_;
+  // The id of recorder actor. Send message to it for recording kernel info after the kernel launch.
+  const AID *recorder_aid_;
 
   //  The output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
@@ -85,17 +98,24 @@ class DataSourceActor : public MemoryAwareActor {
 class DeviceQueueDataSourceActor : public DataSourceActor {
  public:
   DeviceQueueDataSourceActor(std::string name, size_t buffer_capacity, const DeviceContext *device_context,
-                             const AID memory_manager_aid)
-      : DataSourceActor(name, buffer_capacity, memory_manager_aid), device_context_(device_context) {}
+                             const AID memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
+      : DataSourceActor(name, buffer_capacity, memory_manager_aid, debug_aid, recorder_aid),
+        device_context_(device_context) {}
   ~DeviceQueueDataSourceActor() override = default;
+
+  void Init() override;
 
   void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *context) override;
 
+  void SendDebugReq(OpContext<DeviceTensor> *context) override;
+  void OnDebugFinish(OpContext<DeviceTensor> *context) override;
+
  protected:
   void FillDataBuffer() override;
   void SendResult(OpContext<DeviceTensor> *context) override;
+  void SendRecorderInfo(OpContext<DeviceTensor> *context) override;
 
  private:
   friend class GraphScheduler;
@@ -104,15 +124,18 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   CNodePtr data_kernel_{nullptr};
   KernelInfo *kernel_info_{nullptr};
 
+  // The kernel launch info is fetched by the device tensors.
+  KernelLaunchInfo launch_info_;
+
   const DeviceContext *device_context_;
 };
 
 // The class represents that the data source is host queue.
 class HostQueueDataSourceActor : public DataSourceActor {
  public:
-  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid,
-                           HostTensorQueuePtr host_queue)
-      : DataSourceActor(name, buffer_capacity, memory_manager_aid), host_queue_(host_queue) {}
+  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid, const AID *debug_aid,
+                           const AID *recorder_aid, HostTensorQueuePtr host_queue)
+      : DataSourceActor(name, buffer_capacity, memory_manager_aid, debug_aid, recorder_aid), host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
   void SendMemoryAllocReq(OpContext<DeviceTensor> *context) override;

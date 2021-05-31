@@ -123,6 +123,13 @@ struct Address {
 };
 using AddressPtr = std::shared_ptr<Address>;
 
+// The memory info of kernel launch.
+struct KernelLaunchInfo {
+  std::vector<AddressPtr> inputs_;
+  std::vector<AddressPtr> outputs_;
+  std::vector<AddressPtr> workspaces_;
+};
+
 class KernelMod {
  public:
   virtual const std::vector<size_t> &GetInputSizeList() const = 0;

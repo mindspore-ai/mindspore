@@ -259,8 +259,10 @@ class GraphScheduler {
   // the actor set after link.
   std::vector<CopyActorPtr> copy_actors_;
 
-  // The id of memory manager actor.
+  // The id of global actor.
   AID memory_manager_aid_;
+  const AID *recorder_aid_{nullptr};
+  const AID *debug_aid_{nullptr};
 
   InterThreadPool *thread_pool_{nullptr};
 
