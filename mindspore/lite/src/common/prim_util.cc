@@ -25,7 +25,6 @@
 namespace mindspore {
 namespace lite {
 int GetPrimitiveType(const void *primitive) {
-  MS_ASSERT(primitive != nullptr);
   if (primitive == nullptr) {
     return -1;
   }
