@@ -63,7 +63,6 @@ bool GPUKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call SyncStream error.";
     return false;
   }
-  FreeAndClearBufferPtrs();
   return true;
 }
 
@@ -203,14 +202,9 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 }  // namespace
 
 bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  std::shared_ptr<char[]> buffer(new char[size]());
-  MS_EXCEPTION_IF_NULL(buffer);
-  std::copy(reinterpret_cast<const char *>(src), reinterpret_cast<const char *>(src) + size, buffer.get());
-  AddBufferPtr(buffer);
-
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
-  auto ret = GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(dst, buffer.get(), size, stream);
+  auto ret = GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(dst, src, size, stream);
   if (!ret) {
     MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
     return false;

@@ -88,6 +88,60 @@ class KernelAdjust {
                              NotNull<session::KernelGraph *> kernel_graph_ptr);
   bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+
+  void InsertSwitchLoopInput(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                             const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+  void InsertGetNextLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order, uint32_t *getnext_switch_stream_id,
+                                     uint32_t *getnext_stream_id,
+                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+  void SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, const std::vector<CNodePtr> &orders,
+                                size_t *order_index, CNodePtr getnext_cnode, uint32_t getnext_stream_id);
+  void InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                      std::vector<CNodePtr> *exec_order, uint32_t *fpbp_start_event_id,
+                                      uint32_t getnext_stream_id);
+  void InsertGetNextLoopEosStartSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order, uint32_t *eos_start_event_id,
+                                     uint32_t getnext_stream_id);
+  void InsertEosStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                             const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                             std::vector<CNodePtr> *exec_order, uint32_t *eos_switch_stream_id,
+                             uint32_t *eos_stream_id);
+  void InsertGetNextLoopEosStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order, uint32_t eos_start_event_id,
+                                     uint32_t eos_stream_id);
+  void InsertEosOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
+                   const CNodePtr &getnext_cnode, uint32_t eos_stream_id);
+  void InsertEosDoneSend(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                         std::vector<CNodePtr> *exec_order, uint32_t *eos_done_event_id, uint32_t eos_stream_id);
+  void InsertIndepentParallel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                              const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                              std::vector<CNodePtr> *exec_order);
+  void InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                                  std::vector<CNodePtr> *exec_order, uint32_t *fpbp_stream_id,
+                                  uint32_t *fpbp_switch_stream_id);
+  void InsertFpBpStartRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                           std::vector<CNodePtr> *exec_order, uint32_t fpbp_start_event_id, uint32_t fpbp_stream_id);
+  void InsertNextLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                               std::vector<CNodePtr> *exec_order,
+                               const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
+                               uint32_t fpbp_stream_id);
+  void CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                      const std::vector<CNodePtr> &orders, size_t order_index, std::vector<CNodePtr> *memcpy_list,
+                      std::vector<CNodePtr> *other_list);
+  void InsertEosDoneRecv(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                         std::vector<CNodePtr> *exec_order, uint32_t eos_done_event_id, uint32_t fpbp_stream_id);
+  void InsertGetNextLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                     std::vector<CNodePtr> *exec_order,
+                                     const std::vector<uint32_t> &getnext_active_streams,
+                                     uint32_t getnext_switch_stream_id);
+  void InsertCurrentLoopAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                  std::vector<CNodePtr> *exec_order,
+                                  const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
+  void InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                        std::vector<CNodePtr> *exec_order,
+                                        const std::vector<uint32_t> &fpbp_active_streams);
 };
 }  // namespace device
 }  // namespace mindspore

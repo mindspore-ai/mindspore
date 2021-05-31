@@ -93,7 +93,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 const int FLOAT_LEN = sizeof(float);
-const int FLOAT16_LEN = 2;  // sizeof(float16);
+const int FLOAT16_LEN = 2;
 const std::set<std::string> kOpNeedTransFormat = {
   kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
   kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
@@ -114,7 +114,7 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
       MS_EXCEPTION(DeviceProcessError) << "rtMemcpy failed";
     }
   } else {
-    auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(kind));
+    auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(RT_MEMCPY_HOST_TO_DEVICE_EX));
     if (!ret) {
       MS_EXCEPTION(DeviceProcessError) << "MemcpyAsync failed";
     }

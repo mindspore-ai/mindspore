@@ -26,10 +26,13 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kTileInputShapeSize = 5;
+constexpr size_t kReduceNumInputShapeSize = 5;
+constexpr size_t kMultiplesSize = 4;
 AnfNodePtr ModifyReduceOpsAttrs(const CNodePtr &cnode) {
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto input_format = AnfAlgo::GetInputFormat(cnode, 0);
-  if (input_shape.size() == 5 || input_format != kOpFormat_NC1HWC0) {
+  if (input_shape.size() == kReduceNumInputShapeSize || input_format != kOpFormat_NC1HWC0) {
     return nullptr;
   }
   if (!AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode)) {
@@ -42,7 +45,7 @@ AnfNodePtr ModifyReduceOpsAttrs(const CNodePtr &cnode) {
 
 AnfNodePtr ModifyTileOpAttrs(const CNodePtr &cnode) {
   auto input_shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
-  if (input_shape.size() != 5) {
+  if (input_shape.size() != kTileInputShapeSize) {
     return nullptr;
   }
   if (!AnfAlgo::HasNodeAttr(kAttrMultiples, cnode)) {
@@ -50,7 +53,7 @@ AnfNodePtr ModifyTileOpAttrs(const CNodePtr &cnode) {
   }
 
   auto multiples = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrMultiples);
-  if (multiples.size() == 4 && multiples[1] == 1) {
+  if (multiples.size() == kMultiplesSize && multiples[1] == 1) {
     multiples.push_back(1);
     AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), cnode);
   }

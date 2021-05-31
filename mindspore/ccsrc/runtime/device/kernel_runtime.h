@@ -104,8 +104,6 @@ class KernelRuntime {
 
   virtual void PreInit() {}
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
-  void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
-  void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
@@ -158,7 +156,6 @@ class KernelRuntime {
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
-  std::vector<std::shared_ptr<char[]>> buffer_ptrs_ = {};
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device
