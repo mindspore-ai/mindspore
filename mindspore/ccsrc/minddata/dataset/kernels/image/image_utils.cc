@@ -28,7 +28,7 @@
 #include "minddata/dataset/kernels/image/math_utils.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
 
-#define MAX_INT_PRECISION 16777216  // float int precision is 16777216
+const int32_t MAX_INT_PRECISION = 16777216;  // float int precision is 16777216
 namespace mindspore {
 namespace dataset {
 int GetCVInterpolationMode(InterpolationMode mode) {
