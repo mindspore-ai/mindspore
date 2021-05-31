@@ -12,30 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Export DPN"""
-import argparse
+"""Export DPN
+suggest run as python export.py --file_name [filename] --file_format [file format] --checkpoint_path [ckpt path]
+"""
+
 import numpy as np
-
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
-
 from src.dpn import dpns
-from src.config import config
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description="export dpn")
-parser.add_argument("--device_id", type=int, default=0, help="device id")
-parser.add_argument("--ckpt_file", type=str, required=True, help="dpn ckpt file.")
-parser.add_argument("--width", type=int, default=224, help="input width")
-parser.add_argument("--height", type=int, default=224, help="input height")
-parser.add_argument("--file_name", type=str, default="dpn", help="dpn output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"],
-                    default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
 
 if __name__ == "__main__":
     # define net
@@ -44,9 +33,9 @@ if __name__ == "__main__":
     net = dpns[backbone](num_classes=num_classes)
 
     # load checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
-    image = Tensor(np.zeros([config.batch_size, 3, args.height, args.width], np.float32))
-    export(net, image, file_name=args.file_name, file_format=args.file_format)
+    image = Tensor(np.zeros([config.batch_size, 3, config.height, config.width], np.float32))
+    export(net, image, file_name=config.file_name, file_format=config.file_format)

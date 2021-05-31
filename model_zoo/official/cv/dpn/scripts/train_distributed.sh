@@ -36,6 +36,7 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp -r ./src ./train_parallel$i
+    cp ./*yaml ./train_parallel$i
     cp ./train.py ./train_parallel$i
     echo "start training for rank $i, device $DEVICE_ID"
 
@@ -47,12 +48,12 @@ do
         --is_distributed=1 \
         --ckpt_path=$SAVE_PATH \
         --eval_each_epoch=$EVAL_EACH_EPOCH\
-        --data_dir=$DATA_DIR > log.txt 2>&1 &
+        --train_data_dir=$DATA_DIR > log.txt 2>&1 &
         echo "python train.py  \
         --is_distributed=1 \
         --ckpt_path=$SAVE_PATH \
         --eval_each_epoch=$EVAL_EACH_EPOCH\
-        --data_dir=$DATA_DIR > log.txt 2>&1 &"
+        --train_data_dir=$DATA_DIR > log.txt 2>&1 &"
     fi
 
     if [ $# == 6 ]
@@ -62,7 +63,7 @@ do
         --eval_each_epoch=$EVAL_EACH_EPOCH\
         --ckpt_path=$SAVE_PATH \
         --pretrained=$PATH_CHECKPOINT \
-        --data_dir=$DATA_DIR > log.txt 2>&1 &
+        --train_data_dir=$DATA_DIR > log.txt 2>&1 &
     fi
 
     cd ../

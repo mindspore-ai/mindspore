@@ -30,12 +30,12 @@ then
         --is_distributed=0 \
         --ckpt_path=$SAVE_CKPT_PATH\
         --eval_each_epoch=$EVAL_EACH_EPOCH\
-        --data_dir=$DATA_DIR > train_log.txt 2>&1 &
+        --train_data_dir=$DATA_DIR > train_log.txt 2>&1 &
     echo "    python train.py  \
         --is_distributed=0 \
         --ckpt_path=$SAVE_CKPT_PATH\
         --eval_each_epoch=$EVAL_EACH_EPOCH\
-        --data_dir=$DATA_DIR > train_log.txt 2>&1 &"
+        --train_data_dir=$DATA_DIR > train_log.txt 2>&1 &"
 fi
 if [ $# == 5 ]
 then
@@ -43,6 +43,6 @@ then
         --is_distributed=0 \
         --ckpt_path=$SAVE_CKPT_PATH\
         --pretrained=$PATH_CHECKPOINT \
-        --data_dir=$DATA_DIR\
+        --train_data_dir=$DATA_DIR\
         --eval_each_epoch=$EVAL_EACH_EPOCH > train_log.txt 2>&1 &
 fi
