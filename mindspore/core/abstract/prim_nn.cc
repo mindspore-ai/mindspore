@@ -52,8 +52,10 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
   if (input_shape->shape().size() != input_shape_size) {
     MS_LOG(EXCEPTION) << "Pooling input should be a 4-D tensor.";
   }
-  int64_t h_input = input_shape->shape()[2];
-  int64_t w_input = input_shape->shape()[3];
+  constexpr size_t H_INDEX = 2;
+  constexpr size_t W_INDEX = 3;
+  int64_t h_input = input_shape->shape()[H_INDEX];
+  int64_t w_input = input_shape->shape()[W_INDEX];
 
   int64_t window = primitive->GetAttr("window")->cast<Int64ImmPtr>()->value();
   int64_t stride = primitive->GetAttr("stride")->cast<Int64ImmPtr>()->value();
@@ -544,9 +546,12 @@ AbstractBasePtr InferImplLayerNormGrad(const AnalysisEnginePtr &, const Primitiv
   // Outputs: x_backprob, gamma_backprob, beta_backprob
   CheckArgsSize(primitive->name(), args_spec_list, 5);
 
-  auto x_backprob = args_spec_list[0]->Broaden();
-  auto gamma_backprob = args_spec_list[4]->Broaden();
-  auto beta_backprob = args_spec_list[4]->Broaden();
+  constexpr size_t X_INDEX = 0;
+  constexpr size_t GAMMA_INDEX = 4;
+  constexpr size_t BETA_INDEX = 4;
+  auto x_backprob = args_spec_list[X_INDEX]->Broaden();
+  auto gamma_backprob = args_spec_list[GAMMA_INDEX]->Broaden();
+  auto beta_backprob = args_spec_list[BETA_INDEX]->Broaden();
 
   AbstractBasePtrList args_list({x_backprob, gamma_backprob, beta_backprob});
   return std::make_shared<AbstractTuple>(args_list);

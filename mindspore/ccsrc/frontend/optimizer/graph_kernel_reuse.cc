@@ -99,12 +99,11 @@ bool GraphKernelReuse::DoReplace(const FuncGraphManagerPtr manager) {
       if (find(graph_kernel_ops[key].begin(), graph_kernel_ops[key].end(), fg) == graph_kernel_ops[key].end()) {
         FuncGraphPtr new_fg = nullptr;
         for (auto &cfg : graph_kernel_ops[key]) {
-          if (!IsReusable(fg, cfg)) {
-            continue;
+          if (IsReusable(fg, cfg)) {
+            // Find reusable fg
+            new_fg = cfg;
+            break;
           }
-          // Find reusable fg
-          new_fg = cfg;
-          break;
         }
 
         if (new_fg != nullptr) {

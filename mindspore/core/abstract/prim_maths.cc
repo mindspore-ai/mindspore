@@ -127,6 +127,61 @@ AbstractBasePtr InferImplEqual(const AnalysisEnginePtr &, const PrimitivePtr &pr
   return ret;
 }
 
+int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
+  int64_t dim_ = static_cast<int64_t>(dim);
+  if (axis < -dim_ || axis >= dim_) {
+    MS_LOG(EXCEPTION) << "axis should be in [" << -dim_ << ", " << dim_ << "). But got axis = " << axis;
+  }
+  int64_t ret_axis = axis;
+  if (axis >= -dim_ && axis < 0) {
+    ret_axis += dim_;
+  }
+  return ret_axis;
+}
+
+void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape, const ValuePtr &axis,
+                                 bool keep_dims_value) {
+  if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
+    auto axis_ptr_list =
+      axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
+    if (!axis_ptr_list.size()) {
+      if (keep_dims_value) shape->insert(shape->end(), x_shape.size(), 1);
+    } else {
+      shape->insert(shape->end(), x_shape.begin(), x_shape.end());
+      ValuePtrList axis_items = axis_ptr_list;
+      ValuePtrList::iterator it;
+      ValuePtrList::reverse_iterator it_re;
+      int64_t axis_value;
+      if (keep_dims_value) {
+        for (it = axis_items.begin(); it != axis_items.end(); ++it) {
+          axis_value = GetValue<int64_t>(*it);
+          axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
+          shape->at(axis_value) = 1;
+        }
+      } else {
+        std::sort(axis_items.begin(), axis_items.end());
+        for (it_re = axis_items.rbegin(); it_re != axis_items.rend(); ++it_re) {
+          axis_value = GetValue<int64_t>(*it_re);
+          axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
+          shape->erase(shape->begin() + axis_value);
+        }
+      }
+    }
+  } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
+    shape->insert(shape->end(), x_shape.begin(), x_shape.end());
+    int64_t axis_value = GetValue<int64_t>(axis);
+    axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
+    if (keep_dims_value) {
+      shape->at(axis_value) = 1;
+    } else {
+      shape->erase(shape->begin() + axis_value);
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Axis should be one of types: [int/tuple/list].";
+  }
+  return;
+}
+
 // To reduce code repeat, use InferImplReduceFunc. Currently registered with ReduceMean, ReduceSum,
 // ReduceAll, ReduceAny, ReduceMax, ReduceMin.
 AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -147,62 +202,9 @@ AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePt
   ValuePtr axis = primitive->GetAttr("axis");
   MS_EXCEPTION_IF_NULL(axis);
 
-  auto check_axis = [](int64_t &axis, const size_t dim) -> void {
-    int64_t dim_ = static_cast<int64_t>(dim);
-    if (axis < -dim_ || axis >= dim_) {
-      MS_LOG(EXCEPTION) << "axis should be in [" << -dim_ << ", " << dim_ << "). But got axis = " << axis;
-    }
-    if (axis >= -dim_ && axis < 0) {
-      axis += dim_;
-    }
-    return;
-  };
-
-  auto cal_shape = [axis, keep_dims_value, check_axis](ShapeVector &shape, const ShapeVector &x_shape) -> void {
-    if (axis->isa<ValueTuple>() || axis->isa<ValueList>()) {
-      auto axis_ptr_list =
-        axis->isa<ValueTuple>() ? axis->cast<ValueTuplePtr>()->value() : axis->cast<ValueListPtr>()->value();
-      if (!axis_ptr_list.size()) {
-        if (keep_dims_value) shape.insert(shape.end(), x_shape.size(), 1);
-      } else {
-        shape.insert(shape.end(), x_shape.begin(), x_shape.end());
-        ValuePtrList axis_items = axis_ptr_list;
-        ValuePtrList::iterator it;
-        ValuePtrList::reverse_iterator it_re;
-        int64_t axis_value;
-        if (keep_dims_value) {
-          for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-            axis_value = GetValue<int64_t>(*it);
-            check_axis(axis_value, x_shape.size());
-            shape[axis_value] = 1;
-          }
-        } else {
-          std::sort(axis_items.begin(), axis_items.end());
-          for (it_re = axis_items.rbegin(); it_re != axis_items.rend(); ++it_re) {
-            axis_value = GetValue<int64_t>(*it_re);
-            check_axis(axis_value, x_shape.size());
-            shape.erase(std::begin(shape) + axis_value);
-          }
-        }
-      }
-    } else if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
-      shape.insert(shape.end(), x_shape.begin(), x_shape.end());
-      int64_t axis_value = GetValue<int64_t>(axis);
-      check_axis(axis_value, x_shape.size());
-      if (keep_dims_value) {
-        shape[axis_value] = 1;
-      } else {
-        shape.erase(std::begin(shape) + axis_value);
-      }
-    } else {
-      MS_LOG(EXCEPTION) << "Axis should be one of types: [int/tuple/list].";
-    }
-    return;
-  };
-
   ShapeVector shape = {};
   ShapeVector x_shape = input_x->shape()->shape();
-  cal_shape(shape, x_shape);
+  InferImplReduceFuncCalShape(&shape, x_shape, axis, keep_dims_value);
 
   bool x_is_dyn = (!input_x->shape()->min_shape().empty() && !input_x->shape()->max_shape().empty());
   if (x_is_dyn) {
@@ -210,8 +212,8 @@ AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePt
     ShapeVector shape_max = {};
     ShapeVector x_shape_min = input_x->shape()->min_shape();
     ShapeVector x_shape_max = input_x->shape()->max_shape();
-    cal_shape(shape_min, x_shape_min);
-    cal_shape(shape_max, x_shape_max);
+    InferImplReduceFuncCalShape(&shape_min, x_shape_min, axis, keep_dims_value);
+    InferImplReduceFuncCalShape(&shape_max, x_shape_max, axis, keep_dims_value);
     return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape, shape_min, shape_max));
   }
   return std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape));
@@ -352,7 +354,8 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   MS_EXCEPTION_IF_NULL(y->shape());
   auto x_shp = x->shape()->shape();
   auto y_shp = y->shape()->shape();
-  if (x_shp.size() != 2 || y_shp.size() != 2) {
+  const size_t SHAPE_SIZE = 2;
+  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
     MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
   }
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");

@@ -459,9 +459,9 @@ BaseShapePtr AbstractTensor::BuildShape() const {
 
 AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   if (other->BuildType()->type_id() == kObjectTypeUndeterminedType) {
-    auto other_tensor = dyn_cast<AbstractUndetermined>(other);
-    auto element = element_->Join(other_tensor->element());
-    auto shape = ShapeJoin(this->shape(), other_tensor->shape());
+    auto other_undetermined_tensor = dyn_cast<AbstractUndetermined>(other);
+    auto element = element_->Join(other_undetermined_tensor->element());
+    auto shape = ShapeJoin(this->shape(), other_undetermined_tensor->shape());
     auto ret = std::make_shared<AbstractUndetermined>(element, shape);
     return ret;
   }

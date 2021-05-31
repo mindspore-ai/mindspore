@@ -25,7 +25,7 @@ from .parser import (Parser, create_obj_instance, generate_scope,
                      get_ast_namespace_symbol, get_operation_namespace_symbol,
                      get_parse_method_of_class, get_scope_name, expand_expr_statement,
                      is_class_member, parse_cb, resolve_symbol, convert_to_ms_tensor, get_object_description)
-from .serialize import *
+from .serialize import (dump_obj, load_obj)
 
 __all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class', 'resolve_symbol',
            'get_object_key', 'get_class_instance_type', 'is_class_member', 'get_ast_type', 'get_node_type',
