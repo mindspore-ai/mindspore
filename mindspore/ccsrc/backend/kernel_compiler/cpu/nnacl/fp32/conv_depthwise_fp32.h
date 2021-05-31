@@ -34,7 +34,8 @@ void ConvDw(float *output_data, const float *input_data, const float *weight_dat
 
 void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 
-void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
+void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int input_block,
+                          int weight_block);
 
 void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int in_block,
                             int weight_block);

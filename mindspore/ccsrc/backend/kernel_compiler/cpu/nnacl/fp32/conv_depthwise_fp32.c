@@ -116,18 +116,18 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
   sliding->out_h_step_ = conv_param->output_w_ * sliding->block_channel_;
 }
 
-void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block) {
-  InitSlidingParam(sliding, conv_param, block);
-  // SW is not algin in input_channel and weight must be algin to N8 in avx
-  AppendSlidingParamConv(sliding, conv_param, 0, block);
+void InitSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int input_block,
+                          int weight_block) {
+  InitSlidingParam(sliding, conv_param, weight_block);
+  AppendSlidingParamConv(sliding, conv_param, input_block, weight_block);
 }
 
-void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int in_block,
+void AppendSlidingParamConv(SlidingWindowParam *sliding, const ConvParameter *conv_param, int input_block,
                             int weight_block) {
-  if (in_block == 0) {  // is not align
+  if (input_block == 0) {  // is not aligned
     sliding->ic_align_ = conv_param->input_channel_;
-  } else {
-    sliding->ic_align_ = UP_DIV(conv_param->input_channel_, in_block) * in_block;
+  } else {  // 1x1 input is aligned to input_block
+    sliding->ic_align_ = UP_DIV(conv_param->input_channel_, input_block) * input_block;
   }
   sliding->in_step_ = conv_param->input_h_ * conv_param->input_w_ * sliding->ic_align_;  // for batch loop
   sliding->in_h_step_ = conv_param->input_w_ * sliding->ic_align_;

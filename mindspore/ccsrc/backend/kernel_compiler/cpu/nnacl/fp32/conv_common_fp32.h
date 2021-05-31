@@ -47,7 +47,6 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
 
 void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
                 int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param);
-
 void SWCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width, int kernel_h,
               int kernel_w, bool is_relu, bool is_relu6, SlidingWindowParam *sw_param);
 

@@ -128,7 +128,7 @@ void SWBorder(float *dst, const float *src, const float *weight, const float *bi
   }  // height loop
 }
 
-// fp32 sliding window
+// fp32 sliding window common conv
 void ConvSWFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
                 int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
   int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
@@ -205,6 +205,7 @@ void ConvSWFp32(const float *input_data, const float *packed_weight, const float
     output_data += sw_param->out_step_;
   }  // batch loop
 }
+
 #ifndef ENABLE_DEBUG
 void SWConv3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
@@ -1244,88 +1245,6 @@ void SWConvWxKKernel(float *dst, const float *src, const float *weight, const fl
       _mm256_storeu_ps(dst + i * oc_algin + j * C8NUM, dst_data[i * oc_block + j]);
     }
   }
-}
-
-void SWConvNx8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                     size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_algin, size_t ic_algin,
-                     size_t in_kw_step, size_t in_kh_step, size_t in_sw_step) {
-  __m256 dst_data[12];
-  const float *src_kh[12];
-  const float *src_kw[12];
-  for (int i = 0; i < ow_block; ++i) {
-    if (bias != NULL) {
-      dst_data[i] = _mm256_loadu_ps(bias);
-    } else {
-      dst_data[i] = _mm256_set1_ps(0.0f);
-    }
-    src_kh[i] = src + i * in_sw_step;
-    src_kw[i] = NULL;
-  }
-  const float *weight_kernel = weight;
-  for (int kh = 0; kh < kernel_h; kh++) {
-    for (int i = 0; i < ow_block; ++i) {
-      src_kw[i] = src_kh[i];
-    }
-    for (int kw = 0; kw < kernel_w; kw++) {
-      for (int ic = 0; ic < ic_algin; ++ic) {
-        __m256 weight_data = _mm256_loadu_ps(weight_kernel);
-        for (int i = 0; i < ow_block; ++i) {
-          dst_data[i] += src_kw[i][ic] * weight_data;
-        }
-        weight_kernel += C8NUM;
-      }  // ic loop
-      for (int i = 0; i < ow_block; ++i) {
-        src_kw[i] += in_kw_step;
-      }
-    }  // kernel_w loop
-    for (int i = 0; i < ow_block; ++i) {
-      src_kh[i] += in_kh_step;
-    }
-  }  // kernel_h loop
-  // add bias and relu
-  for (int i = 0; i < ow_block; ++i) {
-    if (0x1 & act_flag) {  // relu6
-      dst_data[i] = _mm256_min_ps(dst_data[i], _mm256_set1_ps(6.0f));
-    }
-    if (0x2 & act_flag) {  // relu
-      dst_data[i] = _mm256_max_ps(dst_data[i], _mm256_set1_ps(0.0f));
-    }
-    _mm256_storeu_ps(dst + i * oc_algin, dst_data[i]);
-  }
-}
-
-void SWConv1x8Kernel11(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
-                       size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
-                       size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step, size_t kw_remainder) {
-  __m256 dst_data;
-  const float *src_kh = src;
-  const float *src_kw = NULL;
-  if (bias != NULL) {
-    dst_data = _mm256_loadu_ps(bias);
-  } else {
-    dst_data = _mm256_set1_ps(0.0f);
-  }
-  const float *weight_kernel = weight;
-  for (int kh = 0; kh < kernel_h; kh++) {
-    src_kw = src_kh;
-    for (int kw = 0; kw < kernel_w; kw++) {
-      for (int ic = 0; ic < ic_algin; ++ic) {
-        __m256 weight_data = _mm256_loadu_ps(weight_kernel);
-        dst_data += src_kw[ic] * weight_data;
-        weight_kernel += C8NUM;
-      }  // ic loop
-      src_kw += in_kw_step;
-    }  // kernel_w loop
-    src_kh += in_kh_step;
-  }  // kernel_h loop
-  // add bias and relu
-  if (0x1 & act_flag) {  // relu6
-    dst_data = _mm256_min_ps(dst_data, _mm256_set1_ps(6.0f));
-  }
-  if (0x2 & act_flag) {  // relu
-    dst_data = _mm256_max_ps(dst_data, _mm256_set1_ps(0.0f));
-  }
-  _mm256_storeu_ps(dst, dst_data);
 }
 #endif
 #endif

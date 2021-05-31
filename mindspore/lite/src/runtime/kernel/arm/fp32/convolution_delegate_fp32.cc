@@ -140,9 +140,23 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   kernel::InnerKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+#ifdef ENABLE_AVX
+    if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
+        conv_param->output_channel_ % 8 == 0 && conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 &&
+        conv_param->input_channel_ % 8 == 0) {
+      kernel = new (std::nothrow) kernel::ConvolutionSWCPUKernel(
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+        origin_weight_, origin_bias_);
+    } else {
+      kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(
+        op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
+        origin_weight_, origin_bias_);
+    }
+#else
     kernel = new (std::nothrow) kernel::Convolution1x1CPUKernel(op_parameter_, in_tensors_, out_tensors_,
                                                                 static_cast<const lite::InnerContext *>(this->context_),
                                                                 origin_weight_, origin_bias_);
+#endif
   } else {
     int out_unit;
     if (CheckIfUseWinograd(&out_unit, conv_param)) {
@@ -150,7 +164,7 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
         op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_), out_unit,
         origin_weight_, origin_bias_);
     } else {
-      if (context_->thread_num_ == 1 && conv_param->input_channel_ > 64) {
+      if (conv_param->input_channel_ / context_->thread_num_ > 64) {
         kernel = new (std::nothrow) kernel::ConvolutionCPUKernel(
           op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->context_),
           origin_weight_, origin_bias_);
