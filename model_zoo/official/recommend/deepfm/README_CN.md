@@ -16,6 +16,10 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -250,6 +254,37 @@ FM和深度学习部分拥有相同的输入原样特征向量，让DeepFM能从
 
 - 在GPU运行时评估数据集
   待运行。
+
+## 推理过程
+
+### [导出MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数ckpt_file为必填项，
+`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中选择。
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用minir模型执行推理的示例。
+
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `NEED_PREPROCESS` 表示数据是否需要预处理，取值范围为 'y' 或者 'n'。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+auc : 0.8057789065281104
+```
 
 ## 模型描述
 
