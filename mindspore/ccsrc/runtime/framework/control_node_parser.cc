@@ -69,6 +69,86 @@ std::vector<FuncGraphPtr> ControlNodeParser::FetchFuncGraphbyCallNode(const CNod
   return func_graphs;
 }
 
+AnfNodePtr ControlNodeParser::GetCallNodeInputByPos(const AnfNodePtr &call_node, const FuncGraphPtr &func_graph,
+                                                    const size_t pos) {
+  const auto &cnode = call_node->cast<CNodePtr>();
+  const auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Input of call node is empty, node:" << AnfAlgo::GetNodeDebugString(call_node);
+  }
+
+  if (inputs[0]->isa<CNode>()) {
+    // The first input of call node is a switch node.
+    if (AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitch)) {
+      if (inputs.size() != kSwitchInputNum) {
+        MS_LOG(EXCEPTION) << "Invalid input num of switch node, num:" << inputs.size();
+      }
+
+      auto switch_cnode = inputs[0]->cast<CNodePtr>();
+      auto switch_inputs = switch_cnode->inputs();
+      auto true_partial_cnode = switch_inputs[kSwitchTrueBranchPos]->cast<CNodePtr>();
+      auto partial_inputs = true_partial_cnode->inputs();
+      if (partial_inputs.size() <= kPartialFuncGraphPos) {
+        MS_LOG(EXCEPTION) << "Invalid input num of switch node, num:" << inputs.size();
+      }
+      auto true_func_graph = GetValueNode<FuncGraphPtr>(partial_inputs[kPartialFuncGraphPos]);
+
+      // If the funcgraph is not in true branch, it must be in false branch.
+      if (true_func_graph != func_graph) {
+        auto false_partial_cnode = switch_inputs[kSwitchFalseBranchPos]->cast<CNodePtr>();
+        partial_inputs = false_partial_cnode->inputs();
+      }
+      if (pos + kPartialInputStartPos >= partial_inputs.size()) {
+        MS_LOG(EXCEPTION) << "Invalid input pos:" << pos << " node:" << AnfAlgo::GetNodeDebugString(call_node);
+      }
+      return partial_inputs[pos + kPartialInputStartPos];
+    } else if (AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
+      if (inputs.size() != kSwitchLayerInputNum) {
+        MS_LOG(EXCEPTION) << "Invalid input num of switchlayer node, num:" << inputs.size();
+      }
+
+      // The first input of call node is a switchlayer node.
+      auto switch_layer_cnode = inputs[0]->cast<CNodePtr>();
+      const auto &make_tuple_node = switch_layer_cnode->input(kSwitchLayerBranchPos);
+      const auto &make_tuple_cnode = make_tuple_node->cast<CNodePtr>();
+      const auto &tuple_inputs = make_tuple_cnode->inputs();
+
+      for (const auto &node : tuple_inputs) {
+        // tuple input is a value node of funcgraph.
+        if (node->isa<ValueNode>() && IsValueNode<FuncGraph>(node)) {
+          auto branch_graph = GetValueNode<FuncGraphPtr>(node);
+          if (branch_graph == func_graph) {
+            if (pos + kCallInputStartPos >= inputs.size()) {
+              MS_LOG(EXCEPTION) << "Invalid input pos:" << pos << " node:" << AnfAlgo::GetNodeDebugString(call_node);
+            }
+            return inputs[pos + kCallInputStartPos];
+          }
+        } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+          // tuple input is a partial, it means that part of the input of funcgraph is on partial and part on call.
+          auto partial_cnode = node->cast<CNodePtr>();
+          auto partial_input = partial_cnode->inputs();
+          if (func_graph == GetValueNode<FuncGraphPtr>(partial_input[kPartialFuncGraphPos])) {
+            if (pos + kPartialInputStartPos >= partial_input.size()) {
+              return inputs[pos + kPartialInputStartPos - partial_input.size()];
+            } else {
+              return partial_input[pos + kPartialInputStartPos];
+            }
+          }
+        }
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid input node:" << AnfAlgo::GetNodeDebugString(inputs[0]);
+    }
+  } else {
+    // The first input of funcgraph is a value node of funcgraph.
+    if (pos + kCallInputStartPos >= inputs.size()) {
+      MS_LOG(EXCEPTION) << "Invalid input pos:" << pos << " node:" << AnfAlgo::GetNodeDebugString(call_node);
+    }
+    return inputs[pos + kCallInputStartPos];
+  }
+  return nullptr;
+}
+
 std::vector<AnfNodePtr> ControlNodeParser::FetchFuncGraphOutput(const FuncGraphPtr &func_graph,
                                                                 std::vector<AnfNodePtr> *call_nodes) {
   std::vector<AnfNodePtr> outputs;
@@ -270,6 +350,17 @@ void ControlNodeParser::FetchFrontToBackendParameterMap(const std::vector<Kernel
       (*front_to_backend_parameter)[front_pair.first] = backend_node;
     }
   }
+}
+
+AnfNodePtr ControlNodeParser::GetFrontNodeByBackendNode(const AnfNodePtr &backend_node) {
+  if (backend_node->func_graph() == nullptr) {
+    return nullptr;
+  }
+  auto kernel_graph = dynamic_cast<KernelGraph *>(backend_node->func_graph().get());
+  if (kernel_graph == nullptr) {
+    return nullptr;
+  }
+  return kernel_graph->GetFrontAnfByBackendAnf(backend_node);
 }
 }  // namespace runtime
 }  // namespace mindspore

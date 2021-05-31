@@ -212,6 +212,21 @@ class GraphScheduler {
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 
+  // Control flow link interface.
+  void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info);
+  void LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
+                                   KernelWithIndex from_kernel_with_output_idx,
+                                   KernelWithIndex to_kernel_with_input_idx);
+  void LinkDataArrowForSwitchActor(const GraphCompilerInfo &graph_compiler_info, SwitchActor *actor);
+  // Connect the input of the actor.
+  void LinkDataArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, const AnfNodePtr &input_node,
+                                  OpActor<DeviceTensor> *to_actor, const size_t to_index);
+  // When the input of the actor is a call node, the output of the funcgraph called by the call node needs to be
+  // connected.
+  void LinkDataArrowByCallInput(const GraphCompilerInfo &graph_compiler_info, const AnfNodePtr &call_node,
+                                OpActor<DeviceTensor> *to_actor, const size_t to_index);
+  void LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors, LoopCountActor *to_actor);
+
   // The processing of actors link dynamically.
   // Analyze necessary input data of current actor, generate and cache op arrow
   // between current actor and prev actor, the method executes before calling Schedule.
@@ -248,6 +263,9 @@ class GraphScheduler {
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
   std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;
+  // Since the control node does not have a backend node, it can only be connected through the relationship between
+  // the front node, so the mapping relationship between the front node and the actor needs to be recorded.
+  std::unordered_map<AnfNodePtr, KernelActorPtr> front_node_to_actor_;
   std::unordered_map<ActorInfo, HostTensorQueuePtr> actor_to_host_queue_;
   // The second element of pair represents the output index of op actor corresponding to the device tensor.
   std::unordered_map<DeviceTensorPtr, GraphOutputPair> device_tensor_to_actor_;

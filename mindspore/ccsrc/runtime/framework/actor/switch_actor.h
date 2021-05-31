@@ -67,6 +67,8 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   void Initialize();
   // Add input for all branches.
   void AddCommonInput(const AnfNodePtr &node);
+  // Fetch the input position of the data node.
+  size_t FetchDataNodePosition(const AnfNodePtr &data_node) const;
 
  private:
   friend class GraphScheduler;
@@ -92,8 +94,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   std::vector<AnfNodePtr> input_nodes_;
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
-  // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
-  std::vector<std::pair<size_t, AnfNode *>> branch_device_tensor_store_keys_;
+
   std::vector<std::vector<AnfNodePtr>> branch_total_inputs_;
   std::vector<FuncGraphPtr> branch_func_graph_;
 
