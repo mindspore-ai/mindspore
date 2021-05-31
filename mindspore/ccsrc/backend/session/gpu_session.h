@@ -37,7 +37,7 @@ class GPUSession : public SessionBasic {
   void SyncStream() override;
 
  protected:
-  void UnifyMindIR(const KernelGraphPtr &graph) override { return; }
+  void UnifyMindIR(const KernelGraphPtr &graph) override { SessionBasic::UnifyMindIR(graph); }
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
   void PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph, const std::vector<tensor::TensorPtr> &inputs,

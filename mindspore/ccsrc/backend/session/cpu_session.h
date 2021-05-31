@@ -32,7 +32,7 @@ class CPUSession : public SessionBasic {
   void Init(uint32_t device_id) override;
 
  protected:
-  void UnifyMindIR(const KernelGraphPtr &graph) override { return; }
+  void UnifyMindIR(const KernelGraphPtr &graph) override { SessionBasic::UnifyMindIR(graph); }
   void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *,
                            std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) override;
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
