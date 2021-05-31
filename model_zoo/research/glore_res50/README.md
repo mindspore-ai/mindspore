@@ -228,7 +228,7 @@ sh run_eval.sh ~/dataset/imagenet 0 ~/ckpt/glore_res50_120-1251.ckpt
 | 总时长                 | 10.98小时 |
 | 参数(M)             | 30.5 |
 | 微调检查点| 233.46M（.ckpt文件）|
-| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/glore_res50_r1.2/model_zoo/research/cv/glore_res50) |
+| 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/glore_res50) |
 
 # 随机情况说明
 
