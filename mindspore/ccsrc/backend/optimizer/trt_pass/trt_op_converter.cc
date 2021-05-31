@@ -162,7 +162,7 @@ ConvertResult AddUnaryLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext
   return {true, {layer->getOutput(0)}};
 }
 
-ConvertResult addReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
+ConvertResult AddReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContext> context,
                              nvinfer1::ReduceOperation op_type) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
@@ -292,7 +292,7 @@ MS_TRT_CONVERTER_FUNC_REG(Reciprocal) { return AddUnaryLayer(node, context, nvin
 MS_TRT_CONVERTER_FUNC_REG(Abs) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kABS); }
 MS_TRT_CONVERTER_FUNC_REG(Neg) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kNEG); }
 MS_TRT_CONVERTER_FUNC_REG(Sin) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kSIN); }
-MS_TRT_CONVERTER_FUNC_REG(COS) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kCOS); }
+MS_TRT_CONVERTER_FUNC_REG(Cos) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kCOS); }
 MS_TRT_CONVERTER_FUNC_REG(Tan) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kTAN); }
 MS_TRT_CONVERTER_FUNC_REG(Sinh) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kSINH); }
 MS_TRT_CONVERTER_FUNC_REG(Cosh) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kCOSH); }
@@ -305,11 +305,11 @@ MS_TRT_CONVERTER_FUNC_REG(Ceil) { return AddUnaryLayer(node, context, nvinfer1::
 MS_TRT_CONVERTER_FUNC_REG(Floor) { return AddUnaryLayer(node, context, nvinfer1::UnaryOperation::kFLOOR); }
 
 // Reduce operators
-MS_TRT_CONVERTER_FUNC_REG(ReduceSum) { return addReduceLayer(node, context, nvinfer1::ReduceOperation::kSUM); }
-MS_TRT_CONVERTER_FUNC_REG(ReduceMean) { return addReduceLayer(node, context, nvinfer1::ReduceOperation::kAVG); }
-MS_TRT_CONVERTER_FUNC_REG(ReduceMax) { return addReduceLayer(node, context, nvinfer1::ReduceOperation::kMAX); }
-MS_TRT_CONVERTER_FUNC_REG(ReduceMin) { return addReduceLayer(node, context, nvinfer1::ReduceOperation::kMIN); }
-MS_TRT_CONVERTER_FUNC_REG(ReduceProd) { return addReduceLayer(node, context, nvinfer1::ReduceOperation::kPROD); }
+MS_TRT_CONVERTER_FUNC_REG(ReduceSum) { return AddReduceLayer(node, context, nvinfer1::ReduceOperation::kSUM); }
+MS_TRT_CONVERTER_FUNC_REG(ReduceMean) { return AddReduceLayer(node, context, nvinfer1::ReduceOperation::kAVG); }
+MS_TRT_CONVERTER_FUNC_REG(ReduceMax) { return AddReduceLayer(node, context, nvinfer1::ReduceOperation::kMAX); }
+MS_TRT_CONVERTER_FUNC_REG(ReduceMin) { return AddReduceLayer(node, context, nvinfer1::ReduceOperation::kMIN); }
+MS_TRT_CONVERTER_FUNC_REG(ReduceProd) { return AddReduceLayer(node, context, nvinfer1::ReduceOperation::kPROD); }
 
 // Pooling operators.
 MS_TRT_CONVERTER_FUNC_REG(AvgPool) { return AddPoolingLayer(node, context, nvinfer1::PoolingType::kAVERAGE); }
@@ -321,6 +321,41 @@ MS_TRT_CONVERTER_FUNC_REG(Sigmoid) { return AddActivationLayer(node, context, nv
 MS_TRT_CONVERTER_FUNC_REG(Tanh) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kTANH); }
 MS_TRT_CONVERTER_FUNC_REG(Elu) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kELU); }
 MS_TRT_CONVERTER_FUNC_REG(Softsign) { return AddActivationLayer(node, context, nvinfer1::ActivationType::kSOFTSIGN); }
+
+MS_TRT_CONVERTER_FUNC_REG(ReLU6) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  const std::vector<size_t> &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  nvinfer1::Dims dim;
+  dim.nbDims = SizeToInt(x_shape.size());
+  std::fill(dim.d, dim.d + dim.nbDims, 1);
+
+  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+    std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
+    auto value = static_cast<float *>(weight->data_c());
+    value[0] = coeff;
+
+    auto *layer = context->network()->addConstant(dim, nvinfer1::Weights{nvinfer1::DataType::kFLOAT, value, 1});
+    MS_EXCEPTION_IF_NULL(layer);
+    return layer->getOutput(0);
+  };
+
+  // y = max(0.0, min(6.0, x)
+  auto *c0 = AddConst(0.0f);
+  auto *c1 = AddConst(6.0f);
+  auto *x = inputs[0].tensor();
+  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c1, nvinfer1::ElementWiseOperation::kMIN);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c0, nvinfer1::ElementWiseOperation::kMAX);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {layer->getOutput(0)}};
+}
 
 MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   std::vector<LayerInput> inputs;
@@ -373,17 +408,101 @@ MS_TRT_CONVERTER_FUNC_REG(GeLU) {
   return {true, {layer->getOutput(0)}};
 }
 
+MS_TRT_CONVERTER_FUNC_REG(HSigmoid) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  const std::vector<size_t> &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  nvinfer1::Dims dim;
+  dim.nbDims = SizeToInt(x_shape.size());
+  std::fill(dim.d, dim.d + dim.nbDims, 1);
+
+  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+    std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
+    auto value = static_cast<float *>(weight->data_c());
+    value[0] = coeff;
+
+    auto *layer = context->network()->addConstant(dim, nvinfer1::Weights{nvinfer1::DataType::kFLOAT, value, 1});
+    MS_EXCEPTION_IF_NULL(layer);
+    return layer->getOutput(0);
+  };
+
+  // y = max(0, min(1.0, (x + 3.0)/6.0))
+  auto *c0 = AddConst(0.0f);
+  auto *c1 = AddConst(1.0f);
+  auto *c2 = AddConst(3.0f);
+  auto *c3 = AddConst(6.0f);
+  auto *x = inputs[0].tensor();
+  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c2, nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c3, nvinfer1::ElementWiseOperation::kDIV);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c1, nvinfer1::ElementWiseOperation::kMIN);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c0, nvinfer1::ElementWiseOperation::kMAX);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {layer->getOutput(0)}};
+}
+
+MS_TRT_CONVERTER_FUNC_REG(HSwish) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 1) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  const std::vector<size_t> &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  nvinfer1::Dims dim;
+  dim.nbDims = SizeToInt(x_shape.size());
+  std::fill(dim.d, dim.d + dim.nbDims, 1);
+
+  auto AddConst = [&context, &dim](const float &coeff) -> nvinfer1::ITensor * {
+    std::shared_ptr<tensor::Tensor> weight = context->CreateTempWeight(kNumberTypeFloat32, {1});
+    auto value = static_cast<float *>(weight->data_c());
+    value[0] = coeff;
+
+    auto *layer = context->network()->addConstant(dim, nvinfer1::Weights{nvinfer1::DataType::kFLOAT, value, 1});
+    MS_EXCEPTION_IF_NULL(layer);
+    return layer->getOutput(0);
+  };
+
+  // y = x * (Relu6(x) + 3.0) / 6.0
+  // relu6(x) = min(max(x, 0.0), 6.0)
+  auto *c0 = AddConst(0.0f);
+  auto *c1 = AddConst(3.0f);
+  auto *c2 = AddConst(6.0f);
+  auto *x = inputs[0].tensor();
+  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c0, nvinfer1::ElementWiseOperation::kMAX);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c2, nvinfer1::ElementWiseOperation::kMIN);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c1, nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c2, nvinfer1::ElementWiseOperation::kDIV);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*x, *layer->getOutput(0), nvinfer1::ElementWiseOperation::kPROD);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {layer->getOutput(0)}};
+}
+
 MS_TRT_CONVERTER_FUNC_REG(MatMul) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 2 || !inputs[0].IsTensor() || !inputs[1].IsWeight()) {
+  if (!ret || inputs.size() != 2) {
     MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 2 expected.";
     return {false, {}};
   }
 
   const auto &transpose_a = AnfAlgo::GetNodeAttr<bool>(node, "transpose_a");
   const auto &transpose_b = AnfAlgo::GetNodeAttr<bool>(node, "transpose_b");
-  if (inputs[0].IsTensor() && inputs[1].IsWeight() && !transpose_a && transpose_b) {
+  if (inputs[0].IsTensor() && inputs[1].IsWeight()) {
     // Reshape x from (M, K) to (M, K, 1, 1)
     nvinfer1::Dims unsqueeze_dims = inputs[0].tensor()->getDimensions();
     for (size_t i = 0; i < 2; i++) {
@@ -407,9 +526,15 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
 
     return {true, {squeeze_y->getOutput(0)}};
   } else {
-    // convert weight to tensor and appy addMatrixMultiply
-    MS_LOG(ERROR) << "Operator not implemented: " << node->DebugString();
-    return {false, {}};
+    auto op1 = transpose_a ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+    auto op2 = transpose_b ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+    const std::vector<size_t> &x1_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+    const std::vector<size_t> &x2_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+    nvinfer1::ITensor *x1 = ToTensor(&inputs[0], x1_shape, context);
+    nvinfer1::ITensor *x2 = ToTensor(&inputs[1], x2_shape, context);
+    auto *layer = context->network()->addMatrixMultiply(*x1, op1, *x2, op2);
+    MS_EXCEPTION_IF_NULL(layer);
+    return {true, {layer->getOutput(0)}};
   }
 }
 
@@ -452,36 +577,7 @@ MS_TRT_CONVERTER_FUNC_REG(BatchMatMul) {
   return {true, {layer->getOutput(0)}};
 }
 
-MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
-  std::vector<LayerInput> inputs;
-  bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 2 || !inputs[0].IsTensor() || !inputs[1].IsWeight()) {
-    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
-    return {false, {}};
-  }
-
-  const auto &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  const auto &bias_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
-  const string::size_type &pos = format.find("C");
-  if (pos == std::string::npos || pos >= x_shape.size()) {
-    MS_LOG(ERROR) << "The format " << format << "' invalid";
-    return {false, {}};
-  }
-
-  // Convert Weight to ITensor
-  nvinfer1::Dims unsqueeze_bias_dims;
-  unsqueeze_bias_dims.nbDims = x_shape.size();
-  std::fill(unsqueeze_bias_dims.d, unsqueeze_bias_dims.d + unsqueeze_bias_dims.nbDims, 1);
-  unsqueeze_bias_dims.d[pos] = SizeToInt(bias_shape[0]);
-  nvinfer1::ITensor *bias = context->network()->addConstant(unsqueeze_bias_dims, *inputs[1].weight())->getOutput(0);
-
-  // Create Broadcast Add layer.
-  auto *layer = context->network()->addElementWise(*inputs[0].tensor(), *bias, nvinfer1::ElementWiseOperation::kSUM);
-  MS_EXCEPTION_IF_NULL(layer);
-
-  return {true, {layer->getOutput(0)}};
-}
+MS_TRT_CONVERTER_FUNC_REG(BiasAdd) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kSUM); }
 
 // NoOp
 MS_TRT_CONVERTER_FUNC_REG(Reshape) { return AddReshapeLayer(node, context); }
@@ -739,14 +835,17 @@ MS_TRT_CONVERTER_FUNC_REG(Gather) {
 MS_TRT_CONVERTER_FUNC_REG(Cast) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 1 || !inputs[0].IsTensor()) {
+  if (!ret || inputs.size() != 1) {
     MS_LOG(ERROR) << "Get inputs failed. Input num: " << inputs.size();
     return {false, {}};
   }
 
+  const std::vector<size_t> &input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  nvinfer1::ITensor *input = ToTensor(&inputs[0], input_shape, context);
+
   const TypeId &dst_type = AnfAlgo::GetOutputInferDataType(node, 0);
   auto trt_type = TrtUtils::MsDtypeToTrtDtype(dst_type);
-  auto *layer = context->network()->addIdentity(*inputs[0].tensor());
+  auto *layer = context->network()->addIdentity(*input);
   layer->setOutputType(0, trt_type);
   return {true, {layer->getOutput(0)}};
 }

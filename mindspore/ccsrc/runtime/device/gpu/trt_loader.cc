@@ -26,9 +26,9 @@ namespace device {
 namespace gpu {
 TrtLoader::TrtLoader()
     : nvinfer_loaded_(false), nvinfer_handle_(nullptr), create_infer_builder_(nullptr), create_infer_runtime_(nullptr) {
-  nvinfer_handle_ = dlopen("libnvinfer.so", RTLD_NOW | RTLD_LOCAL);
+  nvinfer_handle_ = dlopen("libnvinfer.so.7", RTLD_NOW | RTLD_LOCAL);
   if (nvinfer_handle_ == nullptr) {
-    MS_LOG(WARNING) << "Can not open libnvinfer.so. " << dlerror()
+    MS_LOG(WARNING) << "Can not open libnvinfer.so.7 " << dlerror()
                     << ". Install Tensor-RT and export LD_LIBRARY_PATH=${TENSORRT_HOME}/lib:$LD_LIBRARY_PATH.";
     return;
   }
