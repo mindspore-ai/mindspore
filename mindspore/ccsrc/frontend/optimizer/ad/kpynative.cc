@@ -665,8 +665,8 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   if (bprop_app_abstract != nullptr) {
     abstract_tuple = bprop_app_abstract->cast<abstract::AbstractTuplePtr>();
     if (abstract_tuple->size() != (cnode_primal->size() - 1)) {
-      MS_LOG(EXCEPTION) << "AbstractTuple size: " << abstract_tuple->ToString()
-                        << " not match primal cnode input size: " << cnode_primal->DebugString();
+      MS_LOG(WARNING) << "AbstractTuple size: " << abstract_tuple->ToString()
+                      << " not match primal cnode input size: " << cnode_primal->DebugString();
     }
   }
   for (size_t i = 1; i < cnode_primal->size(); i++) {
@@ -986,6 +986,8 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
     need_grad_weights_.emplace(weight);
     auto input_w = weight->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(input_w);
+    // Use name to match weight parameter in high order
+    p->set_name(input_w->name());
     p->set_default_param(input_w->default_param());
   }
 }
