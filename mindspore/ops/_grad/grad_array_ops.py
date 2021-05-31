@@ -1055,3 +1055,14 @@ def get_bprop_unique(self):
         return (dx,)
 
     return bprop
+
+@bprop_getters.register(P.MaskedSelect)
+def get_bprop_masked_select(self):
+    """Generate bprop for MaskedSelect"""
+    op = G.MaskedSelectGrad()
+
+    def bprop(x, mask, dout):
+        dx = op(x, mask, dout)
+        return (dx,)
+
+    return bprop

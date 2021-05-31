@@ -236,5 +236,36 @@ void TransposeIterator::GenNextPos() {
     }
   }
 }
+
+std::vector<size_t> CPUKernelUtils::GetBroadcastShape(const std::vector<size_t> &x, const std::vector<size_t> &y) {
+  size_t x_len = x.size();
+  size_t y_len = y.size();
+  size_t length = x_len < y_len ? x_len : y_len;
+  std::vector<size_t> broadcast_shape;
+  std::vector<size_t> broadcast_shape_back;
+  for (int i = -length; i < 0; ++i) {
+    if (x[x_len + i] == 1) {
+      broadcast_shape_back.push_back(y[y_len + i]);
+    } else if (y[y_len + i] == 1) {
+      broadcast_shape_back.push_back(x[x_len + i]);
+    } else if (x[x_len + i] == y[y_len + i]) {
+      broadcast_shape_back.push_back(x[x_len + i]);
+    }
+  }
+  if (length == x_len) {
+    for (size_t i = 0; i < y_len - length; ++i) {
+      broadcast_shape.push_back(y[i]);
+    }
+  } else {
+    for (size_t i = 0; i < x_len - length; ++i) {
+      broadcast_shape.push_back(x[i]);
+    }
+  }
+  for (size_t i = 0; i < length; ++i) {
+    broadcast_shape.push_back(broadcast_shape_back[i]);
+  }
+  return broadcast_shape;
+}
+
 }  // namespace kernel
 }  // namespace mindspore

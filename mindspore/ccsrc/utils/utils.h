@@ -32,6 +32,7 @@ namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
 constexpr auto kConcatOpName = "Concat";
 constexpr auto kUniqueOpName = "Unique";
+constexpr auto kMaskedSelectOpName = "MaskedSelect";
 constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
 constexpr auto kCTCGreedyDecoderOpName = "CTCGreedyDecoder";
 constexpr auto kFour2FiveOpName = "Four2Five";
@@ -555,7 +556,8 @@ const std::set<std::string> kHWSpecialFormatSet = {
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
 const std::set<std::string> kComputeDepend = {kUniqueOpName,      kComputeAccidentalHitsOpName, kSubAndFilterOpName,
-                                              kPadAndShiftOpName, kCTCGreedyDecoderOpName,      kDropoutGenMaskOpName};
+                                              kPadAndShiftOpName, kCTCGreedyDecoderOpName,      kDropoutGenMaskOpName,
+                                              kMaskedSelectOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

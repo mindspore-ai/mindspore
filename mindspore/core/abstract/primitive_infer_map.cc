@@ -96,6 +96,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSplit, {InferImplSplit, nullptr, true}},
     {prim::kPrimSequenceMask, {InferImplSequenceMask, nullptr, true}},
     {prim::kPrimSort, {InferImplSort, nullptr, true}},
+    {prim::kPrimMaskedSelect, {InferImplMaskedSelect, nullptr, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, nullptr, true}},
     {prim::kPrimMakeList, {InferImplMakeList, nullptr, true}},
