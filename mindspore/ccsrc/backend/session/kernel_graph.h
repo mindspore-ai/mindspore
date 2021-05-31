@@ -83,6 +83,8 @@ class KernelGraph : public FuncGraph {
     input_nodes_ = graph.input_nodes_;
     pre_graphs_ = graph.pre_graphs_;
     post_graphs_ = graph.post_graphs_;
+    allreduce_from_send_recv_pairs_ = graph.allreduce_from_send_recv_pairs_;
+    allreduce_to_send_recv_pairs_ = graph.allreduce_to_send_recv_pairs_;
     size_t pre_graph_finished_count = graph.pre_graph_finished_count_;
     pre_graph_finished_count_ = pre_graph_finished_count;
     size_t post_graph_finished_count = graph.post_graph_finished_count_;
@@ -284,6 +286,20 @@ class KernelGraph : public FuncGraph {
   }
   // end of handle graph dependency
 
+  // The interface of allreduce send/recv pairs map.
+  void InsertFromSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
+    allreduce_from_send_recv_pairs_[allreduce] = send_recv_pair;
+  }
+  void InsertToSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
+    allreduce_to_send_recv_pairs_[allreduce] = send_recv_pair;
+  }
+  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() {
+    return allreduce_from_send_recv_pairs_;
+  }
+  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() {
+    return allreduce_to_send_recv_pairs_;
+  }
+
   uint32_t label_num() const { return label_num_; }
   void set_label_num(uint32_t num) { label_num_ = num; }
   // The graphs has recursion.
@@ -377,6 +393,10 @@ class KernelGraph : public FuncGraph {
   std::vector<AnfNodePtr> input_nodes_;
   std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> pre_graphs_;
   std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> post_graphs_;
+  // The send/recv pairs inserted for allreduce, the key is allreduce kernel, the first of pair is send node, the second
+  // of pair is recv node.
+  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_from_send_recv_pairs_;
+  std::unordered_map<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_to_send_recv_pairs_;
   std::atomic<size_t> pre_graph_finished_count_{0};
   std::atomic<size_t> post_graph_finished_count_{0};
   bool first_step_{true};

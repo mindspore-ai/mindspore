@@ -663,6 +663,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
         LinkDataArrow(kernel_actor, actor_set, graph, from_kernel_with_output_idx, to_kernel_with_input_idx, tensor);
       }
     }
+    // Link the control arrows for allreduce kernel by the send/recv nodes in the kernel graph.
+    LinkControlArrowBySendRecvNodes(graph);
   }
 
   // Link the control arrows of kernel actors.
@@ -1002,6 +1004,7 @@ void GraphScheduler::LinkDataArrowForDeviceDSActor(DeviceQueueDataSourceActor *f
     auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
     from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
+    to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
 
     // Update the reference count of device tensor.
     UpdateRefCount(from_kernel, from_output_index);
@@ -1029,6 +1032,7 @@ void GraphScheduler::LinkDataArrowForHostDSActor(HostQueueDataSourceActor *from_
     auto op_arrow = std::make_shared<DataArrow>(position, to_aid, to_input_index);
     from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
+    to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
 
     // Update the reference count of device tensor.
     UpdateRefCount(from_actor->data_nodes_[position], from_output_index);
@@ -1068,6 +1072,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(KernelActor *from_actor, Kernel
     auto op_arrow = std::make_shared<DataArrow>(from_output_index, to_aid, to_input_index);
     from_actor->output_data_arrows_.emplace_back(op_arrow);
     to_actor->input_datas_num_++;
+    to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
 
     // Update the reference count of device tensor.
     UpdateRefCount(from_kernel, from_output_index);
@@ -1239,6 +1244,59 @@ void GraphScheduler::LinkControlArrowBySkippedNode(KernelActor *to_actor, const 
                  << ", from actor: " << from_actor->GetAID().Name() << ", to actor: " << to_actor->GetAID().Name();
     from_actor->output_control_arrows_.emplace_back(to_aid);
     to_actor->input_controls_num_++;
+  }
+}
+
+void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (auto &from_iter : graph->allreduce_from_send_recv_pairs()) {
+    auto to_allreduce_node = from_iter.first;
+    MS_LOG(INFO) << "Link control arrow for to_allreduce_node: " << to_allreduce_node->fullname_with_scope();
+    auto from_send_node = from_iter.second.first;
+    auto from_recv_node = from_iter.second.second;
+    auto to_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(to_allreduce_node->fullname_with_scope()));
+    auto from_send_actor = dynamic_cast<KernelActor *>(FetchActor(from_send_node->fullname_with_scope()));
+    auto from_recv_actor = dynamic_cast<KernelActor *>(FetchActor(from_recv_node->fullname_with_scope()));
+
+    // inputs of to_allreduce_actor  --> from_send_actor
+    for (auto &input_aid : to_allreduce_actor->input_data_arrow_aids_) {
+      auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.Name()));
+      input_actor->output_control_arrows_.emplace_back(from_send_actor->GetAID());
+      from_send_actor->input_controls_num_++;
+    }
+
+    // from_send_actor --> from_recv_actor
+    from_send_actor->output_control_arrows_.emplace_back(from_recv_actor->GetAID());
+    from_recv_actor->input_controls_num_++;
+
+    // from_recv_actor --> to_allreduce_actor
+    from_recv_actor->output_control_arrows_.emplace_back(to_allreduce_actor->GetAID());
+    to_allreduce_actor->input_controls_num_++;
+  }
+
+  for (auto &to_iter : graph->allreduce_to_send_recv_pairs()) {
+    auto from_allreduce_node = to_iter.first;
+    MS_LOG(INFO) << "Link control arrow for from_allreduce_node: " << from_allreduce_node->fullname_with_scope();
+    auto to_send_node = to_iter.second.first;
+    auto to_recv_node = to_iter.second.second;
+    auto from_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(from_allreduce_node->fullname_with_scope()));
+    auto to_send_actor = dynamic_cast<KernelActor *>(FetchActor(to_send_node->fullname_with_scope()));
+    auto to_recv_actor = dynamic_cast<KernelActor *>(FetchActor(to_recv_node->fullname_with_scope()));
+
+    // from_allreduce_actor  --> to_send_actor
+    from_allreduce_actor->output_control_arrows_.emplace_back(to_send_actor->GetAID());
+    to_send_actor->input_controls_num_++;
+
+    // to_send_actor --> to_recv_actor
+    to_send_actor->output_control_arrows_.emplace_back(to_recv_actor->GetAID());
+    to_recv_actor->input_controls_num_++;
+
+    // to_recv_actor --> outputs of from_allreduce_actor
+    for (auto &output_data_arrow : from_allreduce_actor->output_data_arrows_) {
+      auto output_actor = dynamic_cast<KernelActor *>(FetchActor(output_data_arrow->to_op_id_.Name()));
+      to_recv_actor->output_control_arrows_.emplace_back(output_actor->GetAID());
+      output_actor->input_controls_num_++;
+    }
   }
 }
 

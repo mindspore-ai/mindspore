@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <utility>
 #include "runtime/device/gpu/gpu_common.h"
 #include "runtime/device/gpu/kernel_info_setter.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
@@ -155,6 +156,8 @@ void InsertStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_
       if (!GenSendRecvCNodesForAllReduce(kernel_graph, mock_send_node, mock_recv_node, &send_node, &recv_node)) {
         MS_LOG(EXCEPTION) << "Generating CNodes for send and recv failed. Stream switch type: kAllReduceStreamSwitch";
       }
+
+      CacheSendRecvCNodesForAllReduce(kernel_graph, mock_send_node, mock_recv_node, send_node, recv_node);
     }
     // Step 2: Sort send and recv CNodes by offset.
     ordered_stream_switch_nodes.insert({send_node_offset, send_node});
@@ -205,6 +208,20 @@ CNodePtr CreateStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &ker
   node->set_abstract(abstract_none);
   SetKernelInfo(node);
   return node;
+}
+
+void CacheSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                                     const CNodePtr &mock_send_node, const CNodePtr &mock_recv_node,
+                                     const CNodePtr &send_node, const CNodePtr &recv_node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  std::pair<CNodePtr, CNodePtr> send_recv_nodes(send_node, recv_node);
+  if (AnfAlgo::GetCNodeName(mock_send_node) == kAllReduceOpName) {
+    kernel_graph->InsertToSendRecvPair(mock_send_node, send_recv_nodes);
+  }
+
+  if (AnfAlgo::GetCNodeName(mock_recv_node) == kAllReduceOpName) {
+    kernel_graph->InsertFromSendRecvPair(mock_recv_node, send_recv_nodes);
+  }
 }
 }  // namespace gpu
 }  // namespace device

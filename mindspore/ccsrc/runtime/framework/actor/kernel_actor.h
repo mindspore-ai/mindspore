@@ -120,6 +120,10 @@ class KernelActor : public DebugAwareActor {
   // The real input number of kernel launch.
   size_t real_input_num_;
 
+  // The dependent input actors.
+  std::vector<AID> input_data_arrow_aids_;
+  std::vector<AID> input_control_arrow_aids_;
+
   // Pair<index, anfNode> points to the dependent device tensor store, anfNode is the key of the device tensor store.
   std::vector<std::pair<size_t, AnfNode *>> device_tensor_store_keys_;
 
