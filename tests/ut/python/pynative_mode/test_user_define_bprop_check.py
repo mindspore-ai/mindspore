@@ -207,6 +207,6 @@ def test_user_define_bprop_check_number():
     context.set_context(mode=context.PYNATIVE_MODE, check_bprop=True)
     net = Net()
     grad_net = GradNet(net)
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(TypeError) as ex:
         ret = grad_net(x, y, sens)
     assert "For user define net bprop, the gradients number: 1 is not equal to the args number: 2." in str(ex.value)
