@@ -51,6 +51,8 @@ if __name__ == "__main__":
     ds_train = create_dataset(os.path.join(args.data_path, "train"), cfg.batch_size, 1)
     step_size = ds_train.get_dataset_size()
 
+    if args.device_target == "GPU":
+        context.set_context(enable_graph_kernel=True)
     # define fusion network
     network = LeNet5Fusion(cfg.num_classes)
 
