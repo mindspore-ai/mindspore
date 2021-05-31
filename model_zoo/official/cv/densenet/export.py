@@ -12,41 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export checkpoint file into air, onnx, mindir models"""
-import argparse
-import numpy as np
 
+"""export checkpoint file into air, onnx, mindir models
+   Suggest run as python export.py --file_name [file_name] --ckpt_files [ckpt path] --file_format [file format]
+"""
+
+import numpy as np
 from mindspore.common import dtype as mstype
 from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
+from src.model_utils.config import config
 
-parser = argparse.ArgumentParser(description="densenet export")
 
-parser.add_argument("--net", type=str, default='', help="Densenet Model, densenet100 or densenet121")
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=32, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="densenet", help="output file name.")
-parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
 
-if args.net == "densenet100":
-    from src.config import config_100 as config
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
+
+if config.net == "densenet100":
     from src.network.densenet import DenseNet100 as DenseNet
 else:
-    from src.config import config_121 as config
     from src.network.densenet import DenseNet121 as DenseNet
+
 
 if __name__ == "__main__":
     network = DenseNet(config.num_classes)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_files)
 
     param_dict_new = {}
     for key, value in param_dict.items():
@@ -62,7 +55,7 @@ if __name__ == "__main__":
     network.add_flags_recursive(fp16=True)
     network.set_train(False)
 
-    shape = [int(args.batch_size), 3] + [int(config.image_size.split(",")[0]), int(config.image_size.split(",")[1])]
+    shape = [int(config.batch_size), 3] + [int(config.image_size.split(",")[0]), int(config.image_size.split(",")[1])]
     input_data = Tensor(np.zeros(shape), mstype.float32)
 
-    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
+    export(network, input_data, file_name=config.file_name, file_format=config.file_format)
