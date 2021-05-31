@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace lite {
 namespace {
-int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
+int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bool weight_narrow_range,
+                           int32_t act_numbits, int32_t weight_numbits) {
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quant_param;
@@ -40,8 +41,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
     auto *max_buf = static_cast<float *>(input_max_ptr->data_c());
     quant_param.min = *min_buf;
     quant_param.max = *max_buf;
-    auto ret =
-      lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, narrow_range, numbits);
+    auto ret = lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, input_narrow_range,
+                                                  act_numbits);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Can't calculate quant parameters";
       return ret;
@@ -64,8 +65,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t 
       schema::QuantParamT tmp_quant_param;
       tmp_quant_param.min = *min_buf;
       tmp_quant_param.max = *max_buf;
-      auto ret =
-        lite::quant::CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max, true, numbits);
+      auto ret = lite::quant::CalQuantizationParams(&tmp_quant_param, tmp_quant_param.min, tmp_quant_param.max,
+                                                    weight_narrow_range, weight_numbits);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Can't calculate quant parameters";
         return ret;
@@ -104,39 +105,77 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
   return lite::RET_OK;
 }
 
-int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
-  auto narrow_range = prim->GetAttr("narrow_range");
-  bool narrow_range_param = false;
+int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str, bool *narrow_range_param) {
+  auto narrow_range = prim->GetAttr(narrow_range_str);
   if (narrow_range != nullptr) {
     if (utils::isa<tensor::TensorPtr>(narrow_range)) {
       auto narrow_range_tensor = narrow_range->cast<tensor::TensorPtr>();
-      narrow_range_param = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
+      *narrow_range_param = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
     } else if (utils::isa<ImmTraits<bool>::type>(narrow_range)) {
-      narrow_range_param = GetValue<bool>(narrow_range);
+      *narrow_range_param = GetValue<bool>(narrow_range);
     } else {
       MS_LOG(ERROR) << "valueptr is invalid.";
       return lite::RET_ERROR;
     }
   }
-  auto num_bits = prim->GetAttr("num_bits");
-  int32_t num_bits_param = 8;
+  return lite::RET_OK;
+}
+
+int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *num_bits_param) {
+  auto num_bits = prim->GetAttr(num_bits_str);
   if (num_bits != nullptr) {
     if (utils::isa<tensor::TensorPtr>(num_bits)) {
       auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
-      num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
+      *num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
     } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
-      num_bits_param = GetValue<int64_t>(num_bits);
+      *num_bits_param = GetValue<int64_t>(num_bits);
     } else {
       MS_LOG(ERROR) << "valueptr is invalid.";
       return lite::RET_ERROR;
     }
   }
-  auto status = ConvertInputQuantParam(prim, narrow_range_param, num_bits_param);
+  return lite::RET_OK;
+}
+
+int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
+  bool input_narrow_range_param = false;
+  auto status = GetNarrowRange(prim, "input_narrow_range", &input_narrow_range_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get input narrow range failed.";
+    return status;
+  }
+  bool weight_narrow_range_param = true;
+  status = GetNarrowRange(prim, "weight_narrow_range", &weight_narrow_range_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get weight narrow range failed.";
+    return status;
+  }
+  bool output_narrow_range_param = false;
+  status = GetNarrowRange(prim, "output_narrow_range", &output_narrow_range_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get output narrow range failed.";
+    return status;
+  }
+
+  int32_t act_num_bits_param = 8;
+  status = GetNumBits(prim, "act_num_bits", &act_num_bits_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get activation num_bits failed.";
+    return status;
+  }
+  int32_t weight_num_bits_param = 8;
+  status = GetNumBits(prim, "weight_num_bits", &weight_num_bits_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get weight num_bits failed.";
+    return status;
+  }
+  status = ConvertInputQuantParam(prim, input_narrow_range_param, weight_narrow_range_param, act_num_bits_param,
+                                  weight_num_bits_param);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "compute int quant param failed.";
     return status;
   }
-  status = ConvertOutputQuantParam(prim, narrow_range_param, num_bits_param);
+  status = ConvertOutputQuantParam(prim, output_narrow_range_param, act_num_bits_param);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "compute output quant param failed.";
     return status;

@@ -175,6 +175,11 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         MS_LOG(ERROR) << "compute tensor to int8 prechannel failed.";
         return RET_ERROR;
       }
+      int bit_num = tensor->quantParams.front()->numBits;
+      if (DoBitPack(bit_num, tensor.get()) != RET_OK) {
+        MS_LOG(ERROR) << "bit pack failed.";
+        return RET_ERROR;
+      }
       index++;
       continue;
     }
@@ -183,6 +188,11 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
     if (quantParam->dstDtype == TypeId::kNumberTypeInt8 || quantParam->dstDtype == TypeId::kNumberTypeUInt8 ||
         quantParam->dstDtype == TypeId::kNumberTypeFloat32 || quantParam->dstDtype == TypeId::kNumberTypeFloat) {
       status = ComputeDataToInt8(tensor, index);
+      int bit_num = tensor->quantParams.front()->numBits;
+      if (DoBitPack(bit_num, tensor.get()) != RET_OK) {
+        MS_LOG(ERROR) << "bit pack failed.";
+        return RET_ERROR;
+      }
     } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
       // quant bias data
       status = ComputeDataToInt32(tensor);

@@ -138,6 +138,10 @@ def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMaxObserver`."""
     minq = cell.minq.data.asnumpy()
     maxq = cell.maxq.data.asnumpy()
+    # make sure maxq > 0 and minq <= 0
+    if cell.mode == 'LEARNED_SCALE':
+        maxq = np.abs(maxq)
+        minq = -np.abs(minq)
 
     scale, zp = cal_quantization_params(
         minq, maxq, data_type,

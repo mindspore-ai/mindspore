@@ -38,7 +38,7 @@ if [ $# == 6 ]; then
     device_id=$6
 fi
 
-echo "mindir name: "$model
+echo "air name: "$model
 echo "dataset path: "$data_path
 echo "annotation path: "$anno_path
 echo "image shape path: "$image_shape_path

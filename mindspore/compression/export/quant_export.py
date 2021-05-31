@@ -23,14 +23,162 @@ from ..._checkparam import Validator
 from ...common import Tensor
 from ...common import dtype as mstype
 from ...common.api import _executor
+from ...common.parameter import Parameter
+from ...nn import Cell
 from ...nn.layer import quant
 from ...ops import operations as P
+from ...ops import functional as F
 from ...ops.operations import _inner_ops as inner
 from ..quant import quant_utils
 from ..quant.qat import _AddFakeQuantInput, _AddFakeQuantAfterSubCell
 
 
 __all__ = ["ExportToQuantInferNetwork"]
+
+class QuantBlock(Cell):
+    r"""
+    A quant block of Conv/Dense, activation layer for Ascend deploy.
+
+    Calculate Conv or Dense in Int8, with Quant and DeQuant.
+
+    Notes:
+        This block is only for deploy, and not trainable.
+
+    Args:
+        in_channels (int): The number of channels in the input space.
+        out_channels (int): The number of channels in the output space.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
+            is same as input x. The values of str refer to the function `initializer`. Default: 'normal'.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
+            same as input x. The values of str refer to the function `initializer`. Default: 'zeros'.
+        has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
+        activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
+        batchnorm (bool): Specifies to used batchnorm or not. Default: None.
+        activation (string): Specifies activation type. The optional values are as following:
+            'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
+            'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+
+    Outputs:
+        Tensor of shape :math:`(N, out\_channels)`.
+    """
+
+    def __init__(self,
+                 core_op,
+                 weight,
+                 quant_op,
+                 dequant_op,
+                 dequant_scale,
+                 bias=None,
+                 activation=None):
+        super(QuantBlock, self).__init__()
+        self.core_op = core_op
+        self.weight = weight
+        self.quant = quant_op
+        self.dequant = dequant_op
+        self.dequant_scale = dequant_scale
+        self.bias = bias
+        self.has_bias = bias is not None
+        self.activation = activation
+        self.has_act = activation is not None
+        self.bias_add = P.BiasAdd()
+        self.sub = P.Sub()
+        self.weight_offset = Parameter(np.zeros(shape=weight.shape, dtype=np.int8), name='weight_offset')
+
+    def construct(self, x):
+        x = self.quant(x)
+        if self.has_bias:
+            weight = self.sub(self.weight, self.weight_offset)
+            x = self.core_op(x, weight)
+            x = self.bias_add(x, self.bias)
+        else:
+            x = self.core_op(x, self.weight)
+        x = self.dequant(x, self.dequant_scale)
+        x = F.cast(x, mstype.float32)
+        if self.has_act:
+            x = self.activation(x)
+        return x
+
+    def extend_repr(self):
+        s = f'quant={self.quant}, core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
+        if self.has_bias:
+            s += f', bias=shape[{self.bias.shape}]'
+        if self.has_act:
+            s += f', activation={self.activation}'
+        s += f', dequant={self.dequant}'
+        return s
+
+
+class QuantMindirBlock(Cell):
+    """A quant binary block of Conv/Dense, activation layer for export MINDIR model.
+
+       Args:
+        core_op (Cell): The operation cell.
+        weight (Tensor): The weight of the cell.
+        bias (Tensor): The bias of the cell. Default: None.
+        activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
+        param_dict (dict): The information of the cell.
+    """
+
+    def __init__(self,
+                 core_op,
+                 weight,
+                 bias=None,
+                 activation=None,
+                 param_dict=None):
+
+        super(QuantMindirBlock, self).__init__()
+        self.core_op = core_op
+        if activation is not None:
+            self.core_op.add_prim_attr("activation_name", activation.__class__.__name__)
+        self.core_op.add_prim_attr("filter_maxq", Tensor(param_dict["filter_maxq"]))
+        self.core_op.add_prim_attr("filter_minq", Tensor(param_dict["filter_minq"]))
+        if param_dict["output_maxq"] is not None:
+            self.core_op.add_prim_attr("output_maxq", Tensor(param_dict["output_maxq"]))
+            self.core_op.add_prim_attr("output_minq", Tensor(param_dict["output_minq"]))
+        self.core_op.add_prim_attr("symmetric", Tensor(param_dict["symmetric"]))
+        if hasattr(core_op, 'pad_mode'):
+            self.core_op.add_prim_attr("pad_mode", core_op.pad_mode)
+        self.core_op.add_prim_attr("act_num_bits", Tensor(8))
+        self.core_op.add_prim_attr("weight_num_bits", Tensor(param_dict["weight_num_bits"]))
+        self.core_op.add_prim_attr("weight_narrow_range", Tensor(param_dict["weight_narrow_range"]))
+        if param_dict["input_narrow_range"] is not None:
+            self.core_op.add_prim_attr("input_narrow_range", Tensor(param_dict["input_narrow_range"]))
+        if param_dict["output_narrow_range"] is not None:
+            self.core_op.add_prim_attr("output_narrow_range", Tensor(param_dict["output_narrow_range"]))
+        if param_dict["input_maxq"] == 'None':
+            self.core_op.add_prim_attr("mean", Tensor(param_dict["mean"]))
+            self.core_op.add_prim_attr("std_dev", Tensor(param_dict["std_dev"]))
+        elif param_dict["input_maxq"] is not None:
+            self.core_op.add_prim_attr("input_maxq", Tensor(param_dict["input_maxq"]))
+            self.core_op.add_prim_attr("input_minq", Tensor(param_dict["input_minq"]))
+
+        self.weight = weight
+        self.bias = bias
+        self.has_bias = bias is not None
+        self.activation = activation
+        self.has_act = activation is not None
+        self.bias_add = P.BiasAdd()
+
+    def construct(self, x):
+        if self.has_bias:
+            x = self.core_op(x, self.weight)
+            x = self.bias_add(x, self.bias)
+        else:
+            x = self.core_op(x, self.weight)
+        if self.has_act:
+            x = self.activation(x)
+        return x
+
+    def extend_repr(self):
+        s = f'core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
+        if self.has_bias:
+            s += f', bias=shape[{self.bias.shape}]'
+        if self.has_act:
+            s += f', activation={self.activation}'
+        return s
 
 class ExportToQuantInferNetwork:
     """
@@ -92,15 +240,20 @@ class ExportToQuantInferNetwork:
         param_dict["output_minq"] = None
         param_dict["input_maxq"] = None
         param_dict["input_minq"] = None
+        param_dict["input_narrow_range"] = None
+        param_dict["output_narrow_range"] = None
+        param_dict["weight_narrow_range"] = cell_core.fake_quant_weight.narrow_range
         param_dict["mean"] = self.mean
         param_dict["std_dev"] = self.std_dev
         param_dict["symmetric"] = cell_core.fake_quant_weight.symmetric
+        param_dict["weight_num_bits"] = cell_core.fake_quant_weight.num_bits
 
         scale_w, zp_w, param_dict["filter_maxq"], param_dict["filter_minq"] = \
             quant_utils.scale_zp_max_min_from_fake_quant_cell(cell_core.fake_quant_weight, np_type)
         if fake_quant_a_out is not None:
             _, _, param_dict["output_maxq"], param_dict["output_minq"] = \
                 quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_out, np_type)
+            param_dict["output_narrow_range"] = fake_quant_a_out.narrow_range
 
         info = self.quant_info_table.get(w_minq_name, None)
         if not info:
@@ -120,6 +273,7 @@ class ExportToQuantInferNetwork:
 
                 scale_a_in, zp_a_in, param_dict["input_maxq"], param_dict["input_minq"] = \
                     quant_utils.scale_zp_max_min_from_fake_quant_cell(fake_quant_a_in, np_type)
+                param_dict["input_narrow_range"] = fake_quant_a_in.narrow_range
         else:
             # skip quant layer
             scale_a_in, zp_a_in = 1.0, 0.0
@@ -175,9 +329,9 @@ class ExportToQuantInferNetwork:
         if bias_b is not None:
             bias_b = Tensor(bias_b, mstype.float32)
         if self.is_mindir:
-            block = quant.QuantMindirBlock(op_core, weight_b, bias_b, activation, param_dict)
+            block = QuantMindirBlock(op_core, weight_b, bias_b, activation, param_dict)
         else:
-            block = quant.QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
+            block = QuantBlock(op_core, weight, quant_op, dequant_op, scale_deq, bias, activation)
         return block
 
     def _add_output_min_max_for_op(self, origin_op, fake_quant_cell):

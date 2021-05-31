@@ -36,7 +36,7 @@ if [ $# == 4 ]; then
     device_id=$4
 fi
 
-echo "mindir name: "$model
+echo "air name: "$model
 echo "dataset path: "$data_path
 echo "label path: "$label_path
 echo "device id: "$device_id
