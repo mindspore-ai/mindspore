@@ -31,14 +31,11 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void GenIndex(size_t num, size_t *idx1, size_t *idx2);
-  void Broadcast(T *broadcastedInput1, T *broadcastedInput2, T *input1, T *input2);
+  void GenIndex(size_t num, std::vector<size_t> *idx);
   void Less(const T *input1, const T *input2, bool *out);
   void Equal(const T *input1, const T *input2, bool *out);
   void NotEqual(const T *input1, const T *input2, bool *out);
