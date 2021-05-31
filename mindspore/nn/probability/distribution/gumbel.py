@@ -122,14 +122,14 @@ class Gumbel(TransformedDistribution):
         return "Gumbel"
 
     def _get_dist_args(self, loc=None, scale=None):
-        if loc is not None:
-            self.checktensor(loc, 'loc')
-        else:
-            loc = self.loc
-        if scale is not None:
-            self.checktensor(scale, 'scale')
-        else:
+        if scale is None:
             scale = self.scale
+        else:
+            self.checktensor(scale, 'scale')
+        if loc is None:
+            loc = self.loc
+        else:
+            self.checktensor(loc, 'loc')
         return loc, scale
 
     def _mean(self):
