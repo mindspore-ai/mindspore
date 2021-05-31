@@ -4814,7 +4814,7 @@ class ReverseSequence(PrimitiveWithInfer):
         TypeError: If `seq_dim` or `batch_dim` is not an int.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
