@@ -35,11 +35,13 @@ from ..cell import Cell
 
 __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 
+
 @constexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
         raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
     return True
+
 
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
@@ -458,6 +460,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
     OPERATOR_SUM = 'SUM'
     OPERATOR_MEAN = 'MEAN'
     OPERATOR_MAX = 'MAX'
+
     def __init__(self, vocab_size, embedding_size, field_size, param_init='normal', target='CPU',
                  slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM'):
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,

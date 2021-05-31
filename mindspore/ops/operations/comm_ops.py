@@ -48,6 +48,7 @@ target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
 
 
 def check_hcom_group_valid(group):
+    """Check if hcom group is valid."""
     if context.get_context("mode") == context.PYNATIVE_MODE and \
             context.get_context("device_target") == "Ascend" and \
             group != GlobalComm.WORLD_COMM_GROUP:

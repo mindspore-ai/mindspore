@@ -22,6 +22,7 @@ from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.

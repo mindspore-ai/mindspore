@@ -86,6 +86,7 @@ class _MathBinaryOp(_BinaryOp):
 
     @staticmethod
     def do_infer_dtype(x_dtype, y_dtype, valid_dtype=mstype.number_type, prim_name=None):
+        """Staticmethod of infer dtype for _MathBinaryOp."""
         args_type = {"x": x_dtype, "y": y_dtype}
         validator.check_tensors_dtypes_same_and_valid(args_type, valid_dtype, prim_name)
         return x_dtype
@@ -810,6 +811,7 @@ class MatMul(PrimitiveWithCheck):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
 
     def check_shape_size(self, x1, x2):
+        """Check the shape size of inputs for MatMul."""
         if len(x1) != 2 or len(x2) != 2:
             raise ValueError('P.MatMul inputs x1, x2 should have the same dimension size and '
                              + f'equal to 2, while x1 size is ({len(x1)}) and x2 size is ({len(x2)}).')
@@ -1490,6 +1492,7 @@ class Square(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
 
     def infer_value(self, x):
+        """Infer the value of input for Square."""
         if x is not None:
             x = x.asnumpy()
             out = x * x
@@ -1577,6 +1580,7 @@ class Sqrt(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("x", x_type, mstype.number_type, self.name)
 
     def infer_value(self, x):
+        """Infer the value of input for Sqrt."""
         if x is not None:
             x = x.asnumpy()
             out = np.sqrt(x)
@@ -2810,6 +2814,7 @@ class _LogicBinaryOp(_BinaryOp):
 
     @staticmethod
     def do_infer_dtype(x_dtype, y_dtype, valid_type=mstype.number_type, prim_name=None):
+        """Staticmethod of infer dtype for _LogicBinaryOp."""
         args_dtype = {"x": x_dtype, "y": y_dtype}
         validator.check_tensors_dtypes_same_and_valid(args_dtype, valid_type, prim_name)
         return mstype.tensor_type(mstype.bool_)

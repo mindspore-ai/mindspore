@@ -47,16 +47,19 @@ SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 
 @constexpr
 def raise_value_error(msg):
+    """Constexpr for raise_value_error."""
     raise ValueError(msg)
 
 
 @constexpr
 def raise_index_error(msg):
+    """Constexpr for raise_index_error."""
     raise IndexError(msg)
 
 
 @constexpr
 def raise_type_error(msg):
+    """Constexpr for raise_type_error."""
     raise TypeError(msg)
 
 
@@ -70,11 +73,13 @@ def check_equal(param1, param2, msg="{},{}"):
 
 @constexpr
 def make_empty_slice():
+    """Creates a empty slice."""
     return slice(None, None, None)
 
 
 @constexpr
 def make_tensor(data, data_type=mstype.int64, data_shape=None):
+    """Creates a tensor according to data."""
     if data_shape:
         return Tensor(np.zeros(data_shape), data_type)
     return Tensor(data, data_type)
@@ -82,6 +87,7 @@ def make_tensor(data, data_type=mstype.int64, data_shape=None):
 
 @constexpr
 def judge_data_rank(data_rank, min_data_rank=0, max_data_rank=8):
+    """Judges whether the data rank is valid."""
     if data_rank < min_data_rank or data_rank > max_data_rank:
         raise ValueError(f"The input data's rank should in the range of[{min_data_rank}, "
                          f"{max_data_rank}], bug actually is '{data_rank}'")
@@ -139,6 +145,7 @@ def is_same_type(inst, type_):
 
 @constexpr
 def check_valid_dim(dim, name):
+    """Checks whether the dim is valid."""
     if dim not in (1, 2):
         raise ValueError(
             f"For {name}, inputs dim must be 1d or 2d")
@@ -146,6 +153,7 @@ def check_valid_dim(dim, name):
 
 @constexpr
 def judge_index_type(index_type, target_type):
+    """Judges whether the index type is valid."""
     if index_type == target_type or (isinstance(target_type, (list, tuple)) and index_type in target_type):
         return True
     return False
@@ -162,6 +170,7 @@ def judge_indexes_types(dtypes, target_type):
 
 @constexpr
 def check_type_valid(dtype, target_type, op_name):
+    """Checks whether the dtype is valid."""
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         if op_name in (TENSOR_GETITEM, TENSOR_SETITEM):
             raise IndexError(
@@ -463,6 +472,7 @@ def compute_new_shape(origin_shape, indexes_shapes_info):
 
 @constexpr
 def convert_int_to_slice(tuple_index):
+    """Converts each int to a slice."""
     tuple_index_new = tuple(slice(i, i+1, 1) for i in tuple_index)
     return tuple_index_new
 
@@ -558,6 +568,7 @@ def generate_updates_shape(data_shape, index_shape, op_type):
 
 @constexpr
 def transform_slice_to_ele_list(slice_index, dim_len):
+    """Transforms slice to element list."""
     slice_obj = slice(slice_index.start, slice_index.stop, slice_index.step)
     slice_ele_list = list(range(dim_len))[slice_obj]
     if not slice_ele_list:
@@ -598,6 +609,7 @@ def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_ind
 
     return broadcast_shape, index_tensor_new_shape, final_shape, fancy_position
 
+
 def _judge_order_continuous(order_sequence):
     if not order_sequence:
         return False
@@ -623,6 +635,7 @@ def scalar_in_sequence(x, y):
 
 @constexpr
 def get_np_eps(input_dtype):
+    """Get numpy eps."""
     nptype = mstype.dtype_to_nptype(input_dtype)
     eps = np.finfo(nptype).eps
     return float(eps)
@@ -707,6 +720,7 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
 
 @constexpr
 def mstype_eq(x, y):
+    """Checks whether the types are equal."""
     if x == y:
         return True
     return False
