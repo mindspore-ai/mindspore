@@ -506,43 +506,38 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
 
     dev_mat = layout[0]
     tensor_map = layout[1]
-    field_size = layout[3]
     uniform_split = layout[4]
     opt_shard_group = layout[5]
 
     allgather_net = None
+    mp_weight = False
+    for dim in tensor_map:
+        if dim != -1:
+            mp_weight = True
+            break
     if param_name in net.parallel_parameter_merge_net_dict:
         allgather_net = net.parallel_parameter_merge_net_dict[param_name]
     else:
         logger.info("need to create allgather net for %s", param_name)
-
-    if integrated_save:
-        if uniform_split == 0:
-            raise RuntimeError("Integrated save checkpoint only support uniform split tensor now.")
-        # while any dim is not equal to -1, means param is split and needs to be merged
-        # pipeline parallel need to be supported here later
-        for dim in tensor_map:
-            if dim != -1:
-                if allgather_net is None:
-                    if opt_shard_group:
-                        allgather_net = get_allgather_cell(opt_shard_group, True)
-                    else:
-                        allgather_net = get_allgather_cell(opt_shard_group, False)
-                    net.parallel_parameter_merge_net_dict[param_name] = allgather_net
-                param_data = allgather_net(param_data)
-                if field_size:
-                    return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
-                return _reshape_param_data(param_data, dev_mat, tensor_map)
-        if opt_shard_group:
-            if allgather_net is None:
+        if integrated_save:
+            if uniform_split == 0:
+                raise RuntimeError("Integrated save checkpoint only support uniform split tensor now.")
+            # while any dim is not equal to -1, means param is split and needs to be merged
+            # pipeline parallel need to be supported here later
+            if mp_weight:
+                if opt_shard_group:
+                    allgather_net = get_allgather_cell(opt_shard_group, True)
+                else:
+                    allgather_net = get_allgather_cell(opt_shard_group, False)
+            elif opt_shard_group:
                 allgather_net = get_allgather_cell(opt_shard_group, False)
-                net.parallel_parameter_merge_net_dict[param_name] = allgather_net
-            param_data = allgather_net(param_data)
-    elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
-        if allgather_net is None:
+        elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
             allgather_net = get_allgather_cell(opt_shard_group, False)
-            net.parallel_parameter_merge_net_dict[param_name] = allgather_net
+        net.parallel_parameter_merge_net_dict[param_name] = allgather_net
+    if allgather_net:
         param_data = allgather_net(param_data)
+    if mp_weight and integrated_save:
+        param_data = _reshape_param_data(param_data, dev_mat, tensor_map)
     return param_data
 
 
