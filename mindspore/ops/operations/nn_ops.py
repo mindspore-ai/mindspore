@@ -7788,7 +7788,7 @@ class AvgPool3D(Primitive):
         >>> avg_pool3d = ops.AvgPool3D(kernel_size=2, strides=1, pad_mode="valid")
         >>> output = avg_pool3d(input)
         >>> print(output)
-        [[[[[5. 6.]]]
+        [[[[[ 5.  6.]]]
           [[[17. 18.]]]]]
     """
     @prim_attr_register
