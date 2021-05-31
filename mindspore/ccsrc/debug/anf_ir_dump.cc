@@ -459,8 +459,23 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
     if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
       gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
                    << label_manage::Label(nd->debug_info()) << "\n";
+      auto primal_debug_infos = nd->primal_debug_infos();
+      if (!primal_debug_infos.empty()) {
+        gsub->buffer << "      # Corresponding forward node candidate:\n";
+        for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
+          gsub->buffer << trace::GetDebugInfo(*iter, "      # ", kSourceLineTipDiscard) << "#"
+                       << label_manage::Label(*iter) << "\n";
+        }
+      }
     } else {
       gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+      auto primal_debug_infos = nd->primal_debug_infos();
+      if (!primal_debug_infos.empty()) {
+        gsub->buffer << "      # Corresponding forward node candidate:\n";
+        for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
+          gsub->buffer << trace::GetDebugInfo(*iter, "      # ", kSourceLineTipDiscard) << "\n";
+        }
+      }
     }
   } else if (dump_location == kWholeStack) {
     auto traces = mindspore::trace::GetSourceLineList(nd);

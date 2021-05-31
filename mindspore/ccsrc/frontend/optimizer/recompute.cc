@@ -380,8 +380,8 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const std::unordered_se
       }
     }
     auto new_target_node = graph->NewCNode(new_target_inputs);
+    new_target_node->CloneCNodeInfo(target_node);
     new_target_node->AddAttr("target_grad", MakeValue(true));
-    new_target_node->set_abstract(target_node->abstract());
     new_target_node->set_scope(target_node->scope());
     mng->Replace(target_node, new_target_node);
   }
