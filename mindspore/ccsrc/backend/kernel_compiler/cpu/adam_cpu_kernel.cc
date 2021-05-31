@@ -25,7 +25,7 @@ namespace kernel {
 template <typename T>
 void AdamCPUKernel::LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
                                size_t size) {
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &var, &m, &v, &gradient, lr, beta1, beta2, epsilon](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       m[i] += (gradient[i] - m[i]) * (1 - beta1);
       v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);

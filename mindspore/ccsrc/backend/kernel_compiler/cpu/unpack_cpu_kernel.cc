@@ -31,7 +31,7 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size_ *= input_shape[i];
-    if (i > IntToSize(axis_)) {
+    if (i > axis_) {
       dims_after_axis_ *= input_shape[i];
     }
   }

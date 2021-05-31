@@ -28,10 +28,10 @@ void LayerNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto begin_norm_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
   auto begin_params_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
   if (begin_norm_axis < 0) {
-    begin_norm_axis += x_shape.size();
+    begin_norm_axis += SizeToLong(x_shape.size());
   }
   if (begin_params_axis < 0) {
-    begin_params_axis += x_shape.size();
+    begin_params_axis += SizeToLong(x_shape.size());
   }
   for (size_t i = 0; i < LongToSize(begin_norm_axis); i++) {
     block_num_ *= x_shape[i];
@@ -81,7 +81,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto thread_num2 = block_num_ < thread_num ? block_num_ : thread_num;
   std::vector<common::Task> tasks2;
   tasks2.reserve(thread_num2);
-  auto task1 = [&](size_t start, size_t end) {
+  auto task1 = [this, &x, &dy, &var, &mean, &dg, &db, thread_num1](size_t start, size_t) {
     for (size_t c = 0; c < ceil(static_cast<double>(param_num_) / thread_num1); ++c) {
       if (c * thread_num1 + start >= param_num_) {
         continue;
@@ -98,7 +98,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       db[param_index] = dbeta;
     }
   };
-  auto task2 = [&](size_t start, size_t end) {
+  auto task2 = [this, &x, &dy, &var, &mean, &dx, &gamma, thread_num2](size_t start, size_t) {
     for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num2); ++c) {
       if (c * thread_num2 + start >= block_num_) {
         continue;
@@ -121,7 +121,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
         auto norm_shift = static_cast<int>(j / block_size_);
         auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
         auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
-        auto dx2 = sum1 * (T)2.0 / block_size_ * (x[j] - mean[norm_shift]);
+        auto dx2 = sum1 * (T)2.0 / (T)(block_size_) * (x[j] - mean[norm_shift]);
         auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / (T)block_size_) * sum1 * sum3) * ((T)1.0 / (T)block_size_);
         dx[j] = dx1 + dx2 + dx3;
       }

@@ -21,7 +21,7 @@ namespace kernel {
 template <typename T>
 void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
-  output_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num");
+  output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   CheckParam(kernel_node);
   Reshape();
@@ -32,7 +32,7 @@ void SplitCPUKernel<T>::Reshape() {
   input_size_ = 1;
   dims_current_after_axis_ = 1;
   dims_after_axis_ = 1;
-  axis_step_ = SizeToLong(input_shape_[axis_]) / output_num_;
+  axis_step_ = input_shape_[LongToSize(axis_)] / output_num_;
 
   for (int i = 0; i < SizeToInt(input_shape_.size()); i++) {
     input_size_ *= input_shape_[i];
@@ -49,7 +49,7 @@ void SplitCPUKernel<T>::Reshape() {
 template <typename T>
 void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
+  (void)workspace_size_list_.emplace_back((sizeof(T *) * output_num_));
 }
 
 template <typename T>
@@ -64,10 +64,10 @@ template <typename T>
 void SplitCPUKernel<T>::LaunchSplit(const T *input, T **output, size_t size) {
   auto task = [this, &input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      int num = i % dims_current_after_axis_ / dims_after_axis_;
-      int block = num / axis_step_;
-      int block_pos = i / dims_current_after_axis_ * axis_step_ * dims_after_axis_ +
-                      num % axis_step_ * dims_after_axis_ + i % dims_after_axis_;
+      size_t num = i % dims_current_after_axis_ / dims_after_axis_;
+      size_t block = num / axis_step_;
+      size_t block_pos = i / dims_current_after_axis_ * axis_step_ * dims_after_axis_ +
+                         num % axis_step_ * dims_after_axis_ + i % dims_after_axis_;
       output[block][block_pos] = input[i];
     }
   };
@@ -93,7 +93,7 @@ template <typename T>
 void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   int64_t dims = SizeToLong(input_shape_.size());
-  int64_t output_num = SizeToLong(AnfAlgo::GetOutputTensorNum(kernel_node));
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
 
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Split needs 1 input.";
@@ -105,9 +105,9 @@ void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
   }
   if (axis_ < 0) {
-    axis_ += SizeToInt(input_shape_.size());
+    axis_ += SizeToLong(input_shape_.size());
   }
-  if (output_num_ > SizeToInt(input_shape_[axis_])) {
+  if (output_num_ > input_shape_[LongToSize(axis_)]) {
     MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must less than " << input_shape_[axis_];
   }
   if (output_num_ != output_num) {

@@ -39,7 +39,7 @@ void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t
     if (index < 0 || LongToSize(index) >= var_first_dim_size) {
       MS_LOG(EXCEPTION) << "Index " << index << " in indices is out of range after unique process";
     }
-    size_t start_index = var_outer_dim_size * static_cast<size_t>(index);
+    size_t start_index = var_outer_dim_size * LongToSize(index);
     size_t end_index = start_index + var_outer_dim_size;
     for (size_t j = start_index, k = var_outer_dim_size * i; j < end_index; ++j, ++k) {
       auto summed_grad = unique_sparse_grad.value_[k];

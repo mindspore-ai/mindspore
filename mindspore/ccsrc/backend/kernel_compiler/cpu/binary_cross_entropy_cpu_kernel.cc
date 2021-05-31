@@ -40,7 +40,6 @@ void BinaryCrossEntropyCpuKernel::LaunchToScalar(const int &input_size, const in
 
 template <typename T>
 void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y = reinterpret_cast<T *>(inputs[1]->addr);
@@ -53,13 +52,13 @@ void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &in
   if (reduction_ == 0) {
     for (size_t i = 0; i < input_size_; i++) {
       T value =
-        -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+        T(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
       loss[i] = value;
     }
   } else {
     for (size_t i = 0; i < input_size_; i++) {
       T value =
-        -weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon));
+        T(-weight[i] * (input_y[i] * log(input_x[i] + epsilon) + (one - input_y[i]) * log(one - input_x[i] + epsilon)));
       tmp_loss[i] = value;
     }
   }
@@ -69,14 +68,13 @@ void BinaryCrossEntropyCpuKernel::Launchkernel(const std::vector<AddressPtr> &in
   }
 }
 
-bool BinaryCrossEntropyCpuKernel::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+bool BinaryCrossEntropyCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs) {
   if (input_size_ > 0) {
     if (dtype_ == kNumberTypeFloat32) {
-      Launchkernel<float>(inputs, workspace, outputs);
+      Launchkernel<float>(inputs, outputs);
     } else if (dtype_ == kNumberTypeFloat16) {
-      Launchkernel<float16>(inputs, workspace, outputs);
+      Launchkernel<float16>(inputs, outputs);
     }
   }
   return true;
