@@ -98,8 +98,8 @@ int main(int argc, char **argv) {
     }
 
     auto decode = Decode();
-    auto resizeImageNet = Resize({256, 256});
-    auto centerCrop = CenterCrop({224, 224});
+    auto resizeImageNet = Resize({256});
+    auto centerCrop = CenterCrop({224});
     auto normalizeImageNet = Normalize({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
     auto hwc2chw = HWC2CHW();
 
