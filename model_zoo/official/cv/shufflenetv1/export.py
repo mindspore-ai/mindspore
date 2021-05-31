@@ -14,40 +14,28 @@
 # ============================================================================
 """
 ##############export checkpoint file into air, onnx, mindir models#################
-python export.py
+suggest run as python export.py --file_name [file name] --ckpt_path [ckpt path] --file_format [file format]
 """
-import argparse
-import numpy as np
 
+import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
-
+from src.model_utils.config import config
 from src.shufflenetv1 import ShuffleNetV1
 
-parser = argparse.ArgumentParser(description='ShuffleNetV1 export')
-parser.add_argument("--device_id", type=int, default=0, help="device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--ckpt_file", type=str, required=True, help="checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="shufflenetv1", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-parser.add_argument('--model_size', type=str, default='2.0x', choices=['2.0x', '1.5x', '1.0x', '0.5x'],
-                    help='shufflenetv1 model size')
 
-args = parser.parse_args()
+context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+if config.device_target == "Ascend":
+    context.set_context(device_id=config.device_id)
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
 
-    net = ShuffleNetV1(model_size=args.model_size)
+    net = ShuffleNetV1(model_size=config.model_size)
 
-    param_dict = load_checkpoint(args.ckpt_file)
+    param_dict = load_checkpoint(config.ckpt_path)
     load_param_into_net(net, param_dict)
 
     image_height, image_width = (224, 224)
-    input_arr = Tensor(np.ones([args.batch_size, 3, image_height, image_width]), ms.float32)
-    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)
+    input_arr = Tensor(np.ones([config.batch_size, 3, image_height, image_width]), ms.float32)
+    export(net, input_arr, file_name=config.file_name, file_format=config.file_format)

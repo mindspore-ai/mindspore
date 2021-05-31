@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Data operations, will be used in train.py and eval.py"""
-from src.config import config
+from src.model_utils.config import config
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
