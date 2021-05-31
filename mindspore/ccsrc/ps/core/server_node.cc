@@ -141,6 +141,10 @@ std::shared_ptr<CommunicatorBase> ServerNode::GetOrCreateTcpComm(const std::stri
     MS_LOG(INFO) << "Create Tcp communicator.";
     auto tcp_comm = std::make_shared<TcpCommunicator>(task_executor, this);
     MS_EXCEPTION_IF_NULL(tcp_comm);
+    PSContext::instance()->cluster_config().scheduler_host = scheduler_ip;
+    PSContext::instance()->cluster_config().scheduler_port = scheduler_port;
+    PSContext::instance()->cluster_config().initial_worker_num = worker_num;
+    PSContext::instance()->cluster_config().initial_server_num = server_num;
     MS_LOG(INFO) << "Initialize cluster metadata for server. Worker number:" << worker_num
                  << ", Server number:" << server_num << ", Scheduler ip:" << scheduler_ip
                  << ", Scheduler port:" << scheduler_port;

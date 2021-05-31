@@ -333,6 +333,22 @@ RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &ke
   *value = res;
   return result;
 }
+
+RequestProcessResult HttpMessageHandler::ParseNodeIdsFromKey(const std::string &key,
+                                                             std::vector<std::string> *const value) {
+  RequestProcessResult result(RequestProcessResultCode::kSuccess);
+  if (!request_message_.contains(key)) {
+    std::string message = "The json is not contain the key:" + key;
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+    return result;
+  }
+  auto res = request_message_.at(key).get<std::vector<std::string>>();
+  for (const auto &val : res) {
+    MS_LOG(INFO) << "The node id is:" << val;
+    (*value).push_back(val);
+  }
+  return result;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

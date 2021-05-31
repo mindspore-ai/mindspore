@@ -186,9 +186,9 @@ void NodeManager::set_worker_num(const int32_t &worker_num) { meta_data_->worker
 
 void NodeManager::set_server_num(const int32_t &server_num) { meta_data_->server_num = server_num; }
 
-int32_t NodeManager::worker_num() { return UintToInt(meta_data_->worker_num); }
+int32_t NodeManager::worker_num() const { return UintToInt(meta_data_->worker_num); }
 
-int32_t NodeManager::server_num() { return UintToInt(meta_data_->server_num); }
+int32_t NodeManager::server_num() const { return UintToInt(meta_data_->server_num); }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
