@@ -104,6 +104,7 @@ bool CheckOtherOutputs(const CNodePtr &node, const std::shared_ptr<kernel::Kerne
 }
 
 bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuildInfo> &kernel_info, size_t index) {
+  constexpr size_t kInferShapeSize = 4;
   if (kernel_info == nullptr) {
     return false;
   }
@@ -111,8 +112,8 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
   if (AnfAlgo::GetOutputDeviceDataType(node, 0) != kernel_info->GetOutputDeviceType(index)) {
     return false;
   }
-  if (AnfAlgo::GetOutputInferShape(node, 0).size() == 4 && AnfAlgo::GetOutputFormat(node, 0) == kOpFormat_NCHW &&
-      kernel_info->GetOutputFormat(index) == kOpFormat_DEFAULT) {
+  if (AnfAlgo::GetOutputInferShape(node, 0).size() == kInferShapeSize &&
+      AnfAlgo::GetOutputFormat(node, 0) == kOpFormat_NCHW && kernel_info->GetOutputFormat(index) == kOpFormat_DEFAULT) {
     return true;
   }
   return AnfAlgo::GetOutputFormat(node, 0) == kernel_info->GetOutputFormat(index);

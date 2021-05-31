@@ -27,6 +27,13 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kMaxPoolGradWithArgmaxInputNum = 4;
+constexpr size_t kMaxPoolWithArgmaxShape = 4;
+constexpr size_t kAlignBytes = 16;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
+constexpr size_t kIndex4 = 4;
+
 bool IsC(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     AnfNodePtr in = utils::cast<AnfNodePtr>(n);
@@ -41,7 +48,7 @@ CNodePtr GetMaxPoolWithArgmax(const CNodePtr &maxpool_grad_with_argmax) {
   if (maxpool_grad_with_argmax->inputs().size() != kMaxPoolGradWithArgmaxInputNum) {
     MS_LOG(EXCEPTION) << "MaxPoolGradWithArgmax has wrong input size.";
   }
-  auto tuple_getitem0_anf = maxpool_grad_with_argmax->input(3);
+  auto tuple_getitem0_anf = maxpool_grad_with_argmax->input(kIndex3);
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
   return tuple_getitem0_anf->cast<CNodePtr>();
 }
@@ -64,11 +71,11 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
   auto output_shape = AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
   auto argmax_shape = output_shape;
-  if (argmax_shape.size() != 4) {
+  if (argmax_shape.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
   }
-  argmax_shape[2] = ksize[1] * ksize[2];
-  argmax_shape[3] = (output_shape[2] * output_shape[3] + 15) / 16 + 1;
+  argmax_shape[kIndex2] = ksize[kIndex1] * ksize[kIndex2];
+  argmax_shape[kIndex3] = (output_shape[kIndex2] * output_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
   auto types = {AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
   auto shapes = {output_shape, argmax_shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
@@ -98,11 +105,11 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
   auto argmax_shape = AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
-  if (argmax_shape.size() != 4) {
+  if (argmax_shape.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
   }
-  argmax_shape[3] = (argmax_shape[2] * argmax_shape[3] + 15) / 16 + 1;
-  argmax_shape[2] = ksize[1] * ksize[2];
+  argmax_shape[kIndex3] = (argmax_shape[kIndex2] * argmax_shape[kIndex3] + kAlignBytes - 1) / kAlignBytes + 1;
+  argmax_shape[kIndex2] = ksize[kIndex1] * ksize[kIndex2];
   AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;

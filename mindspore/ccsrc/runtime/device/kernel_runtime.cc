@@ -40,6 +40,8 @@ using mindspore::kernel::AddressPtr;
 
 namespace mindspore {
 namespace device {
+constexpr size_t kMinInputSize = 2;
+
 KernelRuntime::~KernelRuntime() {}
 
 bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
@@ -258,7 +260,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
       continue;
     }
     if (opt::IsNopNode(real_output_cnode)) {
-      if (real_output_cnode->inputs().size() < 2) {
+      if (real_output_cnode->inputs().size() < kMinInputSize) {
         MS_LOG(EXCEPTION) << "The input size of output node: " << real_output_cnode->DebugString()
                           << " should large than one!";
       }
@@ -280,14 +282,14 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
   for (size_t i = 0; i < graph_inputs.size(); ++i) {
-    auto item = graph_inputs[i];
-    MS_EXCEPTION_IF_NULL(item);
+    auto input_node = graph_inputs[i];
+    MS_EXCEPTION_IF_NULL(input_node);
     if (i < graph_valid_input.size() && !graph_valid_input[i]) {
       continue;
     }
 
-    if (AnfAlgo::CheckPrimitiveType(item, prim::kPrimMakeTuple)) {
-      auto outs = AnfAlgo::GetAllOutput(item);
+    if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+      auto outs = AnfAlgo::GetAllOutput(input_node);
       for (auto &out : outs) {
         MS_EXCEPTION_IF_NULL(out);
         if (!out->isa<Parameter>()) {
@@ -299,13 +301,13 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         need_alloc_nodes.push_back(out);
       }
     }
-    if (!item->isa<Parameter>()) {
+    if (!input_node->isa<Parameter>()) {
       continue;
     }
-    if (NodeOutputDeviceAddressExist(item, 0)) {
+    if (NodeOutputDeviceAddressExist(input_node, 0)) {
       continue;
     }
-    need_alloc_nodes.push_back(item);
+    need_alloc_nodes.push_back(input_node);
   }
 #if (ENABLE_CPU && !_WIN32)
   bool ps_cache_check = false;
@@ -358,15 +360,15 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
   std::vector<session::KernelWithIndex> non_communication_op;
   // Assign Communicate Op Memory firstly.
   for (const auto &node : nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
-    MS_EXCEPTION_IF_NULL(item_with_index.first);
-    if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
+    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+    MS_EXCEPTION_IF_NULL(kernel_with_index.first);
+    if (!kernel_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_with_index.first)) {
       continue;
     }
-    if (AnfAlgo::IsCommunicationOp(item_with_index.first)) {
-      AssignCommunicationNodeMem(kStaticMem, item_with_index.first);
+    if (AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {
+      AssignCommunicationNodeMem(kStaticMem, kernel_with_index.first);
     } else {
-      non_communication_op.emplace_back(item_with_index);
+      non_communication_op.emplace_back(kernel_with_index);
     }
   }
 
@@ -595,7 +597,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() < 2) {
+  if (cnode->inputs().size() < kMinInputSize) {
     // communication node's input should contain itself and at least on input
     MS_LOG(ERROR) << "No inputs for " << cnode->fullname_with_scope();
     return;
