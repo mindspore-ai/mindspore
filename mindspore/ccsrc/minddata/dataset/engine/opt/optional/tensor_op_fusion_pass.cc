@@ -38,9 +38,9 @@ Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *const modi
                          [](auto op, const std::string &nm) { return op->Name() == nm; });
   if (itr != ops.end()) {
     MS_LOG(WARNING) << "Fusing pre-build Decode and RandomCropResize into one pre-build.";
-    auto op = dynamic_cast<RandomCropAndResizeOp *>((*(itr + 1))->Build().get());
-    RETURN_UNEXPECTED_IF_NULL(op);
-    (*itr) = std::make_shared<transforms::PreBuiltOperation>(std::make_shared<RandomCropDecodeResizeOp>(*op));
+    auto fused_op = dynamic_cast<RandomCropAndResizeOp *>((*(itr + 1))->Build().get());
+    RETURN_UNEXPECTED_IF_NULL(fused_op);
+    (*itr) = std::make_shared<transforms::PreBuiltOperation>(std::make_shared<RandomCropDecodeResizeOp>(*fused_op));
     ops.erase(itr + 1);
     node->setOperations(ops);
     *modified = true;
@@ -54,10 +54,10 @@ Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *const modi
 
   // return here if no pattern is found
   RETURN_OK_IF_TRUE(itr == ops.end());
-  auto *op = dynamic_cast<vision::RandomResizedCropOperation *>((itr + 1)->get());
-  RETURN_UNEXPECTED_IF_NULL(op);
+  auto *fused_ir = dynamic_cast<vision::RandomResizedCropOperation *>((itr + 1)->get());
+  RETURN_UNEXPECTED_IF_NULL(fused_ir);
   // fuse the two ops
-  (*itr) = std::make_shared<vision::RandomCropDecodeResizeOperation>(*op);
+  (*itr) = std::make_shared<vision::RandomCropDecodeResizeOperation>(*fused_ir);
   ops.erase(itr + 1);
   node->setOperations(ops);
   *modified = true;

@@ -18,11 +18,10 @@ NLP text processing module which is developed with ICU4C and cppjieba.
 utils provides some general methods for NLP text processing.
 """
 import platform
-from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, TruncateSequencePair, \
-    ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer
+from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \
+    TruncateSequencePair, ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer
 from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
     SPieceTokenizerOutType, SPieceTokenizerLoadType
-
 
 __all__ = [
     "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
