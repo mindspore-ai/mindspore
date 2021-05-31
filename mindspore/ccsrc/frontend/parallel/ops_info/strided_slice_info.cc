@@ -211,15 +211,7 @@ Status StridedSliceInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status StridedSliceInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
-  if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
-  }
+std::vector<StrategyPtr> StridedSliceInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input_split(inputs_shape_[0].size(), 1);
   if (has_mask_) {
     for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
@@ -237,21 +229,10 @@ Status StridedSliceInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": generate strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-
-  MS_LOG(INFO) << name() << ", finishing GenerateStrategies().";
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status StridedSliceInfo::Init(const StrategyPtr &strategy) {

@@ -63,6 +63,7 @@ class ReshapeInfo : public OperatorInfo {
                                int64_t in_index, bool is_prev_param);
   Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::string pre_operator_name() const { return pre_operator_name_; }
   std::string next_operator_name() const { return next_operator_name_; }

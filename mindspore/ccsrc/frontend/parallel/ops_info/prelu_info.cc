@@ -111,13 +111,7 @@ Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status PReLUInfo::GenerateStrategies(int64_t stage_id) {
-  if (inputs_shape_.size() != PRELU_INPUTS_SIZE) {
-    return FAILED;
-  }
-  if (inputs_shape_[1].size() != PRELU_SECOND_INPUT_SIZE) {
-    return FAILED;
-  }
+std::vector<StrategyPtr> PReLUInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split;
   input0_split.emplace_back(1);
   input0_split.emplace_back(0);
@@ -126,18 +120,9 @@ Status PReLUInfo::GenerateStrategies(int64_t stage_id) {
   Shapes splittable_inputs = {input0_split, input1_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": GenerateStrategies For Independent Inputs failed";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }

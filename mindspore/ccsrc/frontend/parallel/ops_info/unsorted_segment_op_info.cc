@@ -188,15 +188,14 @@ Status UnsortedSegmentOpInfo::InitForCostModel(const StrategyPtr &strategy) {
 }
 
 // Set the default strategy
-Status UnsortedSegmentOpInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> UnsortedSegmentOpInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, {inputs_shape_.at(0)}, splittable_inputs, &sp_vector) !=
       SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
   }
   for (auto &sp : sp_vector) {
     Strategys tmp_strategy;
@@ -209,17 +208,8 @@ Status UnsortedSegmentOpInfo::GenerateStrategies(int64_t stage_id) {
     tmp_strategy.push_back(second_input_strategy);
     sp->ResetInputs(tmp_strategy);
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
 
-  return SUCCESS;
+  return sp_vector;
 }
 
 // if the dimension of the input b is split, we regarded it as the row slice, thus requires a AllReduce

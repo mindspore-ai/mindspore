@@ -40,7 +40,7 @@ Status LayerNormInfo::GetAttrs() {
     return FAILED;
   }
 
-  int64_t dim = SizeToLong(input_shape_.size());
+  int64_t dim = SizeToLong(inputs_shape_[0].size());
   auto axis = GetValue<int64_t>(iter->second);
   if ((axis >= dim) || (axis < -dim)) {
     MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << -dim << ", " << dim - 1 << "]";
@@ -199,19 +199,13 @@ Status LayerNormInfo::GenerateGammaAndBetaStrategies(const std::vector<StrategyP
   return SUCCESS;
 }
 
-Status LayerNormInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> LayerNormInfo::GenerateOpStrategies(int64_t stage_id) {
   if (InitShapes() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Init shapes failed";
-    return FAILED;
-  }
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Get attrs failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Init shapes failed";
   }
   Shape input_split(input_shape_.size(), SPLIT_FLAG);
   if (begin_norm_axis_ >= input_split.size()) {
-    MS_LOG(ERROR) << name_ << ": Invalid begin norm axis " << begin_norm_axis_;
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Invalid begin norm axis " << begin_norm_axis_;
   }
 
   // Can not split the dimensions from begin norm axis
@@ -224,24 +218,15 @@ Status LayerNormInfo::GenerateStrategies(int64_t stage_id) {
   Shapes tmp_inputs_shape = {input_shape_};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate input strategy failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate input strategy failed";
   }
 
   // Generate the strategies for gamma and beta
   if (GenerateGammaAndBetaStrategies(sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate gamma and beta strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate gamma and beta strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(DEBUG) << name_ << ": Successfully generated " << success << " strategy";
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status LayerNormInfo::InitShapes() {

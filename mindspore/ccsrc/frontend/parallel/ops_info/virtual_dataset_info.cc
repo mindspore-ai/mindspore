@@ -175,6 +175,11 @@ Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
+std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t) {
+  std::vector<StrategyPtr> sp_vector;
+  return sp_vector;
+}
+
 Status VirtualDatasetInfo::InferAsLossDivisor() {
   // no need to insert div op
   as_loss_divisor_ = 1;

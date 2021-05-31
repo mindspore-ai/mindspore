@@ -50,7 +50,7 @@ Status ReLUV2Info::CheckStrategy(const StrategyPtr &strategy) {
 
 Status ReLUV2Info::GetAttrs() { return SUCCESS; }
 
-Status ReLUV2Info::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> ReLUV2Info::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   // the second dimension is not splitable
   input0_split[1] = 0;
@@ -58,18 +58,10 @@ Status ReLUV2Info::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Generate strategies for independent inputs() failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+
+  return sp_vector;
 }
 
 Status ReLUV2Info::InferDevMatrixShape() {

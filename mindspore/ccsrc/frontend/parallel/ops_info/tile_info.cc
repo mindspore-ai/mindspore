@@ -186,11 +186,7 @@ std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
 
 Status TileInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status TileInfo::GenerateStrategies(int64_t stage_id) {
-  if (InferAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer attrs failed";
-    return FAILED;
-  }
+std::vector<StrategyPtr> TileInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape multiples_split(full_multiples_.size(), 1);
   Shapes splittable_inputs = {multiples_split};
 
@@ -204,19 +200,10 @@ Status TileInfo::GenerateStrategies(int64_t stage_id) {
   }
   Shapes tmp_inputs_shape = {full_multiples_};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": generate strategies failed";
   }
 
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    PrintStrategy(sp);
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 Status TileInfo::Init(const StrategyPtr &strategy) {

@@ -92,10 +92,9 @@ Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status DropoutDoMaskInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> DropoutDoMaskInfo::GenerateOpStrategies(int64_t stage_id) {
   if (inputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": The inputs shape is empty";
   }
 
   Shape input0_split(inputs_shape_[0].size(), 1);
@@ -104,18 +103,9 @@ Status DropoutDoMaskInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, used_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies failed";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {

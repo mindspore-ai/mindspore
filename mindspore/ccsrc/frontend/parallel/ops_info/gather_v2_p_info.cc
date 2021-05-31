@@ -864,13 +864,9 @@ Status GatherPInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status GatherPInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status GatherPInfo::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    return FAILED;
-  }
+std::vector<StrategyPtr> GatherPInfo::GenerateOpStrategies(int64_t stage_id) {
   if (manual_split_) {
-    MS_LOG(ERROR) << name_ << ": Manual split does not support to search strategy";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Manual split does not support to search strategy";
   }
   is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
@@ -879,18 +875,9 @@ Status GatherPInfo::GenerateStrategies(int64_t stage_id) {
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Generate strategies for independent inputs() failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies for independent inputs() failed.";
   }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy";
-      PrintStrategy(sp);
-    }
-  }
-  return SUCCESS;
+  return sp_vector;
 }
 
 std::shared_ptr<Strategys> GatherPInfo::GenerateBatchStrategies() {
