@@ -21,12 +21,6 @@
 
 namespace mindspore {
 namespace {
-const std::map<enum DeviceType, std::set<ModelType>> kSupportedModelMap = {
-  {kAscend310, {kOM, kMindIR}},
-  {kAscend910, {kMindIR}},
-  {kNvidiaGPU, {kMindIR}},
-};
-
 std::string GetDeviceTypeString(enum DeviceType type) {
   static const std::map<enum DeviceType, std::string> kDeviceTypeStrs = {
     {kCPU, "CPU"},           {kMaliGPU, "MaliGPU"},     {kNvidiaGPU, "GPU"},
@@ -144,16 +138,11 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
     return false;
   }
 
-  auto first_iter = kSupportedModelMap.find(device_type);
-  if (first_iter == kSupportedModelMap.end()) {
+  auto check_model = Factory<ModelImpl>::Instance().Create(device_type_str);
+  if (check_model == nullptr) {
     return false;
   }
 
-  auto secend_iter = first_iter->second.find(model_type);
-  if (secend_iter == first_iter->second.end()) {
-    return false;
-  }
-
-  return true;
+  return check_model->CheckModelSupport(model_type);
 }
 }  // namespace mindspore

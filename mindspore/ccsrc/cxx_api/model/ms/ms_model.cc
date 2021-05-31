@@ -16,6 +16,7 @@
 
 #include "cxx_api/model/ms/ms_model.h"
 #include <memory>
+#include <set>
 #include "include/api/context.h"
 #include "utils/ms_context.h"
 #include "cxx_api/factory.h"
@@ -168,5 +169,14 @@ uint32_t MsModel::GetDeviceID() const {
   }
 
   return 0;
+}
+
+bool MsModel::CheckModelSupport(enum ModelType model_type) {
+  static const std::set<ModelType> kSupportedModelMap = {kMindIR};
+  auto iter = kSupportedModelMap.find(model_type);
+  if (iter == kSupportedModelMap.end()) {
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore

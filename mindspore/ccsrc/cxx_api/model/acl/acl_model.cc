@@ -16,9 +16,12 @@
 
 #include "cxx_api/model/acl/acl_model.h"
 #include <memory>
+#include <string>
+#include <set>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
+#include "acl/acl_base.h"
 
 namespace mindspore {
 API_FACTORY_REG(ModelImpl, Ascend310, AclModel);
@@ -164,5 +167,23 @@ std::vector<MSTensor> AclModel::GetInputs() {
 std::vector<MSTensor> AclModel::GetOutputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
   return graph_cell_->GetOutputs();
+}
+
+bool AclModel::CheckModelSupport(enum ModelType model_type) {
+  const char *soc_name_c = aclrtGetSocName();
+  if (soc_name_c == nullptr) {
+    return false;
+  }
+  std::string soc_name(soc_name_c);
+  if (soc_name.find("910") != std::string::npos) {
+    return false;
+  }
+
+  static const std::set<ModelType> kSupportedModelMap = {kMindIR, kOM};
+  auto iter = kSupportedModelMap.find(model_type);
+  if (iter == kSupportedModelMap.end()) {
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore

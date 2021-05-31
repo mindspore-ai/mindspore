@@ -17,6 +17,7 @@
 #include <memory>
 #include "utils/log_adapter.h"
 #include "external/ge/ge_api_types.h"
+#include "acl/acl_base.h"
 
 namespace mindspore {
 static const std::map<enum DataType, std::string> kSupportedDtypeOptionMap = {{DataType::kNumberTypeFloat16, "FP16"},
@@ -55,6 +56,12 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   device_id_ = ascend310_info->GetDeviceID();
   dump_cfg_path_ = ascend310_info->GetDumpConfigPath();
   buffer_optimize_mode_ = ascend310_info->GetBufferOptimizeMode();
+  const char *soc_name = aclrtGetSocName();
+  if (soc_name == nullptr) {
+    MS_LOG(WARNING) << "Get soc version failed.";
+    return;
+  }
+  soc_version_ = soc_name;
 }
 
 void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {

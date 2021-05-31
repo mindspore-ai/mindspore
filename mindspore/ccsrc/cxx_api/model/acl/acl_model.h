@@ -43,6 +43,8 @@ class AclModel : public ModelImpl {
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 
+  bool CheckModelSupport(enum ModelType model_type) override;
+
  private:
   ModelConverter model_converter_;
   std::unique_ptr<AclModelOptions> options_;

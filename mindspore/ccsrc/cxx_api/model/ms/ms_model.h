@@ -44,6 +44,8 @@ class MsModel : public ModelImpl {
   std::vector<MSTensor> GetInputs() override;
   std::vector<MSTensor> GetOutputs() override;
 
+  bool CheckModelSupport(enum ModelType model_type) override;
+
  private:
   std::shared_ptr<GraphCell> GenerateGraphCell(const std::vector<std::vector<int64_t>> &dims);
   uint32_t GetDeviceID() const;
