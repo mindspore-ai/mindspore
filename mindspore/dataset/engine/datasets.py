@@ -268,9 +268,8 @@ class Dataset:
                 for d in item.children:
                     temp.append(d)
                     op_name[str(d)] = operator_id
-                    if isinstance(d, GeneratorDataset) and d.sample_fn:
-                        if d.sample_fn.pid:
-                            generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pid)]
+                    if isinstance(d, GeneratorDataset) and d.sample_fn and d.sample_fn.pid:
+                        generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pid)]
 
             operator_id = operator_id + 1
             return process_name(temp, operator_id)

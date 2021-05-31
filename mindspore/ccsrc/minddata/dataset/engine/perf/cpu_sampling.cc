@@ -17,8 +17,8 @@
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #endif
-#include <math.h>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <memory>
@@ -49,6 +49,26 @@ BaseCpu::BaseCpu() {
   cpu_processor_num_ = 0;
 }
 
+Status BaseCpu::GetTotalCpuTime(uint64_t *total_stat) {
+  std::ifstream file("/proc/stat");
+  if (!file.is_open()) {
+    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
+    return Status::OK();
+  }
+  std::string str;
+  getline(file, str);
+  uint64_t user = 0, sys = 0, idle = 0, iowait = 0, nice = 0, irq = 0, softirq = 0;
+  if (sscanf_s(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &user, &nice, &sys, &idle, &iowait, &irq, &softirq) ==
+      EOF) {
+    file.close();
+    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
+  }
+  file.close();
+  *total_stat = user + nice + sys + idle + iowait + irq + softirq;
+
+  return Status::OK();
+}
+
 Status DeviceCpu::ParseCpuInfo(const std::string &str) {
   CpuStat cpu_stat;
   uint64_t nice = 0;
@@ -64,18 +84,14 @@ Status DeviceCpu::ParseCpuInfo(const std::string &str) {
   // Calculate the utilization from the second sampling
   if (!first_collect_) {
     CpuUtil info;
-    info.user_utilization_ = floor((cpu_stat.user_stat_ - pre_cpu_stat_.user_stat_) * 1.0 /
-                                     (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100 +
-                                   0.5);
-    info.sys_utilization_ = floor((cpu_stat.sys_stat_ - pre_cpu_stat_.sys_stat_) * 1.0 /
-                                    (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100 +
-                                  0.5);
-    info.io_utilization_ = floor((cpu_stat.io_stat_ - pre_cpu_stat_.io_stat_) * 1.0 /
-                                   (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100 +
-                                 0.5);
-    info.idle_utilization_ = floor((cpu_stat.idle_stat_ - pre_cpu_stat_.idle_stat_) * 1.0 /
-                                     (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100 +
-                                   0.5);
+    info.user_utilization_ = round((cpu_stat.user_stat_ - pre_cpu_stat_.user_stat_) * 1.0 /
+                                   (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100);
+    info.sys_utilization_ = round((cpu_stat.sys_stat_ - pre_cpu_stat_.sys_stat_) * 1.0 /
+                                  (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100);
+    info.io_utilization_ = round((cpu_stat.io_stat_ - pre_cpu_stat_.io_stat_) * 1.0 /
+                                 (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100);
+    info.idle_utilization_ = round((cpu_stat.idle_stat_ - pre_cpu_stat_.idle_stat_) * 1.0 /
+                                   (cpu_stat.total_stat_ - pre_cpu_stat_.total_stat_) * 100);
     cpu_util_.emplace_back(info);
   }
   pre_cpu_stat_.user_stat_ = cpu_stat.user_stat_;
@@ -237,26 +253,6 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
   return Status::OK();
 }
 
-Status OperatorCpu::GetTotalCpuTime(uint64_t *total_stat) {
-  std::ifstream file("/proc/stat");
-  if (!file.is_open()) {
-    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
-    return Status::OK();
-  }
-  std::string str;
-  getline(file, str);
-  uint64_t user = 0, sys = 0, idle = 0, iowait = 0, nice = 0, irq = 0, softirq = 0;
-  if (sscanf_s(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &user, &nice, &sys, &idle, &iowait, &irq, &softirq) ==
-      EOF) {
-    file.close();
-    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
-  }
-  file.close();
-  *total_stat = user + nice + sys + idle + iowait + irq + softirq;
-
-  return Status::OK();
-}
-
 Status OperatorCpu::Collect(const ExecutionTree *tree) {
   if (first_collect_) {
     for (auto iter = tree->begin(); iter != tree->end(); ++iter) {
@@ -340,9 +336,9 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
     // mainly obtain the init CPU execute time in first collect
     for (auto iter = op_thread.begin(); iter != op_thread.end(); iter++) {
       int32_t op_id = iter->first;
-      for (auto thread_id : iter->second) {
+      for (auto thread_id_ : iter->second) {
         // ignore errors in the first collect
-        (void)ParseCpuInfo(op_id, thread_id, &op_stat_);
+        (void)ParseCpuInfo(op_id, thread_id_, &op_stat_);
       }
     }
   }
@@ -480,26 +476,6 @@ Status ProcessCpu::ParseCpuInfo() {
   pre_total_stat_ = total_stat_;
   first_collect_ = false;
   pre_fetched_state = fetched_all_process;
-  return Status::OK();
-}
-
-Status ProcessCpu::GetTotalCpuTime(uint64_t *total_stat) {
-  std::ifstream file("/proc/stat");
-  if (!file.is_open()) {
-    MS_LOG(INFO) << "Open CPU file failed when collect CPU information";
-    return Status::OK();
-  }
-  std::string str;
-  getline(file, str);
-  uint64_t user = 0, sys = 0, idle = 0, iowait = 0, nice = 0, irq = 0, softirq = 0;
-  if (sscanf_s(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &user, &nice, &sys, &idle, &iowait, &irq, &softirq) ==
-      EOF) {
-    file.close();
-    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
-  }
-  file.close();
-  *total_stat = user + nice + sys + idle + iowait + irq + softirq;
-
   return Status::OK();
 }
 
