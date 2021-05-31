@@ -46,6 +46,7 @@ class InterThreadPool : public ThreadPool {
   std::mutex actor_mutex_;
   std::condition_variable actor_cond_var_;
   std::queue<ActorReference> actor_queue_;
+  std::condition_variable finish_cond_var_;
 
   std::atomic_bool exit_{false};
 };
