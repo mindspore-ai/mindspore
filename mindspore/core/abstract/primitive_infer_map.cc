@@ -25,6 +25,7 @@
 #include "ops/add.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
+#include "ops/tile.h"
 
 namespace mindspore {
 namespace abstract {
@@ -174,7 +175,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, {InferImplSub, nullptr, false}},
     {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
-    {prim::kPrimTile, {InferImplTile, nullptr, false}},
+    {prim::kPrimTile, {ops::TileInfer, nullptr, true}},
     {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAll, {InferImplReduceFunc, nullptr, true}},

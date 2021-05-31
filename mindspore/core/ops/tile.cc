@@ -41,6 +41,9 @@ std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, cons
                                 "length of dimension in input_x";
   }
   for (size_t i = 0; i < multiples_w.size(); i++) {
+    if (infer_shape[i] == abstract::Shape::SHP_ANY) {
+      continue;
+    }
     infer_shape[i] *= multiples_w[i];
   }
   return infer_shape;
