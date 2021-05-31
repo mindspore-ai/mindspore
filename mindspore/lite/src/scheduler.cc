@@ -494,6 +494,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
   }
+  op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #ifdef SUPPORT_GPU
   //  if (node->device_type_ == DT_GPU || node->device_type_ == DEFAULT) {

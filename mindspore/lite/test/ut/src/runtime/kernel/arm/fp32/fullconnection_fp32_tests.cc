@@ -83,11 +83,16 @@ TEST_F(TestFcFp32, FcTest1) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::AllocWorkspace(fc->workspace_size());
+#endif
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete ctx;
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::FreeWorkspace();
+#endif
 }
 
 int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
@@ -143,11 +148,16 @@ TEST_F(TestFcFp32, FcTest2) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::AllocWorkspace(fc->workspace_size());
+#endif
   fc->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete ctx;
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::FreeWorkspace();
+#endif
 }
 
 void FcTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
@@ -193,14 +203,19 @@ TEST_F(TestFcFp32, FcTest3) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-
   fc->Init();
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::AllocWorkspace(fc->workspace_size());
+#endif
   struct timeval start, end;
   gettimeofday(&start, nullptr);
   for (int i = 0; i < 100000; ++i) fc->Run();
   gettimeofday(&end, nullptr);
   // printf("## elapsed: %llu\n", 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - end.tv_usec);
   delete ctx;
+#ifdef SUPPORT_TRAIN
+  mindspore::kernel::InnerKernel::FreeWorkspace();
+#endif
 }
 
 }  // namespace mindspore

@@ -39,6 +39,10 @@ void MatmulFp32BaseCPUKernel::InitParameter() {
   params_->a_const_ = (in_tensors_.at(0)->data_c() != nullptr);
   params_->b_const_ = (in_tensors_.at(1)->data_c() != nullptr);
 
+  if (op_parameter_->is_train_session_) {
+    params_->a_const_ = false;
+    params_->b_const_ = false;
+  }
 #ifdef ENABLE_AVX
   row_tile_ = C6NUM;
   col_tile_ = C16NUM;
@@ -68,8 +72,15 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  a_pack_ptr_ = reinterpret_cast<float *>(
-    context_->allocator->Malloc(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float)));
+#ifdef SUPPORT_TRAIN
+  if (op_parameter_->is_train_session_) {
+    a_pack_ptr_ = reinterpret_cast<float *>(workspace());
+  } else {
+    a_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
+  }
+#else
+  a_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
+#endif
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
     return RET_ERROR;
@@ -81,8 +92,15 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  b_pack_ptr_ = reinterpret_cast<float *>(
-    context_->allocator->Malloc(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float)));
+#ifdef SUPPORT_TRAIN
+  if (op_parameter_->is_train_session_) {
+    b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
+  } else {
+    b_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
+  }
+#else
+  b_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
+#endif
   if (b_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
     return RET_ERROR;
@@ -221,16 +239,24 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
-  if (a_pack_ptr_ != nullptr) {
-    context_->allocator->Free(a_pack_ptr_);
+  if (!op_parameter_->is_train_session_) {
+    if (a_pack_ptr_ != nullptr) {
+      context_->allocator->Free(a_pack_ptr_);
+      a_pack_ptr_ = nullptr;
+    }
+  } else {
     a_pack_ptr_ = nullptr;
   }
   return;
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
-  if (b_pack_ptr_ != nullptr) {
-    context_->allocator->Free(b_pack_ptr_);
+  if (!op_parameter_->is_train_session_) {
+    if (b_pack_ptr_ != nullptr) {
+      context_->allocator->Free(b_pack_ptr_);
+      b_pack_ptr_ = nullptr;
+    }
+  } else {
     b_pack_ptr_ = nullptr;
   }
   return;
@@ -258,6 +284,13 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) {
 
 int MatmulFp32BaseCPUKernel::Init() {
   ResizeParameter();
+  matrix_a_pack_size_ = params_->batch * params_->row_align_ * params_->deep_;
+  matrix_b_pack_size_ = params_->batch * params_->col_align_ * params_->deep_;
+  if ((matrix_a_pack_size_ + matrix_b_pack_size_) < 0) {
+    MS_LOG(ERROR) << "Matrix pack size is negative "
+                  << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size" << matrix_b_pack_size_;
+    return RET_ERROR;
+  }
 
   auto ret = InitBiasData();
   if (ret != RET_OK) {
@@ -288,6 +321,16 @@ int MatmulFp32BaseCPUKernel::Init() {
 
 int MatmulFp32BaseCPUKernel::ReSize() {
   ResizeParameter();
+  matrix_a_pack_size_ = params_->batch * params_->row_align_ * params_->deep_;
+  matrix_b_pack_size_ = params_->batch * params_->col_align_ * params_->deep_;
+  if ((matrix_a_pack_size_ + matrix_b_pack_size_) < 0) {
+    MS_LOG(ERROR) << "Matrix pack size is negative "
+                  << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size" << matrix_b_pack_size_;
+    return RET_ERROR;
+  }
+#ifdef SUPPORT_TRAIN
+  set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * sizeof(float));
+#endif
 
   if (params_->b_const_ == true && src_b_ != nullptr) {
     if (RET_OK != InitBufferB()) {

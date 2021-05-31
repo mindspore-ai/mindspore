@@ -31,7 +31,6 @@ class MatmulCPUKernel : public MatmulFp32BaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int Eval() override;
 
  private:
   void InitShapeA();

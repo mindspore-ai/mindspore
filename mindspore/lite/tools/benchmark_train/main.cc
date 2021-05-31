@@ -22,6 +22,6 @@ int main(int argc, const char **argv) {
   MS_LOG(INFO) << mindspore::lite::Version();
   int res = mindspore::lite::RunNetTrain(argc, argv);
   struct mallinfo info = mallinfo();
-  std::cout << "total allocation: " << info.arena << "\n";
+  std::cout << "Total allocation: " << info.arena + info.hblkhd << std::endl;
   return res;
 }
