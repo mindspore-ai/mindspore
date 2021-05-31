@@ -213,7 +213,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 | Total time                 | 8pcs: 5.93 hours                                            |
 | Parameters                 | 87.6                                                        |
 | Checkpoint for Fine tuning | 333.07M(.ckpt file)                                         |
-| Scripts                    | [ntsnet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ntsnet) |
+| Scripts                    | [ntsnet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ntsnet) |
 
 # [Description of Random Situation](#contents)
 
