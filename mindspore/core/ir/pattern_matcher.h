@@ -726,7 +726,7 @@ class PConstant : public PBase<PConstant<T> > {
   }
 
   template <typename TD>
-  TD CalcuConstant(const TD &data, const PrimitivePtr &calcu_type) {
+  TD CalcuConstantInner(const TD &data, const PrimitivePtr &calcu_type) {
     TD tmp_data = data;
     if (calcu_type == prim::kPrimReciprocal) {
       if (data == 0) {
@@ -741,6 +741,20 @@ class PConstant : public PBase<PConstant<T> > {
     return tmp_data;
   }
 
+  template <typename TD>
+  bool CalcuConstant(TD *data, TD *data2, int data_size, size_t mem_size, const PrimitivePtr &calcu_type) {
+    if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      return false;
+    }
+    for (int i = 0; i < data_size; i++) {
+      if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
+        return false;
+      }
+      data2[i] = CalcuConstantInner(data2[i], calcu_type);
+    }
+    return true;
+  }
+
   AnfNodePtr CalcuConstantTensor(const AnfNodePtr &node, const ValuePtr &value, const PrimitivePtr &calcu_type) {
     tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
     TypeId tensor_type = tensor_ptr->Dtype()->type_id();
@@ -752,44 +766,24 @@ class PConstant : public PBase<PConstant<T> > {
     if (new_tensor_ptr->DataSize() < tensor_ptr->DataSize()) {
       MS_EXCEPTION(ValueError) << "DataSize of new_tensor_ptr is smaller than DataSize of tensor_ptr";
     }
-    if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
-        (tensor_type == TypeId::kNumberTypeFloat64)) {
+    int data_size = tensor_ptr->DataSize();
+    if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat)) {
       float *data = reinterpret_cast<float *>(tensor_ptr->data_c());
       float *data2 = reinterpret_cast<float *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!CalcuConstant(data, data2, data_size, mem_size, calcu_type)) {
         return nullptr;
       }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
-      }
-    }
-    if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
+    } else if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
       int *data = reinterpret_cast<int *>(tensor_ptr->data_c());
       int *data2 = reinterpret_cast<int *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!CalcuConstant(data, data2, data_size, mem_size, calcu_type)) {
         return nullptr;
       }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
-      }
-    }
-    if (tensor_type == TypeId::kNumberTypeFloat64) {
+    } else if (tensor_type == TypeId::kNumberTypeFloat64) {
       double *data = reinterpret_cast<double *>(tensor_ptr->data_c());
       double *data2 = reinterpret_cast<double *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!CalcuConstant(data, data2, data_size, mem_size, calcu_type)) {
         return nullptr;
-      }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
       }
     }
     auto new_vnode = NewValueNode(new_tensor_ptr);
@@ -869,13 +863,13 @@ class PConstant : public PBase<PConstant<T> > {
     return;
   }
 
-  AnfNodePtr AddByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
+  AnfNodePtr AddByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) {
     AnfNodePtr vnode_1 = this->GetNode(captured_node_);
     AnfNodePtr vnode_2 = vpnode_2.GetNode(captured_node_);
     return CalcConstantTensors(vnode_1, vnode_2, node_3, ADD);
   }
 
-  AnfNodePtr MulByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) const {
+  AnfNodePtr MulByPatternConst(const PConstant<T> &vpnode_2, const AnfNodePtr &node_3) {
     AnfNodePtr vnode_1 = this->GetNode(captured_node_);
     AnfNodePtr vnode_2 = vpnode_2.GetNode(captured_node_);
     return CalcConstantTensors(vnode_1, vnode_2, node_3, MULTIPLY);
@@ -892,28 +886,20 @@ class PConstant : public PBase<PConstant<T> > {
     return dyn_cast<tensor::Tensor>(value);
   }
 
-  AnfNodePtr CalcConstantTensors(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3,
-                                 BinOperator bin_operator) const {
-    auto tensor_ptr_1 = GetTensorFromValueNode(vnode_1);
-    auto tensor_ptr_2 = GetTensorFromValueNode(vnode_2);
-    if (tensor_ptr_1 == nullptr || tensor_ptr_2 == nullptr || node_3->abstract() == nullptr) {
-      return nullptr;
-    }
-
+  tensor::TensorPtr GetNewTensor(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3,
+                                 int tensor_size_1, int tensor_size_2, int *data_out_size) {
     auto tensor_1_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
     auto tensor_2_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_1_type_ptr = tensor_1_abstract->element()->BuildType();
     TypePtr tensor_2_type_ptr = tensor_2_abstract->element()->BuildType();
 
-    ShapeVector tensor_out_shape;
-    int data_out_size;
     tensor::TensorPtr new_tensor_ptr;
-
+    ShapeVector tensor_out_shape;
     if ((tensor_1_abstract->shape()->shape() == tensor_2_abstract->shape()->shape()) &&
         (tensor_1_type_ptr->type_id() == tensor_2_type_ptr->type_id())) {
       // If two constant nodes have the same shape, then create a new one with this shape
       tensor_out_shape = tensor_1_abstract->shape()->shape();
-      data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
+      *data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
 
       new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_1_type_ptr->type_id(), tensor_out_shape);
     } else {
@@ -926,14 +912,32 @@ class PConstant : public PBase<PConstant<T> > {
         return nullptr;
       }
       tensor_out_shape = tensor_3_abstract->shape()->shape();
-      data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-      if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
+      *data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
+      if ((tensor_size_1 > 1) && (tensor_size_1 != *data_out_size)) {
         return nullptr;
       }
-      if ((tensor_ptr_2->DataSize() > 1) && (tensor_ptr_2->DataSize() != data_out_size)) {
+      if ((tensor_size_2 > 1) && (tensor_size_2 != *data_out_size)) {
         return nullptr;
       }
       new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
+    }
+    return new_tensor_ptr;
+  }
+
+  AnfNodePtr CalcConstantTensors(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3,
+                                 BinOperator bin_operator) {
+    auto tensor_ptr_1 = GetTensorFromValueNode(vnode_1);
+    auto tensor_ptr_2 = GetTensorFromValueNode(vnode_2);
+    if (tensor_ptr_1 == nullptr || tensor_ptr_2 == nullptr || node_3->abstract() == nullptr) {
+      return nullptr;
+    }
+
+    int data_out_size = 0;
+    int tensor_size_1 = tensor_ptr_1->DataSize();
+    int tensor_size_2 = tensor_ptr_2->DataSize();
+    auto new_tensor_ptr = GetNewTensor(vnode_1, vnode_2, node_3, tensor_size_1, tensor_size_2, &data_out_size);
+    if (new_tensor_ptr == nullptr) {
+      return nullptr;
     }
 
     size_t mem_size = GetTypeByte(new_tensor_ptr->Dtype()) * IntToSize(new_tensor_ptr->ElementsNum());
