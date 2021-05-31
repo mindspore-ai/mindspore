@@ -87,6 +87,14 @@ bool IsKernelActor(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsSkippedKernelActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsKernelActor(node) && AnfAlgo::IsInplaceNode(node, "skip")) {
+    return true;
+  }
+  return false;
+}
+
 bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {
@@ -97,6 +105,5 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   }
   return false;
 }
-
 }  // namespace runtime
 }  // namespace mindspore

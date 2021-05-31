@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include <unordered_set>
 #include <functional>
 #include <numeric>
 #include "ir/anf.h"
@@ -50,8 +49,6 @@ constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kNopNodeRealInputIndex = 1;
 constexpr size_t kReturnDataIndex = 1;
 
-using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
-
 const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
 
 bool IsShapeDynamic(const abstract::ShapePtr &shape) {
@@ -66,15 +63,6 @@ bool IsShapeDynamic(const std::vector<size_t> &shape) {
 bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
   return (prim && prim_set.find(prim) != prim_set.end());
-}
-
-bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr || cnode->size() == 0) {
-    return false;
-  }
-  return IsOneOfPrimitive(cnode->inputs().at(kAnfPrimitiveIndex), prim_set);
 }
 
 bool IsRealKernelCNode(const CNodePtr &cnode) {
@@ -284,7 +272,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
     return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, visit_nop_node, return_types);
   }
-  if (IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
+  if (AnfAlgo::IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
     return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, visit_nop_node, return_types);
   }
   if (opt::IsNopNode(cnode) && visit_nop_node) {
@@ -2087,5 +2075,13 @@ bool AnfRuntimeAlgorithm::IsTensorBroadcast(const std::vector<size_t> &lhs, cons
   return false;
 }
 
+bool AnfRuntimeAlgorithm::IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr || cnode->size() == 0) {
+    return false;
+  }
+  return IsOneOfPrimitive(cnode->inputs().at(kAnfPrimitiveIndex), prim_set);
+}
 }  // namespace session
 }  // namespace mindspore

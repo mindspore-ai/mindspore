@@ -23,6 +23,7 @@
 #include <tuple>
 #include <utility>
 #include <memory>
+#include <unordered_set>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "base/base.h"
@@ -37,6 +38,7 @@
 
 namespace mindspore {
 namespace session {
+using PrimitiveSet = std::unordered_set<PrimitivePtr, PrimitiveHasher, PrimitiveEqual>;
 using AnfVisitFuncion = std::function<Any(const AnfNodePtr &node, int index)>;
 using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
@@ -293,6 +295,7 @@ class AnfRuntimeAlgorithm {
     }
     return result;
   }
+  static bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
