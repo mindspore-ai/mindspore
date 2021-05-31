@@ -20,7 +20,6 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean
@@ -87,56 +86,12 @@ def _clip_grad(clip_type, clip_value, grad):
         new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
     return new_grad
 
-get_square_sum = C.MultitypeFuncGraph("get_square_sum")
-@get_square_sum.register("Tensor")
-def _get_square_sum(grad):
-    norm = P.ReduceSum(False)(F.square(grad), ())
-    norm = F.expand_dims(F.cast(norm, mstype.float32), 0)
-    return norm
-
-
-apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
-@apply_global_norm.register("Tensor", "Tensor", "Tensor")
-def _apply_global_norm(clip_norm, global_norm, grad):
-    grad = grad * clip_norm / global_norm
-    return grad
-
-class GlobalNorm(Cell):
-    """
-    Calculate the global norm value of given tensors
-    """
-    def __init__(self):
-        super(GlobalNorm, self).__init__()
-        self.norm = nn.Norm()
-        self.hyper_map = C.HyperMap()
-
-    def construct(self, grads):
-        square_sum = self.hyper_map(get_square_sum, grads)
-        global_norms = F.sqrt(F.addn(square_sum) / F.scalar_to_array(len(square_sum)))
-        return global_norms
-
-class ClipByGlobalNorm(Cell):
-    """
-    Clip grads by global norm
-    """
-    def __init__(self, clip_norm=1.0):
-        super(ClipByGlobalNorm, self).__init__()
-        self.global_norm = GlobalNorm()
-        self.clip_norm = Tensor([clip_norm], mstype.float32)
-        self.hyper_map = C.HyperMap()
-
-    def construct(self, grads):
-        global_norm = self.global_norm(grads)
-        cond = P.GreaterEqual()(global_norm, self.clip_norm)
-        global_norm = F.select(cond, global_norm, self.clip_norm)
-        grads = self.hyper_map(F.partial(apply_global_norm, self.clip_norm, global_norm), grads)
-        return grads
 
 def clip_gradient(enable_clip_grad, gradients):
     """clip gradients"""
     if enable_clip_grad:
         if IS_ENABLE_GLOBAL_NORM:
-            gradients = ClipByGlobalNorm()(gradients)
+            gradients = C.clip_by_global_norm(gradients, GRADIENT_CLIP_VALUE, None)
         else:
             gradients = hyper_map_op(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), gradients)
     return gradients
@@ -211,16 +166,15 @@ def get_net_layertype_mask(net):
 
 def get_layer_counter(layer_type, layer_counter, params, idx):
     """get layer counter"""
-    if layer_type in [Conv, FC, LayerNorm, BatchNorm]:
-        if layer_type in [LayerNorm, BatchNorm]:
-            if "beta" in params[idx].name.lower():
-                layer_counter = layer_counter + 1
+    if layer_type in [Conv, FC]:
+        if "bias" in params[idx].name.lower():
+            layer_counter = layer_counter + 1
         else:
-            if "bias" in params[idx].name.lower():
+            if idx < len(params) - 1 and "bias" not in params[idx + 1].name.lower():
                 layer_counter = layer_counter + 1
-            else:
-                if idx < len(params) - 1 and "bias" not in params[idx + 1].name.lower():
-                    layer_counter = layer_counter + 1
+    elif layer_type in [LayerNorm, BatchNorm]:
+        if "beta" in params[idx].name.lower():
+            layer_counter = layer_counter + 1
     else:
         layer_counter = layer_counter + 1
     return layer_counter
@@ -229,6 +183,12 @@ def get_layer_counter(layer_type, layer_counter, params, idx):
 def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
          use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None, enable_clip_grad=False,
          frequency=100):
+    r"""
+    Updates gradients by the THOR algorithm.
+    Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation (THOR) algorithm is proposed in:
+    `THOR: Trace-based Hardware-driven layer-ORiented Natural Gradient Descent Computation
+    <https://www.aaai.org/AAAI21Papers/AAAI-6611.ChenM.pdf>`_
+    """
     context.set_context(max_call_depth=10000)
     ConvertNetUntils().convert_to_thor_net(net)
     if context.get_context("device_target") == "Ascend":
@@ -285,8 +245,6 @@ class ThorGpu(Optimizer):
         self.update_gradient = P.UpdateThorGradient(split_dim=split_dim)
         self.enable_clip_grad = enable_clip_grad
         self.frequency = frequency
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self._define_gpu_reducer(split_indices)
 
     def get_frequency(self):
@@ -320,6 +278,8 @@ class ThorGpu(Optimizer):
 
     def _define_gpu_reducer(self, split_indices):
         """define gpu reducer"""
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         if self.is_distributed:
             mean = _get_gradients_mean()
             degree = _get_device_num()
@@ -369,21 +329,21 @@ class ThorGpu(Optimizer):
 
             if layer_type in [Conv, FC, Embedding] and "bias" not in self.params[idx].name.lower():
                 self.weight_fim_idx_map = self.weight_fim_idx_map + (self.thor_layer_count,)
-                self.weight_layertype_idx_map = self.weight_layertype_idx_map + (layer_type,)
                 self.thor_layer_count = self.thor_layer_count + 1
+                self.weight_layertype_idx_map = self.weight_layertype_idx_map + (layer_type,)
                 if layer_type == Conv:
                     self.weight_conv_idx_map = self.weight_conv_idx_map + (self.conv_layer_count,)
                     self.conv_layer_count = self.conv_layer_count + 1
                 else:
                     self.weight_conv_idx_map = self.weight_conv_idx_map + (-1,)
             else:
-                self.weight_fim_idx_map = self.weight_fim_idx_map + (-1,)
                 self.weight_conv_idx_map = self.weight_conv_idx_map + (-1,)
+                self.weight_fim_idx_map = self.weight_fim_idx_map + (-1,)
                 if layer_type == LayerNorm:
                     self.weight_layertype_idx_map = self.weight_layertype_idx_map + (LayerNorm,)
                 else:
                     self.weight_layertype_idx_map = self.weight_layertype_idx_map + (Other,)
-                # bert.cls1.output_bias: not a network layer, only a trainable param
+            # bert.cls1.output_bias: not a network layer, only a trainable param
             if "output_bias" not in self.params[idx].name.lower():
                 layer_counter = get_layer_counter(layer_type, layer_counter, self.params, idx)
 
@@ -439,6 +399,24 @@ class ThorGpu(Optimizer):
                 matrix_g_allreduce = matrix_g_allreduce + (matrix_g,)
         return matrix_a_allreduce, matrix_g_allreduce
 
+    def _process_layernorm(self, damping_step, gradient):
+        """process layernorm"""
+        damping = self.sqrt(damping_step)
+        normalizer = self.batch_size
+        normalizer = self.cast(normalizer, mstype.float32)
+        fim_cov = self.square(gradient)
+        fim_cov = self.mul(fim_cov, 1.0 / normalizer)
+        fim_cov = fim_cov + damping
+        fim_inv = self.inv(fim_cov)
+        gradient = self.mul(fim_inv, gradient)
+        return gradient
+
+    def _reshape_gradient(self, conv_layer_count, g, g_shape):
+        """reshape gradient"""
+        if conv_layer_count != -1:
+            g = self.reshape(g, g_shape)
+        return g
+
     def construct(self, gradients):
         params = self.params
         moments = self.moments
@@ -470,8 +448,7 @@ class ThorGpu(Optimizer):
                     fake_g = self.assign(self.matrix_g[thor_layer_count], matrix_g)
                     g = F.depend(g, fake_a)
                     g = F.depend(g, fake_g)
-                    if conv_layer_count != -1:
-                        g = self.reshape(g, g_shape)
+                    g = self._reshape_gradient(conv_layer_count, g, g_shape)
                 elif layer_type == Embedding:
                     matrix_a = matrix_a_allreduce[thor_layer_count]
                     matrix_g = matrix_g_allreduce[thor_layer_count]
@@ -483,14 +460,7 @@ class ThorGpu(Optimizer):
                     g = self.mul(temp_a, g)
                     g = self.matmul(g, matrix_g)
                 elif layer_type == LayerNorm:
-                    damping = self.sqrt(damping_step)
-                    normalizer = self.batch_size
-                    normalizer = self.cast(normalizer, mstype.float32)
-                    fim_cov = self.square(g)
-                    fim_cov = self.mul(fim_cov, 1.0 / normalizer)
-                    fim_cov = fim_cov + damping
-                    fim_inv = self.inv(fim_cov)
-                    g = self.mul(fim_inv, g)
+                    g = self._process_layernorm(damping_step, g)
                 new_grads = new_grads + (g,)
         else:
             for j in range(len(self.params)):
@@ -504,8 +474,7 @@ class ThorGpu(Optimizer):
                     matrix_a = self.matrix_a[thor_layer_count]
                     matrix_g = self.matrix_g[thor_layer_count]
                     g = self.update_gradient(matrix_g, g, matrix_a)
-                    if conv_layer_count != -1:
-                        g = self.reshape(g, g_shape)
+                    g = self._reshape_gradient(conv_layer_count, g, g_shape)
                 elif layer_type == Embedding:
                     matrix_a = self.matrix_a[thor_layer_count]
                     matrix_g = self.matrix_g[thor_layer_count]
@@ -514,14 +483,7 @@ class ThorGpu(Optimizer):
                     g = self.mul(temp_a, g)
                     g = self.matmul(g, matrix_g)
                 elif layer_type == LayerNorm:
-                    damping = self.sqrt(damping_step)
-                    normalizer = self.batch_size
-                    normalizer = self.cast(normalizer, mstype.float32)
-                    fim_cov = self.square(g)
-                    fim_cov = self.mul(fim_cov, 1.0 / normalizer)
-                    fim_cov = fim_cov + damping
-                    fim_inv = self.inv(fim_cov)
-                    g = self.mul(fim_inv, g)
+                    g = self._process_layernorm(damping_step, g)
                 new_grads = new_grads + (g,)
         gradients = new_grads
 
@@ -564,8 +526,8 @@ class ThorAscend(Optimizer):
         self.matrix_g = ()
         self.thor_layer_count = 0
         self.conv_layer_count = 0
-        self.weight_fim_idx_map = ()
         self.weight_conv_idx_map = ()
+        self.weight_fim_idx_map = ()
         self.weight_layertype_idx_map = ()
         self._process_matrix_init_and_weight_idx_map(self.net)
         self.matrix_a = ParameterTuple(self.matrix_a)
@@ -584,8 +546,6 @@ class ThorAscend(Optimizer):
         self.batch_size_scale = Tensor(batch_size * batch_size, mstype.float32)
         self.enable_clip_grad = enable_clip_grad
         self.frequency = frequency
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self._define_ascend_reducer(split_indices)
 
 
@@ -626,6 +586,8 @@ class ThorAscend(Optimizer):
 
     def _define_ascend_reducer(self, split_indices):
         """define ascend reducer"""
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         if self.is_distributed:
             mean = _get_gradients_mean()
             degree = _get_device_num()
@@ -937,6 +899,44 @@ class ThorAscend(Optimizer):
                 new_grads = new_grads + (g,)
         return new_grads
 
+    def _get_second_grad_by_matmul(self, index, temp_a, temp_g, g, temp_max):
+        """get second gradient by matmul"""
+        conv_layer_count = self.weight_conv_idx_map[index]
+        layer_type = self.weight_layertype_idx_map[index]
+        if layer_type == FC:
+            g = self.cube_matmul_left_fc(temp_g, g)
+            g = self.cube_matmul_right_fc(g, temp_a, temp_max)
+        elif layer_type == Conv:
+            a_normalizer = self.a_normalizer[conv_layer_count]
+            a_normalizer = F.depend(a_normalizer, g)
+            temp_max = self.mul(temp_max, self.batch_size / a_normalizer)
+            g = self.cube_matmul_left(temp_g, g)
+            g = self.cube_matmul_right_mul(g, temp_a, temp_max)
+        return g, temp_max
+
+    def _get_second_grad_by_layertype(self, index, matrix_a_allreduce, matrix_g_allreduce, g, damping_step):
+        """get second gradient by layertype"""
+        thor_layer_count = self.weight_fim_idx_map[index]
+        layer_type = self.weight_layertype_idx_map[index]
+        if layer_type == Embedding:
+            temp_a_ori = matrix_a_allreduce[thor_layer_count]
+            temp_g = matrix_g_allreduce[thor_layer_count]
+            fake_a = self.assign(self.matrix_a_cov[thor_layer_count], temp_a_ori)
+            fake_g = self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
+            g = F.depend(g, fake_a)
+            g = F.depend(g, fake_g)
+            temp_a = self.expand(temp_a_ori, 1)
+            g = self.mul(temp_a, g)
+            temp_g = self.cast(temp_g, mstype.float16)
+            g = self.cast(g, mstype.float16)
+            g = self.matmul(g, temp_g)
+            g = self.cast(g, mstype.float32)
+        elif layer_type == FC:
+            g = self._process_thor_fc(thor_layer_count, matrix_a_allreduce, matrix_g_allreduce, g)
+        elif layer_type == LayerNorm:
+            g = self._process_layernorm(damping_step, g)
+        return g
+
     def construct(self, gradients):
         params = self.params
         moments = self.moments
@@ -963,8 +963,6 @@ class ThorAscend(Optimizer):
                 for i in range(len(self.params)):
                     g = gradients[i]
                     thor_layer_count = self.weight_fim_idx_map[i]
-                    conv_layer_count = self.weight_conv_idx_map[i]
-                    layer_type = self.weight_layertype_idx_map[i]
                     temp_a = matrix_a_allreduce[thor_layer_count]
                     temp_g = matrix_g_allreduce[thor_layer_count]
                     matrix_a_inv_max = self.log(matrix_a_max_allreduce[thor_layer_count])
@@ -979,15 +977,7 @@ class ThorAscend(Optimizer):
                                         matrix_g_max_allreduce[thor_layer_count])
                     temp_a = self.cast(temp_a, mstype.float16)
                     temp_g = self.cast(temp_g, mstype.float16)
-                    if layer_type == FC:
-                        g = self.cube_matmul_left_fc(temp_g, g)
-                        g = self.cube_matmul_right_fc(g, temp_a, temp_max)
-                    elif layer_type == Conv:
-                        a_normalizer = self.a_normalizer[conv_layer_count]
-                        a_normalizer = F.depend(a_normalizer, g)
-                        temp_max = self.mul(temp_max, self.batch_size / a_normalizer)
-                        g = self.cube_matmul_left(temp_g, g)
-                        g = self.cube_matmul_right_mul(g, temp_a, temp_max)
+                    g, temp_max = self._get_second_grad_by_matmul(i, temp_a, temp_g, g, temp_max)
                     fake_a = self.assign(self.matrix_a[thor_layer_count], temp_a)
                     fake_g = self.assign(self.matrix_g[thor_layer_count], temp_g)
                     fake_max = self.assign(self.matrix_max_inv[thor_layer_count], temp_max)
@@ -999,25 +989,7 @@ class ThorAscend(Optimizer):
             else:
                 for i in range(len(self.params)):
                     g = gradients[i]
-                    thor_layer_count = self.weight_fim_idx_map[i]
-                    layer_type = self.weight_layertype_idx_map[i]
-                    if layer_type == Embedding:
-                        temp_a_ori = matrix_a_allreduce[thor_layer_count]
-                        temp_g = matrix_g_allreduce[thor_layer_count]
-                        fake_a = self.assign(self.matrix_a_cov[thor_layer_count], temp_a_ori)
-                        fake_g = self.assign(self.matrix_g_cov[thor_layer_count], temp_g)
-                        g = F.depend(g, fake_a)
-                        g = F.depend(g, fake_g)
-                        temp_a = self.expand(temp_a_ori, 1)
-                        g = self.mul(temp_a, g)
-                        temp_g = self.cast(temp_g, mstype.float16)
-                        g = self.cast(g, mstype.float16)
-                        g = self.matmul(g, temp_g)
-                        g = self.cast(g, mstype.float32)
-                    elif layer_type == FC:
-                        g = self._process_thor_fc(thor_layer_count, matrix_a_allreduce, matrix_g_allreduce, g)
-                    elif layer_type == LayerNorm:
-                        g = self._process_layernorm(damping_step, g)
+                    g = self._get_second_grad_by_layertype(i, matrix_a_allreduce, matrix_g_allreduce, g, damping_step)
                     new_grads = new_grads + (g,)
                 gradients = new_grads
         else:

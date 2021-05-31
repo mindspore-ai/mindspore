@@ -27,9 +27,9 @@ from mindspore._c_expression import init_exec_dataset
 from .dataset_helper import DatasetHelper
 
 
-def _convert_type(types):
+def _convert_to_ms_type(types):
     """
-    Convert from numpy type to tensor type.
+    Convert from numpy type to mindspore tensor type.
 
     Args:
         types (list): Numpy type list of element in dataset.
@@ -38,15 +38,15 @@ def _convert_type(types):
         list, list of element in dataset.
     """
     ms_types = []
-    for np_type in types:
-        ms_type = pytype_to_dtype(np_type)
+    for numpy_type in types:
+        ms_type = pytype_to_dtype(numpy_type)
         ms_types.append(ms_type)
     return ms_types
 
 
 def _get_types_and_shapes(dataset):
     """Get dataset types and shapes."""
-    dataset_types = _convert_type(dataset.output_types())
+    dataset_types = _convert_to_ms_type(dataset.output_types())
     dataset_shapes = dataset.output_shapes()
     return dataset_types, dataset_shapes
 
