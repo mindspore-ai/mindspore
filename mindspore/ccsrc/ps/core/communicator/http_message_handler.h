@@ -115,6 +115,9 @@ class HttpMessageHandler {
   const nlohmann::json &request_message() const;
   RequestProcessResult ParseValueFromKey(const std::string &key, int32_t *const value);
 
+  // Parse node ids when receiving an http request for scale in
+  RequestProcessResult ParseNodeIdsFromKey(const std::string &key, std::vector<std::string> *const value);
+
  private:
   struct evhttp_request *event_request_;
   const struct evhttp_uri *event_uri_;

@@ -79,8 +79,8 @@ class NodeManager {
   const int32_t &total_node_num();
   void set_worker_num(const int32_t &worker_num);
   void set_server_num(const int32_t &server_num);
-  int32_t worker_num();
-  int32_t server_num();
+  int32_t worker_num() const;
+  int32_t server_num() const;
 
   void UpdateNodeState(const NodeState &state);
   void UpdateClusterState(const ClusterState &state);

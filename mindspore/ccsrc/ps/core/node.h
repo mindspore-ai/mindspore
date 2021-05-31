@@ -68,14 +68,15 @@ class Node {
 
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
+                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
+
  protected:
   bool WaitForStart(const uint32_t &timeout);
 
   // Send data synchronously
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                        const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
-                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
   // Send data asynchronously
   uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta> meta,
                             const Protos &protos, const void *data, size_t size);

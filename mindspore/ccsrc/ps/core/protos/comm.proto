@@ -123,10 +123,18 @@ message CommMessage {
   bytes data = 2;
 }
 
-// The scheduler will broadcast the worker/server numbers after scale out/in to all nodes.
+// The scheduler will broadcast the worker/server numbers after scale out to all nodes.
 message ScaleOutMessage {
-  // the worker number after scale out/in
+  // the worker number after scale out
   int32 worker_num = 1;
-  // the server number after scale out/in
+  // the server number after scale out
+  int32 server_num = 2;
+}
+
+// The scheduler will broadcast the worker/server numbers after scale in to all nodes.
+message ScaleInMessage {
+  // the worker number after scale in
+  int32 worker_num = 1;
+  // the server number after scale in
   int32 server_num = 2;
 }
