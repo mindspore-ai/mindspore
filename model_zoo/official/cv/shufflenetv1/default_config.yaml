@@ -23,12 +23,12 @@ device_id: 0
 # Training options
 epoch_size: 250
 keep_checkpoint_max: 5
-save_ckpt_path: "/data1/mjq/ckpt/shufflenetv1/test_before_pr/"
+save_ckpt_path: "./"
 save_checkpoint_epochs: 1
 save_checkpoint: True
 amp_level: "O3"
 is_distributed: False
-train_dataset_path: "/data1/mjq/dataset/ImageNet_Original/train/"
+train_dataset_path: ""
 resume: ""
 
 # Dataset config
@@ -49,9 +49,14 @@ momentum: 0.9
 
 # ======================================================================================
 # Eval options
-ckpt_path: "/data1/mjq/ckpt/shufflenetv1/shufflenetv1_1-250_1251.ckpt"
-eval_dataset_path: "/data1/mjq/dataset/ImageNet_Original/validation_preprocess/"
+ckpt_path: ""
+eval_dataset_path: ""
 
+
+# ======================================================================================
+# export options
+file_name: "shufflenetv1"
+file_format: "MINDIR"
 
 ---
 # Help description for each configuration
@@ -65,3 +70,6 @@ enable_profiling: "Whether enable profiling while training default: False"
 is_distributed: "distributed training"
 resume: "resume training with existed checkpoint"
 model_size: "shuffleNetV1 model size choices 2.0x, 1.5x, 1.0x, 0.5x"
+device_id: "device id"
+file_name: "output file name"
+file_format: "file format choices [AIR MINDIR ONNX]"
