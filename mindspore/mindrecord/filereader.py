@@ -18,8 +18,8 @@ This module is to read data from mindrecord.
 from .shardreader import ShardReader
 from .shardheader import ShardHeader
 from .shardutils import populate_data
-from .shardutils import MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT, check_filename
-from .common.exceptions import ParamValueError, ParamTypeError
+from .shardutils import check_parameter
+from .common.exceptions import ParamTypeError
 
 __all__ = ['FileReader']
 
@@ -39,22 +39,8 @@ class FileReader:
         ParamValueError: If file_name, num_consumer or columns is invalid.
     """
 
+    @check_parameter
     def __init__(self, file_name, num_consumer=4, columns=None, operator=None):
-        if isinstance(file_name, list):
-            for f in file_name:
-                check_filename(f)
-        else:
-            check_filename(file_name)
-
-        if num_consumer is not None:
-            if isinstance(num_consumer, int):
-                if num_consumer < MIN_CONSUMER_COUNT or num_consumer > MAX_CONSUMER_COUNT():
-                    raise ParamValueError("Consumer number should between {} and {}."
-                                          .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
-            else:
-                raise ParamValueError("Consumer number is illegal.")
-        else:
-            raise ParamValueError("Consumer number is illegal.")
         if columns:
             if isinstance(columns, list):
                 self._columns = columns

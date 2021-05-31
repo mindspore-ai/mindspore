@@ -236,6 +236,10 @@ class MnistToMR:
         return SUCCESS
 
     def transform(self):
+        """
+        Encapsulate the run function to exit normally
+        """
+
         t = ExceptionThread(target=self.run)
         t.daemon = True
         t.start()

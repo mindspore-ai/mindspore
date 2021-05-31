@@ -45,7 +45,7 @@ SoftJpegd::SoftJpegd() : soft_decode_out_buf_(nullptr) {}
  * @param [in] jpeg_decompress_struct& libjpeg_handler : libjpeg
  * @param [in] VpcInfo& vpc_input_info : vpc input information
  */
-void SetFormat(struct jpeg_decompress_struct *libjpeg_handler, struct VpcInfo *vpc_input_info) {
+void SetFormat(const struct jpeg_decompress_struct *libjpeg_handler, struct VpcInfo *vpc_input_info) {
   // yuv400: component 1 1x1
   // yuv420: component 3 2x2 1x1 1x1
   // yuv422: component 3 2x1 1x1 1x1
