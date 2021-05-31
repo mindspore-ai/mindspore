@@ -54,8 +54,8 @@ class TcpConnection {
 
   virtual void InitConnection(const messageReceive &callback);
   virtual void SendMessage(const void *buffer, size_t num) const;
-  bool SendMessage(std::shared_ptr<CommMessage> message) const;
-  bool SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) const;
+  bool SendMessage(const std::shared_ptr<CommMessage> &message) const;
+  bool SendMessage(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) const;
   virtual void OnReadHandler(const void *buffer, size_t numBytes);
   const TcpServer *GetServer() const;
   const evutil_socket_t &GetFd() const;
@@ -101,10 +101,10 @@ class TcpServer {
   std::shared_ptr<TcpConnection> GetConnectionByFd(const evutil_socket_t &fd);
   OnServerReceiveMessage GetServerReceive() const;
   void SetMessageCallback(const OnServerReceiveMessage &cb);
-  bool SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message);
-  bool SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
-                   const void *data, size_t sizee);
-  void SendMessage(std::shared_ptr<CommMessage> message);
+  bool SendMessage(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<CommMessage> &message);
+  bool SendMessage(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                   const Protos &protos, const void *data, size_t sizee);
+  void SendMessage(const std::shared_ptr<CommMessage> &message);
   uint16_t BoundPort() const;
   std::string BoundIp() const;
   int ConnectionNum() const;

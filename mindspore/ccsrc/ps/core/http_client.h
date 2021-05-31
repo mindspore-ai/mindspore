@@ -42,6 +42,7 @@
 #include "ps/core/http_message_handler.h"
 #include "ps/core/comm_util.h"
 #include "ps/constants.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -78,7 +79,7 @@ class HttpClient {
   static void ConnectionCloseCallback(struct evhttp_connection *connection, void *arg);
 
   void AddHeaders(const std::map<std::string, std::string> &headers, const struct evhttp_request *request,
-                  std::shared_ptr<HttpMessageHandler> handler);
+                  const std::shared_ptr<HttpMessageHandler> &handler);
   void InitRequest(std::shared_ptr<HttpMessageHandler> handler, const std::string &url,
                    const struct evhttp_request *request);
   Status CreateRequest(std::shared_ptr<HttpMessageHandler> handler, struct evhttp_connection *connection,

@@ -42,13 +42,13 @@ bool ServerNode::Start(const uint32_t &timeout) {
 
 void ServerNode::set_handler(const RequestHandler &handler) { request_handler_ = handler; }
 
-void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const void *data,
-                          size_t size) {
+void ServerNode::Response(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                          const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   meta->set_role(node_info_.node_role_);
-  meta->set_rank_id(node_info_.rank_id_);
+  meta->set_rank_id(UintToInt(node_info_.rank_id_));
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << meta->request_id();
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
@@ -96,8 +96,8 @@ void ServerNode::Initialize() {
   MS_LOG(INFO) << "Server node init client successful!";
 }
 
-void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                 const Protos &protos, const void *data, size_t size) {
+void ServerNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                                 const Protos &, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
@@ -117,8 +117,8 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   request_handler_(conn, meta, res, size);
 }
 
-void ServerNode::ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
-                                           const void *data, size_t size) {
+void ServerNode::ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn,
+                                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   server_->SendMessage(conn, meta, Protos::RAW, data, size);

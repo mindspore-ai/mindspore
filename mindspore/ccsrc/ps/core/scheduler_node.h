@@ -42,8 +42,10 @@ class SchedulerNode : public Node {
   SchedulerNode() : server_(nullptr), scheduler_thread_(nullptr), update_state_thread_(nullptr) {}
   ~SchedulerNode() override;
 
-  typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                                 std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  typedef void (SchedulerNode::*ResponseHandler)(const std::shared_ptr<TcpServer> &server,
+                                                 const std::shared_ptr<TcpConnection> &conn,
+                                                 const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                 size_t size);
 
   bool Start(const uint32_t &timeout = ClusterMetadata::instance()->cluster_available_timeout()) override;
   bool Stop() override;
@@ -53,15 +55,15 @@ class SchedulerNode : public Node {
   void Initialize();
   void InitCommandHandler();
   void CreateTcpServer();
-  void ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                       std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessHeartbeat(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessRegister(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                       const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
   void StartUpdateClusterStateTimer();
-  void ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
-  void ProcessFetchServers(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                           std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  void ProcessFinish(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                     const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+  void ProcessFetchServers(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
