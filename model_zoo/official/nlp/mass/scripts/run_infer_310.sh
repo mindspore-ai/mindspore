@@ -99,7 +99,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --config=$config --vocab=$vocab --output=$output --source_id_folder=./preprocess_Result/00_source_eos_ids --target_id_folder=./preprocess_Result/01_source_eos_mask --result_dir=./result_Files &> acc.log
+    python3.7 ../postprocess.py --config=$config --vocab=$vocab --output=$output --source_id_folder=./preprocess_Result/00_source_eos_ids --target_id_folder=./preprocess_Result/target_eos_ids --result_dir=./result_Files &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then
