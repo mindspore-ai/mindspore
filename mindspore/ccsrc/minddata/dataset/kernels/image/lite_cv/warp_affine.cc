@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <limits.h>
+#include <climits>
 #include <cmath>
 #include <vector>
 
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
 
-#define BITS 5
-#define BITS1 15
-#define TAB_SZ (1 << BITS)
-#define TAB_SZ2 (TAB_SZ * TAB_SZ)
-#define REMAP_SCALE (1 << 15)
 #define INTTOUCHAR(v) ((uint8_t)((unsigned)(v) <= UCHAR_MAX ? (v) : (v) > 0 ? UCHAR_MAX : 0))
 #define SrcValue(src, y, x) (reinterpret_cast<double *>((src) + (y)*3))[(x)]
 #define DstValue(dst, y, x) (reinterpret_cast<double *>((dst) + (y)*3))[(x)]
+
+constexpr int BITS = 5;
+constexpr int BITS1 = 15;
+constexpr int TAB_SZ = 1 << BITS;
+constexpr int TAB_SZ2 = TAB_SZ * TAB_SZ;
+constexpr int REMAP_SCALE = 1 << 15;
 
 namespace mindspore {
 namespace dataset {
@@ -44,7 +45,9 @@ static double GetDet3(double *src) {
 }
 
 static int16_t IntCastShort(int value) {
-  return (int16_t)((unsigned)(value - SHRT_MIN) <= (unsigned)USHRT_MAX ? value : value > 0 ? SHRT_MAX : SHRT_MIN);
+  return static_cast<int16_t>(static_cast<unsigned>(value - SHRT_MIN) <= static_cast<unsigned>(USHRT_MAX)
+                                ? value
+                                : value > 0 ? SHRT_MAX : SHRT_MIN);
 }
 
 static int16_t FloatToShort(float value) { return IntCastShort(round(value)); }
@@ -83,7 +86,7 @@ static void CalWBlock(const int &sum_i, const int &ks, int16_t *iWBlock) {
 
 static const void *InitWBlock() {
   static bool initWB = false;
-  int16_t *iWBlock = 0;
+  int16_t *iWBlock = nullptr;
   const int ks = 2;
 
   iWBlock = BWBlock_i[0][0];

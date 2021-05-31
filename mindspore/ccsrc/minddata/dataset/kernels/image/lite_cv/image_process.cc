@@ -16,20 +16,18 @@
 
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
-#include <float.h>
-#include <limits.h>
-#include <cstring>
+#include <cfloat>
+#include <climits>
 #include <cmath>
+#include <cstring>
 #include <limits>
-#include <vector>
-#include <utility>
 #include <random>
+#include <utility>
+#include <vector>
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-
-#define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
 
 namespace mindspore {
 namespace dataset {
@@ -528,6 +526,10 @@ static uint8x8_t RGBToGray(const uint16x8_t &r_value, const uint16x8_t &g_value,
   return v_gray;
 }
 
+static uint8_t U32ToU8Cast(uint32_t value) {
+  return static_cast<uint8_t>(std::min(value, static_cast<uint32_t>(UCHAR_MAX)));
+}
+
 static bool ConvertRGBAToGRAY_Neon(const uint8_t *srcBase, uint8_t *dstBase, int w, int h) {
   const uint32_t r_to_gray = kR2Gray;
   const uint32_t g_to_gray = kG2Gray;
@@ -577,7 +579,7 @@ static bool ConvertRGBAToGRAY_Neon(const uint8_t *srcBase, uint8_t *dstBase, int
 
     for (; dst_j < w; src_j += 4, dst_j++) {
       uint32_t val = src_ptr[src_j] * r_to_gray + src_ptr[src_j + 1] * g_to_gray + src_ptr[src_j + 2] * b_to_gray;
-      dst_ptr[dst_j] = U32TOU8CAST((val + kGrayShiftDelta) >> kGrayShift);
+      dst_ptr[dst_j] = U32ToU8Cast((val + kGrayShiftDelta) >> kGrayShift);
     }
   }
   return true;
