@@ -295,6 +295,7 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/utils_test.cc
         ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
+        ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         )
 
 if(ENABLE_CONVERTER)
