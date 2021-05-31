@@ -521,18 +521,51 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET]  [DATA_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` can choose from [resnet18, se-resnet50].
+- `NET_TYPE` can choose from [resnet18, se-resnet50, resnet50, resnet101].
+- `DATASET` can choose from [cifar10, imagenet].
 - `DEVICE_ID` is optional, default value is 0.
 
 ### result
 
 Inference result is saved in current path, you can find result like this in acc.log file.
 
+- Evaluating ResNet18 with CIFAR-10 dataset
+
 ```bash
-top1_accuracy:70.42, top5_accuracy:89.7
+Total data: 10000, top1 accuracy: 0.94.26, top5 accuracy: 0.9987.
+```
+
+- Evaluating ResNet18 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.70668, top5 accuracy: 0.89698.
+```
+
+- Evaluating ResNet50 with CIFAR-10 dataset
+
+```bash
+Total data: 10000, top1 accuracy: 0.9310, top5 accuracy: 0.9980.
+```
+
+- Evaluating ResNet50 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.0.7696, top5 accuracy: 0.93432.
+```
+
+- Evaluating ResNet101 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.7871, top5 accuracy: 0.94354.
+```
+
+- Evaluating SE-ResNet50 with ImageNet2012 dataset
+
+```bash
+Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 ```
 
 # [Model Description](#contents)

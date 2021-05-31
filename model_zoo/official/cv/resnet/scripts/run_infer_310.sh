@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 3 || $# -gt 4 ]]; then
-    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
-    NET_TYPE can choose from [resnet18, se-resnet50]
+if [[ $# -lt 4 || $# -gt 5 ]]; then
+    echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
+    NET_TYPE can choose from [resnet18, se-resnet50, resnet50, resnet101]
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -29,23 +29,25 @@ get_real_path(){
     fi
 }
 model=$(get_real_path $1)
-if [ $2 == 'resnet18' ] || [ $2 == 'se-resnet50' ]; then
+if [ $2 == 'resnet18' ] || [ $2 == 'se-resnet50' ] || [ $2 == 'resnet50' ] || [ $2 == 'resnet101' ]; then
   network=$2
 else
   echo "NET_TYPE can choose from [resnet18, se-resnet50]"
   exit 1
 fi
 
-data_path=$(get_real_path $3)
+dataset=$3
+data_path=$(get_real_path $4)
 
 device_id=0
-if [ $# == 4 ]; then
-    device_id=$4
+if [ $# == 5 ]; then
+    device_id=$5
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
 echo "network: "$network
+echo "dataset: "$dataset
 echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
@@ -71,6 +73,16 @@ function compile_app()
     bash build.sh &> build.log
 }
 
+function preprocess_data()
+{
+    if [ -d preprocess_Result ]; then
+        rm -rf ./preprocess_Result
+    fi
+    mkdir preprocess_Result
+
+    python3.7 ../preprocess.py --dataset_path=$data_path --output_path=./preprocess_Result
+}
+
 function infer()
 {
     cd - || exit
@@ -82,14 +94,27 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=$data_path --network=$network --device_id=$device_id  &> infer.log
+    ../ascend310_infer/src/main --mindir_path=$model --dataset_path=$data_path --network=$network --dataset=$dataset --device_id=$device_id  &> infer.log
 }
 
 function cal_acc()
 {
-    python3.7 ../create_imagenet2012_label.py  --img_path=$data_path
-    python3.7 ../postprocess.py --result_path=./result_Files --label_path=./imagenet_label.json  &> acc.log &
+    if [ "x${dataset}" == "xcifar10" ] || [ "x${dataset}" == "xCifar10" ]; then
+        python ../postprocess.py --dataset=$dataset --label_path=./preprocess_Result/label --result_path=result_Files &> acc.log
+    else
+        python3.7 ../create_imagenet2012_label.py  --img_path=$data_path
+        python3.7 ../postprocess.py --dataset=$dataset --result_path=./result_Files --label_path=./imagenet_label.json  &> acc.log
+    fi
+    if [ $? -ne 0 ]; then
+        echo "calculate accuracy failed"
+        exit 1
+    fi
 }
+
+if [ "x${dataset}" == "xcifar10" ] || [ "x${dataset}" == "xCifar10" ]; then
+    preprocess_data
+    data_path=./preprocess_Result/img_data
+fi
 
 compile_app
 if [ $? -ne 0 ]; then
