@@ -187,7 +187,9 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     auto matrix_g_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
 
     split_dim = LongToSize(GetAttr<int64_t>(kernel_node, "split_dim"));
-
+    if (split_dim == 0) {
+      MS_LOG(ERROR) << "Divide by zero, split_dim can not be zero.";
+    }
     gradient_size.batch_h = gradient_shape[0] / split_dim;
     gradient_size.batch_w = gradient_shape[1] / split_dim;
     if (gradient_size.batch_h * split_dim != gradient_shape[0]) {
