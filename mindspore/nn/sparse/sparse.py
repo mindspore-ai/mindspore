@@ -21,6 +21,11 @@ class SparseToDense(Cell):
     """
     Converts a sparse tensor into dense.
 
+    In Python, for the ease of use, three tensors are collected into a SparseTensor class.
+    MindSpore uses three independent dense tensors: indices, value and dense shape to represent the sparse tensor.
+    Separate indexes, values and dense shape tensors can be wrapped in a Sparse Tensor object
+    before being passed to the OPS below.
+
     Inputs:
         - **sparse_tensor** (:class:`mindspore.SparseTensor`): the sparse tensor to convert.
 
@@ -31,8 +36,8 @@ class SparseToDense(Cell):
         sparse_tensor (SparseTensor): the sparse tensor to convert.
 
     Raises:
-        TypeError: If the`sparse_tensor.indices` data type is neither int32 nor int64.
-        TypeError: If the 'sparse_tensor.values' data type is not a Number or bool.
+        TypeError: If `sparse_tensor.indices` is not a Tensor.
+        TypeError: If 'sparse_tensor.values' is not a Tensor.
         TypeError: If 'sparse_tensor.dense_shape' is not a tuple.
 
     Supported Platforms:
