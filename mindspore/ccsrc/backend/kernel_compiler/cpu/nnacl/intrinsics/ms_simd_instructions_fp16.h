@@ -92,6 +92,14 @@ static inline float16x4_t ms_vcvt_f16_f32(float32x4_t in) {
 #define MS_ADDVQ_F32(src) vaddvq_f32(src)
 #endif
 
+#define MS_FLOAT16X8 float16x8_t
+#define MS_MOVQ_F16 vmovq_n_f16
+#define MS_STQ_F16 vst1q_f16
+#define MS_MINQ_F16 vminq_f16
+#define MS_MAXQ_F16 vmaxq_f16
+#define MS_LDQ_F16 vld1q_f16
+#define MS_ADDQ_F16 vaddq_f16
+
 static inline float16x8_t MS_TANHX8_F16(float16x8_t src) {
   float32x4_t src_low = MS_CVT_F32_F16(vget_low_f16(src));
   float32x4_t src_high = MS_CVT_F32_F16(vget_high_f16(src));
