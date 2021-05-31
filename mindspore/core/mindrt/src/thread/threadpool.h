@@ -80,7 +80,7 @@ typedef struct Worker {
 
 class ThreadPool {
  public:
-  static ThreadPool *CreateThreadPool(size_t thread_num, BindMode bind_mode);
+  static ThreadPool *CreateThreadPool(size_t thread_num);
   virtual ~ThreadPool();
 
   size_t thread_num() const { return thread_num_; }
@@ -98,7 +98,7 @@ class ThreadPool {
   int CreateThreads(size_t thread_num);
   void DestructThreads();
 
-  int InitAffinityInfo(BindMode bind_mode);
+  int InitAffinityInfo();
 
   virtual void ThreadAsyncRun(Worker *worker);
   void KernelThreadRun(Worker *worker);

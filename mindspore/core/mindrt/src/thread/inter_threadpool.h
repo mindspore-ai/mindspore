@@ -29,7 +29,7 @@ namespace mindspore {
 class InterThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains inter thread and intra thread
-  static InterThreadPool *CreateThreadPool(size_t inter_thread_num, size_t intra_thread_num, BindMode bind_mode);
+  static InterThreadPool *CreateThreadPool(size_t inter_thread_num, size_t intra_thread_num);
   // create ThreadPool that contains only actor thread
   static InterThreadPool *CreateThreadPool(size_t thread_num);
   ~InterThreadPool() override;
@@ -45,7 +45,6 @@ class InterThreadPool : public ThreadPool {
 
   std::mutex actor_mutex_;
   std::condition_variable actor_cond_var_;
-  std::condition_variable finish_cond_var_;
   std::queue<ActorReference> actor_queue_;
 
   std::atomic_bool exit_{false};

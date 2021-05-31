@@ -211,7 +211,7 @@ int GetMaxFrequency(int core_id) {
   return max_freq;
 }
 
-int CoreAffinity::SortCPUProcessors() {
+int CoreAffinity::InitHardwareCoreInfo() {
   core_num_ = std::thread::hardware_concurrency();
   std::vector<CpuInfo> freq_set;
   freq_set.resize(core_num_);
@@ -248,22 +248,17 @@ int CoreAffinity::SortCPUProcessors() {
 }
 
 int CoreAffinity::InitBindCoreId(size_t thread_num, BindMode bind_mode) {
-  int ret = SortCPUProcessors();
-  if (ret != THREAD_OK) {
-    return THREAD_ERROR;
-  }
   if (core_num_ != sorted_id_.size()) {
     THREAD_ERROR("init sorted core id failed");
     return THREAD_ERROR;
   }
-  thread_num_ = thread_num;
   bind_id_.clear();
   if (bind_mode == Power_Higher || bind_mode == Power_NoBind) {
-    for (size_t i = 0; i < thread_num_; ++i) {
+    for (size_t i = 0; i < thread_num; ++i) {
       bind_id_.push_back(sorted_id_[i % core_num_]);
     }
   } else if (bind_mode == Power_Middle) {
-    for (size_t i = 0; i < thread_num_; ++i) {
+    for (size_t i = 0; i < thread_num; ++i) {
       bind_id_.push_back(sorted_id_[(i + higher_num_) % core_num_]);
     }
   } else {
@@ -301,18 +296,14 @@ int CoreAffinity::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) co
 
 int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) const {
 #ifdef BIND_CORE
-  if (thread_num_ != workers.size()) {
-    return THREAD_ERROR;
-  }
   cpu_set_t mask;
   CPU_ZERO(&mask);
-  for (size_t i = 0; i < thread_num_; ++i) {
-    CPU_SET(sorted_id_[i], &mask);
+  for (int i : bind_id_) {
+    CPU_SET(i, &mask);
   }
-  for (size_t i = 0; i < thread_num_; ++i) {
-    int ret = SetAffinity(workers[i]->thread.native_handle(), &mask);
+  for (auto worker : workers) {
+    int ret = SetAffinity(worker->thread.native_handle(), &mask);
     if (ret != THREAD_OK) {
-      THREAD_ERROR("set thread[%zu] affinity failed", i);
       return THREAD_ERROR;
     }
   }
@@ -322,21 +313,22 @@ int CoreAffinity::FreeScheduleThreads(const std::vector<Worker *> &workers) cons
 
 int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) const {
 #ifdef BIND_CORE
-  if (thread_num_ != workers.size()) {
-    THREAD_ERROR("invalid core list");
+  if (bind_id_.empty()) {
+    THREAD_ERROR("bind id is empty");
     return THREAD_ERROR;
   }
-  for (size_t i = 0; i < thread_num_; ++i) {
+  size_t window = bind_id_.size();
+  size_t thread_num = workers.size();
+  for (size_t i = 0; i < thread_num; ++i) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
-    CPU_SET(bind_id_[i], &mask);
+    CPU_SET(bind_id_[i % window], &mask);
     // affinity mask determines the CPU core which it is eligible to run
     int ret = SetAffinity(workers[i]->thread.native_handle(), &mask);
     if (ret != THREAD_OK) {
-      THREAD_ERROR("set thread[%zu] affinity to core[%d] failed", i, bind_id_[i]);
       return THREAD_ERROR;
     }
-    THREAD_ERROR("set thread[%zu] affinity to core[%d] success", i, bind_id_[i]);
+    THREAD_INFO("set thread[%zu] affinity to core[%d] success", i, bind_id_[i % window]);
   }
 #endif  // BIND_CORE
   return THREAD_OK;
@@ -344,6 +336,11 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) co
 
 int CoreAffinity::BindProcess(BindMode bind_mode) const {
 #ifdef BIND_CORE
+  if (bind_id_.empty()) {
+    // initializes bind id before bind currently process
+    THREAD_ERROR("bind id is empty");
+    return THREAD_ERROR;
+  }
   cpu_set_t mask;
   CPU_ZERO(&mask);
   if (bind_mode != Power_NoBind) {
@@ -359,7 +356,14 @@ int CoreAffinity::BindProcess(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
-int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode) const {
+int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, BindMode bind_mode) {
+  if (bind_id_.empty()) {
+    int ret = InitBindCoreId(workers.size(), bind_mode);
+    if (ret != THREAD_OK) {
+      THREAD_ERROR("init bind id failed");
+      return THREAD_ERROR;
+    }
+  }
   if (bind_mode == Power_NoBind) {
     return FreeScheduleThreads(workers);
   } else {
@@ -368,6 +372,7 @@ int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, BindMode bin
 }
 
 int CoreAffinity::BindThreads(const std::vector<Worker *> &workers, const std::vector<int> &core_list) {
+  // the size of core_list doesn't have to be the same as the size of workers(thread_num)
   bind_id_ = core_list;
   return BindThreadsToCoreList(workers);
 }

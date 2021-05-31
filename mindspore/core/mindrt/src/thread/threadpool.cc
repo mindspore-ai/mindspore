@@ -35,6 +35,7 @@ void ThreadPool::DestructThreads() {
       worker->thread.join();
     }
     sem_destroy(&worker->sem);
+    sem_destroy(&worker->init);
     delete worker;
     worker = nullptr;
   }
@@ -137,10 +138,10 @@ void ThreadPool::DistributeTask(Task *task, int task_num) {
   }
 }
 
-int ThreadPool::InitAffinityInfo(BindMode bind_mode) {
+int ThreadPool::InitAffinityInfo() {
   affinity_ = new (std::nothrow) CoreAffinity();
   THREAD_ERROR_IF_NULL(affinity_);
-  int ret = affinity_->InitBindCoreId(thread_num_, bind_mode);
+  int ret = affinity_->InitHardwareCoreInfo();
   if (ret != THREAD_OK) {
     delete affinity_;
     affinity_ = nullptr;
@@ -182,7 +183,7 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
-ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, BindMode bind_mode) {
+ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num) {
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
     return nullptr;
@@ -193,7 +194,7 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, BindMode bind_mode) 
     return nullptr;
   }
 #ifdef BIND_CORE
-  ret = pool->InitAffinityInfo(bind_mode);
+  ret = pool->InitAffinityInfo();
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

@@ -39,19 +39,11 @@ typedef struct {
 } NpuDeviceInfo;
 
 /// \brief DeviceInfo defined for backend's configuration information.
-#ifdef NOT_USE_STL
-// DeviceInfo() is implicitly deleted because
-// the default definition of union struct would be ill-formed
 struct DeviceInfo {
-  CpuDeviceInfo cpu_device_info_;
-};
-#else
-union DeviceInfo {
   CpuDeviceInfo cpu_device_info_;
   GpuDeviceInfo gpu_device_info_;
   NpuDeviceInfo npu_device_info_;
 };
-#endif  // NOT_USE_STL
 
 /// \brief DeviceContext defined for holding backend's configuration information.
 struct DeviceContext {
@@ -66,6 +58,7 @@ struct Context {
   String vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
   bool enable_parallel_ = false;
+  Vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
 #ifndef NOT_USE_STL
   DeviceContextVector device_list_ = {{DT_CPU, {false, MID_CPU}}};
