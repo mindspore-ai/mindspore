@@ -19,7 +19,7 @@ operations including OneHotOp.
 from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list, \
     check_compose_call
 from . import py_transforms_util as util
-
+from .c_transforms import TensorOperation
 
 def not_random(function):
     function.random = False
@@ -144,9 +144,10 @@ class Compose:
         Returns:
             list, the reduced list of operations
         """
-        #
         if len(operations) == 1:
-            return operations
+            if str(operations).find("c_transform") >= 0 or isinstance(operations[0], TensorOperation):
+                return operations
+            return [util.FuncWrapper(operations[0])]
 
         new_ops, start_ind, end_ind = [], 0, 0
         for i, op in enumerate(operations):

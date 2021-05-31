@@ -18,7 +18,7 @@ Built-in py_transforms_utils functions.
 import random
 import numpy as np
 
-from ..core.py_util_helpers import is_numpy
+from ..core.py_util_helpers import is_numpy, ExceptionHandler
 
 
 def all_numpy(args):
@@ -44,7 +44,11 @@ def compose(transforms, *args):
     """
     if all_numpy(args):
         for transform in transforms:
-            args = transform(*args)
+            try:
+                args = transform(*args)
+            except Exception:
+                result = ExceptionHandler(where="in map(or batch) worker and execute python function")
+                result.reraise()
             args = (args,) if not isinstance(args, tuple) else args
 
         if all_numpy(args):
@@ -127,3 +131,28 @@ def random_choice(img, transforms):
         img, Transformed image.
     """
     return random.choice(transforms)(img)
+
+
+class FuncWrapper:
+    """
+    Wrap function with try except logic, mainly for warping python function.
+
+    Args:
+        transform: Callable python function.
+
+    Returns:
+        result, data after apply transformation.
+    """
+    def __init__(self, transform):
+        if not callable(transform):
+            raise ValueError("FuncWrapper only support warping callable python function.")
+        self.transform = transform
+
+    def __call__(self, *args):
+        result = None
+        try:
+            result = self.transform(*args)
+        except Exception:
+            result = ExceptionHandler(where="in map(or batch) worker and execute python function")
+            result.reraise()
+        return result

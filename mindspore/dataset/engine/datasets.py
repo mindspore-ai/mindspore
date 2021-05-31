@@ -63,6 +63,8 @@ from ..core.config import get_callback_timeout, _init_device_info, get_enable_sh
     get_prefetch_size, get_dynamic_columns
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 from ..core.validator_helpers import replace_none
+from ..core.py_util_helpers import ExceptionHandler
+from ..transforms.py_transforms_util import FuncWrapper
 
 try:
     context = import_module("mindspore.context")
@@ -2157,6 +2159,9 @@ class BatchDataset(Dataset):
             # If python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
             if sys.version_info >= (3, 8):
                 atexit.register(self.process_pool.close)
+        else:
+            if self.per_batch_map is not None:
+                self.per_batch_map = FuncWrapper(self.per_batch_map)
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
@@ -2379,16 +2384,25 @@ def _pyfunc_worker_exec(index, qid, *args):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     if qid != -1:
-        ## Pass arguments through the Queue instead of directly to remote process
+        # Pass arguments through the Queue instead of directly to remote process
         args = _ARGS_QUEUE[qid].get()
-        r = _GLOBAL_PYFUNC_LIST[index](*args)
+        try:
+            r = _GLOBAL_PYFUNC_LIST[index](*args)
+        except Exception:
+            return ExceptionHandler(where="in map(or batch) worker and execute python function")
         if isinstance(r, tuple):
             _RET_QUEUE[qid].put(r)
         else:
             _RET_QUEUE[qid].put((r,))
         return [qid]
-    ## not using shared memory for passing arguments, call function directly
-    return _GLOBAL_PYFUNC_LIST[index](*args)
+    # not using shared memory for passing arguments, call function directly
+    result = None
+    try:
+        result = _GLOBAL_PYFUNC_LIST[index](*args)
+    except Exception:
+        result = ExceptionHandler(where="in map(or batch) worker and execute python function")
+    return result
+
 
 
 # PythonCallable wrapper for multiprocess pyfunc
@@ -2442,11 +2456,16 @@ class _PythonCallable:
                 try:
                     if self.arg_q != []:
                         r = result.get(30)
+                        if isinstance(r, ExceptionHandler):
+                            r.reraise()
                         if r[0] != qid:
                             raise Exception("In PyCallable, got results from wrong thread")
                         r = self.res_q[qid].get()
                         return r
-                    return result.get(30)
+                    r = result.get(30)
+                    if isinstance(r, ExceptionHandler):
+                        r.reraise()
+                    return r
                 except multiprocessing.TimeoutError:
                     continue
                 except KeyboardInterrupt:
@@ -3464,6 +3483,8 @@ class SamplerFn:
             # Fetch result and put index
             try:
                 result = self.workers[i % self.num_worker].get()
+                if isinstance(result, ExceptionHandler):
+                    result.reraise()
             except queue.Empty:
                 self._stop_subprocess()
                 raise Exception("Generator worker process timeout.")
@@ -3528,7 +3549,10 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
                 result_queue.cancel_join_thread()
             return
         # Fetch data, any exception from __getitem__ will terminate worker and timeout master process
-        result = dataset[idx]
+        try:
+            result = dataset[idx]
+        except Exception:
+            result = ExceptionHandler(where="in GeneratorDataset worker process")
         # Send data, block
         while True:
             try:
