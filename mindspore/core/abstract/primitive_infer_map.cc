@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "ops/exp.h"
 #include "ops/real_div.h"
 #include "ops/add.h"
 #include "abstract/abstract_function.h"
@@ -185,6 +186,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, nullptr, true}},
     {prim::kPrimReduceScatter, {InferImplReduceScatter, nullptr, true}},
     {prim::kPrimCast, {InferImplCast, nullptr, true}},
+    {prim::kPrimExp, {ops::ExpInfer, nullptr, true}},
     {prim::kPrimExpandDims, {InferImplExpandDims, nullptr, true}},
     {prim::kPrimAllReduce, {InferImplAllReduce, nullptr, true}},
     {prim::kPrimBroadcast, {InferImplBroadcast, nullptr, true}},
