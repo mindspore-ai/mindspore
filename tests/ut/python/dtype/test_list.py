@@ -142,9 +142,8 @@ def test_class_member_list_append():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [[1, 2], 3]
     net = Net(z)
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         net(x, y)
-    assert "'self.z' should be a Parameter, but got '[[1, 2], 3]' with type 'list'." in str(ex.value)
 
 
 def test_class_member_not_defined():
@@ -180,9 +179,8 @@ def test_change_list_element():
     y = Tensor(np.zeros([3, 4, 5], np.int32))
     z = [[1, 2], 3]
     net = Net(z)
-    with pytest.raises(TypeError) as ex:
+    with pytest.raises(TypeError):
         net(x, y)
-    assert "'self.z' should be a Parameter, but got '[[1, 2], 3]' with type 'list'." in str(ex.value)
 
 
 class ListOperate(nn.Cell):

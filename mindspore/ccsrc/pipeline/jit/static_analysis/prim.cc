@@ -916,7 +916,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      MS_LOG(EXCEPTION) << "The object of type: " << data_type->ToString() << " has no method or attr: " << item_name;
+      MS_LOG(EXCEPTION) << "Mindspore don't support this usage '" << item_name << "' for the object with type <"
+                        << data_type->ToString() << ">.";
     }
     require_type = REQUIRE_TYPE::ATTR;
   }
@@ -1153,8 +1154,8 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     // Create class instance.
     auto obj = parse::data_converter::CreatePythonObject(class_type, params);
     if (py::isinstance<py::none>(obj)) {
-      MS_LOG(EXCEPTION) << "Create python object" << py::str(class_type)
-                        << " failed, only support create Cell or Primitive object.";
+      MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_type)
+                        << "` failed, only support create Cell or Primitive object.";
     }
 
     // Process the object.

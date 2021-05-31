@@ -283,8 +283,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
   if (func == nullptr) {
-    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString()
-                      << ", NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
+    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString() << ".";
   }
 
   ConfigPtrList args_conf_list;

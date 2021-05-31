@@ -756,13 +756,14 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
 // Process comparison expression : a == b. a > b  etc.
 AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Compare";
+  TraceGuard guard(GetLocation(node));
 
   // For python comparison ,there may be if x>y>5 ,
   // Which there is two ops , but we only support one now
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() > MAX_COMPARISON_OPS_SUPPORTED) {
-    MS_LOG(ERROR) << "MindSpore does not support comparison with operators more than one now, ops size =" << ops.size();
-    return nullptr;
+    MS_EXCEPTION(NotSupportError)
+      << "MindSpore does not support comparison with operators more than one now, ops size =" << ops.size();
   }
 
   py::object left = python_adapter::GetPyObjAttr(node, "left");
@@ -1500,14 +1501,17 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
 
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined.";
+    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be defined in the class '__init__' function. \n\n"
+                            << trace::GetDebugInfo(target_node->debug_info());
   }
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
-    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
+    MS_EXCEPTION(TypeError) << "'" << var_name
+                            << "' should be defined with a Parameter type in the class '__init__' function, but got '"
                             << py::str(obj).cast<std::string>() << "' with type '"
-                            << py::str(obj_type).cast<std::string>() << ".";
+                            << py::str(obj_type).cast<std::string>() << ".\n\n"
+                            << trace::GetDebugInfo(target_node->debug_info());
   }
 
   MS_EXCEPTION_IF_NULL(block);
@@ -1530,14 +1534,17 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     auto attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
     if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-      MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.";
+      MS_EXCEPTION(TypeError) << "'" << var_name << "' was not defined in the class '__init__' function.\n\n"
+                              << trace::GetDebugInfo(value_node->debug_info());
     }
     auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
     auto obj_type = obj.attr("__class__").attr("__name__");
     if (!py::hasattr(obj, "__parameter__")) {
-      MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
+      MS_EXCEPTION(TypeError) << "'" << var_name
+                              << "' should be defined with a Parameter in the class '__init__' function, but got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
-                              << py::str(obj_type).cast<std::string>() << "'.";
+                              << py::str(obj_type).cast<std::string>() << "'.\n\n"
+                              << trace::GetDebugInfo(value_node->debug_info());
     }
     block->WriteVariable(var_name, setitem_app);
     return;
@@ -1548,7 +1555,8 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     return;
   }
   if (!py::hasattr(value_obj, "id")) {
-    MS_EXCEPTION(TypeError) << "Attribute id not found in " << py::str(value_obj).cast<std::string>();
+    MS_EXCEPTION(TypeError) << "Attribute id not found in " << py::str(value_obj).cast<std::string>() << "\n\n"
+                            << trace::GetDebugInfo(value_node->debug_info());
   }
   var_name = value_obj.attr("id").cast<std::string>();
   block->WriteVariable(var_name, setitem_app);
@@ -1567,11 +1575,11 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
   } else if (ast_->IsClassMember(targ)) {
     HandleAssignClassMember(block, targ, value_node);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
-    MS_LOG(EXCEPTION) << "The subnet attributes cannot be changed in the network"
-                      << " NodeInfo: " << trace::GetDebugInfo(value_node->debug_info());
+    MS_LOG(EXCEPTION) << "The subnet attributes cannot be changed in the network. \n\n"
+                      << trace::GetDebugInfo(value_node->debug_info());
   } else {
-    MS_LOG(EXCEPTION) << "Not supported assign type: " << ast_type
-                      << " NodeInfo: " << trace::GetDebugInfo(value_node->debug_info());
+    MS_LOG(EXCEPTION) << "Not support this assign type: " << ast_type << "\n\n"
+                      << trace::GetDebugInfo(value_node->debug_info());
   }
 }
 
@@ -1855,6 +1863,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     MS_LOG(EXCEPTION) << "Current graph cast failed from " << cell_ptr->ToString();
   }
 
+  TraceGuard guard(current_graph->debug_info()->location());
   auto func_graph = std::make_shared<FuncGraph>();
   func_graph->debug_info()->set_name(current_graph->debug_info()->name() + "_wrapper");
 

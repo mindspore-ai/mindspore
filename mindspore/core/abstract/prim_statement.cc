@@ -63,7 +63,7 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &p
     }
   }
 
-  MS_LOG(EXCEPTION) << "Invalid condition value for switch " << cond->ToString();
+  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond->GetValueTrack()->ToString();
 }
 
 AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -130,8 +130,8 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &prim
   CheckArgsSize(op_name, args_spec_list, 2);
   ValuePtr t = args_spec_list[1]->BuildValue();
   if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION) << "Not supported type:" << t->ToString()
-                      << " for statement is, supported list is:None, False, True ";
+    MS_LOG(EXCEPTION) << "This comparator '" << t->ToString()
+                      << "' is not supported. For statement 'is', only support compare with 'None', 'False' or 'True'";
   }
   ValuePtr x = args_spec_list[0]->BuildValue();
 
@@ -146,8 +146,9 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
   CheckArgsSize(op_name, args_spec_list, 2);
   ValuePtr t = args_spec_list[1]->BuildValue();
   if (!SupportedIsTargetValue(t)) {
-    MS_LOG(EXCEPTION) << "Not supported type:" << t->ToString()
-                      << " for statement is not, supported list is:None, False, True ";
+    MS_LOG(EXCEPTION)
+      << "This comparator '" << t->ToString()
+      << "' is not supported. For statement 'is not' , only support compare with 'None', 'False' or 'True'";
   }
   ValuePtr x = args_spec_list[0]->BuildValue();
 

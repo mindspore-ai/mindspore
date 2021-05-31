@@ -164,7 +164,7 @@ def resolve_symbol(namespace, symbol):
             resolve_ = convert_object_map.get(resolve_)
             logger.debug("convert resolve = %r", resolve_)
             if resolve_ == NO_IMPLEMENT:
-                raise NotImplementedError("not implemented for ", str(symbol))
+                raise NotImplementedError(f"Not support for `{symbol}`")
     except Exception as e:
         if isinstance(e, NotImplementedError):
             raise e
@@ -248,7 +248,7 @@ def get_obj_type(obj):
     else:
         # here for ndarray, just print its shape (in case of the array to large and print many data in screen)
         is_ndarray = type(obj).__name__ == 'ndarray' and hasattr(obj, 'shape')
-        raise TypeError(f'Invalid object with type `{type(obj)}` and {"shape" if is_ndarray else "value"} '
+        raise TypeError(f'Not support for this object with type `{type(obj)}` and {"shape" if is_ndarray else "value"} '
                         f'`{obj.shape if is_ndarray else obj}`.')
     return obj_type
 

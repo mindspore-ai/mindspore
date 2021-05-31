@@ -130,7 +130,7 @@ class ResolverResolveAndGetAttr : public OptimizerCaller {
     resolver_optimizers_ = {std::make_shared<ResolverGetAttrResolve>(), std::make_shared<ResolverResolve>(),
                             std::make_shared<ResolverGetAttr>()};
   }
-  ~ResolverResolveAndGetAttr() = default;
+  virtual ~ResolverResolveAndGetAttr() = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     AnfNodePtr new_node;

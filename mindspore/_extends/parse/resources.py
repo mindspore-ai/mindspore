@@ -120,13 +120,13 @@ convert_object_map = {
     T.iter:         M.ms_iter,
     T.next:         M.ms_next,
     T.hasnext:      M.hasnext,
-
-    T.MakeTuple:   F.make_tuple,
+    T.MakeTuple:    F.make_tuple,
     T.make_dict:    F.make_dict,
     T.make_list:    F.make_list,
     T.make_slice:   F.make_slice,
     T.range:        F.make_range,
     T.while_cond:   M.while_cond,
+
     # lib function
     math.floor:     NO_IMPLEMENT,
     math.trunc:     NO_IMPLEMENT,
@@ -137,6 +137,6 @@ convert_object_map = {
     math.tan:       NO_IMPLEMENT,
 
     # user defined
-    RowTensor:  F.make_row_tensor,
+    RowTensor:      F.make_row_tensor,
     SparseTensor:   F.make_sparse_tensor,
 }

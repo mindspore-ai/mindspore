@@ -506,7 +506,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   }
 
   OutputAnalyzedGraphWithType(file_name);
-  oss << "\nThe function call stack (See file '" << file_name << "' for details):\n";
+  oss << "\nThe function call stack (See file '" << file_name << "' for more details):\n";
 
   int index = 0;
   std::string last_location_info = "";

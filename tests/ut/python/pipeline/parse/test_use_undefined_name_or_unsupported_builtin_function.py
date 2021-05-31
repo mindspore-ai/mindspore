@@ -394,4 +394,4 @@ def test_use_defined_class_obj_in_for():
     net = Net()
     with pytest.raises(TypeError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
-    assert "Invalid object with type" in str(err.value)
+    assert "Not support for this object with type" in str(err.value)
