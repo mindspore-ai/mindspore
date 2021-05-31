@@ -28,6 +28,7 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
+const int ONNX_VERSION = 11;
 enum OpMergeMode {
   OP_MERGE_UNDEFINED = 0,            // undefined behavior
   OP_MERGE_IGNORE = 1,               // indicate an input op merged into other op in compute node list
@@ -415,7 +416,7 @@ void OnnxExporter::InitModelInfo() {
   model_.set_producer_name("MindSpore");
   model_.set_producer_version("1.0");
   onnx::OperatorSetIdProto *opset_proto = model_.add_opset_import();
-  opset_proto->set_version(11);
+  opset_proto->set_version(ONNX_VERSION);
 }
 
 void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, onnx::GraphProto *const graph_proto) {
@@ -631,7 +632,7 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
   }
 }
 
-void OnnxExporter::ExportPrimReshape(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimReshape(const FuncGraphPtr &, const CNodePtr &node,
                                      std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   auto name_x = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
   auto input_shape = node->input(2);
@@ -663,7 +664,7 @@ void OnnxExporter::ExportPrimReshape(const FuncGraphPtr & /*func_graph*/, const 
   node_proto->add_input(name_shape);
 }
 
-void OnnxExporter::ExportPrimReduce(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimReduce(const FuncGraphPtr &, const CNodePtr &node,
                                     std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   auto input_data = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
   auto input_axis = node->input(2);
@@ -699,7 +700,7 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr & /*func_graph*/, const C
   }
 }
 
-void OnnxExporter::ExportPrimCast(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimCast(const FuncGraphPtr &, const CNodePtr &node,
                                   std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   auto input_data = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
   auto input_type = node->input(2);
@@ -724,7 +725,7 @@ void OnnxExporter::ExportPrimCast(const FuncGraphPtr & /*func_graph*/, const CNo
   }
 }
 
-void OnnxExporter::ExportPrimPReLU(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimPReLU(const FuncGraphPtr &, const CNodePtr &node,
                                    std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   auto input_x = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
   auto input_slope = GetNodeInputName(node->input(2), node_map_ptr, graph_proto);
@@ -760,7 +761,7 @@ void OnnxExporter::ExportPrimPReLU(const FuncGraphPtr & /*func_graph*/, const CN
   node_proto->add_input(input_slope);
 }
 
-void OnnxExporter::ExportPrimReLU6(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimReLU6(const FuncGraphPtr &, const CNodePtr &node,
                                    std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
   auto input_x = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
   auto node_idx = AllocateNodeIndex();
@@ -779,7 +780,7 @@ void OnnxExporter::ExportPrimReLU6(const FuncGraphPtr & /*func_graph*/, const CN
   attr_proto->set_f(6.f);
 }
 
-void OnnxExporter::ExportPrimDepthwiseConv2d(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
+void OnnxExporter::ExportPrimDepthwiseConv2d(const FuncGraphPtr &, const CNodePtr &node,
                                              std::map<AnfNodePtr, size_t> *node_map_ptr,
                                              onnx::GraphProto *const graph_proto) {
   auto input_x = GetNodeInputName(node->input(1), node_map_ptr, graph_proto);
@@ -1020,7 +1021,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
   }
 }
 
-size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr & /*func_graph*/, std::map<AnfNodePtr, size_t> *node_map_ptr,
+size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr &, std::map<AnfNodePtr, size_t> *node_map_ptr,
                                      const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
                                      onnx::GraphProto *const graph_proto) {
   auto op_map = OpConvertRegistry::GetOpConvertMap();
@@ -1109,8 +1110,8 @@ void OnnxExporter::ExportMergeMaxPoolWithArgmax(const FuncGraphPtr &func_graph, 
   (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_maxpool_with_argmax, inputs, graph_proto);
 }
 
-void OnnxExporter::ExportOutput(const FuncGraphPtr & /*func_graph*/, const CNodePtr &node,
-                                std::map<AnfNodePtr, size_t> *node_map_ptr, onnx::GraphProto *const graph_proto) {
+void OnnxExporter::ExportOutput(const FuncGraphPtr &, const CNodePtr &node, std::map<AnfNodePtr, size_t> *node_map_ptr,
+                                onnx::GraphProto *const graph_proto) {
   if (node->inputs().size() != 2) {
     MS_LOG(EXCEPTION) << "Number of inputs of return node is not equal to 2.";
   }
