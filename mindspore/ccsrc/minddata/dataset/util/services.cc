@@ -15,7 +15,7 @@
  */
 #include "minddata/dataset/util/services.h"
 
-#include <limits.h>
+#include <climits>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #else

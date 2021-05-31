@@ -63,6 +63,7 @@ class ExceptionThread(threading.Thread):
             self.exception = e
             self.exc_traceback = ''.join(traceback.format_exception(*sys.exc_info()))
 
+
 def check_filename(path):
     """
     check the filename in the path.
@@ -98,6 +99,7 @@ def check_filename(path):
 
     return True
 
+
 def populate_data(raw, blob, columns, blob_fields, schema):
     """
     Reconstruct data form raw and blob data.
@@ -113,7 +115,7 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         MRMUnsupportedSchemaError: If schema is invalid.
     """
     if raw:
-        # remove dummy fileds
+        # remove dummy fields
         raw = {k: v for k, v in raw.items() if k in schema}
     else:
         raw = {}

@@ -16,20 +16,24 @@
 enums for exceptions
 """
 
+
 class BaseEnum:
     """
     Enum base class.
     """
+
 
 class LogRuntime(BaseEnum):
     """Log runtime enum."""
     RT_HOST = 0b01
     RT_DEVICE = 0b10
 
+
 class ErrorCodeType(BaseEnum):
     """Error code type enum."""
     ERROR_CODE = 0b01
     EXCEPTION_CODE = 0b10
+
 
 class ErrorLevel(BaseEnum):
     """Error level."""

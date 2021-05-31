@@ -168,6 +168,7 @@ class ParamMissError(MindRecordException):
         super(ParamMissError, self).__init__()
         self.error_msg = "Param missing. '{}' is required.".format(param_name)
 
+
 class PathNotExistsError(MindRecordException):
     """
     invalid path.
@@ -176,6 +177,7 @@ class PathNotExistsError(MindRecordException):
         super(PathNotExistsError, self).__init__()
         self.error_msg = 'Invalid path. {}'.format(error_path)
 
+
 class DbConnectionError(MindRecordException):
     """
     Database connection error.
@@ -183,7 +185,7 @@ class DbConnectionError(MindRecordException):
     def __init__(self, error_detail):
         super(DbConnectionError, self).__init__()
         self.error_msg = 'Db connection is error. Detail: {}'.format(error_detail)
-##
+
 class MRMOpenError(MindRecordException):
     """
     Raised when could not open mind record file successfully.
@@ -191,6 +193,7 @@ class MRMOpenError(MindRecordException):
     def __init__(self):
         super(MRMOpenError, self).__init__()
         self.error_msg = 'MindRecord File could not open successfully.'
+
 
 class MRMOpenForAppendError(MindRecordException):
     """
@@ -200,84 +203,108 @@ class MRMOpenForAppendError(MindRecordException):
         super(MRMOpenForAppendError, self).__init__()
         self.error_msg = 'MindRecord File could not open successfully for append.'
 
+
 class MRMInvalidPageSizeError(MindRecordException):
     pass
+
 
 class MRMInvalidHeaderSizeError(MindRecordException):
     pass
 
+
 class MRMSetHeaderError(MindRecordException):
     pass
+
 
 class MRMWriteDatasetError(MindRecordException):
     pass
 
+
 class MRMCommitError(MindRecordException):
     pass
+
 
 class MRMLaunchError(MindRecordException):
     pass
 
+
 class MRMFinishError(MindRecordException):
     pass
+
 
 class MRMCloseError(MindRecordException):
     pass
 
+
 class MRMAddSchemaError(MindRecordException):
     pass
+
 
 class MRMAddIndexError(MindRecordException):
     pass
 
+
 class MRMBuildSchemaError(MindRecordException):
     pass
+
 
 class MRMGetMetaError(MindRecordException):
     pass
 
+
 class MRMIndexGeneratorError(MindRecordException):
     pass
+
 
 class MRMGenerateIndexError(MindRecordException):
     pass
 
+
 class MRMInitSegmentError(MindRecordException):
     pass
+
 
 class MRMFetchCandidateFieldsError(MindRecordException):
     pass
 
+
 class MRMReadCategoryInfoError(MindRecordException):
     pass
 
+
 class MRMFetchDataError(MindRecordException):
     pass
+
 
 class MRMInvalidSchemaError(MindRecordException):
     def __init__(self, error_detail):
         super(MRMInvalidSchemaError, self).__init__()
         self.error_msg = 'Schema format is error. Detail: {}'.format(error_detail)
 
+
 class MRMValidateDataError(MindRecordException):
     def __init__(self, error_detail):
         super(MRMValidateDataError, self).__init__()
         self.error_msg = 'Raw data do not match the schema. Detail: {}'.format(error_detail)
+
 
 class MRMDefineIndexError(MindRecordException):
     def __init__(self, error_detail):
         super(MRMDefineIndexError, self).__init__()
         self.error_msg = 'Failed to define index field. Detail: {}'.format(error_detail)
 
+
 class MRMDefineBlobError(MindRecordException):
     def __init__(self, error_detail):
         super(MRMDefineBlobError, self).__init__()
         self.error_msg = 'Failed to define blob field. Detail: {}'.format(error_detail)
 
+
 class MRMUnsupportedSchemaError(MindRecordException):
     def __init__(self, error_detail):
         super(MRMUnsupportedSchemaError, self).__init__()
         self.error_msg = 'Schema is not supported. Detail: {}'.format(error_detail)
+
 
 class MRMDefineCategoryError(MindRecordException):
     def __init__(self, error_detail):

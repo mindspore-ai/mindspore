@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "album_op_android.h"  //NOLINT
 #include <fstream>
 #include <iomanip>
@@ -260,7 +261,6 @@ Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t c
   std::vector<std::string> data = json_obj.get<std::vector<std::string>>();
 
   MS_LOG(INFO) << "String array label found: " << data << ".";
-  //  TensorPtr label;
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, tensor));
   return Status::OK();
 }
@@ -276,7 +276,6 @@ Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_nu
 }
 
 Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor) {
-  //  TensorPtr label;
   // consider templating this function to handle all ints
   if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
     std::vector<int64_t> data;
@@ -304,7 +303,6 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
 }
 
 Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor) {
-  //  TensorPtr float_array;
   // consider templating this function to handle all ints
   if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
     std::vector<double> data;
@@ -333,13 +331,11 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t co
 
 Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorPtr *tensor) {
   if (data_schema_->column(col_num).type() == DataType::DE_STRING) {
-    //    TensorPtr id;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<std::string>(file, tensor));
     return Status::OK();
   }
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
   int64_t image_id = std::atoi(file.substr(1, file.find(".")).c_str());
-  //  TensorPtr id;
   RETURN_IF_NOT_OK(Tensor::CreateScalar<int64_t>(image_id, tensor));
   MS_LOG(INFO) << "File ID " << image_id << ".";
   return Status::OK();
@@ -347,7 +343,6 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorPt
 
 Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorPtr *tensor) {
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
-  //  TensorPtr empty_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->column(col_num).type(), tensor));
   return Status::OK();
 }
@@ -357,7 +352,6 @@ Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorPtr *tensor) {
 // Float64 doesn't work with reinterpret cast here. Otherwise we limit the float in the schema to
 // only be float32, seems like a weird limitation to impose
 Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor) {
-  //  TensorPtr float_tensor;
   if (data_schema_->column(col_num).type() == DataType::DE_FLOAT64) {
     double data = json_obj;
     MS_LOG(INFO) << "double found: " << json_obj << ".";
@@ -372,7 +366,6 @@ Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num
 
 // Loads a tensor with int value, we have to cast the value to type specified in the schema.
 Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor) {
-  //  TensorPtr int_tensor;
   if (data_schema_->column(col_num).type() == DataType::DE_INT64) {
     int64_t data = json_obj;
     MS_LOG(INFO) << "int64 found: " << json_obj << ".";

@@ -51,6 +51,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         # Forbid everything else.
         raise pickle.UnpicklingError("global '%s.%s' is forbidden" %(module, name))
 
+
 def restricted_loads(s):
     """Helper function analogous to pickle.loads()."""
     if isinstance(s, str):
@@ -102,12 +103,12 @@ class Cifar100:
         files = os.listdir(self.path)
         for file in files:
             if file == "train":
-                with open(os.path.join(self.path, file), 'rb') as f:       #load train data
+                with open(os.path.join(self.path, file), 'rb') as f:       # load train data
                     dic = restricted_loads(f.read())
                     images = np.array(dic[b"data"].reshape([-1, 3, 32, 32]))
                     fine_labels.append(dic[b"fine_labels"])
                     coarse_labels.append(dic[b"coarse_labels"])
-            elif file == "test":          #load test data
+            elif file == "test":          # load test data
                 with open(os.path.join(self.path, file), 'rb') as f:
                     dic = restricted_loads(f.read())
                     test_images = np.array(dic[b"data"].reshape([-1, 3, 32, 32]))

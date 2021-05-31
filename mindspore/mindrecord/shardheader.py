@@ -21,6 +21,7 @@ from .common.exceptions import MRMAddSchemaError, MRMAddIndexError, MRMBuildSche
 
 __all__ = ['ShardHeader']
 
+
 class ShardHeader:
     """
     Wrapper class which is represent ShardHeader class in c++ module.
