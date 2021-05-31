@@ -775,6 +775,11 @@ std::unique_ptr<schema::PrimitiveT> SplitWithOverlapPrimitiveCreator(const AnfNo
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+std::unique_ptr<schema::PrimitiveT> GluPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::GLU>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -993,6 +998,7 @@ RegistryMSOps g_LogSoftmaxPrimitiveCreatorRegistry("LogSoftmax", LogSoftmaxPrimi
 RegistryMSOps g_CallPrimitiveCreatorRegistry("call", CallPrimitiveCreator);
 RegistryMSOps g_CumSumPrimitiveCreatorRegistry("CumSum", CumSumPrimitiveCreator);
 RegistryMSOps g_SplitWithOverlapCreatorRegistry("SplitWithOverlap", SplitWithOverlapPrimitiveCreator);
+RegistryMSOps g_GluCreatorRegistry("GLU", GluPrimitiveCreator);
 
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Custom>>(node);

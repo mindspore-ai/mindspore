@@ -44,6 +44,7 @@ class SplitBaseCPUKernel : public InnerKernel {
 
  public:
   int Split(int task_id);
+  static int CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param);
 
  protected:
   int thread_n_stride_ = 0;

@@ -28,7 +28,10 @@ namespace opt {
 class GLUFusion : public PatternProcessPass {
  public:
   explicit GLUFusion(const std::string &name = "glu_fusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph), input_(std::make_shared<Var>()) {}
+      : PatternProcessPass(name, multigraph),
+        input_(std::make_shared<Var>()),
+        axis_(std::make_shared<SeqVar>()),
+        split_prim_(std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSplit>)) {}
 
   ~GLUFusion() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -36,6 +39,8 @@ class GLUFusion : public PatternProcessPass {
 
  protected:
   VarPtr input_ = nullptr;
+  VarPtr axis_ = nullptr;
+  VarPtr split_prim_ = nullptr;
 
  private:
   CNodePtr CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;

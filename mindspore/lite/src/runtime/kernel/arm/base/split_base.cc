@@ -35,15 +35,13 @@ int SplitBaseCPUKernel::Init() {
 
   return ReSize();
 }
-
-int SplitBaseCPUKernel::ReSize() {
-  auto in_tensor = in_tensors_.front();
-  auto input_shape = in_tensor->shape();
+int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param) {
+  auto input_shape = in_tensor.shape();
 
   MS_ASSERT(param);
-  MS_ASSERT(input_shape.size() >= 1 && input_shape.size() <= SPLIT_STRIDES_SIZE);
+  MS_ASSERT(!input_shape.empty() && input_shape.size() <= SPLIT_STRIDES_SIZE);
   auto split_dim = param->split_dim_;
-  param->split_dim_ = split_dim >= 0 ? split_dim : in_tensors_.front()->shape().size() + split_dim;
+  param->split_dim_ = split_dim >= 0 ? split_dim : input_shape.size() + split_dim;
   param->strides_[input_shape.size() - 1] = 1;
   for (int i = input_shape.size() - 2; i >= 0; i--) {
     param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);
@@ -82,7 +80,19 @@ int SplitBaseCPUKernel::ReSize() {
     }
     param->split_sizes_[param->num_split_ - 1] = split_shape_end;
   }
+  return RET_OK;
+}
 
+int SplitBaseCPUKernel::ReSize() {
+  auto in_tensor = in_tensors_.front();
+  auto status = CheckAndInitSplitParam(*in_tensor, param);
+  if (RET_OK != status) {
+    MS_LOG(ERROR) << "CheckAndInitSplitParam failed";
+    return status;
+  }
+
+  // split_count means the previous dims num before split dim
+  // e.g. input dims is [1, 3, 4, 8], split axis is 2, num_split is 2, so split_count_ is 1*3, num_unit_ is 1*3*2
   num_unit_ = param->split_count_ * param->num_split_;
   thread_n_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   if (thread_n_num_ != 0) {

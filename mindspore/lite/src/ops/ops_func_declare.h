@@ -240,6 +240,7 @@
 #include "ops/call.h"
 #include "ops/cumsum.h"
 #include "ops/split_with_overlap.h"
+#include "ops/glu.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -448,6 +449,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LogSoftmax)
 FUNC_MSOP2SCHEMAOP_DECLARE(Call)
 FUNC_MSOP2SCHEMAOP_DECLARE(CumSum)
 FUNC_MSOP2SCHEMAOP_DECLARE(SplitWithOverlap)
+FUNC_MSOP2SCHEMAOP_DECLARE(GLU)
 #endif
 }  // namespace mindspore::lite::ops
 #else

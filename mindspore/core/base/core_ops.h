@@ -65,6 +65,7 @@ constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kGeLU = "GeLU";
+constexpr auto kGLU = "GLU";
 constexpr auto kReLU = "ReLU";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kReLUV2 = "ReLUV2";
