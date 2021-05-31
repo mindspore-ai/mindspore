@@ -68,7 +68,7 @@ public class Main {
     }
 
     private static boolean run() {
-        MSTensor inputTensor = session.getInputsByTensorName("2031_2030_1_construct_wrapper:x");
+        MSTensor inputTensor = session.getInputsByTensorName("graph_input-173");
         if (inputTensor.getDataType() != DataType.kNumberTypeFloat32) {
             System.err.println("Input tensor shape do not float, the data type is " + inputTensor.getDataType());
             return false;
@@ -89,7 +89,7 @@ public class Main {
         }
 
         // Get Output Tensor Data.
-        MSTensor outTensor = session.getOutputByTensorName("Default/head-MobileNetV2Head/Softmax-op204");
+        MSTensor outTensor = session.getOutputByTensorName("Softmax-65");
 
         // Print out Tensor Data.
         StringBuilder msgSb = new StringBuilder();

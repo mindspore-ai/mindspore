@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean runInference(LiteSession session) {
         Log.i(TAG, "runInference: ");
-        MSTensor inputTensor = session.getInputsByTensorName("2031_2030_1_construct_wrapper:x");
+        MSTensor inputTensor = session.getInputsByTensorName("graph_input-173");
         if (inputTensor.getDataType() != DataType.kNumberTypeFloat32) {
             Log.e(TAG, "Input tensor shape do not float, the data type is " + inputTensor.getDataType());
             return false;
@@ -172,14 +172,14 @@ public class MainActivity extends AppCompatActivity {
 
 
         // Get Output Tensor Data.
-        MSTensor outTensor = session.getOutputByTensorName("Default/head-MobileNetV2Head/Softmax-op204");
+        MSTensor outTensor = session.getOutputByTensorName("Softmax-65");
         // Print out Tensor Data.
         ret = printTensorData(outTensor);
         if (!ret) {
             return false;
         }
 
-        outTensor = session.getOutputsByNodeName("Default/head-MobileNetV2Head/Softmax-op204").get(0);
+        outTensor = session.getOutputsByNodeName("Softmax-65").get(0);
         ret = printTensorData(outTensor);
         if (!ret) {
             return false;
