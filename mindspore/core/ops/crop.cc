@@ -46,7 +46,7 @@ AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto crop_prim = primitive->cast<PrimCrop>();
   MS_EXCEPTION_IF_NULL(crop_prim);
   auto prim_name = crop_prim->name();
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

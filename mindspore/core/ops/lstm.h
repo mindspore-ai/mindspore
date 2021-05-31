@@ -57,7 +57,7 @@ class LSTM : public PrimitiveC {
   float get_zoneout_cell() const;
   void set_zoneout_hidden(float zoneout_hidden);
   float get_zoneout_hidden() const;
-  int64_t get_good_ld(const int64_t dim, const int64_t type_size);
+  int64_t get_good_ld(const int64_t dim, const int64_t type_size) const;
 };
 AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);

@@ -28,8 +28,8 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto prim_name = broad_cast_to->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto input_x = broad_cast_to->get_shape();
-  int64_t outer_dim_offset = input_x.size() - x_shape.size();
   CheckAndConvertUtils::Check("x shape", x_shape, kLessEqual, "input_x", input_x, prim_name);
+  auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
     flag = false;
@@ -37,7 +37,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
     flag = true;
   }
   if (flag == true) {
-    for (int64_t i = 0; i < (int64_t)input_x.size(); i++) {
+    for (size_t i = 0; i < input_x.size(); i++) {
       if (input_x[i] == -1) {
         if (i < outer_dim_offset) {
           MS_EXCEPTION(ValueError) << " -1 in init shape is in an incompatible "
@@ -68,7 +68,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 void BroadcastTo::Init(const std::vector<int64_t> &shape) { set_shape(shape); }
 
 void BroadcastTo::set_shape(const std::vector<int64_t> &shape) {
-  CheckAndConvertUtils::CheckInteger(kShapeSize, shape.size(), kGreaterThan, 0, name());
+  CheckAndConvertUtils::CheckInteger(kShapeSize, SizeToLong(shape.size()), kGreaterThan, 0, name());
   AddAttr(kShape, MakeValue(shape));
 }
 

@@ -34,6 +34,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("w", input_args[1]->BuildType());

@@ -20,24 +20,25 @@ namespace mindspore {
 namespace ops {
 namespace {
 std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::vector<TypePtr> x_types, int64_t axis,
-                                     std::string name) {
+                                     const std::string &name) {
   CheckAndConvertUtils::CheckInteger("len of input_x", (int64_t)x_shapes.size(), kGreaterEqual, 1, name);
   CheckAndConvertUtils::CheckSubClass("input_x[0]", x_types[0], {TypeIdToType(kObjectTypeTensorType)}, name);
   auto output_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape[0]", x_shapes[0], name);
-  int64_t rank_base = output_shape.size();
-  int64_t N = x_shapes.size();
+  int64_t rank_base = SizeToLong(output_shape.size());
+  int64_t N = SizeToLong(x_shapes.size());
   //  CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeBoth, {-rank_base-1, rank_base}, name);
   if (axis < 0) {
     axis = axis + rank_base + 1;
   }
   for (int64_t i = 1; i < N; i++) {
-    auto type = x_types[i]->cast<TensorTypePtr>()->element();
+    auto type = x_types[LongToSize(i)]->cast<TensorTypePtr>()->element();
     MS_EXCEPTION_IF_NULL(type);
     auto type0 = x_types[0]->cast<TensorTypePtr>()->element();
     MS_EXCEPTION_IF_NULL(type0);
     CheckAndConvertUtils::Check("x_type[" + std::to_string(i) + "]", type->type_id(), kEqual, "base", type0->type_id(),
                                 name);
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape" + std::to_string(i), x_shapes[i], name);
+    auto shape =
+      CheckAndConvertUtils::ConvertShapePtrToShape("x_shape" + std::to_string(i), x_shapes[LongToSize(i)], name);
     if (shape != output_shape) {
       MS_EXCEPTION(ValueError) << "For '" + name + "' element " + std::to_string(i) +
                                     "shape in input can't pack with first element.";
