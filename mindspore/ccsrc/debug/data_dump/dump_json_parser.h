@@ -41,6 +41,9 @@ class DumpJsonParser {
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
+  bool IsDumpIter(uint32_t iteration);
+  bool DumpAllIter();
+  bool IsSingleIter();
 
   bool async_dump_enabled() const { return async_dump_enabled_; }
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
@@ -58,6 +61,7 @@ class DumpJsonParser {
   bool OutputNeedDump() const;
   std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;
   void UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph);
+  bool AsyncDumpEnabled() const { return async_dump_enabled_; }
 
  private:
   DumpJsonParser() = default;
@@ -71,6 +75,7 @@ class DumpJsonParser {
   std::string path_;
   std::string net_name_;
   uint32_t iteration_{0};
+  std::string async_iteration_;
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
   std::set<uint32_t> support_devices_;
@@ -80,7 +85,6 @@ class DumpJsonParser {
   bool already_parsed_{false};
 
   void ParseCommonDumpSetting(const nlohmann::json &content);
-  void ParseAsyncDumpSetting(const nlohmann::json &content);
   void ParseE2eDumpSetting(const nlohmann::json &content);
   bool IsDumpEnabled();
 

@@ -22,6 +22,7 @@
 
 #include "debug/data_dump/dump_json_parser.h"
 #include "common/trans.h"
+#include "debug/common.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -235,6 +236,38 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
   }
 }
 
+void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t device_id) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  uint32_t cur_iter = dump_json_parser.cur_dump_iter();
+  if (dump_json_parser.AsyncDumpEnabled() && dump_json_parser.IsDumpIter(cur_iter)) {
+    auto zero_dir_dump_path =
+      dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
+
+    auto root_cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/" +
+                                   dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id());
+
+    auto cur_iter_dump_path = root_cur_iter_dump_path + "/" + std::to_string(cur_iter);
+
+    MS_LOG(INFO) << "zero_dir_dump_path: " << zero_dir_dump_path;
+    MS_LOG(INFO) << "root_cur_iter_dump_path: " << root_cur_iter_dump_path;
+    MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
+
+    // create cur_iter_dump_path dirs
+    bool status = Common::CreateNotExistDirs(root_cur_iter_dump_path);
+    if (!status) {
+      MS_LOG(EXCEPTION) << "Failed at CreateNotExistDirs for " << root_cur_iter_dump_path;
+      return;
+    }
+
+    // create symlink to active dump dir for the iteration in final dump dir
+    std::string command = "ln -fs " + zero_dir_dump_path + " " + cur_iter_dump_path;
+    MS_LOG(INFO) << "ln command: " << command;
+    if (system(command.c_str())) {
+      MS_LOG(EXCEPTION) << "failed to create symlink to active dump dir for the iteration in final dump dir.";
+    }
+  }
+}
+
 bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -245,16 +278,60 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
   if (starting_graph_id == graph_id) {
     dump_json_parser.UpdateDumpIter();
   }
-  if (!dump_json_parser.GetIterDumpFlag()) {
+
+  if (dump_json_parser.GetIterDumpFlag()) {
+    MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
+    MS_LOG(INFO) << "Current graph id is " << graph_id;
+    std::string dump_path = GenerateDumpPath(graph_id, &device_id);
+
+    DumpInput(graph, dump_path, debugger);
+    DumpOutput(graph, dump_path, debugger);
+    DumpParametersAndConst(graph, dump_path, debugger);
+    return true;
+  } else if (dump_json_parser.AsyncDumpEnabled()) {
+    uint32_t prev_dump_iter = dump_json_parser.cur_dump_iter() - 1;
+
+    auto zero_dir_dump_path =
+      dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
+
+    auto cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/" +
+                              dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id()) + "/" +
+                              std::to_string(prev_dump_iter);
+
+    MS_LOG(INFO) << "zero_dir_dump_path: " << zero_dir_dump_path;
+    MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
+
+    if (dump_json_parser.IsDumpIter(prev_dump_iter)) {
+      // remove symlink to active dump dir
+      std::string command = "rm -f " + cur_iter_dump_path;
+      MS_LOG(INFO) << "rm command: " << command;
+      if (system(command.c_str())) {
+        MS_LOG(EXCEPTION) << "failed to remove symlink to active dump dir.";
+      }
+
+      // create actual dir for iteration in final dump dir
+      bool status = Common::CreateNotExistDirs(cur_iter_dump_path);
+      if (!status) {
+        MS_LOG(EXCEPTION) << "failed at CreateNotExistDirs for " << cur_iter_dump_path;
+      }
+
+      // move contents from active dump dir to final dump dir
+      command = "mv " + zero_dir_dump_path + "/* " + cur_iter_dump_path + "/.";
+      MS_LOG(INFO) << "mv command: " << command;
+      if (system(command.c_str())) {
+        MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+      }
+    } else {
+      // delete contents from active dump dir
+      std::string command = "rm -f " + zero_dir_dump_path + "/*";
+      MS_LOG(INFO) << "rm command: " << command;
+      if (system(command.c_str())) {
+        MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
+      }
+    }
+
     return true;
   }
-  MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
-  MS_LOG(INFO) << "Current graph id is " << graph_id;
-  std::string dump_path = GenerateDumpPath(graph_id, &device_id);
-
-  DumpInput(graph, dump_path, debugger);
-  DumpOutput(graph, dump_path, debugger);
-  DumpParametersAndConst(graph, dump_path, debugger);
-  return true;
+  return false;
 }
 }  // namespace mindspore

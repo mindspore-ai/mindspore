@@ -1198,6 +1198,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+  DumpSetup(kernel_graph);
   bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
   Dump(kernel_graph);
   if (!ret_ok) {
@@ -1206,6 +1207,13 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 #endif
     MS_LOG(EXCEPTION) << "run task error!";
   }
+  MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  E2eDump::DumpSetup(kernel_graph.get(), device_id_);
   MS_LOG(INFO) << "Finish!";
 }
 

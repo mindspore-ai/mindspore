@@ -3,17 +3,10 @@
     "dump_mode": 0,
     "path": "/test",
     "net_name": "ResNet50",
-    "iteration": 0,
+    "iteration": "0",
     "input_output": 2,
     "kernels": ["Default/Conv-op12"],
-    "support_device": [0,1,2,3,4,5,6,7]
-  },
-  "e2e_dump_settings": {
-    "enable": false,
-    "trans_flag": false
-  },
-  "async_dump_settings": {
-    "enable": false,
+    "support_device": [0,1,2,3,4,5,6,7],
     "op_debug_mode": 0
   }
 }
