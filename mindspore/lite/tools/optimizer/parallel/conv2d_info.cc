@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <algorithm>
 #include "mindspore/core/ops/fusion/conv2d_fusion.h"
 #include "mindspore/core/ops/split_with_overlap.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -34,16 +35,17 @@ namespace opt {
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
   Strategys strategys = strategy.strategys;
-
   // if split N
   if (is_any_not_none(strategys[0][kAxisN])) {
     split_count++;
     split_mode_ = SplitN;
+    splits_ = strategys[0][kAxisN];
   }
   // if split C_in
   if (is_any_not_none(strategys[0][kAxisCIn])) {
     split_count++;
     split_mode_ = SplitCIN;
+    splits_ = strategys[0][kAxisCIn];
     if (strategys[0][kAxisCIn] != strategys[1][kAxisCIn]) {
       MS_LOG(ERROR) << "Strategy ERROR, split C_in, input and kernel must use same strategy.";
       return lite::RET_ERROR;
@@ -53,11 +55,13 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   if (is_any_not_none(strategys[1][kAxisCOut])) {
     split_count++;
     split_mode_ = SplitCOUT;
+    splits_ = strategys[1][kAxisCOut];
   }
   // if split H
   if (is_any_not_none(strategys[0][kAxisH])) {
     split_count++;
     split_mode_ = SplitH;
+    splits_ = strategys[0][kAxisH];
   }
   if (is_any_not_none(strategys[0][kAxisW])) {
     MS_LOG(ERROR) << "Strategy ERROR, doesn't support split W.";
@@ -76,6 +80,52 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
     return lite::RET_ERROR;
   }
   return lite::RET_OK;
+}
+
+int Conv2DInfo::CheckIfSplit() {
+  auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  auto strides = conv_prim->get_stride();
+  std::vector<int64_t> weight_shape;
+  std::vector<int64_t> input_shape;
+
+  // for n, h, cin, we should checkout it's input whether bigger than split total ratio
+  if (split_mode_ != SplitCOUT) {
+    auto input_node_abstract = GetCNodeInputAbstract(cnode_, 1);
+    auto weught_node_abstract = GetCNodeInputAbstract(cnode_, 2);
+    if (!utils::isa<abstract::AbstractTensorPtr>(input_node_abstract)) {
+      MS_LOG(ERROR) << "conv_input_abstract of should be abstract tensor";
+      return RET_ERROR;
+    }
+    if (!utils::isa<abstract::AbstractTensorPtr>(weught_node_abstract)) {
+      MS_LOG(ERROR) << "conv_weight_abstract of should be abstract tensor";
+      return RET_ERROR;
+    }
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(input_node_abstract);
+    MS_ERROR_IF_NULL(abstract_tensor);
+    input_shape = abstract_tensor->shape()->shape();
+    abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(weught_node_abstract);
+    weight_shape = abstract_tensor->shape()->shape();
+    int total_ratio = 0;
+    total_ratio = std::accumulate(splits_.begin(), splits_.end(), total_ratio);
+    if (input_shape.empty() || weight_shape.empty()) {
+      return RET_ERROR;
+    }
+    auto shape_h = input_shape.at(1);
+    auto shape_n = input_shape.at(0);
+    if (split_mode_ == SplitH && shape_h < total_ratio) {
+      return RET_ERROR;
+    }
+    if (split_mode_ == SplitN && shape_n < total_ratio) {
+      return RET_ERROR;
+    }
+
+    // too tiny FLOPs no need to be splited
+    auto current_flops = ApproximateFLOPs(strides, input_shape, weight_shape);
+    if (current_flops <= kUserFLOPs) {
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
@@ -114,7 +164,7 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
-
+  conv_prim->set_pad_mode(PAD);
   split_cnode->set_fullname_with_scope("Split_" + name_);
   CreateMultipleOutputsOfAnfNode(split_cnode, split_num, split_outputs);
   return split_cnode;
@@ -134,7 +184,10 @@ int Conv2DInfo::CheckConv2DPrimitiveType() {
 }
 
 int Conv2DInfo::InferParallelCNodes() {
-  if (CheckConv2DPrimitiveType() != lite::RET_OK) {
+  if (CheckConv2DPrimitiveType() != RET_OK) {
+    return RET_ERROR;
+  }
+  if (CheckIfSplit() != RET_OK) {
     return RET_ERROR;
   }
   Strategys strategys = strategy_.strategys;

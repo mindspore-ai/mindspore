@@ -78,8 +78,14 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
 #ifdef SUBGRAPH_SPLIT
-  auto search_sub_graph = SearchSubGraph(context_, src_model_, this->graph_output_node_indexes_);
-  search_sub_graph.SubGraphSplitByOutput();
+  auto search_sub_graph =
+    SearchSubGraph(context_, src_model_, this->src_tensors_, &(this->op_parameters_), this->graph_output_node_indexes_);
+  bool offline_parallel_enable = src_model_->all_nodes_.front()->device_type_ != kDefaultDeviceType;
+  if (offline_parallel_enable) {
+    search_sub_graph.SubGraphSplitByOffLineParallel();
+  } else {
+    search_sub_graph.SubGraphSplitByOutput();
+  }
 #endif
 
   ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
@@ -497,44 +503,44 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   op_parameter->is_train_session_ = is_train_session_;
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
 #ifdef SUPPORT_GPU
-  //  if (node->device_type_ == DT_GPU || node->device_type_ == DEFAULT) {
-  status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
-  if (status == RET_OK) {
-    return kernel;
-  } else {
-    MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
-                  << node->name_;
-    if (status == RET_ERROR) {
-      auto ret = InferNodeShape(node);
-      if (ret == RET_INFER_INVALID || ret == RET_OK) {
-        op_parameter = op_parameters_[node->output_indices_.at(0)];
-      } else {
-        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-        return nullptr;
+  if (node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType) {
+    status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
+    if (status == RET_OK) {
+      return kernel;
+    } else {
+      MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
+                    << node->name_;
+      if (status == RET_ERROR) {
+        auto ret = InferNodeShape(node);
+        if (ret == RET_INFER_INVALID || ret == RET_OK) {
+          op_parameter = op_parameters_[node->output_indices_.at(0)];
+        } else {
+          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+          return nullptr;
+        }
       }
     }
   }
-//  }
 #endif
 #ifdef SUPPORT_NPU
-  //  if (node->device_type_ == DT_NPU || node->device_type_ == DEFAULT) {
-  status = FindNpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
-  if (status == RET_OK) {
-    return kernel;
-  } else {
-    MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
-                  << node->name_;
-    if (status == RET_ERROR) {
-      auto ret = InferNodeShape(node);
-      if (ret == RET_INFER_INVALID || ret == RET_OK) {
-        op_parameter = op_parameters_[node->output_indices_.at(0)];
-      } else {
-        MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
-        return nullptr;
+  if (node->device_type_ == DT_NPU || node->device_type_ == kDefaultDeviceType) {
+    status = FindNpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
+    if (status == RET_OK) {
+      return kernel;
+    } else {
+      MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(desc.type) << " "
+                    << node->name_;
+      if (status == RET_ERROR) {
+        auto ret = InferNodeShape(node);
+        if (ret == RET_INFER_INVALID || ret == RET_OK) {
+          op_parameter = op_parameters_[node->output_indices_.at(0)];
+        } else {
+          MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
+          return nullptr;
+        }
       }
     }
   }
-//  }
 #endif
   if (prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kTypeUnknown) {
     status = FindCpuKernel(in_tensors, out_tensors, op_parameter, desc, kNumberTypeFloat16, &kernel);

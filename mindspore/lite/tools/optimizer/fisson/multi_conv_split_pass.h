@@ -23,12 +23,14 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
-#include "schema/inner/model_generated.h"
+#include "schema/model_generated.h"
 #include "tools/optimizer/parallel/multi_node_split.h"
 
 using mindspore::schema::PrimitiveType;
 namespace mindspore {
 namespace opt {
+constexpr auto kMaxMultiConvNodeNums = 2;
+
 class MultiConvSplitPass : public PatternProcessPass {
  public:
   explicit MultiConvSplitPass(const std::unordered_map<std::string, SplitStrategy> &strategys, int32_t fmk_type = -1,

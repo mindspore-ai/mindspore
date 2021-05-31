@@ -40,6 +40,8 @@ enum FmkType {
   FmkType_ONNX_LOW_VERSION = 5
 };
 
+constexpr auto kMaxSplitRatio = 10;
+
 class Flags : public virtual mindspore::lite::FlagParser {
  public:
   Flags();
@@ -81,6 +83,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string bitNumIn;
   int bitNum;
   bool parallelMode = false;
+  std::vector<int64_t> parallel_compute_rates_;
+  std::vector<std::string> parallel_devices_;
   std::string configFile;
   std::string quantWeightChannelStr;
   int quantWeightChannel;
@@ -89,6 +93,9 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::vector<std::string> pluginsPath;
   bool disableFusion = false;
 };
+
+bool CheckOfflineParallelConfig(const std::string &file, std::vector<int64_t> *compute_rates,
+                                std::vector<std::string> *parallel_devices);
 
 std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
 

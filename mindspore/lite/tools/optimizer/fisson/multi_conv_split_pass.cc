@@ -41,12 +41,12 @@ std::string MultiConvSplitPass::IsMultiParallelConvNode(const AnfNodePtr &node) 
 }
 
 const BaseRef MultiConvSplitPass::DefinePattern() const {
-  auto conv1_var = std::make_shared<CondVar>(IsConvNode);
+  auto conv1_var = std::make_shared<CondVar>(IsParallelSplitConvNode);
   auto conv1_other_var = std::make_shared<SeqVar>();
   VectorRef res = VectorRef({conv1_var, conv1_other_var});
   int32_t idx = 1;
   while (idx < num_) {
-    auto tmp_var = std::make_shared<CondVar>(IsConvNode);
+    auto tmp_var = std::make_shared<CondVar>(IsParallelSplitConvNode);
     auto tmp_other_var = std::make_shared<SeqVar>();
     res = VectorRef({tmp_var, res, tmp_other_var});
     idx++;

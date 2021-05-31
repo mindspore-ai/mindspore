@@ -28,6 +28,7 @@
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::lite {
+constexpr int kDefaultDeviceType = -1;
 class SearchSubGraph {
   enum TensorType { NORMAL, CONST, INPUT };
 
@@ -84,19 +85,20 @@ class SearchSubGraph {
 
  public:
   void SubGraphSplitByOutput();
+  void SubGraphSplitByOffLineParallel();
 
  private:
   void InitSearchTensor();
   void InitSearchSubGraph();
+  void InitSearchParallelSubGraph();
   void ConvertSubGraphToModel();
   void InsertNode(uint32_t index, Subgraph *subgraph);
+  void InsertParallelNode(uint32_t index, Subgraph *subgraph);
   bool IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes);
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
   void InitSubgraphDevice();
   void SubgraphFusion();
   void InitMainGraphDevice();
-
- private:
   void CalculateCostModel();
   CostModel CalculateConv2DFusion(Model::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,

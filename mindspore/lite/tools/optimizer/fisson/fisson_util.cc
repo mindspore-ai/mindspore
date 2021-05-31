@@ -175,6 +175,7 @@ std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2
   prim->set_stride(ori_attr->get_stride());
   prim->set_activation_type(ori_attr->get_activation_type());
   prim->set_pad_list(prim->get_pad_list());
+  prim->set_pad_mode(PAD);
   return prim;
 }
 

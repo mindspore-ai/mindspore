@@ -27,11 +27,11 @@ namespace opt {
 int MultiConvSplit ::GenSplitInfo() {
   split_info_.out_num = this->strategy_.dev_num;
   for (const auto &dev_type : this->strategy_.dev_types) {
-    if (dev_type == "CPU") {
+    if (dev_type == "cpu") {
       split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_CPU);
-    } else if (dev_type == "GPU") {
+    } else if (dev_type == "gpu") {
       split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_GPU);
-    } else if (dev_type == "NPU") {
+    } else if (dev_type == "npu") {
       split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_NPU);
     } else {
       MS_LOG(ERROR) << "Do not support DeviceType:" << dev_type << "now.";

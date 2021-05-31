@@ -18,10 +18,23 @@
 #include "include/errorcode.h"
 #include "ir/tensor.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
+#include "ops/fusion/conv2d_fusion.h"
 
 namespace mindspore {
 namespace opt {
+
+namespace {
+constexpr auto kAnfPrimitiveIndex = 0;
+}
+
 bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
+  auto c_node = node->cast<CNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(c_node->input(kAnfPrimitiveIndex));
+  // depth_wise can not be splited
+  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+  if (is_depth_wise) {
+    return false;
+  }
   type_name_.clear();
   return std::any_of(kParallelSet.begin(), kParallelSet.end(), [this, &node](auto &prim) {
     if (CheckPrimitiveType(node, prim)) {
@@ -71,21 +84,22 @@ OperatorInfoPtr ParallelPass::CreateParallelOperator(const AnfNodePtr &node, con
   auto cnode = node->cast<CNodePtr>();
   auto node_prim = cnode->input(kParallelPrimitiveIndex);
   auto prim = GetValueNode<PrimitivePtr>(node_prim);
-  auto split_key_pair = kParallelSchemaId.find(prim);
-
-  if (split_key_pair == kParallelSchemaId.end()) {
-    return nullptr;
+  for (const auto &schmea_id : kParallelSchemaId) {
+    if (!CheckPrimitiveType(node, schmea_id.first)) {
+      continue;
+    }
+    auto split_key_pair = kParallelSchemaId.find(schmea_id.first);
+    auto split_schema_id = split_key_pair->second.first;
+    auto split_type_id = split_key_pair->second.second;
+    SplitOpKey op_key = SplitOpKey(split_schema_id, split_type_id);
+    auto op_create_func = OperatorInfoFactory::GeInstance()->FindOperatorInfo(op_key);
+    if (op_create_func == nullptr) {
+      return nullptr;
+    }
+    OperatorInfoPtr op = op_create_func(scope_name, split_strategys_[parallel_op_name]);
+    return op;
   }
-  auto split_schema_id = split_key_pair->second.first;
-  auto split_type_id = split_key_pair->second.second;
-  SplitOpKey op_key = SplitOpKey(split_schema_id, split_type_id);
-
-  auto op_create_func = OperatorInfoFactory::GeInstance()->FindOperatorInfo(op_key);
-  if (op_create_func == nullptr) {
-    return nullptr;
-  }
-  OperatorInfoPtr op = op_create_func(scope_name, split_strategys_[parallel_op_name]);
-  return op;
+  return nullptr;
 }
 
 AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
@@ -99,7 +113,16 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   if (!IsParallelCareNode(node)) {
     return node;
   }
-
+  // if current conv2d node has two output nodes ,we do not split it;
+  auto manager = func_graph->manager();
+  auto iter = manager->node_users().find(node);
+  if (iter == manager->node_users().end()) {
+    MS_LOG(ERROR) << "node : " << node->fullname_with_scope() << "has no output";
+  }
+  auto output_info_list = iter->second;
+  if (output_info_list.size() > 1) {
+    return node;
+  }
   auto cnode = node->cast<CNodePtr>();
   std::string parallel_op_name = cnode->fullname_with_scope();
   if (CheckIfCNodeIsNull(cnode) != lite::RET_OK) {

@@ -44,11 +44,14 @@ class Conv2DInfo : public OperatorInfo {
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
                                   size_t split_dim, size_t split_num, const std::vector<int64_t> &splits,
                                   bool trans_format) override;
-  int CheckConv2DPrimitiveType();
 
+ protected:
   SplitMode split_mode_ = NoSplit;
-  bool format_NCHW_ = false;
-  std::vector<int32_t> splits_;
+  std::vector<int64_t> splits_;
+
+ private:
+  int CheckConv2DPrimitiveType();
+  int CheckIfSplit();
 };
 
 class DepthwiseConv2DInfo : public Conv2DInfo {

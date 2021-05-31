@@ -21,40 +21,55 @@
 
 namespace mindspore {
 namespace opt {
-std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy() {
+
+int64_t ApproximateFLOPs(const std::vector<int64_t> &strides, const std::vector<int64_t> &input_shape,
+                         const std::vector<int64_t> &weight_shape) {
+  int64_t input_h = input_shape.at(kShapeH);
+  int64_t input_w = input_shape.at(kShapeW);
+  int64_t in_c = input_shape.at(kShapeC);
+  int64_t out_c = weight_shape.at(kShapeN);
+  int64_t k_h = weight_shape.at(kShapeH);
+  int64_t k_w = weight_shape.at(kShapeW);
+  int64_t stride_h = strides.at(kIndexH);
+  int64_t stride_w = strides.at(kIndexW);
+  return (input_h / stride_h) * (input_w / stride_w) * in_c * k_h * k_w * out_c / kPerFlops;
+}
+
+std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(const std::vector<int64_t> &split_ratio,
+                                                                        const std::vector<std::string> &split_device,
+                                                                        SplitMode split_mode) {
   std::unordered_map<std::string, opt::SplitStrategy> split_strategys;
-  if (kSplitRatio.empty() || kSplitDefaultRatio.empty() || kSplitDevTypes.empty()) {
+  if (split_ratio.empty() || kSplitDefaultRatio.empty() || split_device.empty()) {
     return split_strategys;
   }
-  if (kSplitRatio.size() != kSplitDevTypes.size()) {
+  if (split_ratio.size() != kSplitDevTypes.size()) {
     return split_strategys;
   }
   std::vector<std::vector<int64_t>> split_feature_map;
   std::vector<std::vector<int64_t>> split_weight;
-  switch (kParallelMode) {
+  switch (split_mode) {
     case SplitN:
-      split_feature_map = {kSplitRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
+      split_feature_map = {split_ratio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
       split_weight = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
       break;
     case SplitH:
-      split_feature_map = {kSplitDefaultRatio, kSplitRatio, kSplitDefaultRatio, kSplitDefaultRatio};
+      split_feature_map = {kSplitDefaultRatio, split_ratio, kSplitDefaultRatio, kSplitDefaultRatio};
       split_weight = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
       break;
     case SplitCIN:
-      split_feature_map = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitRatio};
-      split_weight = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitRatio};
+      split_feature_map = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, split_ratio};
+      split_weight = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, split_ratio};
       break;
     case SplitCOUT:
       split_feature_map = {kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
-      split_weight = {kSplitRatio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
+      split_weight = {split_ratio, kSplitDefaultRatio, kSplitDefaultRatio, kSplitDefaultRatio};
       break;
     default:
       return split_strategys;
   }
   opt::Strategys strategys = {split_feature_map, split_weight};
-
   for (const auto &supported_parallel_op : kParallelOpNames) {
-    split_strategys[supported_parallel_op.second] = {strategys, kSplitDevTypes, kSplitDevTypes.size(), kParallelMode};
+    split_strategys[supported_parallel_op.second] = {strategys, kSplitDevTypes, kSplitDevTypes.size(), split_mode};
   }
 
   return split_strategys;

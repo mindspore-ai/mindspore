@@ -30,11 +30,9 @@ constexpr auto PARALLEL_NAME_SUFFIX = "_parallel";
 
 constexpr auto kParallelPrimitiveIndex = 0;
 
-const std::vector<int64_t> kSplitRatio = {1, 1};
-
 const std::vector<int64_t> kSplitDefaultRatio = {0, 0};
 
-const std::vector<std::string> kSplitDevTypes = {"CPU", "GPU"};
+const std::vector<std::string> kSplitDevTypes = {"cpu", "gpu"};
 
 using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
 
@@ -45,6 +43,13 @@ constexpr int32_t kAxisCIn = 3;
 constexpr int32_t kAxisCOut = 0;
 constexpr int32_t kAxisH = 1;
 constexpr int32_t kAxisW = 2;
+
+constexpr auto kDefaultBatch = 1;
+
+constexpr auto kShapeN = 0;
+constexpr auto kShapeH = 1;
+constexpr auto kShapeW = 2;
+constexpr auto kShapeC = 3;
 
 constexpr auto kIndexH = 0;
 constexpr auto kIndexW = 1;
@@ -62,8 +67,6 @@ enum SplitMode {
   SplitCOUT = 4,
 };
 
-constexpr auto kParallelMode = SplitH;
-
 struct SplitStrategy {
   Strategys strategys;
   std::vector<std::string> dev_types;
@@ -80,9 +83,23 @@ const std::unordered_map<PrimitivePtr, std::string> kParallelOpNames = {{prim::k
 
 // this is a map for key: primitive  value: schema_primitive_id
 const std::unordered_map<PrimitivePtr, std::pair<schema::PrimitiveType, TypeId>> kParallelSchemaId = {
-  {prim::kPrimConv2D, {schema::PrimitiveType_Conv2DFusion, kNumberTypeFloat32}}};
+  {prim::kPrimConv2D, {schema::PrimitiveType_Conv2DFusion, kNumberTypeFloat32}},
+  {prim::kPrimConv2DFusion, {schema::PrimitiveType_Conv2DFusion, kNumberTypeFloat32}}};
 
-std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy();
+// this is an artificial restriction that if user split conv, we limit total FLOPs bigger than
+// 2 * output_H * output_W * (in_C * kW * kH +1) * out_C >= 100
+// FLOPs ~= output_H * output_W * (in_C * kW * kH) * out_C
+// FLOPs ~= (input_h/stride_h)*(input_w/stride_w)*in_C * kW * kH) * out_C
+// etc. (12/1)*(12/1)*(1*3*3)*128/1024 = 162kFLPOs
+constexpr auto kUserFLOPs = 100;
+constexpr auto kPerFlops = 1024;
+
+int64_t ApproximateFLOPs(const std::vector<int64_t> &strides, const std::vector<int64_t> &input_shae,
+                         const std::vector<int64_t> &weight_shape);
+
+std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(
+  const std::vector<int64_t> &parallel_compute_rates, const std::vector<std::string> &parallel_devices,
+  SplitMode split_mode);
 
 }  // namespace opt
 }  // namespace mindspore
