@@ -1026,9 +1026,15 @@ void AscendStreamAssign::InsertStreamActiveForCommon(const NotNull<KernelGraphPt
       // 2.set active stream ids
       std::vector<uint32_t> active_index_list{cur_stream_id};
       AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(active_index_list), active_ptr);
-      update_cnode_list.emplace_back(active_ptr);
+      if (i > 0) {
+        auto pre_node = AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]);
+        if (pre_node == kLabelSwitchOpName || pre_node == kLabelGotoOpName) {
+          update_cnode_list.insert(update_cnode_list.end() - 1, active_ptr);
+        } else {
+          update_cnode_list.emplace_back(active_ptr);
+        }
+      }
     }
-
     if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamSwitchOpName) {
       MS_LOG(INFO) << "Insert StreamActive op after FP StreamSwitch for stream parallel";
       update_cnode_list.emplace_back(cur_cnode_ptr);
