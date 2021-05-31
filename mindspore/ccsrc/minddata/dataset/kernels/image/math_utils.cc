@@ -25,7 +25,8 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
                                        int32_t *lo) {
   try {
     int32_t n = std::accumulate(hist->begin(), hist->end(), 0);
-    int32_t cut = static_cast<int32_t>((low_p / 100.0) * n);
+    constexpr float kMaxPerc = 100.0;
+    int32_t cut = static_cast<int32_t>((low_p / kMaxPerc) * n);
     for (int32_t lb = 0; lb < hist->size() + 1 && cut > 0; lb++) {
       if (cut > (*hist)[lb]) {
         cut -= (*hist)[lb];
@@ -35,7 +36,7 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
         cut = 0;
       }
     }
-    cut = static_cast<int32_t>((hi_p / 100.0) * n);
+    cut = static_cast<int32_t>((hi_p / kMaxPerc) * n);
     for (int32_t ub = hist->size() - 1; ub >= 0 && cut > 0; ub--) {
       if (cut > (*hist)[ub]) {
         cut -= (*hist)[ub];
@@ -52,9 +53,8 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
     for (; (*hi) >= 0 && !(*hist)[*hi]; (*hi)--) {
     }
   } catch (const std::exception &e) {
-    const char *err_msg = e.what();
     std::string err_message = "AutoContrast: ComputeUpperAndLowerPercentiles failed: ";
-    err_message += err_msg;
+    err_message += e.what();
     RETURN_STATUS_UNEXPECTED(err_message);
   }
   return Status::OK();
@@ -70,9 +70,8 @@ Status GenerateRealNumber(float_t a, float_t b, std::mt19937 *rnd, float_t *resu
     std::uniform_real_distribution<float_t> distribution{a, b};
     *result = distribution(*rnd);
   } catch (const std::exception &e) {
-    const char *err_msg = e.what();
     std::string err_message = "RandomAffine: GenerateRealNumber failed: ";
-    err_message += err_msg;
+    err_message += e.what();
     RETURN_STATUS_UNEXPECTED(err_message);
   }
   return Status::OK();

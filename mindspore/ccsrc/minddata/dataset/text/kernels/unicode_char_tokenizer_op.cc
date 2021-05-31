@@ -15,7 +15,9 @@
  */
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include <memory>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "cppjieba/Unicode.hpp"
@@ -26,32 +28,20 @@ using cppjieba::RuneStrArray;
 namespace mindspore {
 namespace dataset {
 
-const bool UnicodeCharTokenizerOp::kDefWithOffsets = false;
-
-Status UnicodeCharTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
-  IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "UnicodeCharTokenizer: input should be one column data.");
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED(
-      "UnicodeCharTokenizer: "
-      "the input shape should be scalar and the input datatype should be string.");
-  }
-  std::string_view str;
-  RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
-
+Status UnicodeCharTokenizerOp::Tokenize(std::string_view str, std::vector<std::string> *splits,
+                                        std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) {
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("UnicodeCharTokenizer: Decode utf8 string failed.");
   }
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
-  std::vector<std::string> splits(runes.size());
-  std::vector<uint32_t> offsets_start, offsets_limit;
+  std::vector<std::string> words(runes.size());
   for (size_t i = 0; i < runes.size(); i++) {
-    offsets_start.push_back(runes[i].offset);
-    offsets_limit.push_back(runes[i].offset + runes[i].len);
-    splits[i] = str.substr(runes[i].offset, runes[i].len);
+    offsets_start->push_back(runes[i].offset);
+    offsets_limit->push_back(runes[i].offset + runes[i].len);
+    words[i] = str.substr(runes[i].offset, runes[i].len);
   }
-  return TokenizerHelper(&splits, &offsets_start, &offsets_limit, with_offsets_, output);
+  *splits = std::move(words);
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

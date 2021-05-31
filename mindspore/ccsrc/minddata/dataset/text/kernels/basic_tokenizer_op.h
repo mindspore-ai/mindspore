@@ -25,18 +25,18 @@
 #include "minddata/dataset/text/kernels/normalize_utf8_op.h"
 #include "minddata/dataset/text/kernels/regex_replace_op.h"
 #include "minddata/dataset/text/kernels/regex_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class BasicTokenizerOp : public TensorOp {
+class BasicTokenizerOp : public TokenizerOp {
  public:
   static const bool kDefLowerCase;
   static const bool kDefKeepWhitespace;
   static const NormalizeForm kDefNormalizationForm;
   static const bool kDefPreserveUnusedToken;
-  static const bool kDefWithOffsets;
 
   explicit BasicTokenizerOp(const bool &lower_case = kDefLowerCase, const bool &keep_whitespace = kDefKeepWhitespace,
                             const NormalizeForm &normalization_form = kDefNormalizationForm,
@@ -58,7 +58,6 @@ class BasicTokenizerOp : public TensorOp {
   static const char kCommonPattern[];
   static const char kUnusedPattern[];
   static const std::unordered_set<std::string> kUnusedWords;
-  bool with_offsets_;
   bool lower_case_;
   bool keep_whitespace_;
   NormalizeForm normalization_form_;

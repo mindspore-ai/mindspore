@@ -21,6 +21,8 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/text/kernels/basic_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
+#include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
@@ -36,7 +38,7 @@ class BertTokenizerOp : public TensorOp {
                            const bool &keep_whitespace = BasicTokenizerOp::kDefKeepWhitespace,
                            const NormalizeForm &normalization_form = BasicTokenizerOp::kDefNormalizationForm,
                            const bool &preserve_unused_token = BasicTokenizerOp::kDefPreserveUnusedToken,
-                           const bool &with_offsets = WordpieceTokenizerOp::kDefWithOffsets)
+                           const bool &with_offsets = TokenizerOp::kDefWithOffsets)
       : wordpiece_tokenizer_(vocab, suffix_indicator, max_bytes_per_token, unknown_token, with_offsets),
         basic_tokenizer_(lower_case, keep_whitespace, normalization_form, preserve_unused_token, with_offsets) {}
 

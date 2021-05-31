@@ -22,16 +22,15 @@ namespace dataset {
 const char WordpieceTokenizerOp::kDefSuffixIndicator[] = "##";
 const int WordpieceTokenizerOp::kDefMaxBytesPerToken = 100;
 const char WordpieceTokenizerOp::kDefUnknownToken[] = "[UNK]";
-const bool WordpieceTokenizerOp::kDefWithOffsets = false;
 
 WordpieceTokenizerOp::WordpieceTokenizerOp(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator,
                                            const int &max_bytes_per_token, const std::string &unknown_token,
                                            const bool &with_offsets)
-    : vocab_(vocab),
+    : TokenizerOp(with_offsets),
+      vocab_(vocab),
       suffix_indicator_(suffix_indicator),
       max_bytes_per_token_(max_bytes_per_token),
-      unknown_token_(unknown_token),
-      with_offsets_(with_offsets) {}
+      unknown_token_(unknown_token) {}
 
 Status WordpieceTokenizerOp::LookupWord(const std::string &input_token, const RuneStrArray &runes, const int start,
                                         bool *out_found, int *out_end) const {

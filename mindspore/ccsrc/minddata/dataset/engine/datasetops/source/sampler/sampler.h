@@ -156,7 +156,7 @@ class SamplerRT {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
+  virtual Status to_json(nlohmann::json *out_json);
 
  protected:
   // Number of rows of data from the place this sampler is sampling from. If this sampler

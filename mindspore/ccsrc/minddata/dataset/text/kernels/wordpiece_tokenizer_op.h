@@ -24,6 +24,7 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/text/vocab.h"
 #include "minddata/dataset/util/status.h"
 
@@ -32,12 +33,11 @@ using cppjieba::RuneStrArray;
 namespace mindspore {
 namespace dataset {
 
-class WordpieceTokenizerOp : public TensorOp {
+class WordpieceTokenizerOp : public TokenizerOp {
  public:
   static const char kDefSuffixIndicator[];
   static const int kDefMaxBytesPerToken;
   static const char kDefUnknownToken[];
-  static const bool kDefWithOffsets;
   WordpieceTokenizerOp(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator = kDefSuffixIndicator,
                        const int &max_bytes_per_token = kDefMaxBytesPerToken,
                        const std::string &unknown_token = kDefUnknownToken, const bool &with_offsets = kDefWithOffsets);
@@ -61,7 +61,6 @@ class WordpieceTokenizerOp : public TensorOp {
  private:
   const std::shared_ptr<Vocab> vocab_;
   const std::string suffix_indicator_;
-  const bool with_offsets_;
   const int max_bytes_per_token_;
   const std::string unknown_token_;
 };

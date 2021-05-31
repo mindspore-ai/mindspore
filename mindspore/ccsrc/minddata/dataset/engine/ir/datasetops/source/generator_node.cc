@@ -144,8 +144,7 @@ Status GeneratorNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &s
     return Status::OK();
   } else {
     int64_t sample_size;
-    int64_t num_rows;
-    num_rows = source_len_;
+    int64_t num_rows = source_len_;
     std::shared_ptr<SamplerRT> sampler_rt = nullptr;
     if (sampler_) RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
     sample_size = sampler_ ? sampler_rt->CalculateNumSamples(num_rows) : num_rows;

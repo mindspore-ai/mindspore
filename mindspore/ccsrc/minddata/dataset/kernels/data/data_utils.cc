@@ -548,7 +548,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_BOOL), output));
 
-  std::unique_ptr<TypeCastOp> value_cast_op(new TypeCastOp(input->type()));
+  std::unique_ptr<TypeCastOp> value_cast_op = std::make_unique<TypeCastOp>(input->type());
   std::shared_ptr<Tensor> casted_value;
   if (input->type().IsNumeric()) {
     RETURN_IF_NOT_OK(value_cast_op->Compute(value, &casted_value));

@@ -13,32 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_TOKENIZER_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_TOKENIZER_OP_H_
 #include <memory>
 #include <vector>
 #include <string>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/text/kernels/tokenizer_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class UnicodeCharTokenizerOp : public TokenizerOp {
+class TokenizerOp : public TensorOp {
  public:
-  explicit UnicodeCharTokenizerOp(const bool &with_offsets = kDefWithOffsets) : TokenizerOp(with_offsets) {}
+  static const bool kDefWithOffsets;
 
-  ~UnicodeCharTokenizerOp() override = default;
+  explicit TokenizerOp(const bool &with_offsets = kDefWithOffsets) : with_offsets_(with_offsets) {}
 
-  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
-                  std::vector<uint32_t> *offsets_limit) override;
+  ~TokenizerOp() override = default;
 
-  std::string Name() const override { return kUnicodeCharTokenizerOp; }
+  virtual Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+                          std::vector<uint32_t> *offsets_limit) {
+    return Status::OK();
+  }
+
+  Status Compute(const TensorRow &input, TensorRow *output) override;
+
+ protected:
+  bool with_offsets_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_TEXT_KERNELS_TOKENIZER_OP_H_
