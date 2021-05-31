@@ -19,7 +19,7 @@
 #include <map>
 #include <set>
 #include <vector>
-
+#include "abstract/param_validator.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
@@ -34,17 +34,24 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  abstract::CheckShapeSame(prim_name, out, dout);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
+
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   CheckAndConvertUtils::CheckInteger("ReLUGrad infer", input_args.size(), kEqual, 2, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  abstract::CheckDtypeSame(prim_name, out, dout);
   auto x_type_map = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type_map);
   auto x_type = x_type_map->cast<TensorTypePtr>();
