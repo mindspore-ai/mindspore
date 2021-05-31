@@ -47,6 +47,7 @@ class CPUDeviceContext : public DeviceContext {
 
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
+
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 

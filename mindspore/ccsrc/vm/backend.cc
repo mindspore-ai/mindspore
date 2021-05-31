@@ -163,6 +163,18 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
   auto position = iter - parameters.begin();
   PushInputTensor(args[position], input_tensor);
 }
+
+void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_info) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  const auto &kernels = kernel_graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::GetCNodeName(kernel) == op_run_info->op_name) {
+      op_run_info->abstract = kernel->abstract();
+    }
+  }
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -377,7 +389,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       const ActorInfo &actor_info =
         CompileGraph(op_run_info, graph_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
       VectorRef op_outputs =
-        RunGraph(actor_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
+        RunGraph(actor_info, &op_run_info, &input_tensor_info.input_tensors_mask, &input_tensor_info.input_tensors);
 
       std::vector<tensor::TensorPtr> new_output_tensors;
       runtime::GraphCompiler::GetInstance().RecoverGraphOutput(kernel, op_outputs, output_indexes, &op_output_map,
@@ -465,8 +477,14 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   // Fetch outputs.
   MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
   auto &output_tensors = actor_set->output_actor_->outputs();
-  (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
-                       [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+  if (output_tensors.size() > 1) {
+    VectorRef tmp;
+    (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(tmp.elements_),
+                         [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+    outputs.emplace_back(std::move(tmp));
+  } else if (output_tensors.size() == 1) {
+    outputs.emplace_back(std::move(output_tensors.front()));
+  }
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
   return outputs;
 }
@@ -489,13 +507,22 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   const auto &all_branch_output = ControlNodeParser::FetchAllBranchOutputs(root_graph);
   for (const auto &branch_output : all_branch_output) {
     size_t position = 0;
-    const auto &outputs = AnfAlgo::GetAllOutput(branch_output, {prim::kPrimTupleGetItem});
-    outputs_num = outputs.size();
+    if (AnfAlgo::CheckPrimitiveType(branch_output, prim::kPrimMakeTuple)) {
+      const auto &outputs = AnfAlgo::GetAllOutput(branch_output, {prim::kPrimTupleGetItem});
+      outputs_num = outputs.size();
 
-    for (const auto &output : outputs) {
-      const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
-      MS_EXCEPTION_IF_NULL(output_with_index.first);
-      outputs_order.emplace(output_with_index, position++);
+      for (const auto &output : outputs) {
+        const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(output, 0, false);
+        MS_EXCEPTION_IF_NULL(output_with_index.first);
+        outputs_order.emplace(output_with_index, position++);
+      }
+    } else if (branch_output->isa<CNode>()) {
+      outputs_num = AnfAlgo::GetOutputTensorNum(branch_output);
+      for (size_t i = 0; i < outputs_num; i++) {
+        const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(branch_output, i, false);
+        MS_EXCEPTION_IF_NULL(output_with_index.first);
+        outputs_order.emplace(output_with_index, position++);
+      }
     }
   }
 
@@ -542,7 +569,8 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
                                              outputs_order.size(), name);
 }
 
-VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
+VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
+                                  const std::vector<int64_t> *tensors_mask,
                                   const std::vector<tensor::TensorPtr> *input_tensors) {
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
   if (graph_iter == actor_to_graph_compiler_info_.end()) {
@@ -584,6 +612,12 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const std::vector
   VectorRef outputs;
   (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
                        [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+
+  // update output abstract of dynamic op to op_run_info
+  if (op_run_info->is_dynamic_shape) {
+    UpdateOutputAbstract(graph_compiler_info.graphs_.front(), op_run_info);
+  }
+
   return outputs;
 }
 }  // namespace compile

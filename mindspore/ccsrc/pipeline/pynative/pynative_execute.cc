@@ -1687,7 +1687,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
     }
     const compile::ActorInfo &actor_info =
       mind_rt_backend->CompileGraph(op_run_info, graph_info, &tensors_mask, &input_tensors);
-    outputs = mind_rt_backend->RunGraph(actor_info, &tensors_mask, &input_tensors);
+    outputs = mind_rt_backend->RunGraph(actor_info, &op_run_info, &tensors_mask, &input_tensors);
   }
 
   if (op_exec_info->is_dynamic_shape) {

@@ -73,7 +73,7 @@ std::vector<AnfNodePtr> ControlNodeParser::FetchFuncGraphOutput(const FuncGraphP
                                                                 std::vector<AnfNodePtr> *call_nodes) {
   std::vector<AnfNodePtr> outputs;
   const auto &output = func_graph->output();
-  const auto &real_output = AnfAlgo::VisitKernelWithReturnType(output, 0);
+  const auto &real_output = AnfAlgo::VisitKernelWithReturnType(output, 0, false, {prim::kPrimTupleGetItem});
   if (find((*call_nodes).begin(), (*call_nodes).end(), real_output.first) != (*call_nodes).end()) {
     return outputs;
   }

@@ -86,6 +86,13 @@ class DeviceContext {
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
+  // Infer kernel shape and update abstract info for dynamic shape kernel.
+  virtual void UpdateKernelDynamicShape(const CNodePtr &kernel) const {
+    if (AnfAlgo::IsDynamicShape(kernel)) {
+      AnfAlgo::InferShape(kernel);
+    }
+  }
+
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                             const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const = 0;
