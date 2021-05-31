@@ -46,7 +46,7 @@ CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const
   if (shape[shape.size() - 1] == -1) {
     MS_LOG(EXCEPTION) << "Dim needs pad should not be dynamic";
   }
-  shape[shape.size() - 1] = pad_dim_size;
+  shape[shape.size() - 1] = SizeToLong(pad_dim_size);
   auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
   if (param_dyn_shape->max_shape().size() == param_dyn_shape->shape().size() &&
@@ -54,8 +54,8 @@ CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const
     ShapeVector max_shape(param_dyn_shape->max_shape());
     ShapeVector min_shape(param_dyn_shape->min_shape());
     ShapeVector new_shape(shape);
-    max_shape[max_shape.size() - 1] = pad_dim_size;
-    min_shape[min_shape.size() - 1] = pad_dim_size;
+    max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
+    min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
     abstract->set_shape(std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape));
   }
   pad->set_abstract(abstract);

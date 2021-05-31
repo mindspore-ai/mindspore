@@ -48,12 +48,12 @@ void SetAttrForSplitVNode(const AnfNodePtr &splitv, const std::vector<int64_t> &
 size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_t num_split) {
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(split_node, 0);
   if (split_dim < 0) {
-    split_dim += input_shape.size();
+    split_dim += SizeToLong(input_shape.size());
   }
   if (LongToSize(split_dim) >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "The split_dim value should be less than the shape size of input 0";
   }
-  return input_shape[split_dim] / num_split;
+  return input_shape[LongToSize(split_dim)] / LongToSize(num_split);
 }
 
 void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv, int64_t outputs_num,
@@ -64,11 +64,11 @@ void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv,
   inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
 }
 
-AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &input, size_t index) {
+AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &input, int64_t index) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto idx = NewValueNode(SizeToLong(index));
+  auto idx = NewValueNode(index);
   MS_EXCEPTION_IF_NULL(idx);
-  auto imm = std::make_shared<Int64Imm>(SizeToLong(index));
+  auto imm = std::make_shared<Int64Imm>(index);
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
   auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, idx});
@@ -82,9 +82,9 @@ void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
   MS_EXCEPTION_IF_NULL(new_output_shapes);
   auto output_shape = AnfAlgo::GetOutputInferShape(origin_cnode, 0);
   if (split_dim < 0) {
-    split_dim += output_shape.size();
+    split_dim += SizeToLong(output_shape.size());
   }
-  output_shape[split_dim] = split_size;
+  output_shape[LongToSize(split_dim)] = LongToSize(split_size);
   TypeId type_id = AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
   for (int64_t i = 0; i < num_split; ++i) {
     new_type_ids->emplace_back(type_id);
@@ -102,10 +102,10 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
   std::vector<TypeId> base_type_ids(num_split, type_id);
   std::vector<std::vector<size_t>> base_output_shapes_base;
   if (split_dim < 0) {
-    split_dim += output_shape.size();
+    split_dim += SizeToLong(output_shape.size());
   }
-  for (int64_t i = 0; i < num_split; ++i) {
-    output_shape[split_dim] = size_splits_base[i];
+  for (size_t i = 0; i < LongToSize(num_split); ++i) {
+    output_shape[LongToSize(split_dim)] = size_splits_base[i];
     base_output_shapes_base.emplace_back(output_shape);
     AnfAlgo::SetOutputInferTypeAndShape({type_id}, {output_shape}, base_splitv_outputs[i].get());
   }
