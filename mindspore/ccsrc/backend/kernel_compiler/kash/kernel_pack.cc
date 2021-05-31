@@ -26,6 +26,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+const size_t kSuffix = 5;
+const int64_t kSLEEP_TIME = 500000;
 bool CheckHash(const std::string &json_file, const std::string &bin_file, const nlohmann::json &js) {
   if (js.find("sha256") == js.end()) {
     MS_LOG(ERROR) << "No sha256 found in " << json_file;
@@ -100,7 +102,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   (void)kerneljson.read(json_->contents, SizeToLong(json_->len));
 
   if (processor == kProcessorCuda) {
-    std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".ptx";
+    std::string bin_f = json_f.substr(0, json_f.length() - kSuffix) + ".ptx";
     std::ifstream kernelbin(bin_f);
     if (!kernelbin.is_open()) {
       MS_LOG(ERROR) << "read kernel ptx file error, please check kernelmeta.";
@@ -122,7 +124,7 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   }
 
   std::string binfilesuffix = js["binFileSuffix"];
-  std::string bin_f = json_f.substr(0, json_f.length() - 5) + binfilesuffix;
+  std::string bin_f = json_f.substr(0, json_f.length() - kSuffix) + binfilesuffix;
   if (binfilesuffix.compare(".so") == 0) {
     // change "xx/xx.so" -> "xx/libxx.so"
     auto sp = bin_f.rfind('/');
@@ -187,7 +189,7 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
   kernel_json_info_.sha256 = js["sha256"];
 }
 
-bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &processor) {
+bool KernelPack::LoadKernelMeta(const std::string &json_f) {
   if (json_f.length() <= strlen(kJsonSuffix)) {
     MS_LOG(ERROR) << "please check json path.";
     return false;
@@ -204,7 +206,7 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
   } catch (std::exception &e) {
     MS_LOG(WARNING) << "Parse json file error: " << json_f << ", sleep 500ms and retry again.";
     kernel_json.close();
-    std::this_thread::sleep_for(std::chrono::microseconds(500000));
+    std::this_thread::sleep_for(std::chrono::microseconds(kSLEEP_TIME));
     std::ifstream retry_tmp(json_f);
     if (!retry_tmp.is_open()) {
       MS_LOG(INFO) << "Open json file: " << json_f << " error, please check kernel_meta.";
@@ -215,7 +217,7 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
   }
   ParseKernelJson(js);
 
-  std::string bin_f = json_f.substr(0, json_f.length() - 5) + kernel_json_info_.bin_file_suffix;
+  std::string bin_f = json_f.substr(0, json_f.length() - kSuffix) + kernel_json_info_.bin_file_suffix;
   if (kernel_json_info_.bin_file_suffix == ".so") {
     // change "xx/xx.so" -> "xx/libxx.so"
     auto sp = bin_f.rfind('/');

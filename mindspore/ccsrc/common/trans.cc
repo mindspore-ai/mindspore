@@ -57,7 +57,7 @@ T DivCeil(T n1, T n2) {
   return 0;
 }
 
-enum DataTypeTransMode {
+enum class DataTypeTransMode : int {
   FROM_FLOAT_TO_FLOAT16,
   FROM_FLOAT_TO_INT32,
   FROM_FLOAT16_TO_FLOAT,
@@ -86,31 +86,31 @@ enum DataTypeTransMode {
 };
 
 const std::map<std::pair<TypeId, TypeId>, DataTypeTransMode> mode_map{
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat64, kNumberTypeFloat32), FROM_FLOAT64_TO_FLOAT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat64), FROM_FLOAT32_TO_FLOAT64},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat16), FROM_FLOAT_TO_FLOAT16},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeInt32), FROM_FLOAT_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeFloat32), FROM_FLOAT16_TO_FLOAT},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeInt32), FROM_FLOAT16_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeUInt8), FROM_FLOAT16_TO_UINT8},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat32), FROM_INT32_TO_FLOAT},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat16), FROM_INT32_TO_FLOAT16},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeUInt8), FROM_INT32_TO_UINT8},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt8), FROM_INT32_TO_INT8},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt64), FROM_INT32_TO_INT64},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeBool), FROM_INT32_TO_BOOL},
-  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat32), FROM_UINT8_TO_FLOAT},
-  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeInt32), FROM_UINT8_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat16), FROM_UINT8_TO_FLOAT16},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat32), FROM_INT8_TO_FLOAT},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat16), FROM_INT8_TO_FLOAT16},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeInt32), FROM_INT8_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeInt64, kNumberTypeInt32), FROM_INT64_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeUInt16, kNumberTypeInt32), FROM_UINT16_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeInt32), FROM_BOOL_TO_INT32},
-  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat), FROM_BOOL_TO_FLOAT},
-  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeUInt8), FROM_BOOL_TO_UINT8},
-  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), FROM_BOOL_TO_FLOAT16}};
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat64, kNumberTypeFloat32), DataTypeTransMode::FROM_FLOAT64_TO_FLOAT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat64), DataTypeTransMode::FROM_FLOAT32_TO_FLOAT64},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeFloat16), DataTypeTransMode::FROM_FLOAT_TO_FLOAT16},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat32, kNumberTypeInt32), DataTypeTransMode::FROM_FLOAT_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeFloat32), DataTypeTransMode::FROM_FLOAT16_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeInt32), DataTypeTransMode::FROM_FLOAT16_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeFloat16, kNumberTypeUInt8), DataTypeTransMode::FROM_FLOAT16_TO_UINT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat32), DataTypeTransMode::FROM_INT32_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat16), DataTypeTransMode::FROM_INT32_TO_FLOAT16},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeUInt8), DataTypeTransMode::FROM_INT32_TO_UINT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt8), DataTypeTransMode::FROM_INT32_TO_INT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt64), DataTypeTransMode::FROM_INT32_TO_INT64},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeBool), DataTypeTransMode::FROM_INT32_TO_BOOL},
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat32), DataTypeTransMode::FROM_UINT8_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeInt32), DataTypeTransMode::FROM_UINT8_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat16), DataTypeTransMode::FROM_UINT8_TO_FLOAT16},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat32), DataTypeTransMode::FROM_INT8_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeFloat16), DataTypeTransMode::FROM_INT8_TO_FLOAT16},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt8, kNumberTypeInt32), DataTypeTransMode::FROM_INT8_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt64, kNumberTypeInt32), DataTypeTransMode::FROM_INT64_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeUInt16, kNumberTypeInt32), DataTypeTransMode::FROM_UINT16_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeInt32), DataTypeTransMode::FROM_BOOL_TO_INT32},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat), DataTypeTransMode::FROM_BOOL_TO_FLOAT},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeUInt8), DataTypeTransMode::FROM_BOOL_TO_UINT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), DataTypeTransMode::FROM_BOOL_TO_FLOAT16}};
 
 void CheckMemSize(const TypeIdArgs &args) {
   auto src_type_size = abstract::TypeIdSize(args.host_data_type);
@@ -145,34 +145,34 @@ void TransDataSrc2Fp16(const TypeIdArgs &args, void *dst, const size_t data_size
 bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const DataTypeTransMode mode) {
   using DtypeKernel = std::function<void(const TypeIdArgs &, void *, const size_t)>;
   const std::map<DataTypeTransMode, DtypeKernel> cast_kernel_map{
-    {FROM_FLOAT_TO_INT32, TransDataSrc2Dst<float, int32_t>},
-    {FROM_FLOAT64_TO_FLOAT32, TransDataSrc2Dst<double, float>},
-    {FROM_FLOAT32_TO_FLOAT64, TransDataSrc2Dst<float, double>},
-    {FROM_FLOAT16_TO_INT32, TransDataSrc2Dst<float16, int32_t>},
-    {FROM_FLOAT16_TO_UINT8, TransDataSrc2Dst<float16, uint8_t>},
-    {FROM_INT32_TO_FLOAT, TransDataSrc2Dst<int32_t, float>},
-    {FROM_INT32_TO_INT8, TransDataSrc2Dst<int32_t, int8_t>},
-    {FROM_INT32_TO_INT64, TransDataSrc2Dst<int32_t, int64_t>},
-    {FROM_INT32_TO_UINT8, TransDataSrc2Dst<int32_t, uint8_t>},
-    {FROM_INT32_TO_BOOL, TransDataSrc2Dst<int32_t, int8_t>},
-    {FROM_INT32_TO_FLOAT16, TransDataSrc2Fp16<int32_t>},
-    {FROM_UINT8_TO_FLOAT, TransDataSrc2Dst<uint8_t, float>},
-    {FROM_UINT8_TO_INT32, TransDataSrc2Dst<uint8_t, int32_t>},
-    {FROM_UINT8_TO_FLOAT16, TransDataSrc2Fp16<uint8_t>},
-    {FROM_INT8_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
-    {FROM_INT8_TO_FLOAT16, TransDataSrc2Fp16<int8_t>},
-    {FROM_INT8_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
-    {FROM_INT64_TO_INT32, TransDataSrc2Dst<int64_t, int32_t>},
-    {FROM_UINT16_TO_INT32, TransDataSrc2Dst<uint16_t, int32_t>},
-    {FROM_BOOL_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
-    {FROM_BOOL_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
-    {FROM_BOOL_TO_UINT8, TransDataSrc2Dst<int8_t, uint8_t>},
-    {FROM_BOOL_TO_FLOAT16, TransDataSrc2Fp16<int8_t>}};
+    {DataTypeTransMode::FROM_FLOAT_TO_INT32, TransDataSrc2Dst<float, int32_t>},
+    {DataTypeTransMode::FROM_FLOAT64_TO_FLOAT32, TransDataSrc2Dst<double, float>},
+    {DataTypeTransMode::FROM_FLOAT32_TO_FLOAT64, TransDataSrc2Dst<float, double>},
+    {DataTypeTransMode::FROM_FLOAT16_TO_INT32, TransDataSrc2Dst<float16, int32_t>},
+    {DataTypeTransMode::FROM_FLOAT16_TO_UINT8, TransDataSrc2Dst<float16, uint8_t>},
+    {DataTypeTransMode::FROM_INT32_TO_FLOAT, TransDataSrc2Dst<int32_t, float>},
+    {DataTypeTransMode::FROM_INT32_TO_INT8, TransDataSrc2Dst<int32_t, int8_t>},
+    {DataTypeTransMode::FROM_INT32_TO_INT64, TransDataSrc2Dst<int32_t, int64_t>},
+    {DataTypeTransMode::FROM_INT32_TO_UINT8, TransDataSrc2Dst<int32_t, uint8_t>},
+    {DataTypeTransMode::FROM_INT32_TO_BOOL, TransDataSrc2Dst<int32_t, int8_t>},
+    {DataTypeTransMode::FROM_INT32_TO_FLOAT16, TransDataSrc2Fp16<int32_t>},
+    {DataTypeTransMode::FROM_UINT8_TO_FLOAT, TransDataSrc2Dst<uint8_t, float>},
+    {DataTypeTransMode::FROM_UINT8_TO_INT32, TransDataSrc2Dst<uint8_t, int32_t>},
+    {DataTypeTransMode::FROM_UINT8_TO_FLOAT16, TransDataSrc2Fp16<uint8_t>},
+    {DataTypeTransMode::FROM_INT8_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
+    {DataTypeTransMode::FROM_INT8_TO_FLOAT16, TransDataSrc2Fp16<int8_t>},
+    {DataTypeTransMode::FROM_INT8_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
+    {DataTypeTransMode::FROM_INT64_TO_INT32, TransDataSrc2Dst<int64_t, int32_t>},
+    {DataTypeTransMode::FROM_UINT16_TO_INT32, TransDataSrc2Dst<uint16_t, int32_t>},
+    {DataTypeTransMode::FROM_BOOL_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
+    {DataTypeTransMode::FROM_BOOL_TO_FLOAT, TransDataSrc2Dst<int8_t, float>},
+    {DataTypeTransMode::FROM_BOOL_TO_UINT8, TransDataSrc2Dst<int8_t, uint8_t>},
+    {DataTypeTransMode::FROM_BOOL_TO_FLOAT16, TransDataSrc2Fp16<int8_t>}};
 
-  if (mode == FROM_FLOAT_TO_FLOAT16) {
+  if (mode == DataTypeTransMode::FROM_FLOAT_TO_FLOAT16) {
     device::FloatToHalf(dst, args.data, data_size);
     return true;
-  } else if (mode == FROM_FLOAT16_TO_FLOAT) {
+  } else if (mode == DataTypeTransMode::FROM_FLOAT16_TO_FLOAT) {
     device::HalfToFloat(dst, args.data, data_size);
     return true;
   }
@@ -188,7 +188,7 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
 
 namespace {
 bool CheckDims(const std::vector<size_t> &shape) {
-  if (shape.size() != kNchwDims) {
+  if (shape.size() != kAxis::kNchwDims) {
     MS_LOG(ERROR) << "Host shape dims should be 4";
     return false;
   }
@@ -207,7 +207,7 @@ std::vector<size_t> NhwcDeviceShape(const std::vector<size_t> &shape) {
     MS_LOG(EXCEPTION) << "Ccheck dims failed.";
   }
   std::vector<size_t> device_shape;
-  device_shape.push_back(shape[kN]);
+  device_shape.push_back(shape[kAxis::kN]);
   device_shape.push_back(shape[kH]);
   device_shape.push_back(shape[kW]);
   device_shape.push_back(shape[kC]);
@@ -306,7 +306,7 @@ std::vector<size_t> FracZc04DeviceShape(const std::vector<size_t> &shape) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
   std::vector<size_t> device_shape;
-  const size_t c0 = 4;
+  const size_t c0 = kC04Size;
   auto first_dim = DivCeil(c0 * shape[kH] * shape[kW], kCubeSize);
   auto no = DivCeil(shape.at(kN), kCubeSize);
   device_shape.push_back(first_dim);
@@ -322,7 +322,7 @@ std::vector<size_t> Nc1hwc04DeviceShape(const std::vector<size_t> &shape) {
   }
   std::vector<size_t> device_shape;
   const size_t C1 = 1;
-  const size_t C0 = 4;
+  const size_t C0 = kC04Size;
   device_shape.push_back(shape[kN]);
   device_shape.push_back(C1);
   device_shape.push_back(shape[kH]);
@@ -512,19 +512,19 @@ std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape) {
       shape_5d[1] = shape[0];
       break;
     case 2:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
       break;
     case 3:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
+      shape_5d[H_ncdhw] = shape[D_ncdhw];
       break;
     case 4:
-      shape_5d[1] = shape[0];
-      shape_5d[2] = shape[1];
-      shape_5d[3] = shape[2];
-      shape_5d[4] = shape[3];
+      shape_5d[C_ncdhw] = shape[N_ncdhw];
+      shape_5d[D_ncdhw] = shape[C_ncdhw];
+      shape_5d[H_ncdhw] = shape[D_ncdhw];
+      shape_5d[W_ncdhw] = shape[H_ncdhw];
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
@@ -556,12 +556,12 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
       // For [1] and [1024] shape we can trait it as NZ shape
       return shape;
     }
-    if (shape.size() < 2) {
+    if (shape.size() < kDims2) {
       MS_LOG(EXCEPTION) << "Format" << format << " is not support shape " << shape.size();
     } else {
-      (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
+      (void)std::copy(shape.begin(), shape.end() - kDims2, std::back_inserter(device_shape));
     }
-    auto h1 = (shape[shape.size() - 2] - 1) / kCubeSize + 1;
+    auto h1 = (shape[shape.size() - kDims2] - 1) / kCubeSize + 1;
     auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;
     device_shape.push_back(w1);
     device_shape.push_back(h1);
@@ -569,7 +569,7 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     device_shape.push_back(kCubeSize);
     return device_shape;
   } else if (format == kOpFormat_FRACTAL_ZN_LSTM) {
-    const size_t c0 = 4;
+    const size_t c0 = kC04Size;
     const size_t h = shape.at(kN) / c0;
     const size_t i = shape.at(kC) - h;
     const size_t first = DivCeil(i, kCubeSize) + DivCeil(h, kCubeSize);
@@ -690,7 +690,7 @@ bool NchwTo4D(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto src_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto dst_idx = 0;
+          size_t dst_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             dst_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -722,7 +722,7 @@ bool ToNchw(const FormatArgs &args, void *result) {
       for (size_t hi = 0; hi < h; hi++) {
         for (size_t wi = 0; wi < w; wi++) {
           auto dst_idx = ni * c * h * w + ci * h * w + hi * w + wi;
-          auto src_idx = 0;
+          size_t src_idx = 0;
           if (args.device_format == kOpFormat_NHWC) {
             src_idx = ni * h * w * c + hi * w * c + wi * c + ci;
           } else if (args.device_format == kOpFormat_HWCN) {
@@ -753,7 +753,7 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
 
-  const size_t c0 = 16;
+  const size_t c0 = kCubeSize;
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;
   auto chw = c * hw;
@@ -811,9 +811,9 @@ bool FracZToNchw(const FormatArgs &args, void *result) {
     return false;
   }
 
-  auto n0 = args.device_shape.at(1);
-  auto ni = args.device_shape.at(2);
-  auto c0 = args.device_shape.at(3);
+  auto n0 = args.device_shape.at(N0_fz);
+  auto ni = args.device_shape.at(Ni_fz);
+  auto c0 = args.device_shape.at(C0_fz);
   auto n = args.host_shape[kN];
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
@@ -860,7 +860,7 @@ bool NchwToFracZc04(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  const size_t c0 = 4;
+  const size_t c0 = kC04Size;
   auto c1 = DivCeil(c, c0);
   auto hwc0 = h * w * c0;
   auto hwc = h * w * c;
@@ -916,17 +916,17 @@ bool TransShapeToNz(const std::vector<size_t> &host_shape, std::vector<size_t> *
       return true;
     default:
       auto size = host_shape.size();
-      if (size < 2) {
+      if (size < kDims2) {
         MS_LOG(ERROR) << "Illegal size.";
         return false;
       }
       size_t times = 1;
-      for (size_t i = 0; i != size - 2; i++) {
+      for (size_t i = 0; i != size - kH; i++) {
         times *= host_shape[i];
       }
       hw_shape->push_back(times);
-      hw_shape->push_back(host_shape[size - 2]);
-      hw_shape->push_back(host_shape[size - 1]);
+      hw_shape->push_back(host_shape[size - kH]);
+      hw_shape->push_back(host_shape[size - kN]);
       return true;
   }
 }
@@ -939,7 +939,7 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Trans shape failed..";
     return false;
   }
-  if (hw_shape.size() < 3 || args.device_shape.size() < 4) {
+  if (hw_shape.size() < HW_hw || args.device_shape.size() < NZ_nz) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }
@@ -955,15 +955,15 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
     return false;
   }
   auto times = hw_shape.at(0);
-  auto h = hw_shape.at(1);
-  auto w = hw_shape.at(2);
+  auto h = hw_shape.at(H_hw);
+  auto w = hw_shape.at(W_hw);
   auto hw = h * w;
 
   auto shape_size = args.device_shape.size();
-  auto w1 = args.device_shape[shape_size - 4];
-  auto h1 = args.device_shape[shape_size - 3];
-  auto h0 = args.device_shape[shape_size - 2];
-  auto w0 = args.device_shape[shape_size - 1];
+  auto w1 = args.device_shape[shape_size - W1_nz];
+  auto h1 = args.device_shape[shape_size - H1_nz];
+  auto h0 = args.device_shape[shape_size - H0_nz];
+  auto w0 = args.device_shape[shape_size - W0_nz];
   auto h1h0w0 = h1 * h0 * w0;
   auto w1h1h0w0 = w1 * h1h0w0;
   auto num_w1 = w / w0;
@@ -1001,7 +1001,7 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Trans shape failed..";
     return false;
   }
-  if (hw_shape.size() < 3 || args.device_shape.size() < 4) {
+  if (hw_shape.size() < HW_hw || args.device_shape.size() < NZ_nz) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }
@@ -1018,14 +1018,14 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
   }
   auto times = hw_shape.at(0);
   auto h = hw_shape.at(1);
-  auto w = hw_shape.at(2);
+  auto w = hw_shape.at(W_hw);
   auto hw = h * w;
 
   auto shape_size = args.device_shape.size();
-  auto w1 = args.device_shape[shape_size - 4];
-  auto h1 = args.device_shape[shape_size - 3];
-  auto h0 = args.device_shape[shape_size - 2];
-  auto w0 = args.device_shape[shape_size - 1];
+  auto w1 = args.device_shape[shape_size - W1_nz];
+  auto h1 = args.device_shape[shape_size - H1_nz];
+  auto h0 = args.device_shape[shape_size - H0_nz];
+  auto w0 = args.device_shape[shape_size - W0_nz];
   auto h1h0w0 = h1 * h0 * w0;
   auto w1h1h0w0 = w1 * h1h0w0;
   auto num_w1 = w / w0;
@@ -1077,9 +1077,9 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  size_t c0 = 16;
+  size_t c0 = kCubeSize;
   if (args.device_format == kOpFormat_NC1HWC0_C04) {
-    c0 = 4;
+    c0 = kC04Size;
   }
   auto c1 = DivCeil(c, c0);
   auto hw = h * w;
@@ -1131,8 +1131,8 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result) {
   auto c = args.host_shape[kC];
   auto h = args.host_shape[kH];
   auto w = args.host_shape[kW];
-  auto c1 = args.device_shape[1];
-  auto c0 = args.device_shape[4];
+  auto c1 = args.device_shape[C1_nc1hwc0];
+  auto c0 = args.device_shape[C0_nc1hwc0];
 
   auto hw = h * w;
   auto chw = c * hw;
@@ -1429,7 +1429,7 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
   auto d = args.host_shape[D_ncdhw];
   auto h = args.host_shape[H_ncdhw];
   auto w = args.host_shape[W_ncdhw];
-  auto c0 = args.device_shape[3];
+  auto c0 = args.device_shape[C0_fz3d];
   auto c1 = DivCeil(c, kCubeSize);
   auto n1n0 = DivCeil(n, kCubeSize) * kCubeSize;
   auto n1n0c0 = n1n0 * c0;

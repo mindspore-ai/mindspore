@@ -21,6 +21,14 @@
 
 constexpr auto kHcclConfigFile = "MINDSPORE_HCCL_CONFIG_PATH";
 constexpr auto kHcclConfigFileOld = "RANK_TABLE_FILE";
+constexpr int kRank0 = 0;
+constexpr int kRank1 = 1;
+constexpr int kRank2 = 2;
+constexpr int kRank3 = 3;
+constexpr int kRank4 = 4;
+constexpr int kRank5 = 5;
+constexpr int kRank6 = 6;
+constexpr int kRank7 = 7;
 
 namespace mindspore {
 namespace kernel {
@@ -50,7 +58,7 @@ bool HcclContext::InitHccl() {
   }
 
   rank_id_ = GetRankId();
-  if (rank_id_ < 0 || rank_id_ > 7) {
+  if (rank_id_ < kRank0 || rank_id_ > kRank7) {
     MS_LOG(ERROR) << "rank_id needs to be between 0-7";
     return false;
   }

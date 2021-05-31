@@ -256,7 +256,7 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const st
     std::string cce_json = kCceKernelMeta;
     (void)cce_json.append(kernel_name).append(kJsonSuffix);
     ret = std::make_shared<KernelPack>();
-    if (!ret->LoadKernelMeta(cce_json, processor)) {
+    if (!ret->LoadKernelMeta(cce_json)) {
       MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
       return nullptr;
     }
