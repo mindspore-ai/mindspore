@@ -19,6 +19,7 @@
 #include <string>
 
 #include "ir/func_graph.h"
+#include "proto/mind_ir.pb.h"
 
 namespace mindspore {
 std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
@@ -26,6 +27,8 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 
 std::string GetBinaryProtoString(const FuncGraphPtr &func_graph);
+
+mind_ir::ModelProto GetBinaryProto(const FuncGraphPtr &func_graph);
 
 void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 }  // namespace mindspore

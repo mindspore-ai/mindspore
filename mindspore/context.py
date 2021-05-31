@@ -513,7 +513,8 @@ def _check_target_specific_cfgs(device, arg_key):
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
-                 enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str)
+                 enable_sparse=bool, max_call_depth=int, env_config_path=str, graph_kernel_flags=str,
+                 save_compile_cache=bool, load_compile_cache=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -549,6 +550,8 @@ def set_context(**kwargs):
     save_graphs_path             auto_tune_mode
     env_config_path              graph_kernel_flags
     grad_for_scalar
+    save_compile_cache
+    load_compile_cache
     ===========================  ===========================  =================
 
     Args:
@@ -633,6 +636,11 @@ def set_context(**kwargs):
             - rl_tune: Reinforecement Learning tune.
             - ga_tune: Genetic Algorithm tune.
         grad_for_scalar (bool): Whether to get gradient for scalar. Default: False.
+        save_compile_cache (bool): Experimental. Whether to cache the graph compiled by frontend. Default: False.
+        load_compile_cache (bool): Experimental. Whether to use the cache of the graph compiled by frontend.
+            When it is true, the graph compilation will skip the frontend compilation process. It means that
+            you should make sure the network has not been changed since the last execution. Currently we have
+            not support automatic checking the changes yet. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.
