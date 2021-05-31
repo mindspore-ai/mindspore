@@ -54,7 +54,7 @@ static size_t GenFusionJsonHash(const nlohmann::json &fusion_json) {
 
 std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
   std::map<int64_t, KernelModPtr> kernel_mod_ret;
-  static std::set<std::string> processed_fusion_kernel;
+  static std::set<std::string> processed_fusion_kernel = {};
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
   auto context_ptr = MsContext::GetInstance();
@@ -94,8 +94,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     // search cache
     auto kernel_pack = TbeUtils::SearchCache(json_name, tbe::kProcessorAiCore);
     if (kernel_pack != nullptr && ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
-      auto kernel_mod =
-        build_manger->GenKernelMod(json_name, tbe::kProcessorAiCore, input_size_list, output_size_list, kernel_pack);
+      auto kernel_mod = build_manger->GenKernelMod(input_size_list, output_size_list, kernel_pack);
       if (kernel_mod != nullptr) {
         kernel_mod_ret[fusion_scope_iter.scope_id] = kernel_mod;
         continue;
@@ -118,7 +117,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     nlohmann::json fusion_json;
     fusion_json["fusion_op"] = fusion_op;
     fusion_json["SocInfo"] = soc_info_json;
-    auto task_id = build_manger->StartCompileOp(fusion_json);
+    auto task_id = ParallelBuildManager::StartCompileOp(fusion_json);
     TbeUtils::SaveJsonInfo(json_name, fusion_json.dump());
     if (task_id < 0) {
       MS_EXCEPTION(ArgumentError) << "start compile failed.";
@@ -132,7 +131,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     int task_id = -1;
     std::string task_result;
     std::string build_result;
-    auto ret = build_manger->WaitOne(&task_id, &task_result, &build_result);
+    auto ret = ParallelBuildManager::WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
       MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
     }

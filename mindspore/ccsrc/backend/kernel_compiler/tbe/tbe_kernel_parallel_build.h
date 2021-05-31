@@ -45,7 +45,7 @@ class ParallelBuildManager {
   ~ParallelBuildManager();
   void SaveTaskInfo(int32_t task_id, const AnfNodePtr &anf_node, const std::string &json_name,
                     const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
-                    int32_t scope_id = 0);
+                    int64_t scope_id = 0);
   void SaveSameOpInfo(const AnfNodePtr &anf_node, const std::string &json_name,
                       const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list);
   void SaveSameFusionOpInfo(const int64_t scope_id, const std::string &json_name, const std::string &processor,
@@ -59,14 +59,13 @@ class ParallelBuildManager {
   void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, const std::string &build_ret,
                                                      bool set_kernel_mod = true);
-  KernelModPtr GenKernelMod(const string &json_name, const string &processor,
-                            const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
+  KernelModPtr GenKernelMod(const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
                             const KernelPackPtr &kernel_pack) const;
 
   // Interactive with real backend, who could be implemented by Python.
   static int StartCompileOp(const nlohmann::json &kernel_json);
   static bool WaitOne(int *task_id, std::string *task_result, std::string *build_result);
-  void ResetTaskInfo();
+  void ResetTaskInfo() noexcept;
   AnfNodePtr GetAnfNodeByTaskID(int32_t task_id);
 
  private:
