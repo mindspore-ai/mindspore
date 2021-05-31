@@ -114,6 +114,9 @@ class _MindSporeFunction:
         input_signature (Function): User defines signature to verify input.
         obj (Object): If function is a method, obj is the owner of function,
              else, obj is none.
+
+    Returns:
+        The result of pipeline running in graph mode.
     """
 
     def __init__(self, fn, input_signature=None, obj=None):
@@ -240,6 +243,9 @@ def ms_function(fn=None, obj=None, input_signature=None):
         None, returns a decorator and when this decorator invokes with a single `fn` argument, the callable function is
         equal to the case when `fn` is not None.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
@@ -353,10 +359,19 @@ def _parameter_broadcast(obj, auto_parallel_mode):
 
 class _PynativeExecutor:
     """
-    An pynative executor used to compile/manage/run graph.
+    A pynative executor used to compile/manage/run single op.
+
+    The main functions include: construct op graph, compile op graph, auto grad and run op graph.
+
+    Args:
+        obj (Object): The python network that will be run in pynative mode.
+        args (Tuple(Tensor...)): The inputs of network in tuple form.
 
     Returns:
-        Graph, return the result of pipeline running.
+        gradients (Tuple(Tensor...)): The gradients of network parameters and inputs.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     def __init__(self):
@@ -415,6 +430,10 @@ class _Executor:
     An executor used to compile/manage/run graph.
 
     Including data_graph, train_graph, eval_graph and predict graph.
+
+    Args:
+        obj (Function/Cell): The function or cell instance need compile.
+        args (tuple): Function or cell input arguments.
 
     Returns:
         Graph, return the result of pipeline running.
