@@ -58,7 +58,7 @@ def eval_PINNs_sch(ckpoint_name, num_neuron=100, path='./Data/NLS.mat'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate PINNs for Schrodinger equation scenario')
-    parser.add_argument('ck_file', type=str, help='model checkpoint(ckpt) filename')
+    parser.add_argument('--ckpoint_path', type=str, help='model checkpoint(ckpt) filename')
 
     #only support 'Schrodinger' for now
     parser.add_argument('--scenario', type=str, help='scenario for PINNs', default='Schrodinger')

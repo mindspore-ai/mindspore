@@ -83,7 +83,7 @@ After installing MindSpore via the official website, you can start training and 
   bash /scripts/run_standalone_Schrodinger_train.sh Schrodinger
 
   # Running evaluation example
-  python eval.py [CHECKPOINT_PATH] --scenario=Schrodinger ----datapath=[DATASET_PATH] > eval.log
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
   OR
   bash /scriptsrun_standalone_Schrodinger_eval.sh [CHECKPOINT_PATH] [DATASET_PATH]
   ```
@@ -160,7 +160,7 @@ For more configuration details, please refer the script `config.py`.
   Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path, e.g., “./ckpt/checkpoint_PINNs_Schrodinger-50000_1.ckpt”。
 
   ```bash
-  python eval.py [CHECKPOINT_PATH] --scenario=Schrodinger ----datapath=[DATASET_PATH] > eval.log
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The error of evaluation is as follows:

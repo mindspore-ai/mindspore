@@ -42,4 +42,4 @@ fi
 
 ck_path=$(get_real_path $1)
 data_set_path=$(get_real_path $2)
-python ${PROJECT_DIR}/../eval.py $ck_path --scenario=Schrodinger --datapath=$data_set_path > eval.log 2>&1 &
+python ${PROJECT_DIR}/../eval.py --ckpoint_path=$ck_path --scenario=Schrodinger --datapath=$data_set_path > eval.log 2>&1 &
