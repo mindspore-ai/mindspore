@@ -312,7 +312,9 @@ class CNode : public AnfNode, public EffectInfoHolder {
 
   std::vector<NodeDebugInfoPtr> primal_debug_infos() { return primal_debug_infos_; }
 
-  void set_primal_debug_infos(const std::vector<NodeDebugInfoPtr> &debug_infos) { primal_debug_infos_ = debug_infos; }
+  void set_primal_debug_infos(const std::vector<NodeDebugInfoPtr> &debug_infos) {
+    primal_debug_infos_.insert(primal_debug_infos_.end(), debug_infos.begin(), debug_infos.end());
+  }
 
   void AddPrimalDebugInfo(const NodeDebugInfoPtr debug_info) {
     if (std::find(primal_debug_infos_.begin(), primal_debug_infos_.end(), debug_info) != primal_debug_infos_.end()) {
