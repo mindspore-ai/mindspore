@@ -346,7 +346,7 @@ bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num) {
          conv_param->output_h_ >= thread_num * 4;  // better had more than 4 rows for each thread
 }
 
-void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
+static void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2, v3;
   v0 = MS_MOVQ_F32(0.0f);
   int ic = 0;
@@ -381,7 +381,7 @@ void ConvDw3x3RowLeft(const float *src, float *line, int lw, int channel) {
   }
 }
 
-void ConvDw3x3RowMiddle(const float *src, float *line, int lw, int channel) {
+static void ConvDw3x3RowMiddle(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2, v3;
   int ic = 0;
   for (; ic < channel - 3; ic += 4) {
@@ -417,7 +417,7 @@ void ConvDw3x3RowMiddle(const float *src, float *line, int lw, int channel) {
   }
 }
 
-void ConvDw3x3RowRight(const float *src, float *line, int lw, int channel) {
+static void ConvDw3x3RowRight(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2, v3;
   int ic = 0;
   v3 = MS_MOVQ_F32(0.0f);
@@ -452,7 +452,7 @@ void ConvDw3x3RowRight(const float *src, float *line, int lw, int channel) {
   }
 }
 
-void ConvDw3x3RowSingle(const float *src, float *line, int lw, int channel) {
+static void ConvDw3x3RowSingle(const float *src, float *line, int lw, int channel) {
   MS_FLOAT32X4 v0, v1, v2;
   int ic = 0;
   v2 = MS_MOVQ_F32(0.0f);
@@ -481,7 +481,7 @@ void ConvDw3x3RowSingle(const float *src, float *line, int lw, int channel) {
   }
 }
 
-void ConvDw3x3InitTop(const float *src, float **lines, int width, int channel) {
+static void ConvDw3x3InitTop(const float *src, float **lines, int width, int channel) {
   float *line0 = lines[0];
   float *line1 = lines[1];
   float *line2 = lines[2];
@@ -505,7 +505,7 @@ void ConvDw3x3InitTop(const float *src, float **lines, int width, int channel) {
   }
 }
 
-void ConvDw3x3InitRow(const float *src, float **lines, int width, int channel) {
+static void ConvDw3x3InitRow(const float *src, float **lines, int width, int channel) {
   float *line0 = lines[0];
   float *line1 = lines[1];
   float *line2 = lines[2];
@@ -531,7 +531,7 @@ void ConvDw3x3InitRow(const float *src, float **lines, int width, int channel) {
   }
 }
 
-void ConvDw3x3Row(const float *src, float **lines, int width, int channel) {
+static void ConvDw3x3Row(const float *src, float **lines, int width, int channel) {
   float *tmp = lines[0];
   lines[0] = lines[1];
   lines[1] = lines[2];
@@ -552,7 +552,7 @@ void ConvDw3x3Row(const float *src, float **lines, int width, int channel) {
   }
 }
 
-void ConvDw3x3Bottom(float **lines, int width, int channel) {
+static void ConvDw3x3Bottom(float **lines, int width, int channel) {
   float *tmp = lines[0];
   lines[0] = lines[1];
   lines[1] = lines[2];
@@ -561,6 +561,7 @@ void ConvDw3x3Bottom(float **lines, int width, int channel) {
   memset(tmp, 0, UP_DIV(width, C2NUM) * c4 * C4NUM * sizeof(float));
 }
 
+#ifndef ENABLE_ARM64
 void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *bias_data, int width, int ori_channel,
                    bool relu, bool relu6) {
   int channel = ori_channel;
@@ -656,6 +657,7 @@ void ConvDw3x3Line(float *dst, float **lines, const float *weight, const float *
     dst += 4;
   }
 }
+#endif
 
 void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
                const float *bias_data, const ConvParameter *conv_param, int start_oh, int end_oh) {
