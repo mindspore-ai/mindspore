@@ -43,7 +43,7 @@ Status LayerNormInfo::GetAttrs() {
   int64_t dim = SizeToLong(inputs_shape_[0].size());
   auto axis = GetValue<int64_t>(iter->second);
   if ((axis >= dim) || (axis < -dim)) {
-    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << -dim << ", " << dim - 1 << "]";
+    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim) << ", " << (dim - 1) << "]";
     return FAILED;
   }
 
