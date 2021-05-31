@@ -250,9 +250,11 @@ def _promote(dtype1, dtype2):
         return promotion_rule[dtype1, dtype2]
     return promotion_rule[dtype2, dtype1]
 
+
 @constexpr
 def _promote_for_trigonometric(dtype):
     return rule_for_trigonometric[dtype]
+
 
 @constexpr
 def _max(*args):
