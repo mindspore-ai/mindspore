@@ -24,7 +24,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
-from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import CheckpointConfig
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
@@ -111,6 +111,16 @@ def parallel_init(args):
         parallel_mode = ParallelMode.DATA_PARALLEL
         degree = get_group_size()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, gradients_mean=True, device_num=degree)
+
+
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
 
 
 def modelarts_pre_process():
@@ -231,7 +241,7 @@ def run_train():
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=save_ckpt_path,
                                   prefix='{}'.format(config.rank))
-        cb_params = _InternalCallbackParam()
+        cb_params = InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = ckpt_max_num
         cb_params.cur_epoch_num = 1
