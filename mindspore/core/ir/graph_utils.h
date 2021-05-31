@@ -72,7 +72,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = 
                                  const IncludeFunc &include = AlwaysInclude);
 
 std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts);
-std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root);
+std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root);
 
 CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate);
 

@@ -209,7 +209,8 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors and a tuple.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 3);
+  constexpr size_t size_expected = 3;
+  CheckArgsSize(op_name, args_spec_list, size_expected);
   auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   auto dense_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 2);

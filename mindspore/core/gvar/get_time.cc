@@ -41,10 +41,11 @@ std::string GetTimeString() {
   int idx = 26;
   const int ten = 10;
   auto num = cur_time.tv_usec;
+  constexpr int interval_number = 3;
   for (int i = 5; i >= 0; i--) {
     buf[idx--] = static_cast<char>(num % ten + '0');
     num /= ten;
-    if (i % 3 == 0) {
+    if (i % interval_number == 0) {
       buf[idx--] = '.';
     }
   }

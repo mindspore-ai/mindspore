@@ -604,7 +604,6 @@ TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const Ty
   if (valid_type.empty()) {
     MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty valid_type!";
   }
-  // std::set<TypeId> types_id;
   std::ostringstream buffer;
   TypeId arg_type_;
   arg_type_ = arg_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg_type)->generic_type_id()

@@ -519,7 +519,7 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
     MS_LOG(DEBUG) << "Broaded_argvals: " << broaded_argvals.size() << ", " << ::mindspore::ToString(broaded_argvals);
   }
 
-  if (1 == choices.size()) {
+  if (choices.size() == 1) {
     ConfigPtrList args_conf_list;
     (void)std::transform(broaded_argvals.begin(), broaded_argvals.end(), std::back_inserter(args_conf_list),
                          [](AbstractBasePtr v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });

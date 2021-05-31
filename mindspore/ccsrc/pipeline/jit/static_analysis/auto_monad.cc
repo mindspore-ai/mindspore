@@ -1058,9 +1058,7 @@ class AutoMonadConverter {
     return effect_info;
   }
 
-  //
   // Handle CNodes for side effects.
-  //
   void HandleCNodes() {
     // Check whether UpdateState and Depend are required.
     bool update_state = NeedUpdateState();

@@ -219,8 +219,7 @@ bool ConvertFuncGraph(const py::object &obj, ValuePtr *const data) {
 bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting slice object";
 
-  auto slice_obj = obj.cast<py::slice>();
-  auto convert_func = [obj](std::string attr) -> ValuePtr {
+  auto convert_func = [obj](const std::string &attr) -> ValuePtr {
     auto py_attr = py::getattr(obj, attr.c_str());
     if (py::isinstance<py::none>(py_attr)) {
       return kNone;
@@ -301,7 +300,7 @@ bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
 }
 
 template <typename T>
-bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
+bool ConvertNumberWithType(const T &obj, ValuePtr *const data, const TypePtr &dtype) {
   constexpr int kBit8 = 8;
   constexpr int kBit16 = 16;
   constexpr int kBit32 = 32;
@@ -366,7 +365,7 @@ bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
   return false;
 }
 
-bool ConvertIntegerWithType(const int64_t &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+bool ConvertIntegerWithType(const int64_t &obj, ValuePtr *const data, const TypePtr &dtype = nullptr) {
   if (dtype == nullptr) {
     *data = std::make_shared<Int64Imm>(obj);
     return true;
@@ -375,7 +374,7 @@ bool ConvertIntegerWithType(const int64_t &obj, ValuePtr *const data, TypePtr dt
   return ConvertNumberWithType<int64_t>(obj, data, dtype);
 }
 
-bool ConvertFloatWithType(const float &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+bool ConvertFloatWithType(const float &obj, ValuePtr *const data, const TypePtr &dtype = nullptr) {
   if (dtype == nullptr) {
     *data = std::make_shared<FP32Imm>(obj);
     return true;
@@ -422,7 +421,7 @@ bool ConvertSingleData(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
-bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, TypePtr dtype) {
+bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature, const TypePtr &dtype) {
   // check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "Data is null pointer";
