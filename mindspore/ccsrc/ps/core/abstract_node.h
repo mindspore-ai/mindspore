@@ -77,6 +77,8 @@ class AbstractNode : public Node {
   int32_t worker_num() const;
   int32_t server_num() const;
 
+  ClusterState cluster_state() const;
+
  protected:
   void Register(const std::shared_ptr<TcpClient> &client);
   bool Heartbeat(const std::shared_ptr<TcpClient> &client);

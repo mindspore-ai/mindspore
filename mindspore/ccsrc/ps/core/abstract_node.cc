@@ -103,7 +103,7 @@ void AbstractNode::set_ready_for_scale_in() {
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(data);
-  if (!CommUtil::ValidateRankId(node_role, rank_id)) {
+  if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
 
@@ -126,7 +126,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
     MS_LOG(EXCEPTION) << "The number of rank ids, data and lens are not equal!";
   }
   for (size_t it = 0; it < rank_ids.size(); ++it) {
-    if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it))) {
+    if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
       MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
     }
 
@@ -151,7 +151,7 @@ bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id,
                         int command, VectorPtr *output, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(output);
-  if (!CommUtil::ValidateRankId(node_role, rank_id)) {
+  if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
 
@@ -201,7 +201,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   });
 
   for (size_t it = 0; it < size; ++it) {
-    if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it))) {
+    if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
       MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
     }
 
@@ -226,7 +226,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const void *data,
                                            size_t size) {
   MS_EXCEPTION_IF_NULL(data);
-  if (!CommUtil::ValidateRankId(node_role, rank_id)) {
+  if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
 
@@ -242,7 +242,7 @@ uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const
 std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum NodeRole &node_role,
                                                                    const uint32_t &rank_id, VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
-  if (!CommUtil::ValidateRankId(node_role, rank_id)) {
+  if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
 
@@ -280,6 +280,8 @@ bool AbstractNode::CollectiveWait(std::pair<uint32_t, uint64_t> request_id, cons
 int32_t AbstractNode::worker_num() const { return worker_num_; }
 
 int32_t AbstractNode::server_num() const { return server_num_; }
+
+ClusterState AbstractNode::cluster_state() const { return current_cluster_state_; }
 
 void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client) {
   MS_LOG(INFO) << "The node role: " << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -423,6 +425,12 @@ void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::sha
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
+
+  ScaleOutMessage scale_out_message;
+  scale_out_message.ParseFromArray(data, size);
+  worker_num_ = scale_out_message.worker_num();
+  server_num_ = scale_out_message.server_num();
+
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   on_node_event_message_(ClusterEvent::READY_FOR_SCALE_OUT);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_OUT;
@@ -434,6 +442,12 @@ void AbstractNode::ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shar
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
+
+  ScaleInMessage scale_in_message;
+  scale_in_message.ParseFromArray(data, size);
+  worker_num_ = scale_in_message.worker_num();
+  server_num_ = scale_in_message.server_num();
+
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   on_node_event_message_(ClusterEvent::READY_FOR_SCALE_IN);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
