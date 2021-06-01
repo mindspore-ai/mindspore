@@ -42,14 +42,14 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   ~DuplexPipe();
 
   // Create a subprocess and open a duplex pipe between local and remote
-  int Open(std::initializer_list<std::string> arg_list, bool append_fds = false);
+  int Open(const std::initializer_list<std::string> &arg_list, bool append_fds = false);
   void Close();
   void SetTimeOutSeconds(unsigned int secs) { time_out_secs_ = secs; }
   void SetTimeOutCallback(const std::shared_ptr<std::function<void()>> cb) { time_out_callback_ = cb; }
   void SetFinalizeCallback(const std::shared_ptr<std::function<void()>> cb) { finalize_callback_ = cb; }
 
   // Write the 'buf' to remote stdin
-  void Write(const std::string &buf, bool flush = true);
+  void Write(const std::string &buf, bool flush = true) const;
   // Read from remote stdout/stderr into 'c_buf_'
   std::string Read();
 
@@ -108,8 +108,8 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
     SignalHandler(const std::weak_ptr<DuplexPipe> &dp, pid_t *pid);
     ~SignalHandler();
 
-    void SetAlarm(unsigned int interval_secs);
-    void CancelAlarm();
+    void SetAlarm(unsigned int interval_secs) const;
+    void CancelAlarm() const;
 
    private:
     static void SigAlarmHandler(int sig);

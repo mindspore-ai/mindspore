@@ -60,7 +60,7 @@ std::shared_ptr<HcclKernel> HcclKernelFactory::Get(const std::string &name) {
 }
 
 HcclKernelFactory &HcclKernelFactory::Get() {
-  static HcclKernelFactory _this;
+  static HcclKernelFactory _this{};
   return _this;
 }
 
