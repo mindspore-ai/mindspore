@@ -32,6 +32,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_build_client.h"
 #include "nlohmann/json.hpp"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore::kernel {
 constexpr auto kName = "name";
@@ -185,7 +186,7 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
     MS_LOG(INFO) << "Warning: get kernel build info failed.";
     return;
   }
-  std::vector<std::shared_ptr<KernelBuildInfo>> new_kernel_info_list;
+  std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
   auto dynamic_inputs = GetNodeDynamicInputs();
   for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
     if (!FilterInVaildShape(iter, !dynamic_inputs.empty())) {
@@ -196,9 +197,9 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
         continue;
       }
     }
-    new_kernel_info_list.emplace_back(*iter);
+    kernel_info_list.emplace_back(*iter);
   }
-  (*kernel_info_list_) = new_kernel_info_list;
+  (*kernel_info_list_) = kernel_info_list;
 }
 
 bool TbeKernelSelect::FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter, bool is_dynamic_input) {
@@ -229,7 +230,7 @@ bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const
   if (format == kOpFormat_DEFAULT) {
     return true;
   }
-  static std::set<std::string> kServerNotSupportFormat = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+  static const std::set<std::string> kServerNotSupportFormat = {kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
   // if format is default, it remarkes support all format
   if (kOpFormatList.find(format) == kOpFormatList.end()) {
     MS_LOG(EXCEPTION) << "Got the unknown format " << format;
@@ -324,7 +325,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           reshape_types->emplace_back(reshape_type);
         }
         dynamic_input_index++;
-        real_io_tensor_index += dynamic_input_size;
+        real_io_tensor_index += LongToSize(dynamic_input_size);
       } else {
         if (ios_info.size() != 1) {
           MS_LOG(EXCEPTION) << "if output is dynamic, so output must has one output.";

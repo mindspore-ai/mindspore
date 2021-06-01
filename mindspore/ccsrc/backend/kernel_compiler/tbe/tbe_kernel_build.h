@@ -97,7 +97,7 @@ class TbeKernelJsonCreator {
   ~TbeKernelJsonCreator() = default;
   bool GenTbeSingleKernelJson(const std::shared_ptr<AnfNode> &anf_node, nlohmann::json *kernel_json);
   std::string json_name() { return json_name_; }
-  bool GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
+  void GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                       nlohmann::json *attrs_json);
   static string GetSocVersion();
 
@@ -107,7 +107,7 @@ class TbeKernelJsonCreator {
   bool GenTbeOutputsJson(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<OpInfo> &op_info,
                          nlohmann::json *outputs_json);
   void GenSocInfo(nlohmann::json *soc_info_json);
-  static void ParseAttrValue(const std::string &type, const ValuePtr &value, nlohmann::json *attr_obj);
+  static bool ParseAttrValue(const std::string &type, const ValuePtr &value, nlohmann::json *attr_obj);
   static void ParseAttrDefaultValue(const std::string &type, const std::string &value, nlohmann::json *attr_obj);
   bool GenInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index, bool value,
                         const std::shared_ptr<OpIOInfo> &input_ptr, const string &op_input_name, size_t input_i,

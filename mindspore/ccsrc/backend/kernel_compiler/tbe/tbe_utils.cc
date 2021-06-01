@@ -90,8 +90,8 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
 void TbeUtils::LoadCache() {
   static bool has_load = false;
   if (!has_load) {
-    KernelMeta *bin_map = KernelMeta::GetInstance();
-    if (bin_map != nullptr && !bin_map->ReadIndex(kCceKernelMeta)) {
+    auto bin_map = KernelMeta::GetInstance();
+    if (!bin_map->ReadIndex(kCceKernelMeta)) {
       MS_LOG(INFO) << "Cache initialize failed[" << kCceKernelMeta << "]";
     }
     has_load = true;

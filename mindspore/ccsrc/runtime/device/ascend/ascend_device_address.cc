@@ -424,8 +424,7 @@ kernel::KernelModPtr AscendDeviceAddress::CompileTransDataAndObtainKernelMod(con
   // search cache
   auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
   MS_EXCEPTION_IF_NULL(cached_kernel_pack);
-  auto kernel_mod_ptr =
-    build_manager->GenKernelMod(json_name, processor, input_size_list, output_size_list, cached_kernel_pack);
+  auto kernel_mod_ptr = build_manager->GenKernelMod(input_size_list, output_size_list, cached_kernel_pack);
   return kernel_mod_ptr;
 }
 

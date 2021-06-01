@@ -18,13 +18,12 @@
 
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include <functional>
 #include <string>
 
 #include "utils/utils.h"
-#include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
+#include "utils/convert_utils_base.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -84,7 +83,7 @@ std::vector<std::vector<float>> GetAssistInputMatrix(const std::vector<int64_t> 
   std::vector<float> tmp_one_vector(in_shape_after_padding_2d[1], 1.0);
   for (int64_t i = 0; i < in_shape_after_padding_2d[1]; ++i) {
     if (i < pad_left || i >= (in_shape_after_padding_2d[1] - pad_right)) {
-      tmp_one_vector[i] = 0.0;
+      tmp_one_vector[LongToSize(i)] = 0.0;
     }
   }
   for (int64_t i = 0; i < in_shape_after_padding_2d[0]; ++i) {
@@ -118,11 +117,11 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
       float curr_sum = 0;
       for (int64_t i = h * stride[DIM2]; i < h * stride[DIM2] + k_size[DIM2]; ++i) {
         for (int64_t j = w * stride[DIM3]; j < w * stride[DIM3] + k_size[DIM3]; ++j) {
-          curr_sum += assist_input_matrix[i][j];
+          curr_sum += assist_input_matrix[LongToSize(i)][LongToSize(j)];
         }
       }
       if (curr_sum > 0) {
-        hw_output[h * w_output + w] = 1.0 / curr_sum;
+        hw_output[LongToSize(h * w_output + w)] = 1.0 / curr_sum;
       }
     }
   }
@@ -133,8 +132,8 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   std::vector<float> output(output_size, 0.0);
   for (int64_t i = 0; i < output_shape[0] * output_shape[1]; ++i) {
     size_t src_size = hw_output.size() * kFloat32Len;
-    size_t dst_size = output_shape[DIM2] * output_shape[DIM3] * kFloat32Len;
-    auto ret = memcpy_s(&output[i * hw_output.size()], dst_size, &hw_output[0], src_size);
+    auto dst_size = LongToSize(output_shape[DIM2] * output_shape[DIM3] * kFloat32Len);
+    auto ret = memcpy_s(&output[LongToSize(i * hw_output.size())], dst_size, &hw_output[0], src_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return nullptr;

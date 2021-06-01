@@ -239,7 +239,7 @@ void SetConv2DBackpropInputAttrs(const CNodePtr &conv2d_backin, const CNodePtr &
   auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backin, kAttrStride);
   constexpr size_t kStrideSize = 2;
   if (stride.size() == kStrideSize) {
-    stride.insert(stride.begin(), kStrideSize, 1);
+    (void)stride.insert(stride.begin(), kStrideSize, 1);
   }
   AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backin);
 }
@@ -251,7 +251,7 @@ void SetConv2DBackpropFilterAttrs(const CNodePtr &conv2d_backfil, const CNodePtr
   auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backfil, kAttrStride);
   constexpr size_t kStrideSize = 2;
   if (stride.size() == kStrideSize) {
-    stride.insert(stride.begin(), kStrideSize, 1);
+    (void)stride.insert(stride.begin(), kStrideSize, 1);
   }
   AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backfil);
 }
@@ -305,7 +305,7 @@ const AnfNodePtr Conv2DBackpropInputUnifyMindIR::Process(const FuncGraphPtr &gra
   // In pynative mode, input_sizes input will be convert to attr if Conv2DBackpropInput is a forward op.
   if (input_size != kConv2DBackpropInputNum && input_size != kConv2DBackpropInputNum - 1) {
     MS_LOG(EXCEPTION) << "Conv2DBackpropInput's input number should be " << (kConv2DBackpropInputNum - 1) << " or "
-                      << (kConv2DBackpropInputNum - 2) << ", but got " << input_size - 1;
+                      << (kConv2DBackpropInputNum - 2) << ", but got " << (input_size - 1);
   }
   auto transpose = CreateTranspose(graph, conv2d_backin, conv2d_backin->input(kInput2), true);
   auto depth_conv_backin = CreateDepthwiseConv2DBackpropInput(graph, conv2d_backin, transpose);

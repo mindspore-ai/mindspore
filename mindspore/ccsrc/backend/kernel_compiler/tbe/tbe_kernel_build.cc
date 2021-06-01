@@ -29,6 +29,7 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "utils/trace_base.h"
+#include "utils/convert_utils_base.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -469,7 +470,7 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
   }
 }
 
-bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node,
+void TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_node,
                                           const std::shared_ptr<OpInfo> &op_info, nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_info);
@@ -477,7 +478,7 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
   auto attrs_ptr = op_info->attrs_ptr();
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
   if (TbeAdapter::RunAttrPass(anf_node, attrs_ptr, attrs_json)) {
-    return true;
+    return;
   }
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
@@ -491,7 +492,10 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
     if (primitive->GetAttr(attr_name) != nullptr) {
       auto value = primitive->GetAttr(attr_name);
       std::string type = attr_ptr->type();
-      ParseAttrValue(type, value, &attr_obj);
+      if (!ParseAttrValue(type, value, &attr_obj)) {
+        MS_LOG(EXCEPTION) << "Op name: " << op_info->op_name() << " attr: " << attr_name
+                          << ", node debug: " << anf_node->DebugString(2);
+      }
       attr_obj[kJValid] = true;
     } else {
       auto default_value = attr_ptr->default_value();
@@ -515,12 +519,11 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
     }
     (*attrs_json).push_back(attr_obj);
   }
-  return true;
 }
 
 string TbeKernelJsonCreator::GetSocVersion() {
   // Get default soc version.
-  static std::string version;
+  static std::string version = "";
   if (version.empty()) {
     const int kSocVersionLen = 50;
     char soc_version[kSocVersionLen] = {0};
@@ -550,10 +553,43 @@ string TbeKernelJsonCreator::GetSocVersion() {
   return version;
 }
 
-void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value,
+bool ParseListIntAttrValue(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  std::vector<int64_t> attr_value;
+  auto value_type = value->type();
+  if (!value_type) {
+    MS_LOG(ERROR) << "value_type is null.";
+    return false;
+  }
+  auto value_type_str = value_type->ToString();
+  if (value_type_str == kVTypeInt64) {
+    auto data = GetValue<int64_t>(value);
+    attr_value.push_back(data);
+  } else {
+    auto vec = value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+    if (!vec.empty()) {
+      if (vec[0]->isa<Int32Imm>()) {
+        std::vector<int32_t> attr_value_me = GetValue<std::vector<int32_t>>(value);
+        (void)std::transform(attr_value_me.begin(), attr_value_me.end(), std::back_inserter(attr_value),
+                             [](const int &value) { return static_cast<int64_t>(value); });
+      } else {
+        attr_value = GetValue<std::vector<int64_t>>(value);
+      }
+    }
+  }
+  (*attr_obj)[kJValue] = attr_value;
+  return true;
+}
+
+bool TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value,
                                           nlohmann::json *attr_obj) {
-  MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(attr_obj);
+  if (!value) {
+    MS_LOG(ERROR) << "value ptr is null.";
+    return false;
+  }
+  if (!attr_obj) {
+    MS_LOG(ERROR) << "attr_obj ptr is null.";
+    return false;
+  }
   if (type == kVTypeInt) {
     if (value->isa<Int32Imm>()) {
       (*attr_obj)[kJValue] = GetValue<int>(value);
@@ -573,31 +609,16 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   } else if (type == kVTypeFloat) {
     (*attr_obj)[kJValue] = GetValue<float>(value);
   } else if (type == kVTypeListInt) {
-    std::vector<int64_t> attr_value;
-    auto value_type = value->type();
-    MS_EXCEPTION_IF_NULL(value_type);
-    auto value_type_str = value_type->ToString();
-    if (value_type_str == kVTypeInt64) {
-      auto data = GetValue<int64_t>(value);
-      attr_value.push_back(data);
-    } else {
-      auto vec =
-        value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
-      if (!vec.empty()) {
-        if (vec[0]->isa<Int32Imm>()) {
-          std::vector<int32_t> attr_value_me = GetValue<std::vector<int32_t>>(value);
-          (void)std::transform(attr_value_me.begin(), attr_value_me.end(), std::back_inserter(attr_value),
-                               [](const int &value) { return static_cast<int64_t>(value); });
-        } else {
-          attr_value = GetValue<std::vector<int64_t>>(value);
-        }
-      }
+    if (!ParseListIntAttrValue(value, attr_obj)) {
+      return false;
     }
-    (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListFloat) {
     std::vector<float> attr_value;
     auto value_type = value->type();
-    MS_EXCEPTION_IF_NULL(value_type);
+    if (!attr_obj) {
+      MS_LOG(ERROR) << "attr_obj ptr is null.";
+      return false;
+    }
     auto value_type_str = value_type->ToString();
     if (value_type_str == kVTypeFloat) {
       auto data = GetValue<float>(value);
@@ -611,8 +632,10 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   } else if (type == kVTypeListListInt) {
     (*attr_obj)[kJValue] = GetValue<std::vector<std::vector<int64_t>>>(value);
   } else {
-    MS_LOG(EXCEPTION) << "Type: " << type << "not support";
+    MS_LOG(ERROR) << "Type: " << type << "not support";
+    return false;
   }
+  return true;
 }
 
 void TbeKernelJsonCreator::ParseAttrDefaultValue(const std::string &type, const std::string &value,
@@ -733,7 +756,6 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
     for (size_t m = 0; m < input_json[i].size(); m++) {
       size_t size_i = 1;
       if (input_json[i][m][kJValid] == false) {
-        std::string input_name = input_json[i][m][kJName];
         continue;
       }
       for (size_t j = 0; j < input_json[i][m][kJShape].size(); ++j) {
@@ -743,7 +765,7 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
           MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j];
-          size_i *= input_max_shape[j];
+          size_i *= LongToSize(input_max_shape[j]);
           continue;
         }
         size_i *= static_cast<size_t>(input_json[i][m][kJShape][j]);
@@ -773,7 +795,7 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
             MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
           }
           MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j];
-          size_i *= output_max_shape[j];
+          size_i *= LongToSize(output_max_shape[j]);
           continue;
         }
         size_i *= static_cast<size_t>(output_json[i][m][kJShape][j]);
@@ -874,9 +896,7 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   // attr_desc
   TbeKernelJsonCreator json_creater(SINGLE_BUILD);
   nlohmann::json json_attr_args;
-  if (!json_creater.GenTbeAttrJson(cnode, op_info_ptr, &json_attr_args)) {
-    MS_LOG(INFO) << "Fusion warning: get prebuild args of attr failed.";
-  }
+  json_creater.GenTbeAttrJson(cnode, op_info_ptr, &json_attr_args);
   nlohmann::json attr_desc;
   for (const auto &attr : json_attr_args) {
     if (attr[kJName] != "isRef" && attr[kJValid] == true) {
@@ -950,17 +970,17 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
   constexpr size_t C0 = 16;
   if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == 5) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[DIM0]);
-    spec_shape.emplace_back(shape[DIM1]);
-    spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
-    spec_shape.emplace_back(shape[DIM4]);
+    (void)spec_shape.emplace_back(shape[DIM0]);
+    (void)spec_shape.emplace_back(shape[DIM1]);
+    (void)spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
+    (void)spec_shape.emplace_back(shape[DIM4]);
     (*output_desc)[kJShape] = spec_shape;
   } else if (fusion_data_type == kFusionReLUGradV2) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[DIM0]);
-    spec_shape.emplace_back(shape[DIM1]);
-    spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
-    spec_shape.emplace_back(C0);
+    (void)spec_shape.emplace_back(shape[DIM0]);
+    (void)spec_shape.emplace_back(shape[DIM1]);
+    (void)spec_shape.emplace_back(shape[DIM2] * shape[DIM3]);
+    (void)spec_shape.emplace_back(C0);
     (*output_desc)[kJShape] = spec_shape;
     (*output_desc)[kJDataType] = kVTypeBool;
   }

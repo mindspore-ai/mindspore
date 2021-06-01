@@ -58,7 +58,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
 
   std::vector<size_t> logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0);
   int64_t depth = 0;
-  if (logits_shape.size() >= 1) {
+  if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
     depth = SizeToLong(logits_shape[index]);
   } else {
