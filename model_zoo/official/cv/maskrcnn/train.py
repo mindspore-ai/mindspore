@@ -15,10 +15,17 @@
 
 """train MaskRcnn and get checkpoint files."""
 
-import os
 import time
-import argparse
-import ast
+import os
+import re
+
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
+from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
+from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
+from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
+from src.lr_schedule import dynamic_lr
 
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor
@@ -31,32 +38,78 @@ from mindspore.nn import Momentum
 from mindspore.common import set_seed
 from mindspore.communication.management import get_rank, get_group_size
 
-from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
-from src.network_define import LossCallBack, WithLossCell, TrainOneStepCell, LossNet
-from src.config import config
-from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
-from src.lr_schedule import dynamic_lr
-
 set_seed(1)
 
-parser = argparse.ArgumentParser(description="MaskRcnn training")
-parser.add_argument("--only_create_dataset", type=ast.literal_eval, default=False, help="If set it true, only create "
-                    "Mindrecord, default is false.")
-parser.add_argument("--run_distribute", type=ast.literal_eval, default=False, help="Run distribute, default is false.")
-parser.add_argument("--do_train", type=ast.literal_eval, default=True, help="Do train or not, default is true.")
-parser.add_argument("--do_eval", type=ast.literal_eval, default=False, help="Do eval or not, default is false.")
-parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-parser.add_argument("--pre_trained", type=str, default="", help="Pretrain file path.")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-parser.add_argument("--rank_id", type=int, default=0, help="Rank id, default is 0.")
-args_opt = parser.parse_args()
+lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
+config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
+config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
+config.warmup_ratio = 1/3.0
+config.mask_shape = (28, 28)
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+def modelarts_pre_process():
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),\
+                    int(int(time.time() - s_time) % 60)))
+                print("Extract Done")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-if __name__ == '__main__':
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+        print("#" * 200, os.listdir(save_dir_1))
+        print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
+
+    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.pre_trained = os.path.join(config.dataset_path, config.ckpt_path)
+    config.save_checkpoint_path = config.output_path
+    config.mindrecord_dir = os.path.join(config.dataset_path, config.mindrecord_dir)
+
+
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def train_maskrcnn():
     print("Start train for maskrcnn!")
-    if not args_opt.do_eval and args_opt.run_distribute:
+    if not config.do_eval and config.run_distribute:
         init()
         rank = get_rank()
         device_num = get_group_size()
@@ -68,7 +121,7 @@ if __name__ == '__main__':
 
     print("Start create dataset!")
 
-    # It will generate mindrecord file in args_opt.mindrecord_dir,
+    # It will generate mindrecord file in config.mindrecord_dir,
     # and the file name is MaskRcnn.mindrecord0, 1, ... file_num.
     prefix = "MaskRcnn.mindrecord"
     mindrecord_dir = config.mindrecord_dir
@@ -76,13 +129,13 @@ if __name__ == '__main__':
     if rank == 0 and not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
-        if args_opt.dataset == "coco":
-            if os.path.isdir(config.coco_root):
+        if config.dataset == "coco":
+            if os.path.isdir(config.data_path):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("coco", True, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                raise Exception("coco_root not exits.")
+                raise Exception("data_path not exits.")
         else:
             if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
                 print("Create Mindrecord.")
@@ -93,9 +146,8 @@ if __name__ == '__main__':
     while not os.path.exists(mindrecord_file+".db"):
         time.sleep(5)
 
-    if not args_opt.only_create_dataset:
-        loss_scale = float(config.loss_scale)
-
+    if not config.only_create_dataset:
+        # loss_scale = float(config.loss_scale)
         # When create MindDataset, using the fitst mindrecord file, such as MaskRcnn.mindrecord0.
         dataset = create_maskrcnn_dataset(mindrecord_file, batch_size=config.batch_size,
                                           device_num=device_num, rank_id=rank)
@@ -107,7 +159,7 @@ if __name__ == '__main__':
         net = Mask_Rcnn_Resnet50(config=config)
         net = net.set_train()
 
-        load_path = args_opt.pre_trained
+        load_path = config.pre_trained
         if load_path != "":
             param_dict = load_checkpoint(load_path)
             if config.pretrain_epoch_size == 0:
@@ -123,7 +175,7 @@ if __name__ == '__main__':
                        weight_decay=config.weight_decay, loss_scale=config.loss_scale)
 
         net_with_loss = WithLossCell(net, loss)
-        if args_opt.run_distribute:
+        if config.run_distribute:
             net = TrainOneStepCell(net_with_loss, opt, sens=config.loss_scale, reduce_flag=True,
                                    mean=True, degree=device_num)
         else:
@@ -141,3 +193,7 @@ if __name__ == '__main__':
 
         model = Model(net)
         model.train(config.epoch_size, dataset, callbacks=cb)
+
+
+if __name__ == '__main__':
+    train_maskrcnn()

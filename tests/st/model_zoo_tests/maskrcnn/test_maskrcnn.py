@@ -16,13 +16,8 @@
 
 import os
 import pytest
-import numpy as np
-from model_zoo.official.cv.maskrcnn.src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
-from model_zoo.official.cv.maskrcnn.src.config import config
+from tests.st.model_zoo_tests import utils
 
-from mindspore import Tensor, context, export
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -32,24 +27,20 @@ def test_maskrcnn_export():
     """
     export maskrcnn air.
     """
-    net = Mask_Rcnn_Resnet50(config=config)
-    net.set_train(False)
+    old_list = ["(config=config)", "(net, param_dict_new)"]
+    new_list = ["(config=config\\n)    '''", "(net, param_dict_new)\\n    '''"]
 
-    bs = config.test_batch_size
+    cur_path = os.getcwd()
+    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_name = "maskrcnn"
+    utils.copy_files(model_path, cur_path, model_name)
+    cur_model_path = os.path.join(cur_path, model_name)
 
-    img = Tensor(np.zeros([bs, 3, 768, 1280], np.float16))
-    img_metas = Tensor(np.zeros([bs, 4], np.float16))
-    gt_bboxes = Tensor(np.zeros([bs, 128, 4], np.float16))
-    gt_labels = Tensor(np.zeros([bs, 128], np.int32))
-    gt_num = Tensor(np.zeros([bs, 128], np.bool))
-    gt_mask = Tensor(np.zeros([bs, 128], np.bool))
-
-    input_data = [img, img_metas, gt_bboxes, gt_labels, gt_num, gt_mask]
-    export(net, *input_data, file_name="maskrcnn", file_format="AIR")
-    file_name = "maskrcnn.air"
-    assert os.path.exists(file_name)
-    os.remove(file_name)
-
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "export.py"))
+    # ckpt_path = os.path.join(utils.ckpt_root, "bgcf/bgcf_trained.ckpt")
+    exec_export_shell = "cd {}; python export.py --config_path default_config.yaml".format(model_name)
+    os.system(exec_export_shell)
+    assert os.path.exists(os.path.join(cur_model_path, "{}.air".format(model_name)))
 
 if __name__ == '__main__':
     test_maskrcnn_export()

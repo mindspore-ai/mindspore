@@ -15,29 +15,31 @@
 
 """Evaluation for MaskRcnn"""
 import os
-import argparse
 import time
+import re
 import numpy as np
+
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id, get_device_num
+from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
+from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
+from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
+
 from pycocotools.coco import COCO
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
-from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
-from src.config import config
-from src.dataset import data_to_mindrecord_byte_image, create_maskrcnn_dataset
-from src.util import coco_eval, bbox2result_1image, results2json, get_seg_masks
 
 set_seed(1)
 
-parser = argparse.ArgumentParser(description="MaskRcnn evaluation")
-parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-parser.add_argument("--ann_file", type=str, default="val.json", help="Ann file, default is val.json.")
-parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-args_opt = parser.parse_args()
+lss = [int(re.findall(r'[0-9]+', i)[0]) for i in config.feature_shapes]
+config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
+config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
+config.warmup_ratio = 1/3.0
+config.mask_shape = (28, 28)
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
 def maskrcnn_eval(dataset_path, ckpt_path, ann_file):
     """MaskRcnn evaluation."""
@@ -106,14 +108,77 @@ def maskrcnn_eval(dataset_path, ckpt_path, ann_file):
     result_files = results2json(dataset_coco, outputs, "./results.pkl")
     coco_eval(result_files, eval_types, dataset_coco, single_result=False)
 
-if __name__ == '__main__':
+
+def modelarts_process():
+    """ modelarts process """
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),\
+                    int(int(time.time() - s_time) % 60)))
+                print("Extract Done")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+        print("#" * 200, os.listdir(save_dir_1))
+        print("#" * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
+
+    config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.coco_root = config.dataset_path
+    config.checkpoint_path = os.path.join(config.dataset_path, config.ckpt_path)
+    config.ann_file = os.path.join(config.dataset_path, config.ann_file)
+    config.mindrecord_dir = os.path.join(config.dataset_path, config.mindrecord_dir)
+
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=get_device_id())
+
+@moxing_wrapper(pre_process=modelarts_process)
+def eval_():
     prefix = "MaskRcnn_eval.mindrecord"
     mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix)
     if not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
-        if args_opt.dataset == "coco":
+        if config.dataset == "coco":
             if os.path.isdir(config.coco_root):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("coco", False, prefix, file_num=1)
@@ -129,5 +194,9 @@ if __name__ == '__main__':
                 print("IMAGE_DIR or ANNO_PATH not exits.")
 
     print("Start Eval!")
-    maskrcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
-    print("ckpt_path=", args_opt.checkpoint_path)
+    maskrcnn_eval(mindrecord_file, config.checkpoint_path, config.ann_file)
+    print("ckpt_path=", config.checkpoint_path)
+
+
+if __name__ == '__main__':
+    eval_()

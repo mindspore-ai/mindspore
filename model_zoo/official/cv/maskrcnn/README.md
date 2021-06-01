@@ -155,17 +155,17 @@ bash scripts/docker_start.sh maskrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```shell
 # standalone training
-bash run_standalone_train.sh [PRETRAINED_CKPT]
+bash run_standalone_train.sh [PRETRAINED_CKPT] [DATA_PATH]
 
 # distributed training
-bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT] [DATA_PATH]
 ```
 
 4. Eval
 
 ```shell
 # Evaluation
-bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH] [DATA_PATH]
 ```
 
 5. Inference.
@@ -203,12 +203,17 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py                       # backbone network
       ├─roi_align.py                      # roi align network
       └─rpn.py                            # reagion proposal network
-    ├─config.py                           # network configuration
     ├─convert_checkpoint.py               # convert resnet50 backbone checkpoint
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
     ├─network_define.py                   # network define for maskrcnn
-    └─util.py                             # routine operation
+    ├─util.py                             # routine operation
+    └─model_utils
+      ├─config.py                         # Processing configuration parameters
+      ├─device_adapter.py                 # Get cloud ID
+      ├─local_adapter.py                  # Get local ID
+      └─moxing_adapter.py                 # Parameter processing
+  ├─default_config.yaml                   # Training parameter profile
   ├─mindspore_hub_conf.py                 # mindspore hub interface
   ├─export.py                             #script to export AIR,MINDIR,ONNX model
   ├─eval.py                               # evaluation scripts

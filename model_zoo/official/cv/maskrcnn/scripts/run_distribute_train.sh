@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 3 ]
 then 
-    echo "Usage: bash run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
+    echo "Usage: bash run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH] [DATA_PATH]"
 exit 1
 fi
 
@@ -29,9 +29,11 @@ get_real_path(){
 }
 PATH1=$(get_real_path $1)
 PATH2=$(get_real_path $2)
+PATH3=$(get_real_path $3)
 
 echo $PATH1
 echo $PATH2
+echo $PATH3
 
 if [ ! -f $PATH1 ]
 then 
@@ -68,12 +70,13 @@ do
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
     cp ../*.py ./train_parallel$i
+    cp ../*.yaml ./train_parallel$i
     cp *.sh ./train_parallel$i
     cp -r ../src ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
-                    --pre_trained=$PATH2 &> log &
+    --pre_trained=$PATH2 --data_path=$PATH3 &> log &
     cd ..
 done

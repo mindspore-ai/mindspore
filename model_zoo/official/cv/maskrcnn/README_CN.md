@@ -197,12 +197,17 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py                       # 骨干网
       ├─roi_align.py                      # 兴趣点对齐网络
       └─rpn.py                            # 区域候选网络
-    ├─config.py                           # 网络配置
     ├─convert_checkpoint.py               # 转换预训练checkpoint文件
     ├─dataset.py                          # 数据集工具
     ├─lr_schedule.py                      # 学习率生成器
     ├─network_define.py                   # MaskRCNN的网络定义
-    └─util.py                             # 例行操作
+    ├─util.py                             # 例行操作
+    └─model_utils
+      ├─config.py                         # 训练配置
+      ├─device_adapter.py                 # 获取云上id
+      ├─local_adapter.py                  # 获取本地id
+      └─moxing_adapter.py                 # 参数处理
+  ├─default_config.yaml                   # 训练参数配置文件
   ├─mindspore_hub_conf.py                 # MindSpore hub接口
   ├─export.py                             #导出 AIR,MINDIR,ONNX模型的脚本
   ├─eval.py                               # 评估脚本
