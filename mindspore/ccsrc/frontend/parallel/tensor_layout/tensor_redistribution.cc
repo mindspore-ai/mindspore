@@ -63,8 +63,8 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return nullptr;
     } else {
-      (void)operator_vector.push_back(constructor.GetOperator());
-      (void)output_info_vector.push_back(std::make_pair(false, 0));
+      operator_vector.push_back(constructor.GetOperator());
+      output_info_vector.push_back(std::make_pair(false, 0));
     }
   }
   if (InferRedistribution(to_repeat, to_origin_, &operator_vector, &output_info_vector, is_cost_model) ==
@@ -107,7 +107,6 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   MS_LOG(DEBUG) << "reshape from_ " << from_.ToString();
   MS_LOG(DEBUG) << "reshape to_ " << to_.ToString();
   // Step 2: Infer redistribution and insert operators
-  RedistributionOperatorInfer operator_infer(construct_op_flag_);
   OperatorVector operator_vector;
   OutPutInfoVector output_info_vector;
   if (InferRedistribution(from_layout, to_layout, &operator_vector, &output_info_vector, is_cost_model) !=
@@ -248,14 +247,14 @@ Status TensorRedistribution::ComputePermuteCost(double input_size, Shape attrs) 
   forward_comm_cost_ += input_size * ALLTOALL_SCALE_FACTOR;
   backward_comm_cost_ += input_size * ALLTOALL_SCALE_FACTOR;
   comm_cost_ += COST_FACTOR * input_size * ALLTOALL_SCALE_FACTOR;
-  int32_t concat_dim = attrs[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
+  int64_t concat_dim = attrs[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
   if (concat_dim == 0) {
     // memory cost = all_gather
     computation_cost_ += input_size;
     memory_cost_ += input_size;
   } else {
     // memory cost = all_gather + split + concat
-    int32_t dev_num = attrs[TRANSFER_PERMUTE_DEV_NUM_INDEX];
+    int64_t dev_num = attrs[TRANSFER_PERMUTE_DEV_NUM_INDEX];
     computation_cost_ += (input_size + input_size * dev_num + input_size * dev_num);
     memory_cost_ += (input_size * dev_num + input_size * dev_num + input_size);
   }
@@ -274,7 +273,7 @@ Status TensorRedistribution::ComputeConcatCost(double input_size, Shape attrs) {
   forward_comm_cost_ += input_size * dev_num * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
   backward_comm_cost_ += input_size * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
   comm_cost_ += input_size * (dev_num + 1.0) * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
-  int32_t concat_dim = attrs[TRANSFER_CONCAT_TENSOR_DIM_INDEX];
+  int64_t concat_dim = attrs[TRANSFER_CONCAT_TENSOR_DIM_INDEX];
   if (concat_dim == 0) {
     // computation cost = all_gather
     computation_cost_ += input_size;
