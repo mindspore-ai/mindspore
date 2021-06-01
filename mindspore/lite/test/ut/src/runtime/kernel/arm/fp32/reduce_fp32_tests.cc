@@ -20,7 +20,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/runtime/allocator.h"
+#include "mindspore/lite/src/runtime/inner_allocator.h"
 
 using mindspore::lite::Tensor;
 using mindspore::schema::ReduceMode;

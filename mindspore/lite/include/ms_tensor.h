@@ -39,6 +39,16 @@ class MS_API MSTensor {
   static MSTensor *CreateTensor(const String &name, TypeId type, const Vector<int> &shape, const void *data,
                                 size_t data_len);
 
+  /// \brief Set memory allocator for current MSTensor.
+  ///
+  /// \param[in] allocator Define memory allocator, which is shown in allocator.h.
+  virtual void set_allocator(mindspore::Allocator *allocator) = 0;
+
+  /// \brief Get memory allocator of current MSTensor.
+  ///
+  /// \return Pointer of memory allocator class.
+  virtual mindspore::Allocator *allocator() const = 0;
+
   /// \brief Get data type of the MindSpore Lite MSTensor.
   ///
   /// \note TypeId is defined in mindspore/mindspore/include/api/type_id.h. Only number types in TypeId enum are
@@ -46,6 +56,9 @@ class MS_API MSTensor {
   ///
   /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor.
   virtual TypeId data_type() const = 0;
+
+  /// \brief Set data type of current MSTensor.
+  virtual void set_data_type(TypeId data_type) = 0;
 
   /// \brief Get shape of the MindSpore Lite MSTensor.
   ///

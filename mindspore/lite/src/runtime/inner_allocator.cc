@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include <utility>
 #include "src/common/log_adapter.h"
 

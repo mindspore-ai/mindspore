@@ -25,43 +25,26 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <atomic>
+#include "include/allocator.h"
 
 namespace mindspore {
-
 struct AllocatorContext {
   int shiftFactor;
   bool lockFlag;
-};
-
-class Allocator {
- public:
-  Allocator() : name("default") {}
-  virtual ~Allocator() = default;
-  virtual void *Malloc(size_t size) = 0;
-  virtual void Free(void *ptr) = 0;
-  virtual int RefCount(void *ptr) = 0;
-  virtual int SetRefCount(void *ptr, int ref_count) = 0;
-  virtual int DecRefCount(void *ptr, int ref_count) = 0;
-  virtual int IncRefCount(void *ptr, int ref_count) = 0;
-  virtual void SetContext(const AllocatorContext &ctx) {}
-  virtual size_t total_size() = 0;
-  static std::shared_ptr<Allocator> Create();
-  virtual void *Prepare(void *ptr) { return ptr; }
-  std::string name;
 };
 
 class DefaultAllocator : public Allocator {
  public:
   DefaultAllocator();
   ~DefaultAllocator() override;
-  void SetContext(const AllocatorContext &ctx) override;
+  void SetContext(const AllocatorContext &ctx);
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
   int RefCount(void *ptr) override;
   int SetRefCount(void *ptr, int ref_count) override;
   int DecRefCount(void *ptr, int ref_count) override;
   int IncRefCount(void *ptr, int ref_count) override;
-  size_t total_size() override { return this->total_size_; }
+  size_t total_size() { return this->total_size_; }
   void Clear();
 
  private:

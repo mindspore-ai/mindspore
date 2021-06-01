@@ -602,6 +602,7 @@ class Vector {
 };
 using TensorPtrVector = Vector<mindspore::schema::Tensor *>;
 using Uint32Vector = Vector<uint32_t>;
+class Allocator;
 using AllocatorPtr = void *;
 using DeviceContextVector = Vector<lite::DeviceContext>;
 using KernelCallBack = void (*)(void *, void *);

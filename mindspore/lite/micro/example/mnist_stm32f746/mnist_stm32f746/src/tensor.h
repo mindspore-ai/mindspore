@@ -41,7 +41,10 @@ class MTensor : public mindspore::tensor::MSTensor {
   MTensor(String name, TypeId type, Vector<int> shape) : tensor_name_(name), data_type_(type), shape_(shape) {}
   ~MTensor() override;
 
+  void set_allocator(mindspore::Allocator *allocator) override {}
+  mindspore::Allocator *allocator() const override { return nullptr; }
   TypeId data_type() const override { return data_type_; }
+  void set_data_type(TypeId data_type) override { data_type_ = data_type; }
   Vector<int> shape() const override { return shape_; }
   void set_shape(const Vector<int> &shape) override { shape_ = shape; }
   int ElementsNum() const override;

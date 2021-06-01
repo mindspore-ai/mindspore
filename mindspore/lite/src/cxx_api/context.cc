@@ -20,7 +20,7 @@
 #include <any>
 #include "include/api/types.h"
 #include "include/api/data_type.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {

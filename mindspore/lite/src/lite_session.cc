@@ -21,7 +21,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/scheduler.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "src/executor.h"
 #include "src/common/utils.h"
 #include "src/common/prim_util.h"

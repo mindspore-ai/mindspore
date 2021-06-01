@@ -25,7 +25,7 @@
 #include <type_traits>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 #include "schema/gpu_cache_generated.h"
 
 namespace mindspore::lite::gpu {

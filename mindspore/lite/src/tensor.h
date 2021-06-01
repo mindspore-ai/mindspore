@@ -24,7 +24,7 @@
 #include <functional>
 #include <atomic>
 #include "include/ms_tensor.h"
-#include "src/runtime/allocator.h"
+#include "src/runtime/inner_allocator.h"
 
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
@@ -81,7 +81,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   TypeId data_type() const override { return data_type_; }
 
-  void set_data_type(TypeId data_type) { data_type_ = data_type; }
+  void set_data_type(TypeId data_type) override { data_type_ = data_type; }
 
   std::vector<int> shape() const override { return shape_; }
 
@@ -103,9 +103,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   size_t Size() const override;
 
-  void set_allocator(mindspore::Allocator *allocator) { allocator_ = allocator; }
+  void set_allocator(mindspore::Allocator *allocator) override { allocator_ = allocator; }
 
-  mindspore::Allocator *allocator() const { return this->allocator_; }
+  mindspore::Allocator *allocator() const override { return this->allocator_; }
 
   virtual int MallocData(const mindspore::Allocator *allocator = nullptr);
 
