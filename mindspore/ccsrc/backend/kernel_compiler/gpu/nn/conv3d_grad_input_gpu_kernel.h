@@ -97,7 +97,7 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     c_ = SizeToInt(input_shape[1]);
     old_depth_ = SizeToInt(input_shape[2]);
     old_height_ = SizeToInt(input_shape[3]);
-    old_width_ = SizeToInt(input_shape[3]);
+    old_width_ = SizeToInt(input_shape[4]);
     SetNDDesc(dy_shape, input_shape, filter_shape);
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, group_),

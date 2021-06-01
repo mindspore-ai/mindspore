@@ -94,7 +94,7 @@ class Conv3dGpuKernel : public GpuKernel {
     c_ = SizeToInt(in_shape[1]);
     old_depth_ = SizeToInt(in_shape[2]);
     old_height_ = SizeToInt(in_shape[3]);
-    old_width_ = SizeToInt(in_shape[3]);
+    old_width_ = SizeToInt(in_shape[4]);
     compute_format_ = CUDNN_TENSOR_NCHW;
     SetNDDesc(in_shape, filter_shape, output_shape);
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
