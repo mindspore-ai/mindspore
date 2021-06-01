@@ -133,10 +133,25 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Not support device list more than 2.";
     return RET_NOT_SUPPORT;
   }
+  if (thread_num_ < 1) {
+    MS_LOG(ERROR) << "Thread num smaller than 1 is not allowed.";
+    return RET_NOT_SUPPORT;
+  }
+  if (!IsAllDeviceTypeValid()) {
+    MS_LOG(ERROR) << "Device type should be one of DT_CPU, DT_GPU or DT_NPU.";
+    return RET_NOT_SUPPORT;
+  }
+
   if (!IsUserSetCpu()) {
     MS_LOG(ERROR) << "CPU context should be set.";
     return RET_NOT_SUPPORT;
   }
+
+  if (IsCpuBindModeInvalid()) {
+    MS_LOG(ERROR) << "CPU bind mode should be one of NO_BIND, HIGHER_CPU or MID_CPU.";
+    return RET_NOT_SUPPORT;
+  }
+
 #ifndef SUPPORT_GPU
   if (IsUserSetGpu()) {
     MS_LOG(ERROR) << "GPU is not supported.";
@@ -200,6 +215,20 @@ bool InnerContext::IsProviderEnabled() const {
   return this->device_list_.end() !=
          std::find_if(this->device_list_.begin(), this->device_list_.end(),
                       [](const DeviceContext &device) { return !device.provider_.empty(); });
+}
+
+bool InnerContext::IsAllDeviceTypeValid() const {
+  return std::all_of(this->device_list_.begin(), this->device_list_.end(), [](const DeviceContext &device) {
+    return device.device_type_ >= DT_CPU && device.device_type_ <= DT_NPU;
+  });
+}
+
+bool InnerContext::IsCpuBindModeInvalid() const {
+  return this->device_list_.end() !=
+         std::find_if(this->device_list_.begin(), this->device_list_.end(), [](const DeviceContext &device) {
+           return device.device_type_ == DT_CPU && (device.device_info_.cpu_device_info_.cpu_bind_mode_ < NO_BIND ||
+                                                    device.device_info_.cpu_device_info_.cpu_bind_mode_ > MID_CPU);
+         });
 }
 
 bool InnerContext::IsUserSetCpu() const {
