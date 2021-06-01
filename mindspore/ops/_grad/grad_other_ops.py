@@ -87,6 +87,7 @@ def get_bprop_sync_batch_norm(self):
 
 @bprop_getters.register(inner.GpuConvertToDynamicShape)
 def get_bprop_gpu_convert_to_dynamic_shape(self):
+    """Get backprop for GpuConvertToDynamicShape."""
     def bprop(x, out, dout):
         return (dout,)
     return bprop

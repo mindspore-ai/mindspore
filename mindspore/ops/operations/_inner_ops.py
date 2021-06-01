@@ -683,6 +683,7 @@ class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
         return input_shape
 
     def infer_type(self, input_dtype):
+        """Infer the dtype of input for ErrorOnDynamicShapeInput."""
         validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
         return input_dtype
 

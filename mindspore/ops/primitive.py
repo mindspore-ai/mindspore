@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -538,6 +538,7 @@ def constexpr(fn=None, get_instance=True, name=None):
     """
 
     def deco(fn):
+        """Decorator for CompileOp."""
         class CompileOp(PrimitiveWithInfer):
             """
             CompileOp is a temporary operator used to execute the constexpr function.

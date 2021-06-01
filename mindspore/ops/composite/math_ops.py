@@ -450,6 +450,7 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
     output_shape = tuple([batch_size]) + x1_ret + x2_ret
     return output_shape
 
+
 def batch_dot(x1, x2, axes=None):
     """
     Computation of batch dot product between samples in two tensors containing batch dims.

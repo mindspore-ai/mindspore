@@ -141,7 +141,7 @@ class Load(PrimitiveWithCheck):
 
     def check_dtype(self, variable):
         if variable != mstype.type_refkey:
-            validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
+            validator.check_tensors_dtypes_same_and_valid({"variable": variable}, mstype.number_type, self.name)
 
 
 class BoundingBoxEncode(PrimitiveWithInfer):
