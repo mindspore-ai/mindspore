@@ -1030,6 +1030,7 @@ void AscendStreamAssign::InsertStreamActiveForCommon(const NotNull<KernelGraphPt
         auto pre_node = AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]);
         if (pre_node == kLabelSwitchOpName || pre_node == kLabelGotoOpName) {
           update_cnode_list.insert(update_cnode_list.end() - 1, active_ptr);
+          AnfAlgo::SetStreamId(cur_stream_id, cnode_ptr_list[i - 1].get());
         } else {
           update_cnode_list.emplace_back(active_ptr);
         }
