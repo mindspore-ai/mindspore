@@ -15,8 +15,12 @@
 # ============================================================================
 
 export DEVICE_ID=$1
-DATA_DIR=$2
-python train.py  \
-    --platform=Ascend \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
+export DATA_DIR=$2
+export CKPT_PATH=$3
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
+python train.py --config_path=$CONFIG_FILE \
+    --platform=Ascend \
+    --dataset_path=$DATA_DIR --ckpt_path=$CKPT_PATH > log.txt 2>&1 &

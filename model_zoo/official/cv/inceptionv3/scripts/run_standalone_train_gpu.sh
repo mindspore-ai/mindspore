@@ -15,5 +15,10 @@
 # ============================================================================
 DEVICE_ID=$1
 DATA_DIR=$2
-CUDA_VISIBLE_DEVICES=$DEVICE_ID python ./train.py --platform 'GPU' --dataset_path $DATA_DIR > train.log 2>&1 &
+CKPT_PATH=$3
 
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config_gpu.yaml"
+
+CUDA_VISIBLE_DEVICES=$DEVICE_ID python ./train.py --config_path=$CONFIG_FILE --platform 'GPU' \
+--dataset_path $DATA_DIR --ckpt_path=$CKPT_PATH > train.log 2>&1 &

@@ -18,7 +18,10 @@ export DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=$3
 
-python eval.py  \
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config.yaml"
+
+python ../eval.py --config_path=$CONFIG_FILE \
     --platform=Ascend \
     --checkpoint=$PATH_CHECKPOINT \
     --dataset_path=$DATA_DIR > eval.log 2>&1 &

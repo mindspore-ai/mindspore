@@ -16,4 +16,8 @@
 DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=$3
-CUDA_VISIBLE_DEVICES=$DEVICE_ID python ./eval.py --platform 'GPU' --dataset_path $DATA_DIR --checkpoint $PATH_CHECKPOINT > eval.log 2>&1 &
+
+BASE_PATH=$(cd ./"`dirname $0`" || exit; pwd)
+CONFIG_FILE="${BASE_PATH}/../default_config_gpu.yaml"
+
+CUDA_VISIBLE_DEVICES=$DEVICE_ID python ../eval.py --config_path=$CONFIG_FILE --platform 'GPU' --dataset_path $DATA_DIR --checkpoint $PATH_CHECKPOINT > eval.log 2>&1 &
