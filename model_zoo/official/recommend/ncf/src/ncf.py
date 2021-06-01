@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Neural Collaborative Filtering Model"""
-from mindspore import nn
+from mindspore import nn, context
 from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore._checkparam import Validator as validator
 from mindspore.nn.layer.activation import get_activation
@@ -22,7 +22,6 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
@@ -245,12 +244,12 @@ class TrainStepWrap(nn.Cell):
 
         self.reducer_flag = False
         self.grad_reducer = None
-        parallel_mode = _get_parallel_mode()
+        parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
+            mean = context.get_auto_parallel_context("gradients_mean")
+            degree = context.get_auto_parallel_context("device_num")
             self.grad_reducer = DistributedGradReducer(self.optimizer.parameters, mean, degree)
 
 
