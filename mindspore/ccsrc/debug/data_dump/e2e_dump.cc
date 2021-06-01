@@ -259,11 +259,18 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t device_id) {
       return;
     }
 
-    // create symlink to active dump dir for the iteration in final dump dir
-    std::string command = "ln -fs " + zero_dir_dump_path + " " + cur_iter_dump_path;
-    MS_LOG(INFO) << "ln command: " << command;
+    // test if cur_iter_dump_path dir already exists
+    std::string command = "test -d " + cur_iter_dump_path;
+    MS_LOG(INFO) << "test command: " << command;
     if (system(command.c_str())) {
-      MS_LOG(EXCEPTION) << "failed to create symlink to active dump dir for the iteration in final dump dir.";
+      // create symlink to active dump dir for the iteration in final dump dir
+      command = "ln -fs " + zero_dir_dump_path + " " + cur_iter_dump_path;
+      MS_LOG(INFO) << "ln command: " << command;
+      if (system(command.c_str())) {
+        MS_LOG(EXCEPTION) << "did not create symlink to active dump dir for the iteration in final dump dir.";
+      }
+    } else {
+      MS_LOG(INFO) << "final dump dir already exists";
     }
   }
 }
@@ -306,7 +313,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
       std::string command = "rm -f " + cur_iter_dump_path;
       MS_LOG(INFO) << "rm command: " << command;
       if (system(command.c_str())) {
-        MS_LOG(EXCEPTION) << "failed to remove symlink to active dump dir.";
+        MS_LOG(WARNING) << "did not remove symlink to active dump dir, likely an actual dir";
       }
 
       // create actual dir for iteration in final dump dir
