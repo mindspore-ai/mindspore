@@ -1,3 +1,28 @@
+# Contents
+
+- [Contents](#contents)
+    - [SSD Description](#ssd-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Training on Ascend](#training-on-ascend)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation on Ascend](#evaluation-on-ascend)
+    - [Inference Process](#inference-process)
+            - [Export MindIR](#export-mindir)
+            - [Infer on Ascend310](#infer-on-ascend310)
+            - [result](#result)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+            - [Inference Performance](#inference-performance)
+            - [310Inference Performance](#310inference-performance)
+
 # [SSD Description](#contents)
 
 SSD discretizes the output space of bounding boxes into a set of default boxes over different aspect ratios and scales per feature map location. At prediction time, the network generates scores for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.Additionally, the network combines predictions from multiple feature maps with different resolutions to naturally handle objects of various sizes.
@@ -122,8 +147,10 @@ If you want to run in modelarts, please check the official documentation of [mod
 
   ├── ssd_ghostnet
     ├── README.md                 ## readme file of ssd_ghostnet
+    ├── ascend310_infer           ## application for 310 inference
     ├── scripts
-      └─ run_distribute_train_ghostnet.sh  ## shell script for distributed on ascend
+      ├─ run_distribute_train_ghostnet.sh  ## shell script for distributed on ascend
+      └─ run_infer_310.sh                  ## shell script for 310inference on ascend
     ├── src
       ├─ box_util.py              ## bbox utils
       ├─ coco_eval.py             ## coco metrics utils
@@ -132,13 +159,15 @@ If you want to run in modelarts, please check the official documentation of [mod
       ├─ lr_schedule.py           ## learning ratio generator
       └─ ssd_ghostnet.py          ## ssd architecture
       ├── model_utils
-      │   ├── config.py          ## parameter configuration
-      │   ├── device_adapter.py  ## device adapter
-      │   ├── local_adapter.py   ## local adapter
-      │   ├── moxing_adapter.py  ## moxing adapter
+      │   ├── config.py           ## parameter configuration
+      │   ├── device_adapter.py   ## device adapter
+      │   ├── local_adapter.py    ## local adapter
+      │   ├── moxing_adapter.py   ## moxing adapter
     ├── default_config.yaml       ## parameter configuration
     ├── eval.py                   ## eval scripts
     ├── train.py                  ## train scripts
+    ├── export.py                 ## export mindir script
+    ├── postprocess.py            ## postprocess scripts
     ├── mindspore_hub_conf.py     ## export model for hub
 ```
 
@@ -205,6 +234,49 @@ Training result will be stored in the current path, whose folder name begins wit
 python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.ckpt
 ```
 
+## [Inference Process](#contents)
+
+### Export MindIR
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`FILE_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. SSD_ghostnet only support CPU mode. Note that the image shape of ssd_ghostnet inference is [300, 300], The DVPP hardware restricts width 16-alignment and height even-alignment. Therefore, the network needs to use the CPU operator to process images.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.243
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.411
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.244
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.038
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.205
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.450
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.252
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.391
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.424
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.122
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.699
+mAP: 0.24270569394180577
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -227,7 +299,7 @@ python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.c
 | Parameters          | Ascend                      |
 | ------------------- | ----------------------------|
 | Model Version       | SSD ghostnet                |
-| Resource            | Ascend 910; OS Euler2.8                  |
+| Resource            | Ascend 910; OS Euler2.8     |
 | Uploaded Date       | 09/08/2020 (month/day/year) |
 | MindSpore Version   | 0.7.0                       |
 | Dataset             | COCO2017                    |
@@ -235,3 +307,17 @@ python eval.py --device_id 0 --dataset coco --checkpoint_path LOG4/ssd-500_458.c
 | outputs             | mAP                         |
 | Accuracy            | IoU=0.50: 24.1%             |
 | Model for inference | 55M(.ckpt file)             |
+
+#### 310Inference Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | SSD ghostnet                |
+| Resource            | Ascend 310; OS Euler2.8     |
+| Uploaded Date       | 06/01/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | COCO2017                    |
+| batch_size          | 1                           |
+| outputs             | mAP                         |
+| Accuracy            | IoU=0.50: 24.2%             |
+| Model for inference | 52.5M(.ckpt file)           |

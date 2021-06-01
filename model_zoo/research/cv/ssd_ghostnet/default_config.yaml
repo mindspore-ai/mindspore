@@ -82,6 +82,8 @@ coco_classes: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane
                      'refrigerator', 'book', 'clock', 'vase', 'scissors',
                      'teddy bear', 'hair drier', 'toothbrush']
 num_classes: 81
+result_path: ""
+img_path: ""
 # The annotation.json position of voc validation dataset.
 voc_root: ""
 # voc original dataset.
