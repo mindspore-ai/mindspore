@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <memory>
 #include <chrono>
+#include <nlohmann/json.hpp>
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -67,11 +68,18 @@ class Sampling : public Profiling {
   // virtual Status TestPrint() = 0;
   virtual Status Analyze() = 0;
   virtual ~Sampling() = default;
+  Status ReadJson(nlohmann::json *output);
 };
 
 // Tracing is class of profiling which record samples upon request.
 class Tracing : public Profiling {
-  // Tracing does not define a fixed interface to provide flexible on data recording.
+ public:
+  // Tracing has minimal interface to provide flexible on data recording.
+  // It only includes some common routines.
+  Status SaveToFile();
+
+ protected:
+  std::vector<std::string> value_;
 };
 
 // ProfilingManager is a class manages all profiling infrastructure
