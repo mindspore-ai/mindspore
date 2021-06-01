@@ -113,6 +113,7 @@ class KernelGraph : public FuncGraph {
   ParameterPtr NewParameter(const abstract::AbstractBasePtr &abstract);
   ValueNodePtr NewValueNode(const AbstractBasePtr &abstract, const ValuePtr &value);
   ValueNodePtr NewValueNode(const ValueNodePtr &value_node = nullptr);
+  ValueNodePtr NewValueNode(const tensor::TensorPtr &input_tensor);
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }

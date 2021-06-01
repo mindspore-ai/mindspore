@@ -289,22 +289,6 @@ ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph) {
   return new_value_node;
 }
 
-ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_node = std::make_shared<ValueNode>(input_tensor);
-  MS_EXCEPTION_IF_NULL(value_node);
-  // construct abstract of value node
-  auto type_of_tensor = input_tensor->Dtype();
-  auto shape_of_tensor = input_tensor->shape();
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
-  value_node->set_abstract(abstract);
-  // add value node to graph
-  auto input_value_node = graph->NewValueNode(value_node);
-  graph->AddValueNodeToGraph(input_value_node);
-  return input_value_node;
-}
-
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
                                      int64_t tensor_mask) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -721,7 +705,8 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if ((is_depend && input_idx > 1) || (is_updatestate && input_idx > 2)) {
+    } else if ((is_depend && input_idx > kRealInputIndexInDepend) ||
+               (is_updatestate && input_idx > kUpdateStateRealInput)) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
@@ -780,8 +765,8 @@ CNodePtr SessionBasic::CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr
   // switch input generalizes partial
   std::vector<AnfNodePtr> partial_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimPartial->name()))};
   if (AnfAlgo::CheckPrimitiveType(node_input, prim::kPrimPartial)) {
-    auto partial_node = graph->GetBackendAnfByFrontAnf(node_input);
-    return partial_node->cast<CNodePtr>();
+    auto backend_node = graph->GetBackendAnfByFrontAnf(node_input);
+    return backend_node->cast<CNodePtr>();
   } else if (node_input->isa<ValueNode>() && IsValueNode<FuncGraph>(node_input)) {
     partial_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(node_input));
   } else {
@@ -811,8 +796,7 @@ std::vector<AnfNodePtr> SessionBasic::CreateCallSwitchInputs(const CNodePtr &cno
   auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
   auto switch_cnode = cnode_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(switch_cnode);
-  constexpr size_t cnode_size = 2;
-  if (cnode->inputs().size() < cnode_size) {
+  if (cnode->inputs().size() <= 1) {
     cnode_inputs = switch_cnode->inputs();
     return cnode_inputs;
   }
@@ -1819,8 +1803,8 @@ AnfNodePtr GetSupportedInternalNode(const AnfNodePtr &front_node) {
     auto cnode = front_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto &inputs = cnode->inputs();
-    if (inputs.size() > 2) {
-      return GetSupportedInternalNode(inputs[1]);
+    if (inputs.size() >= kDependInputSize) {
+      return GetSupportedInternalNode(inputs[kRealInputIndexInDepend]);
     }
   }
   return nullptr;
@@ -2004,7 +1988,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   }
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     if (tensors_mask[i] == kValueNodeTensorMask) {
-      auto value_node = ConstructRunOpValueNode(graph, input_tensors[i]);
+      auto value_node = graph->NewValueNode(input_tensors[i]);
       inputs.push_back(value_node);
       continue;
     }

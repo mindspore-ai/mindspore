@@ -475,6 +475,7 @@ constexpr auto kUpdateStateRealInput = 2;
 // index define of Load
 constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
+
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_ChannelFirst = "ChannelFirst";

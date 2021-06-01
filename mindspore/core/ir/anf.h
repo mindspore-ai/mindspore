@@ -35,6 +35,7 @@
 #include "ir/primal_attr.h"
 #include "ir/primal_debug_info.h"
 #include "utils/info.h"
+#include "utils/ms_utils.h"
 
 // A MindSpore ANF IR defined here.
 // with BNF followed:
