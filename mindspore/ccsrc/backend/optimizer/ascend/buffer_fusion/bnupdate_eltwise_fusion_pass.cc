@@ -40,19 +40,6 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
   auto bnupdate = getitem->input(kIndex1);
   MS_EXCEPTION_IF_NULL(bnupdate);
   if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
-    std::vector<int64_t> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
-    for (auto out_getitem : manager->node_users()[bnupdate]) {
-      MS_EXCEPTION_IF_NULL(out_getitem.first);
-      if (!AnfAlgo::CheckPrimitiveType(out_getitem.first, prim::kPrimTupleGetItem)) {
-        continue;
-      }
-      auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(out_getitem_ptr);
-      auto input2 = out_getitem_ptr->input(kIndex2);
-      auto output_idx = GetValue<int64_t>(GetValueNode(input2));
-      output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
-    }
-    AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), bnupdate);
     std::unordered_set<AnfNodePtr> record{cnode, bnupdate};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);

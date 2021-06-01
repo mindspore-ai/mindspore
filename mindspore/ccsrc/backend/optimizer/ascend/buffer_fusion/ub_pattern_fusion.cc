@@ -329,6 +329,36 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
   }
 }
 
+void SetOutputUsedNumAttr(const session::KernelGraph &kernel_graph,
+                          const std::unordered_map<int64_t, BufferFusionInfo_t> &buffer_fusion_infos) {
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (auto &fusion_info : buffer_fusion_infos) {
+    auto &fusion_nodes = fusion_info.second.anf_nodes;
+    for (auto iter = fusion_nodes.begin(); iter != fusion_nodes.end() - 1; ++iter) {
+      auto node = *iter;
+      auto output_num = AnfAlgo::GetOutputTensorNum(node);
+      std::vector<int64_t> output_used_num(output_num, 0);
+      if (output_num == 1) {
+        output_used_num[0] = SizeToLong(manager->node_users()[node].size());
+      } else {
+        for (auto out_getitem : manager->node_users()[node]) {
+          MS_EXCEPTION_IF_NULL(out_getitem.first);
+          if (!AnfAlgo::CheckPrimitiveType(out_getitem.first, prim::kPrimTupleGetItem)) {
+            continue;
+          }
+          auto out_getitem_ptr = out_getitem.first->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(out_getitem_ptr);
+          auto getitem_input2 = out_getitem_ptr->input(kInputNodeOutputIndexInTupleGetItem);
+          auto output_idx = GetValue<int64_t>(GetValueNode(getitem_input2));
+          output_used_num[output_idx] = SizeToLong(manager->node_users()[out_getitem.first].size());
+        }
+      }
+      AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), node);
+    }
+  }
+}
+
 void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<AnfNodePtr> &outputs_list,
                          const AnfNodePtr &fusion_kernel) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -402,6 +432,7 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
   GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos);
   // Remove the fusion infos which will produce a circle if do fusion
   RemoveCircle(*kernel_graph, buffer_fusion_infos);
+  SetOutputUsedNumAttr(*kernel_graph, *buffer_fusion_infos);
 
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
     buffer_fusion_info.second.kernel_build_info =
