@@ -43,14 +43,10 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("ReLU infer", input_args.size(), kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("ReLU infer", input_args.size(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(x_type_map);
-  auto x_type = x_type_map->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(x_type);
-  std::set<TypePtr> valid_x_type = {kTensorType};
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_x_type, prim_name);
+  auto x_type = input_args[0]->BuildType();
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
 }
 }  // namespace
 AbstractBasePtr ReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
