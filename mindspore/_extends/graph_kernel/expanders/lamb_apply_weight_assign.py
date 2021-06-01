@@ -52,5 +52,6 @@ class LambApplyWeightAssign(Expander):
 
         # input_param - ratio_update_with_ir
         next_param = graph_builder.emit('Sub', [input_param, ratio_update_with_ir])
+        next_param = graph_builder.emit('Assign', [input_param, next_param])
 
         return [next_param]
