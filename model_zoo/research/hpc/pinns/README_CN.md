@@ -83,7 +83,7 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
   bash /scripts/run_standalone_Schrodinger_train.sh [DATASET_PATH]
 
   # 运行评估示例
-  python eval.py [CHECKPOINT_PATH] --scenario=Schrodinger ----datapath=[DATASET_PATH] > eval.log
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
   OR
   bash /scriptsrun_standalone_Schrodinger_eval.sh [CHECKPOINT_PATH] [DATASET_PATH]
   ```
@@ -161,7 +161,7 @@ PINNs是针对偏微分方程问题构造神经网络的思路，具体的模型
   在运行以下命令之前，请检查用于评估的检查点路径。请将检查点路径设置为绝对全路径，例如“./ckpt/checkpoint_PINNs_Schrodinger-50000_1.ckpt”。
 
   ```bash
-  python eval.py [CHECKPOINT_PATH] --scenario=Schrodinger ----datapath=[DATASET_PATH] > eval.log
+  python eval.py --ckpoint_path=[CHECKPOINT_PATH] --scenario=Schrodinger --datapath=[DATASET_PATH] > eval.log
   ```
 
   上述python命令将在后台运行，您可以通过eval.log文件查看结果。测试误差如下：
