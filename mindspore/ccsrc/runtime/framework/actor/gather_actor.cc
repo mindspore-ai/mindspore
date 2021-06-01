@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/gather_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
 #include "mindrt/include/async/async.h"
@@ -23,21 +24,10 @@
 
 namespace mindspore {
 namespace runtime {
-void GatherActor::Init() {
+
+GatherActor::GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid)
+    : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid) {
   input_datas_num_ = data_nodes_.size();
-  input_device_tensors_.resize(input_datas_num_);
-  output_data_by_output_index_.resize(input_datas_num_);
-
-  for (auto &data_arrow : output_data_arrows_) {
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    if (IntToSize(data_arrow->from_output_index_) >= input_datas_num_) {
-      MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
-    }
-
-    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    output_data_.emplace_back(data.get());
-    output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
-  }
 }
 
 size_t GatherActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
@@ -75,6 +65,20 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_control_arrows_) {
     Async(output_control, &OpActor::RunOpControl, source_aid, context);
+  }
+
+  // Send graph output result.
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    size_t from_index = result_arrow->from_output_index_;
+    const auto &front_node = data_nodes_[from_index];
+    for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
+      if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
+          input_device_tensors_[from_index]) {
+        Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, backend_node.second,
+              result_arrow->to_input_index_, context);
+      }
+    }
   }
 }
 

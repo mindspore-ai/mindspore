@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ACTOR_COMMON_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ACTOR_COMMON_H_
 
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include "mindrt/include/actor/op_actor.h"
+#include "runtime/device/device_address.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
@@ -26,6 +29,7 @@
 namespace mindspore {
 namespace runtime {
 using tensor::TensorPtr;
+using DeviceTensor = mindspore::device::DeviceAddress;
 
 // The execution result of actor.
 constexpr int kSuccess = 0;
@@ -60,6 +64,10 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
 
 // Judge whether the device tensor of the node is persistent or not.
 bool IsPersistentDeviceTensor(const AnfNodePtr &node);
+
+// Judge whether the front node is in a gather actor.
+bool IsGatherActor(const AnfNodePtr &front_node,
+                   const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor_);
 }  // namespace runtime
 }  // namespace mindspore
 

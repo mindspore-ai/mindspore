@@ -105,5 +105,17 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   }
   return false;
 }
+
+bool IsGatherActor(const AnfNodePtr &front_node,
+                   const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor_) {
+  if (front_node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(front_node->cast<ParameterPtr>())) &&
+      front_node->func_graph() != nullptr) {
+    const auto &func_graph = front_node->func_graph();
+    if (func_graph != nullptr && actor_name_to_actor_.find(func_graph->ToString()) != actor_name_to_actor_.end()) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace runtime
 }  // namespace mindspore

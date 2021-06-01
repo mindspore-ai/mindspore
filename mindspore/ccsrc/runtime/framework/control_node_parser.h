@@ -30,13 +30,23 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::session::KernelGraph;
 using mindspore::session::KernelWithIndex;
+
+constexpr int kInvalidBranchID = -1;
+constexpr int kMainBranchID = 0;
+constexpr int kSubBranchStartID = 1;
 
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 
 // ControlNodeParser is a series of tool functions used to parse control nodes.
 class ControlNodeParser {
  public:
+  // Check whether node is a call node, there are two types of call nodes:
+  // 1. First input of node is a cnode.
+  // 2. First input of node is a funcgraph value node.
+  static bool IsCallNode(const AnfNodePtr &node);
+
   // Fetch all the relationships between front parameters and backend parameters.The front parameters
   // include two parts:
   // 1. The parameter from kernel graph.
@@ -54,17 +64,18 @@ class ControlNodeParser {
   // multiple branch outputs, there will be multiple output nodes.
   static std::vector<AnfNodePtr> FetchAllBranchOutputs(const FuncGraphPtr &func_graph);
 
+  // Find all funcgraphs that the call node will call.
+  static std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const CNodePtr &node);
+
+  // Get front node by backend node.
+  static AnfNodePtr GetFrontNodeByBackendNode(const AnfNodePtr &backend_node);
+
  private:
-  // Check whether node is a call node, there are two types of call nodes:
-  // 1. First input of node is a cnode.
-  // 2. First input of node is a funcgraph value node.
-  static bool IsCallNode(const AnfNodePtr &node);
+  // Get the pos input of call node to funcgraph.
+  AnfNodePtr GetCallNodeInputByPos(const AnfNodePtr &call_node, const FuncGraphPtr &func_graph, const size_t pos);
 
   // Get the funcgraph in partial node.
   static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node);
-
-  // Find all funcgraphs that the call node will call.
-  static std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const CNodePtr &node);
 
   // Find the output of the funcgraph, if the output is a call node, return the output of the funcgraph
   // called by the call node.

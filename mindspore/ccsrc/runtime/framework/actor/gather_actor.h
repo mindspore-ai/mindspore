@@ -28,6 +28,7 @@
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_graph.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
@@ -36,8 +37,7 @@ namespace runtime {
 // Gather actor is the entrance of sub funcgraph. Graph input is sent to it and sent to other actors by gather actor.
 class GatherActor : public OpActor<DeviceTensor> {
  public:
-  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid)
-      : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid) {}
+  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid);
   ~GatherActor() override = default;
 
   // Get the index of the parameter, the data_node needs to be the front node.
@@ -45,8 +45,6 @@ class GatherActor : public OpActor<DeviceTensor> {
 
   // The kernel actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
-
-  void Init() override;
 
  private:
   friend class GraphScheduler;
@@ -66,6 +64,11 @@ class GatherActor : public OpActor<DeviceTensor> {
   // Parameters of sub funcgraph, which is the front node.
   std::vector<AnfNodePtr> data_nodes_;
 
+  // When the output is a parameter of the subgraph, the gather actor needs to send the anfnode to the output actor,
+  // so all the nodes that may send the device tensor to gather actor are recorded. When the anfnode needs to be sent
+  // to the output actor, the corresponding backend node will be found from the map.
+  std::unordered_map<AnfNodePtr, std::vector<KernelWithIndex>> front_to_backend_parameter_;
+
   // The dependent input data number.
   size_t input_datas_num_{0};
   // The dependent input controls number.
@@ -80,7 +83,7 @@ class GatherActor : public OpActor<DeviceTensor> {
 
   // When the result of the graph is sent to the output actor, the gather actor of the graph needs
   // to send branch_id to the output actor to determine the corresponding weight.
-  int branch_id_;
+  int branch_id_{kInvalidBranchID};
 };
 
 using GatherActorPtr = std::shared_ptr<GatherActor>;

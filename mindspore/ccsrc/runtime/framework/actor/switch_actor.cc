@@ -115,7 +115,6 @@ void SwitchActor::InitSwitchLayer() {
   auto branch_nodes = inputs[kSwitchLayerBranchPos]->cast<CNodePtr>()->inputs();
   branch_total_inputs_.resize(branch_nodes.size() - 1);
   branch_inputs_pos_.resize(branch_nodes.size() - 1);
-  branch_device_tensor_store_keys_.resize(branch_nodes.size() - 1);
   branch_func_graph_.resize(branch_nodes.size() - 1);
   output_branch_arrows_.resize(branch_nodes.size() - 1);
 
@@ -135,9 +134,20 @@ void SwitchActor::AddCommonInput(const AnfNodePtr &node) {
   }
 }
 
+size_t SwitchActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
+  const auto &iter = find(input_nodes_.begin(), input_nodes_.end(), data_node);
+  if (iter == input_nodes_.end()) {
+    MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope()
+                      << " is not exist in gather actor:" << GetAID();
+  }
+  return iter - input_nodes_.begin();
+}
+
 void SwitchActor::AddInput(const AnfNodePtr &node, const size_t branch) {
   branch_total_inputs_[branch].push_back(node);
-  if (IsPersistentDeviceTensor(node)) {
+
+  // Switch actor only receives parameter, updatestate node output is U, need to be skipped.
+  if (IsPersistentDeviceTensor(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
     return;
   }
   auto iter = find(input_nodes_.begin(), input_nodes_.end(), node);
@@ -178,9 +188,6 @@ size_t SwitchActor::GetIndex() {
   if (index < 0) {
     index += branch_func_graph_.size();
   }
-  if (index > static_cast<int64_t>(SIZE_MAX)) {
-    MS_LOG(EXCEPTION) << "Index is too large:" << index;
-  }
   return static_cast<size_t>(index);
 }
 
@@ -200,9 +207,8 @@ bool SwitchActor::CheckLaunchCondition(OpContext<DeviceTensor> *context) const {
 
 void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_context_);
-  auto input_size = input_datas_num_ + branch_device_tensor_store_keys_.size();
-  input_device_tensors_.resize(input_size);
+
+  input_device_tensors_.resize(input_datas_num_);
   auto data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
@@ -211,17 +217,6 @@ void SwitchActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
     }
   }
   data_iter->second.clear();
-
-  for (auto &device_tensor_store_key : branch_device_tensor_store_keys_) {
-    input_device_tensors_[device_tensor_store_key.first] =
-      DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second, device_context_->GetDeviceAddressType());
-    if (input_device_tensors_[device_tensor_store_key.first] == nullptr) {
-      std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_context_->GetDeviceAddressType()));
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
-  }
 }
 
 void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
