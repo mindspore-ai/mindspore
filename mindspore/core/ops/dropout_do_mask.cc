@@ -28,6 +28,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
+template <typename T>
+T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
+  auto value = reinterpret_cast<T *>(keep_prop->data_c());
+  MS_EXCEPTION_IF_NULL(value);
+  T min = (T)0.0;
+  T max = (T)1.0;
+  if (*value < min || *value > max) {
+    MS_EXCEPTION(ValueError) << "DropoutDoMask's keep_prop input value must in the range [0, 1], but got " << *value;
+  }
+  return *value;
+}
+
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
@@ -63,17 +75,21 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   auto keep_prop = input_args[2];
   MS_EXCEPTION_IF_NULL(keep_prop);
   auto keep_prop_value = keep_prop->BuildValue();
+  MS_EXCEPTION_IF_NULL(keep_prop_value);
 
   if (keep_prop->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kFloat32, kFloat64};
     CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->BuildType(), keep_prop_valid_types, op_name);
     if (keep_prop_value->isa<tensor::Tensor>()) {
-      auto tensor = keep_prop_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      auto value = reinterpret_cast<float *>(tensor->data_c());
-      MS_EXCEPTION_IF_NULL(value);
-      if (*value < 0 || *value > 1) {
-        MS_EXCEPTION(ValueError) << "DropoutDoMask's keep_prop input value must in the range [0, 1].";
+      auto keep_prop_tensor = keep_prop_value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(keep_prop_tensor);
+      TypeId tensor_type = keep_prop_tensor->data_type();
+      if (tensor_type == TypeId::kNumberTypeFloat16) {
+        (void)GetAndCheckKeepProp<float16>(keep_prop_tensor);
+      } else if (tensor_type == TypeId::kNumberTypeFloat32) {
+        (void)GetAndCheckKeepProp<float>(keep_prop_tensor);
+      } else {
+        (void)GetAndCheckKeepProp<double>(keep_prop_tensor);
       }
     }
   } else if (keep_prop->isa<abstract::AbstractScalar>()) {

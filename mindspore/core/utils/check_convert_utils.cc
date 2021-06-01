@@ -599,7 +599,7 @@ void CheckAndConvertUtils::CheckMode(const std::string &class_name) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_EXCEPTION(NotSupportError) << class_name << "operator does not support PyNative mode.";
+    MS_EXCEPTION(NotSupportError) << class_name << " operator does not support PyNative mode.";
   }
 }
 
