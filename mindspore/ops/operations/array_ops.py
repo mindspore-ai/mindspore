@@ -74,7 +74,7 @@ class _ScatterOp(PrimitiveWithInfer):
         return x_dtype
 
 
-class _ScatterOp_Dynamic(PrimitiveWithCheck):
+class _ScatterOpDynamic(PrimitiveWithCheck):
     """
     Defines Scatter operators with dynamic shape
     """
@@ -98,7 +98,7 @@ class _ScatterOp_Dynamic(PrimitiveWithCheck):
 
     @prim_attr_register
     def __init__(self, use_locking=False):
-        """Initialize _ScatterOp_Dynamic"""
+        """Initialize _ScatterOpDynamic"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
         self.add_prim_attr('side_effect_mem', True)
@@ -3543,7 +3543,7 @@ class TensorScatterAdd(PrimitiveWithInfer):
         return x_dtype
 
 
-class ScatterUpdate(_ScatterOp_Dynamic):
+class ScatterUpdate(_ScatterOpDynamic):
     r"""
     Updates tensor values by using input indices and value.
 
@@ -3765,7 +3765,7 @@ class ScatterMin(_ScatterOp):
     """
 
 
-class ScatterAdd(_ScatterOp_Dynamic):
+class ScatterAdd(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the addition operation.
 

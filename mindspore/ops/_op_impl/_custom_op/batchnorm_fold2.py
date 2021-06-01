@@ -23,7 +23,7 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 SHAPE_SIZE_LIMIT = 2147483648
 
-batchnorm_fold2_op_info = TBERegOp("BatchNormFold2_D") \
+batchnorm_fold2_op_info = TBERegOp("BatchNormFold2D") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("batchnorm_fold2.so") \

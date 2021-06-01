@@ -332,11 +332,13 @@ class AkgRegOp(RegOp):
 
 
 class AkgGpuRegOp(AkgRegOp):
+    """Class for AkgGpu op info register"""
     def __init__(self, op_name):
         super(AkgGpuRegOp, self).__init__(op_name, "CUDA")
 
 
 class AkgAscendRegOp(AkgRegOp):
+    """Class for AkgAscend op info register"""
     def __init__(self, op_name):
         super(AkgAscendRegOp, self).__init__(op_name, "AiCore")
 

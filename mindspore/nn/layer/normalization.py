@@ -94,12 +94,7 @@ class _BatchNorm(Cell):
             self.device_list = [i for i in range(0, self.rank_size)]
             self.rank_list = self.list_group(self.device_list, self.group_device_num)
             self.rank_list_idx = len(self.rank_list)
-            for i in range(self.rank_list_idx):
-                if self.rank_id in self.rank_list[i]:
-                    self.is_global = True
-                    if SYNC_BN_GROUP_NAME == "":
-                        SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
-                        management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
+            self._create_global_groups()
         # for SyncBatchNorm
         if self.process_groups != 0:
             self.rank_id = get_rank()
@@ -107,14 +102,7 @@ class _BatchNorm(Cell):
             if self.process_groups is not None:
                 validator.check_isinstance("process_groups", self.process_groups, list)
                 self._check_rank_ids(self.process_groups, self.rank_size)
-                for i in range(len(self.process_groups)):
-                    validator.check_isinstance("process_groups[" + str(i) + "]", self.process_groups[i], list)
-                    self.group_device_num = len(self.process_groups[i])
-                    if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
-                        self.is_global = True
-                        if SYNC_BN_GROUP_NAME == "":
-                            SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
-                            management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
+                self._create_sync_groups()
             elif self.rank_size > 1:
                 self.is_global = True
                 self.group_device_num = self.rank_size
@@ -182,6 +170,26 @@ class _BatchNorm(Cell):
             if rid in seen:
                 raise ValueError("rank id in process_groups should not be duplicated.")
             seen.add(rid)
+
+    def _create_global_groups(self):
+        for i in range(self.rank_list_idx):
+            if self.rank_id in self.rank_list[i]:
+                self.is_global = True
+                global SYNC_BN_GROUP_NAME
+                if SYNC_BN_GROUP_NAME == "":
+                    SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
+                    management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
+
+    def _create_sync_groups(self):
+        for i in range(len(self.process_groups)):
+            validator.check_isinstance("process_groups[" + str(i) + "]", self.process_groups[i], list)
+            self.group_device_num = len(self.process_groups[i])
+            if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
+                self.is_global = True
+                global SYNC_BN_GROUP_NAME
+                if SYNC_BN_GROUP_NAME == "":
+                    SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
+                    management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
 
     def construct(self, x):
         _shape_check_bn(self.shape(x), self.input_dims)
