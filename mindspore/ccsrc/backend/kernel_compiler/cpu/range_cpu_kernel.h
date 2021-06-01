@@ -36,9 +36,6 @@ class RangeCPUKernel : public CPUKernel {
 
  private:
   TypeId dtype_{kTypeUnknown};
-  int64_t start_;
-  int64_t limit_;
-  int64_t delta_;
 };
 
 MS_REG_CPU_KERNEL(Range, KernelAttr(), RangeCPUKernel);

@@ -17,12 +17,12 @@
 from mindspore.ops.op_info_register import op_info_register, CpuRegOp, DataType
 
 range_op_info = CpuRegOp("Range") \
-    .input(0, "x", "required") \
-    .output(0, "y", "required") \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
+    .input(0, "start", "required") \
+    .input(1, "limit") \
+    .input(2, "delta") \
+    .output(0, "output", "required") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
