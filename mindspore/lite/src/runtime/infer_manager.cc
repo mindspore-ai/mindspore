@@ -32,6 +32,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
                      const void *primitive, std::set<std::string> &&providers) {
   std::vector<tensor::MSTensor *> in_tensors(inputs.begin(), inputs.end());
   std::vector<tensor::MSTensor *> out_tensors(outputs.begin(), outputs.end());
+  if (primitive == nullptr) {
+    return RET_NOT_SUPPORT;
+  }
   auto prim_type = GetPrimitiveType(primitive);
   std::shared_ptr<kernel::KernelInterface> kernel_interface = nullptr;
   if (prim_type == schema::PrimitiveType_Custom) {
