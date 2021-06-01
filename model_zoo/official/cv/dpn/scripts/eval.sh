@@ -18,5 +18,5 @@ DATA_DIR=$2
 PATH_CHECKPOINT=$3
 
 python eval.py  \
-    --pretrained=$PATH_CHECKPOINT \
-    --data_dir=$DATA_DIR > eval_log.txt 2>&1 &
+    --checkpoint_path=$PATH_CHECKPOINT \
+    --eval_data_dir=$DATA_DIR > eval_log.txt 2>&1 &

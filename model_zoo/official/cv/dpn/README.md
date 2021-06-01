@@ -89,13 +89,13 @@ The DPN models use ImageNet-1K dataset to train and validate in this repository.
 To train the DPNs, run the shell script `scripts/train_standalone.sh` with the format below:
 
 ```shell
-sh scripts/train_standalone.sh [device_id] [dataset_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
+sh scripts/train_standalone.sh [device_id] [train_data_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
 ```
 
 To validate the DPNs, run the shell script `scripts/eval.sh` with the format below:
 
 ```shell
-sh scripts/eval.sh [device_id] [dataset_dir] [pretrained_ckpt]
+sh scripts/eval.sh [device_id] [eval_data_dir] [checkpoint_path]
 ```
 
 # [Script Description](#contents)
@@ -116,6 +116,11 @@ The structure of the files in this repository is shown below.
     │   ├─ dpn.py                 // dpns implementation
     │   ├─ imagenet_dataset.py    // dataset processor and provider
     │   └─ lr_scheduler.py        // dpn learning rate scheduler
+    ├── model_utils
+        ├──config.py             // Parameter config
+        ├──moxing_adapter.py     // modelarts device configuration
+        ├──device_adapter.py     // Device Config
+        ├──local_adapter.py      // local device config
     ├─ eval.py                    // evaluation script
     ├─ train.py                   // training script
     ├─ export.py                  // export model
@@ -124,11 +129,11 @@ The structure of the files in this repository is shown below.
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in `src/config.py`
+Parameters for both training and evaluation and export can be set in `default_config.yaml`
 
 - Configurations for DPN92 with ImageNet-1K dataset
 
-```python
+```default_config.yaml
 # model config
 config.image_size = (224,224)               # inpute image size
 config.num_classes = 1000                   # dataset class number
@@ -174,7 +179,7 @@ config.keep_checkpoint_max = 3              # only keep the last keep_checkpoint
 Run `scripts/train_standalone.sh` to train the model standalone. The usage of the script is:
 
 ```shell
-sh scripts/train_standalone.sh [device_id] [dataset_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
+sh scripts/train_standalone.sh [device_id] [train_data_dir] [ckpt_path_to_save] [eval_each_epoch] [pretrained_ckpt(optional)]
 ```
 
 For example, you can run the shell command below to launch the training procedure.
@@ -212,10 +217,16 @@ The model checkpoint will be saved into `[ckpt_path_to_save]`.
 
 #### Running on Ascend
 
+  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+
+  Please follow the instructions in the link below:
+
+  <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools>.
+
 Run `scripts/train_distributed.sh` to train the model distributed. The usage of the script is:
 
 ```text
-sh scripts/train_distributed.sh [rank_table] [dataset_dir] [ckpt_path_to_save]  [rank_size] [eval_each_epoch] [pretrained_ckpt(optional)]
+sh scripts/train_distributed.sh [rank_table] [train_data_dir] [ckpt_path_to_save]  [rank_size] [eval_each_epoch] [pretrained_ckpt(optional)]
 ```
 
 For example, you can run the shell command below to launch the training procedure.
@@ -243,7 +254,7 @@ The model checkpoint will be saved into `[ckpt_path_to_save]`.
 Run `scripts/eval.sh` to evaluate the model with one Ascend processor. The usage of the script is:
 
 ```text
-sh scripts/eval.sh [device_id] [dataset_dir] [pretrained_ckpt]
+sh scripts/eval.sh [device_id] [eval_data_dir] [checkpoint_path]
 ```
 
 For example, you can run the shell command below to launch the validation procedure.
@@ -257,6 +268,58 @@ The above shell script will run evaluation in the background. You can view the r
 ```text
 Evaluation result: {'top_5_accuracy': 0.9449223751600512, 'top_1_accuracy': 0.7911731754161332}.
 DPN evaluate success!
+```
+
+- running on ModelArts
+- If you want to train the model on modelarts, you can refer to the [official guidance document] of modelarts (https://support.huaweicloud.com/modelarts/)
+
+```python
+#  Example of using distributed training dpn on modelarts :
+#  Data set storage method
+
+#  ├── ImageNet_Original         # dir
+#    ├── train                   # train dir
+#      ├── train_dataset        # train_dataset dir
+#      ├── train_predtrained    # predtrained dir if exists
+#    ├── eval                    # eval dir
+#      ├── eval_dataset         # eval dataset dir
+#      ├── checkpoint           # ckpt files dir
+
+# (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
+#       a. set "enable_modelarts=True" 。
+#          set "is_distributed=1"
+#          set "ckpt_path=/cache/train/outputs_imagenet/"
+#          set "train_data_dir=/cache/data/train/train_dataset/"
+#          set "pretrained=/cache/data/train/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
+
+#       b. add "enable_modelarts=True" Parameters are on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (2) Set the path of the network configuration file  "_config_path=/The path of config in default_config.yaml/"
+# (3) Set the code path on the modelarts interface "/path/dpn"。
+# (4) Set the model's startup file on the modelarts interface "train.py" 。
+# (5) Set the data path of the model on the modelarts interface ".../ImageNet_Original"(choices ImageNet_Original Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path" 。
+# (6) start trainning the model。
+
+# Example of using model inference on modelarts
+# (1) Place the trained model to the corresponding position of the bucket。
+# (2) chocie a or b。
+#       a. set "enable_modelarts=True" 。
+#          set "eval_data_dir=/cache/data/eval/eval_dataset/"
+#          set "checkpoint_path=/cache/data/eval/checkpoint/"
+
+#       b. Add "enable_modelarts=True" parameter on the interface of modearts。
+#          Set the parameters required by method a on the modelarts interface
+#          Note: The path parameter does not need to be quoted
+
+# (3) Set the path of the network configuration file "_config_path=/The path of config in default_config.yaml/"
+# (4) Set the code path on the modelarts interface "/path/dpn"。
+# (5) Set the model's startup file on the modelarts interface "eval.py" 。
+# (6) Set the data path of the model on the modelarts interface ".../ImageNet_Original"(choices ImageNet_Original Folder path) ,
+# The output path of the model "Output file path" and the log path of the model "Job log path"  。
+# (7) Start model inference。
 ```
 
 # [Model Description](#contents)

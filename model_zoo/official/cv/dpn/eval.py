@@ -13,70 +13,53 @@
 # limitations under the License.
 # ============================================================================
 """DPN model eval with MindSpore"""
-import os
-import argparse
-
 from mindspore import context
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.model import Model
 from mindspore.common import set_seed
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-
-from src.dpn import dpns
-from src.config import config
 from src.imagenet_dataset import classification_dataset
+from src.dpn import dpns
+from src.crossentropy import CrossEntropy
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
+
+
 set_seed(1)
+
+
 # set context
-device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE,
-                    device_target="Ascend", save_graphs=False, device_id=device_id)
+                    device_target=config.device_target, save_graphs=False, device_id=get_device_id())
 
 
-def parse_args():
-    """parameters"""
-    parser = argparse.ArgumentParser('dpn evaluating')
-    # dataset related
-    parser.add_argument('--data_dir', type=str, default='', help='eval data dir')
-    # network related
-    parser.add_argument('--pretrained', type=str, default='', help='ckpt path to load')
-    args, _ = parser.parse_known_args()
-    args.image_size = config.image_size
-    args.num_classes = config.num_classes
-    args.batch_size = config.batch_size
-    args.num_parallel_workers = config.num_parallel_workers
-    args.backbone = config.backbone
-    args.loss_scale_num = config.loss_scale_num
-    args.rank = config.rank
-    args.group_size = config.group_size
-    args.dataset = config.dataset
-    return args
-
-
-def dpn_evaluate(args):
+@moxing_wrapper(pre_process=None)
+def dpn_evaluate():
     # create evaluate dataset
-    eval_path = os.path.join(args.data_dir, 'val')
-    eval_dataset = classification_dataset(eval_path,
-                                          image_size=args.image_size,
-                                          num_parallel_workers=args.num_parallel_workers,
-                                          per_batch_size=args.batch_size,
+    # eval_path = os.path.join(config.eval_data_dir, 'val')
+    eval_dataset = classification_dataset(config.eval_data_dir,
+                                          image_size=config.image_size,
+                                          num_parallel_workers=config.num_parallel_workers,
+                                          per_batch_size=config.batch_size,
                                           max_epoch=1,
-                                          rank=args.rank,
+                                          rank=config.rank,
                                           shuffle=False,
-                                          group_size=args.group_size,
+                                          group_size=config.group_size,
                                           mode='eval')
 
     # create network
-    net = dpns[args.backbone](num_classes=args.num_classes)
+    net = dpns[config.backbone](num_classes=config.num_classes)
     # load checkpoint
-    load_param_into_net(net, load_checkpoint(args.pretrained))
-    print("load checkpoint from [{}].".format(args.pretrained))
+    load_param_into_net(net, load_checkpoint(config.checkpoint_path))
+    print("load checkpoint from [{}].".format(config.checkpoint_path))
     # loss
-    if args.dataset == "imagenet-1K":
+    if config.dataset == "imagenet-1K":
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     else:
-        if not args.label_smooth:
-            args.label_smooth_factor = 0.0
-        loss = CrossEntropy(smooth_factor=args.label_smooth_factor, num_classes=args.num_classes)
+        if not config.label_smooth:
+            config.label_smooth_factor = 0.0
+        loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.num_classes)
 
         # create model
     model = Model(net, amp_level="O2", keep_batchnorm_fp32=False, loss_fn=loss,
@@ -87,5 +70,5 @@ def dpn_evaluate(args):
 
 
 if __name__ == '__main__':
-    dpn_evaluate(parse_args())
+    dpn_evaluate()
     print('DPN evaluate success!')
