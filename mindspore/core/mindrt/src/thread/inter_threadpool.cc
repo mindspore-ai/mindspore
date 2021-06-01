@@ -20,6 +20,11 @@
 namespace mindspore {
 
 InterThreadPool::~InterThreadPool() {
+  {
+    THREAD_INFO("wait util actor queue is empty");
+    std::unique_lock<std::mutex> _l(actor_mutex_);
+    finish_cond_var_.wait(_l, [this]() { return actor_queue_.empty(); });
+  }
   exit_ = true;
   alive_ = false;
   actor_cond_var_.notify_all();
@@ -38,6 +43,7 @@ void InterThreadPool::ActorThreadRun() {
     actor_queue_.pop();
   }
   actor->Run();
+  finish_cond_var_.notify_one();
 }
 
 void InterThreadPool::ThreadAsyncRun(Worker *worker) {
