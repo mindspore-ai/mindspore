@@ -40,5 +40,4 @@ NativeRuntimeContext::~NativeRuntimeContext() { TerminateImpl(); }
 TreeConsumer *RuntimeContext::GetConsumer() { return tree_consumer_.get(); }
 
 Status RuntimeContext::Init() { return GlobalInit(); }
-
 }  // namespace mindspore::dataset
