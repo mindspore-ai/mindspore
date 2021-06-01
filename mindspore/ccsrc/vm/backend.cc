@@ -246,6 +246,9 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphPtr root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
+  // Register a summary callback function, which is called in the final stages of summary.
+  runtime::GraphCompiler::GetInstance().RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
+
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
@@ -468,6 +471,8 @@ VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &
   (void)std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(outputs.elements_),
                        [](tensor::TensorPtr &tensor) { return std::move(tensor); });
   MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
+
+  runtime::GraphCompiler::GetInstance().Summary(graph_compiler_info.graphs_);
   return outputs;
 }
 

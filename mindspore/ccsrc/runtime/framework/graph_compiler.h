@@ -29,6 +29,7 @@
 namespace mindspore {
 using device::DeviceContext;
 using mindspore::tensor::TensorPtr;
+using session::CallBackFunc;
 using session::InputTensorInfo;
 using session::KernelWithIndex;
 using session::OpRunInfo;
@@ -93,6 +94,11 @@ class GraphCompiler {
   // Bucket is used in PyNative distributed training mode, one bucket handles all resource to launch and sync allreduce
   // operator.
   void ClearAllBucket(const GraphId &graph_id);
+
+  // Register a summary callback function, which is called in the final stages of summary.
+  void RegisterSummaryCallBackFunc(const CallBackFunc &callback) const;
+  // Execute graph summary.
+  void Summary(const std::vector<KernelGraphPtr> &graphs) const;
 
  private:
   GraphCompiler() = default;
