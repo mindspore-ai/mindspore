@@ -83,6 +83,7 @@ def modelarts_process():
         print('#' * 200, os.listdir(os.path.join(config.data_path, config.modelarts_dataset_unzip_name)))
 
     config.dataset_path = os.path.join(config.data_path, config.modelarts_dataset_unzip_name)
+    config.checkpoint_path = os.path.join(config.dataset_path, config.checkpoint_path)
 
 
 DS_DICT = {
