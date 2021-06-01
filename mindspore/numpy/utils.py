@@ -20,7 +20,7 @@ from ..ops import functional as F
 from ..common import dtype as mstype
 
 from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert, \
-    _tuple_setitem, _callable_const, _check_is_float
+    _tuple_setitem, _callable_const, _check_is_float, _get_device
 
 
 def _deep_list(array_like):
@@ -204,6 +204,6 @@ def _callable(tensor, obj):
 
 
 def _isnan(x):
-    if _check_is_float(F.dtype(x)):
-        return F.isnan(x)
-    return F.fill(mstype.bool_, F.shape(x), False)
+    if _get_device() == 'Ascend' or not _check_is_float(F.dtype(x)):
+        return F.fill(mstype.bool_, F.shape(x), False)
+    return F.isnan(x)

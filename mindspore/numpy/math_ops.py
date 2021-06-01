@@ -1245,9 +1245,6 @@ def log(x, dtype=None):
 
 def _prop_nan(fn, x1, x2):
     """Selects NaN if either element is NaN"""
-    if _get_device() == 'Ascend':
-        # F.isnan is not supported on Ascend
-        return fn(x1, x2)
     has_nan = F.logical_or(_isnan(x1), _isnan(x2))
     nan_tensor = F.fill(_promote(F.dtype(x1), F.dtype(x2)), F.shape(has_nan), nan)
     res = fn(x1, x2)
