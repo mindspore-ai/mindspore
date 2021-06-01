@@ -34,7 +34,7 @@ AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto inputs_type = input_args[0]->BuildType()->cast<TuplePtr>()->elements();
   auto inputs_shape = input_args[0]->BuildShape()->cast<abstract::TupleShapePtr>()->shape();
   std::map<std::string, TypePtr> args;
-  for (int64_t i = 0; i != (int64_t)inputs_type.size(); i++) {
+  for (size_t i = 0; i != inputs_type.size(); i++) {
     args.insert({"input[" + std::to_string(i) + "]", inputs_type[i]});
   }
   std::set<TypeId> template_type = {kNumberTypeBool};

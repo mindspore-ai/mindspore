@@ -44,7 +44,7 @@ void DepthWiseConv2DFusion::Init(const int64_t channel_multiplier, const std::ve
   this->set_dilation(dilations);
   this->set_pad_mode(pad_mode);
 
-  CheckAndConvertUtils::CheckInteger("pad_size", pad.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("pad_size", SizeToLong(pad.size()), kEqual, 4, prim_name);
   if (pad_mode == PAD) {
     for (auto item : pad) {
       CheckAndConvertUtils::Check("pad_item", item, kGreaterEqual, "zeros_list", 0, prim_name);

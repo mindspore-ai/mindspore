@@ -47,7 +47,7 @@ abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr TensorListFromTensorInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr TensorListFromTensorInferType(const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -81,7 +81,7 @@ void TensorListFromTensor::set_shape_type(const int64_t shape_type) {
 
 AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(TensorListFromTensorInferType(primitive, input_args),
+  return std::make_shared<abstract::AbstractTensor>(TensorListFromTensorInferType(input_args),
                                                     TensorListFromTensorInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameTensorListFromTensor, TensorListFromTensor);
