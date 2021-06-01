@@ -230,8 +230,8 @@ class Distribution(Cell):
         """
         Calculate the broadcast shape of the parameters used during initialization.
         """
-        param_dict = self.parameters['param_dict']
         broadcast_shape_tensor = None
+        param_dict = self.parameters['param_dict']
         for value in param_dict.values():
             if value is None:
                 return None

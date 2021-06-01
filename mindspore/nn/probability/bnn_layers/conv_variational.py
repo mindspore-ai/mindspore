@@ -118,14 +118,10 @@ class _ConvVariational(_Conv):
                 .format(self.bias_posterior.mean, self.bias_posterior.untransformed_std)
         return s
 
-    def apply_variational_bias(self, inputs):
-        bias_posterior_tensor = self.bias_posterior("sample")
-        return self.bias_add(inputs, bias_posterior_tensor)
-
     def compute_kl_loss(self):
         """Compute kl loss"""
-        weight_args_list = self.weight_posterior("get_dist_args")
         weight_type = self.weight_posterior("get_dist_type")
+        weight_args_list = self.weight_posterior("get_dist_args")
 
         kl = self.weight_prior("kl_loss", weight_type, *weight_args_list)
         kl_loss = self.sum(kl)
@@ -137,6 +133,10 @@ class _ConvVariational(_Conv):
             kl = self.sum(kl)
             kl_loss += kl
         return kl_loss
+
+    def apply_variational_bias(self, inputs):
+        bias_posterior_tensor = self.bias_posterior("sample")
+        return self.bias_add(inputs, bias_posterior_tensor)
 
 
 class ConvReparam(_ConvVariational):

@@ -197,14 +197,14 @@ class Cauchy(Distribution):
         return "Cauchy"
 
     def _get_dist_args(self, loc=None, scale=None):
-        if loc is not None:
-            self.checktensor(loc, 'loc')
-        else:
-            loc = self.loc
         if scale is not None:
             self.checktensor(scale, 'scale')
         else:
             scale = self.scale
+        if loc is not None:
+            self.checktensor(loc, 'loc')
+        else:
+            loc = self.loc
         return loc, scale
 
     def _mode(self, loc=None, scale=None):
