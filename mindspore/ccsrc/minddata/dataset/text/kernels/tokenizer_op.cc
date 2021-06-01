@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const bool TokenizerOp::kDefWithOffsets = false;
 
 Status TokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
