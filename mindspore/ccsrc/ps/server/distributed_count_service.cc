@@ -26,16 +26,22 @@ void DistributedCountService::Initialize(const std::shared_ptr<core::ServerNode>
                                          uint32_t counting_server_rank) {
   server_node_ = server_node;
   MS_EXCEPTION_IF_NULL(server_node_);
-
-  communicator_ =
-    std::dynamic_pointer_cast<core::TcpCommunicator>(server_node_->GetOrCreateTcpComm("", 0, 0, 0, nullptr));
-  MS_EXCEPTION_IF_NULL(communicator_);
-
   local_rank_ = server_node_->rank_id();
   server_num_ = PSContext::instance()->initial_server_num();
   counting_server_rank_ = counting_server_rank;
-  RegisterCallback();
   return;
+}
+
+void DistributedCountService::RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
+  communicator_ = communicator;
+  MS_EXCEPTION_IF_NULL(communicator_);
+  communicator_->RegisterMsgCallBack(
+    "count", std::bind(&DistributedCountService::HandleCountRequest, this, std::placeholders::_1));
+  communicator_->RegisterMsgCallBack(
+    "countReachThreshold",
+    std::bind(&DistributedCountService::HandleCountReachThresholdRequest, this, std::placeholders::_1));
+  communicator_->RegisterMsgCallBack(
+    "counterEvent", std::bind(&DistributedCountService::HandleCounterEvent, this, std::placeholders::_1));
 }
 
 void DistributedCountService::RegisterCounter(const std::string &name, size_t global_threshold_count,
@@ -136,18 +142,23 @@ void DistributedCountService::ResetCounter(const std::string &name) {
   return;
 }
 
-void DistributedCountService::RegisterCallback() {
-  if (local_rank_ == counting_server_rank_) {
-    communicator_->RegisterMsgCallBack(
-      "count", std::bind(&DistributedCountService::HandleCountRequest, this, std::placeholders::_1));
-    communicator_->RegisterMsgCallBack(
-      "countReachThreshold",
-      std::bind(&DistributedCountService::HandleCountReachThresholdRequest, this, std::placeholders::_1));
+bool DistributedCountService::ReInitForScaling() {
+  // If DistributedCountService is not initialized yet but the scaling event is triggered, do not throw exception.
+  if (server_node_ == nullptr) {
+    return true;
   }
 
-  // The callback of first/last event must be set in both leader server and follower servers.
-  communicator_->RegisterMsgCallBack(
-    "counterEvent", std::bind(&DistributedCountService::HandleCounterEvent, this, std::placeholders::_1));
+  MS_LOG(INFO) << "Cluster scaling completed. Reinitialize for distributed count service.";
+  local_rank_ = server_node_->rank_id();
+  server_num_ = server_node_->server_num();
+  MS_LOG(INFO) << "After scheduler scaling, this server's rank is " << local_rank_ << ", server number is "
+               << server_num_;
+
+  // Clear old counter data of this server.
+  global_current_count_.clear();
+  global_threshold_count_.clear();
+  counter_handlers_.clear();
+  return true;
 }
 
 void DistributedCountService::HandleCountRequest(const std::shared_ptr<core::MessageHandler> &message) {

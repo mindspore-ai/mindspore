@@ -44,6 +44,9 @@ class CollectiveOpsImpl {
   template <typename T>
   bool AllReduce(const void *sendbuff, void *recvbuff, size_t count);
 
+  // Reinitialize the ring for collective communication after scaling operations are done.
+  bool ReInitForScaling();
+
  private:
   CollectiveOpsImpl() = default;
   ~CollectiveOpsImpl() = default;

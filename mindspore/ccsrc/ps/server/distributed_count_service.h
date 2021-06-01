@@ -29,6 +29,8 @@
 namespace mindspore {
 namespace ps {
 namespace server {
+constexpr uint32_t kDefaultCountingServerRank = 0;
+constexpr auto kModuleDistributedCountService = "DistributedCountService";
 // The callbacks for the first count and last count event.
 typedef struct {
   MessageCallback first_count_handler;
@@ -54,6 +56,9 @@ class DistributedCountService {
   // Initialize counter service with the server node because communication is needed.
   void Initialize(const std::shared_ptr<core::ServerNode> &server_node, uint32_t counting_server_rank);
 
+  // Register message callbacks of the counting server to handle messages sent by the other servers.
+  void RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+
   // Register counter to the counting server for the name with its threshold count in server cluster dimension and
   // first/last count event callbacks.
   void RegisterCounter(const std::string &name, size_t global_threshold_count, const CounterHandlers &counter_handlers);
@@ -68,6 +73,9 @@ class DistributedCountService {
   // Reset the count of the name to 0.
   void ResetCounter(const std::string &name);
 
+  // Reinitialize counting service after scaling operations are done.
+  bool ReInitForScaling();
+
   // Returns the server rank because in some cases the callers use this rank as the 'id' for method
   // Count.
   uint32_t local_rank() { return local_rank_; }
@@ -77,9 +85,6 @@ class DistributedCountService {
   ~DistributedCountService() = default;
   DistributedCountService(const DistributedCountService &) = delete;
   DistributedCountService &operator=(const DistributedCountService &) = delete;
-
-  // Register callbacks of the counting server to handle messages sent by the other servers.
-  void RegisterCallback();
 
   // Callback for the reporting count message from other servers. Only counting server will call this method.
   void HandleCountRequest(const std::shared_ptr<core::MessageHandler> &message);

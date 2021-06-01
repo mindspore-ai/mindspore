@@ -46,6 +46,8 @@ class Server {
   // func_graph is the frontend graph which will be parse in server's exector and aggregator.
   void Run();
 
+  bool IsSafeMode();
+
  private:
   Server()
       : server_node_(nullptr),
@@ -58,6 +60,7 @@ class Server {
         communicator_with_server_(nullptr),
         communicators_with_worker_({}),
         iteration_(nullptr),
+        safemode_(true),
         scheduler_ip_(""),
         scheduler_port_(0),
         server_num_(0),
@@ -77,6 +80,13 @@ class Server {
   // Initialize iteration with rounds. Which rounds to use could be set by ps_context as well.
   void InitIteration();
 
+  // Register all message and event callbacks for communicators(TCP and HTTP). This method must be called before
+  // communicators are started.
+  void RegisterCommCallbacks();
+
+  // Register cluster exception callbacks. This method is called in RegisterCommCallbacks.
+  void RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+
   // Initialize executor according to the server mode.
   void InitExecutor();
 
@@ -85,6 +95,14 @@ class Server {
 
   // The communicators should be started after all initializations are completed.
   void StartCommunicator();
+
+  // The barriers before scaling operations.
+  void ProcessBeforeScalingOut();
+  void ProcessBeforeScalingIn();
+
+  // The handlers after scheduler's scaling operations are done.
+  void ProcessAfterScalingOut();
+  void ProcessAfterScalingIn();
 
   // The server node is initialized in Server.
   std::shared_ptr<core::ServerNode> server_node_;
@@ -118,6 +136,10 @@ class Server {
 
   // Iteration consists of multiple kinds of rounds.
   Iteration *iteration_;
+
+  // The flag that represents whether server is in safemode.
+  // If true, the server is not available to workers and clients.
+  std::atomic_bool safemode_;
 
   // Variables set by ps context.
   std::string scheduler_ip_;

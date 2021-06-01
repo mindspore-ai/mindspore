@@ -64,6 +64,9 @@ class ParameterAggregator {
   // The parameter threshold_count helps ParameterAggregator to judge the current status if it's stateful.
   bool Init(const CNodePtr &cnode, size_t threshold_count = 0);
 
+  // Reinitialize the parameter aggregator after scaling operations are done.
+  bool ReInitForScaling();
+
   // Update old data stored in ParameterAggregator with new data.
   // The data could have many meanings: weights, gradients, learning_rate, momentum, etc.
   bool UpdateData(const std::map<std::string, Address> &new_data);

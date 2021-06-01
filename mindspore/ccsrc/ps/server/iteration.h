@@ -27,6 +27,13 @@
 namespace mindspore {
 namespace ps {
 namespace server {
+enum class IterationState {
+  // This iteration is still in process.
+  kRunning,
+  // This iteration is completed and the next iteration is not started yet.
+  kEnd
+};
+
 // In server's logic, Iteration is the minimum execution unit. For each execution, it consists of multiple kinds of
 // Rounds, only after all the rounds are finished, this iteration is considered as completed.
 class Iteration {
@@ -47,12 +54,22 @@ class Iteration {
   // If the timer expires, we consider this iteration as invalid.
   void ProceedToNextIter(bool is_iteration_valid);
 
+  // Set current iteration state to running.
+  void SetIterationRunning();
+
+  // The barrier function for elastic scaling. The scaling out/in operation should be done only after this iteration is
+  // completed.
+  void ScalingBarrier();
+
+  // Reinitialize rounds after scaling operations are done.
+  bool ReInitForScaling();
+
   const std::vector<std::shared_ptr<Round>> &rounds();
 
   bool is_last_iteration_valid() const;
 
  private:
-  Iteration() : iteration_num_(1), is_last_iteration_valid_(true) {
+  Iteration() : iteration_state_(IterationState::kEnd), iteration_num_(1), is_last_iteration_valid_(true) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration() = default;
@@ -60,6 +77,9 @@ class Iteration {
   Iteration &operator=(const Iteration &) = delete;
 
   std::vector<std::shared_ptr<Round>> rounds_;
+
+  // The iteration is either running or completed at any time.
+  std::atomic<IterationState> iteration_state_;
 
   // Server's current iteration number.
   size_t iteration_num_;

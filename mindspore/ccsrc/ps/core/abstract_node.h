@@ -26,12 +26,14 @@
 
 #include "ps/core/node.h"
 #include "ps/core/communicator/message.h"
+#include "ps/core/follower_scaler.h"
 #include "utils/ms_exception.h"
 #include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
+class FollowerScaler;
 class AbstractNode : public Node {
  public:
   AbstractNode()
@@ -83,6 +85,17 @@ class AbstractNode : public Node {
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
   bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
+
+  // Initialize the scaler for server to process before/after scaling operations.
+  bool InitFollowerScaler();
+
+  // Register barriers before scaling operations for server.
+  void RegisterFollowerScalerBarrierBeforeScaleOut(const std::string &module, const BarrierBeforeScaleOut &barrier);
+  void RegisterFollowerScalerBarrierBeforeScaleIn(const std::string &module, const BarrierBeforeScaleIn &barrier);
+
+  // Register handlers after scaling operations for server.
+  void RegisterFollowerScalerHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler);
+  void RegisterFollowerScalerHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler);
 
   int32_t worker_num() const;
   int32_t server_num() const;
@@ -187,6 +200,9 @@ class AbstractNode : public Node {
 
   // Each ClusterEvent corresponds to a EventCallback to process the event.
   std::map<ClusterEvent, EventCallback> event_to_callback_;
+
+  // Scaler for worker/server node.
+  std::unique_ptr<FollowerScaler> follower_scaler_;
 };
 }  // namespace core
 }  // namespace ps

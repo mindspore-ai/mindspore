@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "ps/server/iteration.h"
 
 namespace mindspore {
 namespace ps {
@@ -91,6 +92,8 @@ bool StartFLJobKernel::Reset() {
 void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<core::MessageHandler> &) {
   iter_next_req_timestamp_ = CURRENT_TIME_MILLI.count() + iteration_time_window_;
   LocalMetaStore::GetInstance().put_value(kCtxIterationNextRequestTimestamp, iter_next_req_timestamp_);
+  // The first startFLJob request means a new iteration starts running.
+  Iteration::GetInstance().SetIterationRunning();
 }
 
 bool StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb) {

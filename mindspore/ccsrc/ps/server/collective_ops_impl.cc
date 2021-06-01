@@ -207,6 +207,20 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
   }
 }
 
+bool CollectiveOpsImpl::ReInitForScaling() {
+  // If CollectiveOpsImpl is not initialized yet but the scaling event is triggered, do not throw exception.
+  if (server_node_ == nullptr) {
+    return true;
+  }
+
+  MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize ring for collective communication.";
+  local_rank_ = server_node_->rank_id();
+  server_num_ = server_node_->server_num();
+  MS_LOG(INFO) << "After scheduler scaling out, this server's rank is " << local_rank_ << ", server number is "
+               << server_num_;
+  return true;
+}
+
 template bool CollectiveOpsImpl::RingAllReduce<float>(const void *sendbuff, void *recvbuff, size_t count);
 template bool CollectiveOpsImpl::RingAllReduce<size_t>(const void *sendbuff, void *recvbuff, size_t count);
 template bool CollectiveOpsImpl::RingAllReduce<int>(const void *sendbuff, void *recvbuff, size_t count);

@@ -40,6 +40,23 @@ class Round {
   void Initialize(const std::shared_ptr<core::CommunicatorBase> &communicator, TimeOutCb timeout_cb,
                   FinishIterCb finish_iteration_cb);
 
+  // Reinitialize count service and round kernel of this round after scaling operations are done.
+  bool ReInitForScaling() {
+    if (check_count_) {
+      auto first_count_handler = std::bind(&Round::OnFirstCountEvent, this, std::placeholders::_1);
+      auto last_count_handler = std::bind(&Round::OnLastCountEvent, this, std::placeholders::_1);
+      DistributedCountService::GetInstance().RegisterCounter(name_, threshold_count_,
+                                                             {first_count_handler, last_count_handler});
+    }
+
+    if (kernel_ == nullptr) {
+      MS_LOG(ERROR) << "Reinitializing for round " << name_ << " failed: round kernel is nullptr.";
+      return false;
+    }
+    kernel_->InitKernel(threshold_count_);
+    return true;
+  }
+
   // Bind a round kernel to this Round. This method should be called after Initialize.
   void BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel);
 

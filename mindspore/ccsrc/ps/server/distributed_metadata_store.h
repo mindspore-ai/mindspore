@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace ps {
 namespace server {
+constexpr auto kModuleDistributedMetadataStore = "DistributedMetadataStore";
 // This class is used for distributed metadata storage using consistent hash. All metadata is distributedly
 // stored in all servers. Caller doesn't need to know which server stores the metadata. It only needs to know what kind
 // of operations should be done to the metadata.
@@ -45,6 +46,9 @@ class DistributedMetadataStore {
   // Initialize metadata storage with the server node because communication is needed.
   void Initialize(const std::shared_ptr<core::ServerNode> &server_node);
 
+  // Register callbacks for the server to handle update/get metadata messages from other servers.
+  void RegisterMessageCallback(const std::shared_ptr<core::TcpCommunicator> &communicator);
+
   // Register metadata for the name with the initial value. This method should be only called once for each name.
   void RegisterMetadata(const std::string &name, const PBMetadata &meta);
 
@@ -57,6 +61,9 @@ class DistributedMetadataStore {
   // Get the metadata for the name.
   PBMetadata GetMetadata(const std::string &name);
 
+  // Reinitialize the consistency hash ring and clear metadata after scaling operations are done.
+  bool ReInitForScaling();
+
  private:
   DistributedMetadataStore() = default;
   ~DistributedMetadataStore() = default;
@@ -65,9 +72,6 @@ class DistributedMetadataStore {
 
   // Initialize the consistent hash ring for distributed storage.
   void InitHashRing();
-
-  // Register callbacks for the server to handle update/get metadata messages from other servers.
-  void RegisterCallback();
 
   // Callback for updating metadata request sent to the server.
   void HandleUpdateMetadataRequest(const std::shared_ptr<core::MessageHandler> &message);

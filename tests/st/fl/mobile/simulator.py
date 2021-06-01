@@ -156,10 +156,13 @@ np.random.seed(0)
 while True:
     url1 = "http://" + http_ip + ":" + str(generate_port()) + '/startFLJob'
     print("start url is ", url1)
-    x = requests.post(url1, data=build_start_fl_job(current_iteration))
+    x = session.post(url1, data=build_start_fl_job(current_iteration))
+    while x.text == "The cluster is in safemode.":
+        x = session.post(url1, data=build_start_fl_job(current_iteration))
+
     rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
     while rsp_fl_job.Retcode() != ResponseCode.ResponseCode.SUCCEED:
-        x = requests.post(url1, data=build_start_fl_job(current_iteration))
+        x = session.post(url1, data=build_start_fl_job(current_iteration))
         rsp_fl_job = ResponseFLJob.ResponseFLJob.GetRootAsResponseFLJob(x.content, 0)
     print("epoch is", rsp_fl_job.FlPlanConfig().Epochs())
     print("iteration is", rsp_fl_job.Iteration())
@@ -176,6 +179,10 @@ while True:
     url3 = "http://" + http_ip + ":" + str(generate_port()) + '/getModel'
     print("req get model iteration:", current_iteration, ", id:", args.pid)
     x = session.post(url3, data=build_get_model(current_iteration))
+    while x.text == "The cluster is in safemode.":
+        time.sleep(0.2)
+        x = session.post(url3, data=build_get_model(current_iteration))
+
     rsp_get_model = ResponseGetModel.ResponseGetModel.GetRootAsResponseGetModel(x.content, 0)
     print("rsp get model iteration:", current_iteration, ", id:", args.pid, rsp_get_model.Retcode())
     sys.stdout.flush()
@@ -190,6 +197,10 @@ while True:
         while rsp_get_model.Retcode() == ResponseCode.ResponseCode.SucNotReady:
             time.sleep(0.2)
             x = session.post(url3, data=build_get_model(current_iteration))
+            while x.text == "The cluster is in safemode.":
+                time.sleep(0.2)
+                x = session.post(url3, data=build_get_model(current_iteration))
+
             rsp_get_model = ResponseGetModel.ResponseGetModel.GetRootAsResponseGetModel(x.content, 0)
             if rsp_get_model.Retcode() == ResponseCode.ResponseCode.OutOfTime:
                 next_req_timestamp = int(rsp_get_model.Timestamp().decode('utf-8'))

@@ -82,8 +82,32 @@ void Iteration::ProceedToNextIter(bool is_iteration_valid) {
   }
 
   is_last_iteration_valid_ = is_iteration_valid;
+  iteration_state_ = IterationState::kEnd;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   MS_LOG(INFO) << "Proceed to next iteration:" << iteration_num_ << "\n";
+}
+
+void Iteration::SetIterationRunning() {
+  MS_LOG(INFO) << "Iteration " << iteration_num_ << " start running.";
+  iteration_state_ = IterationState::kRunning;
+}
+
+void Iteration::ScalingBarrier() {
+  MS_LOG(INFO) << "Starting Iteration scaling barrier.";
+  while (iteration_state_.load() != IterationState::kEnd) {
+    std::this_thread::yield();
+  }
+  MS_LOG(INFO) << "Ending Iteration scaling barrier.";
+}
+
+bool Iteration::ReInitForScaling() {
+  for (auto &round : rounds_) {
+    if (!round->ReInitForScaling()) {
+      MS_LOG(ERROR) << "Reinitializing round " << round->name() << " for scaling failed.";
+      return false;
+    }
+  }
+  return true;
 }
 
 const std::vector<std::shared_ptr<Round>> &Iteration::rounds() { return rounds_; }

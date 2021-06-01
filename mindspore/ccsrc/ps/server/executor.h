@@ -45,6 +45,9 @@ class Executor {
   // optimizer cnode's input. So we need to initialize server executor using func_graph.
   void Initialize(const FuncGraphPtr &func_graph, size_t aggregation_count);
 
+  // Reinitialize parameter aggregators after scaling operations are done.
+  bool ReInitForScaling();
+
   // Called in parameter server training mode to do Push operation.
   // For the same trainable parameter, HandlePush method must be called aggregation_count_ times before it's considered
   // as completed.

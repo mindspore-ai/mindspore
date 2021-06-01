@@ -69,13 +69,13 @@ class FedAvgKernel : public AggregationKernel {
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
     MS_LOG(INFO) << "Register counter for " << name_;
-    auto first_cnt_handler = [&](std::shared_ptr<core::MessageHandler>) {
+    first_cnt_handler_ = [&](std::shared_ptr<core::MessageHandler>) {
       std::unique_lock<std::mutex> lock(weight_mutex_);
       if (!participated_) {
         ClearWeightAndDataSize();
       }
     };
-    auto last_cnt_handler = [&](std::shared_ptr<core::MessageHandler>) {
+    last_cnt_handler_ = [&](std::shared_ptr<core::MessageHandler>) {
       T *weight_addr = reinterpret_cast<T *>(weight_addr_->addr);
       size_t weight_size = weight_addr_->size;
       S *data_size_addr = reinterpret_cast<S *>(data_size_addr_->addr);
@@ -94,8 +94,8 @@ class FedAvgKernel : public AggregationKernel {
       done_ = true;
       return;
     };
-    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler, last_cnt_handler});
     GenerateReuseKernelNodeInfo();
+    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
     return;
   }
 
@@ -147,6 +147,11 @@ class FedAvgKernel : public AggregationKernel {
     return;
   }
 
+  bool ReInitForScaling() override {
+    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
+    return true;
+  }
+
  private:
   void GenerateReuseKernelNodeInfo() override {
     MS_LOG(INFO) << "FedAvg reuse 'weight' of the kernel node.";
@@ -169,6 +174,9 @@ class FedAvgKernel : public AggregationKernel {
     }
     return;
   }
+
+  MessageCallback first_cnt_handler_;
+  MessageCallback last_cnt_handler_;
 
   // The trainable parameter index of the kernel node which is parsed from the frontend func_graph.
   size_t cnode_weight_idx_;
