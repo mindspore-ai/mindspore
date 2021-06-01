@@ -166,6 +166,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
       auto reduce_flag = kernel::GpuKernelFactory::GetInstance().reduce_flag_;
+      kernel::GpuKernelFactory::GetInstance().reduce_flag_.first.clear();
       std::vector<TypeId> output_type;
       if (std::find(reduce_flag.first.begin(), reduce_flag.first.end(), input_index) != reduce_flag.first.end()) {
         output_type = {reduce_flag.second};
