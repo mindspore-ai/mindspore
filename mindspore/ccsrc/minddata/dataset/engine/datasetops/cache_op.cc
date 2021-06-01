@@ -161,7 +161,7 @@ Status CacheOp::WaitForCachingAllRows() {
       case CacheServiceState::kBuildPhase:
         // Do nothing. Continue to wait.
         BuildPhaseDone = false;
-        std::this_thread::sleep_for(std::chrono::milliseconds(kPhaseCheckInterval));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kPhaseCheckIntervalInMilliSec));
         break;
       case CacheServiceState::kFetchPhase:
         BuildPhaseDone = true;

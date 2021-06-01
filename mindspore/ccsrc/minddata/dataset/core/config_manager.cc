@@ -28,6 +28,7 @@
 #include "mindspore/lite/src/common/log_adapter.h"
 #endif
 #include "minddata/dataset/util/system_pool.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -54,14 +55,14 @@ ConfigManager::ConfigManager()
       auto_worker_config_(0) {
   num_cpu_threads_ = num_cpu_threads_ > 0 ? num_cpu_threads_ : std::numeric_limits<uint16_t>::max();
   num_parallel_workers_ = num_parallel_workers_ < num_cpu_threads_ ? num_parallel_workers_ : num_cpu_threads_;
-  auto env_cache_host = std::getenv("MS_CACHE_HOST");
-  auto env_cache_port = std::getenv("MS_CACHE_PORT");
-  if (env_cache_host != nullptr) {
+  std::string env_cache_host = common::GetEnv("MS_CACHE_HOST");
+  std::string env_cache_port = common::GetEnv("MS_CACHE_PORT");
+  if (!env_cache_host.empty()) {
     cache_host_ = env_cache_host;
   }
-  if (env_cache_port != nullptr) {
+  if (!env_cache_port.empty()) {
     char *end = nullptr;
-    cache_port_ = strtol(env_cache_port, &end, kDecimal);
+    cache_port_ = static_cast<int32_t>(strtol(env_cache_port.c_str(), &end, kDecimal));
     if (*end != '\0') {
       MS_LOG(WARNING) << "Cache port from env variable MS_CACHE_PORT is invalid\n";
       cache_port_ = 0;  // cause the port range validation to generate an error during the validation checks

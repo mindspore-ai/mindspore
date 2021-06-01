@@ -47,23 +47,23 @@ CacheAdminArgHandler::CacheAdminArgHandler()
       hostname_(kCfgDefaultCacheHost),
       spill_dir_(""),
       command_id_(CommandId::kCmdUnknown) {
-  const char *env_cache_host = std::getenv("MS_CACHE_HOST");
-  const char *env_cache_port = std::getenv("MS_CACHE_PORT");
-  if (env_cache_host != nullptr) {
+  std::string env_cache_host = common::GetEnv("MS_CACHE_HOST");
+  std::string env_cache_port = common::GetEnv("MS_CACHE_PORT");
+  if (!env_cache_host.empty()) {
     hostname_ = env_cache_host;
   }
-  if (env_cache_port != nullptr) {
+  if (!env_cache_port.empty()) {
     char *end = nullptr;
-    port_ = strtol(env_cache_port, &end, kDecimal);
+    port_ = static_cast<int32_t>(strtol(env_cache_port.c_str(), &end, kDecimal));
     if (*end != '\0') {
       std::cerr << "Cache port from env variable MS_CACHE_PORT is invalid\n";
       port_ = 0;  // cause the port range validation to generate an error during the validation checks
     }
   }
-  const char *env_log_level = std::getenv("GLOG_v");
-  if (env_log_level != nullptr) {
+  std::string env_log_level = common::GetEnv("GLOG_v");
+  if (!env_log_level.empty()) {
     char *end = nullptr;
-    log_level_ = strtol(env_log_level, &end, kDecimal);
+    log_level_ = static_cast<int32_t>(strtol(env_log_level.c_str(), &end, kDecimal));
     if (*end != '\0') {
       std::cerr << "Log level from env variable GLOG_v is invalid\n";
       log_level_ = -1;  // cause the log level range validation to generate an error during the validation checks
@@ -499,7 +499,7 @@ Status CacheAdminArgHandler::StopServer(CommandId command_id) {
   // The server will send a message back and remove the queue and we will then wake up. But on the safe
   // side, we will also set up an alarm and kill this process if we hang on
   // the message queue.
-  alarm(kAlarmDeadline);
+  (void)alarm(kAlarmDeadline);
   Status dummy_rc;
   (void)msg.ReceiveStatus(&dummy_rc);
   std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
@@ -544,7 +544,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   } else if (pid > 0) {
     // As a parent, we close the write end. We only listen.
     close(fd[1]);
-    dup2(fd[0], STDIN_FILENO);
+    (void)dup2(fd[0], STDIN_FILENO);
     close(fd[0]);
     int status;
     if (waitpid(pid, &status, 0) == -1) {
@@ -572,11 +572,11 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   } else {
     // Child here ...
     // Close all stdin, redirect stdout and stderr to the write end of the pipe.
-    close(fd[0]);
-    dup2(fd[1], STDOUT_FILENO);
-    dup2(fd[1], STDERR_FILENO);
-    close(STDIN_FILENO);
-    close(fd[1]);
+    (void)close(fd[0]);
+    (void)dup2(fd[1], STDOUT_FILENO);
+    (void)dup2(fd[1], STDERR_FILENO);
+    (void)close(STDIN_FILENO);
+    (void)close(fd[1]);
     // exec the cache server binary in this process
     // If the user did not provide the value of num_workers, we pass -1 to cache server to allow it assign the default.
     // So that the server knows if the number is provided by users or by default.

@@ -151,8 +151,7 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
           if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
             // We will send the request async. But any error we most
             // likely ignore and continue.
-            Status rc;
-            rc = rq->AsyncSendCacheRequest(cache_client_, row);
+            Status rc = rq->AsyncSendCacheRequest(cache_client_, row);
             if (rc.IsOk()) {
               RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
             } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {

@@ -85,7 +85,7 @@ Status CacheClientGreeter::HandleRequest(std::shared_ptr<BaseRequest> rq) {
   auto seqNo = request_cnt_.fetch_add(1);
   auto tag = std::make_unique<CacheClientRequestTag>(std::move(rq), seqNo);
   // One minute timeout
-  auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kRequestTimeoutDeadline);
+  auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kRequestTimeoutDeadlineInSec);
   tag->ctx_.set_deadline(deadline);
   tag->rpc_ = stub_->PrepareAsyncCacheServerRequest(&tag->ctx_, tag->base_rq_->rq_, &cq_);
   tag->rpc_->StartCall();
@@ -108,7 +108,7 @@ Status CacheClientGreeter::WorkerEntry() {
   do {
     bool success;
     void *tag;
-    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kWaitForNewEventDeadline);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(kWaitForNewEventDeadlineInSec);
     // Set a timeout for one second. Check for interrupt if we need to do early exit.
     auto r = cq_.AsyncNext(&tag, &success, deadline);
     if (r == grpc_impl::CompletionQueue::NextStatus::GOT_EVENT) {
