@@ -274,7 +274,7 @@ after allreduce eval: top5_correct=46007, tot=49984,acc=92.04%
 | 速度 | 8卡：97.4毫秒/步 |
 | 总时长 | 8卡：6.1小时 |
 | 调优检查点 |    1.1 GB（.ckpt 文件）               |
-| 脚本                  |[VGG19](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/vgg19) |                   |
+| 脚本                  |[VGG19](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/vgg19) |                   |
 
 ### 评估性能
 
