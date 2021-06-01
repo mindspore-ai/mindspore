@@ -314,10 +314,10 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Mat
   // Q * WQ
   int q_area = q_mat->packed_row_ * q_mat->packed_col_;
   int wq_area = wq_mat->packed_row_ * wq_mat->packed_col_;
-  int q2wq_area = q2wq_mat->row_ * q2wq_mat->col_;
+  int q2wq_area = q2wq_mat->row_ * q2wq_mat->col_ * q2wq_mat->batch_ / param->batch_;
   float *q2wq_data = q2wq_mat->data_;
-  memset(q2wq_data, 0, q2wq_mat->batch_ * q2wq_area * sizeof(float));
-  for (int i = 0; i < q2wq_mat->batch_; i++) {
+  memset(q2wq_data, 0, param->batch_ * q2wq_area * sizeof(float));
+  for (int i = 0; i < param->batch_; i++) {
     float *cur_q = q_mat->packed_data_ + i * q_area;
     float *cur_wq = wq_mat->packed_data_ + i * wq_area;
     float *cur_q2wq = q2wq_data + i * q2wq_area;
@@ -331,13 +331,14 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Mat
   int q_with_pos_perm[] = {0, 2, 1, 3};
   GetTransposeParameter(&q_with_pos_trans_param, q_with_pos_trans_in_shape, q_with_pos_trans_out_shape,
                         q_with_pos_perm);
+  int q2wq_reshaped_area = q2wq_mat->row_ * q2wq_mat->col_;
   // Q_WQ + POS_U
   {
     float *q_with_pu = q2wq_with_pos_mat->data_;
     int q_with_pu_area = q2wq_with_pos_mat->row_ * q2wq_with_pos_mat->col_;
     memset(q_with_pu, 0, q2wq_with_pos_mat->batch_ * q_with_pu_area * sizeof(float));
     for (int i = 0; i < q2wq_with_pos_mat->batch_; i++) {
-      float *cur_qw = q2wq_data + i * q2wq_area;
+      float *cur_qw = q2wq_data + i * q2wq_reshaped_area;
       float *cur_q_with_pu = q_with_pu + i * q_with_pu_area;
       ElementAdd(cur_qw, pu_mat->packed_data_, cur_q_with_pu, q_with_pu_area);
     }
@@ -355,7 +356,7 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Mat
     int q_with_pv_area = q2wq_with_pos_mat->row_ * q2wq_with_pos_mat->col_;
     memset(q_with_pv, 0, q2wq_with_pos_mat->batch_ * q_with_pv_area * sizeof(float));
     for (int i = 0; i < q2wq_with_pos_mat->batch_; i++) {
-      float *cur_qw = q2wq_data + i * q2wq_area;
+      float *cur_qw = q2wq_data + i * q2wq_reshaped_area;
       float *cur_q_with_pv = q_with_pv + i * q_with_pv_area;
       ElementAdd(cur_qw, pv_mat->packed_data_, cur_q_with_pv, q_with_pv_area);
     }
@@ -377,10 +378,10 @@ void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matri
   // K * WK
   int k_area = k_mat->packed_row_ * k_mat->packed_col_;
   int wk_area = wk_mat->packed_row_ * wk_mat->packed_col_;
-  int k2wk_area = k2wk_mat->row_ * k2wk_mat->col_;
+  int k2wk_area = k2wk_mat->row_ * k2wk_mat->col_ * k2wk_mat->batch_ / param->batch_;
   float *k2wk = k2wk_mat->data_;
-  memset(k2wk, 0, k2wk_mat->batch_ * k2wk_area * sizeof(float));
-  for (int i = 0; i < k2wk_mat->batch_; i++) {
+  memset(k2wk, 0, param->batch_ * k2wk_area * sizeof(float));
+  for (int i = 0; i < param->batch_; i++) {
     float *cur_k = k_mat->packed_data_ + i * k_area;
     float *cur_wk = wk_mat->packed_data_ + i * wk_area;
     float *cur_k2wk = k2wk + i * k2wk_area;
@@ -389,7 +390,8 @@ void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matri
   }
   // K * WK perm [0,2,3,1]
   float *k2wk_trans_data = k2wk_trans_mat->data_;
-  memset(k2wk_trans_data, 0, k2wk_trans_mat->batch_ * k2wk_area * sizeof(float));
+  int k2wk_trans_area = k2wk_trans_mat->row_ * k2wk_trans_mat->col_;
+  memset(k2wk_trans_data, 0, k2wk_trans_mat->batch_ * k2wk_trans_area * sizeof(float));
   TransposeParameter k2wk_trans_param;
   int k2wk_in_shape[] = {batch, param->k_seq_, num_heads, depth};
   int k2wk_out_shape[] = {batch, num_heads, depth, param->k_seq_};
@@ -407,10 +409,10 @@ void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matri
   // V * WV
   int v_area = v_mat->packed_row_ * v_mat->packed_col_;
   int wv_area = wv_mat->packed_row_ * wv_mat->packed_col_;
-  int v2wv_area = v2wv_mat->row_ * v2wv_mat->col_;
+  int v2wv_area = v2wv_mat->row_ * v2wv_mat->col_ * v2wv_mat->batch_ / param->batch_;
   float *v2wv = v2wv_mat->data_;
-  memset(v2wv, 0, v2wv_mat->batch_ * v2wv_area * sizeof(float));
-  for (int i = 0; i < v2wv_mat->batch_; i++) {
+  memset(v2wv, 0, param->batch_ * v2wv_area * sizeof(float));
+  for (int i = 0; i < param->batch_; i++) {
     float *cur_v = v_mat->packed_data_ + i * v_area;
     float *cur_wv = wv_mat->packed_data_ + i * wv_area;
     float *cur_v2wv = v2wv + i * v2wv_area;
@@ -418,14 +420,15 @@ void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matri
               wv_mat->col_, OutType_Nhwc);
   }
   // V * WV perm [0,2,1,3]
-  float *v_trans_data = v2wv_trans_mat->data_;
-  memset(v_trans_data, 0, v2wv_trans_mat->batch_ * v2wv_area * sizeof(float));
+  float *v2wv_trans_data = v2wv_trans_mat->data_;
+  int v2wv_trans_area = v2wv_trans_mat->row_ * v2wv_trans_mat->col_;
+  memset(v2wv_trans_data, 0, v2wv_trans_mat->batch_ * v2wv_trans_area * sizeof(float));
   TransposeParameter v2wv_trans_param;
   int v2wv_in_shape[] = {batch, param->v_seq_, num_heads, depth};
   int v2wv_out_shape[] = {batch, num_heads, param->v_seq_, depth};
   int v2wv_perm[] = {0, 2, 1, 3};
   GetTransposeParameter(&v2wv_trans_param, v2wv_in_shape, v2wv_out_shape, v2wv_perm);
-  TransposeDimsFp32(v2wv, v_trans_data, v2wv_out_shape, &v2wv_trans_param, 0, 1);
+  TransposeDimsFp32(v2wv, v2wv_trans_data, v2wv_out_shape, &v2wv_trans_param, 0, 1);
 }
 
 void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matrix *wp_mat, Matrix *p2wp_mat,
@@ -438,10 +441,10 @@ void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matri
   // P * WP
   int p_area = p_mat->packed_row_ * p_mat->packed_col_;
   int wp_area = wp_mat->packed_row_ * wp_mat->packed_col_;
-  int p2wp_area = p2wp_mat->row_ * p2wp_mat->col_;
+  int p2wp_area = p2wp_mat->row_ * p2wp_mat->col_ * p2wp_mat->batch_ / param->batch_;
   float *p2wp_data = p2wp_mat->data_;
-  memset(p2wp_data, 0, p2wp_mat->batch_ * p2wp_area * sizeof(float));
-  for (int i = 0; i < p2wp_mat->batch_; i++) {
+  memset(p2wp_data, 0, param->batch_ * p2wp_area * sizeof(float));
+  for (int i = 0; i < param->batch_; i++) {
     float *cur_p = p_mat->packed_data_ + i * p_area;
     float *cur_wp = wp_mat->packed_data_ + i * wp_area;
     float *cur_p2wp = p2wp_data + i * p2wp_area;
@@ -450,7 +453,8 @@ void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matri
   }
   // P * WP perm [0,2,3,1]
   float *p2wp_trans_data = p2wp_trans_mat->data_;
-  memset(p2wp_trans_data, 0, p2wp_trans_mat->batch_ * p2wp_area * sizeof(float));
+  int p2wp_trans_area = p2wp_trans_mat->row_ * p2wp_trans_mat->col_;
+  memset(p2wp_trans_data, 0, p2wp_trans_mat->batch_ * p2wp_trans_area * sizeof(float));
   TransposeParameter p2wp_trans_param;
   int p2wp_in_shape[] = {batch, param->p_seq_, num_heads, depth};
   int p2wp_out_shape[] = {batch, num_heads, depth, param->p_seq_};
@@ -524,7 +528,8 @@ void RelPosAttention(RelativePositionAttentionParameter *param, Matrix *logits_m
   }
   // multi_head output perm [0,2,1,3]
   float *logits2v_trans_data = logits2v_trans_mat->data_;
-  memset(logits2v_trans_data, 0, logits2v_trans_mat->batch_ * logits2v_area * sizeof(float));
+  int logits2v_trans_area = logits2v_trans_mat->row_ * logits2v_trans_mat->col_;
+  memset(logits2v_trans_data, 0, logits2v_trans_mat->batch_ * logits2v_trans_area * sizeof(float));
   TransposeParameter logits2v_trans_param;
   int logits2v_trans_in_shape[] = {batch, num_heads, param->q_seq_, depth};
   int logits2v_trans_out_shape[] = {batch, param->q_seq_, num_heads, depth};
