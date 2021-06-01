@@ -1432,7 +1432,7 @@ class Dataset:
         runtime_context.AssignConsumer(getter)
         return getter, runtime_context, api_tree
 
-    def _init_size_getter(self):
+    def __init_size_getter(self):
         """
         Get pipeline information.
         """
@@ -1494,7 +1494,7 @@ class Dataset:
             int, number of batches.
         """
         if self.dataset_size is None:
-            runtime_getter = self._init_size_getter()
+            runtime_getter = self.__init_size_getter()
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
             self.close_pool()
         return self.dataset_size

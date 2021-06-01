@@ -118,15 +118,7 @@ class TensorRow {
   template <typename T>
   static Status ConvertFromTensorRow(const TensorRow &input, T *o) {
     DataType data_type = DataType::FromCType<T>();
-    if (data_type == DataType::DE_UNKNOWN) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type was not recognized.");
-    }
-    if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string is not supported.");
-    }
-    if (input.size() != 1) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow must have exactly one tensor.");
-    }
+    RETURN_IF_NOT_OK(ValidateTensorRow(input, data_type));
     if (input.at(0)->type() != data_type) {
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The output type doesn't match the input tensor type.");
     }
@@ -143,15 +135,7 @@ class TensorRow {
   template <typename T>
   static Status ConvertFromTensorRow(const TensorRow &input, std::vector<T> *o) {
     DataType data_type = DataType::FromCType<T>();
-    if (data_type == DataType::DE_UNKNOWN) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type was not recognized.");
-    }
-    if (data_type == DataType::DE_STRING) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: Data type string is not supported.");
-    }
-    if (input.size() != 1) {
-      RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input TensorRow must have exactly one tensor.");
-    }
+    RETURN_IF_NOT_OK(ValidateTensorRow(input, data_type));
     if (input.at(0)->Rank() != 1)
       RETURN_STATUS_UNEXPECTED("ConvertFromTensorRow: The input tensor must have a rank of 1.");
     for (auto it = input.at(0)->begin<T>(); it != input.at(0)->end<T>(); it++) {
@@ -226,6 +210,12 @@ class TensorRow {
   row_id_type id_;
   std::vector<std::string> path_;
   std::vector<std::shared_ptr<Tensor>> row_;
+
+ private:
+  /// Validate data type of TensorRow for conversions.
+  /// \param[in] input TensorRow
+  /// \param[in] data_type data type of the tensor row
+  static Status ValidateTensorRow(const TensorRow &input, const DataType &data_type);
 };
 }  // namespace dataset
 }  // namespace mindspore

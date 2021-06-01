@@ -25,9 +25,9 @@
 namespace mindspore {
 namespace dataset {
 
-constexpr size_t kMinLabelShapeSize = 2;
-constexpr size_t kMaxLabelShapeSize = 3;
 constexpr size_t kExpectedImageShapeSize = 4;
+constexpr size_t kMaxLabelShapeSize = 3;
+constexpr size_t kMinLabelShapeSize = 2;
 constexpr size_t dimension_one = 1;
 constexpr size_t dimension_two = 2;
 constexpr size_t dimension_three = 3;
@@ -45,7 +45,7 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), out_labels, DataType(DataType::DE_FLOAT32)));
 
   int64_t row_labels = label_shape.size() == kMaxLabelShapeSize ? label_shape[1] : 1;
-  int64_t num_classes = label_shape.size() == kMaxLabelShapeSize ? label_shape[2] : label_shape[1];
+  int64_t num_classes = label_shape.size() == kMaxLabelShapeSize ? label_shape[dimension_two] : label_shape[1];
 
   for (int64_t i = 0; i < label_shape[0]; i++) {
     for (int64_t j = 0; j < row_labels; j++) {
