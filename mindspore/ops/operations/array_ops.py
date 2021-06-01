@@ -3469,6 +3469,8 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_shape(self, x_shape, indices_shape, value_shape):
+        if indices_shape[-1] > len(x_shape):
+            raise ValueError("For 'TensorScatterUpdate', indies.shape[-1] is larger than the rank of x.")
         if indices_shape[:-1] + x_shape[indices_shape[-1]:] != value_shape:
             raise ValueError("For 'TensorScatterUpdate', input value are not match with input indices.")
         return x_shape
