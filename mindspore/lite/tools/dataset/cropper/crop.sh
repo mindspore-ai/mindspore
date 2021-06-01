@@ -17,7 +17,6 @@ checkopts()
 {
   while getopts ':p:h' opt
   do
-    OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
       p)
         MINDSPORE_PATH="$(cd "${OPTARG}" &> /dev/null && pwd )"
