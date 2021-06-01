@@ -35,13 +35,13 @@ class Im2ColGpuFwdKernel : public GpuKernel {
         input_desc_(nullptr),
         output_desc_(nullptr),
         filter_desc_(nullptr),
-        conv_desc_(nullptr),
-        padded_desc_(nullptr),
+        conv_desc_n(nullptr),
+        padded_desc_n(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         old_height_(0),
         old_width_(0),
         pad_height_(0),
-        pad_width_(0),
+        pad_width_n(0),
         pad_top_(0),
         pad_left_(0),
         n_(0),
@@ -67,14 +67,14 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
       T *padded_addr = GetDeviceAddress<T>(workspace, 0);
       CalPad(padded_size_ / sizeof(T), input_addr, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
-             old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded_addr,
+             old_width_ + pad_width_n, pad_top_, pad_left_, pad_value_, padded_addr,
              reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnIm2Col(cudnn_handle_, padded_desc_, padded_addr, filter_desc_, conv_desc_, output_addr),
+        kernel_node_, cudnnIm2Col(cudnn_handle_, padded_desc_n, padded_addr, filter_desc_, conv_desc_n, output_addr),
         "cudnnIm2ColForward failed");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnIm2Col(cudnn_handle_, input_desc_, input_addr, filter_desc_, conv_desc_, output_addr),
+        kernel_node_, cudnnIm2Col(cudnn_handle_, input_desc_, input_addr, filter_desc_, conv_desc_n, output_addr),
         "cudnnIm2ColForward failed");
     }
 
@@ -100,10 +100,10 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     }
     CheckTensorSize({in_shape, output_shape});
     Set4DDesc(in_shape, filter_shape, output_shape);
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, 1),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_n, 1),
                                 "cudnnSetConvGroupCount failed");
     pad_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pad"));
-    pad_width_ = pad_height_;
+    pad_width_n = pad_height_;
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
@@ -111,16 +111,16 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
         pad_height_ = 0;
-        pad_width_ = 0;
+        pad_width_n = 0;
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,
-        cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_[2], stride_[3], dilation_[2],
+        cudnnSetConvolution2dDescriptor(conv_desc_n, pad_height_, pad_width_n, stride_[2], stride_[3], dilation_[2],
                                         dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "cudnnSetConvolution2dDescriptor failed");
     }
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionMathType(conv_desc_n, CUDNN_TENSOR_OP_MATH),
                                   "cudnnSetConvolutionMathType failed.")
     }
     InitSizeLists();
@@ -128,11 +128,11 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyConvolutionDescriptor(conv_desc_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyConvolutionDescriptor(conv_desc_n),
                                "cudnnDestroyConvolutionDescriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyFilterDescriptor(filter_desc_),
                                "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(padded_desc_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(padded_desc_n),
                                "cudnnDestroyTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(output_desc_),
                                "cudnnDestroyTensorDescriptor failed");
@@ -147,11 +147,11 @@ class Im2ColGpuFwdKernel : public GpuKernel {
                                 "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&output_desc_),
                                 "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&padded_desc_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&padded_desc_n),
                                 "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateFilterDescriptor(&filter_desc_),
                                 "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateConvolutionDescriptor(&conv_desc_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateConvolutionDescriptor(&conv_desc_n),
                                 "cudnnCreateConvolutionDescriptor failed");
   }
 
@@ -164,7 +164,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
                                   cudnnGetTensorSizeInBytes(output_desc_, reinterpret_cast<size_t *>(&output_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnGetTensorSizeInBytes(padded_desc_, reinterpret_cast<size_t *>(&padded_size_)),
+                                  cudnnGetTensorSizeInBytes(padded_desc_n, reinterpret_cast<size_t *>(&padded_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
     }
     input_size_list_.push_back(input_size_);
@@ -202,23 +202,23 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     old_height_ = SizeToInt(in_shape[2]);
     old_width_ = SizeToInt(in_shape[3]);
     pad_height_ = pad_list[0] + pad_list[1];
-    pad_width_ = pad_list[2] + pad_list[3];
+    pad_width_n = pad_list[2] + pad_list[3];
     pad_top_ = pad_list[0];
     pad_left_ = pad_list[2];
 
     // if use_pad_ == true, using zero padding in advance, else using the default cudnn pad.
-    if (pad_height_ % 2 == 0 && pad_width_ % 2 == 0) {
+    if (pad_height_ % 2 == 0 && pad_width_n % 2 == 0) {
       use_pad_ = false;
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetTensor4dDescriptor(padded_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_, c_,
-                                                           old_height_ + pad_height_, old_width_ + pad_width_),
+                                cudnnSetTensor4dDescriptor(padded_desc_n, CUDNN_TENSOR_NCHW, cudnn_data_type_, n_, c_,
+                                                           old_height_ + pad_height_, old_width_ + pad_width_n),
                                 "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetConvolution2dDescriptor(
-                                  conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_[2], stride_[3],
-                                  dilation_[2], dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+                                  conv_desc_n, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_[2],
+                                  stride_[3], dilation_[2], dilation_[3], CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
                                 "cudnnSetConvolution2dDescriptor failed");
   }
 
@@ -269,8 +269,8 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   cudnnTensorDescriptor_t output_desc_;
   cudnnFilterDescriptor_t filter_desc_;
   cudnnConvolutionFwdAlgo_t conv_algorithm_;
-  cudnnConvolutionDescriptor_t conv_desc_;
-  cudnnTensorDescriptor_t padded_desc_;
+  cudnnConvolutionDescriptor_t conv_desc_n;
+  cudnnTensorDescriptor_t padded_desc_n;
   std::string pad_mode_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
@@ -280,7 +280,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   int old_height_;
   int old_width_;
   int pad_height_;
-  int pad_width_;
+  int pad_width_n;
   int pad_top_;
   int pad_left_;
   int n_;

@@ -560,7 +560,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, split_dim=0):
+    def __init__(self, split_dim=1):
         """Initialize UpdateThorGradient"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
         self.split_dim = split_dim
