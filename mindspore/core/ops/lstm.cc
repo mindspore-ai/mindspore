@@ -25,16 +25,16 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   auto lstm_prim = primitive->cast<PrimLstmPtr>();
   MS_EXCEPTION_IF_NULL(lstm_prim);
   auto prim_name = lstm_prim->name();
-  CheckAndConvertUtils::CheckInteger("lstm_prim_infer", input_args.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
   auto x_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto h_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("h_shape", input_args[1]->BuildShape(), prim_name);
   auto c_input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("c_shape", input_args[2]->BuildShape(), prim_name);
 
   int64_t input_x_size = lstm_prim->get_input_size();
-  CheckAndConvertUtils::CheckInteger("x_shape.size()", x_input_shape.size(), kEqual, 3, prim_name);
+  CheckAndConvertUtils::CheckInteger("x_shape.size()", SizeToLong(x_input_shape.size()), kEqual, 3, prim_name);
   CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
 
-  CheckAndConvertUtils::CheckInteger("h_shape.size()", h_input_shape.size(), kEqual, 3, prim_name);
+  CheckAndConvertUtils::CheckInteger("h_shape.size()", SizeToLong(h_input_shape.size()), kEqual, 3, prim_name);
   CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, lstm_prim->name());
 
   int64_t num_layers = lstm_prim->get_num_layers();
@@ -57,7 +57,6 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
     (num_layers + 1) * num_directions * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
   int64_t ws_diff_states_size =
     (num_layers + 1) * num_directions * 3 * (x_input_shape[0] + 1) * x_input_shape[1] * states_ws_ld * type_size;
-  const int64_t ws_grad_comp_size = 0;
   const int64_t page_size = 4096;
   int64_t current_offset = 0;
   current_offset += ws_gates_size;
@@ -68,7 +67,6 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
   current_offset += ws_diff_states_size;
   current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
-  current_offset += ws_grad_comp_size;
   std::vector<int64_t> x_shape = {x_input_shape};
   // std::vector<int64_t> h_shape = {h_input_shape};
   std::vector<int64_t> c_shape = {c_input_shape};
@@ -76,7 +74,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   std::vector<int64_t> state_shape = {1, 1};
 
   // infer type
-  CheckAndConvertUtils::CheckInteger("lstm_prim_infer", input_args.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("lstm_prim_infer", SizeToLong(input_args.size()), kEqual, 4, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -167,7 +165,7 @@ void LSTM::Init(const int64_t input_size, const int64_t hidden_size, const int64
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
-int64_t LSTM::get_good_ld(const int64_t dim, const int64_t type_size) {
+int64_t LSTM::get_good_ld(const int64_t dim, const int64_t type_size) const {
   int64_t ld = ((dim + (64 / type_size) - 1) / (64 / type_size)) * (64 / type_size);
   if (ld * 256 == 0) {
     return ld + 64 / type_size;

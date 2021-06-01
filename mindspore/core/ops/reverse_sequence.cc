@@ -44,7 +44,7 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
   auto reverse_prim = primitive->cast<PrimReverseSequence>();
   MS_EXCEPTION_IF_NULL(reverse_prim);
   auto prim_name = reverse_prim->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -55,12 +55,12 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
     CheckAndConvertUtils::ConvertShapePtrToShape("seq_lengths", input_args[1]->BuildShape(), prim_name);
   auto seq_dim = reverse_prim->get_seq_dim();
   auto batch_dim = reverse_prim->get_batch_dim();
-  CheckAndConvertUtils::CheckInteger("seq_dim", seq_dim, kLessEqual, input_shape.size(), prim_name);
-  CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kLessEqual, input_shape.size(), prim_name);
+  CheckAndConvertUtils::CheckInteger("seq_dim", seq_dim, kLessEqual, SizeToLong(input_shape.size()), prim_name);
+  CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kLessEqual, SizeToLong(input_shape.size()), prim_name);
   CheckAndConvertUtils::CheckInteger("batch_dim", batch_dim, kNotEqual, seq_dim, prim_name);
-  CheckAndConvertUtils::CheckInteger("seq_lengths rank", seq_lengths.size(), kEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckInteger("seq_lengths vector size", seq_lengths[0], kEqual, input_shape[batch_dim],
-                                     prim_name);
+  CheckAndConvertUtils::CheckInteger("seq_lengths rank", SizeToLong(seq_lengths.size()), kEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckInteger("seq_lengths vector size", seq_lengths[0], kEqual,
+                                     input_shape[LongToSize(batch_dim)], prim_name);
   // infer type
   std::set<TypeId> tmp(common_valid_types);
   tmp.insert(kNumberTypeBool);

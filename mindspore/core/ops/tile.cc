@@ -30,7 +30,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = tile_prim->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x shape", input_args[0]->BuildShape(), prim_name);
   auto multiples_v = GetValue<std::vector<int64_t>>(input_args[1]->cast<abstract::AbstractTuplePtr>()->BuildValue());
-  int len_sub = input_shape.size() - multiples_v.size();
+  int64_t len_sub = SizeToLong(input_shape.size() - multiples_v.size());
   std::vector<int64_t> infer_shape = input_shape;
   std::vector<int64_t> multiples_w;
   if (len_sub == 0) {
@@ -53,7 +53,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("tile_prim_infer", input_args.size(), kEqual, 2, prim->name());
+  CheckAndConvertUtils::CheckInteger("tile_prim_infer", SizeToLong(input_args.size()), kEqual, 2, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
