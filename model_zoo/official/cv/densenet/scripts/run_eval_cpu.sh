@@ -40,7 +40,7 @@ cd ../eval || exit
 python ${BASEPATH}/../eval.py \
             --net=$1 \
             --dataset=$2 \
-            --train_data_dir=$3 \
+            --eval_data_dir=$3 \
             --device_target='CPU' \
             --is_distributed=0 \
-            --train_pretrained=$4 > eval.log 2>&1 &
+            --ckpt_files=$4 > eval.log 2>&1 &

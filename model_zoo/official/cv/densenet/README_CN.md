@@ -130,6 +130,7 @@ DenseNet-100使用的数据集： Cifar-10
 
 # (1) 选择a(修改yaml文件参数)或者b(ModelArts创建训练作业修改参数)其中一种方式。
 #       a. 设置 "enable_modelarts=True" 。
+#          设置 "is_distributed=1"
 #          设置 "save_ckpt_path=/cache/train/outputs_imagenet/"
 #          设置 "train_data_dir=/cache/data/train/train_dataset/"
 #          设置 "train_pretrained=/cache/data/train/train_predtrained/pred file name" 如果没有预训练权重 train_pretrained=""

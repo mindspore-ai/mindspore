@@ -127,6 +127,7 @@ After installing MindSpore via the official website, you can start training and 
 
 # (1) Choose either a (modify yaml file parameters) or b (modelArts create training job to modify parameters) 。
 #       a. set "enable_modelarts=True" 。
+#          set "is_distributed=1"
 #          set "save_ckpt_path=/cache/train/outputs_imagenet/"
 #          set "train_data_dir=/cache/data/train/train_dataset/"
 #          set "train_pretrained=/cache/data/train/train_predtrained/pred file name" Without pre-training weights  train_pretrained=""
