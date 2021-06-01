@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ from mindspore import context
 from src.face_qa import FaceQABackbone
 
 warnings.filterwarnings('ignore')
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=devid)
 
 
 def softmax(x):
@@ -210,7 +208,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Face Quality Assessment')
     parser.add_argument('--eval_dir', type=str, default='', help='eval image dir, e.g. /home/test')
     parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
+    parser.add_argument('--device_target', type=str, choices=['Ascend', 'GPU', 'CPU'], default='Ascend',
+                        help='device target')
 
     arg = parser.parse_args()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=arg.device_target, save_graphs=False)
+    if arg.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
 
     test_trains(arg)

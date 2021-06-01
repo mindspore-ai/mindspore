@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +17,6 @@ import mindspore.nn as nn
 from mindspore.ops.operations import Add
 from mindspore.ops import operations as P
 from mindspore.nn import Dense, Cell
-
-
-class Cut(nn.Cell):
-
-
-
-    def construct(self, x):
-        return x
 
 
 def bn_with_initialize(out_channels):
