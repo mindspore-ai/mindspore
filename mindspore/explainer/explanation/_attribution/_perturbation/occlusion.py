@@ -52,9 +52,9 @@ class Occlusion(PerturbationAttribution):
     Args:
         network (Cell): The black-box model to be explained.
         activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
-            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
-            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
-            when combining this function with network, the final output is the probability of the input.
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
+            tasks,`nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
+            as when combining this function with network, the final output is the probability of the input.
         perturbation_per_eval (int, optional): Number of perturbations for each inference during inferring the
             perturbed samples. Within the memory capacity, usually the larger this number is, the faster the
             explanation is obtained. Default: 32.
@@ -95,30 +95,36 @@ class Occlusion(PerturbationAttribution):
         """Call function for 'Occlusion'."""
         self._verify_data(inputs, targets)
 
-        inputs_np = inputs.asnumpy()
-        targets_np = targets.asnumpy() if isinstance(targets, ms.Tensor) else np.array([targets], np.int)
+        inputs = inputs.asnumpy()
+        targets = targets.asnumpy() if isinstance(targets, ms.Tensor) else np.array([targets], np.int)
 
-        batch_size = inputs_np.shape[0]
-        window_size, strides = self._get_window_size_and_strides(inputs_np)
+        batch_size = inputs.shape[0]
+        window_size, strides = self._get_window_size_and_strides(inputs)
 
         full_network = nn.SequentialCell([self._network, self._activation_fn])
 
-        original_outputs = full_network(ms.Tensor(inputs, ms.float32)).asnumpy()[np.arange(batch_size), targets_np]
+        original_outputs = full_network(ms.Tensor(inputs, ms.float32)).asnumpy()[np.arange(batch_size), targets]
 
-        total_attribution = np.zeros_like(inputs_np)
-        weights = np.ones_like(inputs_np)
-        masks = Occlusion._generate_masks(inputs_np, window_size, strides)
+        masks = Occlusion._generate_masks(inputs, window_size, strides)
+
+        return self._perturbate(batch_size, full_network, (original_outputs, masks, inputs, targets))
+
+    def _perturbate(self, batch_size, full_network, data):
+        """Perform perturbations."""
+        original_outputs, masks, inputs, targets = data
+        total_attribution = np.zeros_like(inputs)
+        weights = np.ones_like(inputs)
         num_perturbations = masks.shape[1]
-        reference = self._get_replacement(inputs_np)
+        reference = self._get_replacement(inputs)
 
         count = 0
         while count < num_perturbations:
             ith_masks = masks[:, count:min(count+self._perturbation_per_eval, num_perturbations)]
             actual_num_eval = ith_masks.shape[1]
             num_samples = batch_size * actual_num_eval
-            occluded_inputs = self._ablation(inputs_np, reference, ith_masks)
-            occluded_inputs = occluded_inputs.reshape((-1, *inputs_np.shape[1:]))
-            targets_repeat = np.repeat(targets_np, repeats=actual_num_eval, axis=0)
+            occluded_inputs = self._ablation(inputs, reference, ith_masks)
+            occluded_inputs = occluded_inputs.reshape((-1, *inputs.shape[1:]))
+            targets_repeat = np.repeat(targets, repeats=actual_num_eval, axis=0)
             occluded_outputs = full_network(
                 ms.Tensor(occluded_inputs, ms.float32)).asnumpy()[np.arange(num_samples), targets_repeat]
             original_outputs_repeat = np.repeat(original_outputs, repeats=actual_num_eval, axis=0)

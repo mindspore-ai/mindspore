@@ -183,6 +183,7 @@ class ForwardProbe:
 
     @property
     def value(self):
+        """Obtain the intermediate tensor."""
         return self._intermediate_tensor
 
     def __enter__(self):
