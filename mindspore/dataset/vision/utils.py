@@ -25,16 +25,18 @@ class Inter(IntEnum):
     AREA = 4
 
 
-# Padding Mode, Border Type
-# Note: This class derived from class str to support json serializable.
 class Border(str, Enum):
+    '''
+    Padding Mode, Border Type
+    Note: This class derived from class str to support json serializable.
+    '''
     CONSTANT: str = "constant"
     EDGE: str = "edge"
     REFLECT: str = "reflect"
     SYMMETRIC: str = "symmetric"
 
 
-# Image Batch Format
 class ImageBatchFormat(IntEnum):
+    ''' Image Batch Format '''
     NHWC = 0
     NCHW = 1

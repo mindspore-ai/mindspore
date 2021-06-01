@@ -28,7 +28,7 @@
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/random.h"
 
-#define MAX_INT_PRECISION 16777216  // float int precision is 16777216
+const int32_t MAX_INT_PRECISION = 16777216;  // float int precision is 16777216
 namespace mindspore {
 namespace dataset {
 int GetCVInterpolationMode(InterpolationMode mode) {
