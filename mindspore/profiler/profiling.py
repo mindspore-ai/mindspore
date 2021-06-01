@@ -98,6 +98,8 @@ class Profiler:
         ...
         ...     # Init Profiler
         ...     # Note that the Profiler should be initialized after context.set_context and before model.train
+        ...     # If you are running in parallel mode on Ascend, the Profiler should be initialized before HCCL
+        ...     # initialized.
         ...     profiler = Profiler()
         ...
         ...     # Train Model
