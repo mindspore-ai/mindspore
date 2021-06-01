@@ -464,10 +464,10 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-#ifndef SUPPORT_TRAIN
-  // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
-  FreePackOpWeight(kernels_);
-#endif
+  if (!is_train_session_) {
+    // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
+    FreePackOpWeight(kernels_);
+  }
   is_running_.store(false);
   return RET_OK;
 }  // namespace lite

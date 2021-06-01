@@ -23,17 +23,17 @@
 namespace mindspore {
 namespace session {
 
-class TrainSession;
+class LiteSession;
 class TrainLoop;
 
 struct TrainLoopCallBackData {
-  TrainLoopCallBackData(bool train_mode, int epoch, TrainSession *session, TrainLoop *loop)
+  TrainLoopCallBackData(bool train_mode, int epoch, LiteSession *session, TrainLoop *loop)
       : train_mode_(train_mode), epoch_(epoch), session_(session), loop_(loop) {}
 
-  bool train_mode_;       /**< training mode of TrainSession object */
+  bool train_mode_;       /**< training mode of LiteSession object */
   unsigned int epoch_;    /**< the current training epoch (starts at 0) */
   unsigned int step_ = 0; /**< the current step within the epoch */
-  TrainSession *session_; /**< pointer to the TrainSession */
+  LiteSession *session_;  /**< pointer to the LiteSession */
   TrainLoop *loop_;
 };
 

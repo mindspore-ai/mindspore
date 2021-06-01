@@ -25,7 +25,6 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-#ifdef SUPPORT_TRAIN
 void *InnerKernel::workspace_ = nullptr;
 
 void InnerKernel::AllocWorkspace(size_t size) {
@@ -42,8 +41,6 @@ void InnerKernel::FreeWorkspace() {
   free(workspace_);
   workspace_ = nullptr;
 }
-
-#endif
 
 int InnerKernel::PreProcess() {
   if (!InferShapeDone()) {

@@ -24,9 +24,10 @@
 
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/train/train_session.h"
+#include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
+#include "include/train/train_cfg.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/kernel_registry.h"
@@ -42,8 +43,8 @@ class NetworkTest : public mindspore::CommonTest {
 int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, const std::string &out,
                const char *tensor_name, bool debug = false);
 
-int32_t fileIterator(mindspore::session::TrainSession *session, const std::string &path,
-                     std::function<int32_t(mindspore::session::TrainSession *session, const std::string &)> cb) {
+int32_t fileIterator(mindspore::session::LiteSession *session, const std::string &path,
+                     std::function<int32_t(mindspore::session::LiteSession *session, const std::string &)> cb) {
   int32_t res = 0;
   if (auto dir = opendir(path.c_str())) {
     while (auto f = readdir(dir)) {
@@ -101,7 +102,7 @@ TEST_F(NetworkTest, efficient_net) {
   context->thread_num_ = 1;
 
   std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
-  auto session = session::TrainSession::CreateSession(net, context, false);
+  auto session = session::LiteSession::CreateTrainSession(net, context, false);
   ASSERT_NE(session, nullptr);
 
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
@@ -147,7 +148,7 @@ TEST_F(NetworkTest, noname) {
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
 
-  auto session = mindspore::session::TrainSession::CreateSession(net, &context);
+  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context);
   ASSERT_NE(session, nullptr);
 
   auto tensors_map = session->GetOutputs();
@@ -168,7 +169,7 @@ TEST_F(NetworkTest, setname) {
   lite::TrainCfg train_cfg;
   train_cfg.loss_name_ = "nhwc";
 
-  auto session = mindspore::session::TrainSession::CreateSession(net, &context, true, &train_cfg);
+  auto session = mindspore::session::LiteSession::CreateTrainSession(net, &context, true, &train_cfg);
   ASSERT_NE(session, nullptr);
 
   auto tensors_map = session->GetOutputs();

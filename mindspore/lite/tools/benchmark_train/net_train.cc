@@ -30,6 +30,7 @@
 #include "src/runtime/runtime_api.h"
 #include "include/version.h"
 #include "include/model.h"
+#include "include/train/train_cfg.h"
 
 namespace mindspore {
 namespace lite {
@@ -221,7 +222,7 @@ int NetTrain::CompareOutput(const session::LiteSession &lite_session) {
   }
 }
 
-int NetTrain::MarkPerformance(session::TrainSession *session) {
+int NetTrain::MarkPerformance(session::LiteSession *session) {
   MS_LOG(INFO) << "Running train loops...";
   std::cout << "Running train loops..." << std::endl;
   uint64_t time_min = 0xFFFFFFFFFFFFFFFF;
@@ -331,21 +332,19 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
   }
 
   session::LiteSession *session = nullptr;
-  session::TrainSession *t_session = nullptr;
   if (train_session) {
-    MS_LOG(INFO) << "CreateSession from model file" << filename.c_str();
-    std::cout << "CreateSession from model file " << filename.c_str() << std::endl;
-    t_session = session::TrainSession::CreateSession(filename, &context, true, &train_cfg);
-    if (t_session == nullptr) {
-      MS_LOG(ERROR) << "RunNetTrain CreateSession failed while running " << model_name.c_str();
-      std::cout << "RunNetTrain CreateSession failed while running " << model_name.c_str() << std::endl;
+    MS_LOG(INFO) << "CreateTrainSession from model file" << filename.c_str();
+    std::cout << "CreateTrainSession from model file " << filename.c_str() << std::endl;
+    session = session::LiteSession::CreateTrainSession(filename, &context, true, &train_cfg);
+    if (session == nullptr) {
+      MS_LOG(ERROR) << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str();
+      std::cout << "RunNetTrain CreateTrainSession failed while running " << model_name.c_str() << std::endl;
       return RET_ERROR;
     }
 
     if (epochs > 0) {
-      t_session->Train();
+      session->Train();
     }
-    session = t_session;
   } else {
     std::string filenamems = filename;
     if (filenamems.substr(filenamems.find_last_of(".") + 1) != "ms") {
@@ -386,19 +385,18 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, int train_session
     return status;
   }
 
-  if ((epochs > 0) && (t_session != nullptr)) {
-    status = MarkPerformance(t_session);
+  if ((epochs > 0) && train_session) {
+    status = MarkPerformance(session);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;
     }
-    SaveModels(t_session);  // save file if flags are on
+    SaveModels(session);  // save file if flags are on
   }
   if (!flags_->data_file_.empty()) {
-    if (t_session != nullptr) {
-      t_session->Eval();
-    }
+    session->Eval();
+
     status = MarkAccuracy(session, check_accuracy);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
@@ -426,7 +424,7 @@ int NetTrain::RunNetTrain() {
   return RET_OK;
 }
 
-int NetTrain::SaveModels(session::TrainSession *session) {
+int NetTrain::SaveModels(session::LiteSession *session) {
   if (!flags_->export_file_.empty()) {
     auto status = session->Export(flags_->export_file_ + "_qt", lite::MT_TRAIN, lite::QT_WEIGHT);
     if (status != RET_OK) {

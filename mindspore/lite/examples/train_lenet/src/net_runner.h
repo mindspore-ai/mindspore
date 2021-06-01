@@ -46,7 +46,7 @@ class NetRunner {
   float GetLoss() const;
   mindspore::tensor::MSTensor *SearchOutputsForSize(size_t size) const;
 
-  mindspore::session::TrainSession *session_ = nullptr;
+  mindspore::session::LiteSession *session_ = nullptr;
   mindspore::session::TrainLoop *loop_ = nullptr;
 
   std::shared_ptr<Dataset> train_ds_;

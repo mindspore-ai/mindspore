@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "include/train/train_session.h"
+#include "include/lite_session.h"
 #include "include/ms_tensor.h"
 #include "src/dataset.h"
 
@@ -43,7 +43,7 @@ class NetRunner {
   mindspore::tensor::MSTensor *SearchOutputsForSize(size_t size) const;
 
   DataSet ds_;
-  mindspore::session::TrainSession *session_ = nullptr;
+  mindspore::session::LiteSession *session_ = nullptr;
 
   std::string ms_backbone_file_ = "";
   std::string ms_head_file_ = "";

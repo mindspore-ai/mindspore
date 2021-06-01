@@ -274,3 +274,98 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_resize
   int ret = lite_session_ptr->Resize(c_inputs, c_dims);
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
+
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_export(JNIEnv *env, jobject thiz,
+                                                                                 jlong session_ptr,
+                                                                                 jstring model_name,
+                                                                                 jint model_type,
+                                                                                 jint quantization_type) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->Export(env->GetStringUTFChars(model_name, JNI_FALSE),
+                                      static_cast<mindspore::lite::ModelType>(model_type),
+                                      static_cast<mindspore::lite::QuantizationType>(quantization_type));
+  return (jboolean)(ret == 0);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_train(JNIEnv *env, jobject thiz,
+                                                                                jlong session_ptr) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->Train();
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_eval(JNIEnv *env, jobject thiz,
+                                                                                jlong session_ptr) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->Eval();
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_isTrain(JNIEnv *env, jobject thiz,
+                                                                                   jlong session_ptr) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->IsTrain();
+  return (jboolean)(ret);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_isEval(JNIEnv *env, jobject thiz,
+                                                                                  jlong session_ptr) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->IsEval();
+  return (jboolean)(ret);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setLearningRate(JNIEnv *env, jobject thiz,
+                                                                                           jlong session_ptr,
+                                                                                           jfloat learning_rate) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->SetLearningRate(learning_rate);
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_LiteSession_setupVirtualBatch(JNIEnv *env, jobject thiz,
+                                                                                           jlong session_ptr,
+                                                                                           jint virtualBatchMultiplier,
+                                                                                           jfloat learningRate,
+                                                                                           jfloat momentum) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *lite_session_ptr = static_cast<mindspore::session::LiteSession *>(session_pointer);
+  auto ret = lite_session_ptr->SetupVirtualBatch(virtualBatchMultiplier, learningRate, momentum);
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}
+
