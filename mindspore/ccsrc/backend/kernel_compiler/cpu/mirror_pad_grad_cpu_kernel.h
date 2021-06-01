@@ -58,14 +58,14 @@ class MirrorPadGradCPUKernel : public CPUKernel {
                     const std::vector<AddressPtr> &outputs);
 
   template <typename T>
-  void MirrorPadGrad_Width_Height(const size_t size, const T *interim_dy, const int dx_height, const int dx_width,
-                                  const int dy_height, const int dy_width, const int padd_dim,
-                                  const int64_t *paddings_arg, int mode, T *dx);
+  void MirrorPadGrad_Width_Height(const size_t size, const T *interim_dy, const int64_t dx_height,
+                                  const int64_t dx_width, const int64_t dy_height, const int64_t dy_width,
+                                  const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode, T *dx);
 
   template <typename T>
-  void MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int dx_batches, const int dx_channels,
-                                 const int dy_height, const int dy_width, const int padd_dim,
-                                 const int64_t *paddings_arg, int mode);
+  void MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int64_t dx_batches,
+                                 const int64_t dx_channels, const int64_t dy_height, const int64_t dy_width,
+                                 const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode);
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
@@ -74,10 +74,10 @@ class MirrorPadGradCPUKernel : public CPUKernel {
   size_t shape_size_;
   size_t output_size_ = 1;
   size_t workspace_size_ = 1;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  int mode_;
-  int num_paddings_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
+  int64_t mode_;
+  int64_t num_paddings_;
 };
 
 MS_REG_CPU_KERNEL(
