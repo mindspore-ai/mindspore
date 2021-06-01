@@ -185,14 +185,15 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
   // Optimization pass which is relevant to device type or format.
   OptimizeGraphWithDeviceInfo(graph);
+
+  // Assign the stream and insert the send/recv node for all reduce kernel, so must be the last in the optimizer.
+  device::gpu::AssignGpuStream(graph);
 }
 
 void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   // Operator fusion optimization.
   FuseOperators(graph);
-
-  device::gpu::AssignGpuStream(graph);
 
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));

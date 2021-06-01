@@ -67,6 +67,11 @@ bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &
                                    const CNodePtr &mock_send_node, const CNodePtr &mock_recv_node, CNodePtr *send_node,
                                    CNodePtr *recv_node);
 CNodePtr CreateStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &name);
+
+// Cache the allreduce kernel to send/recv nodes in the kernel graph.
+void CacheSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                                     const CNodePtr &mock_send_node, const CNodePtr &mock_recv_node,
+                                     const CNodePtr &send_node, const CNodePtr &recv_node);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
