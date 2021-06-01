@@ -631,7 +631,6 @@ std::pair<MSRStatus, std::vector<uint64_t>> ShardReader::GetPagesByCategory(
 
   if (!criteria.first.empty()) {
     auto schema = shard_header_->GetSchemas()[0]->GetSchema();
-
     if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
       sql +=
         " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
