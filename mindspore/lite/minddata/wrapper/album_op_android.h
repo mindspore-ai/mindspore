@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_ALBUM_ANDROID_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_ALBUM_ANDROID_OP_H_
+#ifndef MINDSPORE_LITE_MINDDATA_WRAPPER_ALBUM_OP_ANDROID_H_
+#define MINDSPORE_LITE_MINDDATA_WRAPPER_ALBUM_OP_ANDROID_H_
 
 #include <deque>
 #include <memory>
@@ -190,4 +190,4 @@ class AlbumOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_ALBUM_ANDROID_OP_H_
+#endif  // MINDSPORE_LITE_MINDDATA_WRAPPER_ALBUM_OP_ANDROID_H_
