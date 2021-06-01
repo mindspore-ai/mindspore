@@ -33,11 +33,10 @@ class Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
   }
   ~Conv2DBackpropFilterFusion() = default;
   MS_DECLARE_PARENT(Conv2DBackpropFilterFusion, Conv2DBackpropFilter);
-  void Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
-            const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad_list = {0, 0, 0, 0},
-            const int64_t mode = 1, const std::vector<int64_t> &stride = {1, 1},
-            const std::vector<int64_t> &dilation = {1, 1, 1, 1}, const int64_t group = 1, const Format &format = NCHW,
-            const ActivationType activation_type = NO_ACTIVATION);
+  void Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size, const PadMode &pad_mode = VALID,
+            const std::vector<int64_t> &pad_list = {0, 0, 0, 0}, const int64_t mode = 1,
+            const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1, 1, 1},
+            const int64_t group = 1, const Format &format = NCHW, const ActivationType activation_type = NO_ACTIVATION);
   void set_activation_type(const ActivationType activation_type);
   void set_in_channel(const int64_t in_channel);
 

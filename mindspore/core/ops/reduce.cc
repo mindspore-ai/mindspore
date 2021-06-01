@@ -34,7 +34,7 @@ void reduce_one_axis(const int64_t one_axis, const int64_t dim, std::set<int64_t
 }
 
 std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, const ValuePtr axis_value,
-                                        const bool keep_dims, const std::string &prim_name) {
+                                        const bool keep_dims) {
   int64_t dim = input_x_shape.size();
   std::set<int64_t> axis_reduce;
   if (axis_value == nullptr) {
@@ -50,7 +50,7 @@ std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, cons
   } else {
     int64_t size = axis_value_elem.size();
     for (int64_t i = 0; i < size; i++) {
-      reduce_one_axis(axis_value_elem[i], dim, axis_reduce);
+      reduce_one_axis(axis_value_elem[LongToSize(i)], dim, axis_reduce);
     }
   }
   std::vector<int64_t> out_shape;
@@ -60,7 +60,7 @@ std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, cons
         out_shape.emplace_back(1);
       }
     } else {
-      out_shape.emplace_back(input_x_shape[i]);
+      out_shape.emplace_back(input_x_shape[LongToSize(i)]);
     }
   }
   return out_shape;
@@ -70,11 +70,10 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto axis_value = input_args[1]->BuildValue();
 
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
 
   auto keep_dims = GetValue<bool>(primitive->GetAttr(kKeepDims));
-  auto out_shape = infer_shape_reduce(input_x_shape, axis_value, keep_dims, prim_name);
+  auto out_shape = infer_shape_reduce(input_x_shape, axis_value, keep_dims);
 
   return std::make_shared<abstract::Shape>(out_shape);
 }

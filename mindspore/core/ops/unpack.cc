@@ -29,13 +29,13 @@ AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const Primitive
   CheckAndConvertUtils::CheckSubClass("x", input_args[0]->BuildType(), {TypeIdToType(kObjectTypeTensorType)},
                                       prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  int64_t dim = x_shape.size();
+  int64_t dim = SizeToLong(x_shape.size());
   int64_t axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   //  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-dim, dim}, prim_name);
   if (axis < 0) {
     axis = axis + dim;
   }
-  auto output_num = x_shape[axis];
+  auto output_num = x_shape[LongToSize(axis)];
   CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
   auto output_valid_check = x_shape[axis] - output_num;
   CheckAndConvertUtils::CheckInteger("The dimension which to unpack divides output_num", output_valid_check, kEqual, 0,
