@@ -103,6 +103,7 @@ def check_filename(path):
 
     return True
 
+
 def check_parameter(func):
     """
     decorator for parameter check
@@ -120,13 +121,12 @@ def check_parameter(func):
                 else:
                     check_filename(value)
             if name == 'num_consumer':
-                if value is not None:
-                    if isinstance(value, int):
-                        if value < MIN_CONSUMER_COUNT or value > MAX_CONSUMER_COUNT():
-                            raise ParamValueError("Consumer number should between {} and {}."
-                                                  .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
-                    else:
-                        raise ParamValueError("Consumer number is illegal.")
+                if value is None:
+                    raise ParamValueError("Consumer number is illegal.")
+                if isinstance(value, int):
+                    if value < MIN_CONSUMER_COUNT or value > MAX_CONSUMER_COUNT():
+                        raise ParamValueError("Consumer number should between {} and {}."
+                                              .format(MIN_CONSUMER_COUNT, MAX_CONSUMER_COUNT()))
                 else:
                     raise ParamValueError("Consumer number is illegal.")
         return func(*args, **kw)

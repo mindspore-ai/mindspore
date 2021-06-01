@@ -659,7 +659,7 @@ MSRStatus ShardWriter::MergeBlobData(const std::vector<string> &blob_fields,
       uint64_t blob_size = b->size();
       // big edian
       for (size_t i = 0; i < buf.size(); ++i) {
-        buf[buf.size() - 1 - i] = (std::numeric_limits<uint8_t>::max() & blob_size);
+        buf[buf.size() - 1 - i] = (std::numeric_limits<uint8_t>::max()) & blob_size;
         blob_size >>= 8u;
       }
       std::copy(buf.begin(), buf.end(), (*output)->begin() + idx);
