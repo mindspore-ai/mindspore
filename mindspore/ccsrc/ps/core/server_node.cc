@@ -59,7 +59,7 @@ void ServerNode::CreateTcpServer() {
   std::string server_ip;
   CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   server_ = std::make_shared<TcpServer>(server_ip, 0);
-  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+  server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {
     switch (meta->cmd()) {
       case NodeCommand::SEND_DATA:

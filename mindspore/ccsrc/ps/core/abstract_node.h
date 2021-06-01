@@ -27,6 +27,7 @@
 #include "ps/core/node.h"
 #include "ps/core/message.h"
 #include "utils/ms_exception.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -60,7 +61,7 @@ class AbstractNode : public Node {
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
-  bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
  protected:
   void Register(const std::shared_ptr<TcpClient> &client);
@@ -80,8 +81,8 @@ class AbstractNode : public Node {
   const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const int &rank_id);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                        const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, std::shared_ptr<MessageMeta>, const Protos &,
-                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                       const Protos &, const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
   uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                             const Protos &protos, const void *data, size_t size);
   void ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,

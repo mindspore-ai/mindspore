@@ -296,12 +296,13 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(conn);
   SetTcpNoDelay(fd);
   server->AddConnection(fd, conn);
-  conn->InitConnection([=](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
-    OnServerReceiveMessage on_server_receive = server->GetServerReceive();
-    if (on_server_receive) {
-      on_server_receive(conn, meta, protos, data, size);
-    }
-  });
+  conn->InitConnection(
+    [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+      OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+      if (on_server_receive) {
+        on_server_receive(conn, meta, protos, data, size);
+      }
+    });
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
                     reinterpret_cast<void *>(conn.get()));
   if (bufferevent_enable(bev, EV_READ | EV_WRITE) == -1) {
