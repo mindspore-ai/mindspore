@@ -25,12 +25,13 @@ class ConvertNetUntils():
     Convert net to thor layer net
     """
     def __init__(self):
-        self._convert_method_map = {nn.Dense: self._convert_dense,
-                                    nn.Embedding: self._convert_embedding,
-                                    nn.Conv2d: self._convert_conv2d}
+        self._convert_method_map = {nn.Dense: ConvertNetUntils._convert_dense,
+                                    nn.Embedding: ConvertNetUntils._convert_embedding,
+                                    nn.Conv2d: ConvertNetUntils._convert_conv2d}
 
 
-    def _convert_dense(self, subcell):
+    @staticmethod
+    def _convert_dense(subcell):
         """
         convert dense cell to second_order cell
         """
@@ -65,7 +66,8 @@ class ConvertNetUntils():
         return new_subcell
 
 
-    def _convert_embedding(self, subcell):
+    @staticmethod
+    def _convert_embedding(subcell):
         """
         convert embedding cell to second_order cell
         """
@@ -76,7 +78,8 @@ class ConvertNetUntils():
         return new_subcell
 
 
-    def _convert_conv2d(self, subcell):
+    @staticmethod
+    def _convert_conv2d(subcell):
         """
         convert conv2d cell to second_order cell
         """
@@ -140,7 +143,8 @@ class ConvertModelUtils():
     convert model to thor model utils
     """
 
-    def convert_to_thor_model(self, model, network, loss_fn=None, optimizer=None, metrics=None, amp_level="O0",
+    @staticmethod
+    def convert_to_thor_model(model, network, loss_fn=None, optimizer=None, metrics=None, amp_level="O0",
                               loss_scale_manager=None, keep_batchnorm_fp32=False):
 
         """
