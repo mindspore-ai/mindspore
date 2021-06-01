@@ -21,7 +21,7 @@
 
 namespace mindspore {
 
-constexpr int kDefaultSpinCount = 30000;
+constexpr int kDefaultSpinCount = 300000;
 
 ThreadPool::~ThreadPool() {
   alive_.store(false);
@@ -30,12 +30,10 @@ ThreadPool::~ThreadPool() {
 
 void ThreadPool::DestructThreads() {
   for (auto &worker : workers_) {
-    sem_post(&worker->sem);
+    worker->cond_var.notify_one();
     if (worker->thread.joinable()) {
       worker->thread.join();
     }
-    sem_destroy(&worker->sem);
-    sem_destroy(&worker->init);
     delete worker;
     worker = nullptr;
   }
@@ -57,14 +55,11 @@ int ThreadPool::CreateThreads(size_t thread_num) {
   for (size_t i = 0; i < thread_num_; ++i) {
     Worker *worker = new (std::nothrow) Worker();
     THREAD_ERROR_IF_NULL(worker);
-    sem_init(&worker->sem, 0, 0);
-    sem_init(&worker->init, 0, 0);
     worker->type = i < inter_thread_num_ ? kActorThread : kKernelThread;
     if (worker->type == kKernelThread) {
       freelist_.push_back(worker);
     }
     worker->thread = std::thread(&ThreadPool::ThreadAsyncRun, this, worker);
-    sem_wait(&worker->init);
     workers_.push_back(worker);
     THREAD_INFO("create thread[%zu]", i);
   }
@@ -72,39 +67,39 @@ int ThreadPool::CreateThreads(size_t thread_num) {
 }
 
 void ThreadPool::KernelThreadRun(Worker *worker) {
-  if (sem_trywait(&worker->sem) == THREAD_OK) {
+  if (worker->active) {
     Task *task = worker->task;
-    if (task == nullptr) {
-      return;
-    }
+    THREAD_RETURN_IF_NULL(task);
     task->status |= task->func(task->content, ++task->task_id);
-    ++task->finished;
-    worker->task = nullptr;
+    {
+      std::lock_guard<std::mutex> _l(worker->mutex);
+      worker->task = nullptr;
+      worker->active = false;
+    }
     {
       std::lock_guard<std::mutex> _l(pool_mutex_);
       freelist_.push_back(worker);
     }
+    ++task->finished;
   } else {
-    std::this_thread::yield();
     worker->spin++;
-    if (worker->spin >= kDefaultSpinCount) {
-      worker->spin = 0;
-      sem_wait(&worker->sem);
-      sem_post(&worker->sem);
-    }
+    std::this_thread::yield();
+  }
+  if (worker->spin >= kDefaultSpinCount) {
+    worker->spin = 0;
+    std::unique_lock<std::mutex> _l(worker->mutex);
+    worker->cond_var.wait(_l, [&]() { return worker->active || !alive_; });
   }
 }
 
 void ThreadPool::ThreadAsyncRun(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
-  sem_post(&worker->init);
   while (alive_) {
     KernelThreadRun(worker);
   }
 }
 
 int ThreadPool::ParallelLaunch(const Func &func, Contend contend, int task_num) {
-  THREAD_INFO("parallel launch, task num: %d", task_num);
   // distribute task to the KernelThread and the free ActorThread,
   // if the task num is greater than the KernelThread num
   Task task = Task(func, contend);
@@ -126,15 +121,23 @@ int ThreadPool::ParallelLaunch(const Func &func, Contend contend, int task_num) 
 
 void ThreadPool::DistributeTask(Task *task, int task_num) {
   int count = 0;
+  Worker *worker;
   while (count < task_num - 1) {
-    std::lock_guard<std::mutex> _l(pool_mutex_);
-    if (!freelist_.empty()) {
-      Worker *worker = freelist_.back();
+    {
+      std::lock_guard<std::mutex> _l(pool_mutex_);
+      if (freelist_.empty()) {
+        continue;
+      }
+      worker = freelist_.back();
       freelist_.pop_back();
-      worker->task = task;
-      sem_post(&worker->sem);
-      count++;
     }
+    {
+      std::lock_guard<std::mutex> _l(worker->mutex);
+      worker->task = task;
+      worker->active = true;
+    }
+    worker->cond_var.notify_one();
+    count++;
   }
 }
 

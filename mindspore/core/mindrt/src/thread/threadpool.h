@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 #define MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
 
-#include <semaphore.h>
 #include <vector>
 #include <memory>
 #include <thread>
@@ -72,9 +71,10 @@ typedef struct Task {
 typedef struct Worker {
   std::thread thread;
   std::atomic_int type{kActorThread};
+  std::atomic_bool active{false};
   Task *task{nullptr};
-  sem_t sem;
-  sem_t init;
+  std::mutex mutex;
+  std::condition_variable cond_var;
   int spin{0};
 } Worker;
 
