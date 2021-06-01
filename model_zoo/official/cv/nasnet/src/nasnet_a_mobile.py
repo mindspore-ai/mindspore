@@ -17,7 +17,7 @@ import numpy as np
 
 from mindspore import Tensor
 import mindspore.nn as nn
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 import mindspore.ops.composite as C
@@ -57,7 +57,7 @@ def _clip_grad(clip_type, clip_value, grad):
     return new_grad
 
 
-class CrossEntropy(_Loss):
+class CrossEntropy(Loss):
     """the redefined loss function with SoftmaxCrossEntropyWithLogits"""
     def __init__(self, smooth_factor=0, num_classes=1000, factor=0.4):
         super(CrossEntropy, self).__init__()

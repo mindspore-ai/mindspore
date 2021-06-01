@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore import nn
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
@@ -69,7 +69,7 @@ else:
     raise ValueError("Unsupported device_target.")
 
 
-class CrossEntropyWithLabelSmooth(_Loss):
+class CrossEntropyWithLabelSmooth(Loss):
     """
     CrossEntropyWith LabelSmooth.
 

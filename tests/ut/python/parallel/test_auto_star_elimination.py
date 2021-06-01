@@ -20,7 +20,7 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -59,7 +59,7 @@ class CustomMatMul(nn.Cell):
         return out
 
 
-class MarginCE(_Loss):
+class MarginCE(Loss):
     def __init__(self):
         super(MarginCE, self).__init__()
         self.fc = CustomMatMul(transpose_b=True)

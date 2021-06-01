@@ -17,7 +17,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from mindspore import Tensor
 
 eps = 1e-24
@@ -41,7 +41,7 @@ class log_softmax(nn.Cell):
         return result
 
 
-class CEWithIgnoreIndex3D(_Loss):
+class CEWithIgnoreIndex3D(Loss):
     '''CEWithIgnoreIndex3D'''
     def __init__(self):
         super(CEWithIgnoreIndex3D, self).__init__()
