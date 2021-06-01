@@ -121,11 +121,11 @@ std::string CommUtil::NodeRoleToString(const NodeRole &role) {
       MS_LOG(EXCEPTION) << "The node role:" << role << " is illegal!";
   }
 }
-bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id) {
-  if (node_role == NodeRole::SERVER && (rank_id > PSContext::instance()->cluster_config().initial_server_num - 1)) {
+bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id, const int32_t &total_worker_num,
+                              const int32_t &total_server_num) {
+  if (node_role == NodeRole::SERVER && (rank_id > IntToUint(total_server_num) - 1)) {
     return false;
-  } else if (node_role == NodeRole::WORKER &&
-             (rank_id > PSContext::instance()->cluster_config().initial_worker_num - 1)) {
+  } else if (node_role == NodeRole::WORKER && (rank_id > IntToUint(total_worker_num) - 1)) {
     return false;
   }
   return true;

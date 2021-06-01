@@ -26,6 +26,11 @@ SchedulerNode::~SchedulerNode() {
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "Start scheduler node!";
+  if (PSContext::instance()->scheduler_manage_port() != 0) {
+    MS_LOG(WARNING) << "Start the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
+                    << ", the port:" << PSContext::instance()->scheduler_manage_port();
+    StartRestfulServer(PSContext::instance()->scheduler_ip(), PSContext::instance()->scheduler_manage_port(), 1);
+  }
   Initialize();
   StartUpdateClusterStateTimer();
   if (!WaitForStart(timeout)) {
@@ -33,6 +38,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     return false;
   }
   MS_LOG(INFO) << "Start the scheduler node is successful!";
+
   return true;
 }
 
@@ -61,6 +67,7 @@ void SchedulerNode::Initialize() {
   is_already_stopped_ = false;
   node_info_.node_id_ = CommUtil::GenerateUUID();
   node_info_.node_role_ = NodeRole::SCHEDULER;
+  leader_scaler_ = std::make_unique<LeaderScaler>(this);
   MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << ", the node id is:" << node_info_.node_id_;
 }
@@ -126,8 +133,9 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       SendMetadata(client);
+      MS_LOG(INFO) << "Send meta data to" << kvs.first;
     }
-    current_cluster_state_ = ClusterState::CLUSTER_READY;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     wait_start_cond_.notify_all();
   }
 }
@@ -149,7 +157,7 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
       SendFinish(client);
     }
     is_finish_ = true;
-    current_cluster_state_ = ClusterState::CLUSTER_FINISH;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_FINISH);
     wait_finish_cond_.notify_all();
   }
 }
@@ -266,6 +274,11 @@ bool SchedulerNode::Stop() {
     client_thread_->join();
     is_ready_ = true;
   }
+  if (PSContext::instance()->scheduler_manage_port() != 0) {
+    MS_LOG(WARNING) << "Stop the scheduler http service, the ip:" << PSContext::instance()->scheduler_ip()
+                    << ", the port:" << PSContext::instance()->scheduler_manage_port();
+    StopRestfulServer();
+  }
   return true;
 }
 
@@ -279,6 +292,209 @@ bool SchedulerNode::Finish(const uint32_t &timeout) {
     return is_finish_.load();
   });
   return true;
+}
+
+void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+  status = resp->ParsePostMessageToJson();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  int32_t scale_worker_num = 0;
+  status = resp->ParseValueFromKey(kWorkerNum, &scale_worker_num);
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  int32_t scale_server_num = 0;
+  status = resp->ParseValueFromKey(kServerNum, &scale_server_num);
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  int32_t total_worker_num = scale_worker_num + node_manager_.worker_num();
+  int32_t total_server_num = scale_server_num + node_manager_.server_num();
+
+  node_manager_.set_worker_num(total_worker_num);
+  node_manager_.set_server_num(total_server_num);
+  node_manager_.set_total_node_num(total_worker_num + total_server_num);
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    leader_scaler_->ScaleOutAsync(client, node_manager_);
+  }
+  node_manager_.ResetMetadata();
+  MS_LOG(INFO) << "Scheduler send scale out successful.";
+
+  nlohmann::json js;
+  js["message"] = "Cluster begin to scale out.";
+  resp->AddRespString(js.dump());
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+/*
+ * The body format is:
+ * {
+ *    "node_ids": [
+ *        {
+ *            "node_id": "423ljjfslkj5",
+ *            "rank_id": "0",
+ *            "role": "SERVER"
+ *        },
+ *        {
+ *            "node_id": "jklj3424kljj",
+ *            "rank_id": "1",
+ *            "role": "WORKER"
+ *        }
+ *    ]
+ * }
+ */
+void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+  status = resp->ParsePostMessageToJson();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+  }
+
+  status = CheckIfClusterReady();
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  std::vector<std::string> node_ids;
+  status = resp->ParseNodeIdsFromKey(kNodesIds, &node_ids);
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  int32_t scale_worker_num = 0;
+  int32_t scale_server_num = 0;
+  auto node_infos = node_manager_.nodes_info();
+  for (auto const &val : node_ids) {
+    if (node_infos.count(val)) {
+      NodeInfo info = node_infos[val];
+      if (info.node_role_ == NodeRole::WORKER) {
+        scale_worker_num++;
+      } else if (info.node_role_ == NodeRole::SERVER) {
+        scale_server_num++;
+      }
+    }
+  }
+
+  MS_LOG(INFO) << "The scale worker num:" << scale_worker_num << ", the scale server num:" << scale_server_num;
+
+  int32_t total_worker_num = node_manager_.worker_num() - scale_worker_num;
+  int32_t total_server_num = node_manager_.server_num() - scale_server_num;
+
+  node_manager_.set_worker_num(total_worker_num);
+  node_manager_.set_server_num(total_server_num);
+  node_manager_.set_total_node_num(total_worker_num + total_server_num);
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    leader_scaler_->ScaleInAsync(client, node_manager_);
+  }
+
+  node_manager_.ResetMetadata();
+  nlohmann::json js;
+  js["message"] = "Cluster begin to scale in.";
+  resp->AddRespString(js.dump());
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+/*
+ * The return body format is:
+ * {
+ *    "message": "Get nodes info successful.",
+ *    "node_ids": [
+ *        {
+ *            "node_id": "423ljjfslkj5",
+ *            "rank_id": "0",
+ *            "role": "SERVER"
+ *        },
+ *        {
+ *            "node_id": "jklj3424kljj",
+ *            "rank_id": "1",
+ *            "role": "WORKER"
+ *        }
+ *    ]
+ * }
+ */
+void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp) {
+  RequestProcessResult status(RequestProcessResultCode::kSuccess);
+
+  nlohmann::json js;
+  js["message"] = "Get nodes info successful.";
+  auto node_infos = node_manager_.nodes_info();
+  for (const auto &kvs : node_infos) {
+    std::unordered_map<std::string, std::string> res;
+    res["node_id"] = kvs.second.node_id_;
+    res["rank_id"] = kvs.second.rank_id_;
+    res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
+    js["node_ids"].push_back(res);
+  }
+
+  resp->AddRespString(js.dump());
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
+RequestProcessResult SchedulerNode::CheckIfClusterReady() {
+  RequestProcessResult result(RequestProcessResultCode::kSuccess);
+  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY) {
+    std::string message = "The cluster is not ready.";
+    ERROR_STATUS(result, RequestProcessResultCode::kSystemError, message);
+    return result;
+  }
+  return result;
+}
+
+void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t port, size_t thread_num) {
+  MS_LOG(INFO) << "Scheduler start https server.";
+  http_server_ = std::make_shared<HttpServer>(address, port, thread_num);
+
+  OnRequestReceive scale_out = std::bind(&SchedulerNode::ProcessScaleOut, this, std::placeholders::_1);
+  callbacks_["/scaleout"] = scale_out;
+  http_server_->RegisterRoute("/scaleout", &callbacks_["/scaleout"]);
+
+  OnRequestReceive scale_in = std::bind(&SchedulerNode::ProcessScaleIn, this, std::placeholders::_1);
+  callbacks_["/scalein"] = scale_in;
+  http_server_->RegisterRoute("/scalein", &callbacks_["/scalein"]);
+
+  OnRequestReceive nodes = std::bind(&SchedulerNode::ProcessGetNodesInfo, this, std::placeholders::_1);
+  callbacks_["/nodes"] = nodes;
+  http_server_->RegisterRoute("/nodes", &callbacks_["/nodes"]);
+
+  http_server_->InitServer();
+
+  http_server_->Start();
+  restful_thread_ = std::make_unique<std::thread>([&]() { http_server_->Wait(); });
+}
+
+void SchedulerNode::StopRestfulServer() {
+  MS_LOG(INFO) << "Scheduler stop https server.";
+  http_server_->Stop();
+  if (restful_thread_->joinable()) {
+    restful_thread_->join();
+  }
 }
 }  // namespace core
 }  // namespace ps

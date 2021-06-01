@@ -38,6 +38,7 @@
 #include "ps/constants.h"
 #include "ps/core/cluster_metadata.h"
 #include "ps/core/communicator/http_server.h"
+#include "ps/core/leader_scaler.h"
 
 namespace mindspore {
 namespace ps {
@@ -51,7 +52,8 @@ class SchedulerNode : public Node {
         restful_thread_(nullptr),
         http_server_(nullptr),
         client_thread_(nullptr),
-        is_client_started_(false) {}
+        is_client_started_(false),
+        leader_scaler_(nullptr) {}
   ~SchedulerNode() override;
 
   typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
@@ -82,6 +84,21 @@ class SchedulerNode : public Node {
   // // After scheduler collects all finish message, it actively sends finish message to workers and servers.
   void SendFinish(const std::shared_ptr<TcpClient> &client);
 
+  // Handle the scale out http request, then delegate to the leader scaler to process scale out asynchronously.
+  void ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp);
+
+  // Handle the scale in http request, then delegate to the leader scaler to process scale in asynchronously.
+  void ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp);
+
+  // Handle the get nodes info http request Synchronously.
+  void ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp);
+
+  // check whether the cluster is in the ready state.
+  RequestProcessResult CheckIfClusterReady();
+
+  void StartRestfulServer(const std::string &address, std::uint16_t port, size_t thread_num = 10);
+  void StopRestfulServer();
+
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
@@ -97,6 +114,10 @@ class SchedulerNode : public Node {
 
   std::unique_ptr<std::thread> client_thread_;
   std::atomic<bool> is_client_started_;
+
+  std::unique_ptr<LeaderScaler> leader_scaler_;
+
+  std::unordered_map<std::string, OnRequestReceive> callbacks_;
 };
 }  // namespace core
 }  // namespace ps

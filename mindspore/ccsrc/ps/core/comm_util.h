@@ -53,6 +53,7 @@
 #include "ps/core/cluster_config.h"
 #include "utils/log_adapter.h"
 #include "ps/ps_context.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -76,7 +77,8 @@ class CommUtil {
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
   static std::string GenerateUUID();
   static std::string NodeRoleToString(const NodeRole &role);
-  static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id);
+  static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id, const int32_t &total_worker_num,
+                             const int32_t &total_server_num);
   static bool Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds);
   static void LogCallback(int severity, const char *msg);
 

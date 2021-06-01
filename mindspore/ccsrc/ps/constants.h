@@ -77,6 +77,7 @@ constexpr int64_t kInvalidID = -1;
 constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) << 20));
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";
+constexpr char kNodesIds[] = "node_ids";
 
 constexpr int64_t kSubmitTaskIntervalInMs = 1;
 constexpr int64_t kMaxTaskNum = 10240;
