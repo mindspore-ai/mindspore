@@ -14,9 +14,14 @@
         - [Distributed Training](#distributed-training)
     - [Evaluation Procsee](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training Performance](#training-performance)
+        - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -97,12 +102,14 @@ For more details, please refer the specify script.
 ```bash
 
 ├── tinydarknet
-    ├── README.md                      // descriptions about Tiny-Darknet in English
-    ├── README_CN.md                      // descriptions about Tiny-Darknet in Chinese
+    ├── README.md                       // descriptions about Tiny-Darknet in English
+    ├── README_CN.md                    // descriptions about Tiny-Darknet in Chinese
+    ├── ascend310_infer                 // application for 310 inference
     ├── scripts
         ├──run_standalone_train.sh      // shell script for single on Ascend
         ├──run_distribute_train.sh                // shell script for distributed on Ascend
         ├──run_eval.sh                 // shell script for evaluation on Ascend
+        ├──run_infer_310.sh            // shell script for inference on Ascend310
     ├── src
         ├─lr_scheduler    //learning rate scheduler
             ├─__init__.py    // init
@@ -116,7 +123,8 @@ For more details, please refer the specify script.
     ├── train.py                       // training script
     ├── eval.py                        //  evaluation script
     ├── export.py                      // export checkpoint file into air/onnx
-    ├── mindspore_hub_conf.py                      // hub config
+    ├── mindspore_hub_conf.py          // hub config
+    ├── postprocess.py                 // postprocess script
 
 ```
 
@@ -235,6 +243,40 @@ For more configuration details, please refer the script config.py.
   accuracy:  {'top_1_accuracy': 0.5871979166666667, 'top_5_accuracy': 0.8175280448717949}
   ```
 
+## [Inference process](#contents)
+
+### Export MindIR
+
+```shell
+# Ascend310 inference
+python export.py --dataset [DATASET] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+```
+
+The parameter does not have the ckpt_file option. Please store the ckpt file according to the path of the parameter `checkpoint_path` in `config.py`.
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+Current batch_size can only be set to 1.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `LABEL_PATH` label.txt path. Write a py script to sort the category under the dataset, map the file names under the categories and category sort values,Such as[file name : sort value], and write the mapping results to the labe.txt file.
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive.The size of the picture that MobilenetV2 performs inference is [224, 224], the DVPP hardware limits the width of divisible by 16, and the height is divisible by 2. The network conforms to the standard, and the network can pre-process the image through DVPP.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+'top_1_accuracy': 59.07%, 'top_5_accuracy': 81.73%
+```
+
 # [Model Description](#contents)
 
 ## [Performance](#contents)
@@ -256,7 +298,7 @@ For more configuration details, please refer the script config.py.
 | Parameters(M)             | 4.0M                                                        |
 | Scripts                    | [Tiny-Darknet Scripts](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/tinydarknet) |
 
-### [Inference Performance](#contents)
+### [Evaluation Performance](#contents)
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
@@ -269,6 +311,20 @@ For more configuration details, please refer the script config.py.
 | Outputs             | probability                 |
 | Accuracy            | 8 pc Top-1: 58.7%; Top-5: 81.7%                 |
 | Model for inference             | 11.6M (.ckpt file)                 |
+
+### [Inference Performance](#contents)
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | TinyDarknet                 |
+| Resource            | Ascend 310; Euler2.8        |
+| Uploaded Date       | 29/05/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |
+| Dataset             | ImageNet                    |
+| batch_size          | 1                           |
+| outputs             | Accuracy                    |
+| Accuracy            | Top-1: 59.07%; Top-5: 81.73%|
+| Model for inference | 10.3M(.ckpt file)           |
 
 # [ModelZoo Homepage](#contents)
 

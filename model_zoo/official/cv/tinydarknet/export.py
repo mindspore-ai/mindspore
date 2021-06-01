@@ -24,12 +24,15 @@ from mindspore import Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src.config import imagenet_cfg
-from src.tinydarknet import TinydarkNet
+from src.tinydarknet import TinyDarkNet
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Classification')
     parser.add_argument('--dataset_name', type=str, default='imagenet', choices=['imagenet', 'cifar10'],
                         help='dataset name.')
+    parser.add_argument('--file_format', type=str, default='AIR', choices=['MINDIR', 'AIR'],
+                        help='file format.')
+    parser.add_argument('--file_name', type=str, default='tinydarknet', help='output file name.')
     args_opt = parser.parse_args()
 
     if args_opt.dataset_name == 'imagenet':
@@ -37,12 +40,11 @@ if __name__ == '__main__':
     else:
         raise ValueError("dataset is not support.")
 
-    net = TinydarkNet(num_classes=cfg.num_classes)
+    net = TinyDarkNet(num_classes=cfg.num_classes)
 
     assert cfg.checkpoint_path is not None, "cfg.checkpoint_path is None."
     param_dict = load_checkpoint(cfg.checkpoint_path)
     load_param_into_net(net, param_dict)
 
     input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 224, 224]), ms.float32)
-    export(net, input_arr, file_name=cfg.onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=cfg.air_filename, file_format="AIR")
+    export(net, input_arr, file_name=args_opt.file_name, file_format=args_opt.file_format)

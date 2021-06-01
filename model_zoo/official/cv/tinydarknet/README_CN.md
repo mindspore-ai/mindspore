@@ -14,10 +14,15 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [推理过程](#推理过程)
+        - [导出MindIR](#导出mindir)
+        - [在Ascend310执行推理](#在ascend310执行推理)
+        - [结果](#结果)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
         - [评估性能](#评估性能)
+        - [推理性能](#推理性能)
 - [ModelZoo主页](#modelzoo主页)
 
 # [Tiny-DarkNet描述](#目录)
@@ -105,12 +110,14 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 ```bash
 
 ├── tinydarknet
-    ├── README.md                  // Tiny-Darknet英文说明
+    ├── README.md                     // Tiny-Darknet英文说明
     ├── README_CN.md                  // Tiny-Darknet中文说明
+    ├── ascend310_infer               // 用于310推理
     ├── scripts
-        ├──run_standalone_train.sh     // Ascend单卡训练shell脚本
-        ├──run_distribute_train.sh               // Ascend分布式训练shell脚本
+        ├──run_standalone_train.sh    // Ascend单卡训练shell脚本
+        ├──run_distribute_train.sh    // Ascend分布式训练shell脚本
         ├──run_eval.sh                // Ascend评估shell脚本
+        ├──run_infer_310.sh           // Ascend310推理shell脚本
     ├── src
         ├─lr_scheduler    //学习率策略
             ├─__init__.py    // 初始化文件
@@ -125,6 +132,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
     ├── eval.py                        //  评估脚本
     ├── export.py                      // 导出checkpoint文件
     ├── mindspore_hub_conf.py          // hub配置文件
+    ├── postprocess.py                 // 310推理后处理脚本
 
 ```
 
@@ -243,6 +251,39 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   accuracy:  {'top_1_accuracy': 0.5871979166666667, 'top_5_accuracy': 0.8175280448717949}
   ```
 
+## 推理过程
+
+### 导出MindIR
+
+```shell
+python export.py --dataset [DATASET] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
+```
+
+参数没有ckpt_file选项，ckpt文件请按照`config.py`中参数`checkpoint_path`的路径存放。
+`EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
+
+### 在Ascend310执行推理
+
+在执行推理前，mindir文件必须通过`export.py`脚本导出。以下展示了使用mindir模型执行推理的示例。
+目前仅支持batch_size为1的推理。
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [LABEL_PATH] [DVPP] [DEVICE_ID]
+```
+
+- `LABEL_PATH` label.txt存放的路径，写一个py脚本对数据集下的类别名进行排序，对类别下的文件名和类别排序值做映射，例如[文件名:排序值]，将映射结果写到labe.txt文件中。
+- `DVPP` 为必填项，需要在["DVPP", "CPU"]选择，大小写均可。注意目前仅支持CPU模式。
+- `DEVICE_ID` 可选，默认值为0。
+
+### 结果
+
+推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
+
+```bash
+'top_1_accuracy': 59.07%, 'top_5_accuracy': 81.73%
+```
+
 # [模型描述](#目录)
 
 ## [性能](#目录)
@@ -277,6 +318,20 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 | 输出             | 分类概率                 |
 | 准确率            | 8卡 Top-1: 58.7%; Top-5: 81.7%                 |
 | 推理模型             | 11.6M (.ckpt文件)                 |
+
+### [推理性能](#目录)
+
+| 参数            | Ascend                     |
+| -------------- | ---------------------------|
+| 模型版本        | TinyDarknet                 |
+| 资源           | Ascend 310；系统 Euler2.8 |
+| 上传日期        | 2021-05-29                  |
+| MindSpore版本  | 1.2.0                       |
+| 数据集          | ImageNet                   |
+| batch_size     | 1                          |
+| 输出            | Accuracy                   |
+| 准确率          | Top-1: 59.07% Top-5: 81.73%  |
+| 推理模型        | 10.3M（.ckpt文件）            |
 
 # [ModelZoo主页](#目录)
 
