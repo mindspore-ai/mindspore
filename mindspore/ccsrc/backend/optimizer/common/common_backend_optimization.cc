@@ -44,7 +44,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
-  common_pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
@@ -78,6 +77,29 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
   if (save_graphs) {
     std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(filename, kernel_graph);
+  }
+}
+
+void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "start common unify mindir opt graph:" << kernel_graph->graph_id();
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name =
+      "hwopt_common_unify_mindir_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
+  }
+  auto opt = std::make_shared<GraphOptimizer>();
+  auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
+  pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
+  opt->AddPassManager(pm);
+  (void)opt->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+  if (save_graphs) {
+    std::string file_name = "hwopt_common_unify_mindir_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph);
   }
 }
 }  // namespace opt

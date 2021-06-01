@@ -338,6 +338,7 @@ bool TensorNeedSync(const AnfNodePtr &parameter, const tensor::TensorPtr &tensor
 void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
 
 void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
+  SessionBasic::UnifyMindIR(graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);

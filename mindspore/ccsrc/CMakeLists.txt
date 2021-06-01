@@ -231,7 +231,7 @@ foreach(_comp ${SUB_COMP})
     string(REPLACE "/" "_" sub ${_comp})
     if(TARGET _mindspore_${sub}_obj)
         list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${sub}_obj>)
-        add_dependencies(_mindspore_${sub}_obj proto_input)
+        add_dependencies(_mindspore_${sub}_obj proto_input mindspore_core)
     endif()
 endforeach()
 
