@@ -77,6 +77,7 @@ std::vector<int64_t> SetPadList(const PrimitivePtr &primitive, const std::vector
   std::vector<int64_t> out_shape = {x_shape[0], out_channel, h_out, w_out};
   return out_shape;
 }
+
 abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();

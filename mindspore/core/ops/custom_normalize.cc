@@ -17,6 +17,7 @@
 #include "ops/custom_normalize.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "utils/infer_base.h"
 
 namespace mindspore {
 namespace ops {
@@ -43,24 +44,11 @@ abstract::ShapePtr CustomNormalizeInferShape(const PrimitivePtr &primitive,
   }
   return std::make_shared<abstract::Shape>(infer_shape);
 }
-
-TypePtr CustomNormalizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto infer_type = input_args[0]->BuildType();
-  auto tensor_type = infer_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  return data_type;
-}
 }  // namespace
 
 AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(CustomNormalizeInferType(primitive, input_args),
+  return std::make_shared<abstract::AbstractTensor>(InferBase::SingleInputOutputInferType(primitive, input_args),
                                                     CustomNormalizeInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameCustomNormalize, CustomNormalize);

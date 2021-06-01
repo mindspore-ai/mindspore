@@ -21,6 +21,7 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
+#include "utils/infer_base.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -54,17 +55,6 @@ abstract::ShapePtr AudioSpectrogramInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr AudioSpectrogramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto infer_type = input_args[0]->BuildType();
-  auto tensor_type = infer_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto data_type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(data_type);
-  return data_type;
-}
 }  // namespace
 
 void AudioSpectrogram::set_window_size(const int64_t window_size) {
@@ -115,7 +105,7 @@ void AudioSpectrogram::Init(const int64_t window_size, const int64_t stride, con
 
 AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(AudioSpectrogramInferType(primitive, input_args),
+  return std::make_shared<abstract::AbstractTensor>(InferBase::SingleInputOutputInferType(primitive, input_args),
                                                     AudioSpectrogramInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameAudioSpectrogram, AudioSpectrogram);

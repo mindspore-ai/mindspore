@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "ops/constant.h"
+#include "utils/infer_base.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
@@ -26,15 +27,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto x = input_args[0]->BuildShape();
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
-}
-
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ConstantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
   for (const auto &item : input_args) {
@@ -49,8 +42,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr ConstantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(ConstantInferType(primitive, input_args),
+                                                    InferBase::SingleInputOutputInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameConstant, Constant);
 }  // namespace ops

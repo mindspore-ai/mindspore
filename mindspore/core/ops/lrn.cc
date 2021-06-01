@@ -21,6 +21,7 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
+#include "utils/infer_base.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -84,23 +85,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("input shape", in_shape.size(), kEqual, 4, prim_name);
   return std::make_shared<abstract::Shape>(in_shape);
 }
-
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
-  std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return TypeIdToType(infer_type);
-}
 }  // namespace
 
 AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  size_t input_num = 1;
+  const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
+  auto type = InferBase::CheckSameInferType(primitive, input_args, valid_types, input_num);
+  return std::make_shared<abstract::AbstractTensor>(type, InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameLRN, LRN);
 }  // namespace ops
