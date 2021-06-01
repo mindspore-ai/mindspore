@@ -178,7 +178,7 @@ enum class LogConfigToken : size_t {
   NUM_LOG_CFG_TOKENS
 };
 
-static const char *g_tok_names[(size_t)LogConfigToken::NUM_LOG_CFG_TOKENS] = {
+static const char *g_tok_names[static_cast<size_t>(LogConfigToken::NUM_LOG_CFG_TOKENS)] = {
   "invalid",        // indicate invalid token
   "{",              // '{'
   "}",              // '}'
@@ -278,8 +278,9 @@ class LogConfigParser {
 
   bool Expect(LogConfigToken expected, LogConfigToken tok) const {
     if (expected != tok) {
-      MS_LOG(WARNING) << "Parse submodule log configuration text error, expect `" << g_tok_names[(size_t)expected]
-                      << "`, but got `" << g_tok_names[(size_t)tok] << "`. The whole configuration will be ignored.";
+      MS_LOG(WARNING) << "Parse submodule log configuration text error, expect `"
+                      << g_tok_names[static_cast<size_t>(expected)] << "`, but got `"
+                      << g_tok_names[static_cast<size_t>(tok)] << "`. The whole configuration will be ignored.";
       return false;
     }
     return true;
