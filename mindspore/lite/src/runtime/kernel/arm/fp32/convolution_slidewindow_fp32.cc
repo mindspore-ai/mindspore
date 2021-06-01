@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_slidewindow_fp32.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/conv_common_fp32.h"
+#include "nnacl/fp32/conv_1x1_x86_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -67,6 +68,11 @@ int ConvolutionSWCPUKernel::InitWeightBias() {
 int ConvolutionSWCPUKernel::Init() {
   oc_tile_ = C8NUM;
   oc_res_ = conv_param_->output_channel_ % oc_tile_;
+  if (conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1) {
+    // 1x1 conv is aligned to C8NUM
+    in_tile_ = C8NUM;
+    ic_res_ = conv_param_->input_channel_ % in_tile_;
+  }
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init weight bias failed.";
@@ -102,13 +108,18 @@ int ConvolutionSWCPUKernel::ReSize() {
     MS_LOG(ERROR) << "new SlidingWindowParam fail!";
     return RET_ERROR;
   }
-  InitSlidingParamConv(slidingWindow_param_, conv_param_, oc_tile_);
+  InitSlidingParamConv(slidingWindow_param_, conv_param_, in_tile_, oc_tile_);
   return RET_OK;
 }
 
 int ConvolutionSWCPUKernel::RunImpl(int task_id) {
-  ConvSWFp32(ori_input_data_, packed_weight_, reinterpret_cast<float *>(bias_data_), output_data_, task_id, conv_param_,
-             slidingWindow_param_);
+  if (conv_param_->kernel_w_ == 1 && conv_param_->kernel_h_ == 1) {
+    Conv1x1SWFp32(input_data_, packed_weight_, reinterpret_cast<float *>(bias_data_), output_data_, task_id,
+                  conv_param_, slidingWindow_param_);
+  } else {
+    ConvSWFp32(input_data_, packed_weight_, reinterpret_cast<float *>(bias_data_), output_data_, task_id, conv_param_,
+               slidingWindow_param_);
+  }
   return RET_OK;
 }
 
@@ -123,11 +134,30 @@ int ConvolutionSWImpl(void *cdata, int task_id) {
 }
 
 int ConvolutionSWCPUKernel::InitTmpBuffer() {
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  if (ic_res_ != 0 && conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1) {
+    // 1x1 conv input is align to in_tile
+    int in_channel = conv_param_->input_channel_;
+    int ic_block_num = UP_DIV(in_channel, in_tile_);
+    MS_ASSERT(ctx_->allocator != nullptr);
+    input_data_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(conv_param_->input_batch_ * conv_param_->input_h_ *
+                                                                    conv_param_->input_w_ * ic_block_num * in_tile_ *
+                                                                    sizeof(float)));
+    if (input_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc tmp input_data_ failed.";
+      return RET_NULL_PTR;
+    }
+    PackNHWCToNHWC8Fp32(input_data, input_data_, conv_param_->input_batch_,
+                        conv_param_->input_w_ * conv_param_->input_h_, conv_param_->input_channel_);
+  } else {
+    input_data_ = input_data;
+  }
+
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   MS_ASSERT(out_data != nullptr);
   if (oc_res_ == 0) {  // not need to malloc dst
     output_data_ = out_data;
-  } else {  // need to malloc dst to algin block
+  } else {  // need to malloc dst to align block
     int out_channel = conv_param_->output_channel_;
     int oc_block_num = UP_DIV(out_channel, oc_tile_);
     MS_ASSERT(ctx_->allocator != nullptr);
@@ -151,11 +181,9 @@ int ConvolutionSWCPUKernel::Run() {
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitTmpBuffer error!";
+    FreeTmpBuffer();
     return ret;
   }
-  auto input_data = in_tensors_.at(kInputIndex)->MutableData();
-  MS_ASSERT(input_data != nullptr);
-  ori_input_data_ = reinterpret_cast<float *>(input_data);
   int error_code = static_cast<const lite::InnerContext *>(this->context_)
                      ->thread_pool_->ParallelLaunch(ConvolutionSWImpl, this, thread_count_);
   if (error_code != RET_OK) {

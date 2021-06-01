@@ -183,7 +183,6 @@ void PackNHWCTo1HWCNXFp32(int kernel_h, int kernel_w, int output_channel, int oc
     }
   }
 }
-
 void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c8 = UP_DIV(channel, C8NUM);
   int c8_channel = c8 * C8NUM;

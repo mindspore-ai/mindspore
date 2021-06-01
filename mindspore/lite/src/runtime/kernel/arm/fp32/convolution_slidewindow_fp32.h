@@ -56,14 +56,20 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(output_data_);
       output_data_ = nullptr;
     }
+    if (input_data_ != nullptr && ic_res_ != 0 && conv_param_->kernel_w_ == 1 && conv_param_->kernel_h_ == 1) {
+      ctx_->allocator->Free(input_data_);
+      input_data_ = nullptr;
+    }
   }
   int oc_tile_ = C8NUM;  // oc tile is C8NUM in avx
+  int in_tile_ = 0;      // input channel algin
   int oc_res_ = 0;
-  float *ori_input_data_ = nullptr;
+  int ic_res_ = 0;
   float *ori_weight_data_ = nullptr;
   float *ori_bias_data_ = nullptr;
   float *packed_weight_ = nullptr;
   float *output_data_ = nullptr;
+  float *input_data_ = nullptr;
   SlidingWindowParam *slidingWindow_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
