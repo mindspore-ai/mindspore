@@ -21,22 +21,14 @@ namespace kernel {
 void RangeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-
-  start_ = AnfAlgo::GetNodeAttr<float>(kernel_node, START);
-  limit_ = AnfAlgo::GetNodeAttr<float>(kernel_node, LIMIT);
-  delta_ = AnfAlgo::GetNodeAttr<float>(kernel_node, DELTA);
 }
 
 bool RangeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
     return LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    return LaunchKernel<int64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Only support int, float, but actual data type is " << TypeIdLabel(dtype_);
   }
@@ -44,10 +36,18 @@ bool RangeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
 
 template <typename T>
 bool RangeCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  T start_ = reinterpret_cast<T *>(inputs[0]->addr)[0];
+  T limit_ = reinterpret_cast<T *>(inputs[1]->addr)[0];
+  T delta_ = reinterpret_cast<T *>(inputs[2]->addr)[0];
+
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = outputs[0]->size / sizeof(T);
   for (size_t i = 0; i < elem_num; i++) {
-    output_addr[i] = start_ + i * delta_;
+    T val_ = start_ + i * delta_;
+    if (val_ > limit_) {
+      break;
+    }
+    output_addr[i] = val_;
   }
   return true;
 }
