@@ -278,7 +278,7 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, no valid data matching the dataset API ManifestDataset. Please check file path or dataset API.");
+      "Invalid data, no valid data matching the dataset API ManifestDataset. Please check file path: " + file_);
   }
   return Status::OK();
 }
