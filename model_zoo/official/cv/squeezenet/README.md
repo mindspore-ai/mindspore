@@ -362,7 +362,7 @@ Before performing inference, the mindir file must be exported by `export.py` scr
 bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_PATH] [DEVICE_ID]
 ```
 
-- `DATASET` should be in ["imagenet", "cifar10"].
+- `DATASET` should be in ["imagenet", "cifar10"]. If the DATASET is cifar10, you don't need to set LABEL_FILE.
 - `LABEL_PATH` label.txt path, LABEL_FILE is only useful for imagenet. Write a py script to sort the category under the dataset, map the file names under the categories and category sort values,Such as[file name : sort value], and write the mapping results to the labe.txt file.
 - `DEVICE_ID` is optional, default value is 0.
 

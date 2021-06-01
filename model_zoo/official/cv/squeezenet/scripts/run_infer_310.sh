@@ -14,9 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 4 || $# -gt 5 ]]; then
+if [[ $# -lt 3 || $# -gt 5 ]]; then
     echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
-    DEVICE_ID is optional, default value is zero, LABEL_FILE is only useful for imagenet "
+    LABEL_FILE is only useful for imagenet. If the DATASET is cifar10, you don't need to set LABEL_FILE.
+    DEVICE_ID is optional, default value is zero. "
 exit 1
 fi
 
@@ -27,14 +28,34 @@ get_real_path(){
         echo "$(realpath -m $PWD/$1)"
     fi
 }
+
 model=$(get_real_path $1)
 dataset=$2
 data_path=$(get_real_path $3)
-label_file=$(get_real_path $4)
-
-device_id=0
-if [ $# == 5 ]; then
-    device_id=$5
+if [ "x${dataset}" == "xcifar10" ] || [ "x${dataset}" == "xCifar10" ]; then
+    if [[ $# -gt 4 ]]; then
+        echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+        LABEL_FILE is only useful for imagenet. If the DATASET is cifar10, you don't need to set LABEL_FILE.
+        DEVICE_ID is optional, default value is zero. "
+    exit 1
+    fi
+    label_file=./preprocess_Result/label
+    device_id=0
+    if [ $# == 4 ]; then
+        device_id=$4
+    fi
+else
+    if [[ $# -lt 4 ]]; then
+        echo "Usage: bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+        LABEL_FILE is only useful for imagenet. If the DATASET is cifar10, you don't need to set LABEL_FILE.
+        DEVICE_ID is optional, default value is zero. "
+    exit 1
+    fi
+    label_file=$(get_real_path $4)
+    device_id=0
+    if [ $# == 5 ]; then
+        device_id=$5
+    fi
 fi
 
 echo "mindir name: "$model
