@@ -40,7 +40,7 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
     }
   }
   // check reduction on the last dimension
-  if (AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
+  if (GetCNodeFuncName(cnode) == kStridedSliceOpName && AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
     auto shrink_axis_mask = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrShrinkAxisMask));
     AnfNodePtr input = cnode->input(1);
     int input_dims = 0;
