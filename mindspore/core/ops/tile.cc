@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, const std::vector<int64_t> &multiples_v) {
-  int len_sub = multiples_v.size() - input_shape.size();
+  int64_t len_sub = SizeToLong(multiples_v.size() - input_shape.size());
   std::vector<int64_t> infer_shape = input_shape;
   std::vector<int64_t> multiples_w;
   if (len_sub == 0) {
@@ -52,7 +52,7 @@ std::vector<int64_t> GetInferShape(const std::vector<int64_t> &input_shape, cons
 abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
+  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

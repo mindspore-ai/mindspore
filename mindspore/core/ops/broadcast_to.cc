@@ -27,8 +27,8 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
-  int64_t outer_dim_offset = input_x.size() - x_shape.size();
   CheckAndConvertUtils::Check("x shape", x_shape.size(), kLessEqual, "input_x", input_x.size(), prim_name);
+  auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
     flag = false;
@@ -36,7 +36,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
     flag = true;
   }
   if (flag == true) {
-    for (int64_t i = 0; i < (int64_t)input_x.size(); i++) {
+    for (size_t i = 0; i < input_x.size(); i++) {
       if (input_x[i] == -1) {
         if (i < outer_dim_offset) {
           MS_EXCEPTION(ValueError) << " -1 in init shape is in an incompatible "
@@ -50,7 +50,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   }
   auto x_shape_ptr = std::make_shared<abstract::Shape>(input_x);
   primitive->AddAttr("shape", MakeValue(input_x));
-  for (int64_t i = 0; i < (int64_t)x_shape.size(); i++) {
+  for (size_t i = 0; i < x_shape.size(); i++) {
     if (input_x[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
       MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: "
                                << input_args[0]->BuildShape()->ToString()
@@ -74,7 +74,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 void BroadcastTo::Init(const std::vector<int64_t> &shape) { set_shape(shape); }
 
 void BroadcastTo::set_shape(const std::vector<int64_t> &shape) {
-  CheckAndConvertUtils::CheckInteger(kShapeSize, shape.size(), kGreaterThan, 0, name());
+  CheckAndConvertUtils::CheckInteger(kShapeSize, SizeToLong(shape.size()), kGreaterThan, 0, name());
   AddAttr(kShape, MakeValue(shape));
 }
 
