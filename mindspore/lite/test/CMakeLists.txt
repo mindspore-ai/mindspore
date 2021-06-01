@@ -11,7 +11,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-if(ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER)
     set(CCSRC_SRC
             ## ccsrc
             ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
@@ -40,7 +40,7 @@ if(SUPPORT_TRAIN)
 endif()
 
 ### gpu kernel
-if(SUPPORT_GPU STREQUAL opencl)
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB GPU_KERNEL_OP_SRC
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/*.cc
             )
@@ -53,7 +53,7 @@ if(SUPPORT_GPU STREQUAL opencl)
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
             )
 endif()
-if(SUPPORT_GPU STREQUAL vulkan)
+if(MSLITE_GPU_BACKEND STREQUAL vulkan)
     file(GLOB GPU_KERNEL_OP_SRC
             ${LITE_DIR}/src/runtime/kernel/vulkan/kernel/*.cc
             )
@@ -67,7 +67,7 @@ endif()
 add_definitions(-DENABLE_V0)
 
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
-if(ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER)
     set(OPS_SRC ${OPS_SRC})
 endif()
 set(TEST_LITE_SRC
@@ -120,7 +120,7 @@ if(ENABLE_TOOLS)
 endif()
 
 ### gpu runtime
-if(SUPPORT_GPU STREQUAL opencl)
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-headers-src)
     include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-clhpp-src/include)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
@@ -131,7 +131,7 @@ if(SUPPORT_GPU STREQUAL opencl)
             ${OPENCL_RUNTIME_SRC}
             )
 endif()
-if(SUPPORT_GPU STREQUAL vulkan)
+if(MSLITE_GPU_BACKEND STREQUAL vulkan)
     include_directories(${LITE_DIR}/build/_deps/vulkan-headers-src/include)
     file(GLOB VULKAN_RUNTIME_SRC
             ${LITE_DIR}/src/runtime/gpu/*.cc
@@ -166,7 +166,7 @@ endif()
 
 
 ### converter
-if(ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
     file(GLOB_RECURSE TEST_CASE_TFLITE_PARSERS_SRC
@@ -304,7 +304,7 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/lite_mindrt_test.cc
         )
 
-if(ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
@@ -332,7 +332,7 @@ else()
             )
 endif()
 
-if(SUPPORT_GPU STREQUAL opencl)
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE TEST_CASE_KERNEL_GPU_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
             )
@@ -382,9 +382,9 @@ endif()
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
-    target_link_libraries(lite-test npu_kernel_mid)
+    target_link_libraries(lite-test npu_kernel_mid c++_shared)
 endif()
-if(ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_exporter_mid

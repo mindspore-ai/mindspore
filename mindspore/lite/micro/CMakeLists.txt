@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(micro)
 
-option(BUILD_TESTCASES "if build testcase" on)
+option(MSLITE_ENABLE_TESTCASES "if build testcase" off)
 option(PLATFORM_ARM32 "build operator for android arm 32" off)
 option(PLATFORM_ARM64 "build operator for android arm 64" off)
 
@@ -51,6 +51,6 @@ if(NOT WIN32)
 endif()
 
 add_subdirectory(coder)
-if(BUILD_TESTCASES AND NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
+if(MSLITE_ENABLE_TESTCASES AND NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
   add_subdirectory(test)
 endif()

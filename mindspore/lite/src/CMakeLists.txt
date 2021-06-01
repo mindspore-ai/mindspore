@@ -78,7 +78,8 @@ set(LITE_SRC
 
 file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
 set(LITE_SRC ${LITE_SRC} ${KERNEL_REG_SRC})
-if(SUPPORT_GPU STREQUAL opencl)
+
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/opencl/*.cc
             )
@@ -88,7 +89,7 @@ if(SUPPORT_GPU STREQUAL opencl)
             )
 endif()
 
-if(SUPPORT_GPU STREQUAL vulkan)
+if(MSLITE_GPU_BACKEND STREQUAL vulkan)
     file(GLOB VULKAN_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/vulkan/*.cc
@@ -99,7 +100,7 @@ if(SUPPORT_GPU STREQUAL vulkan)
             )
 endif()
 
-if(SUPPORT_GPU STREQUAL cuda)
+if(MSLITE_GPU_BACKEND STREQUAL cuda)
     file(GLOB CUDA_RUNTIME_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/cuda/*.cc
@@ -167,14 +168,14 @@ if(ENABLE_MINDRT)
     target_link_libraries(mindspore-lite_static mindrt_mid)
 endif()
 
-if(SUPPORT_GPU STREQUAL opencl)
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
     target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
-elseif(SUPPORT_GPU STREQUAL cuda)
-        add_subdirectory(runtime/kernel/cuda)
-        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
-        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
+elseif(MSLITE_GPU_BACKEND STREQUAL cuda)
+    add_subdirectory(runtime/kernel/cuda)
+    target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
 else()
     target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
