@@ -40,6 +40,8 @@
 
 namespace mindspore {
 namespace dataset {
+const uint32_t kWaitInterruptTaskTime = 30;  // the wait time of interrupt task
+
 class TaskManager;
 
 class Task : public IntrpResource {

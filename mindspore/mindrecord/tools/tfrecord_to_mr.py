@@ -124,7 +124,27 @@ class TFRecordToMR:
         self.bytes_fields_list = bytes_fields_list
         self.scalar_set = set()
         self.list_set = set()
+        self.mindrecord_schema = self._parse_mindrecord_schema_from_feature_dict()
 
+    def _check_input(self, source, destination, feature_dict):
+        """Validation check for inputs of init method"""
+        if not isinstance(source, str):
+            raise ValueError("Parameter source must be string.")
+        check_filename(source, "source")
+
+        if not isinstance(destination, str):
+            raise ValueError("Parameter destination must be string.")
+        check_filename(destination, "destination")
+
+        if feature_dict is None or not isinstance(feature_dict, dict):
+            raise ValueError("Parameter feature_dict is None or not dict.")
+
+        for _, val in feature_dict.items():
+            if not isinstance(val, self.tf.io.FixedLenFeature):
+                raise ValueError("Parameter feature_dict: {} only support FixedLenFeature.".format(feature_dict))
+
+    def _parse_mindrecord_schema_from_feature_dict(self):
+        """get mindrecord schema from feature dict"""
         mindrecord_schema = {}
         for key, val in self.feature_dict.items():
             if not val.shape:
@@ -146,24 +166,7 @@ class TFRecordToMR:
                                      "is not None. It is not supported.".format(key))
                 self.list_set.add(_cast_name(key))
                 mindrecord_schema[_cast_name(key)] = {"type": self._cast_type(val.dtype), "shape": [val.shape[0]]}
-        self.mindrecord_schema = mindrecord_schema
-
-    def _check_input(self, source, destination, feature_dict):
-        """Validation check for inputs of init method"""
-        if not isinstance(source, str):
-            raise ValueError("Parameter source must be string.")
-        check_filename(source, "source")
-
-        if not isinstance(destination, str):
-            raise ValueError("Parameter destination must be string.")
-        check_filename(destination, "destination")
-
-        if feature_dict is None or not isinstance(feature_dict, dict):
-            raise ValueError("Parameter feature_dict is None or not dict.")
-
-        for _, val in feature_dict.items():
-            if not isinstance(val, self.tf.io.FixedLenFeature):
-                raise ValueError("Parameter feature_dict: {} only support FixedLenFeature.".format(feature_dict))
+        return mindrecord_schema
 
     def _parse_record(self, example):
         """Returns features for a single example"""
@@ -240,6 +243,24 @@ class TFRecordToMR:
                 except self.tf.errors.InvalidArgumentError:
                     raise ValueError("TFRecord feature_dict parameter error.")
 
+    def _get_data_from_tfrecord_sample(self, iterator):
+        """convert tfrecord sample to mindrecord sample"""
+        ms_dict = {}
+        sample = iterator.get_next()
+        for key, val in sample.items():
+            cast_key = _cast_name(key)
+            if cast_key in self.scalar_set:
+                self._get_data_when_scalar_field(ms_dict, cast_key, key, val)
+            else:
+                if not isinstance(val.numpy(), np.ndarray) and not isinstance(val.numpy(), list):
+                    raise ValueError("The response key: {}, value: {} from TFRecord should be a ndarray or list."
+                                     .format(key, val))
+                # list set
+                ms_dict[cast_key] = \
+                    np.asarray(val, _cast_string_type_to_np_type(self.mindrecord_schema[cast_key]["type"]))
+        return ms_dict
+
+
     def tfrecord_iterator(self):
         """
         Yield a dictionary whose keys are fields in schema.
@@ -252,20 +273,7 @@ class TFRecordToMR:
         iterator = dataset.__iter__()
         while True:
             try:
-                ms_dict = {}
-                sample = iterator.get_next()
-                for key, val in sample.items():
-                    cast_key = _cast_name(key)
-                    if cast_key in self.scalar_set:
-                        self._get_data_when_scalar_field(ms_dict, cast_key, key, val)
-                    else:
-                        if not isinstance(val.numpy(), np.ndarray) and not isinstance(val.numpy(), list):
-                            raise ValueError("The response key: {}, value: {} from TFRecord should be a ndarray or "
-                                             "list.".format(key, val))
-                        # list set
-                        ms_dict[cast_key] = \
-                            np.asarray(val, _cast_string_type_to_np_type(self.mindrecord_schema[cast_key]["type"]))
-                yield ms_dict
+                yield self._get_data_from_tfrecord_sample(iterator)
             except self.tf.errors.OutOfRangeError:
                 break
             except self.tf.errors.InvalidArgumentError:

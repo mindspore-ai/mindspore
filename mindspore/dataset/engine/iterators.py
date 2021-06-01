@@ -84,7 +84,7 @@ class Iterator:
                 self._transform_tensor = lambda t: Tensor(t.as_array())
             else:
                 self._transform_tensor = lambda t: Tensor.from_numpy(t.as_array())
-        self._index = 0
+        self.__index = 0
 
         # todo remove next when ContextManager is done
         ITERATORS_LIST.append(weakref.ref(self))
@@ -123,12 +123,12 @@ class Iterator:
 
         data = self._get_next()
         if not data:
-            if self._index == 0:
+            if self.__index == 0:
                 logger.warning("No records available.")
             if self._ori_dataset.dataset_size is None:
-                self._ori_dataset.dataset_size = self._index
+                self._ori_dataset.dataset_size = self.__index
             raise StopIteration
-        self._index += 1
+        self.__index += 1
         return data
 
     def __deepcopy__(self, memo):

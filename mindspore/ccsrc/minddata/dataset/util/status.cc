@@ -15,9 +15,9 @@
  */
 #include "minddata/dataset/util/status.h"
 
+#include <cstdio>
+#include <cstdlib>
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
 #include "./securec.h"
 
 #ifndef ENABLE_ANDROID
@@ -32,8 +32,7 @@ namespace dataset {
 float GetMemoryUsage() {
   char buf[128] = {0};
 
-  FILE *fd;
-  fd = fopen("/proc/meminfo", "r");
+  FILE *fd = fopen("/proc/meminfo", "r");
   if (fd == nullptr) {
     MS_LOG(WARNING) << "The meminfo file: /proc/meminfo is opened failed.";
     return 0.0;
