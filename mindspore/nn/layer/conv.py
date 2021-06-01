@@ -506,9 +506,10 @@ class Conv3d(_Conv):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the depth, height
-            and width of the 3D convolution window. Single int means the value is for the depth, height and the width of
-            the kernel. A tuple of 3 ints means the first value is for the depth, second value is for height and the
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers.
+            Specifies the depth, height and width of the 3D convolution window.
+            Single int means the value is for the depth, height and the width of the kernel.
+            A tuple of 3 ints means the first value is for the depth, second value is for height and the
             other is for the width of the kernel.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
@@ -746,7 +747,8 @@ class Conv3dTranspose(_Conv):
 
     Examples:
         >>> input = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
-        >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2), pad_mode='pad')
+        >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2),
+        ...                                       pad_mode='pad')
         >>> output = conv3d_transpose(input)
         >>> print(output.shape)
         (32, 3, 13, 37, 33)
@@ -825,6 +827,23 @@ class Conv3dTranspose(_Conv):
                                                   self.weight_init,
                                                   self.bias_init)
         return s
+
+
+def _deconv_output_length(is_valid, is_same, is_pad, input_length, filter_size, stride_size, dilation_size, padding):
+    """Calculate the width and height of output."""
+    length = 0
+    filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
+    if is_valid:
+        if filter_size - stride_size > 0:
+            length = input_length * stride_size + filter_size - stride_size
+        else:
+            length = input_length * stride_size
+    elif is_same:
+        length = input_length * stride_size
+    elif is_pad:
+        length = input_length * stride_size - padding + filter_size - stride_size
+
+    return length
 
 
 class Conv2dTranspose(_Conv):
@@ -982,28 +1001,12 @@ class Conv2dTranspose(_Conv):
         self.conv2d_transpose.shard(strategy)
         return self
 
-    def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size, padding):
-        """Calculate the width and height of output."""
-        length = 0
-        filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
-        if self.is_valid:
-            if filter_size - stride_size > 0:
-                length = input_length * stride_size + filter_size - stride_size
-            else:
-                length = input_length * stride_size
-        elif self.is_same:
-            length = input_length * stride_size
-        elif self.is_pad:
-            length = input_length * stride_size - padding + filter_size - stride_size
-
-        return length
-
     def construct(self, x):
         n, _, h, w = self.shape(x)
-        h_out = self._deconv_output_length(h, self.kernel_size[0], self.stride[0], self.dilation[0],
-                                           self.padding_top + self.padding_bottom)
-        w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1],
-                                           self.padding_left + self.padding_right)
+        h_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, h, self.kernel_size[0],
+                                      self.stride[0], self.dilation[0], self.padding_top + self.padding_bottom)
+        w_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, w, self.kernel_size[1],
+                                      self.stride[1], self.dilation[1], self.padding_left + self.padding_right)
         if self.has_bias:
             return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
                                  self.bias)
@@ -1179,22 +1182,6 @@ class Conv1dTranspose(_Conv):
         self.conv2d_transpose.shard(strategy)
         return self
 
-    def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size, padding):
-        """Calculate the width and height of output."""
-        length = 0
-        filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
-        if self.is_valid:
-            if filter_size - stride_size > 0:
-                length = input_length * stride_size + filter_size - stride_size
-            else:
-                length = input_length * stride_size
-        elif self.is_same:
-            length = input_length * stride_size
-        elif self.is_pad:
-            length = input_length * stride_size - padding + filter_size - stride_size
-
-        return length
-
     def construct(self, x):
         x_shape = self.shape(x)
         _check_input_3d(x_shape)
@@ -1202,10 +1189,10 @@ class Conv1dTranspose(_Conv):
 
         n, _, h, w = self.shape(x)
 
-        h_out = self._deconv_output_length(h, self.kernel_size[0], self.stride[0], self.dilation[0],
-                                           self.padding[0] + self.padding[1])
-        w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1],
-                                           self.padding[2] + self.padding[3])
+        h_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, h, self.kernel_size[0],
+                                      self.stride[0], self.dilation[0], self.padding[0] + self.padding[1])
+        w_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, w, self.kernel_size[1],
+                                      self.stride[1], self.dilation[1], self.padding[2] + self.padding[3])
         output = self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
         if self.has_bias:
             output = self.bias_add(output, self.bias)

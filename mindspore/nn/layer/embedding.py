@@ -440,7 +440,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         TypeError: If `sparse` is not a bool or `feature_num_list` is not a tuple.
         ValueError: If `vocab_size` or `embedding_size` or `field_size` is less than 1.
         ValueError: If `target` is neither 'CPU' nor 'DEVICE'.
-        ValueError: If `slice_mode` is not one of 'batch_slice', 'field_slice', 'table_row_slice', 'table_column_slice'.
+        ValueError: If `slice_mode` is not one of 'batch_slice', 'field_slice', 'table_row_slice',
+                    'table_column_slice'.
         ValueError: If `sparse` is False and `target` is 'CPU'.
         ValueError: If `slice_mode` is 'field_slice' and `feature_num_list` is None.
         ValueError: If `operator` is not one of 'SUM', 'MAX', 'MEAN'.

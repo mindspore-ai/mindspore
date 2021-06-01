@@ -125,7 +125,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, origin_shape=[-1, -1]):
+    def __init__(self, origin_shape=(-1, -1)):
         """Initialize CusFusedAbsMax1"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.origin_shape = origin_shape
@@ -589,10 +589,8 @@ class _Cholesky(PrimitiveWithInfer):
 
     def infer_shape(self, x1_shape):
         if self.split_dim != 0:
-            assert len(x1_shape) == 2
             height = x1_shape[0]
             width = x1_shape[1]
-            assert height == width
             if height <= self.split_dim:
                 out_shape = [1, height, width]
             else:

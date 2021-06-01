@@ -217,7 +217,8 @@ class SSIM(Cell):
         max_val (Union[int, float]): The dynamic range of the pixel values (255 for 8-bit grayscale images).
           Default: 1.0.
         filter_size (int): The size of the Gaussian filter. Default: 11. The value must be greater than or equal to 1.
-        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5. The value must be greater than 0.
+        filter_sigma (float): The standard deviation of Gaussian kernel. Default: 1.5.
+          The value must be greater than 0.
         k1 (float): The constant used to generate c1 in the luminance comparison function. Default: 0.01.
         k2 (float): The constant used to generate c2 in the contrast comparison function. Default: 0.03.
 
