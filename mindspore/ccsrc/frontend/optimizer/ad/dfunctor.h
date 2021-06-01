@@ -33,6 +33,7 @@
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/operator/ops.h"
 #include "debug/trace.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace ad {
@@ -142,8 +143,7 @@ class KPrim {
   FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
  private:
-  FuncGraphPtr GetBprop(const PrimitivePtr &prim, const std::unordered_map<std::string, ValuePtr> &primal_attrs,
-                        const std::vector<NodeDebugInfoPtr> &primal_debug_infos);
+  FuncGraphPtr GetBprop(const PrimitivePtr &prim);
   FuncGraphPtr GetFprop(const PrimitivePtr &prim);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
@@ -152,7 +152,8 @@ class KPrim {
   // Refer the comment in KUserDefinedCellBprop.
   template <typename T>
   FuncGraphPtr BpropToK(const T &primal, const FuncGraphPtr &bprop_g, const FuncGraphPtr &current_primal_fg,
-                        const CNodePtr &cnode);
+                        const CNodePtr &cnode, const std::unordered_map<std::string, ValuePtr> &primal_attrs,
+                        const std::vector<NodeDebugInfoPtr> &primal_debug_infos);
   AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
   void TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                  const PrimitivePtr &primitive, const FuncGraphPtr &outer,
@@ -169,15 +170,20 @@ class KPrim {
 
 template <typename T>
 FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg,
-                             const CNodePtr &cnode) {
+                             const CNodePtr &cnode, const std::unordered_map<std::string, ValuePtr> &primal_attrs,
+                             const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
   MS_EXCEPTION_IF_NULL(primal);
   MS_EXCEPTION_IF_NULL(bprop_fg);
   CheckBprop(bprop_fg, primal->ToString());
 
   auto debug_info = std::make_shared<GraphDebugInfo>();
   debug_info->set_name(primal->ToString());
-
-  auto cloned_bprop_fg = BasicClone(bprop_fg);
+  FuncGraphPtr cloned_bprop_fg;
+  {
+    PrimalAttrGuard primal_attr_guard(primal_attrs);
+    PrimalDebugInfoGuard primal_debug_info_guard(primal_debug_infos);
+    cloned_bprop_fg = BasicClone(bprop_fg);
+  }
   MS_EXCEPTION_IF_NULL(cloned_bprop_fg);
 
   cloned_bprop_fg->debug_info()->set_name("");
