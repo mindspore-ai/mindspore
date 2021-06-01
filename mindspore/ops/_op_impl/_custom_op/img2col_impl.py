@@ -35,7 +35,7 @@ cus_img2col_info = TBERegOp("CusImg2Col") \
 
 
 def shape56_0(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 4, 56, 56, 16), 'float16', (3, 3), (1, 1))"""
+    """input_shape is ((32, 4, 56, 56, 16), 'float16', (3, 3), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 56, 56, 1, 1
@@ -62,7 +62,7 @@ def shape56_0(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape56_1(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 8, 56, 56, 16), 'float16', (3, 3), (2, 2))"""
+    """input_shape is ((32, 8, 56, 56, 16), 'float16', (3, 3), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 56, 56, 1, 1
@@ -90,7 +90,7 @@ def shape56_1(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape56_2(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 4, 56, 56, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 4, 56, 56, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, c1_index, jump_stride, repeat_mode = 56, 56, 0, 1, 1
@@ -114,7 +114,7 @@ def shape56_2(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape56_3(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 16, 56, 56, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 16, 56, 56, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, c1_index, jump_stride, repeat_mode = 56, 56, 0, 1, 1
@@ -142,7 +142,7 @@ def shape56_3(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape56_4(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 16, 56, 56, 16), 'float16', (1, 1), (2, 2))"""
+    """input_shape is ((32, 16, 56, 56, 16), 'float16', (1, 1), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, c1_index, jump_stride, repeat_mode = 56, 56, 0, 1, 1
@@ -171,7 +171,7 @@ def shape56_4(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape28_0(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 8, 28, 28, 16), 'float16', (3, 3), (1, 1))"""
+    """input_shape is ((32, 8, 28, 28, 16), 'float16', (3, 3), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 28, 28, 1, 1
@@ -199,7 +199,7 @@ def shape28_0(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape28_1(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 16, 28, 28, 16), 'float16', (3, 3), (2, 2))"""
+    """input_shape is ((32, 16, 28, 28, 16), 'float16', (3, 3), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 28, 28, 1, 1
@@ -238,7 +238,7 @@ def shape28_1(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape28_2(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 32, 28, 28, 16), 'float16', (1, 1), (2, 2))"""
+    """input_shape is ((32, 32, 28, 28, 16), 'float16', (1, 1), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, jump_stride, repeat_mode = 28, 28, 1, 1
@@ -286,7 +286,7 @@ def shape28_2(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape28_3(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 8, 28, 28, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 8, 28, 28, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, jump_stride, repeat_mode = 28, 28, 1, 1
@@ -314,7 +314,7 @@ def shape28_3(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape28_4(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 32, 28, 28, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 32, 28, 28, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, jump_stride, repeat_mode = 28, 28, 1, 1
@@ -342,7 +342,7 @@ def shape28_4(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape14_0(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 16, 14, 14, 16), 'float16', (3, 3), (1, 1))"""
+    """input_shape is ((32, 16, 14, 14, 16), 'float16', (3, 3), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 14, 14, 1, 1
@@ -382,7 +382,7 @@ def shape14_0(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape14_1(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 32, 14, 14, 16), 'float16', (3, 3), (2, 2))"""
+    """input_shape is ((32, 32, 14, 14, 16), 'float16', (3, 3), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h, l1_w, jump_stride, repeat_mode = 14, 14, 1, 1
@@ -419,7 +419,7 @@ def shape14_1(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape14_2(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 64, 14, 14, 16), 'float16', (1, 1), (2, 2))"""
+    """input_shape is ((32, 64, 14, 14, 16), 'float16', (1, 1), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, jump_stride, repeat_mode = 14, 14, 1, 1
@@ -454,7 +454,7 @@ def shape14_2(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape14_3(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 64, 14, 14, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 64, 14, 14, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h, l1_w, jump_stride, repeat_mode = 14, 14, 1, 1
@@ -476,7 +476,7 @@ def shape14_3(tik_instance, input_x, res, input_shape, shape_info):
             with tik_instance.for_range(eeb1 * 16, (eeb1 + 1) * 16) as i:
                 rep = 13
                 c1_index = 0
-                fetch_filter_w, fetch_filter_h, left_top_w, left_top_h = 0, 0, 0, 0
+                fetch_filter_w, fetch_filter_h, left_top_w, left_top_h, rep, c1_index = 0, 0, 0, 0, 13, 0
                 tik_instance.load3dv1(input_1_1_fractal_l1_local_ub[3328 * (i - eeb1 * 16)],
                                       input_1_1_local_l1[3136 * i],
                                       pad, l1_h, l1_w, c1_index, fetch_filter_w, fetch_filter_h,
@@ -492,9 +492,7 @@ def shape14_3(tik_instance, input_x, res, input_shape, shape_info):
 
         with tik_instance.for_range(0, 2) as eeb1:
             with tik_instance.for_range(eeb1 * 16, (eeb1 + 1) * 16) as i:
-                rep = 13
-                fetch_filter_w, fetch_filter_h, left_top_w, left_top_h = 0, 0, 0, 0
-                c1_index = 0
+                fetch_filter_w, fetch_filter_h, left_top_w, left_top_h, rep, c1_index = 0, 0, 0, 0, 13, 0
                 tik_instance.load3dv1(input_1_1_fractal_l1_local_ub[3328 * (i - eeb1 * 16)],
                                       input_1_2_local_l1[3136 * i],
                                       pad, l1_h, l1_w, c1_index, fetch_filter_w, fetch_filter_h,
@@ -511,7 +509,7 @@ def shape14_3(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape14_4(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 16, 14, 14, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 16, 14, 14, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h = 14
@@ -551,7 +549,7 @@ def shape14_4(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape7_0(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 32, 7, 7, 16), 'float16', (3, 3), (1, 1))"""
+    """input_shape is ((32, 32, 7, 7, 16), 'float16', (3, 3), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [1, 1, 1, 1]
     l1_h = 7
@@ -576,36 +574,34 @@ def shape7_0(tik_instance, input_x, res, input_shape, shape_info):
             left_top_h = -1
             c1_index = 0
             with tik_instance.for_range(0, 32) as i:
-                tik_instance.load3dv1(input_1_1_fractal_l1_local_ub[1024 * i], input_1_1_local_l1[784 * i],
-                                      pad, l1_h, l1_w, c1_index, fetch_filter_w, fetch_filter_h,
-                                      left_top_w, left_top_h, stride_w, stride_h, filter_w,
-                                      filter_h, dilation_filter_w, dilation_filter_h,
-                                      jump_stride, repeat_mode, rep)
+                tik_instance.load3dv1(input_1_1_fractal_l1_local_ub[1024 * i],
+                                      input_1_1_local_l1[784 * i], pad, l1_h, l1_w, c1_index,
+                                      fetch_filter_w, fetch_filter_h, left_top_w, left_top_h,
+                                      stride_w, stride_h, filter_w, filter_h, dilation_filter_w,
+                                      dilation_filter_h, jump_stride, repeat_mode, rep)
             with tik_instance.for_range(0, 32) as i:
                 tik_instance.data_move(input_1_2_fractal_l1_local_ub[i * 49 * 16],
                                        input_1_1_fractal_l1_local_ub[i * 1024], 0, 1, 49, 0, 0)
 
             with tik_instance.for_range(0, 98) as i:
-                tik_instance.data_move(res[eeb + block_index * 9, i, 0, 0], input_1_2_fractal_l1_local_ub[256 * i],
-                                       0, 1, 16, 0, 0)
+                tik_instance.data_move(res[eeb + block_index * 9, i, 0, 0],
+                                       input_1_2_fractal_l1_local_ub[256 * i], 0, 1, 16, 0, 0)
     return tik_instance, res
 
 
 def shape7_1(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 128, 7, 7, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 128, 7, 7, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
-    l1_h = 7
-    l1_w = 7
-    jump_stride = 1
-    repeat_mode = 1
+    l1_h, l1_w, jump_stride, repeat_mode = 7, 7, 1, 1
     with tik_instance.for_range(0, 32, block_num=32) as block_index:
+        input_1_2_fractal_l1_local_ub = tik_instance.Tensor("float16", (25088,), scope=tik.scope_ubuf,
+                                                            name="input_1_2_fractal_l1_local_ub")
         input_1_1_local_l1 = tik_instance.Tensor("float16", (25088,), scope=tik.scope_cbuf,
                                                  name="input_1_1_local_l1")
         input_1_1_fractal_l1_local_ub = tik_instance.Tensor("float16", (32768,), scope=tik.scope_ubuf,
                                                             name="input_1_1_fractal_l1_local_ub")
-        input_1_2_fractal_l1_local_ub = tik_instance.Tensor("float16", (25088,), scope=tik.scope_ubuf,
-                                                            name="input_1_2_fractal_l1_local_ub")
+
         with tik_instance.for_range(0, 4) as eeb0, tik_instance.for_range(0, 32) as i:
             tik_instance.data_move(input_1_1_local_l1[i * 784], input_x[i, eeb0 + block_index * 4, 0, 0, 0], 0,
                                    1, 49, 0, 0)
@@ -633,21 +629,21 @@ def shape7_1(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def shape7_2(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape == ((32, 32, 7, 7, 16), 'float16', (1, 1), (1, 1))"""
+    """input_shape is ((32, 32, 7, 7, 16), 'float16', (1, 1), (1, 1))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [0, 0, 0, 0]
     l1_h = 7
     l1_w = 7
     c1_index = 0
-    jump_stride = 1
-    repeat_mode = 1
+    jump_stride, repeat_mode = 1, 1
     with tik_instance.for_range(0, 32, block_num=32) as block_index:
+        input_1_2_fractal_l1_local_ub = tik_instance.Tensor("float16", (25088,), scope=tik.scope_ubuf,
+                                                            name="input_1_2_fractal_l1_local_ub")
         input_1_1_local_l1 = tik_instance.Tensor("float16", (25088,), scope=tik.scope_cbuf,
                                                  name="input_1_1_local_l1")
         input_1_1_fractal_l1_local_ub = tik_instance.Tensor("float16", (32768,), scope=tik.scope_ubuf,
                                                             name="input_1_1_fractal_l1_local_ub")
-        input_1_2_fractal_l1_local_ub = tik_instance.Tensor("float16", (25088,), scope=tik.scope_ubuf,
-                                                            name="input_1_2_fractal_l1_local_ub")
+
 
         with tik_instance.for_range(0, 32) as i:
             tik_instance.data_move(input_1_1_local_l1[i * 784], input_x[i, block_index, 0, 0, 0], 0, 1, 49, 0, 0)
@@ -673,14 +669,10 @@ def shape7_2(tik_instance, input_x, res, input_shape, shape_info):
 
 
 def height224_width224(tik_instance, input_x, res, input_shape, shape_info):
-    """input_shape = ((32, 1, 224, 224, 16), 'float16', (7, 7), (2, 2))"""
+    """input_shape is ((32, 1, 224, 224, 16), 'float16', (7, 7), (2, 2))"""
     stride_w, stride_h, filter_w, filter_h, dilation_filter_w, dilation_filter_h = shape_info
     pad = [3, 3, 3, 3]
-    l1_h = 56
-    l1_w = 224
-    c1_index = 0
-    jump_stride = 1
-    repeat_mode = 1
+    l1_h, l1_w, c1_index, jump_stride, repeat_mode = 56, 224, 0, 1, 1
     with tik_instance.for_range(0, 32, block_num=32) as block_index:
         input_1_1_local_l1 = tik_instance.Tensor("float16", (200704,), scope=tik.scope_cbuf,
                                                  name="input_1_1_local_l1")
@@ -717,11 +709,10 @@ def height224_width224(tik_instance, input_x, res, input_shape, shape_info):
 
                 left_top_h = 1 + ((55 - temp - (-3 + eeb)) // 2 - 29) * 2
 
-                tik_instance.load3dv1(input_1_1_fractal_l1_local_ub, input_1_1_local_l1, pad,
-                                      l1_h, l1_w, c1_index, fetch_filter_w, fetch_filter_h,
-                                      left_top_w, left_top_h, stride_w, stride_h, filter_w,
-                                      filter_h, dilation_filter_w, dilation_filter_h, jump_stride,
-                                      repeat_mode, rep)
+                tik_instance.load3dv1(input_1_1_fractal_l1_local_ub, input_1_1_local_l1, pad, l1_h, l1_w,
+                                      c1_index, fetch_filter_w, fetch_filter_h, left_top_w, left_top_h,
+                                      stride_w, stride_h, filter_w, filter_h, dilation_filter_w,
+                                      dilation_filter_h, jump_stride, repeat_mode, rep)
                 with tik_instance.for_range(0, rep) as cc1:
                     tik_instance.data_move(
                         res[cc0 + eeb * 7, cc1 + rep_prefix + (eeb0 - 1) * rep + 784 * block_index, 0, 0],
