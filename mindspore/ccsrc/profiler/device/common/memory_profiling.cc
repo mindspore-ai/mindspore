@@ -26,6 +26,22 @@ namespace mindspore {
 namespace profiler {
 constexpr char kOutputPath[] = "output";
 
+bool MemoryProfiling::IsMemoryProfilingEnable() const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+    return false;
+  }
+
+  const std::string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  nlohmann::json options = nlohmann::json::parse(prof_options_str);
+  if (options["profile_memory"] == "off") {
+    return false;
+  }
+
+  return true;
+}
+
 std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
   std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);
   graph_memory_[graph_id] = node;

@@ -26,6 +26,7 @@
 #include "runtime/base.h"
 #include "toolchain/prof_acl_api.h"
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
+#include <nlohmann/json.hpp>
 
 namespace {
 constexpr int32_t kProfilingDeviceNum = 1;
@@ -124,8 +125,19 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
   }
 
   const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  const nlohmann::json options_all = nlohmann::json::parse(prof_options_str);
+  nlohmann::json options_for_cann;
+  options_for_cann["output"] = options_all["output"];
+  options_for_cann["fp_point"] = options_all["fp_point"];
+  options_for_cann["bp_point"] = options_all["bp_point"];
+  options_for_cann["training_trace"] = options_all["training_trace"];
+  options_for_cann["task_trace"] = options_all["task_trace"];
+  options_for_cann["aic_metrics"] = options_all["aic_metrics"];
+  options_for_cann["aicpu"] = options_all["aicpu"];
 
-  if (memcpy_s(prof->options, MSPROF_OPTIONS_DEF_LEN_MAX, prof_options_str.c_str(), prof_options_str.size()) != EOK) {
+  const string options_for_cann_str = options_for_cann.dump();
+  if (memcpy_s(prof->options, MSPROF_OPTIONS_DEF_LEN_MAX, options_for_cann_str.c_str(), options_for_cann_str.size()) !=
+      EOK) {
     MS_LOG(ERROR) << "Copy profiling_options failed";
     return PROF_FAILED;
   }

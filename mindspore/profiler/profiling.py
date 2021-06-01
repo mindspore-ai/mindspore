@@ -68,6 +68,8 @@ class Profiler:
         ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located;
             This parameter is used to support offline parsing.
         profile_communication(bool): Whether to collect communication performance data, collect when True.
+            Default is False.
+        profile_memory(bool): Whether to collect tensor memory data, collect when True.Default is False.
 
     Examples:
         >>> import numpy as np
@@ -160,24 +162,15 @@ class Profiler:
             if self._profile_communication:
                 hccl_option = {"output": self._output_path, "task_trace": "on"}
                 os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
+            self._profile_memory = kwargs.pop("profile_memory", False)
+            if not isinstance(self._profile_memory, bool):
+                raise TypeError("The parameter profile_memory must be bool")
             if kwargs:
                 logger.warning("There are invalid params which don't work.")
 
             os.environ['DEVICE_ID'] = self._dev_id
-            fp_point = os.environ.get("PROFILING_FP_START", "")
-            bp_point = os.environ.get("PROFILING_BP_END", "")
 
-            profiling_options = {
-                "output": self._output_path,
-                "fp_point": fp_point,
-                "bp_point": bp_point,
-                "training_trace": "on",
-                "task_trace": "on",
-                "aic_metrics": "PipeUtilization",
-                "aicpu": "on"
-            }
-
-            profiling_options = json.dumps(profiling_options)
+            profiling_options = json.dumps(self._construct_profiling_options())
             # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
             if len(profiling_options) > 2048:
                 msg = "The parameter length exceeds the limit (2048), please input valid parameters."
@@ -197,6 +190,30 @@ class Profiler:
             self._job_id_env = 0
             self._start_time = int(time.time() * 10000000)
             logger.info("Profiling: profiling start time: %d", self._start_time)
+
+    def _construct_profiling_options(self):
+        """
+        Construct profiling options to determine which profiling data should be collected.
+        """
+        profile_memory = "off"
+        if self._profile_memory:
+            profile_memory = "on"
+
+        fp_point = os.environ.get("PROFILING_FP_START", "")
+        bp_point = os.environ.get("PROFILING_BP_END", "")
+
+        profiling_options = {
+            "output": self._output_path,
+            "fp_point": fp_point,
+            "bp_point": bp_point,
+            "training_trace": "on",
+            "task_trace": "on",
+            "aic_metrics": "PipeUtilization",
+            "aicpu": "on",
+            "profile_memory": profile_memory
+            }
+
+        return profiling_options
 
     def analyse(self):
         """
@@ -293,10 +310,11 @@ class Profiler:
             logger.warning('Fail to write timeline data: %s', err)
 
         # analyse memory usage info
-        try:
-            self._analyse_memory_usage(points)
-        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-            logger.warning(err.message)
+        if self._profile_memory:
+            try:
+                self._analyse_memory_usage(points)
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
 
         # analyse hccl profiler info
         if self._profile_communication:
