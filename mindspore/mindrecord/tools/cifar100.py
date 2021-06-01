@@ -53,6 +53,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError("global '%s.%s' is forbidden" % (module, name))
 
 
+
 def restricted_loads(s):
     """Helper function analogous to pickle.loads()."""
     if isinstance(s, str):

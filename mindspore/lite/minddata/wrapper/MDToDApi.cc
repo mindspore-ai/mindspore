@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "MDToDApi.h"  //NOLINT
+
+#include "MDToDApi.h"  // NOLINT
 
 #include <string>
 #include <fstream>
@@ -24,7 +25,7 @@
 #include <vector>
 #include <set>
 
-#include "album_op_android.h"  //NOLINT
+#include "album_op_android.h"  // NOLINT
 #include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/type_id.h"
 #include "minddata/dataset/util/path.h"
@@ -125,7 +126,7 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
       MS_LOG(INFO) << "Push back resize";
       mapOperations.push_back(resize_op);
     }
-    if (1 == MDConf.fixOrientation) {
+    if (MDConf.fixOrientation == 1) {
       std::shared_ptr<TensorOperation> rotate_op = mindspore::dataset::vision::Rotate();
       MS_LOG(INFO) << "Push back rotate";
       mapOperations.push_back(rotate_op);
