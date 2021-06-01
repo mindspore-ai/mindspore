@@ -197,7 +197,7 @@ Status CacheServerGreeterImpl::MonitorUnixSocket() {
       MS_LOG(WARNING) << "Unix socket is removed.";
       TaskManager::WakeUpWatchDog();
     }
-    std::this_thread::sleep_for(std::chrono::seconds(kMonitorInterval));
+    std::this_thread::sleep_for(std::chrono::seconds(kMonitorIntervalInSec));
   } while (true);
 #endif
   return Status::OK();

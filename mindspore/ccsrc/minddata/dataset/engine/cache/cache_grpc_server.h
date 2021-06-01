@@ -70,7 +70,7 @@ class CacheServerGreeterImpl final {
   friend class CacheServer;
 
  public:
-  constexpr static int32_t kMonitorInterval = 5;
+  constexpr static int32_t kMonitorIntervalInSec = 5;
   explicit CacheServerGreeterImpl(int32_t port);
   virtual ~CacheServerGreeterImpl();
   /// \brief Brings up gRPC server

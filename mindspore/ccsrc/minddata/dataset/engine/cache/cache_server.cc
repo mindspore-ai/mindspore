@@ -767,7 +767,7 @@ Status CacheServer::BatchCacheRows(CacheRequest *rq) {
     auto *base = SharedMemoryBaseAddr();
     offset_addr = strtoll(rq->buf_data(kAddrIdx).data(), nullptr, kDecimal);
     auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
-    num_elem = strtol(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal);
+    num_elem = static_cast<int32_t>(strtol(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal));
     auto batch_wait = std::make_shared<BatchWait>(num_elem);
     // Get a set of free request and push into the queues.
     for (auto i = 0; i < num_elem; ++i) {

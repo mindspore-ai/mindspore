@@ -59,8 +59,8 @@ class CacheClientGreeter : public Service {
   friend class CacheClient;
 
  public:
-  constexpr static int32_t kRequestTimeoutDeadline = 60;
-  constexpr static int32_t kWaitForNewEventDeadline = 1;
+  constexpr static int32_t kRequestTimeoutDeadlineInSec = 60;
+  constexpr static int32_t kWaitForNewEventDeadlineInSec = 1;
   explicit CacheClientGreeter(const std::string &hostname, int32_t port, int32_t num_connections);
   ~CacheClientGreeter();
 
