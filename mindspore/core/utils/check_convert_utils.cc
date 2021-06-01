@@ -330,8 +330,7 @@ bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, cons
 
 std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string &arg_name,
                                                                const std::vector<int64_t> &arg_value,
-                                                               const std::string &prim_name, bool allow_four,
-                                                               bool ret_four) {
+                                                               const std::string &prim_name, bool allow_four, bool) {
   auto raise_message = [allow_four, prim_name, arg_value, arg_name]() -> void {
     std::ostringstream buffer;
     buffer << "For " << prim_name << " attr " << arg_name << " should be a positive vector of size two ";
@@ -398,8 +397,7 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
 }
 
 std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string &arg_name,
-                                                                  const BaseShapePtr &shape,
-                                                                  const std::string &prim_name) {
+                                                                  const BaseShapePtr &shape, const std::string &) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {
     MS_EXCEPTION(ValueError) << "The " << arg_name << "'s shape is " << shape->ToString()
@@ -410,9 +408,8 @@ std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::str
   return shape_element->shape();
 }
 
-void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
-                                 const string &value_name, int64_t value, const string &prim_name,
-                                 ExceptionType exception_type) {
+void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, const string &,
+                                 int64_t value, const string &prim_name, ExceptionType exception_type) {
   auto iter = kCompareMap<float>.find(compare_type);
   if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "the compare type :" << compare_type << " is not in the compare map";
@@ -534,8 +531,8 @@ void CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::stri
   }
 
   std::map<std::string, TypePtr> &arg_ = check_results[0];
-  int64_t size = check_results.size();
-  for (int64_t it = 1; it != size; it++) {
+  size_t size = check_results.size();
+  for (size_t it = 1; it != size; it++) {
     arg_ = _CheckTypeSame(arg_, check_results[it], prim_name, allow_mix);
   }
 }

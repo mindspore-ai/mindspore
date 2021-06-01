@@ -61,8 +61,8 @@ bool MetaTensor::operator==(const MetaTensor &meta_tensor) const {
 // The given index number should be in [0, shape_.size()).
 // param index Dimension index number.
 // return The size of the dimension if succeed, or -1 if failed.
-int MetaTensor::DimensionSize(const size_t index) const {
-  int dim_size = -1;
+int64_t MetaTensor::DimensionSize(const size_t index) const {
+  int64_t dim_size = -1;
   if (index < shape_.size()) {
     dim_size = shape_[index];
   } else {
@@ -71,9 +71,7 @@ int MetaTensor::DimensionSize(const size_t index) const {
   return dim_size;
 }
 
-int MetaTensor::ElementsNum() const {
-  return std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int>());
-}
+int MetaTensor::ElementsNum() const { return std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<int>()); }
 
 TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   if (type_ptr == nullptr) {

@@ -285,7 +285,7 @@ OptPassGroupMap GetOptPassesGraphKernelB(const opt::irpass::OptimizeIRPassLib &i
   return map;
 }
 
-OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &irpass) {
+OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
   return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
 }
 
@@ -322,7 +322,7 @@ OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   return map;
 }
 
-OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &irpass) {
+OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   OptPassGroupMap map({{"cse", opt::OptPassConfig(opt::CSEPass(false))}});
   return map;
 }
@@ -464,7 +464,7 @@ bool TransformTopGraphPass(const ResourcePtr &res) {
     AbstractBasePtrList abs_spec_list;
     auto &params = func_graph->parameters();
     std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
-                   [](AnfNodePtr node) { return node->abstract(); });
+                   [](const AnfNodePtr &node) { return node->abstract(); });
     res->set_args_spec(abs_spec_list);
   }
   return true;
