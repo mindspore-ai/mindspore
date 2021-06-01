@@ -213,7 +213,7 @@ class GraphSplitByPattern:
                 os.makedirs(dirname)
             graphname = self.graph.name
             filename = dirname + '/' + graphname + '.log'
-            with open(filename, 'w') as f:
+            with os.fdopen(os.open(filename, os.O_RDWR | os.O_CREAT), 'w+') as f:
                 f.write(subgraphs_str)
 
     def split(self):
