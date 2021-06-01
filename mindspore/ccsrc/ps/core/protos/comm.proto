@@ -29,8 +29,14 @@ enum NodeCommand {
   COLLECTIVE_SEND_DATA = 6;
   // The scheduler actively sends metadata to the worker and server
   SEND_METADATA = 7;
+  // This command is used to start scale out
   SCALE_OUT = 8;
+  // This command is used to start scale in
   SCALE_IN = 9;
+  // This command is used to synchronize the scale out status of the cluster
+  SCALE_OUT_DONE = 10;
+  // This command is used to synchronize the scale in status of the cluster
+  SCALE_IN_DONE = 11;
 }
 
 enum NodeRole {
@@ -111,6 +117,10 @@ message ServersMeta {
 
 message SendMetadataMessage {
   repeated ServersMeta servers_meta = 1;
+  // the current worker number.
+  int32 worker_num = 2;
+  // the current server number.
+  int32 server_num = 3;
 }
 
 message FinishMessage {
@@ -133,8 +143,20 @@ message ScaleOutMessage {
 
 // The scheduler will broadcast the worker/server numbers after scale in to all nodes.
 message ScaleInMessage {
-  // the worker number after scale in
+  // the worker number after scale in.
   int32 worker_num = 1;
-  // the server number after scale in
+  // the server number after scale in.
   int32 server_num = 2;
+  // Determine whether the current node is a scale in node.
+  bool is_node_scale_in = 3;
+}
+
+// This message is sent to the scheduler to notify the completion of scale out
+message ScaleOutDoneMessage {
+  string node_id = 1;
+}
+
+// This message is sent to the scheduler to notify the completion of scale out
+message ScaleInDoneMessage {
+  string node_id = 1;
 }

@@ -36,7 +36,8 @@ void LeaderScaler::ScaleOutAsync(const std::shared_ptr<TcpClient> &client, const
   MS_LOG(INFO) << "The scheduler is sending scale out to workers and servers!";
 }
 
-void LeaderScaler::ScaleInAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager) {
+void LeaderScaler::ScaleInAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager,
+                                bool is_node_scale_in) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
   message_meta->set_cmd(NodeCommand::SCALE_IN);
@@ -44,6 +45,7 @@ void LeaderScaler::ScaleInAsync(const std::shared_ptr<TcpClient> &client, const 
   ScaleInMessage scale_in_message;
   scale_in_message.set_worker_num(manager.worker_num());
   scale_in_message.set_server_num(manager.server_num());
+  scale_in_message.set_is_node_scale_in(is_node_scale_in);
 
   if (!node_->SendMessageSync(client, message_meta, Protos::PROTOBUF, scale_in_message.SerializeAsString().data(),
                               scale_in_message.ByteSizeLong())) {

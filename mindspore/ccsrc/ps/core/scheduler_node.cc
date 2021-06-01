@@ -37,6 +37,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start Scheduler node timeout!";
     return false;
   }
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
   MS_LOG(INFO) << "Start the scheduler node is successful!";
 
   return true;
@@ -55,6 +56,7 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
 
   HeartbeatRespMessage heartbeat_resp_message;
 
+  MS_LOG(DEBUG) << "The cluster state:" << node_manager_.GetClusterState();
   heartbeat_resp_message.set_cluster_state(node_manager_.GetClusterState());
 
   server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
@@ -77,6 +79,8 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::REGISTER] = &SchedulerNode::ProcessRegister;
   handlers_[NodeCommand::FINISH] = &SchedulerNode::ProcessFinish;
   handlers_[NodeCommand::FETCH_METADATA] = &SchedulerNode::ProcessFetchMetadata;
+  handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
+  handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -135,7 +139,6 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
       SendMetadata(client);
       MS_LOG(INFO) << "Send meta data to" << kvs.first;
     }
-    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     wait_start_cond_.notify_all();
   }
 }
@@ -177,6 +180,56 @@ void SchedulerNode::ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std:
                       fetch_servers_message.ByteSizeLong());
 }
 
+void SchedulerNode::ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  ScaleOutDoneMessage scale_out_done_message;
+  scale_out_done_message.ParseFromArray(data, size);
+  std::string node_id = scale_out_done_message.node_id();
+  MS_LOG(INFO) << "The scheduler process a scale_out_done message from node id:" << node_id;
+  node_manager_.AddScaleOutDoneNode(node_id);
+
+  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+
+  if (node_manager_.IsAllNodesScaleOutDone()) {
+    auto node_infos = node_manager_.nodes_info();
+    for (const auto &kvs : node_infos) {
+      auto client = GetOrCreateClient(kvs.second);
+      SendScaleOutDone(client);
+    }
+    is_ready_ = true;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  }
+}
+
+void SchedulerNode::ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                                       std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  ScaleInDoneMessage scale_in_done_message;
+  scale_in_done_message.ParseFromArray(data, size);
+  std::string node_id = scale_in_done_message.node_id();
+  MS_LOG(INFO) << "The scheduler process a scale_in_done message from node id:" << node_id;
+  node_manager_.AddScaleInDoneNode(node_id);
+
+  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
+
+  if (node_manager_.IsAllNodesScaleInDone()) {
+    auto node_infos = node_manager_.nodes_info();
+    for (const auto &kvs : node_infos) {
+      auto client = GetOrCreateClient(kvs.second);
+      SendScaleInDone(client);
+    }
+    is_ready_ = true;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  }
+}
+
 void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -184,6 +237,8 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client) {
 
   SendMetadataMessage send_metadata_message;
   std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
+  send_metadata_message.set_worker_num(node_manager_.worker_num());
+  send_metadata_message.set_server_num(node_manager_.server_num());
 
   *send_metadata_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
@@ -212,6 +267,40 @@ void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << "is sending finish to workers and servers!";
+}
+
+void SchedulerNode::SendScaleOutDone(const std::shared_ptr<TcpClient> &client) {
+  MS_EXCEPTION_IF_NULL(client);
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SCALE_OUT_DONE);
+
+  // The scheduler does not need to bring any data when sending the scale_out_done command
+  std::string resp_data;
+
+  if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, resp_data.data(), resp_data.size())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " send scale_out_done timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is sending scale_out_done to workers and servers!";
+}
+
+void SchedulerNode::SendScaleInDone(const std::shared_ptr<TcpClient> &client) {
+  MS_EXCEPTION_IF_NULL(client);
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SCALE_IN_DONE);
+
+  // The scheduler does not need to bring any data when sending the scale_in_done command
+  std::string resp_data;
+
+  if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, resp_data.data(), resp_data.size())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " send scale_in_done timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is sending scale_in_done to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
@@ -330,11 +419,11 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
   node_manager_.set_total_node_num(total_worker_num + total_server_num);
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT);
   auto node_infos = node_manager_.nodes_info();
+  node_manager_.ResetMetadata();
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
     leader_scaler_->ScaleOutAsync(client, node_manager_);
   }
-  node_manager_.ResetMetadata();
   MS_LOG(INFO) << "Scheduler send scale out successful.";
 
   nlohmann::json js;
@@ -375,18 +464,24 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
     return;
   }
 
-  std::vector<std::string> node_ids;
-  status = resp->ParseNodeIdsFromKey(kNodesIds, &node_ids);
+  std::vector<std::string> scale_in_node_ids;
+  status = resp->ParseNodeIdsFromKey(kNodesIds, &scale_in_node_ids);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
 
+  MS_LOG(WARNING) << "The scale in node ids:" << scale_in_node_ids;
+
+  std::unordered_map<std::string, bool> scale_in_nodes;
+
   int32_t scale_worker_num = 0;
   int32_t scale_server_num = 0;
   auto node_infos = node_manager_.nodes_info();
-  for (auto const &val : node_ids) {
+  node_manager_.ResetMetadata();
+  for (auto const &val : scale_in_node_ids) {
     if (node_infos.count(val)) {
+      scale_in_nodes[val] = true;
       NodeInfo info = node_infos[val];
       if (info.node_role_ == NodeRole::WORKER) {
         scale_worker_num++;
@@ -407,10 +502,13 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
   for (const auto &kvs : node_infos) {
     auto client = GetOrCreateClient(kvs.second);
-    leader_scaler_->ScaleInAsync(client, node_manager_);
+    bool is_node_scale_in = false;
+    if (scale_in_nodes.count(kvs.first)) {
+      is_node_scale_in = true;
+    }
+    leader_scaler_->ScaleInAsync(client, node_manager_, is_node_scale_in);
   }
 
-  node_manager_.ResetMetadata();
   nlohmann::json js;
   js["message"] = "Cluster begin to scale in.";
   resp->AddRespString(js.dump());
@@ -446,7 +544,7 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
   for (const auto &kvs : node_infos) {
     std::unordered_map<std::string, std::string> res;
     res["node_id"] = kvs.second.node_id_;
-    res["rank_id"] = kvs.second.rank_id_;
+    res["rank_id"] = std::to_string(kvs.second.rank_id_);
     res["role"] = CommUtil::NodeRoleToString(kvs.second.node_role_);
     js["node_ids"].push_back(res);
   }

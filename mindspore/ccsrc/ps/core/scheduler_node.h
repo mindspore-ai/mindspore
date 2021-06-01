@@ -79,10 +79,25 @@ class SchedulerNode : public Node {
   void ProcessFetchMetadata(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                             std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
 
-  // After scheduler collects all registered message, it actively sends metadata to workers and servers.
+  // Process scale_out_done messages from workers/servers
+  void ProcessScaleOutDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                           std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+  // Process scale_in_done messages from workers/servers
+  void ProcessScaleInDone(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                          std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
+
+  // After scheduler collects all registered message, it actively sends finish to the node connected by the client.
   void SendMetadata(const std::shared_ptr<TcpClient> &client);
-  // // After scheduler collects all finish message, it actively sends finish message to workers and servers.
+  // After scheduler collects all finish message, it actively sends finish to the node connected by the client.
   void SendFinish(const std::shared_ptr<TcpClient> &client);
+
+  // After scheduler collects all scale_out_done message, it actively sends scale_out_done to the node connected by the
+  // client.
+  void SendScaleOutDone(const std::shared_ptr<TcpClient> &client);
+
+  // After scheduler collects all scale_in_done message, it actively sends scale_out_done to the node connected by the
+  // client.
+  void SendScaleInDone(const std::shared_ptr<TcpClient> &client);
 
   // Handle the scale out http request, then delegate to the leader scaler to process scale out asynchronously.
   void ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp);

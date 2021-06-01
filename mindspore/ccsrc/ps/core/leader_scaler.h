@@ -42,7 +42,7 @@ class LeaderScaler {
   // When the scheduler receives the scale out message, it will send this message to the workers and servers.
   void ScaleOutAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager);
   // When the scheduler receives the scale in message, it will send this message to the workers and servers.
-  void ScaleInAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager);
+  void ScaleInAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &manager, bool is_node_scale_in);
 
  private:
   // The node_ will only be instantiated with scheduler node.

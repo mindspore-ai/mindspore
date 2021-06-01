@@ -96,15 +96,57 @@ void AbstractNode::set_ready_for_scale_out() {
 }
 
 void AbstractNode::set_ready_for_scale_in() {
-  Register(client_to_scheduler_);
-  connected_nodes_.clear();
+  if (!is_current_node_scale_in_) {
+    Register(client_to_scheduler_);
+    connected_nodes_.clear();
+  } else {
+    current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
+    node_info_.rank_id_ = UINT_MAX;
+    MS_LOG(WARNING) << "Trigger cluster scale in done event.";
+    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_IN_DONE);
+  }
+}
+
+void AbstractNode::set_scale_out_done() {
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SCALE_OUT_DONE);
+
+  ScaleOutDoneMessage scale_out_done_message;
+  scale_out_done_message.set_node_id(node_info_.node_id_);
+
+  if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF,
+                       scale_out_done_message.SerializeAsString().data(), scale_out_done_message.ByteSizeLong())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " scale_out_done timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is send scale_out_done to scheduler!";
+}
+
+void AbstractNode::set_scale_in_done() {
+  auto message_meta = std::make_shared<MessageMeta>();
+  message_meta->set_cmd(NodeCommand::SCALE_IN_DONE);
+
+  ScaleInDoneMessage scale_in_done_message;
+  scale_in_done_message.set_node_id(node_info_.node_id_);
+
+  if (!SendMessageSync(client_to_scheduler_, message_meta, Protos::PROTOBUF,
+                       scale_in_done_message.SerializeAsString().data(), scale_in_done_message.ByteSizeLong())) {
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " scale_in_done timeout!";
+  }
+
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is send scale_in_done to scheduler!";
 }
 
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
                         int command, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                      << ", the server num:" << server_num_;
   }
 
   auto message_meta = std::make_shared<MessageMeta>();
@@ -127,7 +169,8 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   }
   for (size_t it = 0; it < rank_ids.size(); ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
-      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                        << ", the server num:" << server_num_;
     }
 
     auto message_meta = std::make_shared<MessageMeta>();
@@ -152,7 +195,8 @@ bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id,
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                      << ", the server num:" << server_num_;
   }
 
   uint64_t request_id = AddMessageTrack(1);
@@ -202,7 +246,8 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 
   for (size_t it = 0; it < size; ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
-      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                        << ", the server num:" << server_num_;
     }
 
     auto message_meta = std::make_shared<MessageMeta>();
@@ -227,7 +272,8 @@ uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const
                                            size_t size) {
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                      << ", the server num:" << server_num_;
   }
 
   std::shared_ptr<MessageMeta> message_meta = std::make_shared<MessageMeta>();
@@ -243,7 +289,8 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
                                                                    const uint32_t &rank_id, VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
+    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                      << ", the server num:" << server_num_;
   }
 
   receive_callbacks_mutex_.lock();
@@ -347,10 +394,13 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
   heartbeat_resp_message.ParseFromArray(data, size);
 
   current_cluster_state_ = heartbeat_resp_message.cluster_state();
+  MS_LOG(DEBUG) << "The current cluster state from heartbeat:" << current_cluster_state_;
+
   if (current_cluster_state_ == ClusterState::CLUSTER_READY) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
   }
+
   if (current_cluster_state_ == ClusterState::CLUSTER_TIMEOUT && on_node_event_message_) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
@@ -390,6 +440,10 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
   MS_EXCEPTION_IF_NULL(data);
   SendMetadataMessage send_meta_message;
   send_meta_message.ParseFromArray(data, size);
+  worker_num_ = send_meta_message.worker_num();
+  server_num_ = send_meta_message.server_num();
+  MS_LOG(WARNING) << "The send metadata worker num:" << worker_num_ << ", server num:" << server_num_;
+
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
     nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
@@ -403,11 +457,13 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
     MS_LOG(WARNING) << "Trigger cluster scale out done event.";
     on_node_event_message_(ClusterEvent::CLUSTER_SCALE_OUT_DONE);
   }
+
   if (current_cluster_state_ == ClusterState::CLUSTER_SCALE_IN) {
     MS_LOG(WARNING) << "Trigger cluster scale in done event.";
     on_node_event_message_(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
-  current_cluster_state_ = ClusterState::CLUSTER_READY;
+
+  MS_LOG(INFO) << "The current cluster state:" << current_cluster_state_;
 }
 
 void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
@@ -420,6 +476,26 @@ void AbstractNode::ProcessFinish(std::shared_ptr<TcpConnection> conn, std::share
   wait_finish_cond_.notify_all();
 }
 
+void AbstractNode::ProcessScaleOutDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                       const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  is_ready_ = true;
+  current_cluster_state_ = ClusterState::CLUSTER_READY;
+}
+
+void AbstractNode::ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                      const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
+  is_ready_ = true;
+  current_cluster_state_ = ClusterState::CLUSTER_READY;
+}
+
 void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
                                    const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
@@ -428,8 +504,9 @@ void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::sha
 
   ScaleOutMessage scale_out_message;
   scale_out_message.ParseFromArray(data, size);
-  worker_num_ = scale_out_message.worker_num();
-  server_num_ = scale_out_message.server_num();
+  int32_t worker_num = scale_out_message.worker_num();
+  int32_t server_num = scale_out_message.server_num();
+  MS_LOG(WARNING) << "The scale out worker num:" << worker_num << ", the server num:" << server_num;
 
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   on_node_event_message_(ClusterEvent::READY_FOR_SCALE_OUT);
@@ -445,8 +522,19 @@ void AbstractNode::ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shar
 
   ScaleInMessage scale_in_message;
   scale_in_message.ParseFromArray(data, size);
-  worker_num_ = scale_in_message.worker_num();
-  server_num_ = scale_in_message.server_num();
+  int32_t worker_num = scale_in_message.worker_num();
+  int32_t server_num = scale_in_message.server_num();
+  MS_LOG(WARNING) << "The scale in worker num:" << worker_num << ", the server num:" << server_num;
+
+  is_current_node_scale_in_ = scale_in_message.is_node_scale_in();
+
+  if (is_current_node_scale_in_) {
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " is a scale in node!";
+  } else {
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " is not a scale in node!";
+  }
 
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
   on_node_event_message_(ClusterEvent::READY_FOR_SCALE_IN);
@@ -665,6 +753,8 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::REGISTER] = &AbstractNode::ProcessRegisterResp;
   handlers_[NodeCommand::FETCH_METADATA] = &AbstractNode::ProcessFetchServersResp;
   handlers_[NodeCommand::FINISH] = nullptr;
+  handlers_[NodeCommand::SCALE_OUT_DONE] = nullptr;
+  handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
 }
 
 void AbstractNode::InitServerHandler() {
@@ -673,6 +763,9 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SEND_DATA] = nullptr;
   server_handler_[NodeCommand::COLLECTIVE_SEND_DATA] = nullptr;
   server_handler_[NodeCommand::SCALE_OUT] = &AbstractNode::ProcessScaleOut;
+  server_handler_[NodeCommand::SCALE_IN] = &AbstractNode::ProcessScaleIn;
+  server_handler_[NodeCommand::SCALE_OUT_DONE] = &AbstractNode::ProcessScaleOutDone;
+  server_handler_[NodeCommand::SCALE_IN_DONE] = &AbstractNode::ProcessScaleInDone;
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {

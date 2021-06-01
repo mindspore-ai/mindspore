@@ -40,7 +40,8 @@ class AbstractNode : public Node {
         server_(nullptr),
         server_thread_(nullptr),
         worker_num_(-1),
-        server_num_(-1) {}
+        server_num_(-1),
+        is_current_node_scale_in_(false) {}
   ~AbstractNode() override = default;
 
   typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
@@ -58,6 +59,12 @@ class AbstractNode : public Node {
   void set_ready_for_scale_out();
   // When the business layer finish scale in, it should call this function
   void set_ready_for_scale_in();
+
+  // Send scale_out_done instructions to the scheduler.
+  void set_scale_out_done();
+
+  // Send scale_in_done instructions to the scheduler.
+  void set_scale_in_done();
 
   bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -98,6 +105,13 @@ class AbstractNode : public Node {
 
   void ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
                       const void *data, size_t size);
+
+  // The worker/server processes the scale_out_done message from scheduelr
+  void ProcessScaleOutDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
+                           const void *data, size_t size);
+  // The worker/server processes the scale_in_done message from scheduelr
+  void ProcessScaleInDone(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, const Protos &protos,
+                          const void *data, size_t size);
 
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
   void UpdateSchedulerTime();
@@ -163,6 +177,9 @@ class AbstractNode : public Node {
 
   int32_t worker_num_;
   int32_t server_num_;
+
+  // Identify whether the current node is a scale in node.
+  std::atomic<bool> is_current_node_scale_in_;
 };
 }  // namespace core
 }  // namespace ps
