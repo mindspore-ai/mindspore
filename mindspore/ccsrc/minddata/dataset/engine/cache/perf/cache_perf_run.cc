@@ -15,7 +15,6 @@
 */
 
 #include "minddata/dataset/engine/cache/perf/cache_perf_run.h"
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -24,6 +23,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 #include "minddata/dataset/util/random.h"
@@ -344,11 +344,11 @@ void CachePerfRun::PrintEpochSummary() const {
             << std::setw(14) << "buffer count" << std::setw(18) << "Elapsed time (s)" << std::endl;
   for (auto &it : epoch_results_) {
     auto epoch_worker_summary = it.second;
-    std::cout << std::setw(12) << epoch_worker_summary.pipeline() + 1 << std::setw(10) << epoch_worker_summary.worker()
-              << std::setw(10) << epoch_worker_summary.min() << std::setw(10) << epoch_worker_summary.max()
-              << std::setw(10) << epoch_worker_summary.avg() << std::setw(13) << epoch_worker_summary.med()
-              << std::setw(14) << epoch_worker_summary.cnt() << std::setw(18) << epoch_worker_summary.elapse()
-              << std::endl;
+    std::cout << std::setw(12) << (epoch_worker_summary.pipeline() + 1) << std::setw(10)
+              << epoch_worker_summary.worker() << std::setw(10) << epoch_worker_summary.min() << std::setw(10)
+              << epoch_worker_summary.max() << std::setw(10) << epoch_worker_summary.avg() << std::setw(13)
+              << epoch_worker_summary.med() << std::setw(14) << epoch_worker_summary.cnt() << std::setw(18)
+              << epoch_worker_summary.elapse() << std::endl;
   }
 }
 
@@ -463,7 +463,7 @@ Status CachePerfRun::StartPipelines() {
       // Call _exit instead of exit because we will hang TaskManager destructor for a forked child process.
       _exit(-1);
     } else if (pid > 0) {
-      std::cout << "Pipeline number " << i + 1 << " has been created with process id: " << pid << std::endl;
+      std::cout << "Pipeline number " << (i + 1) << " has been created with process id: " << pid << std::endl;
       pid_lists_.push_back(pid);
     } else {
       std::string errMsg = "Failed to fork process for cache pipeline: " + std::to_string(errno);

@@ -24,6 +24,7 @@
 #include <grpcpp/grpcpp.h>
 #endif
 #include <string>
+#include <thread>
 #ifdef ENABLE_CACHE
 #include "proto/cache_grpc.grpc.pb.h"
 #endif
@@ -41,6 +42,12 @@ constexpr static int32_t kLocalByPassThreshold = 64 * 1024;
 constexpr static int32_t kDefaultSharedMemorySize = 4;
 /// \brief Memory Cap ratio used by the server
 constexpr static float kDefaultMemoryCapRatio = 0.8;
+/// \brief Default log level of the server
+constexpr static int32_t kDefaultLogLevel = 1;
+/// \brief Set num workers to half of num_cpus as the default
+static const int32_t kDefaultNumWorkers = std::thread::hardware_concurrency() > 2
+                                            ? std::thread::hardware_concurrency() / 2
+                                            : 1;
 /// \brief A flag used by the BatchFetch request (client side) if it can support local bypass
 constexpr static uint32_t kLocalClientSupport = 1;
 /// \brief A flag used by CacheRow request (client side) and BatchFetch (server side) reply to indicate if the data is

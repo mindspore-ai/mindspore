@@ -57,6 +57,8 @@ class CacheServer : public Service {
  public:
   friend class Services;
   using cache_index = std::map<connection_id_type, std::unique_ptr<CacheService>>;
+  // Only allow new service to be created if left memory is more than 15% of our hard memory cap
+  constexpr static float kMemoryBottomLineForNewService = 0.15;
 
   class Builder {
    public:

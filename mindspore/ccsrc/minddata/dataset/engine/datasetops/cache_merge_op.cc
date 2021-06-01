@@ -115,8 +115,8 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
       MS_LOG(DEBUG) << "Ignore eoe";
       // However we need to flush any left over from the async write buffer. But any error
       // we are getting will just to stop caching but the pipeline will continue
-      Status rc;
-      if ((rc = cache_client_->FlushAsyncWriteBuffer()).IsError()) {
+      Status rc = cache_client_->FlushAsyncWriteBuffer();
+      if (rc.IsError()) {
         cache_missing_rows_ = false;
         if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
           cache_client_->ServerRunningOutOfResources();
@@ -138,8 +138,7 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
         if (rq->GetState() == TensorRowCacheRequest::State::kEmpty) {
           // We will send the request async. But any error we most
           // likely ignore and continue.
-          Status rc;
-          rc = rq->AsyncSendCacheRequest(cache_client_, new_row);
+          Status rc = rq->AsyncSendCacheRequest(cache_client_, new_row);
           if (rc.IsOk()) {
             RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
           } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
@@ -192,7 +191,7 @@ Status CacheMergeOp::Cleaner() {
 
 Status CacheMergeOp::PrepareOperator() {  // Run any common code from super class first before adding our own
                                           // specific logic
-  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 2, "Incorrect number of children");
+  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == kNumChildren, "Incorrect number of children");
   RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
   // Get the computed check sum from all ops in the cache miss class
   uint32_t cache_crc = DatasetOp::GenerateCRC(child_[kCacheMissChildIdx]);
@@ -287,8 +286,7 @@ Status CacheMergeOp::TensorRowCacheRequest::AsyncSendCacheRequest(const std::sha
   auto expected = State::kEmpty;
   if (st_.compare_exchange_strong(expected, State::kDirty)) {
     // We will do a deep copy but write directly into CacheRequest protobuf or shared memory
-    Status rc;
-    rc = cc->AsyncWriteRow(row);
+    Status rc = cc->AsyncWriteRow(row);
     if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
       cleaner_copy_ = std::make_shared<CacheRowRequest>(cc.get());
       rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);

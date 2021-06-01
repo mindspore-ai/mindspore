@@ -41,7 +41,8 @@ Status CachedSharedMemory::Init() {
   // We will create a number of sub pool out of shared memory to reduce latch contention
   int32_t num_of_pools = num_numa_nodes_;
   if (num_numa_nodes_ == 1) {
-    num_of_pools = shared_memory_sz_in_gb_ * 2;
+    constexpr int32_t kNumPoolMultiplier = 2;
+    num_of_pools = shared_memory_sz_in_gb_ * kNumPoolMultiplier;
   }
   sub_pool_sz_ = shm_mem_sz / num_of_pools;
   // If each subpool is too small, readjust the number of pools

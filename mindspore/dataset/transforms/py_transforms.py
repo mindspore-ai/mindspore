@@ -22,6 +22,10 @@ from . import py_transforms_util as util
 from .c_transforms import TensorOperation
 
 def not_random(function):
+    """
+    Specify the function as "not random", i.e., it produces deterministic result.
+    A Python function can only be cached after it is specified as "not random".
+    """
     function.random = False
     return function
 

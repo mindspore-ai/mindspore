@@ -56,7 +56,7 @@ Status CacheServerGreeterImpl::Run() {
   // Default message size for gRPC is 4MB. Increase it to 2g-1
   builder.SetMaxReceiveMessageSize(std::numeric_limits<int32_t>::max());
   int port_tcpip = 0;
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   int port_local = 0;
   // We also optimize on local clients on the same machine using unix socket
   builder.AddListeningPort("unix://" + unix_socket_, grpc::InsecureServerCredentials(), &port_local);
@@ -72,7 +72,7 @@ Status CacheServerGreeterImpl::Run() {
     if (port_tcpip != port_) {
       errMsg += "Unable to bind to tcpip port " + std::to_string(port_) + ".";
     }
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
     if (port_local == 0) {
       errMsg += " Unable to create unix socket " + unix_socket_ + ".";
     }
@@ -176,7 +176,7 @@ void CacheServerRequest::Print(std::ostream &out) const {
 
 Status CacheServerGreeterImpl::MonitorUnixSocket() {
   TaskManager::FindMe()->Post();
-#if CACHE_LOCAL_CLIENT
+#ifdef CACHE_LOCAL_CLIENT
   Path p(unix_socket_);
   do {
     RETURN_IF_INTERRUPTED();
@@ -197,7 +197,7 @@ Status CacheServerGreeterImpl::MonitorUnixSocket() {
       MS_LOG(WARNING) << "Unix socket is removed.";
       TaskManager::WakeUpWatchDog();
     }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(kMonitorIntervalInSec));
   } while (true);
 #endif
   return Status::OK();
