@@ -42,6 +42,7 @@ op_add = P.AddN()
 apply_decay = C.MultitypeFuncGraph("apply_decay")
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
+
 @apply_decay.register("Number", "Bool", "Tensor", "Tensor")
 def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
@@ -62,6 +63,7 @@ GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 hyper_map_op = C.HyperMap()
+
 
 @clip_grad.register("Number", "Number", "Tensor")
 def _clip_grad(clip_type, clip_value, grad):
@@ -97,6 +99,8 @@ def clip_gradient(enable_clip_grad, gradients):
     return gradients
 
 C0 = 16
+
+
 def caculate_device_shape(matrix_dim, channel, is_a):
     ll = (0)
     if is_a:
