@@ -612,8 +612,8 @@ class ThorAscend(Optimizer):
 
     def _process_matrix_init_and_weight_idx_map(self, net):
         """for Ascend, process matrix init shape, and get weight idx map"""
-        layer_type_map = get_net_layertype_mask(net)
         layer_counter = 0
+        layer_type_map = get_net_layertype_mask(net)
         for idx in range(len(self.params)):
             layer_type = layer_type_map[layer_counter]
             weight = self.params[idx]
