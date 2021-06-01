@@ -244,10 +244,10 @@ BaseRef CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &gra
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   MS_EXCEPTION_IF_NULL(node_to_tensor);
-  MS_LOG(INFO) << "Create tensor for output[" << anf->DebugString() << "]";
+  MS_LOG(DEBUG) << "Create tensor for output[" << anf->DebugString() << "]";
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(anf, 0);
   MS_EXCEPTION_IF_NULL(item_with_index.first);
-  MS_LOG(INFO) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
+  MS_LOG(DEBUG) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
   // special handle for maketuple
   if (AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
     auto cnode = item_with_index.first->cast<CNodePtr>();
@@ -370,8 +370,8 @@ BaseRef CreateNodeOutputPlaceholder(const session::KernelWithIndex &node_output_
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(output_indexes);
-  MS_LOG(INFO) << "Create placeholder for output[" << node->DebugString() << "] index[" << node_output_pair.second
-               << "]";
+  MS_LOG(DEBUG) << "Create placeholder for output[" << node->DebugString() << "] index[" << node_output_pair.second
+                << "]";
   // if node is a value node, no need sync addr from device to host
   if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
@@ -400,10 +400,10 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
                                     std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(output_indexes);
-  MS_LOG(INFO) << "Create placeholder for output[" << anf->DebugString() << "]";
+  MS_LOG(DEBUG) << "Create placeholder for output[" << anf->DebugString() << "]";
   auto item_with_index = AnfAlgo::VisitKernelWithReturnType(anf, 0);
   MS_EXCEPTION_IF_NULL(item_with_index.first);
-  MS_LOG(INFO) << "Create placeholder for output after visit:" << item_with_index.first->DebugString();
+  MS_LOG(DEBUG) << "Create placeholder for output after visit:" << item_with_index.first->DebugString();
   // special handle for maketuple
   if (AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
     auto cnode = item_with_index.first->cast<CNodePtr>();
@@ -1499,7 +1499,7 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
   auto anf_outputs = kernel_graph->outputs();
   for (auto &item : anf_outputs) {
     MS_EXCEPTION_IF_NULL(item);
-    MS_LOG(INFO) << "Update output[" << item->DebugString() << "]";
+    MS_LOG(DEBUG) << "Update output[" << item->DebugString() << "]";
     outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, &tensor_to_node, &node_to_tensor));
   }
 
@@ -1945,7 +1945,6 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
 }
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) {
-  MS_LOG(INFO) << "Start!";
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   MS_EXCEPTION_IF_NULL(graph);
@@ -1967,7 +1966,6 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   // create output
   auto g_output = graph->NewCNode(make_tuple_inputs);
   graph->set_output(g_output);
-  MS_LOG(INFO) << "Finish!";
 }
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info,
@@ -1983,7 +1981,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   MS_EXCEPTION_IF_NULL(op_prim);
   inputs.push_back(std::make_shared<ValueNode>(op_prim));
   // set input parameter
-  MS_LOG(INFO) << "Input tensor size: " << input_tensors.size();
   if (input_tensors.size() != tensors_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
                       << tensors_mask.size();

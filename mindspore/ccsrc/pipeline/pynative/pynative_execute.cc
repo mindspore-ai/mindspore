@@ -468,7 +468,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
   if (op_run_info->is_dynamic_shape &&
       dynamic_shape_const_input_to_attr.find(op_run_info->op_name) == dynamic_shape_const_input_to_attr.end()) {
-    MS_LOG(INFO) << "current node is dynamic shape: " << op_run_info->op_name;
+    MS_LOG(DEBUG) << "current node is dynamic shape: " << op_run_info->op_name;
     reg_exist = false;
   }
   auto ms_context = MsContext::GetInstance();
@@ -1560,14 +1560,14 @@ py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_polic
   switch (backend_policy) {
     case kMsBackendVmOnly: {
       // use vm only
-      MS_LOG(INFO) << "RunOp use VM only backend";
+      MS_LOG(DEBUG) << "RunOp use VM only backend";
       result = RunOpInVM(op_exec_info, status);
       break;
     }
     case kMsBackendGePrior: {
 #ifdef ENABLE_GE
       // use GE first, use vm when GE fails
-      MS_LOG(INFO) << "RunOp use GE first backend";
+      MS_LOG(DEBUG) << "RunOp use GE first backend";
       result = RunOpInGE(op_exec_info, status);
       if (*status != PYNATIVE_SUCCESS) {
         result = RunOpInVM(op_exec_info, status);
@@ -1577,7 +1577,7 @@ py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_polic
     }
     case kMsBackendMsPrior: {
       // use Ms first,use others when ms failed
-      MS_LOG(INFO) << "RunOp use Ms first backend";
+      MS_LOG(DEBUG) << "RunOp use Ms first backend";
       result = RunOpInMs(op_exec_info, status);
       if (*status != PYNATIVE_SUCCESS) {
         MS_LOG(ERROR) << "RunOp use Ms backend failed!!!";
@@ -1591,7 +1591,7 @@ py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_polic
 }
 
 py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
-  MS_LOG(INFO) << "RunOpInVM start";
+  MS_LOG(DEBUG) << "RunOpInVM start";
   MS_EXCEPTION_IF_NULL(status);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(op_exec_info->py_primitive);
@@ -1617,14 +1617,14 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, Pynativ
       }
     }
     *status = PYNATIVE_SUCCESS;
-    MS_LOG(INFO) << "RunOpInVM end";
+    MS_LOG(DEBUG) << "RunOpInVM end";
     return std::move(result);
   }
 
   auto primitive = op_exec_info->py_primitive;
   MS_EXCEPTION_IF_NULL(primitive);
   auto result = primitive->RunPyComputeFunction(op_inputs);
-  MS_LOG(INFO) << "RunOpInVM end";
+  MS_LOG(DEBUG) << "RunOpInVM end";
   if (py::isinstance<py::none>(result)) {
     MS_LOG(ERROR) << "VM got the result none, please check whether it is failed to get func";
     *status = PYNATIVE_OP_NOT_IMPLEMENTED_ERR;
@@ -1642,7 +1642,7 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, Pynativ
 py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(status);
-  MS_LOG(INFO) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
+  MS_LOG(DEBUG) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
 
@@ -1696,7 +1696,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   auto result = BaseRefToPyData(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;
-  MS_LOG(INFO) << "End run op [" << op_exec_info->op_name << "] with backend policy ms";
+  MS_LOG(DEBUG) << "End run op [" << op_exec_info->op_name << "] with backend policy ms";
   return result;
 }
 

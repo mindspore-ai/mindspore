@@ -717,7 +717,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
 void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(INFO) << "AssignStaticMemoryValueNode start";
+  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // order the value nodes
@@ -757,7 +757,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       }
     }
   }
-  MS_LOG(INFO) << "AssignStaticMemoryValueNode end";
+  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode end";
 }
 
 void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
