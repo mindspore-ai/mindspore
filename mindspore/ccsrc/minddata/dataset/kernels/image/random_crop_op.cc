@@ -58,9 +58,11 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   *t_pad_left = pad_left_;
   *t_pad_right = pad_right_;
 
-  CHECK_FAIL_RETURN_UNEXPECTED(pad_top_ < input->shape()[0] * 3 && pad_bottom_ < input->shape()[0] * 3 &&
-                                 pad_left_ < input->shape()[1] * 3 && pad_right_ < input->shape()[1] * 3,
-                               "Pad: padding size is three times bigger than the image size.");
+  constexpr int64_t max_ratio = 3;
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    pad_top_ < input->shape()[0] * max_ratio && pad_bottom_ < input->shape()[0] * max_ratio &&
+      pad_left_ < input->shape()[1] * max_ratio && pad_right_ < input->shape()[1] * max_ratio,
+    "Pad: padding size is three times bigger than the image size.");
 
   RETURN_IF_NOT_OK(
     Pad(input, pad_image, pad_top_, pad_bottom_, pad_left_, pad_right_, border_type_, fill_r_, fill_g_, fill_b_));

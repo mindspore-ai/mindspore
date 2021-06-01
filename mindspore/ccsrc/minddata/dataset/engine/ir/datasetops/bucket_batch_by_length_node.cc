@@ -52,7 +52,7 @@ std::shared_ptr<DatasetNode> BucketBatchByLengthNode::Copy() {
 }
 
 void BucketBatchByLengthNode::Print(std::ostream &out) const {
-  out << Name() + "(columns:" + PrintColumns(column_names_);
+  out << (Name() + "(columns:" + PrintColumns(column_names_));
   int i = 0;
   for (auto it : bucket_boundaries_) {
     if (i == 0) {

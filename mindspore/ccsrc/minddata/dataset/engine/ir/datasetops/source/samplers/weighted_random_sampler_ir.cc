@@ -55,19 +55,11 @@ Status WeightedRandomSamplerObj::ValidateParams() {
 
 Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "WeightedRandomSampler";
   args["weights"] = weights_;
-  args["num_samples"] = num_samples_;
   args["replacement"] = replacement_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+  args["num_samples"] = num_samples_;
   *out_json = args;
   return Status::OK();
 }

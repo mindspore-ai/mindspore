@@ -39,7 +39,7 @@ std::shared_ptr<DatasetNode> Cifar10Node::Copy() {
 }
 
 void Cifar10Node::Print(std::ostream &out) const {
-  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+  out << (Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")");
 }
 
 Status Cifar10Node::ValidateParams() {

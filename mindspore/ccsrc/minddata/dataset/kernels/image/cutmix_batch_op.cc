@@ -26,6 +26,15 @@
 namespace mindspore {
 namespace dataset {
 
+constexpr size_t kMinLabelShapeSize = 2;
+constexpr size_t kMaxLabelShapeSize = 3;
+constexpr size_t kExpectedImageShapeSize = 4;
+constexpr size_t dimension_one = 1;
+constexpr size_t dimension_two = 2;
+constexpr size_t dimension_three = 3;
+constexpr int64_t value_one = 1;
+constexpr int64_t value_three = 3;
+
 CutMixBatchOp::CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, float prob)
     : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {
   rnd_.seed(GetSeed());
@@ -40,10 +49,11 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
   int cx = width_uniform_distribution(rnd_);
   int x2, y2;
   int cy = height_uniform_distribution(rnd_);
-  *x = std::clamp(cx - cut_w / 2, 0, width - 1);   // horizontal coordinate of left side of crop box
-  *y = std::clamp(cy - cut_h / 2, 0, height - 1);  // vertical coordinate of the top side of crop box
-  x2 = std::clamp(cx + cut_w / 2, 0, width - 1);   // horizontal coordinate of right side of crop box
-  y2 = std::clamp(cy + cut_h / 2, 0, height - 1);  // vertical coordinate of the bottom side of crop box
+  constexpr int cut_half = 2;
+  *x = std::clamp(cx - cut_w / cut_half, 0, width - 1);   // horizontal coordinate of left side of crop box
+  *y = std::clamp(cy - cut_h / cut_half, 0, height - 1);  // vertical coordinate of the top side of crop box
+  x2 = std::clamp(cx + cut_w / cut_half, 0, width - 1);   // horizontal coordinate of right side of crop box
+  y2 = std::clamp(cy + cut_h / cut_half, 0, height - 1);  // vertical coordinate of the bottom side of crop box
   *crop_width = std::clamp(x2 - *x, 1, width - 1);
   *crop_height = std::clamp(y2 - *y, 1, height - 1);
 }
@@ -176,9 +186,9 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // Tensor holding the output labels
   std::shared_ptr<Tensor> out_labels;
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), &out_labels, DataType(DataType::DE_FLOAT32)));
+  int64_t row_labels = label_shape.size() == value_three ? label_shape[1] : 1;
+  int64_t num_classes = label_shape.size() == value_three ? label_shape[dimension_two] : label_shape[1];
 
-  int64_t row_labels = label_shape.size() == 3 ? label_shape[1] : 1;
-  int64_t num_classes = label_shape.size() == 3 ? label_shape[2] : label_shape[1];
   // Compute labels and images
   for (int64_t i = 0; i < image_shape[0]; i++) {
     // Calculating lambda
@@ -197,6 +207,7 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
         ComputeLabel(input, rand_indx[i], i, row_labels, num_classes, label_shape.size(), label_lam, &out_labels));
     }
   }
+
   std::shared_ptr<Tensor> out_images;
   RETURN_IF_NOT_OK(TensorVectorToBatchTensor(images, &out_images));
 

@@ -40,7 +40,7 @@ std::shared_ptr<DatasetNode> FilterNode::Copy() {
 }
 
 void FilterNode::Print(std::ostream &out) const {
-  out << Name() + "(<predicate>," + "input_cols:" + PrintColumns(input_columns_) + ")";
+  out << (Name() + "(<predicate>," + "input_cols:" + PrintColumns(input_columns_) + ")");
 }
 
 Status FilterNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {

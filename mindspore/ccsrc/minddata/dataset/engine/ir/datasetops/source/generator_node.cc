@@ -60,7 +60,7 @@ std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
 }
 
 void GeneratorNode::Print(std::ostream &out) const {
-  out << Name() + "(<func>:" + ",columns:" + PrintColumns(column_names_) + ",<col_types>) ";
+  out << (Name() + "(<func>:" + ",columns:" + PrintColumns(column_names_) + ",<col_types>) ");
 }
 
 Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {

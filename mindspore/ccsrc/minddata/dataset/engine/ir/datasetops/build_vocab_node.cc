@@ -46,7 +46,7 @@ std::shared_ptr<DatasetNode> BuildVocabNode::Copy() {
 }
 
 void BuildVocabNode::Print(std::ostream &out) const {
-  out << Name() + "(<vocab>," + "columns:" + PrintColumns(columns_) + ",...)";
+  out << (Name() + "(<vocab>," + "columns:" + PrintColumns(columns_) + ",...)");
 }
 
 // Function to build BuildVocabNode

@@ -39,7 +39,9 @@ std::shared_ptr<DatasetNode> EpochCtrlNode::Copy() {
   return node;
 }
 
-void EpochCtrlNode::Print(std::ostream &out) const { out << Name() + "(epoch:" + std::to_string(repeat_count_) + ")"; }
+void EpochCtrlNode::Print(std::ostream &out) const {
+  out << (Name() + "(epoch:" + std::to_string(repeat_count_) + ")");
+}
 
 // Function to build the EpochCtrlOp
 Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
