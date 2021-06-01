@@ -82,7 +82,7 @@ static std::unordered_map<TypeId, std::string> g_type_2_lable{
   {kObjectTypeIOMonad, MS_TYPE2LABLE(kObjectTypeIOMonad)},
   {kMonadTypeEnd, MS_TYPE2LABLE(kMonadTypeEnd)}};
 
-enum BitsNum : int {
+enum class BitsNum : int {
   eBits8 = 8,
   eBits16 = 16,
   eBits32 = 32,
@@ -90,13 +90,13 @@ enum BitsNum : int {
 };
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case eBits8:
+    case static_cast<int>(BitsNum::eBits8):
       return kNumberTypeInt8;
-    case eBits16:
+    case static_cast<int>(BitsNum::eBits16):
       return kNumberTypeInt16;
-    case eBits32:
+    case static_cast<int>(BitsNum::eBits32):
       return kNumberTypeInt32;
-    case eBits64:
+    case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeInt64;
     default:
       MS_LOG(EXCEPTION) << "Wrong number of bits.";
@@ -105,13 +105,13 @@ TypeId IntBitsToTypeId(const int nbits) {
 
 TypeId UIntBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case eBits8:
+    case static_cast<int>(BitsNum::eBits8):
       return kNumberTypeUInt8;
-    case eBits16:
+    case static_cast<int>(BitsNum::eBits16):
       return kNumberTypeUInt16;
-    case eBits32:
+    case static_cast<int>(BitsNum::eBits32):
       return kNumberTypeUInt32;
-    case eBits64:
+    case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeUInt64;
     default:
       MS_LOG(EXCEPTION) << "Wrong number of bits.";
@@ -120,11 +120,11 @@ TypeId UIntBitsToTypeId(const int nbits) {
 
 TypeId FloatBitsToTypeId(const int nbits) {
   switch (nbits) {
-    case eBits16:
+    case static_cast<int>(BitsNum::eBits16):
       return kNumberTypeFloat16;
-    case eBits32:
+    case static_cast<int>(BitsNum::eBits32):
       return kNumberTypeFloat32;
-    case eBits64:
+    case static_cast<int>(BitsNum::eBits64):
       return kNumberTypeFloat64;
     default:
       MS_LOG(EXCEPTION) << "Wrong number of bits.";

@@ -47,10 +47,9 @@ using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
-static constexpr auto g_chunk_size = 1024 * 1024 * 3;
-
 namespace mindspore {
 
+static constexpr auto g_chunk_size = 1024 * 1024 * 3;
 DebuggerPtr Debugger::debugger_ = nullptr;
 std::mutex Debugger::instance_lock_;
 
