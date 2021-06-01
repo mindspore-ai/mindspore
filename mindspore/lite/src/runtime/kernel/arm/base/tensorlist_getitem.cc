@@ -42,9 +42,9 @@ int TensorListGetItemCPUKernel::Run() {
   dtype_ = input0->tensors_data_type();
   MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
   index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data_c())[0];
-  int dim0 = input0->ElementsNum() - 1;
-  if (index_ < 0 || index_ > dim0) {
-    MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
+  int dim0 = input0->ElementsNum();
+  if (index_ < 0 || index_ >= dim0) {
+    MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be in [0, " << dim0 << ")!";
     return RET_ERROR;
   }
   auto src_ptr = input0->GetTensor(index_);

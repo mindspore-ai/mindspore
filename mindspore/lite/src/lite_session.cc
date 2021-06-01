@@ -376,7 +376,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     auto inputs = kernel->in_tensors();
     for (auto *tensor : inputs) {
       MS_ASSERT(tensor != nullptr);
-      if (!tensor->IsConst() || tensor->init_ref_count() != 1) {
+      if (!tensor->IsConst()) {
         continue;
       }
       tensor->FreeData();

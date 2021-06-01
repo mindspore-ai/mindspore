@@ -31,7 +31,8 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
   std::vector<size_t> sinked_tensor_idxes;
   // put all const tensor index into sinked_tensor_idxes
   for (size_t i = 0; i < graph->allTensors.size(); i++) {
-    if (graph->allTensors.at(i)->nodeType == NodeType_ValueNode) {
+    if (graph->allTensors.at(i)->nodeType == NodeType_ValueNode ||
+        graph->allTensors.at(i)->nodeType == NodeType_Parameter) {
       sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), i);
     }
   }
@@ -80,7 +81,7 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
 bool TopologicalSortPass::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node,
                                           const std::vector<size_t> &sinked_tensor_idxes) {
   MS_ASSERT(node != nullptr);
-  if (node->primitive->value.type == schema::PrimitiveType_Merge) {
+  if (node->primitive && node->primitive->value.type == schema::PrimitiveType_Merge) {
     auto node_input_index = node->inputIndex;
     MS_ASSERT(node_input_index.size() % 2 == 0);
     return std::all_of(node_input_index.begin(), node_input_index.begin() + node_input_index.size() / 2,
