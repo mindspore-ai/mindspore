@@ -103,7 +103,7 @@ class CacheServer : public Service {
 
     void Print(std::ostream &out) const {
       out << "Summary of the cache server configuration\n"
-          << "Spill directory: " << GetTop() << "\n"
+          << "Spill directory: " << (GetTop().empty() ? "None" : GetTop()) << "\n"
           << "Number of parallel workers: " << GetNumWorkers() << "\n"
           << "Tcp/ip port: " << GetPort() << "\n"
           << "Shared memory size (in GB): " << GetSharedMemorySzInGb() << "\n"
