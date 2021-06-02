@@ -69,6 +69,7 @@ def parse_args(cloud_args=None):
     args_opt.results_dir = cfg.results_dir
     args_opt.last_model_name = cfg.last_model_name
     args_opt.saved_model_file_path = cfg.saved_model_file_path
+    args_opt.is_train = True
     return args_opt
 
 

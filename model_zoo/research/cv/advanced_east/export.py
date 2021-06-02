@@ -32,6 +32,7 @@ parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"]
 parser.add_argument("--device_target", type=str, default="Ascend",
                     choices=["Ascend", "GPU"], help="device target(default: Ascend)")
 args = parser.parse_args()
+args.is_train = False
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 if args.device_target == "Ascend":
@@ -39,7 +40,7 @@ if args.device_target == "Ascend":
 
 if __name__ == '__main__':
 
-    net = AdvancedEast()
+    net = AdvancedEast(args)
 
     assert args.ckpt_file is not None, "checkpoint_path is None."
 
