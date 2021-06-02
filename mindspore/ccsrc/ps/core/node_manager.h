@@ -66,12 +66,24 @@ class NodeManager {
   void CheckClusterTimeout();
   void AddFinishNode(const std::string &finish_message);
 
+  // After the scheduler receives the scale_out_done node, it will save this node.
+  void AddScaleOutDoneNode(const std::string &node_id);
+  // After the scheduler receives the scale_in_done node, it will save this node.
+  void AddScaleInDoneNode(const std::string &node_id);
+
   // When workers and servers registered to scheduler, the scheduler will collect the number of registered
   // nodes and Determine whether the registered number of worker and server is equal to total_node_num_.
   bool IsAllNodesRegistered();
   // When workers and servers send a finish message to the scheduler, the scheduler will collect the number of
   // finish nodes and Determine whether the finished nodes are equal to total_node_num_.
   bool IsAllNodesFinished();
+
+  // When workers and servers send a scale_out_done message to the scheduler, the scheduler will collect the number of
+  // nodes and Determine whether the nodes are equal to total_node_num_.
+  bool IsAllNodesScaleOutDone();
+  // When workers and servers send a scale_in_done message to the scheduler, the scheduler will collect the number of
+  // nodes and Determine whether the nodes are equal to total_node_num_.
+  bool IsAllNodesScaleInDone();
 
   std::unordered_map<std::string, NodeInfo> &nodes_info();
 
@@ -114,6 +126,11 @@ class NodeManager {
   // timeout nodes
   std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
   std::unordered_set<std::string> finish_nodes_id_;
+
+  // The scheduler aggregates scale_out_done messages from workers/servers
+  std::unordered_set<std::string> scale_out_done_nodes_id_;
+  // The scheduler aggregates scale_in_done messages from workers/servers
+  std::unordered_set<std::string> scale_in_done_nodes_id_;
 
   // Cluster metadata information can be dynamically changed
   std::unique_ptr<ClusterMetadata> meta_data_;

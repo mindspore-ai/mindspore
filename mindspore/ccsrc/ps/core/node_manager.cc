@@ -112,8 +112,8 @@ void NodeManager::UpdateCluster() {
   timeout_nodes_info_.clear();
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
     if (it->second.tv_sec + PSContext::instance()->cluster_config().heartbeat_timeout < current_time.tv_sec) {
-      MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
       if (nodes_info_.count(it->first)) {
+        MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
         timeout_nodes_info_[it->first] = nodes_info_[it->first];
       }
     }
@@ -145,9 +145,17 @@ void NodeManager::CheckClusterTimeout() {
 
 void NodeManager::AddFinishNode(const std::string &finish_message) { finish_nodes_id_.insert(finish_message); }
 
+void NodeManager::AddScaleOutDoneNode(const std::string &node_id) { scale_out_done_nodes_id_.insert(node_id); }
+
+void NodeManager::AddScaleInDoneNode(const std::string &node_id) { scale_in_done_nodes_id_.insert(node_id); }
+
 bool NodeManager::IsAllNodesRegistered() { return SizeToInt(nodes_info_.size()) == total_node_num_; }
 
 bool NodeManager::IsAllNodesFinished() { return SizeToInt(finish_nodes_id_.size()) == total_node_num_; }
+
+bool NodeManager::IsAllNodesScaleOutDone() { return SizeToInt(scale_out_done_nodes_id_.size()) == total_node_num_; }
+
+bool NodeManager::IsAllNodesScaleInDone() { return SizeToInt(scale_in_done_nodes_id_.size()) == total_node_num_; }
 
 std::unordered_map<std::string, NodeInfo> &NodeManager::nodes_info() { return nodes_info_; }
 
@@ -174,6 +182,7 @@ ClusterState NodeManager::GetClusterState() {
 void NodeManager::ResetMetadata() {
   MS_LOG(WARNING) << "Reset metadata.";
   nodes_info_.clear();
+  heartbeats_.clear();
   next_worker_rank_id_ = -1;
   next_server_rank_id_ = -1;
 }
