@@ -2194,3 +2194,17 @@ class LRNGrad(PrimitiveWithInfer):
 
     def infer_shape(self, grads, x, y):
         return x
+
+
+class MaskedSelectGrad(PrimitiveWithInfer):
+    """Computes gradient for MaskedSelect."""
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x, mask, grad):
+        return x
+
+    def infer_dtype(self, x, mask, grad):
+        return x

@@ -153,6 +153,7 @@ class CPUKernelUtils {
   static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
   static void ParallelFor(const CTask &task, size_t count);
   static std::vector<size_t> FlatShapeByAxis(const std::vector<size_t> &shape, int axis);
+  static std::vector<size_t> GetBroadcastShape(const std::vector<size_t> &x, const std::vector<size_t> &y);
 };
 
 class BroadcastIterator {

@@ -213,6 +213,7 @@ inline const PrimitivePtr kPrimRank = std::make_shared<Primitive>("Rank");
 inline const PrimitivePtr kPrimResizeBilinear = std::make_shared<Primitive>("ResizeBilinear");
 inline const PrimitivePtr kPrimResizeGrad = std::make_shared<Primitive>("ResizeGrad");
 inline const PrimitivePtr kPrimSort = std::make_shared<Primitive>("Sort");
+inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("MaskedSelect");
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");
