@@ -25,10 +25,10 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
-  T i = (entry + 1) % length;
-  int64_t off = 1;
+  T i = (entry + 1) % static_cast<T>(length);
+  T off = 1;
   int compress_count = 0;
-  for (; !entry_p[i].IsEmpty(); i = (i + 1) % length, off++) {
+  for (; !entry_p[i].IsEmpty(); i = (i + 1) % static_cast<T>(length), off++) {
     if (entry_p[i].tag_ > off) {
       entry_p[entry].key_ = entry_p[i].key_;
       entry_p[entry].value_ = entry_p[i].value_;
@@ -154,8 +154,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       tag_count++;
     }
     hashmap[entry].key_ = emb_idx;
-    hashmap[entry].step_ = SizeToLong(step_[0]);
-    hashmap[entry].tag_ = SizeToLong(tag_count);
+    hashmap[entry].step_ = step_[0];
+    hashmap[entry].tag_ = static_cast<T>(tag_count);
     T tmp_entry = (entry + 1) % static_cast<T>(hashmap_length_);
     size_t delete_count = 1;
     while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {

@@ -324,10 +324,12 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
       auto hashmap_data_type = hashmap_tensor_ptr->data_type();
       if (hashmap_data_type == TypeId::kNumberTypeInt32) {
         MemCopyFromCacheToHost<int32_t>(hashmap_tensor_ptr->data_c(), tensor.data_c(), cache_tensor_ptr->data_c(),
-                                        host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+                                        host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
+                                        LongToSize(host_shape[1]));
       } else if (hashmap_data_type == TypeId::kNumberTypeInt64) {
         MemCopyFromCacheToHost<int32_t>(hashmap_tensor_ptr->data_c(), tensor.data_c(), cache_tensor_ptr->data_c(),
-                                        host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+                                        host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
+                                        LongToSize(host_shape[1]));
       } else {
         MS_LOG(ERROR) << "Hashmap dtype only suppotr int32, in64.";
       }

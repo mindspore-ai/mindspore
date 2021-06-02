@@ -67,7 +67,7 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   MS_LOG(INFO) << "UpdateCache batch_size:" << batch_size_;
   update_size_ = 1;
   for (size_t i = 0; i < update_shape.size(); ++i) {
-    update_size_ *= update_shape[i];
+    update_size_ *= SizeToLong(update_shape[i]);
   }
   update_length_ = update_shape[1];
   char *input_x = reinterpret_cast<char *>(inputs[0]->addr);
