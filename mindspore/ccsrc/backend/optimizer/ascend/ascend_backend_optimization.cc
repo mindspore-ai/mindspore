@@ -67,6 +67,7 @@
 #include "backend/optimizer/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
@@ -93,6 +94,8 @@
 #include "backend/optimizer/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
+#include "backend/optimizer/ascend/buffer_fusion/matmul_dropoutdomaskv3_add_fusion_pass.h"
+#include "backend/optimizer/ascend/buffer_fusion/batchmatmul_dropoutdomaskv3_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
 #include "backend/optimizer/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
@@ -197,6 +200,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SoftmaxDropoutDoMaskV3Fusion>());
 }
 }  // namespace
 void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -432,6 +436,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<MatmulDropoutDoMaskV3AddFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator));
@@ -439,6 +444,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<MatmulConfusionTranposeFusionPass>(fusion_id_allocator));
+  ub_fusion_pm->AddPass(std::make_shared<BatchMatmulDropoutDoMaskV3FusionPass>(fusion_id_allocator));
   ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

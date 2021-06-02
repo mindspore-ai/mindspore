@@ -22,6 +22,7 @@
 #include <functional>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
+#include "common/trans.h"
 
 /*
     DropoutGenMask：
@@ -115,6 +116,19 @@ std::vector<int64_t> CalDropoutGenMaskOutput(const std::vector<int64_t> &shape) 
   return {ret};
 }
 
+std::vector<int64_t> GetGenmaskOutputShape(const std::vector<int64_t> &shape) {
+  // [*dim, M, N] -> [*dim, N/16, M/16, 16, 16] if M%16=0 and N%16=0
+  if (shape.size() >= 2 && shape[shape.size()-1] % kCubeSize == 0 && shape[shape.size()-1] % kCubeSize == 0) {
+    std::vector<size_t> nd_shape;
+    std::transform(shape.begin(), shape.end(), std::back_inserter(nd_shape), LongToSize);
+    auto fnz_shape = trans::TransShapeToDevice(nd_shape, kOpFormat_FRAC_NZ);
+    std::vector<int64_t> out_shape;
+    std::transform(fnz_shape.begin(), fnz_shape.end(), std::back_inserter(out_shape), SizeToLong);
+    return out_shape;
+  }
+  return shape;
+}
+
 bool NeedUpdate(const CNodePtr &getitem_cnode) {
   MS_EXCEPTION_IF_NULL(getitem_cnode);
   MS_EXCEPTION_IF_NULL(getitem_cnode->input(kInput2));
@@ -159,6 +173,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   auto inputx_shape = GetInputXShape(dropout_node);
   auto shape_value = CreateShapeValueNode(func_graph, inputx_shape);
   auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_node, inputx_type_id);
+  auto genmask_output_shape = GetGenmaskOutputShape(inputx_shape);
 
   // CreateDropoutGenMask
   std::vector<AnfNodePtr> dropout_gen_mask_inputs{NewValueNode(std::make_shared<Primitive>(kDropoutGenMaskOpName)),
@@ -166,8 +181,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   CNodePtr dropout_gen_mask = func_graph->NewCNode(dropout_gen_mask_inputs);
   MS_EXCEPTION_IF_NULL(dropout_gen_mask);
   AnfAlgo::CopyNodeAttrs(node, dropout_gen_mask);
-  auto output_shape = CalDropoutGenMaskOutput(inputx_shape);
-  auto gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, output_shape);
+  auto gen_mask_abstract = std::make_shared<abstract::AbstractTensor>(kUInt8, genmask_output_shape);
   MS_EXCEPTION_IF_NULL(gen_mask_abstract);
   dropout_gen_mask->set_abstract(gen_mask_abstract);
   dropout_gen_mask->set_scope(node->scope());
@@ -187,14 +201,14 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
           // if Dropout's first output is used, create forward DropoutDoMask
           auto dropout_input = dropout_cnode->input(1);
           std::vector<AnfNodePtr> dropout_do_mask1_inputs{
-            NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)), dropout_input, dropout_gen_mask,
-            keep_prob_value};
+            NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskV3OpName)), dropout_input, dropout_gen_mask};
           dropout_do_mask1 = func_graph->NewCNode(dropout_do_mask1_inputs);
           MS_EXCEPTION_IF_NULL(dropout_do_mask1);
           auto do_mask_abstract1 =
             std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), inputx_shape);
           dropout_do_mask1->set_abstract(do_mask_abstract1);
           dropout_do_mask1->set_scope(dropout_node->scope());
+	  AnfAlgo::CopyNodeAttr(kKeepProb, dropout_node, dropout_do_mask1);
           (void)manager->Replace(used_node, dropout_do_mask1);
           break;
         }
@@ -221,13 +235,14 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
     MS_LOG(EXCEPTION) << "Can not find grad_input in this pattern.";
   }
   auto dropout_grad_input = utils::cast<AnfNodePtr>((*equiv)[grad_input_]);
-  std::vector<AnfNodePtr> dropout_do_mask_inputs{NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskOpName)),
-                                                 dropout_grad_input, dropout_gen_mask, keep_prob_value};
+  std::vector<AnfNodePtr> dropout_do_mask_inputs{NewValueNode(std::make_shared<Primitive>(kDropoutDoMaskV3OpName)),
+                                                 dropout_grad_input, dropout_gen_mask};
   auto dropout_do_mask = func_graph->NewCNode(dropout_do_mask_inputs);
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), inputx_shape);
   dropout_do_mask->set_abstract(do_mask_abstract);
   dropout_do_mask->set_scope(node->scope());
+  AnfAlgo::CopyNodeAttr(kKeepProb, dropout_node, dropout_do_mask);
 
   return dropout_do_mask;
 }

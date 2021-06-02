@@ -192,6 +192,8 @@ inline const PrimitivePtr kPrimCrop = std::make_shared<Primitive>("Crop");
 inline const PrimitivePtr kPrimFlattenGrad = std::make_shared<Primitive>("FlattenGrad");
 inline const PrimitivePtr kPrimSoftmax = std::make_shared<Primitive>("Softmax");
 inline const PrimitivePtr kPrimSparseSoftmaxCrossEntropy = std::make_shared<Primitive>("SparseSoftmaxCrossEntropy");
+inline const PrimitivePtr kPrimSoftmaxV2WithDropoutDoMaskV3 =
+  std::make_shared<Primitive>("SoftmaxV2WithDropoutDoMaskV3");
 inline const PrimitivePtr kPrimLogSoftmax = std::make_shared<Primitive>("LogSoftmax");
 inline const PrimitivePtr kPrimLogSoftmaxGrad = std::make_shared<Primitive>("LogSoftmaxGrad");
 inline const PrimitivePtr kPrimLstm = std::make_shared<Primitive>("LSTM");
@@ -267,6 +269,7 @@ inline const PrimitivePtr kPrimLayerNormXBackprop = std::make_shared<Primitive>(
 inline const PrimitivePtr kPrimLayerNormBetaGammaBackprop = std::make_shared<Primitive>("LayerNormBetaGammaBackprop");
 inline const PrimitivePtr kPrimDropoutGenMask = std::make_shared<Primitive>("DropoutGenMask");
 inline const PrimitivePtr kPrimDropoutDoMask = std::make_shared<Primitive>("DropoutDoMask");
+inline const PrimitivePtr kPrimDropoutDoMaskV3 = std::make_shared<Primitive>("DropoutDoMaskV3");
 inline const PrimitivePtr kPrimDropoutGrad = std::make_shared<Primitive>("DropoutGrad");
 inline const PrimitivePtr kPrimDropout = std::make_shared<Primitive>("Dropout");
 inline const PrimitivePtr kPrimUniformReal = std::make_shared<Primitive>("UniformReal");
