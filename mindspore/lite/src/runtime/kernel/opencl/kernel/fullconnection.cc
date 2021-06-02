@@ -36,9 +36,9 @@ using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
-
 int FullConnectionOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() != 2 && in_tensors_.size() != 3) || out_tensors_.size() != 1) {
+  if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -71,7 +71,7 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
       MS_LOG(ERROR) << "If fullconnection input weight is not constant, b_transpose_ should be true.";
       return RET_ERROR;
     }
-    if (in_tensors_.at(kWeightIndex)->shape().size() != 2) {
+    if (in_tensors_.at(kWeightIndex)->shape().size() != DIMENSION_2D) {
       MS_LOG(ERROR) << "If fullconnection input weight is not constant, it should be 2d.";
       return RET_ERROR;
     }
@@ -81,7 +81,7 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
-  if (in_tensors_.size() == 3 && !in_tensors_.at(2)->IsConst()) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(2)->IsConst()) {
     MS_LOG(ERROR) << "FullConnection don't support non-constant bias yet.";
     return RET_ERROR;
   }
@@ -203,7 +203,7 @@ int FullConnectionOpenCLKernel::InitBias() {
   bias_ = allocator->Malloc(img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
     if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < CO_; i++) {

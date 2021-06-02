@@ -25,7 +25,6 @@
 #include "nnacl/pad_parameter.h"
 
 namespace mindspore::kernel {
-
 class PadOpenCLKernel : public OpenCLKernel {
  public:
   PadOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

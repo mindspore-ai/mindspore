@@ -24,7 +24,6 @@
 #define MAXDEPTH 5
 
 namespace mindspore::kernel {
-
 class StrassenOpenCLKernel : public MatMulOpenCLKernel {
  public:
   using MatMulOpenCLKernel::MatMulOpenCLKernel;

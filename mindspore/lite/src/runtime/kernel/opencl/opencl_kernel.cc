@@ -23,7 +23,6 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
-
 int OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local) {
   std::vector<size_t> internal_global_ws = global;
   for (size_t i = 0; i < local.size(); ++i) {

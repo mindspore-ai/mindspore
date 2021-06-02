@@ -22,7 +22,6 @@
 #include "nnacl/fp32/batchnorm_fp32.h"
 
 namespace mindspore::kernel {
-
 class BatchNormOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

@@ -21,7 +21,6 @@
 #include "src/common/file_utils.h"
 
 namespace mindspore::lite::cuda {
-
 static std::mutex g_mtx;
 
 bool CudaRuntime::initialized_ = false;

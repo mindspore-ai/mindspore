@@ -31,7 +31,6 @@ using mindspore::schema::PrimitiveType_Fill;
 using mindspore::schema::PrimitiveType_Shape;
 
 namespace mindspore::kernel {
-
 int FillOpenCLKernel::RunFill() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto param = reinterpret_cast<FillParameter *>(this->op_parameter_);
@@ -69,17 +68,17 @@ void FillOpenCLKernel::SetConstArgs() {}
 void FillOpenCLKernel::SetGlobalLocal() {}
 
 int FillOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto param = this->op_parameter_;
 
-  if (out_tensors_[0]->shape().size() > 4) {
+  if (out_tensors_[0]->shape().size() > OUTPUT_TENSOR_SIZE_4) {
     MS_LOG(ERROR) << " only support dim <= 4";
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() > 1 && param->type_ == PrimitiveType_Fill) {
+  if (in_tensors_[0]->shape().size() > DIMENSION_1D && param->type_ == PrimitiveType_Fill) {
     MS_LOG(ERROR) << " fill only support dim = 1";
     return RET_ERROR;
   }

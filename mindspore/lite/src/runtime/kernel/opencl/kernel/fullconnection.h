@@ -23,7 +23,6 @@
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::kernel {
-
 class FullConnectionOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

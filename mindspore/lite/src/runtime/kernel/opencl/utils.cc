@@ -29,7 +29,6 @@ using mindspore::schema::ActivationType_SIGMOID;
 using mindspore::schema::ActivationType_TANH;
 
 namespace mindspore::kernel {
-
 const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveType_MulFusion,
                                                               schema::PrimitiveType_AddFusion,
                                                               schema::PrimitiveType_SubFusion,

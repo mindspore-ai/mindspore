@@ -22,7 +22,6 @@
 #include "nnacl/base/slice_base.h"
 
 namespace mindspore::kernel {
-
 class StridedSliceOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

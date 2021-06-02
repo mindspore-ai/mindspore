@@ -31,9 +31,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-
 int TransposeOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "Transpose input output size unsupported.";
     return RET_ERROR;
   }
@@ -43,7 +42,7 @@ int TransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Transpose only support in_ndim equal to out_ndim.";
     return RET_ERROR;
   }
-  if (in_ndim > 4) {
+  if (in_ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << "Transpose don't support 5d tensor or higher.";
     return RET_ERROR;
   }

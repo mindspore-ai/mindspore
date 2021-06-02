@@ -24,7 +24,6 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
-
 extern std::set<schema::PrimitiveType> SupportedOpenCLArithmetics;
 
 class ArithmeticInt8OpenCLKernel : public OpenCLKernel {

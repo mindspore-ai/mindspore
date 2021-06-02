@@ -42,7 +42,6 @@ using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
-
 std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
   static std::map<int, std::string> supported_act_type = {
     {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"},        {ActivationType_SIGMOID, "Sigmoid"},
@@ -56,7 +55,7 @@ std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
 }
 
 int ActivationOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }

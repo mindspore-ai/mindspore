@@ -30,9 +30,8 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
 
 namespace mindspore::kernel {
-
 int ToFormatOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }

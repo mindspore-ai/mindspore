@@ -47,6 +47,9 @@
 #define COMM_SHAPE_SIZE 4
 #define MAX_SHAPE_SIZE 8
 
+#define DIMENSION_1D 1
+#define DIMENSION_2D 2
+#define DIMENSION_3D 3
 #define DIMENSION_4D 4
 #define DIMENSION_5D 5
 #define DIMENSION_6D 6

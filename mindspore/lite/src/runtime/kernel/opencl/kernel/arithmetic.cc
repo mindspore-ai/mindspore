@@ -42,7 +42,6 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-
 int ArithmeticOpenCLKernel::CheckSpecs() {
   for (auto &tensor : in_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
@@ -57,7 +56,7 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
     }
   }
 
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -93,7 +92,7 @@ void ArithmeticOpenCLKernel::SetGlobalLocal() {
 int ArithmeticOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < in_tensors_.size(); ++i) {
     const auto &in_tensor = in_tensors_.at(i);
     GpuTensorInfo in_shape = GpuTensorInfo(in_tensor);
     if (in_tensor->IsConst()) {

@@ -25,7 +25,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 static std::set<EltwiseOperator> SupportedOperators = {
   // Arithmetic Primitive
   Operator_Mul,

@@ -24,7 +24,6 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
-
 enum class TransposeType { AXIS0312, AXIS0231, GENERAL };
 
 class TransposeOpenCLKernel : public OpenCLKernel {

@@ -26,7 +26,6 @@
 #include "schema/ops_generated.h"
 
 namespace mindspore::kernel {
-
 using lite::opencl::MemType;
 
 constexpr size_t CI_TILE = C4NUM;
