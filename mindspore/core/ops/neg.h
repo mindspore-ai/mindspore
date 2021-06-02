@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameNeg = "Neg";
+constexpr auto kNameNeg = prim::kNeg;
 class Neg : public PrimitiveC {
  public:
-  Neg() : PrimitiveC(kNameNeg) { InitIOName({"x"}, {"y"}); }
+  Neg() : PrimitiveC(prim::kPrimNeg->name()) { InitIOName({"x"}, {"y"}); }
   ~Neg() = default;
   MS_DECLARE_PARENT(Neg, PrimitiveC);
   void Init() {}
