@@ -58,7 +58,7 @@ void CalcNodeRefCount(const FuncGraphPtr &graph, std::map<AnfNodePtr, size_t> *n
   queue.push(graph->get_return());
   std::set<AnfNodePtr> visited;
   while (!queue.empty()) {
-    auto &node = queue.front();
+    auto node = queue.front();
     queue.pop();
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {

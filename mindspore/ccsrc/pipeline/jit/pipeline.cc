@@ -397,7 +397,14 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
   return mindspore::parallel::GetAllreduceFusion(graph);
 }
 
+// Not support multi thread, not support nested call too.
+// Here using nested_called flg to avoid nested call.
 void ExecutorPy::DelNetRes(const std::string &id) {
+  static bool nested_called = false;
+  if (nested_called) {
+    return;
+  }
+  nested_called = true;
 #ifdef ENABLE_GE
   FinalizeBackend();
 #else
@@ -425,6 +432,7 @@ void ExecutorPy::DelNetRes(const std::string &id) {
     }
 #endif
   }
+  nested_called = false;
 }
 
 void ExecutorPy::ClearRes() {
