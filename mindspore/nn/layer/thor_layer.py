@@ -539,18 +539,17 @@ class EmbeddingThor(Cell):
         embedding_size (int): The size of each embedding vector.
         use_one_hot (bool): Specifies whether to apply one_hot encoding form. Default: False.
         embedding_table (Union[Tensor, str, Initializer, numbers.Number]): Initializes the embedding_table.
-            Refer to class `initializer` for the values of string when a string
-            is specified. Default: 'normal'.
+            Refer to class `initializer` for the values of string when a string is specified. Default: 'normal'.
         dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: None. The feature is inactivated.
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
+        - **input** (Tensor) - Tensor of input shape :math:`(\text{batch_size}, \text{input_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
           be zero.
 
     Outputs:
-        Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
+        Tensor of output shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
 
     Examples:
         >>> net = nn.Embedding(20000, 768,  True)
