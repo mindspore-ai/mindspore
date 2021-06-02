@@ -2724,6 +2724,7 @@ void PynativeExecutor::ClearRes() {
   ad::CleanRes();
   pipeline::ReclaimOptimizer();
   kSession = nullptr;
+  mind_rt_backend = nullptr;
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {

@@ -47,6 +47,8 @@ class GraphCompiler;
 namespace mindspore {
 using GraphId = uint32_t;
 using GraphInfo = std::string;
+const char kSessionBasic[] = "SessionBasic";
+
 namespace session {
 using CallBackFunc = uint32_t (*)(uint32_t graph_id,
                                   const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);

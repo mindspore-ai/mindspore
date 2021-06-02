@@ -50,7 +50,7 @@
 #include "utils/info.h"
 #include "load_mindir/load_model.h"
 #include "pipeline/jit/prim_bprop_optimizer.h"
-#include "mindrt/src/actor/actormgr.h"
+#include "runtime/hardware/device_context_manager.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
@@ -1085,10 +1085,10 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (compile::IsMindRTUsed()) {
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
-    auto graph_id = mindrt_backend->CompileGraphs(func_graph);
+    auto &actor_info = mindrt_backend->CompileGraphs(func_graph);
     VectorRef args;
     if (need_run) {
-      (void)mindrt_backend->RunGraph(graph_id, args);
+      (void)mindrt_backend->RunGraph(actor_info, args);
     }
     ConfigManager::GetInstance().set_iter_num(size);
     return true;
@@ -1254,6 +1254,11 @@ void ClearResAtexit() {
 #endif
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+
+  // Clear the resource of mindRT.
+  runtime::GraphScheduler::GetInstance().Clear();
+  device::DeviceContextManager::GetInstance().ClearDeviceContexts();
+
   ReleaseGeTsd();
   parse::python_adapter::ResetPythonScope();
 #ifdef ENABLE_DEBUGGER
@@ -1266,7 +1271,6 @@ void ClearResAtexit() {
   parse::Parser::CleanParserResource();
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
-  ActorMgr::GetActorMgrRef()->TerminateAll();
 }
 }  // namespace pipeline
 }  // namespace mindspore

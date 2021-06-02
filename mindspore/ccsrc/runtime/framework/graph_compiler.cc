@@ -18,7 +18,6 @@
 #include <numeric>
 #include <map>
 #include <utility>
-#include "runtime/framework/graph_scheduler.h"
 #include "runtime/device/device_address.h"
 #include "common/trans.h"
 #include "utils/convert_utils.h"
@@ -252,44 +251,33 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
 }
 }  // namespace
 
-void GraphCompiler::set_device_context(DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context_ = device_context;
-
-  // The member variable 'session_' will be removed after removing session module.
-  if (session_ == nullptr) {
-    session_ = std::make_shared<session::SessionBasic>();
-    const device::DeviceContextKey &device_context_key = device_context->device_context_key();
-    session_->InitExecutor(device_context_key.device_name_, device_context_key.device_id_);
-  }
-}
-
-GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs) {
+GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs,
+                                    const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs);
   MS_EXCEPTION_IF_NULL(graph);
-  return CompileGraphImpl(graph);
+  return CompileGraphImpl(graph, device_context);
 }
 
-GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
+GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context);
 
   // Execute optimization pass.
-  device_context_->OptimizeGraph(graph);
+  device_context->OptimizeGraph(graph);
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
-  device_context_->CreateKernel(graph->execution_order());
+  device_context->CreateKernel(graph->execution_order());
 
   // Create device address for all anf nodes of graph.
-  CreateDeviceAddress(graph);
+  CreateDeviceAddress(graph, device_context);
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
   MS_EXCEPTION_IF_NULL(session_);
-  session_->InitAllBucket(graph, device_context_);
+  session_->InitAllBucket(graph, device_context);
 
   session_->SetSummaryNodes(graph.get());
   SetSummaryNodesRefCount(graph.get());
@@ -299,7 +287,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph) const {
 
 GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
                                     const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
-                                    bool *single_op_cache_hit) {
+                                    bool *single_op_cache_hit, const DeviceContext *device_context) {
   // Check if the graph cache exists.
   auto iter = run_op_graphs_.find(graph_info);
   if (iter != run_op_graphs_.end()) {
@@ -314,18 +302,18 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, const
   KernelGraphPtr graph = session_->ConstructSingleOpGraph(op_run_info, *input_tensors, *tensors_mask);
   MS_EXCEPTION_IF_NULL(graph);
 
-  MS_EXCEPTION_IF_NULL(device_context_);
-  device_context_->OptimizeSingleOpGraph(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->OptimizeSingleOpGraph(graph);
 
   MS_EXCEPTION_IF_NULL(session_);
   session_->RunOpHideNopNode(graph);
   session_->RunOpRemoveNopNode(graph);
 
   // Generate 'KernelMod' for kernel in graph.
-  device_context_->CreateKernel(graph->execution_order());
+  device_context->CreateKernel(graph->execution_order());
 
   // Create device address for all anf nodes of graph.
-  CreateDeviceAddress(graph);
+  CreateDeviceAddress(graph, device_context);
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
   run_op_graphs_[graph_info] = graph;
@@ -346,11 +334,11 @@ KernelGraphPtr GraphCompiler::Fetch(const GraphInfo &graph_info) const {
   return iter->second;
 }
 
-void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph) const {
-  CreateParameterDeviceAddress(device_context_, graph);
-  CreateValueNodeDeviceAddress(device_context_, graph);
-  CreateKernelOutputDeviceAddress(device_context_, graph);
-  CreateKernelWorkspaceDeviceAddress(device_context_, graph);
+void GraphCompiler::CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
+  CreateParameterDeviceAddress(device_context, graph);
+  CreateValueNodeDeviceAddress(device_context, graph);
+  CreateKernelOutputDeviceAddress(device_context, graph);
+  CreateKernelWorkspaceDeviceAddress(device_context, graph);
   UpdateDeviceAddressForInplaceNode(graph);
 }
 

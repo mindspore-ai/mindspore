@@ -37,6 +37,7 @@ namespace compile {
 using OpRunInfo = session::OpRunInfo;
 using DeviceContext = device::DeviceContext;
 using ActorInfo = runtime::ActorInfo;
+using GraphCompiler = runtime::GraphCompiler;
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
 using ControlNodeParser = runtime::ControlNodeParser;
 using FrontToBackendNodeWithContext = runtime::FrontToBackendNodeWithContext;
@@ -143,6 +144,7 @@ class MindRTBackend : public Backend {
   std::unordered_map<ActorInfo, std::unique_ptr<GraphCompilerInfo>> actor_to_graph_compiler_info_;
 
   GraphPartitionPtr graph_partition_;
+  std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;
   uint32_t device_id_;
 };

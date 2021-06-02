@@ -54,7 +54,6 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *context) {
 }
 
 void DataSourceActor::SendOutput(OpContext<DeviceTensor> *context) {
-  MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") sends output data.";
   MS_EXCEPTION_IF_NULL(context);
   // No output.
   if ((output_data_arrows_.size() == 0) && (output_result_arrows_.size() == 0)) {

@@ -187,6 +187,12 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   // Optimization pass which is relevant to device type or format.
   OptimizeGraphWithDeviceInfo(graph);
 
+  // Graph kernel fusion optimization
+  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    opt::GraphKernelOptimize(graph);
+    graph->SetExecOrderByDefault();
+  }
+
   // Assign the stream and insert the send/recv node for all reduce kernel, so must be the last in the optimizer.
   device::gpu::AssignGpuStream(graph);
 }
@@ -244,12 +250,6 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
-
-  // Graph kernel fusion optimization
-  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-    opt::GraphKernelOptimize(graph);
-    graph->SetExecOrderByDefault();
-  }
 }
 
 void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {

@@ -322,22 +322,35 @@ void PrepareDataForHostDataSourceActor(const std::unordered_map<AnfNodePtr, size
 }
 }  // namespace
 
-GraphScheduler::~GraphScheduler() {
-  // Global maps clear.
-  device_tensor_to_actor_.clear();
-  actor_to_host_queue_.clear();
-  actors_.clear();
+void GraphScheduler::Clear() {
+  // Terminate all actors.
+  auto actorMgr = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actorMgr);
+  actorMgr->Finalize();
 
-  // Local maps clear.
+  // Clear the member of DeviceTensorStore.
+  DeviceTensorStore::GetInstance().Clear();
+
+  // Clear global maps.
+  actors_.clear();
   actor_name_to_actor_.clear();
+  actor_to_host_queue_.clear();
+  device_tensor_to_actor_.clear();
+
+  // Clear local maps and vectors.
   graph_output_to_actor_.clear();
+  front_node_to_actor_.clear();
+  copy_actors_.clear();
+
+  // Delete the thread pool.
   delete thread_pool_;
   thread_pool_ = nullptr;
 }
 
 void GraphScheduler::Initialize() {
-  // Local maps and vcetors clear.
+  // Local maps and vectors clear.
   graph_output_to_actor_.clear();
+  front_node_to_actor_.clear();
   copy_actors_.clear();
 
   if (init_) {

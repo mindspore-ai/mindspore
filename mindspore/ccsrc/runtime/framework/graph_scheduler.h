@@ -133,8 +133,11 @@ class GraphScheduler {
   }
 
   // 1. Thread pool creating.
-  // 2. The memory manager creating and scheduling.
+  // 2. The global actors creating and scheduling.
   void Initialize();
+
+  // Clear the members.
+  void Clear();
 
   // Transform graph to actor DAG, contains build and link.
   ActorSet *Transform(const GraphCompilerInfo &graph_compiler_info,
@@ -160,7 +163,7 @@ class GraphScheduler {
 
  private:
   GraphScheduler() = default;
-  ~GraphScheduler();
+  ~GraphScheduler() = default;
   DISABLE_COPY_AND_ASSIGN(GraphScheduler);
 
   // Transform the nodes of graph to actors.
@@ -265,18 +268,18 @@ class GraphScheduler {
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
   std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;
-  // Since the control node does not have a backend node, it can only be connected through the relationship between
-  // the front node, so the mapping relationship between the front node and the actor needs to be recorded.
-  std::unordered_map<AnfNodePtr, KernelActorPtr> front_node_to_actor_;
   std::unordered_map<ActorInfo, HostTensorQueuePtr> actor_to_host_queue_;
   // The second element of pair represents the output index of op actor corresponding to the device tensor.
   std::unordered_map<DeviceTensorPtr, GraphOutputPair> device_tensor_to_actor_;
 
-  // The local maps and vectors, will be cleared at the beginning of each graph transform.
-  // The second element of pair represents the output index of op actor corresponding to the graph output front node.
+  // The local maps and vectors, will be cleared at the beginning of each graph transform:
+  // 1.The second element of pair represents the output index of op actor corresponding to the graph output front node.
   std::map<KernelWithIndex, GraphOutputPair, session::KernelWithIndexCmp> graph_output_to_actor_;
-  // Beaceuse the copy actors are built in the link, so need record the all copy actors in the link process to push into
-  // the actor set after link.
+  // 2.Since the control node does not have a backend node, it can only be connected through the relationship between
+  // the front node, so the mapping relationship between the front node and the actor needs to be recorded.
+  std::unordered_map<AnfNodePtr, KernelActorPtr> front_node_to_actor_;
+  // 3.Beaceuse the copy actors are built in the link, so need record the all copy actors in the link process to push
+  // into the actor set after link.
   std::vector<CopyActorPtr> copy_actors_;
 
   // The id of global actor.
