@@ -118,7 +118,7 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
       }
     }
 
-    if (bit_num != 8 && bit_num != 16 && !repetition_packed) {
+    if (bit_num != 8 && bit_num != 16 && !repetition_packed && dst_node->quantType != schema::QuantType_QUANT_NONE) {
       auto status = DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "do bit pack failed. " << status;

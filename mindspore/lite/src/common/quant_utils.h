@@ -69,14 +69,10 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   const auto zeroPoint = quantParam->zeroPoint;
   const auto numBit = quantParam->numBits;
   const auto narrowRange = quantParam->narrowRange;
-  double maxLimitTemp = static_cast<float>((1 << (unsigned int)numBit) - 1);
-  const double maxLimit = static_cast<float>(maxLimitTemp - zeroPoint + std::numeric_limits<T>::min()) * scale;
-  double minLimit;
-  if (narrowRange) {
-    minLimit = static_cast<float>(std::numeric_limits<T>::min() + 1 - zeroPoint) * scale;
-  } else {
-    minLimit = static_cast<float>(std::numeric_limits<T>::min() - zeroPoint) * scale;
-  }
+  const int32_t quantMax = (1 << (unsigned int)(numBit - 1)) - 1;
+  const int32_t quantMin = -1 * (1 << (unsigned int)(numBit - 1)) + (narrowRange ? 1 : 0);
+  const double maxLimit = static_cast<float>(quantMax - zeroPoint) * scale;
+  const double minLimit = static_cast<float>(quantMin - zeroPoint) * scale;
 
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
     double tmp;
