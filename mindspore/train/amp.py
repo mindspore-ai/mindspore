@@ -28,11 +28,11 @@ from ..context import ParallelMode
 from .. import context
 
 
-class OutputTo16(nn.Cell):
+class _OutputTo16(nn.Cell):
     "Wrap cell for amp. Cast network output back to float16"
 
     def __init__(self, op):
-        super(OutputTo16, self).__init__(auto_prefix=False)
+        super(_OutputTo16, self).__init__(auto_prefix=False)
         self._op = op
 
     def construct(self, x):
@@ -48,7 +48,7 @@ def _do_keep_batchnorm_fp32(network):
         if subcell == network:
             continue
         elif isinstance(subcell, (nn.BatchNorm2d, nn.BatchNorm1d)):
-            network._cells[name] = OutputTo16(subcell.to_float(mstype.float32))
+            network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
             change = True
         else:
             _do_keep_batchnorm_fp32(subcell)
@@ -90,6 +90,7 @@ def _check_kwargs(key_words):
 
 def _add_loss_network(network, loss_fn, cast_model_type):
     """Add loss network."""
+
     class WithLossCell(nn.Cell):
         "Wrap loss for amp. Cast network output back to float32"
 
@@ -128,16 +129,23 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
             - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
               level to O3 Ascend. The recommended level is choose by the export experience, cannot
-              always generalize. User should specify the level for special network.
+              always general. User should specify the level for special network.
 
-            O2 is recommended on GPU, O3 is recommended on Ascend.
+            O2 is recommended on GPU, O3 is recommended on Ascend.Property of 'keep_batchnorm_fp32' , 'cast_model_type'
+            and 'loss_scale_manager' determined by 'level' setting may be overwritten by settings in 'kwargs'.
 
-        cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32`.
-            If set to `mstype.float16`, use `float16` mode to train. If set, overwrite the level setting.
-        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32`. If set, overwrite the level setting.
-            Only `cast_model_type` is `float16`, `keep_batchnorm_fp32` will take effect.
-        loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
-            scale the loss by `LossScaleManager`. If set, overwrite the level setting.
+        cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32`.If set, the network
+            will be casted to 'cast_model_type'(`mstype.float16` or `mstype.float32`), but not to be casted to the type
+            determined by 'level' setting.
+        keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32` when the network is set to cast to 'float16'.
+            If set, the 'level' setting will take no effect on this property.
+        loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, otherwise scale the loss by
+        `LossScaleManager`. If set, the 'level' setting will take no effect on this property.
+    Raises:
+        1.Auto mixed precision only supported on device 'GPU' and 'Ascend'.If device is cpu, a 'ValueError' exception
+            will be raised.
+        2.If device is 'CPU', property `loss_scale_manager` only can be set as None or FixedLossScaleManager(with
+            property `drop_overflow_update`=False), or a 'ValueError' exception will be raised.
     """
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, acc.FreezeOpt))
@@ -176,10 +184,9 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
         if update_cell is not None:
             # only cpu not support `TrainOneStepWithLossScaleCell` for control flow.
             if not context.get_context("enable_ge") and context.get_context("device_target") == "CPU":
-                raise ValueError("Only `loss_scale_manager=None` and "
+                raise ValueError("Only `loss_scale_manager=None` or "
                                  "`loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False)`"
-                                 "are supported in current version. If you use `O2` option, please"
-                                 "use `loss_scale_manager=None` or `FixedLossScaleManager`")
+                                 "are supported on device `CPU`. ")
             network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                        scale_sense=update_cell).set_train()
             return network
