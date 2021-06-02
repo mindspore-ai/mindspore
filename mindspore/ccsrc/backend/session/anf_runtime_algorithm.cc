@@ -1198,7 +1198,6 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
     {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLogSoftmaxGrad->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
-    {prim::kPrimLayerNormBetaGammaBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
     {prim::kPrimLayerNormXBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
     {prim::kPrimMinimumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},
     {prim::kPrimMaximumGrad->name(), {{0, 2}, {1, 0}, {2, 1}}},

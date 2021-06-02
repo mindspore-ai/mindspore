@@ -41,7 +41,7 @@ constexpr size_t INPUT8 = 8;
 
 std::unordered_set<std::string> input_order_adjusted_ops = {
   "Conv2DBackpropInput",        "Conv2DBackpropFilter", "LogSoftmaxGrad", "LayerNormGrad",       "LayerNormXBackprop",
-  "LayerNormBetaGammaBackprop", "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};
+  "MinimumGrad",          "MaximumGrad",    "ApplyCenteredRMSProp"};
 
 void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vector<nlohmann::json>> const &inputs_list,
                                 nlohmann::json *inputs_json) {
