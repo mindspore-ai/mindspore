@@ -77,6 +77,9 @@ class HWTSLogParser:
                 if line:
                     if not line.strip():
                         continue
+                    if len(line) < 64:
+                        logger.warning("Length of hwts data is less than 64")
+                        continue
                 else:
                     break
                 byte_first_four = struct.unpack('BBHHH', line[0:8])
