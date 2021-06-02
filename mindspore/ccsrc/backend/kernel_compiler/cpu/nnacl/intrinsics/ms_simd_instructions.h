@@ -29,6 +29,7 @@
 #ifdef ENABLE_ARM
 #define MS_FLOAT32X4 float32x4_t
 #define MS_INT32X4 int32x4_t
+#define MS_UINT32X4 uint32x4_t
 #define MS_LDQ_F32 vld1q_f32
 #define MS_LDQ_EPI32 vld1q_s32
 #define MS_ADDQ_F32 vaddq_f32

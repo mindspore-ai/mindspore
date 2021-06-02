@@ -60,7 +60,7 @@ usage()
   echo "    -l Compile with python dependency, default on"
   echo "    -S Enable enable download cmake compile dependency from gitee , default off"
   echo "    -k Enable make clean, clean up compilation generated cache "
-  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|avx|neon|off], default off"
+  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|avx|neon|off], default off for lite and avx for CPU"
   echo "    -H Enable hidden"
   echo "    -L Link and specify Tensor-RT library path, default disable Tensor-RT lib linking"
 }
@@ -387,7 +387,7 @@ build_mindspore()
     echo "start build mindspore project."
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
-    CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH -DX86_64_SIMD=${X86_64_SIMD}"
+    CMAKE_ARGS="-DDEBUG_MODE=$DEBUG_MODE -DBUILD_PATH=$BUILD_PATH"
     if [[ "X$ENABLE_COVERAGE" = "Xon" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_COVERAGE=ON"
     fi
