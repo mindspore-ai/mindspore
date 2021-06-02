@@ -204,23 +204,21 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)) {}
 
-  std::function<void(py::object *, const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2,
-                                                                                             auto &&PH3) {
-    NewGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
+  std::function<py::object(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
+    return NewGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
   };
-  std::function<void(py::object *, const py::object &, const py::object &, const py::args &)> LinkGraph =
-    [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
-      EndGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
-                    std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4));
+  std::function<py::object(const py::object &, const py::object &, const py::args &)> LinkGraph =
+    [this](auto &&PH1, auto &&PH2, auto &&PH3) {
+      return EndGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
+                           std::forward<decltype(PH3)>(PH3));
     };
-  std::function<void(py::object *, const GradOperationPtr &, const py::object &, const py::object &, const py::args &)>
-    GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5) {
-      GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
-                   std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5));
+  std::function<py::object(const GradOperationPtr &, const py::object &, const py::object &, const py::args &)>
+    GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
+      return GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
+                          std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4));
     };
-  std::function<void(py::object *, const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2,
-                                                                                             auto &&PH3) {
-    RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
+  std::function<py::object(const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2) {
+    return RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
   };
 
   FuncGraphPtr curr_g() const;
@@ -237,7 +235,7 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
   void SaveAllResult(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &out_real);
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
+  py::object RunGradGraph(const py::object &cell, const py::tuple &args);
   bool need_construct_graph() const { return !graph_stack_.empty() && grad_flag_; }
   void set_dynamic_analysis(DynamicAnalysisPtr dynamic_analysis) { dynamic_analysis_ = std::move(dynamic_analysis); }
   std::stack<FuncGraphPtr> &graph_stack() { return graph_stack_; }
@@ -296,9 +294,9 @@ class GradExecutor {
   bool CheckCellChanged(const std::string &cell_id);
   void UpdateTopCellInfo(const std::string &cell_id, bool vm_compiled);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
-  void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
+  py::object NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args);
-  void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
+  py::object EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
   void EndGraphByOutId(const py::object &cell, const std::string &cell_id, const py::object &out,
                        const std::string &out_id, const py::args &args);
   bool EndBpropGraph(const string &cell_id);
@@ -306,8 +304,8 @@ class GradExecutor {
                              const std::string &cell_id, const py::args &args);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args, py::object *forward_args,
                             py::object *sens = nullptr);
-  void GradNetInner(py::object *ret, const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-                    const py::args &args);
+  py::object GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                          const py::args &args);
   void SetTopCellTensorId(const std::string &cell_id);
   bool CheckGradParamsChanged(const std::string &cell_id, const py::object &weights, const py::object &sens);
   void SetGradGraphParams(const FuncGraphPtr &df_builder, const ResourcePtr &resource, size_t size);
@@ -378,11 +376,11 @@ class ForwardExecutor {
   ForwardExecutor() = default;
   ~ForwardExecutor() = default;
 
-  std::function<void(py::object *, const OpExecInfoPtr &)> RunOpS = [this](auto &&PH1, auto &&PH2) {
-    RunOpInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
+  std::function<py::object(const OpExecInfoPtr &)> RunOpS = [this](auto &&PH1) {
+    return RunOpInner(std::forward<decltype(PH1)>(PH1));
   };
 
-  void RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_info);
+  py::object RunOpInner(const OpExecInfoPtr &op_exec_info);
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
