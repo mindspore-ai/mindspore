@@ -31,7 +31,6 @@ using mindspore::lite::gpu::GpuRuntime;
 using mindspore::lite::gpu::GpuRuntimeWrapper;
 
 namespace mindspore::lite::cuda {
-
 class CudaRuntime : public GpuRuntime {
  public:
   friend GpuRuntimeWrapper<CudaRuntime>;

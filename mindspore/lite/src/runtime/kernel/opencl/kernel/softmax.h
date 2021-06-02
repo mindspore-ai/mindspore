@@ -23,7 +23,6 @@
 #include "nnacl/fp32/softmax_fp32.h"
 
 namespace mindspore::kernel {
-
 class SoftmaxOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

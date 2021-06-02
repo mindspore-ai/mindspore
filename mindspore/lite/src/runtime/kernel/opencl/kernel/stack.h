@@ -22,7 +22,6 @@
 #include "nnacl/stack_parameter.h"
 
 namespace mindspore::kernel {
-
 class StackOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

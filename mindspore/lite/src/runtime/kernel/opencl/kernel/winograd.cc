@@ -23,7 +23,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 namespace {
 void Align(const std::vector<int> &global, const std::vector<int> &local, cl::NDRange *global_range,
            cl::NDRange *local_range) {

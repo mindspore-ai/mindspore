@@ -41,9 +41,9 @@ using mindspore::lite::opencl::ImageSize;
 using mindspore::lite::opencl::MemType;
 
 namespace mindspore::kernel {
-
 int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() != 2 && in_tensors_.size() != 3) || out_tensors_.size() != 1) {
+  if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -55,7 +55,7 @@ int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant weight yet.";
     return RET_ERROR;
   }
-  if (in_tensors_.size() == 3 && !in_tensors_.at(kBiasIndex)->IsConst()) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(kBiasIndex)->IsConst()) {
     MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant bias yet.";
     return RET_ERROR;
   }
@@ -196,7 +196,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
   };
   size_t bias_size = C4NUM * CO4 * dtype_size;
   std::vector<char> temp_bias(bias_size, 0);
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     src_type = in_tensors_.at(kBiasIndex)->data_type();
     dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();

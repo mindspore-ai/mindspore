@@ -41,33 +41,32 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
-
 int Conv2DOpenCLKernel::CheckSpecs() {
   int inputs_num = in_tensors_.size();
-  if (inputs_num != 2 && inputs_num != 3) {
+  if (inputs_num != INPUT_TENSOR_SIZE_2 && inputs_num != INPUT_TENSOR_SIZE_3) {
     MS_LOG(ERROR) << "Conv2D only supports 2 or 3 input Tensor but get " << inputs_num;
     return RET_ERROR;
   }
   int outputs_num = out_tensors_.size();
-  if (outputs_num != 1) {
+  if (outputs_num != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "Conv2D only supports 1 output Tensor but get " << outputs_num;
     return RET_ERROR;
   }
 
   int input_ndim = in_tensors_.at(kInputIndex)->shape().size();
-  if (input_ndim != 4) {
+  if (input_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
   int output_ndim = out_tensors_.at(kOutputIndex)->shape().size();
-  if (output_ndim != 4) {
+  if (output_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
     return RET_ERROR;
   }
 
   auto *filter_tensor = in_tensors_.at(kWeightIndex);
   int filter_ndim = filter_tensor->shape().size();
-  if (filter_ndim != 4) {
+  if (filter_ndim != DIMENSION_4D) {
     MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << filter_ndim << "D.";
     return RET_ERROR;
   }
@@ -76,7 +75,7 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
 
-  auto *bias_tensor = in_tensors_.size() >= 3 ? in_tensors_.at(kBiasIndex) : nullptr;
+  auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
   if (bias_tensor != nullptr && !bias_tensor->IsConst()) {
     MS_LOG(ERROR) << "Conv2D don't support non-constant bias yet.";
     return RET_ERROR;
@@ -130,7 +129,7 @@ void Conv2DOpenCLKernel::InitAttrs() {
   CO_SLICES_ = UP_DIV(CO_, CO_TILE);
   KH_ = param_->kernel_h_;
   KW_ = param_->kernel_w_;
-  has_bias_ = in_tensors_.size() == 3;
+  has_bias_ = in_tensors_.size() == INPUT_TENSOR_SIZE_3;
   // note: TILE_HW_ is only used when use_winograd_=true
   TILE_HW_ = UP_DIV(OW_, 4) * UP_DIV(OH_, 4);
 }

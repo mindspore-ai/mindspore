@@ -24,7 +24,6 @@
 #include "nnacl/fp32/activation_fp32.h"
 
 namespace mindspore::kernel {
-
 class ActivationOpenCLKernel : public OpenCLKernel {
  public:
   ActivationOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

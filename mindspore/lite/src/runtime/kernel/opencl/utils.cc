@@ -41,7 +41,6 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 }  // namespace mindspore::lite
 
 namespace mindspore::kernel {
-
 const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveType_MulFusion,
                                                               schema::PrimitiveType_AddFusion,
                                                               schema::PrimitiveType_SubFusion,
@@ -220,15 +219,15 @@ int GetBroadcastGpuAxis(int ndim, int ori_axis) {
     return ndim - 1;
   }
   int axis = 0;
-  if (ndim == 1) {
+  if (ndim == DIMENSION_1D) {
     axis = 3;
-  } else if (ndim == 2) {
+  } else if (ndim == DIMENSION_2D) {
     axis = ori_axis == 0 ? 0 : 3;
-  } else if (ndim == 3) {
+  } else if (ndim == DIMENSION_3D) {
     axis = ori_axis == 0 ? 0 : ori_axis == 1 ? 2 : 3;
-  } else if (ndim == 4) {
+  } else if (ndim == DIMENSION_4D) {
     axis = ori_axis;
-  } else if (ndim > 4) {
+  } else if (ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << "GPU doesn't support ndim>=" << ndim;
   }
   return axis;

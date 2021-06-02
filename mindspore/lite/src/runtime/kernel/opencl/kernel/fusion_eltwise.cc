@@ -25,7 +25,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 static std::set<EltwiseOperator> SupportedOperators = {
   // Arithmetic Primitive
   Operator_Mul,
@@ -125,9 +124,10 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
   for (auto *in_tensor : node->in_tensors()) {
     MS_ASSERT(in_tensor);
     auto shape = in_tensor->shape();
-    bool is_scalar = shape.empty() || (shape.size() == 1 && shape.front() == 1);
-    bool is_vector = shape.size() == 1 && shape.front() == output_info.C;
-    bool _111C = shape.size() == 4 && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output_info.C;
+    bool is_scalar = shape.empty() || (shape.size() == DIMENSION_1D && shape.front() == 1);
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == output_info.C;
+    bool _111C =
+      shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output_info.C;
     bool same_with_out = shape == output_shape;
     if (!(is_scalar || is_vector || _111C || same_with_out)) {
       return false;

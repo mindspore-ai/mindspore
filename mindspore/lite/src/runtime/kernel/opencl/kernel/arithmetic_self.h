@@ -38,7 +38,6 @@ using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
-
 class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

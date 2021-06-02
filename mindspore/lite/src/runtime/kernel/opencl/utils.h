@@ -33,7 +33,6 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 }
 
 namespace mindspore::kernel {
-
 struct GpuTensorInfo;
 
 // for fusion

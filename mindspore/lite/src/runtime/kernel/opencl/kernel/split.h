@@ -22,7 +22,6 @@
 #include "nnacl/split_parameter.h"
 
 namespace mindspore::kernel {
-
 class SplitOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

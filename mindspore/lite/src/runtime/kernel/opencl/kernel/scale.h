@@ -22,7 +22,6 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
-
 class ScaleOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

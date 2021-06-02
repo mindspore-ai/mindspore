@@ -25,7 +25,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite::opencl {
-
 // default opencl library path
 static const std::vector<std::string> g_opencl_library_paths = {
 #if defined(__APPLE__) || defined(__MACOSX)

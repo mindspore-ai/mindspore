@@ -32,7 +32,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
-
 std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
   std::vector<float> mask{0.0f, 0.0f, 0.0f, 0.0f};
   const int reminder = channels % 4 == 0 ? 4 : channels % 4;
@@ -43,21 +42,21 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
 }
 
 int SoftmaxOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   SoftmaxParameter *parameter = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
   axis_ = parameter->axis_;
   auto in_shape = in_tensors_[0]->shape();
-  if (in_shape.size() > 4) {
+  if (in_shape.size() > DIMENSION_4D) {
     MS_LOG(ERROR) << "Init Softmax kernel failed: Unsupported shape size: " << in_shape.size();
     return RET_ERROR;
   }
   if (axis_ < 0) {
     axis_ = in_shape.size() + axis_;
   }
-  axis_ += 4 - in_shape.size();
+  axis_ += DIMENSION_4D - in_shape.size();
   if (axis_ != 1 && axis_ != 2 && axis_ != 3) {
     MS_LOG(ERROR) << "Init Softmax kernel failed: softmax axis should be H W or C";
     return RET_ERROR;

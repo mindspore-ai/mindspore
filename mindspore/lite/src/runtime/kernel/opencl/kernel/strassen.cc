@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
-
 int StrassenOpenCLKernel::Prepare() {
   std::string kernel_name = "MatMul_Strassen_NHWC4_2d";
   std::string source = strassen_source;

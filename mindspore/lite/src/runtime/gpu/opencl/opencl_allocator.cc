@@ -22,7 +22,6 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {
-
 OpenCLAllocator::OpenCLAllocator(OpenCLRuntime *ocl_runtime) : ocl_runtime_(ocl_runtime) {}
 
 OpenCLAllocator::~OpenCLAllocator() { Clear(); }
