@@ -113,7 +113,7 @@ class MindRTBackend : public Backend {
   VectorRef RunGraph(const ActorInfo &actor_info, const VectorRef &args);
 
   // Run Graph in the pyNative mode.
-  VectorRef RunGraph(const ActorInfo &actor_info, const std::vector<int64_t> *tensors_mask,
+  VectorRef RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info, const std::vector<int64_t> *tensors_mask,
                      const std::vector<tensor::TensorPtr> *input_tensors);
 
  private:

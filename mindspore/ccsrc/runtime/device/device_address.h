@@ -67,6 +67,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual ~DeviceAddress() { ptr_ = nullptr; }
   const void *GetPtr() const { return ptr_; }
   size_t GetSize() const { return size_; }
+  void SetSize(size_t size) { size_ = size; }
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }

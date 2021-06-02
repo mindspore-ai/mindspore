@@ -34,6 +34,7 @@
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/session/kernel_graph.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel.h"
 
 namespace mindspore {
 namespace device {
@@ -226,6 +227,7 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
 void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
   pm->AddPass(std::make_shared<opt::AdamWeightDecayFusion>());
   pm->AddPass(std::make_shared<opt::AdamFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
@@ -238,6 +240,7 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
+  pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
@@ -279,6 +282,23 @@ void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const
 
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
 
+void GPUDeviceContext::UpdateKernelDynamicShape(const CNodePtr &kernel) const {
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
+    MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
+  }
+
+  kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(gpu_kernel);
+  device::DynamicKernelPtr dynamic_kernel = gpu_kernel->DynamicKernel();
+  MS_EXCEPTION_IF_NULL(dynamic_kernel);
+
+  dynamic_kernel->InferShape();
+  dynamic_kernel->UpdateArgs();
+}
+
 bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                     const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) const {
@@ -289,15 +309,30 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 
   std::lock_guard<std::mutex> locker(launch_mutex_);
 
-  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_inst);
-  if (profiler_inst->GetEnableFlag()) {
-    return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
-  }
-
+  bool ret = true;
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  if (!profiler_inst->GetEnableFlag()) {
+    ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  } else {
+    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+  }
+  if (!ret) {
+    MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+    return false;
+  }
+
+  // Processing after execution of dynamic kernel to update output shape.
+  if (AnfAlgo::IsDynamicShape(kernel)) {
+    kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+    MS_EXCEPTION_IF_NULL(gpu_kernel);
+    gpu_kernel->PostExecute();
+  }
+  return ret;
 }
 
 bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,

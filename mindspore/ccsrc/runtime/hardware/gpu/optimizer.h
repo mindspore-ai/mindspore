@@ -47,5 +47,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/gpu/matmul_biasadd_fusion.h"
+#include "backend/optimizer/gpu/bce_with_logits_loss_fusion.h"
 
 #endif  // MINDSPORE_CCSRC_RUNTIME_HARDWARE_GPU_OPTIMIZER_H_

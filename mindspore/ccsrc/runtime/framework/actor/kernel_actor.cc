@@ -72,6 +72,11 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   input_op_datas_[sequential_num].emplace_back(input_data);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
+    // Infer kernel shape and update abstract info for dynamic shape kernel.
+    if (AnfAlgo::IsDynamicShape(kernel_)) {
+      device_context_->UpdateKernelDynamicShape(kernel_);
+    }
+
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     SendMemoryAllocReq(context);
@@ -84,6 +89,11 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
+    // Infer kernel shape and update abstract info for dynamic shape kernel.
+    if (AnfAlgo::IsDynamicShape(kernel_)) {
+      device_context_->UpdateKernelDynamicShape(kernel_);
+    }
+
     FetchInputDeviceTensor(context);
     FetchOutputDeviceTensor();
     SendMemoryAllocReq(context);
@@ -221,9 +231,19 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *context) {
 
 void KernelActor::FetchOutputDeviceTensor() {
   MS_EXCEPTION_IF_NULL(kernel_info_);
-  auto &output_addresss = kernel_info_->output_address_list();
-  for (size_t i = 0; i < output_addresss.size(); ++i) {
-    auto output_address = output_addresss[i].get();
+  auto &output_addresses = kernel_info_->output_address_list();
+  const auto &kernel_mod = kernel_info_->kernel_mod();
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  const auto &output_size_list = kernel_mod->GetOutputSizeList();
+
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto output_address = output_addresses[i].get();
+    if (output_size_list[i] != output_address->GetSize()) {
+      // The size of output address may be changed in dynamic shape scenario.
+      output_address->SetSize(output_size_list[i]);
+    }
+
+    // When the tensor is the output of graph or in dynamic shape scenario, the output tensor may be changed.
     if (output_device_tensors_[i] != output_address) {
       output_device_tensors_[i] = output_address;
       memory_alloc_list_[i] = output_address;
