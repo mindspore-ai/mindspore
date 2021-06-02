@@ -192,6 +192,9 @@ struct CallInfo {
   // multi return points, this should be set.
   AnfNodePtr label_param = nullptr;
 
+  // Return monad.
+  AnfNodePtr return_monad_ = nullptr;
+
   // True if current graph is involved with recursive calls.
   bool recursive = false;
 };
@@ -370,11 +373,14 @@ class CallInfoFinder {
       if (HasAbstractUMonad(node)) {
         // Found a node with UMonad abstract, set it as the last monad.
         last_monad = node;
+        call_info->return_monad_ = last_monad;
       } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
         MakeCallSite(node->cast<CNodePtr>(), last_monad, call_info);
+        call_info->return_monad_ = nullptr;
       } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
                  AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
         MakeSwitchCallSite(node->cast<CNodePtr>(), last_monad, call_info);
+        call_info->return_monad_ = nullptr;
       }
     }
     // Set the last call as tail call if it is the output node.
@@ -910,14 +916,19 @@ class AscendAutoMonadConverter {
     std::vector<uint32_t> labels;
     graphes.reserve(branches.size());
     labels.reserve(branches.size());
+    bool monad_update = false;
     for (auto &[graph, args] : branches) {
       MS_EXCEPTION_IF_NULL(graph);
       auto linked_args = LinkArguments(args, graph);
       if (linked_args != nullptr) {
         monad_ = UpdateState(GetMonad(), linked_args);
+        monad_update = true;
       }
       graphes.push_back(graph);
       labels.push_back(GetGraphLabel(graph));
+    }
+    if (!monad_update) {
+      monad_ = last_monad_;
     }
 
     // Assign label indexes if required.
@@ -1032,6 +1043,9 @@ class AscendAutoMonadConverter {
     // No return points.
     if (return_points.empty()) {
       return;
+    }
+    if (call_info_.return_monad_ != nullptr) {
+      monad_ = call_info_.return_monad_;
     }
     // Assign output according the return points.
     AssignOutput(return_points);
