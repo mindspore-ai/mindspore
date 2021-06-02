@@ -14,10 +14,12 @@
 # ============================================================================
 """preprocess"""
 import os
-import argparse
 import json
 import numpy as np
 from src.dataset import vgg_create_dataset
+
+from model_utils.moxing_adapter import config
+
 
 def create_label(result_path, dir_path):
     print("[WARNING] Create imagenet label. Currently only use for Imagenet2012!")
@@ -41,33 +43,22 @@ def create_label(result_path, dir_path):
 
     print("[INFO] Completed! Total {} data.".format(total))
 
-parser = argparse.ArgumentParser('preprocess')
-parser.add_argument('--dataset', type=str, choices=["cifar10", "imagenet2012"], default="cifar10")
-parser.add_argument('--data_path', type=str, default='', help='eval data dir')
-parser.add_argument('--result_path', type=str, default='./preprocess_Result/', help='result path')
-args = parser.parse_args()
-
-if args.dataset == "cifar10":
-    from src.config import cifar_cfg as cfg
-else:
-    from src.config import imagenet_cfg as cfg
-
-args.per_batch_size = cfg.batch_size
-args.image_size = list(map(int, cfg.image_size.split(',')))
+config.per_batch_size = config.batch_size
+config.image_size = list(map(int, config.image_size.split(',')))
 
 
 if __name__ == "__main__":
-    if args.dataset == "cifar10":
-        dataset = vgg_create_dataset(args.data_path, args.image_size, args.per_batch_size, training=False)
-        img_path = os.path.join(args.result_path, "00_data")
+    if config.dataset == "cifar10":
+        dataset = vgg_create_dataset(config.data_dir, config.image_size, config.per_batch_size, training=False)
+        img_path = os.path.join(config.result_path, "00_data")
         os.makedirs(img_path)
         label_list = []
         for idx, data in enumerate(dataset.create_dict_iterator(output_numpy=True)):
-            file_name = "VGG16_data_bs" + str(args.per_batch_size) + "_" + str(idx) + ".bin"
+            file_name = "VGG16_data_bs" + str(config.per_batch_size) + "_" + str(idx) + ".bin"
             file_path = os.path.join(img_path, file_name)
             data["image"].tofile(file_path)
             label_list.append(data["label"])
-        np.save(os.path.join(args.result_path, "cifar10_label_ids.npy"), label_list)
+        np.save(os.path.join(config.result_path, "cifar10_label_ids.npy"), label_list)
         print("=" * 20, "export bin files finished", "=" * 20)
     else:
-        create_label(args.result_path, args.data_path)
+        create_label(config.result_path, config.data_dir)

@@ -18,9 +18,10 @@ import pytest
 
 from mindspore import Tensor
 from model_zoo.official.cv.vgg16.src.vgg import vgg16
-from model_zoo.official.cv.vgg16.src.config import cifar_cfg as cfg
+from model_zoo.official.cv.vgg16.model_utils.config import get_config_static
 from ..ut_filter import non_graph_engine
 
+cfg = get_config_static()
 
 @non_graph_engine
 def test_vgg16():

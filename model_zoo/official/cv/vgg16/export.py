@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """export checkpoint file into models"""
-import argparse
 import numpy as np
 
 from mindspore import Tensor, context
@@ -22,42 +21,29 @@ from mindspore.train.serialization import load_checkpoint, export
 
 from src.vgg import vgg16
 
-parser = argparse.ArgumentParser(description='VGG16 export')
-parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument('--dataset', type=str, choices=["cifar10", "imagenet2012"], default="cifar10", help='ckpt file')
-parser.add_argument('--ckpt_file', type=str, required=True, help='vgg16 ckpt file.')
-parser.add_argument('--file_name', type=str, default='vgg16', help='vgg16 output file name.')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
-                    help="device target")
-args = parser.parse_args()
+from model_utils.moxing_adapter import config
+from model_utils.device_adapter import get_device_id
 
-if args.dataset == "cifar10":
-    from src.config import cifar_cfg as cfg
-else:
-    from src.config import imagenet_cfg as cfg
 
-args.num_classes = cfg.num_classes
-args.pad_mode = cfg.pad_mode
-args.padding = cfg.padding
-args.has_bias = cfg.has_bias
-args.initialize_mode = cfg.initialize_mode
-args.batch_norm = cfg.batch_norm
-args.has_dropout = cfg.has_dropout
-args.image_size = list(map(int, cfg.image_size.split(',')))
+def run_export():
+    config.image_size = list(map(int, config.image_size.split(',')))
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
+    if config.device_target == "Ascend":
+        config.device_id = get_device_id()
+        context.set_context(device_id=config.device_id)
 
-if __name__ == '__main__':
-    if args.dataset == "cifar10":
-        net = vgg16(num_classes=args.num_classes, args=args)
+    if config.dataset == "cifar10":
+        net = vgg16(num_classes=config.num_classes, args=config)
     else:
-        net = vgg16(args.num_classes, args, phase="test")
+        net = vgg16(config.num_classes, config, phase="test")
 
-    load_checkpoint(args.ckpt_file, net=net)
+    load_checkpoint(config.ckpt_file, net=net)
     net.set_train(False)
 
-    input_data = Tensor(np.zeros([cfg.batch_size, 3, args.image_size[0], args.image_size[1]]), mstype.float32)
-    export(net, input_data, file_name=args.file_name, file_format=args.file_format)
+    input_data = Tensor(np.zeros([config.batch_size, 3, config.image_size[0], config.image_size[1]]), mstype.float32)
+    export(net, input_data, file_name=config.file_name, file_format=config.file_format)
+
+
+if __name__ == '__main__':
+    run_export()
