@@ -51,7 +51,7 @@ size_t FootPrint::Result() {
   std::shared_ptr<FootPrint> foot_print = shared_from_this();
   size_t upperbound = 0;
   uint32_t total_footprints = 0;
-  while (NULL != foot_print) {
+  while (foot_print != NULL) {
     foot_print->printStats();
 
     upperbound = foot_print->getOffset();
@@ -249,7 +249,7 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<F
         break;
       }
       // go to the next footprint slot
-      if (NULL != p->Next()) {
+      if (p->Next() != NULL) {
         p = p->Next();
       } else if (bpushed == false) {  // something went wrong
         MS_LOG(WARNING) << "Could not allocate memory for tensor: " << tensor->index_;

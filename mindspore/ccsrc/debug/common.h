@@ -38,6 +38,7 @@ class Common {
   static bool CreateNotExistDirs(const std::string &path);
 
   static std::string AddId(const std::string &filename, const std::string &suffix);
+  static bool OpenFile(const std::string filename, std::ofstream &ofs);
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);

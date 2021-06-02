@@ -19,10 +19,12 @@
 #include <memory>
 #include <iomanip>
 #include <optional>
+#include <fstream>
 #include "utils/ms_context.h"
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
@@ -286,5 +288,26 @@ std::string Common::AddId(const std::string &filename, const std::string &suffix
   }
   g_id++;
   return s.str();
+}
+
+bool Common::OpenFile(const std::string filename, std::ofstream &ofs) {
+  if (filename.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << filename << " is too long.";
+    return false;
+  }
+  auto real_path = GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return false;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRUSR | S_IWUSR);
+  ofs.open(real_path.value());
+
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore
