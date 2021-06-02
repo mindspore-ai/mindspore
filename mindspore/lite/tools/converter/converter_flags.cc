@@ -45,7 +45,7 @@ Flags::Flags() {
   AddFlag(&Flags::bitNumIn, "bitNum", "Weight quantization bitNum", "8");
   AddFlag(&Flags::quantWeightSizeStr, "quantWeightSize", "Weight quantization size threshold", "0");
   AddFlag(&Flags::quantWeightChannelStr, "quantWeightChannel", "Channel threshold for weight quantization", "16");
-  AddFlag(&Flags::configFile, "configFile", "Configuration for post-training.", "");
+  AddFlag(&Flags::configFile, "configFile", "Configuration for post-training, offline split op to parallel", "");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device. "
           "true | false",
@@ -203,6 +203,11 @@ int Flags::InitConfigFile() {
     }
   }
 
+  if (CheckOfflineParallelConfig(this->configFile, &parallel_compute_rates_, &parallel_devices_)) {
+    this->parallelMode = true;
+  } else {
+    this->parallelMode = false;
+  }
   return RET_OK;
 }
 
@@ -283,13 +288,71 @@ int Flags::Init(int argc, const char **argv) {
   return RET_OK;
 }
 
+bool CheckOfflineParallelConfig(const std::string &file, std::vector<int64_t> *compute_rates,
+                                std::vector<std::string> *parallel_devices) {
+  // device: [device0 device1] ---> {cpu, gpu}
+  // computeRate: [x: y] x >=0 && y >=0 && x/y < 10
+  std::string compute_rate_key = "computeRate";
+  std::string device0_key = "device0";
+  std::string device1_key = "device1";
+  std::vector<std::string> devices = {"cpu", "gpu"};
+  auto compute_rate_result = GetStrFromConfigFile(file, compute_rate_key);
+  if (compute_rate_result.empty()) {
+    return false;
+  }
+  std::string device0_result = GetStrFromConfigFile(file, device0_key);
+  if (device0_result.empty()) {
+    return false;
+  }
+  std::string device1_result = GetStrFromConfigFile(file, device1_key);
+  if (device1_result.empty()) {
+    return false;
+  }
+  bool device0_flag = false;
+  bool device1_flag = false;
+  for (const auto &device : devices) {
+    if (device == device0_result) {
+      device0_flag = true;
+    }
+    if (device == device1_result) {
+      device1_flag = true;
+    }
+  }
+  if (!device0_flag || !device1_flag) {
+    return false;
+  }
+  const char *delimiter = ";";
+  std::vector<std::string> device_rates = SplitStringToVector(compute_rate_result, *delimiter);
+  const char *colon = ":";
+
+  for (const auto &device : device_rates) {
+    std::vector<std::string> rate = SplitStringToVector(device, *colon);
+    compute_rates->push_back(std::stoi(rate.back()));
+  }
+  if (compute_rates->size() != 2) {
+    return false;
+  }
+  int64_t bigger_rate = INT32_MIN;
+  int64_t smaller_rate = INT32_MAX;
+  for (const auto &rate : *compute_rates) {
+    bigger_rate = std::max(rate, bigger_rate);
+    smaller_rate = std::min(rate, smaller_rate);
+    if (rate <= 0 || rate > INT32_MAX) {
+      return false;
+    }
+  }
+  parallel_devices->push_back(device0_result);
+  parallel_devices->push_back(device1_result);
+  // un suitable rate
+  return bigger_rate / smaller_rate <= kMaxSplitRatio;
+}
+
 std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key) {
   std::string res;
   if (file.empty()) {
     MS_LOG(ERROR) << "file is nullptr";
     return res;
   }
-
   auto resolved_path = std::make_unique<char[]>(PATH_MAX);
   if (resolved_path == nullptr) {
     MS_LOG(ERROR) << "new resolved_path failed";

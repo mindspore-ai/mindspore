@@ -126,8 +126,27 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
     return RET_OK;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
+
+  auto graph_inputs = old_graph->get_inputs();
+  opt::SplitMode split_mode = opt::NoSplit;
+  for (const auto &graph_input : graph_inputs) {
+    if (utils::isa<Parameter>(graph_input)) {
+      auto input_parameter = dyn_cast<Parameter>(graph_input);
+      MSLITE_CHECK_PTR(input_parameter->Shape());
+      auto shape_ptr = input_parameter->Shape()->cast<abstract::ShapePtr>();
+      MSLITE_CHECK_PTR(shape_ptr);
+      auto batch = shape_ptr->shape().front();
+      if (batch > opt::kDefaultBatch) {
+        split_mode = opt::SplitN;
+      } else {
+        split_mode = opt::SplitH;
+      }
+    }
+  }
+
   // 1. deal with split strategy
-  std::unordered_map<std::string, opt::SplitStrategy> split_strategys = opt::ParserSplitStrategy();
+  std::unordered_map<std::string, opt::SplitStrategy> split_strategys =
+    opt::ParserSplitStrategy(config->parallel_compute_rates_, config->parallel_devices_, split_mode);
   if (split_strategys.empty()) {
     MS_LOG(ERROR) << "parse split_strategy error.";
     return RET_OK;
@@ -137,7 +156,8 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
   parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 3. multi_conv parallel pass
-  parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, 3));
+  parallel_pm->AddPass(
+    std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, opt::kMaxMultiConvNodeNums));
   parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
   // 4. single conv parallel pass
   parallel_pm->AddPass(std::make_shared<opt::ParallelPass>(split_strategys, config->fmk));

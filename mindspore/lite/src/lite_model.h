@@ -92,6 +92,15 @@ class LiteModel : public Model {
       node->primitive_ = c_node->primitive();
 #endif
       node->quant_type_ = c_node->quantType();
+      auto schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+      if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
+        SetNodeDeviceType(node, *c_node);
+      }
+#ifdef ENABLE_V0
+      if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+        SetNodeDeviceType(node, *c_node);
+      }
+#endif
       if (node->quant_type_ == schema::QuantType_PostTraining || node->quant_type_ == schema::QuantType_AwareTraining) {
         node->quant_type_ = schema::QuantType_QUANT_ALL;
       } else if (node->quant_type_ == schema::QuantType_WeightQuant) {
@@ -215,6 +224,12 @@ class LiteModel : public Model {
 #endif
     return RET_OK;
   }
+
+  void SetNodeDeviceType(Node *node, const schema::CNode &c_node) { node->device_type_ = c_node.deviceType(); }
+
+#ifdef ENABLE_V0
+  void SetNodeDeviceType(Node *node, const schema::v0::CNode &c_node) { node->device_type_ = -1; }
+#endif
 
   int VersionVerify(flatbuffers::Verifier *verify) const;
 

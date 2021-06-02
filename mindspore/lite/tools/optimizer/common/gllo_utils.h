@@ -77,6 +77,8 @@ bool IsParamNode(const BaseRef &n);
 
 bool IsParamOrValueNodeWithData(const BaseRef &n);
 
+bool IsParallelSplitConvNode(const BaseRef &n);
+
 bool IsConvNode(const BaseRef &n);
 
 bool IsDwConvNode(const BaseRef &n);

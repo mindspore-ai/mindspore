@@ -47,11 +47,11 @@ int OperatorInfo::SetCNodeBackend() {
     lite::DeviceType dt_type;
     std::string type = strategy_.dev_types[i];
     auto cnode = parallel_output_nodes_[i]->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-    if (type == "GPU") {
+    if (type == "gpu") {
       dt_type = lite::DeviceType::DT_GPU;
-    } else if (type == "CPU") {
+    } else if (type == "cpu") {
       dt_type = lite::DeviceType::DT_CPU;
-    } else if (type == "NPU") {
+    } else if (type == "npu") {
       dt_type = lite::DeviceType::DT_NPU;
     } else {
       MS_LOG(ERROR) << "SetCnodeBackend: unknown device type.";

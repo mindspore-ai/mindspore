@@ -27,7 +27,7 @@ struct MS_API Model {
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
     int quant_type_;
-    int device_type_;
+    int device_type_ = -1;
   };
   using NodePtrVector = Vector<Node *>;
   struct SubGraph {

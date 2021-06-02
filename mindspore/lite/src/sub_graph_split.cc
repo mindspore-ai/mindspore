@@ -440,4 +440,91 @@ void SearchSubGraph::SubGraphSplitByOutput() {
 
   InitMainGraphDevice();
 }
+
+void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
+  if (subgraph == nullptr) {
+    return;
+  }
+  if (subgraph->search_terminate_) {
+    return;
+  }
+  Model::Node *node = node_list_[index];
+  //  has been searched
+  if (node == nullptr) {
+    return;
+  }
+  // just deal with parallel target node
+  std::vector<uint32_t> input = node->input_indices_;
+  /* remove const node */
+  for (int i = static_cast<int>(input.size()) - 1; i >= 0; i--) {
+    if (tensors_[input[i]].type_ == CONST) {
+      VectorErase(&input, input[i]);
+    }
+  }
+  // search to graph to graph input , terminate it.
+  if (std::any_of(input.begin(), input.end(), [&](int input_index) { return tensors_[input_index].type_ == INPUT; })) {
+    subgraph->search_terminate_ = true;
+    return;
+  }
+  // if current node is no parallel target node, just judge terminate or continue
+  if (GetPrimitiveType(node->primitive_) == schema::PrimitiveType_Conv2DFusion &&
+      node->device_type_ != kDefaultDeviceType) {
+    // first searched
+    if (subgraph->nodes_.empty()) {
+      subgraph->device_ = static_cast<DeviceType>(node->device_type_);
+    } else {
+      // check pre_device_type equal to current device_type
+      if (subgraph->device_ != static_cast<DeviceType>(node->device_type_)) {
+        return;
+      }
+    }
+    if (IsNodeSubGraphHead(index, subgraph->nodes_)) {
+      if (subgraph->nodes_.empty()) {
+        subgraph->search_terminate_ = true;
+        return;
+      }
+      subgraph->heads_.push_back(subgraph->nodes_.front());
+      return;
+    }
+
+    // for offline parallel target subgraph only has one end
+    if (subgraph->ends_.empty()) {
+      subgraph->ends_.push_back(index);
+    }
+
+    subgraph->nodes_.insert(subgraph->nodes_.begin(), index);
+    node_list_[index] = nullptr;
+  } else {
+    if (!subgraph->nodes_.empty()) {
+      return;
+    }
+  }
+
+  // search for next nodes
+  for (uint32_t next : input) {
+    auto next_nodes = tensors_[next].out_nodes_;
+    for (uint32_t next_node : next_nodes) {
+      InsertParallelNode(next_node, subgraph);
+    }
+  }
+}
+
+void SearchSubGraph::InitSearchParallelSubGraph() {
+  // for every graph output, find a parallel subgraph
+  for (uint32_t output : output_nodes_) {
+    Subgraph subgraph;
+    InsertParallelNode(output, &subgraph);
+    sub_graphs_.push_back(std::move(subgraph));
+  }
+}
+
+void SearchSubGraph::SubGraphSplitByOffLineParallel() {
+  MS_LOG(DEBUG) << "start to split offline parallel subgraph";
+  InitSearchTensor();
+  InitSearchParallelSubGraph();
+  ConvertSubGraphToModel();
+  InitMainGraphDevice();
+  MS_LOG(DEBUG) << "end to split offline parallel subgraph";
+}
+
 }  // namespace mindspore::lite
