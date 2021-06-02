@@ -20,10 +20,6 @@
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
 
-#define INTTOUCHAR(v) ((uint8_t)((unsigned)(v) <= UCHAR_MAX ? (v) : (v) > 0 ? UCHAR_MAX : 0))
-#define SrcValue(src, y, x) (reinterpret_cast<double *>((src) + (y)*3))[(x)]
-#define DstValue(dst, y, x) (reinterpret_cast<double *>((dst) + (y)*3))[(x)]
-
 constexpr int BITS = 5;
 constexpr int BITS1 = 15;
 constexpr int TAB_SZ = 1 << BITS;
@@ -33,6 +29,10 @@ constexpr int REMAP_SCALE = 1 << 15;
 namespace mindspore {
 namespace dataset {
 static int16_t BWBlock_i[TAB_SZ2][2][2];
+
+static double SrcValue(double *src, const int &y, const int &x) { return (src + y * 3)[x]; }
+
+static double &DstValue(double *dst, const int &y, const int &x) { return (dst + y * 3)[x]; }
 
 static double GetDet3(double *src) {
   double a1 =
@@ -44,7 +44,11 @@ static double GetDet3(double *src) {
   return a1 - a2 + a3;
 }
 
-static int16_t IntCastShort(int value) {
+static uint8_t IntToUChar(const int &v) {
+  return static_cast<uint8_t>(static_cast<unsigned>(v) <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0);
+}
+
+static int16_t IntCastShort(const int &value) {
   return static_cast<int16_t>(static_cast<unsigned>(value - SHRT_MIN) <= static_cast<unsigned>(USHRT_MAX)
                                 ? value
                                 : value > 0 ? SHRT_MAX : SHRT_MIN);
@@ -117,7 +121,7 @@ static const void *InitWBlock() {
   return (const void *)iWBlock;
 }
 
-static uint8_t CastToFixed(int v) { return INTTOUCHAR(((v + (1 << (BITS1 - 1))) >> BITS1)); }
+static uint8_t CastToFixed(int v) { return IntToUChar(((v + (1 << (BITS1 - 1))) >> BITS1)); }
 
 static int BorderPolate(int value, int length, PaddBorderType borderType) {
   if (static_cast<unsigned>(value) < static_cast<unsigned>(length)) {
@@ -204,20 +208,24 @@ static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *
 
 static void RemapBilinearNotCur(const int &cn, const int &H1, int dx, const int16_t *HW, const uint16_t *FHW,
                                 const int16_t *wblock, size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
-  if (cn == 1) {
+  const int kCur1CCount = 1;  // For RemapBilinearNotCur1C
+  const int kCur2CCount = 2;  // For RemapBilinearNotCur2C
+  const int kCur3CCount = 3;  // For RemapBilinearNotCur3C
+  const int kCur4CCount = 4;  // For RemapBilinearNotCur4C
+  if (cn == kCur1CCount) {
     for (; dx < H1; dx++, dst_ptr++) {
       RemapBilinearNotCur1C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
     }
-  } else if (cn == 2) {
-    for (; dx < H1; dx++, dst_ptr += 2) {
+  } else if (cn == kCur2CCount) {
+    for (; dx < H1; dx++, dst_ptr += kCur2CCount) {
       RemapBilinearNotCur2C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
     }
-  } else if (cn == 3) {
-    for (; dx < H1; dx++, dst_ptr += 3) {
+  } else if (cn == kCur3CCount) {
+    for (; dx < H1; dx++, dst_ptr += kCur3CCount) {
       RemapBilinearNotCur3C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
     }
-  } else if (cn == 4) {
-    for (; dx < H1; dx++, dst_ptr += 4) {
+  } else if (cn == kCur4CCount) {
+    for (; dx < H1; dx++, dst_ptr += kCur4CCount) {
       RemapBilinearNotCur4C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
     }
   } else {

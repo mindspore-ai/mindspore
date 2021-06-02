@@ -467,16 +467,16 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
         }
         uint32_t tmp_y = static_cast<uint32_t>(y_buf[0] * kYScale * kYTog) >> 16;
         // b
-        bgr_buf[0] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
+        bgr_buf[0] = std::clamp(static_cast<int32_t>(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
         // g
-        bgr_buf[1] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp(static_cast<int32_t>(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
         // r
-        bgr_buf[2] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp(static_cast<int32_t>(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
 
         tmp_y = static_cast<uint32_t>(y_buf[1] * kYScale * kYTog) >> 16;
-        bgr_buf[3] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
-        bgr_buf[4] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
-        bgr_buf[5] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
+        bgr_buf[3] = std::clamp(static_cast<int32_t>(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
+        bgr_buf[4] = std::clamp(static_cast<int32_t>(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
+        bgr_buf[5] = std::clamp(static_cast<int32_t>(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
 
         y_buf += 2;
         uv_buf += 2;
@@ -492,10 +492,10 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
           u = uv_buf[0];
           v = uv_buf[1];
         }
-        uint32_t tmp_y = (uint32_t)(y_buf[0] * kYScale * kYTog) >> 16;
-        bgr_buf[0] = std::clamp((int32_t)(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
-        bgr_buf[1] = std::clamp((int32_t)(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
-        bgr_buf[2] = std::clamp((int32_t)(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
+        uint32_t tmp_y = static_cast<uint32_t>(y_buf[0] * kYScale * kYTog) >> 16;
+        bgr_buf[0] = std::clamp(static_cast<int32_t>(-(u * kUTob) + tmp_y + kBTob) >> 6, 0, 255);
+        bgr_buf[1] = std::clamp(static_cast<int32_t>(-(u * kUTog + v * kVTog) + tmp_y + kBTog) >> 6, 0, 255);
+        bgr_buf[2] = std::clamp(static_cast<int32_t>(-(v * kVTor) + tmp_y + kBTor) >> 6, 0, 255);
       }
 
       bgr_ptr += bgr_stride;
