@@ -217,8 +217,8 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<int> shape_;
   schema::Format format_;
   Category category_;
-  std::atomic_int ref_count_ = 0;
-  int init_ref_count_ = 0;
+  std::atomic_int ref_count_ = {0};
+  size_t init_ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
   mindspore::Allocator *allocator_ = nullptr;

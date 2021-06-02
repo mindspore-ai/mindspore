@@ -18,7 +18,8 @@ mindspore_add_pkg(flatbuffers
         EXE flatc
         URL ${REQ_URL}
         MD5 ${MD5}
-        CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
+        CMAKE_OPTION -DCMAKE_C_COMPILER=${FLATC_GCC_COMPILER} -DCMAKE_CXX_COMPILER=${FLATC_GXX_COMPILER}
+        -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
 
 include_directories(${flatbuffers_INC})
 add_library(mindspore::flatbuffers ALIAS flatbuffers::flatbuffers)

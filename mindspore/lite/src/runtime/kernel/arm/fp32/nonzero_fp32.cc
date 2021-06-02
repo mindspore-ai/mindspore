@@ -47,7 +47,7 @@ int NonZeroCPUKernel::Run() {
   }
   auto non_zero_nums = out_tensor->shape()[1];
   int non_zero_count = 0;
-  std::vector coordiate_values(in_tensor->shape().size(), 0);
+  std::vector<int> coordiate_values(in_tensor->shape().size(), 0);
   for (int i = 0; i < in_tensor->ElementsNum(); i += 1) {
     if (input_data[i]) {
       for (size_t j = 0; j < input_dim_size; j++) {

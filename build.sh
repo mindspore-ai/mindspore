@@ -568,6 +568,24 @@ build_lite()
     cd ${BASEPATH}/mindspore/lite/build
     write_commit_file
 
+    if [[ "${local_lite_platform}" == "arm32" ]]; then
+      if [[ "${TOOLCHAIN_FILE}" && "${TOOLCHAIN_NAME}" ]]; then
+        RUN_TESTCASES="off"
+        COMPILE_MINDDATA_LITE="off"
+        CMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
+        CMAKE_TOOLCHAIN_NAME=${TOOLCHAIN_NAME}
+      else
+        CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+        ANDROID_NATIVE_API_LEVEL="19"
+        CMAKE_ANDROID_NDK=${ANDROID_NDK}
+        CMAKE_ANDROID_ABI="armeabi-v7a"
+        CMAKE_ANDROID_TOOLCHAIN_NAME="clang"
+        CMAKE_ANDROID_STL=${MSLITE_ANDROID_STL}
+        CMAKE_BUILD_TYPE=${LITE_BUILD_TYPE}
+        ENABLE_FP16="on"
+      fi
+    fi
+
     if [[ "${local_lite_platform}" == "arm64" ]]; then
       if [ "$(uname)" == "Darwin" ]; then
         cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="arm64" -DENABLE_BITCODE=0                   \
@@ -593,10 +611,10 @@ build_lite()
       else
         checkndk
         echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
-        cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"          \
-              -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                          \
-              -DANDROID_STL=${MSLITE_ANDROID_STL}  -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              -DPLATFORM_ARM32="on" -DENABLE_NEON="on"  -DENABLE_FP16="on" -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
+        cmake -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DTOOLCHAIN_NAME=${CMAKE_TOOLCHAIN_NAME} -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}          \
+              -DANDROID_NDK=${CMAKE_ANDROID_NDK} -DANDROID_ABI=${CMAKE_ANDROID_ABI} -DANDROID_TOOLCHAIN_NAME=${CMAKE_ANDROID_TOOLCHAIN_NAME}                    \
+              -DANDROID_STL=${CMAKE_ANDROID_STL}  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DPLATFORM_ARM32="on" -DENABLE_NEON="on"  -DENABLE_FP16=${ENABLE_FP16} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}    \
               -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
       fi

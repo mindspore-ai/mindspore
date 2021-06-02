@@ -420,6 +420,7 @@ void RowMajor2Col8Major_arm64(const float *src_c, float *dst_c, size_t col) {
 }
 #endif
 #ifdef ENABLE_ARM32
+#ifndef SUPPORT_NNIE
 void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
   size_t stride = col * sizeof(float);
   asm volatile(
@@ -462,6 +463,50 @@ void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
     : "r10", "r11", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
   return;
 }
+#else
+void RowMajor2Col8Major_arm32(const float *src_c, float *dst_c, size_t col) {
+  size_t stride = col * sizeof(float);
+  asm volatile(
+    "mov r10, %[src_c]\n"
+    "mov r7, %[dst_c]\n"
+
+    "vld1.32 {q0}, [r10], %[stride]\n"
+    "vld1.32 {q2}, [r10], %[stride]\n"
+    "vld1.32 {q4}, [r10], %[stride]\n"
+    "vld1.32 {q6}, [r10], %[stride]\n"
+
+    "vtrn.32 d0, d4\n"
+    "vtrn.32 d1, d5\n"
+    "vtrn.32 d8, d12\n"
+    "vtrn.32 d9, d13\n"
+
+    "vld1.32 {q1}, [r10], %[stride]\n"
+    "vld1.32 {q3}, [r10], %[stride]\n"
+    "vld1.32 {q5}, [r10], %[stride]\n"
+    "vld1.32 {q7}, [r10], %[stride]\n"
+
+    "vswp d1, d8\n"
+    "vswp d5, d12\n"
+
+    "vtrn.32 d2, d6\n"
+    "vtrn.32 d3, d7\n"
+    "vtrn.32 d10, d14\n"
+    "vtrn.32 d11, d15\n"
+
+    "vswp d3, d10\n"
+    "vswp d7, d14\n"
+
+    "vst1.32 {q0, q1}, [r7]!\n"
+    "vst1.32 {q2, q3}, [r7]!\n"
+    "vst1.32 {q4, q5}, [r7]!\n"
+    "vst1.32 {q6, q7}, [r7]!\n"
+
+    :
+    : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
+    : "r10", "r7", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
+  return;
+}
+#endif
 #endif
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
   size_t row8 = row / C8NUM * C8NUM;

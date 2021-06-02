@@ -15,6 +15,7 @@ set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/include/dataset)
 set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/third_party/libjpeg-turbo)
 set(SECUREC_DIR ${RUNTIME_PKG_NAME}/inference/third_party/securec)
 set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
+set(MINDSPORE_CORE_LIB_NAME libmindspore_core)
 set(BENCHMARK_NAME benchmark)
 set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
 
@@ -253,6 +254,10 @@ elseif(PLATFORM_ARM32)
                     ${RUNTIME_COMPONENT_NAME})
         endif()
     endif()
+    if(MSLITE_ENABLE_NNIE AND TARGET_HIMIX200)
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie.so
+                DESTINATION ${RUNTIME_PKG_NAME}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
 elseif(WIN32)
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
@@ -392,6 +397,39 @@ else()
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_npu.cfg
                 DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
+    if(NOT SUPPORT_TRAIN AND MSLITE_ENABLE_NNIE)
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/abstract/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/base/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ir/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/ops/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ops
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(DIRECTORY ${TOP_DIR}/mindspore/core/utils/ DESTINATION ${CONVERTER_ROOT_DIR}/include/core/utils
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/${MINDSPORE_CORE_LIB_NAME}.a
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/securec/src/libsecurec.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        file(GLOB PROTOBUF_LIB_PATH ${TOP_DIR}/mindspore/lite/build/.mslib/protobuf_*/lib/libprotobuf.a)
+        install(FILES ${PROTOBUF_LIB_PATH} DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie_converter.so
+                DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D/ COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libmslite_nnie_data_process.so
+                DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/libnnie_mapper.so
+                DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/opencv-4.2.0/lib/
+                DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D/third_party/opencv-4.2.0
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so*")
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/tools/providers/NNIE/3516D/protobuf-3.9.0/lib/
+                DESTINATION ${CONVERTER_ROOT_DIR}/providers/3516D/third_party/protobuf-3.9.0
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.so*")
     endif()
 endif()
 

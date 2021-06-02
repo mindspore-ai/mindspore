@@ -56,6 +56,7 @@
 #include "ops/op_utils.h"
 #include "ops/quant_dtype_cast.h"
 #include "ops/resize.h"
+#include "ops/roi_pooling.h"
 #include "ops/sgd.h"
 #include "ops/space_to_batch.h"
 #include "ops/space_to_batch_nd.h"
@@ -88,6 +89,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNamePReLUFusion, {1}},
   {ops::kNameResize, {1}},
   {ops::kNameResizeGrad, {}},
+  {ops::kNameROIPooling, {1}},
   {ops::kNameSGD, {2}},
   {ops::kNameSpaceToBatch, {1}},
   {ops::kNameSpaceToBatchND, {1}},

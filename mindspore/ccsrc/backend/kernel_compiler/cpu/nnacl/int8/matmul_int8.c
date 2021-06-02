@@ -137,10 +137,10 @@ void RowMajor2Row16x4MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int co
         "vld1.8 {q2}, [r0], r2 \n"
         "vld1.8 {q3}, [r0], r2 \n"
 
-        "vst1.32 q0, [r1], r3 \n"
-        "vst1.32 q1, [r1], r3 \n"
-        "vst1.32 q2, [r1], r3 \n"
-        "vst1.32 q3, [r1], r3 \n"
+        "vst1.32 {d0, d1}, [r1], r3 \n"
+        "vst1.32 {d2, d3}, [r1], r3 \n"
+        "vst1.32 {d4, d5}, [r1], r3 \n"
+        "vst1.32 {d6, d7}, [r1], r3 \n"
 
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ col_offset ] "r"(col_offset)

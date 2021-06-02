@@ -100,7 +100,7 @@ void ThreadPool::KernelThreadRun(Worker *worker) {
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) {
   // distribute task to the KernelThread and the free ActorThread,
   // if the task num is greater than the KernelThread num
-  Task task = Task(func, content);
+  Task task = {func, content};
   Worker *curr = CurrentWorker();
   if (inter_thread_num_ == thread_num_ || curr == nullptr) {
     SyncRunTask(&task, task_num);
