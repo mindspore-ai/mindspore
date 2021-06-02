@@ -120,12 +120,6 @@ bool TrtConverterContext::InitInputTable() {
       weight.type = TrtUtils::MsDtypeToTrtDtype(tensor->data_type());
       weight.count = tensor->DataSize();
       output_map_[input_node][0] = LayerInput(weight, tensor->shape());
-    } else {
-      nvinfer1::DataType trt_dtype = TrtUtils::MsDtypeToTrtDtype(AnfAlgo::GetOutputInferDataType(input_node, 0));
-      nvinfer1::Dims trt_dims = TrtUtils::MsDimsToTrtDims(AnfAlgo::GetOutputInferShape(input_node, 0), false);
-      nvinfer1::ITensor *tensor = network_->addInput(input->name().c_str(), trt_dtype, trt_dims);
-      const std::vector<int64_t> &shape = TrtUtils::TrtDimsToMsDims(trt_dims);
-      output_map_[input_node][0] = LayerInput(tensor, shape);
     }
   }
   return true;
@@ -182,12 +176,28 @@ bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::ve
   return true;
 }
 
+LayerInput *TrtConverterContext::LoadInputOnDemand(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto input = node->cast<ParameterPtr>();
+  const nvinfer1::DataType &trt_dtype = TrtUtils::MsDtypeToTrtDtype(AnfAlgo::GetOutputInferDataType(node, 0));
+  const nvinfer1::Dims &trt_dims = TrtUtils::MsDimsToTrtDims(AnfAlgo::GetOutputInferShape(node, 0), false);
+  nvinfer1::ITensor *tensor = network_->addInput(input->name().c_str(), trt_dtype, trt_dims);
+  const std::vector<int64_t> &shape = TrtUtils::TrtDimsToMsDims(trt_dims);
+  output_map_[node][0] = LayerInput(tensor, shape);
+  return &output_map_[node][0];
+}
+
 bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<LayerInput> *inputs) {
   std::vector<session::KernelWithIndex> real_inputs;
   AnfAlgo::GetRealInputs(node, &real_inputs);
   for (auto item : real_inputs) {
     auto node_iter = output_map_.find(item.first);
     if (node_iter == output_map_.end()) {
+      if (item.first->isa<Parameter>()) {
+        LayerInput *input = LoadInputOnDemand(item.first);
+        inputs->push_back(*input);
+        continue;
+      }
       MS_LOG(ERROR) << "node: " << node->DebugString() << " not found.";
       return false;
     }
@@ -243,7 +253,7 @@ std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> TrtC
   for (int32_t i = 0; i < engine_->getNbBindings(); ++i) {
     if (!engine_->bindingIsInput(i)) {
       const std::string &name = engine_->getBindingName(i);
-      size_t pos = name.find_last_not_of("return_output_");
+      size_t pos = name.find_first_not_of("return_output_");
       size_t anf_index = atoi(name.substr(pos).c_str());
 
       anf_trt_index_map.insert(std::make_pair(anf_index, trt_index));
