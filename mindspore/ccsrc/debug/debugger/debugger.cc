@@ -235,9 +235,8 @@ bool Debugger::CheckDebuggerDumpEnabled() const {
 
 bool Debugger::CheckDebuggerEnabled() const {
   // get env variables to configure debugger
-  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_char != nullptr) {
-    std::string env_enable_str = env_enable_char;
+  std::string env_enable_str = common::GetEnv("ENABLE_MS_DEBUGGER");
+  if (!env_enable_str.empty()) {
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if ((env_enable_str == "1" || env_enable_str == "true") && device_target_ != kCPUDevice) {
       return true;
@@ -248,9 +247,8 @@ bool Debugger::CheckDebuggerEnabled() const {
 
 void Debugger::CheckDebuggerEnabledParam() const {
   // check the value of env variable ENABLE_MS_DEBUGGER
-  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_char != nullptr) {
-    std::string env_enable_str = env_enable_char;
+  std::string env_enable_str = common::GetEnv("ENABLE_MS_DEBUGGER");
+  if (!env_enable_str.empty()) {
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
     if (env_enable_str != "0" && env_enable_str != "1" && env_enable_str != "false" && env_enable_str != "true") {
       MS_LOG(WARNING) << "Env variable ENABLE_MS_DEBUGGER should be True/False/1/0 (case insensitive), but get: "
@@ -260,10 +258,10 @@ void Debugger::CheckDebuggerEnabledParam() const {
 }
 
 bool Debugger::CheckDebuggerPartialMemoryEnabled() const {
-  const char *env_partial_mem_str = std::getenv("MS_DEBUGGER_PARTIAL_MEM");
-  if (env_partial_mem_str != nullptr) {
+  std::string env_partial_mem_str = common::GetEnv("MS_DEBUGGER_PARTIAL_MEM");
+  if (!env_partial_mem_str.empty()) {
     MS_LOG(INFO) << "Getenv MS_DEBUGGER_PARTIAL_MEM: " << env_partial_mem_str;
-    if (std::strcmp(env_partial_mem_str, "1") == 0) {
+    if (env_partial_mem_str == "1") {
       return true;
     }
   }
@@ -751,7 +749,7 @@ void Debugger::ProcessKViewCMD(const EventReply &reply) {
     MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
   }
   EventReply send_tensors_reply = grpc_client_->SendTensors(tensors);
-  if (send_tensors_reply.status() != send_tensors_reply.OK) {
+  if (send_tensors_reply.status() != debugger::EventReply::OK) {
     MS_LOG(ERROR) << "Error: SendTensors failed";
   }
 }
@@ -1052,7 +1050,7 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 
 int32_t Debugger::step_num() const { return num_step_; }
 
-uint64_t BytestoInt64(const std::vector<char> &buffer) {
+uint64_t BytestoUInt64(const std::vector<char> &buffer) {
   uint64_t ret = (uint64_t)buffer[0];
   const int SHIFT = 8;
   const int MAX_INDEX = 8;
@@ -1092,16 +1090,18 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
             continue;
           }
           MS_LOG(INFO) << "Open overflow bin file " << file_name;
-          const uint32_t offset = 313;
+          const uint32_t offset = 321;
           infile.seekg(offset, std::ios::beg);
           std::vector<char> buffer;
           const size_t buf_size = 256;
           buffer.resize(buf_size);
           infile.read(buffer.data(), buf_size);
-          const uint8_t stream_id_offset = 8;
-          const uint8_t task_id_offset = 16;
-          uint64_t stream_id = BytestoInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
-          uint64_t task_id = BytestoInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
+          const uint8_t stream_id_offset = 16;
+          const uint8_t task_id_offset = 24;
+          // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4
+          // byte values currently.
+          uint64_t stream_id = BytestoUInt64(std::vector<char>(buffer.begin() + stream_id_offset, buffer.end()));
+          uint64_t task_id = BytestoUInt64(std::vector<char>(buffer.begin() + task_id_offset, buffer.end()));
           MS_LOG(INFO) << "Overflow stream_id " << stream_id << ", task_id " << task_id << ".";
           auto op = debugger_->stream_task_to_opname_.find(std::make_pair(stream_id, task_id));
           if (op != debugger_->stream_task_to_opname_.end()) {
@@ -1146,11 +1146,12 @@ bool Debugger::CheckPort(const std::string &port) const {
   int num = 0;
   const int min_port_num = 1;
   const int max_port_num = 65535;
+  const int decimal = 10;
   if (port[0] == '0' && port[1] != '\0') return false;
   int i = 0;
   while (port[i] != '\0') {
     if (port[i] < '0' || port[i] > '9') return false;
-    num = num * 10 + (port[i] - '0');
+    num = num * decimal + (port[i] - '0');
     if (num > max_port_num) return false;
     i++;
   }
