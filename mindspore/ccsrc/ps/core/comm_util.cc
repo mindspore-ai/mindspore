@@ -166,6 +166,11 @@ bool CommUtil::IsFileExists(const std::string &file) {
     return true;
   }
 }
+
+std::string CommUtil::ClusterStateToString(const ClusterState &state) {
+  MS_LOG(INFO) << "The cluster state:" << state;
+  return kClusterState.at(state);
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -48,10 +48,6 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
 
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
-  server_node_->RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [this]() {
-    MS_LOG(ERROR) << "Trigger timeout event: CLUSTER_TIMEOUT begin to exit the system!";
-    this->Finalize();
-  });
   server_node_->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
     MS_LOG(ERROR) << "Trigger timeout event: SCHEDULER_TIMEOUT begin to exit the system!";
     this->Finalize();

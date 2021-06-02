@@ -108,8 +108,14 @@ class SchedulerNode : public Node {
   // Handle the get nodes info http request Synchronously.
   void ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp);
 
+  // Handle the get cluster state http request Synchronously.
+  void ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp);
+
   // check whether the cluster is in the ready state.
   RequestProcessResult CheckIfClusterReady();
+
+  // check whether the node id is legal.
+  RequestProcessResult CheckIfNodeIdLegal(const std::vector<std::string> &node_ids);
 
   void StartRestfulServer(const std::string &address, std::uint16_t port, size_t thread_num = 10);
   void StopRestfulServer();

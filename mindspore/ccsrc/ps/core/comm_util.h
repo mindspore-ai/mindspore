@@ -48,6 +48,7 @@
 #include <thread>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -72,6 +73,16 @@ constexpr int kMessageChunkLength = 4096;
 constexpr int kConnectionTimeout = 120;
 constexpr char kLibeventLogPrefix[] = "[libevent log]:";
 
+// Find the corresponding string style of cluster state through the subscript of the enum:ClusterState
+const std::vector<std::string> kClusterState = {
+  "ClUSTER_STARTING",   // Initialization state when the cluster is just started.
+  "CLUSTER_READY",      // The state after all nodes are successfully registered.
+  "CLUSTER_EXIT",       // The state after the cluster exits successfully.
+  "NODE_TIMEOUT",       // When a node has a heartbeat timeout
+  "CLUSTER_SCALE_OUT",  // When the cluster is scale out.
+  "CLUSTER_SCALE_IN"    // When the cluster is scale in.
+};
+
 class CommUtil {
  public:
   static bool CheckIpWithRegex(const std::string &ip);
@@ -86,6 +97,8 @@ class CommUtil {
 
   // Check if the file exists.
   static bool IsFileExists(const std::string &file);
+  // Convert cluster state to string when response the http request.
+  static std::string ClusterStateToString(const ClusterState &state);
 
  private:
   static std::random_device rd;

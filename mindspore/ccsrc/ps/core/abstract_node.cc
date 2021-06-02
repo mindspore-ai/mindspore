@@ -434,10 +434,10 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
     wait_start_cond_.notify_all();
   }
 
-  if (current_cluster_state_ == ClusterState::CLUSTER_TIMEOUT) {
+  if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
-    OnEventCallback(ClusterEvent::CLUSTER_TIMEOUT);
+    OnEventCallback(ClusterEvent::NODE_TIMEOUT);
   }
 }
 

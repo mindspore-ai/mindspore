@@ -160,7 +160,7 @@ void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared
       SendFinish(client);
     }
     is_finish_ = true;
-    node_manager_.UpdateClusterState(ClusterState::CLUSTER_FINISH);
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_EXIT);
     wait_finish_cond_.notify_all();
   }
 }
@@ -316,7 +316,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
       node_manager_.UpdateCluster();
 
-      if (node_manager_.GetClusterState() == ClusterState::CLUSTER_FINISH) {
+      if (node_manager_.GetClusterState() == ClusterState::CLUSTER_EXIT) {
         std::this_thread::sleep_for(
           std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval * 2));
         is_finish_ = true;
@@ -435,20 +435,9 @@ void SchedulerNode::ProcessScaleOut(std::shared_ptr<HttpMessageHandler> resp) {
 }
 
 /*
- * The body format is:
+ * The response body format.
  * {
- *    "node_ids": [
- *        {
- *            "node_id": "423ljjfslkj5",
- *            "rank_id": "0",
- *            "role": "SERVER"
- *        },
- *        {
- *            "node_id": "jklj3424kljj",
- *            "rank_id": "1",
- *            "role": "WORKER"
- *        }
- *    ]
+ *    "node_ids": ["node_id1", "node_id2"]
  * }
  */
 void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
@@ -466,6 +455,12 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
 
   std::vector<std::string> scale_in_node_ids;
   status = resp->ParseNodeIdsFromKey(kNodesIds, &scale_in_node_ids);
+  if (status != RequestProcessResultCode::kSuccess) {
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
+
+  status = CheckIfNodeIdLegal(scale_in_node_ids);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
@@ -518,17 +513,17 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
 }
 
 /*
- * The return body format is:
+ * The response body format.
  * {
  *    "message": "Get nodes info successful.",
  *    "node_ids": [
  *        {
- *            "node_id": "423ljjfslkj5",
+ *            "node_id": "node_id1",
  *            "rank_id": "0",
  *            "role": "SERVER"
  *        },
  *        {
- *            "node_id": "jklj3424kljj",
+ *            "node_id": "node_id2",
  *            "rank_id": "1",
  *            "role": "WORKER"
  *        }
@@ -536,8 +531,6 @@ void SchedulerNode::ProcessScaleIn(std::shared_ptr<HttpMessageHandler> resp) {
  * }
  */
 void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp) {
-  RequestProcessResult status(RequestProcessResultCode::kSuccess);
-
   nlohmann::json js;
   js["message"] = "Get nodes info successful.";
   auto node_infos = node_manager_.nodes_info();
@@ -555,6 +548,25 @@ void SchedulerNode::ProcessGetNodesInfo(std::shared_ptr<HttpMessageHandler> resp
   resp->SendResponse();
 }
 
+/*
+ * The response body format.
+ * {
+ *    "message": "Get cluster state successful.",
+ *    "cluster_state": "CLUSTER_READY"
+ * }
+ */
+void SchedulerNode::ProcessGetClusterState(std::shared_ptr<HttpMessageHandler> resp) {
+  nlohmann::json js;
+  js["message"] = "Get cluster state successful.";
+  auto cluster_state = node_manager_.GetClusterState();
+  js["cluster_state"] = CommUtil::ClusterStateToString(cluster_state);
+
+  resp->AddRespString(js.dump());
+
+  resp->SetRespCode(HTTP_OK);
+  resp->SendResponse();
+}
+
 RequestProcessResult SchedulerNode::CheckIfClusterReady() {
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
   if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY) {
@@ -562,6 +574,35 @@ RequestProcessResult SchedulerNode::CheckIfClusterReady() {
     ERROR_STATUS(result, RequestProcessResultCode::kSystemError, message);
     return result;
   }
+  return result;
+}
+
+RequestProcessResult SchedulerNode::CheckIfNodeIdLegal(const std::vector<std::string> &node_ids) {
+  RequestProcessResult result(RequestProcessResultCode::kSuccess);
+  if (node_ids.size() == 0) {
+    std::string message = "The node ids should not be empty.";
+    ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+    return result;
+  }
+
+  auto node_infos = node_manager_.nodes_info();
+
+  for (auto val : node_ids) {
+    if (!node_infos.count(val)) {
+      std::string message = "The node id:" + val + " is illegal.";
+      MS_LOG(ERROR) << message;
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);
+      return result;
+    }
+
+    if (node_infos[val].node_role_ == NodeRole::SERVER && node_infos[val].rank_id_ == 0) {
+      std::string error_message = "The node id:" + val + " is rank 0 of server, should not be scale in.";
+      MS_LOG(ERROR) << error_message;
+      ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, error_message);
+      return result;
+    }
+  }
+
   return result;
 }
 
@@ -580,6 +621,10 @@ void SchedulerNode::StartRestfulServer(const std::string &address, std::uint16_t
   OnRequestReceive nodes = std::bind(&SchedulerNode::ProcessGetNodesInfo, this, std::placeholders::_1);
   callbacks_["/nodes"] = nodes;
   http_server_->RegisterRoute("/nodes", &callbacks_["/nodes"]);
+
+  OnRequestReceive cluster_state = std::bind(&SchedulerNode::ProcessGetClusterState, this, std::placeholders::_1);
+  callbacks_["/state"] = cluster_state;
+  http_server_->RegisterRoute("/state", &callbacks_["/state"]);
 
   http_server_->InitServer();
 

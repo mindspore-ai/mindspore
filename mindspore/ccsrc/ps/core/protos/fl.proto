@@ -116,7 +116,7 @@ message OneClientNoises {
 
 message ClientShareStr {
   string fl_id = 1;
-  bytes share = 2; // todo: verify the correctness
+  bytes share = 2;
   int32 index = 3;
 }
 
