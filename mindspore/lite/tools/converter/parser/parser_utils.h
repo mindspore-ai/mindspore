@@ -18,15 +18,26 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PARSER_UTILS_H
 
 #include <set>
+#include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/log_adapter.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 int PostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
-
+int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
+int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
+int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
+                                  std::vector<int> perm);
+int HandleWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,
+                      schema::Format src_format, schema::Format dst_format);
+int TransposeInsertForWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
+                                    std::vector<int> perm);
+int HandleWeightSharing(const FuncGraphPtr &graph, int64_t format, const ParameterPtr &weight_node,
+                        schema::Format src_format, schema::Format dst_format);
 }  // namespace lite
 }  // namespace mindspore
 

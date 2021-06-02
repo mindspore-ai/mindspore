@@ -50,8 +50,8 @@ void SetConvWeightFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_ASSERT(prim != nullptr);
-  if (prim->GetAttr(kWeightFormat) != nullptr && inputs.size() > 1) {
-    inputs[1]->set_format(static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(opt::kWeightFormat))));
+  if (prim->GetAttr(ops::kFormat) != nullptr && inputs.size() > 1) {
+    inputs[1]->set_format(static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat))));
   }
 }
 

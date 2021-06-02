@@ -29,6 +29,9 @@ class MindsporeImporter {
 
  private:
   STATUS AdjustForMindir(const FuncGraphPtr &func_graph, const converter::Flags &flag);
+  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
+  STATUS HardCodeMindir(const CNodePtr &conv_node, const FuncGraphPtr &graph);
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 
 }  // namespace mindspore::lite

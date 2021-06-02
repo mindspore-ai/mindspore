@@ -38,7 +38,6 @@ namespace opt {
 inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
-constexpr auto kWeightFormat = "weight_format";
 std::vector<int> CastToInt(const ValuePtr &value);
 
 std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value);

@@ -95,10 +95,12 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
       new_bias_data[i] += down_bias_data[i];
     }
   }
-
-  new_bias_node->set_name(down_bias_node->fullname_with_scope());
-  new_bias_node->set_default_param(tensor_info);
-  new_bias_node->set_abstract(down_bias_node->abstract());
+  new_bias_node->set_name(down_weight_node->fullname_with_scope());
+  auto status = lite::InitParameterFromTensorInfo(new_bias_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 // up weight shape[cout0,h,w,cin0] down weight shape[cout1,1,1,cout0],new weight shape [cout1,h,w,cin0]
@@ -140,8 +142,11 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   }
 
   new_weight_node->set_name(down_weight_node->fullname_with_scope());
-  new_weight_node->set_default_param(tensor_info);
-  new_weight_node->set_abstract(down_weight_node->abstract());
+  auto status = lite::InitParameterFromTensorInfo(new_weight_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -154,8 +159,10 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
     MS_LOG(ERROR) << "GenNewConvWeight failed.";
     return;
   }
+
   auto manager = func_graph->manager();
-  manager->Replace(down_weight_parameter, new_weight_paramter);
+  down_conv_cnode->set_input(kConvWeightIndex, new_weight_paramter);
+
   // whether up conv node has bias
   if (up_conv_cnode->inputs().size() == kConvWithBiasLen) {
     ParameterPtr down_bias_parameter;
@@ -169,7 +176,7 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
       return;
     }
     if (down_conv_cnode->inputs().size() == kConvWithBiasLen) {
-      manager->Replace(down_bias_parameter, new_bias_parameter);
+      down_conv_cnode->set_input(kConvBiasIndex, new_bias_parameter);
     } else {
       down_conv_cnode->add_input(new_bias_parameter);
     }

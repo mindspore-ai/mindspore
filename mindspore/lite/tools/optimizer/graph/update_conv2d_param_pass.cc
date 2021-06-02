@@ -34,7 +34,8 @@ lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
     MS_LOG(DEBUG) << "cnode is invalid.";
     return lite::RET_ERROR;
   }
-  if (conv->GetAttr(ops::kFormat) == nullptr || conv->get_format() != mindspore::NHWC) {
+  if (conv->GetAttr(ops::kFormat) == nullptr ||
+      (conv->get_format() != mindspore::NHWC && conv->get_format() != mindspore::KHWC)) {
     return lite::RET_OK;
   }
   auto weight_node = cnode->input(kAnfPopulaterInputNumTwo);
@@ -54,10 +55,10 @@ lite::STATUS UpdateConv2DParamPass::UpdateCommonConv2D(const CNodePtr &cnode) {
   auto default_param = weight_param->default_param();
   auto weight_tensor = std::dynamic_pointer_cast<tensor::Tensor>(default_param);
   auto weight_shape = weight_tensor->shape();
-  std::vector<int64_t> kernel_size = {weight_shape[0], weight_shape[1]};
+  std::vector<int64_t> kernel_size = {weight_shape[1], weight_shape[2]};
   conv->set_kernel_size(kernel_size);
-  conv->set_in_channel(weight_shape[2]);
-  conv->set_out_channel(weight_shape[3]);
+  conv->set_in_channel(weight_shape[3]);
+  conv->set_out_channel(weight_shape[0]);
   return lite::RET_OK;
 }
 
