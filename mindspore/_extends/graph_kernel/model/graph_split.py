@@ -44,9 +44,13 @@ class GraphSplitByPattern:
             """fuse y to x"""
             for i in self.alive:
                 if self.map[y][i] and not self.map[x][i]:
-                    self.map[x][i] = True
+                    for pre in self.alive:
+                        if self.map[pre][x] and not self.map[pre][i]:
+                            self.map[pre][i] = True
                 if self.map[i][y] and not self.map[i][x]:
-                    self.map[i][x] = True
+                    for suc in self.alive:
+                        if self.map[x][suc] and not self.map[i][suc]:
+                            self.map[i][suc] = True
             self.alive.remove(y)
 
     class Area:
