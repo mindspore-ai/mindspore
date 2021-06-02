@@ -18,11 +18,9 @@
 #include <algorithm>
 #include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/parallel/split_strategy.h"
-#include "mindspore/core/ops/concat.h"
-#include "mindspore/core/ops/addn.h"
-#include "mindspore/core/ops/split.h"
-#include "include/lite_types.h"
-#include "mindspore/ccsrc/utils/utils.h"
+#include "ops/concat.h"
+#include "ops/addn.h"
+#include "utils/utils.h"
 #include "base/core_ops.h"
 #include "include/errorcode.h"
 
@@ -42,21 +40,37 @@ std::shared_ptr<abstract::AbstractTensor> OperatorInfo::CreateFakeAbstractTensor
   return std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
 }
 
+int OperatorInfo::CheckSplitResult(const AnfNodePtr &result_anf_node, const std::vector<AnfNodePtr> &split_results,
+                                   int target_output_num) {
+  if ((result_anf_node == nullptr) || (split_results.size() != IntToSize(target_output_num))) {
+    MS_LOG(ERROR) << name_ << " : Make split cnode failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+void OperatorInfo::Init(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int32_t fmk_type) {
+  func_graph_ = func_graph;
+  cnode_ = cnode;
+  fmk_type_ = fmk_type;
+  parallel_output_nodes_.clear();
+}
+
 int OperatorInfo::SetCNodeBackend() {
   for (size_t i = 0; i < strategy_.dev_num; ++i) {
     lite::DeviceType dt_type;
     std::string type = strategy_.dev_types[i];
     auto cnode = parallel_output_nodes_[i]->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-    if (type == "gpu") {
-      dt_type = lite::DeviceType::DT_GPU;
-    } else if (type == "cpu") {
-      dt_type = lite::DeviceType::DT_CPU;
-    } else if (type == "npu") {
-      dt_type = lite::DeviceType::DT_NPU;
-    } else {
+    auto type_iter = kSupportSplitedDevices.find(type);
+    if (type_iter == kSupportSplitedDevices.end()) {
       MS_LOG(ERROR) << "SetCnodeBackend: unknown device type.";
       return lite::RET_ERROR;
     }
+    if (type_iter->second == lite::DeviceType::DT_NPU) {
+      MS_LOG(ERROR) << "SetCnodeBackend: unsupported device type npu.";
+      return lite::RET_ERROR;
+    }
+    dt_type = type_iter->second;
     cnode->AddAttr(mindspore::ops::kDeviceType, MakeValue(static_cast<int>(dt_type)));
   }
   return lite::RET_OK;
@@ -64,7 +78,6 @@ int OperatorInfo::SetCNodeBackend() {
 
 int OperatorInfo::CheckStrategyValue() {
   auto strategy_size = strategy_.strategys.size();
-
   for (size_t index = 0; index < strategy_size; ++index) {
     auto strategy = strategy_.strategys[index];
     for (const auto &s : strategy) {
@@ -92,7 +105,6 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     MS_LOG(ERROR) << name_ << " : Failed to get CNode.";
     return lite::RET_ERROR;
   }
-
   for (size_t i = 0; i < output_num; ++i) {
     auto idx = NewValueNode(SizeToInt(i));
     auto index = std::make_shared<Int32Imm>(SizeToInt(i));
@@ -115,7 +127,6 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
 AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                            int32_t concat_dim, size_t input_nodes_num, bool trans_format) {
   MS_EXCEPTION_IF_NULL(orig_node);
-
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of concat is not equal to input nodes number.";
     return nullptr;
@@ -134,14 +145,13 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
   concat_cnode->set_fullname_with_scope("Concat_" + name_);
   concat_cnode->set_scope(orig_node->scope());
   std::vector<AnfNodePtr> outputs;
-  CreateMultipleOutputsOfAnfNode(concat_cnode, 1, &outputs);
+  (void)CreateMultipleOutputsOfAnfNode(concat_cnode, 1, &outputs);
   return concat_cnode;
 }
 
 AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                           int32_t reduce_dim, size_t input_nodes_num, bool trans_format) {
   MS_EXCEPTION_IF_NULL(orig_node);
-
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of reduce is not equal to input nodes number.";
     return nullptr;
@@ -159,11 +169,10 @@ AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::
   }
   addn_cnode->set_fullname_with_scope("AddN_" + name_);
   addn_cnode->set_scope(orig_node->scope());
-
   return addn_cnode;
 }
 
-int OperatorInfo::Init() {
+int OperatorInfo::DoSplit() {
   if (CheckStrategyValue() != lite::RET_OK) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy values.";
     return lite::RET_ERROR;
@@ -173,7 +182,7 @@ int OperatorInfo::Init() {
     return lite::RET_ERROR;
   }
   if (InferParallelCNodes() != lite::RET_OK) {
-    MS_LOG(ERROR) << name_ << ": InferReplaceGraph failed.";
+    MS_LOG(ERROR) << name_ << ": InferParallelCNodes failed.";
     return lite::RET_ERROR;
   }
   if (SetCNodeBackend() != lite::RET_OK) {
@@ -184,7 +193,6 @@ int OperatorInfo::Init() {
     MS_LOG(ERROR) << name_ << ": InferForwardOps failed.";
     return lite::RET_ERROR;
   }
-
   return lite::RET_OK;
 }
 

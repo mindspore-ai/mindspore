@@ -77,6 +77,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/parallel/multi_conv_info.cc
         ../optimizer/parallel/parallel_pass.cc
         ../optimizer/parallel/conv2d_info.cc
+        ../optimizer/parallel/depthwise_conv2d_info.cc
         ../optimizer/parallel/operator_info.cc
         ../optimizer/parallel/operator_info_register.cc
         ../optimizer/parallel/spliter.cc

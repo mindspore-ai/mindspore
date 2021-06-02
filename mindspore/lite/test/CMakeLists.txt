@@ -239,6 +239,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/parallel/operator_info.cc
             ${LITE_DIR}/tools/optimizer/parallel/operator_info_register.cc
             ${LITE_DIR}/tools/optimizer/parallel/conv2d_info.cc
+            ${LITE_DIR}/tools/optimizer/parallel/depthwise_conv2d_info.cc
             ${LITE_DIR}/tools/optimizer/parallel/spliter.cc
             ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
             ${LITE_DIR}/tools/common/graph_util.cc

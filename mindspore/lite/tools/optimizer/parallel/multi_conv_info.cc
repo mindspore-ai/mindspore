@@ -27,16 +27,15 @@ namespace opt {
 int MultiConvSplit ::GenSplitInfo() {
   split_info_.out_num = this->strategy_.dev_num;
   for (const auto &dev_type : this->strategy_.dev_types) {
-    if (dev_type == "cpu") {
-      split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_CPU);
-    } else if (dev_type == "gpu") {
-      split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_GPU);
-    } else if (dev_type == "npu") {
-      split_info_.dev_types.push_back(mindspore::lite::DeviceType::DT_NPU);
-    } else {
-      MS_LOG(ERROR) << "Do not support DeviceType:" << dev_type << "now.";
-      return RET_ERROR;
+    for (const auto &support_split_device : kSupportSplitedDevices) {
+      if (dev_type == support_split_device.first) {
+        split_info_.dev_types.push_back(support_split_device.second);
+      }
     }
+  }
+  if (split_info_.dev_types.empty()) {
+    MS_LOG(ERROR) << "unsupported DeviceType. ";
+    return RET_ERROR;
   }
   // only can get N && H && CIN &&
   std::vector<int64_t> tmp(split_info_.out_num, 0);
@@ -57,25 +56,24 @@ int MultiConvSplit ::GenSplitInfo() {
   return RET_OK;
 }
 
-int MultiConvSplit::GetMultiConvNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
+  MS_EXCEPTION_IF_NULL(func_graph_);
   MS_EXCEPTION_IF_NULL(conv_node);
   // get nodes to be splited
   // node in graph 1->2->3...
   // node in vector ...->3->2->1
   std::string conv_cnode_name = conv_node->fullname_with_scope();
-  MS_LOG(INFO) << "---node name:" << conv_cnode_name;
   auto graph_node_outputs = Spliter::GetInstance()->graph_node_outputs();
   auto it = graph_node_outputs.find(conv_cnode_name);
   if (it == graph_node_outputs.end()) {
-    MS_LOG(INFO) << "This node may be the last node of graph,it do not has any out-nodes.";
+    MS_LOG(ERROR) << "This node may be the last node of graph,it do not has any out-nodes.";
     return RET_ERROR;
   }
   conv_nodes_.push_back(conv_node);
-  int32_t idx = 0;
-  while (idx < split_info_.in_num_conv - 1) {
-    auto curr_node = conv_nodes_[idx];
-    auto curr_cnode = conv_nodes_[idx]->cast<CNodePtr>();
+  int32_t index = 0;
+  while (index < split_info_.in_num_conv - 1) {
+    auto curr_node = conv_nodes_[index];
+    auto curr_cnode = conv_nodes_[index]->cast<CNodePtr>();
     auto tmp_node = curr_cnode->input(1);
     if (!IsConv2D(tmp_node)) {
       break;
@@ -86,15 +84,14 @@ int MultiConvSplit::GetMultiConvNodes(const FuncGraphPtr &func_graph, const AnfN
     if (it == graph_node_outputs.end()) {
       return RET_ERROR;
     }
-    if (it->second.size() > 1) {
+    if (it->second.size() > kDefaultBatch) {
       break;
     }
     conv_nodes_.push_back(tmp_node);
-    idx++;
+    index++;
   }
-
   // no need split in multi_node_pass
-  if (conv_nodes_.size() < 2) {
+  if (conv_nodes_.size() < kDefaultBatch + 1) {
     return RET_ERROR;
   }
   return RET_OK;
@@ -107,7 +104,8 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   CreateOutputsOfSplitWithOverlap(func_graph_, conv_nodes_[conv_nodes_.size() - 1], &split_outputs, &split_info_,
                                   conv_cnode_name);
   // Create Conv node
-  for (int32_t i = conv_nodes_.size() - 1; i >= 0; i--) {
+  int res_conv_numbers = static_cast<int>(conv_nodes_.size() - 1);
+  for (int32_t i = res_conv_numbers; i >= 0; i--) {
     std::vector<AnfNodePtr> outputs_node;
     SplitSingleConv(conv_nodes_[i], split_outputs, {}, {}, &outputs_node);
     split_outputs.clear();
@@ -121,12 +119,11 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
 }
 
 void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vector<AnfNodePtr> &inputs_node,
-                                     const std::vector<AnfNodePtr> &weight_node,
+                                     const std::vector<AnfNodePtr> &weight_nodes,
                                      const std::vector<AnfNodePtr> &bias_nodes, std::vector<AnfNodePtr> *outputs_node) {
   auto ori_conv_cnode = ori_node->cast<CNodePtr>();
   auto ori_attr = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(ori_conv_cnode->input(kAnfPrimitiveIndex));
-  for (int32_t output_conv_index = 0; output_conv_index < static_cast<int32_t>(split_info_.out_num);
-       output_conv_index++) {
+  for (int64_t output_conv_index = 0; output_conv_index < (split_info_.out_num); output_conv_index++) {
     // Create Conv node attr
     auto conv_prim = CopyConvPrim(ori_attr);
     // adjust primitive
@@ -134,7 +131,7 @@ void MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
     // node inputs
     std::vector<AnfNodePtr> conv_inputs;
     conv_inputs.push_back(NewValueNode(conv_prim));
-    AdJustInputs(ori_node, inputs_node, weight_node, bias_nodes, output_conv_index, &conv_inputs);
+    AdJustInputs(ori_node, inputs_node, weight_nodes, bias_nodes, output_conv_index, &conv_inputs);
     // create new conv node
     CreateNewConvNode(ori_node, conv_inputs, output_conv_index, outputs_node);
   }
@@ -147,7 +144,7 @@ void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::ve
   // feature_map
   conv_inputs->push_back(new_inputs_node[output_conv_index]);
   // W+bias
-  for (size_t j = 2; j < ori_conv_cnode->size(); j++) {
+  for (size_t j = kDefaultBatch + 1; j < ori_conv_cnode->size(); j++) {
     conv_inputs->push_back(ori_conv_cnode->input(j));
   }
 }
@@ -175,7 +172,7 @@ AnfNodePtr MultiConvSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNode
     return node;
   }
   func_graph_ = func_graph;
-  ret = GetMultiConvNodes(func_graph, node);
+  ret = GetMultiConvNodes(node);
   if (ret != RET_OK) {
     return node;
   }
@@ -198,10 +195,10 @@ AnfNodePtr MultiConvSplitH::SplitMultiConv(const AnfNodePtr &node) {
 }
 
 void MultiConvSplitH::AdJustConvPrim(const std::shared_ptr<ops::Conv2DFusion> &conv_prim, int output_conv_index) {
-  auto pad_list = conv_prim->get_pad_list();
+  auto pad_list = GetSplitPadList(conv_prim);
   if (output_conv_index == 0) {
     pad_list[kPadDown] = 0;
-  } else if (output_conv_index == static_cast<int32_t>(split_info_.out_num - 1)) {
+  } else if (output_conv_index == static_cast<int>(split_info_.out_num - 1)) {
     pad_list[kPadUp] = 0;
   } else {
     pad_list[kPadUp] = 0;

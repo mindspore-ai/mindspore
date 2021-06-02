@@ -18,9 +18,11 @@
 #include <string>
 #include <set>
 #include <utility>
+#include <map>
 #include <unordered_map>
 #include "schema/ops_generated.h"
 #include "base/core_ops.h"
+#include "include/lite_types.h"
 #ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 #define MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 
@@ -32,6 +34,7 @@ constexpr auto kParallelPrimitiveIndex = 0;
 
 const std::vector<int64_t> kSplitDefaultRatio = {0, 0};
 
+// user's device to split, only split to cpu && gpu, no support npu
 const std::vector<std::string> kSplitDevTypes = {"cpu", "gpu"};
 
 using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
@@ -74,12 +77,15 @@ struct SplitStrategy {
   SplitMode split_mode_;
 };
 
-// this is a set to add mindspore supported ops
-const std::set<PrimitivePtr> kParallelSet = {prim::kPrimConv2DFusion, prim::kPrimConv2D};
+// this is a map for key: <primitive,is_depth_wise>  value: parallel_op_name
+const std::map<std::pair<PrimitivePtr, bool>, std::string> kParallelOpNames = {
+  {{prim::kPrimConv2D, false}, "Conv2D"},
+  {{prim::kPrimConv2DFusion, false}, "Conv2D"},
+  {{prim::kPrimConv2D, true}, "DepthwiseConv2D"},
+  {{prim::kPrimConv2DFusion, true}, "DepthwiseConv2D"}};
 
-// this is a map for key: primitive  value: parallel_op_name
-const std::unordered_map<PrimitivePtr, std::string> kParallelOpNames = {{prim::kPrimConv2D, "Conv2D"},
-                                                                        {prim::kPrimConv2DFusion, "Conv2D"}};
+const std::map<std::string, lite::DeviceType> kSupportSplitedDevices = {
+  {"cpu", lite::DeviceType::DT_CPU}, {"gpu", lite::DeviceType::DT_GPU}, {"npu", lite::DeviceType::DT_NPU}};
 
 // this is a map for key: primitive  value: schema_primitive_id
 const std::unordered_map<PrimitivePtr, std::pair<schema::PrimitiveType, TypeId>> kParallelSchemaId = {

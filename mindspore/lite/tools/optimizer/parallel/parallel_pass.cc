@@ -30,27 +30,15 @@ constexpr auto kAnfPrimitiveIndex = 0;
 bool ParallelPass::IsParallelCareNode(const AnfNodePtr &node) {
   auto c_node = node->cast<CNodePtr>();
   auto prim = GetValueNode<PrimitivePtr>(c_node->input(kAnfPrimitiveIndex));
-  // depth_wise can not be splited
-  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
-  if (is_depth_wise) {
-    return false;
-  }
+  // depth_wise can not be splited in conv_info, we deal with in depthwise_conv_info
+  is_depth_wise_ = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
   type_name_.clear();
-  return std::any_of(kParallelSet.begin(), kParallelSet.end(), [this, &node](auto &prim) {
-    if (CheckPrimitiveType(node, prim)) {
-      type_name_ = PrimToString(prim);
+  return std::any_of(kParallelOpNames.begin(), kParallelOpNames.end(), [this, &node](auto &prim_item) {
+    if (CheckPrimitiveType(node, prim_item.first.first) && is_depth_wise_ == prim_item.first.second) {
+      type_name_ = prim_item.second;
     }
     return !type_name_.empty();
   });
-}
-
-std::string ParallelPass::PrimToString(const PrimitivePtr &prim) {
-  std::string parallel_name;
-  if (kParallelOpNames.find(prim) == kParallelOpNames.end()) {
-    MS_LOG(ERROR) << "String of the type not registered";
-    return parallel_name;
-  }
-  return kParallelOpNames.at(prim);
 }
 
 bool ParallelPass::SetParallelOpName(const AnfNodePtr &node, std::string *parallel_name) {
@@ -91,7 +79,7 @@ OperatorInfoPtr ParallelPass::CreateParallelOperator(const AnfNodePtr &node, con
     auto split_key_pair = kParallelSchemaId.find(schmea_id.first);
     auto split_schema_id = split_key_pair->second.first;
     auto split_type_id = split_key_pair->second.second;
-    SplitOpKey op_key = SplitOpKey(split_schema_id, split_type_id);
+    SplitOpKey op_key = SplitOpKey(split_schema_id, split_type_id, is_depth_wise_);
     auto op_create_func = OperatorInfoFactory::GeInstance()->FindOperatorInfo(op_key);
     if (op_create_func == nullptr) {
       return nullptr;
@@ -103,13 +91,12 @@ OperatorInfoPtr ParallelPass::CreateParallelOperator(const AnfNodePtr &node, con
 }
 
 AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
+  if (CheckIfFuncGraphIsNull(func_graph) != RET_OK || CheckIfAnfNodeIsNull(node) != RET_OK) {
     return node;
   }
   if (!utils::isa<CNode>(node)) {
     return node;
   }
-
   if (!IsParallelCareNode(node)) {
     return node;
   }
@@ -120,15 +107,15 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     MS_LOG(ERROR) << "node : " << node->fullname_with_scope() << "has no output";
   }
   auto output_info_list = iter->second;
-  if (output_info_list.size() > 1) {
+  if (output_info_list.size() > kDefaultBatch) {
     return node;
   }
   auto cnode = node->cast<CNodePtr>();
-  std::string parallel_op_name = cnode->fullname_with_scope();
-  if (CheckIfCNodeIsNull(cnode) != lite::RET_OK) {
-    return nullptr;
+  if (CheckIfCNodeIsNull(cnode) != RET_OK) {
+    return node;
   }
 
+  std::string parallel_op_name = cnode->fullname_with_scope();
   if (!SetParallelOpName(node, &parallel_op_name)) {
     return node;
   }
@@ -139,10 +126,8 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     MS_LOG(ERROR) << "Failure: Create " << parallel_op_name << " OperatorInstance failed";
     return node;
   }
-  parallel_operator->set_cnode(cnode);
-  parallel_operator->set_func_graph(func_graph);
-  parallel_operator->set_fmk(fmk_type_);
-  if (parallel_operator->Init() == RET_ERROR) {
+  parallel_operator->Init(func_graph, cnode, fmk_type_);
+  if (parallel_operator->DoSplit() == RET_ERROR) {
     MS_LOG(ERROR) << "Failure: operator " << parallel_op_name << " init failed";
     return node;
   }

@@ -65,7 +65,7 @@ OpParameter *PopulateSplitWithOverlapParameter(const void *prim) {
     param->extend_bottom_[i] = (*extend_bottom)[i];
   }
 
-  param->stride_ = value->stride();
+  param->split_stride_ = value->split_stride();
   param->pad_top_ = value->pad_top();
 
   return reinterpret_cast<OpParameter *>(param);

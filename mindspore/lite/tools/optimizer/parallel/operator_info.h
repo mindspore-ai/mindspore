@@ -55,13 +55,13 @@ class OperatorInfo {
   virtual ~OperatorInfo() = default;
   const std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
-  void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
-  void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
-  void set_fmk(const int32_t fmk_type) { fmk_type_ = fmk_type; }
+  void Init(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int32_t fmk_type);
+  int DoSplit();
   AnfNodePtr replace_op() const { return replace_op_; }
-  int Init();
 
  protected:
+  int CheckSplitResult(const AnfNodePtr &anf_node, const std::vector<AnfNodePtr> &split_results, int target_output_num);
+
   int CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num, std::vector<AnfNodePtr> *outputs);
 
   AnfNodePtr CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
@@ -71,13 +71,14 @@ class OperatorInfo {
 
   std::shared_ptr<abstract::AbstractTensor> CreateFakeAbstractTensor();
 
-  virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index,
+  virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &input_node, size_t input_index,
                                           std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,
                                           const std::vector<int64_t> &splits, bool trans_format) = 0;
   virtual int InferReplaceOp() = 0;
   virtual int InferParallelCNodes() = 0;
   virtual int CheckStrategy(const SplitStrategy &strategy) = 0;
 
+ protected:
   std::string name_;
   SplitStrategy strategy_;
   AnfNodePtr replace_op_{nullptr};

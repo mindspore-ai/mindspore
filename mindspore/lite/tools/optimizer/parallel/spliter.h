@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H
 #include <vector>
 #include <string>
+#include <set>
 #include <unordered_map>
 #include "schema/inner/model_generated.h"
 #include "utils/utils.h"
@@ -27,12 +28,18 @@
 #include "include/lite_types.h"
 namespace mindspore {
 namespace opt {
+struct IntCompare {
+  bool operator()(const int &lhs, const int &rhs) const { return lhs > rhs; }
+};
 
 class Spliter {
  public:
   static Spliter *GetInstance();
   Spliter(const Spliter &) = delete;
   Spliter &operator=(const Spliter &) = delete;
+
+  // record the global numbers of matched multi_conv nodes
+  void RecordGraphInfo(const FuncGraphPtr &func_graph);
 
   // update current input node's output. if candidate node has been recorded, we will be ignore it, otherwise record it.
   void UpdateNodeOutputs(const std::string &input_node_name, const AnfNodePtr &candidate_output);
@@ -53,6 +60,16 @@ class Spliter {
     return graph_node_input_shapes_;
   }
 
+  std::set<int, IntCompare> graph_match_multi_numbers() const { return match_numbers_; }
+
+  std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> nodes_inputs() const { return nodes_inputs_; }
+
+  std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> nodes_outputs() const { return nodes_outputs_; }
+
+  void VisitNodesInputs(const FuncGraphPtr &func_graph);
+
+  void VisitNodesOutputs(const FuncGraphPtr &func_graph);
+
  private:
   Spliter() = default;
   virtual ~Spliter() = default;
@@ -61,6 +78,10 @@ class Spliter {
   std::unordered_map<std::string, std::vector<AnfNodePtr>> graph_node_outputs_;
   std::unordered_map<std::string, std::vector<ShapeVector>> graph_node_output_shapes_;
   std::unordered_map<std::string, std::vector<ShapeVector>> graph_node_input_shapes_;
+  std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> nodes_inputs_;
+  std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> nodes_outputs_;
+  std::unordered_map<AnfNodePtr, bool> match_visited_;
+  std::set<int, IntCompare> match_numbers_;
 };
 }  // namespace opt
 }  // namespace mindspore

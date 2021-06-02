@@ -37,7 +37,7 @@ class SplitWithOverlap : public PrimitiveC {
   void set_extend_bottom(const std::vector<int64_t> &extend_bottom);
   void set_number_split(int64_t number_split);
   void set_split_dim(int64_t split_dim);
-  void set_stride(int64_t stride);
+  void set_split_stride(int64_t stride);
   void set_pad_top(int64_t pad_top);
   void set_trans_format(bool trans_format);
 
@@ -46,7 +46,7 @@ class SplitWithOverlap : public PrimitiveC {
   std::vector<int64_t> get_extend_bottom() const;
   int64_t get_number_split() const;
   int64_t get_split_dim() const;
-  int64_t get_stride() const;
+  int64_t get_split_stride() const;
   int64_t get_pad_top() const;
   bool get_trans_format() const;
 };
