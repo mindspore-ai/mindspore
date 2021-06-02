@@ -18,7 +18,7 @@
 #include "nnacl/infer/infer_register.h"
 
 int PreJudge(const TensorC *get_index, TensorListC *input0, const TensorC *value_tensor) {
-  if (get_index->data_ == NULL || value_tensor->data_ == NULL) {
+  if (get_index->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
 

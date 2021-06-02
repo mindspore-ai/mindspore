@@ -48,7 +48,13 @@ STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<sch
 
 STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &inputs, std::vector<Tensor *> *outputs);
 
-inline schema::PrimitiveType GetCNodeTType(const schema::CNodeT &cNodeT) { return cNodeT.primitive->value.type; }
+inline schema::PrimitiveType GetCNodeTType(const schema::CNodeT &cNodeT) {
+  if (cNodeT.primitive != nullptr) {
+    return cNodeT.primitive->value.type;
+  } else {
+    return schema::PrimitiveType_NONE;
+  }
+}
 
 inline std::string GetCNodeTTypeName(const schema::CNodeT &cNodeT) {
   return schema::EnumNamePrimitiveType(GetCNodeTType(cNodeT));

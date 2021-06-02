@@ -35,6 +35,14 @@ bool SubgraphTensorPass::IsUsing(schema::MetaGraphT *graph, const uint32_t &tens
       return true;
     }
   }
+  for (const auto &subgraph : graph->subGraph) {
+    if (IsContain<uint32_t>(subgraph->inputIndices, tensor_idx)) {
+      return true;
+    }
+    if (IsContain<uint32_t>(subgraph->outputIndices, tensor_idx)) {
+      return true;
+    }
+  }
   return false;
 }
 
