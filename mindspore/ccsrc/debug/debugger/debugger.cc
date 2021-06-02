@@ -1050,13 +1050,7 @@ void Debugger::SetStepNum(int32_t cur_num_step) {
 int32_t Debugger::step_num() const { return num_step_; }
 
 uint64_t BytestoUInt64(const std::vector<char> &buffer) {
-  uint64_t ret = (uint64_t)buffer[0];
-  const int SHIFT = 8;
-  const int MAX_INDEX = 8;
-  for (int i = 1; i < MAX_INDEX; i++) {
-    ret = ((uint64_t)buffer[i] << (i * SHIFT)) | ret;
-  }
-  return ret;
+  return le64toh(*reinterpret_cast<const uint64_t *>(buffer.data()));
 }
 
 std::vector<std::string> Debugger::CheckOpOverflow() {
@@ -1094,7 +1088,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
           std::vector<char> buffer;
           const size_t buf_size = 256;
           buffer.resize(buf_size);
-          infile.read(buffer.data(), buf_size);
+          (void)infile.read(buffer.data(), buf_size);
           const uint8_t stream_id_offset = 16;
           const uint8_t task_id_offset = 24;
           // The stream_id and task_id in the dump file are 8 byte fields for extensibility purpose, but only hold 4

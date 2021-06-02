@@ -49,7 +49,7 @@ void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &
   auto ret = debugger->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, host_type,
                                         device_type, addr->format(), slot);
   if (!ret) {
-    MS_LOG(ERROR) << "DumpTensorToFile Failed: flag:" << std::to_string(trans_flag) << ", path:" << file_path
+    MS_LOG(ERROR) << "DumpTensorToFile Failed: flag:" << trans_flag << ", path:" << file_path
                   << ", host_format:" << format;
   }
 #endif
