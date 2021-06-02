@@ -16,6 +16,7 @@ add_library(kernels-image OBJECT
     decode_op.cc
     equalize_op.cc
     gaussian_blur_op.cc
+    horizontal_flip_op.cc
     hwc_to_chw_op.cc
     image_utils.cc
     invert_op.cc
@@ -58,6 +59,7 @@ add_library(kernels-image OBJECT
     random_color_op.cc
     rotate_op.cc
     resize_cubic_op.cc
+    vertical_flip_op.cc
     )
 if(ENABLE_ACL)
     add_dependencies(kernels-image kernels-soft-dvpp-image kernels-dvpp-image)

@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
+#include "minddata/dataset/kernels/ir/vision/horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 #include "minddata/dataset/kernels/ir/vision/invert_ir.h"
 #include "minddata/dataset/kernels/ir/vision/mixup_batch_ir.h"
@@ -68,6 +69,7 @@
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
+#include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
@@ -315,6 +317,11 @@ std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
 }
 
 #ifndef ENABLE_ANDROID
+// HorizontalFlip Transform Operation.
+HorizontalFlip::HorizontalFlip() {}
+
+std::shared_ptr<TensorOperation> HorizontalFlip::Parse() { return std::make_shared<HorizontalFlipOperation>(); }
+
 // HwcToChw Transform Operation.
 HWC2CHW::HWC2CHW() {}
 
@@ -917,6 +924,11 @@ UniformAugment::UniformAugment(const std::vector<std::reference_wrapper<TensorTr
 std::shared_ptr<TensorOperation> UniformAugment::Parse() {
   return std::make_shared<UniformAugOperation>(data_->transforms_, data_->num_ops_);
 }
+
+// VerticalFlip Transform Operation.
+VerticalFlip::VerticalFlip() {}
+
+std::shared_ptr<TensorOperation> VerticalFlip::Parse() { return std::make_shared<VerticalFlipOperation>(); }
 #endif  // not ENABLE_ANDROID
 
 }  // namespace vision

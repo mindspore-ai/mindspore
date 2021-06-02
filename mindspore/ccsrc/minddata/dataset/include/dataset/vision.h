@@ -152,6 +152,22 @@ class Equalize final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
+/// \brief HorizontalFlip TensorTransform.
+/// \note Flip the input image horizontally.
+class HorizontalFlip final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  HorizontalFlip();
+
+  /// \brief Destructor.
+  ~HorizontalFlip() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
 /// \brief HwcToChw TensorTransform.
 /// \note Transpose the input image; shape (H, W, C) to shape (C, H, W).
 class HWC2CHW final : public TensorTransform {
@@ -947,6 +963,22 @@ class UniformAugment final : public TensorTransform {
  private:
   struct Data;
   std::shared_ptr<Data> data_;
+};
+
+/// \brief VerticalFlip TensorTransform.
+/// \note Flip the input image Vertically.
+class VerticalFlip final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  VerticalFlip();
+
+  /// \brief Destructor.
+  ~VerticalFlip() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 };
 
 }  // namespace vision
