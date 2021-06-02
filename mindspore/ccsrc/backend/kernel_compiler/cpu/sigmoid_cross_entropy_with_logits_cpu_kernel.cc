@@ -52,9 +52,10 @@ void SigmoidCrossEntropyWithLogitsCPUKernel::LaunchKernel(const std::vector<Addr
   T two = (T)2.0;
   for (uint64_t i = 0; i < tensor_size_; ++i) {
     if (logits_addr[i] >= zero) {
-      output_addr[i] = log1p(exp(logits_addr[i] - two * logits_addr[i])) - logits_addr[i] * (labels_addr[i] - one);
+      output_addr[i] = static_cast<T>(log1p(static_cast<float>(exp(logits_addr[i] - two * logits_addr[i])))) -
+                       logits_addr[i] * (labels_addr[i] - one);
     } else {
-      output_addr[i] = log1p(exp(logits_addr[i])) - logits_addr[i] * labels_addr[i];
+      output_addr[i] = static_cast<T>(log1p(static_cast<float>(exp(logits_addr[i])))) - logits_addr[i] * labels_addr[i];
     }
   }
 }

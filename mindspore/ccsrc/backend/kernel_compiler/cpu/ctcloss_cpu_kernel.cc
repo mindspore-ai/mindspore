@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   probs_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -47,8 +46,7 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   blank_index_ = num_class_ - 1;
 }
 
-bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                              const std::vector<kernel::AddressPtr> & /*workspace*/,
+bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
@@ -61,9 +59,9 @@ bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 inline T LogSumExp(const T logprob1, const T logprob2) {
   T kLogZero_ = -std::numeric_limits<T>::infinity();
-  if (logprob1 == kLogZero_) {
+  if (logprob1 <= kLogZero_) {
     return logprob2;
-  } else if (logprob2 == kLogZero_) {
+  } else if (logprob2 <= kLogZero_) {
     return logprob1;
   } else {
     return (logprob1 > logprob2) ? logprob1 + static_cast<T>(log1p(exp(logprob2 - logprob1)))
@@ -105,7 +103,7 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
         }
       }
 
-      (*log_alpha_b)[u][t] = static_cast<TT>(log(y[label_with_blank[u]][t])) + sum_log_alpha_b;
+      (*log_alpha_b)[u][t] = log(static_cast<TT>(y[label_with_blank[u]][t])) + sum_log_alpha_b;
     }
   }
 }
@@ -158,8 +156,7 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
                                      std::vector<std::vector<TT>> *dy) {
   auto dy_b = dy;
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
-
-  if (log_pzx == kLogZero_) {
+  if (log_pzx <= kLogZero_) {
     MS_LOG(INFO) << "No valid path found";
     return;
   }
@@ -181,7 +178,7 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
   }
 }
 
-void CTCLossCPUKernel::GenLableWithBlank(uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
+void CTCLossCPUKernel::GenLableWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
                                          std::vector<std::vector<uint32_t>> *label_with_blank) {
   for (size_t b = 0; b < batch_size_; ++b) {
     std::vector<uint32_t> l;
@@ -216,7 +213,7 @@ void CTCLossCPUKernel::GenLableWithBlank(uint32_t *seq_len, const std::vector<st
 }
 
 template <typename T>
-void InnerSoftMax(T *inputs_addr, std::vector<std::vector<T>> *softmax_probs, const uint32_t sequence_length,
+void InnerSoftMax(const T *inputs_addr, std::vector<std::vector<T>> *softmax_probs, const uint32_t sequence_length,
                   size_t num_class, size_t batch_size, size_t b) {
   for (size_t t = 0; t < sequence_length; ++t) {
     T maxCoeff(T(0));
