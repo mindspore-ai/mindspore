@@ -46,6 +46,8 @@
 #include <string>
 #include <utility>
 #include <thread>
+#include <fstream>
+#include <iostream>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -81,6 +83,9 @@ class CommUtil {
                              const int32_t &total_server_num);
   static bool Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds);
   static void LogCallback(int severity, const char *msg);
+
+  // Check if the file exists.
+  static bool IsFileExists(const std::string &file);
 
  private:
   static std::random_device rd;
