@@ -30,7 +30,7 @@ from mindspore.nn.optim.sgd import SGD
 from mindspore import Tensor
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
-from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
+from mindspore.train.callback import CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.profiler.profiling import Profiler
 from mindspore.common import set_seed
@@ -123,6 +123,16 @@ def convert_training_shape(args_):
     """
     training_shape = [int(args_.training_shape), int(args_.training_shape)]
     return training_shape
+
+
+class InternalCallbackParam(dict):
+    """Internal callback object's parameters."""
+
+    def __getattr__(self, para_name):
+        return self[para_name]
+
+    def __setattr__(self, para_name, para_value):
+        self[para_name] = para_value
 
 
 if __name__ == "__main__":
@@ -285,7 +295,7 @@ if __name__ == "__main__":
         ckpt_cb = ModelCheckpoint(config=ckpt_config,
                                   directory=args.outputs_dir,
                                   prefix='{}'.format(args.rank))
-        cb_params = _InternalCallbackParam()
+        cb_params = InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = ckpt_max_num
         cb_params.cur_epoch_num = 1
