@@ -19,56 +19,41 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.context import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
 from mindspore.communication.management import get_group_size
-from mindspore import context
+
 from .transformer_model import TransformerModel
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 5.0
 
+clip_grad = C.MultitypeFuncGraph("clip_grad")
 
-class ClipGradients(nn.Cell):
+
+@clip_grad.register("Number", "Number", "Tensor")
+def _clip_grad(clip_type, clip_value, grad):
     """
     Clip gradients.
 
-    Args:
-        grads (list): List of gradient tuples.
-        clip_type (Tensor): The way to clip, 'value' or 'norm'.
-        clip_value (Tensor): Specifies how much to clip.
+    Inputs:
+        clip_type (int): The way to clip, 0 for 'value', 1 for 'norm'.
+        clip_value (float): Specifies how much to clip.
+        grad (tuple[Tensor]): Gradients.
 
-    Returns:
-        List, a list of clipped_grad tuples.
+    Outputs:
+        tuple[Tensor], clipped gradients.
     """
-    def __init__(self):
-        super(ClipGradients, self).__init__()
-        self.clip_by_norm = nn.ClipByNorm()
-        self.cast = P.Cast()
-        self.dtype = P.DType()
-
-    def construct(self,
-                  grads,
-                  clip_type,
-                  clip_value):
-        """Defines the gradients clip."""
-        if clip_type not in (0, 1):
-            return grads
-
-        new_grads = ()
-        for grad in grads:
-            dt = self.dtype(grad)
-            if clip_type == 0:
-                t = C.clip_by_value(grad, self.cast(F.tuple_to_array((-clip_value,)), dt),
-                                    self.cast(F.tuple_to_array((clip_value,)), dt))
-            else:
-                t = self.clip_by_norm(grad, self.cast(F.tuple_to_array((clip_value,)), dt))
-            new_grads = new_grads + (t,)
-
-        return new_grads
+    if clip_type not in (0, 1):
+        return grad
+    dt = F.dtype(grad)
+    if clip_type == 0:
+        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+    else:
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+    return new_grad
 
 
 class TransformerTrainingLoss(nn.Cell):
@@ -144,7 +129,7 @@ class TransformerNetworkWithLoss(nn.Cell):
         return self.cast(total_loss, mstype.float32)
 
 
-class TransformerTrainOneStepCell(nn.Cell):
+class TransformerTrainOneStepCell(nn.TrainOneStepCell):
     """
     Encapsulation class of transformer network training.
 
@@ -157,26 +142,10 @@ class TransformerTrainOneStepCell(nn.Cell):
         sens (Number): The adjust parameter. Default: 1.0.
     """
     def __init__(self, network, optimizer, sens=1.0):
-        super(TransformerTrainOneStepCell, self).__init__(auto_prefix=False)
-        self.network = network
-        self.weights = ParameterTuple(network.trainable_params())
-        self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.sens = sens
-        self.reducer_flag = False
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode not in ParallelMode.MODE_LIST:
-            raise ValueError("Parallel mode does not support: ", self.parallel_mode)
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        self.grad_reducer = None
-        if self.reducer_flag:
-            mean = context.get_auto_parallel_context("gradients_mean")
-            degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
+        super(TransformerTrainOneStepCell, self).__init__(network, optimizer, sens)
 
-        self.clip_gradients = ClipGradients()
         self.cast = P.Cast()
+        self.hyper_map = C.HyperMap()
 
     def set_sens(self, value):
         self.sens = value
@@ -211,11 +180,9 @@ class TransformerTrainOneStepCell(nn.Cell):
                                                  label_weights,
                                                  self.cast(F.tuple_to_array((self.sens,)),
                                                            mstype.float32))
-        grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
-
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
 
@@ -235,7 +202,7 @@ grad_overflow = P.FloatStatus()
 def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
 
-class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
+class TransformerTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
     """
     Encapsulation class of Transformer network training.
 
@@ -248,44 +215,12 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(TransformerTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
-        self.network = network
-        self.network.set_grad()
-        self.network.add_flags(defer_inline=True)
-        self.weights = ParameterTuple(network.trainable_params())
-        self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True,
-                                    sens_param=True)
-        self.reducer_flag = False
-        self.allreduce = P.AllReduce()
-
-        self.parallel_mode = _get_parallel_mode()
-        if self.parallel_mode not in ParallelMode.MODE_LIST:
-            raise ValueError("Parallel mode does not support: ", self.parallel_mode)
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        self.grad_reducer = None
-        if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
-        self.clip_gradients = ClipGradients()
+        super(TransformerTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
         self.cast = P.Cast()
-        if context.get_context("device_target") == "GPU":
-            self.gpu_target = True
-            self.float_status = P.FloatStatus()
-            self.addn = P.AddN()
-            self.reshape = P.Reshape()
-        else:
-            self.gpu_target = False
-            self.alloc_status = P.NPUAllocFloatStatus()
-            self.get_status = P.NPUGetFloatStatus()
-            self.clear_status = P.NPUClearFloatStatus()
-        self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.base = Tensor(1, mstype.float32)
-        self.less_equal = P.LessEqual()
-        self.hyper_map = C.HyperMap()
+        self.degree = 1
+        if self.reducer_flag:
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
 
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
@@ -319,14 +254,7 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-        init = False
-        if not self.gpu_target:
-            # alloc status
-            init = self.alloc_status()
-            # clear overflow buffer
-            init = F.depend(init, loss)
-            clear_status = self.clear_status(init)
-            scaling_sens = F.depend(scaling_sens, clear_status)
+        status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -336,31 +264,12 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
 
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
-        grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
-        if not self.gpu_target:
-            init = F.depend(init, grads)
-            get_status = self.get_status(init)
-            init = F.depend(init, get_status)
-            # sum overflow buffer elements, 0: not overflow, >0: overflow
-            flag_sum = self.reduce_sum(init, (0,))
-        else:
-            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
-            flag_sum = self.addn(flag_sum)
-            # convert flag_sum to scalar
-            flag_sum = self.reshape(flag_sum, (()))
-
-        if self.is_distributed:
-            # sum overflow flag over devices
-            flag_reduce = self.allreduce(flag_sum)
-            cond = self.less_equal(self.base, flag_reduce)
-        else:
-            cond = self.less_equal(self.base, flag_sum)
-
+        cond = self.get_overflow_status(status, grads)
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
@@ -368,6 +277,5 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             succ = False
         else:
             succ = self.optimizer(grads)
-
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)

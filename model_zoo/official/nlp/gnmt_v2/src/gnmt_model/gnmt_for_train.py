@@ -23,11 +23,10 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.context import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
+from mindspore.communication.management import get_group_size
 
 from .gnmt import GNMT
-from .grad_clip import GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE, ClipGradients
+from .grad_clip import GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE, clip_grad
 
 
 class PredLogProbs(nn.Cell):
@@ -199,7 +198,7 @@ def _tensor_grad_overflow(grad):
     return grad_overflow(grad)
 
 
-class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
+class GNMTTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
     """
     Encapsulation class of GNMT network training.
 
@@ -217,44 +216,17 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
 
     def __init__(self, network, optimizer, scale_update_cell=None):
 
-        super(GNMTTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
-        self.network = network
-        self.network.set_grad()
-        self.network.add_flags(defer_inline=True)
-        self.weights = optimizer.parameters
-        self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True,
-                                    sens_param=True)
-        self.reducer_flag = False
-        self.all_reduce = P.AllReduce()
-
-        self.parallel_mode = _get_parallel_mode()
-        if self.parallel_mode not in ParallelMode.MODE_LIST:
-            raise ValueError("Parallel mode does not support: ", self.parallel_mode)
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        self.grad_reducer = None
-        if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
-        self.clip_gradients = ClipGradients()
+        super(GNMTTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
         self.cast = P.Cast()
-        self.alloc_status = P.NPUAllocFloatStatus()
-        self.get_status = P.NPUGetFloatStatus()
-        self.clear_status = P.NPUClearFloatStatus()
-        self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.base = Tensor(1, mstype.float32)
-        self.less_equal = P.LessEqual()
-        self.hyper_map = C.HyperMap()
+        self.degree = 1
+        if self.reducer_flag:
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
 
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
-
-        self.loss_scalar = P.ScalarSummary()
 
     def construct(self,
                   source_eos_ids,
@@ -293,12 +265,9 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-        # Alloc status.
-        init = self.alloc_status()
-        # Clear overflow buffer.
-        init = F.depend(init, loss)
-        clear_status = self.clear_status(init)
-        scaling_sens = F.depend(scaling_sens, clear_status)
+
+        status, scaling_sens = self.start_overflow_check(loss, scaling_sens)
+
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -306,24 +275,12 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
                                                  label_weights,
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
-        grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
-        if self.reducer_flag:
-            # Apply grad reducer on grads.
-            grads = self.grad_reducer(grads)
-        init = F.depend(init, grads)
-        get_status = self.get_status(init)
-        init = F.depend(init, get_status)
-        flag_sum = self.reduce_sum(init, (0,))
-
-        if self.is_distributed:
-            # Sum overflow flag over devices.
-            flag_reduce = self.all_reduce(flag_sum)
-            cond = self.less_equal(self.base, flag_reduce)
-        else:
-            cond = self.less_equal(self.base, flag_sum)
-
+        cond = self.get_overflow_status(status, grads)
         overflow = cond
         if sens is None:
             overflow = self.loss_scaling_manager(self.loss_scale, cond)
@@ -331,8 +288,5 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
             succ = False
         else:
             succ = self.optimizer(grads)
-
-        self.loss_scalar("loss", loss)
-
         ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)
