@@ -28,18 +28,18 @@
 
 namespace mindspore {
 namespace lite {
-#define CAFFE_BATCHNORM_MEAN_INDEX 0
-#define CAFFE_BATCHNORM_VARIANCE_INDEX 1
-#define CAFFE_BATCHNORM_SCALE_INDEX 2
-#define TF_BATCHNORM_SCALE_INDEX 0
-#define TF_BATCHNORM_BIAS_INDEX 1
-#define TF_BATCHNORM_MEAN_INDEX 2
-#define TF_BATCHNORM_VARIANCE_INDEX 3
 namespace {
 constexpr const float EPS = 1e-8;
 constexpr const float EPS_DEFAULT_FLOAT = 1e-8;
 constexpr const float POW_NUM = 0.5;
 constexpr uint32_t kQuadrupleNum = 4;
+constexpr const size_t CAFFE_BATCHNORM_MEAN_INDEX = 0;
+constexpr const size_t CAFFE_BATCHNORM_VARIANCE_INDEX = 1;
+constexpr const size_t CAFFE_BATCHNORM_SCALE_INDEX = 2;
+constexpr const size_t TF_BATCHNORM_SCALE_INDEX = 0;
+constexpr const size_t TF_BATCHNORM_BIAS_INDEX = 1;
+constexpr const size_t TF_BATCHNORM_MEAN_INDEX = 2;
+constexpr const size_t TF_BATCHNORM_VARIANCE_INDEX = 3;
 }  // namespace
 
 STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
@@ -230,15 +230,6 @@ STATUS BatchNormConvertScalePass::GetTransParam(MetaGraphT *graph, const std::un
   return RET_OK;
 }
 
-// BatchNorm weight Tensor definition:
-// caffe
-//   estimated_mean  --0
-//   estimated_variance  --1
-// tensorflow
-//   scale    -- 0
-//   bias        --1
-//   estimated_mean  --2
-//   estimated_variance  --3
 STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeightTensors *bnWeightTensors,
                                                      const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);

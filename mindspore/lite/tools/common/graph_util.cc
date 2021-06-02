@@ -158,9 +158,9 @@ STATUS IsolateNode(schema::MetaGraphT *graphT, CNodeT *node) {
     MS_ASSERT(graphT->nodes.size() > postNodeIdx);
     auto &postNode = graphT->nodes.at(postNodeIdx);
     MS_ASSERT(postNode != nullptr);
-    for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        *iter = inDataTensorIdx;
+    for (auto input_iter = postNode->inputIndex.begin(); input_iter != postNode->inputIndex.end(); input_iter++) {
+      if (*input_iter == outDataTensorIdx) {
+        *input_iter = inDataTensorIdx;
         break;
       }
     }
@@ -206,9 +206,9 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
     MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
     MS_ASSERT(graphT->allTensors.at(inDataTensorIdx) != nullptr);
     auto &gOutTensorIdx = graphT->outputIndex;
-    for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        *iter = inDataTensorIdx;
+    for (auto out_iter = gOutTensorIdx.begin(); out_iter != gOutTensorIdx.end(); out_iter++) {
+      if (*out_iter == outDataTensorIdx) {
+        *out_iter = inDataTensorIdx;
         break;
       }
     }
@@ -218,9 +218,10 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
       MS_ASSERT(graphT->nodes.size() > postNodeIdx);
       auto &postNode = graphT->nodes.at(postNodeIdx);
       MS_ASSERT(postNode != nullptr);
-      for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
-        if (*iter == outDataTensorIdx) {
-          *iter = inDataTensorIdx;
+      for (auto post_node_input_iter = postNode->inputIndex.begin(); post_node_input_iter != postNode->inputIndex.end();
+           post_node_input_iter++) {
+        if (*post_node_input_iter == outDataTensorIdx) {
+          *post_node_input_iter = inDataTensorIdx;
           break;
         }
       }
@@ -280,23 +281,24 @@ STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTe
       }
     }
     // update graph output indices
-    for (auto gOutIdx = graphT->outputIndex.begin(); gOutIdx != graphT->outputIndex.end(); gOutIdx++) {
-      if (*gOutIdx > deleteIdx) {
-        (*gOutIdx)--;
+    for (auto out_idx = graphT->outputIndex.begin(); out_idx != graphT->outputIndex.end(); out_idx++) {
+      if (*out_idx > deleteIdx) {
+        (*out_idx)--;
       }
     }
 
     for (auto &subgraph : graphT->subGraph) {
       // update subgraph input indices
-      for (auto gInIdx = subgraph->inputIndices.begin(); gInIdx != subgraph->inputIndices.end(); gInIdx++) {
-        if (*gInIdx > deleteIdx) {
-          (*gInIdx)--;
+      for (auto input_idx = subgraph->inputIndices.begin(); input_idx != subgraph->inputIndices.end(); input_idx++) {
+        if (*input_idx > deleteIdx) {
+          (*input_idx)--;
         }
       }
       // update subgraph output indices
-      for (auto gOutIdx = subgraph->outputIndices.begin(); gOutIdx != subgraph->outputIndices.end(); gOutIdx++) {
-        if (*gOutIdx > deleteIdx) {
-          (*gOutIdx)--;
+      for (auto output_idx = subgraph->outputIndices.begin(); output_idx != subgraph->outputIndices.end();
+           output_idx++) {
+        if (*output_idx > deleteIdx) {
+          (*output_idx)--;
         }
       }
       // update subgraph output indices
@@ -483,8 +485,8 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     }
     toAddNodes.emplace_back(std::move(toAddNode));
   }
-  for (auto &toAddNode : toAddNodes) {
-    existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
+  for (auto &add_node : toAddNodes) {
+    existNodeIter = graphT->nodes.insert(existNodeIter, std::move(add_node));
     existNodeIter++;
     *insert_num += 1;
   }
@@ -562,8 +564,8 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     }
     toAddNodes.emplace_back(std::move(toAddNode));
   }
-  for (auto &toAddNode : toAddNodes) {
-    existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
+  for (auto &to_add_node : toAddNodes) {
+    existNodeIter = graphT->nodes.insert(existNodeIter, std::move(to_add_node));
     existNodeIter++;
     *insert_num += 1;
   }

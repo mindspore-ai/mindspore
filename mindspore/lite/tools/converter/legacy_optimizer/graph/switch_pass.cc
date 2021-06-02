@@ -25,7 +25,9 @@
 #include "tools/common/graph_util.h"
 
 namespace mindspore::lite {
-
+namespace {
+constexpr int kHalfOfTensorSize = 2;
+}  // namespace
 STATUS SwitchPass::Run(mindspore::schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (size_t i = 0; i < graph->nodes.size(); i++) {
@@ -97,7 +99,7 @@ void SingleSwitchPass::UpdateSwitchOutputIndices(uint32_t *idx) {
   auto iter = std::find(switch_node_->outputIndex.begin(), switch_node_->outputIndex.end(), *idx);
   if (iter != switch_node_->outputIndex.end()) {
     int pos = iter - switch_node_->outputIndex.begin();
-    *idx = switch_node_->outputIndex.at(pos + switch_node_->outputIndex.size() / 2);
+    *idx = switch_node_->outputIndex.at(pos + switch_node_->outputIndex.size() / kHalfOfTensorSize);
   }
 }
 
@@ -110,13 +112,13 @@ STATUS SingleSwitchPass::UpdateSwitchUser() {
   }
   // update graph switch user
   for (auto &subgraph : graph_->subGraph) {
-    for (auto &idx : subgraph->outputIndices) {
-      UpdateSwitchOutputIndices(&idx);
+    for (auto &subgraph_idx : subgraph->outputIndices) {
+      UpdateSwitchOutputIndices(&subgraph_idx);
     }
   }
 
-  for (auto &idx : graph_->outputIndex) {
-    UpdateSwitchOutputIndices(&idx);
+  for (auto &graph_idx : graph_->outputIndex) {
+    UpdateSwitchOutputIndices(&graph_idx);
   }
 
   return RET_OK;
@@ -200,8 +202,8 @@ std::unique_ptr<schema::CNodeT> SingleSwitchPass::MakeMergeNode(const std::strin
   for (auto &iter : merge_node->inputIndex) {
     if (input_set.find(iter) != input_set.end()) {
       auto &in_tensor = graph_->allTensors.at(iter);
-      auto tensor = NewTensor(in_tensor, true);
-      graph_->allTensors.push_back(std::move(tensor));
+      auto merge_tensor_copy = NewTensor(in_tensor, true);
+      graph_->allTensors.push_back(std::move(merge_tensor_copy));
       iter = graph_->allTensors.size() - 1;
     }
     input_set.insert(iter);
@@ -210,13 +212,13 @@ std::unique_ptr<schema::CNodeT> SingleSwitchPass::MakeMergeNode(const std::strin
   // double merge inputs to contain the outputs of body  node
   auto old_merge_input = merge_node->inputIndex;
   for (size_t i = 0; i < old_merge_input.size(); i++) {
-    auto &in_tensor = graph_->allTensors.at(old_merge_input[i]);
+    auto &old_merge__in_tensor = graph_->allTensors.at(old_merge_input[i]);
     if (IsContain(const_input, i)) {
       merge_node->inputIndex.push_back(old_merge_input[i]);
     } else {
-      auto tensor = NewTensor(in_tensor);
-      tensor->nodeType = NodeType_CNode;
-      graph_->allTensors.push_back(std::move(tensor));
+      auto merge_tensor = NewTensor(old_merge__in_tensor);
+      merge_tensor->nodeType = NodeType_CNode;
+      graph_->allTensors.push_back(std::move(merge_tensor));
       merge_node->inputIndex.push_back(graph_->allTensors.size() - 1);
     }
   }
@@ -285,16 +287,17 @@ STATUS SingleSwitchPass::InsertMerge() {
 
   // move body node to switch node output
   second_partial_node_->inputIndex.clear();
-  second_partial_node_->inputIndex.assign(switch_node_->outputIndex.begin(),
-                                          switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / 2);
+  second_partial_node_->inputIndex.assign(
+    switch_node_->outputIndex.begin(),
+    switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / kHalfOfTensorSize);
 
   // skip tensor which is not any nodes' inputs to avoid body partial connect to merge input cnode
   std::vector<uint32_t> skip_input_tensors;
   for (auto input : const_input) {
     auto real_input = graph_->subGraph.at(second_subgraph_index_)->inputIndices.at(input);
     bool skip = true;
-    for (auto &node : second_graph_nodes_) {
-      if (IsContain(node->inputIndex, real_input)) {
+    for (auto &second_graph_node : second_graph_nodes_) {
+      if (IsContain(second_graph_node->inputIndex, real_input)) {
         skip = false;
         break;
       }
@@ -308,10 +311,11 @@ STATUS SingleSwitchPass::InsertMerge() {
 
   // concat body output to merge input
   second_partial_node_->outputIndex.clear();
-  for (uint32_t merge_right_input = 0; merge_right_input < merge_node->inputIndex.size() / 2; merge_right_input++) {
+  for (uint32_t merge_right_input = 0; merge_right_input < merge_node->inputIndex.size() / kHalfOfTensorSize;
+       merge_right_input++) {
     if (!IsContain(skip_input_tensors, merge_right_input)) {
       second_partial_node_->outputIndex.emplace_back(
-        merge_node->inputIndex.at(merge_node->inputIndex.size() / 2 + merge_right_input));
+        merge_node->inputIndex.at(merge_node->inputIndex.size() / kHalfOfTensorSize + merge_right_input));
     } else {
       second_partial_node_->outputIndex.emplace_back(UINT32_MAX);
     }
@@ -356,12 +360,15 @@ STATUS SingleSwitchPass::InsertPartialAndMergeAfterSwitch() {
     return ret;
   }
 
-  switch_node_->inputIndex.erase(switch_node_->inputIndex.begin(), switch_node_->inputIndex.begin() + 2);
-  MS_ASSERT(switch_node_->outputIndex.size() % 2 == 0);
-  first_partial_node_->inputIndex.assign(switch_node_->outputIndex.begin(),
-                                         switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / 2);
-  second_partial_node_->inputIndex.assign(switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / 2,
-                                          switch_node_->outputIndex.end());
+  switch_node_->inputIndex.erase(switch_node_->inputIndex.begin(),
+                                 switch_node_->inputIndex.begin() + kHalfOfTensorSize);
+  MS_ASSERT(switch_node_->outputIndex.size() % kHalfOfTensorSize == 0);
+  first_partial_node_->inputIndex.assign(
+    switch_node_->outputIndex.begin(),
+    switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / kHalfOfTensorSize);
+  second_partial_node_->inputIndex.assign(
+    switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / kHalfOfTensorSize,
+    switch_node_->outputIndex.end());
 
   // insert merge
   auto merge_node = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
@@ -391,10 +398,11 @@ STATUS SingleSwitchPass::InsertPartialAndMergeAfterSwitch() {
   }
 
   if (second_graph_nodes_.empty()) {
-    merge_node->inputIndex.insert(merge_node->inputIndex.end(),
-                                  switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / 2,
-                                  switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / 2 +
-                                    second_partial_node_->outputIndex.size());
+    merge_node->inputIndex.insert(
+      merge_node->inputIndex.end(),
+      switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / kHalfOfTensorSize,
+      switch_node_->outputIndex.begin() + switch_node_->outputIndex.size() / kHalfOfTensorSize +
+        second_partial_node_->outputIndex.size());
     second_subgraph_index_ = -1;
     IsolateUselessNode(second_partial_node_, graph_);
   } else {

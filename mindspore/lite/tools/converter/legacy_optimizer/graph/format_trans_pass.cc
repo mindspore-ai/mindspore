@@ -27,9 +27,10 @@
 
 namespace mindspore {
 namespace lite {
-#define kMinInputNum 1
-#define kOutputNum 1
-
+namespace {
+constexpr size_t kMinInputNum = 1;
+constexpr size_t kOutputNum = 1;
+}  // namespace
 STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   auto status = DoModelInputFormatTrans(graph);
@@ -135,10 +136,6 @@ STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
   return RET_OK;
 }
 
-// inference needed inputFormat:
-//           conv     deconv     depth     dedepth
-// fp32      NCHW     NCHW       NCHW      NCHW
-// uint8     NCHW      ?         NCHW        ?
 STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   // insert before and after the op cal by nchw/nc4hw4
@@ -361,8 +358,8 @@ void FormatTransPass::TransformAttrByAxes(int *origin_attr, int *axes, int eleme
       }
     }
   }
-  for (int index = 0; index < element_size; ++index) {
-    origin_attr[index] = cur_attr[index];
+  for (int idx = 0; idx < element_size; ++idx) {
+    origin_attr[idx] = cur_attr[idx];
   }
 }
 

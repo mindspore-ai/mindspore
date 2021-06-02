@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
   MS_ASSERT(graphT != nullptr);
   if (graphT->nodes.size() <= nodeIdx) {
@@ -68,9 +67,9 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
     MS_ASSERT(graphT->allTensors.size() > inDataTensorIdx);
     MS_ASSERT(graphT->allTensors.at(inDataTensorIdx) != nullptr);
     auto &gOutTensorIdx = graphT->outputIndex;
-    for (auto iter = gOutTensorIdx.begin(); iter != gOutTensorIdx.end(); iter++) {
-      if (*iter == outDataTensorIdx) {
-        *iter = inDataTensorIdx;
+    for (auto out_idx = gOutTensorIdx.begin(); out_idx != gOutTensorIdx.end(); out_idx++) {
+      if (*out_idx == outDataTensorIdx) {
+        *out_idx = inDataTensorIdx;
         break;
       }
     }
@@ -80,9 +79,9 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
       MS_ASSERT(graphT->nodes.size() > postNodeIdx);
       auto &postNode = graphT->nodes.at(postNodeIdx);
       MS_ASSERT(postNode != nullptr);
-      for (auto iter = postNode->inputIndex.begin(); iter != postNode->inputIndex.end(); iter++) {
-        if (*iter == outDataTensorIdx) {
-          *iter = inDataTensorIdx;
+      for (auto input_idx = postNode->inputIndex.begin(); input_idx != postNode->inputIndex.end(); input_idx++) {
+        if (*input_idx == outDataTensorIdx) {
+          *input_idx = inDataTensorIdx;
           break;
         }
       }

@@ -27,6 +27,8 @@ namespace mindspore {
 namespace {
 std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
 std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+constexpr int kNumInputDims = 4;
+constexpr int kNumMaxRunCounts = 10;
 }  // namespace
 namespace lite {
 bool IsInOutCanFusion(schema::MetaGraphT *graph, const std::vector<size_t> &node_indexes, size_t *has_trans_count,
@@ -132,7 +134,7 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
   bool changed = true;
   int run_counts = 0;
   std::vector<CNodeT *> has_insert_nodes;
-  while (changed && run_counts < 10) {
+  while (changed && run_counts < kNumMaxRunCounts) {
     changed = false;
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto &node = *iter;
@@ -166,7 +168,7 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
       auto input_tensor_size = (*iter)->inputIndex.size();
       for (size_t i = 0; i < input_tensor_size; i++) {
         auto &input_tensor = graph->allTensors.at((*iter)->inputIndex[i]);
-        if (input_tensor->nodeType == NodeType_ValueNode && input_tensor->dims.size() < 4) {
+        if (input_tensor->nodeType == NodeType_ValueNode && input_tensor->dims.size() < kNumInputDims) {
           continue;
         }
         iter = InsertFormatTransNode(graph, iter, kBefore, i, pre_insert_trans_type_, &status);

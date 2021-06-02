@@ -42,6 +42,11 @@ using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
+namespace {
+constexpr size_t kNumInput0 = 0;
+constexpr size_t kNumInput1 = 1;
+constexpr size_t kNumInput2 = 2;
+}  // namespace
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
@@ -71,9 +76,9 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   std::list<CNodePtr> cnodes;
   auto nodes = TopoSort(fg->get_return(), succ_include_fv, BelongSameGraph);
   for (const auto &node : nodes) {
-    auto cnode = dyn_cast<CNode>(node);
-    if (cnode) {
-      cnodes.push_back(cnode);
+    auto cnode_of_fg = dyn_cast<CNode>(node);
+    if (cnode_of_fg) {
+      cnodes.push_back(cnode_of_fg);
     }
   }
   return cnodes;
@@ -289,8 +294,8 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgrap
                                      const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                      const std::unique_ptr<schema::SubGraphT> &sub_graphT,
                                      schema::CNodeT *return_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != return_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(return_node != nullptr);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     if (input_node == nullptr) {
@@ -512,8 +517,8 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
       MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << inputs.size();
       return RET_ERROR;
     }
-    auto get_item_input_cnode = inputs.at(1);
-    auto index_vnode = inputs.at(2);
+    auto get_item_input_cnode = inputs.at(kNumInput1);
+    auto index_vnode = inputs.at(kNumInput2);
     if (!utils::isa<ValueNode>(index_vnode)) {
       MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
       return RET_ERROR;
@@ -797,8 +802,8 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
 
 int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                 schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != fb_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(fb_node != nullptr);
   if (cnode->inputs().size() <= 1) {
     return RET_OK;
   }
@@ -842,10 +847,11 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
 
 void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                   schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != meta_graphT);
-  MS_ASSERT(nullptr != fb_node);
+  MS_ASSERT(meta_graphT != nullptr);
+  MS_ASSERT(fb_node != nullptr);
   std::string cnode_name = fb_node->name;
-
+  abstract::AbstractTensorPtr abstract_tensor = nullptr;
+  auto type = kNumberTypeFloat32;
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     if (tuple == nullptr) {
@@ -882,9 +888,8 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
           delete (msTensor);
           return;
         }
-        auto type = kNumberTypeFloat32;
         if (utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
-          auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
+          abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
           auto typePtr = abstract_tensor->element()->GetTypeTrack();
           type = typePtr->type_id();
         }
@@ -902,11 +907,10 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       MS_LOG(ERROR) << "new tensor failed";
       return;
     }
-    auto type = kNumberTypeFloat32;
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
-      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
-      auto typePtr = abstract_tensor->element()->GetTypeTrack();
-      type = typePtr->type_id();
+      abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
+      auto typePtr_new = abstract_tensor->element()->GetTypeTrack();
+      type = typePtr_new->type_id();
     }
     ms_tensor->dataType = type;
     ms_tensor->nodeType = NodeType_CNode;
@@ -924,22 +928,23 @@ ValueNodePtr AnfExporter::GetPartialAnfPrim() {
 }
 
 CNodePtr AnfExporter::CreatePartialCnode(const FuncGraphPtr &fg, AnfNodePtr node) {
+  ValueNodePtr partial_anf_prim_vnode = nullptr;
   if (utils::isa<CNodePtr>(node)) {
     auto cnode = utils::cast<CNodePtr>(node);
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitive_c != nullptr) {
       return cnode;
     }
-    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    partial_anf_prim_vnode = GetPartialAnfPrim();
     auto cnode_input = cnode->inputs();
     cnode_input.insert(cnode_input.begin(), partial_anf_prim_vnode);
     cnode->set_inputs(cnode_input);
     return cnode;
   } else if (utils::isa<ValueNodePtr>(node)) {
-    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    partial_anf_prim_vnode = GetPartialAnfPrim();
     std::vector<AnfNodePtr> inputs{partial_anf_prim_vnode, node};
-    auto cnode = fg->NewCNode(inputs);
-    return cnode;
+    auto new_cnode = fg->NewCNode(inputs);
+    return new_cnode;
   } else {
     MS_LOG(ERROR) << "failed to create partial cnode.";
     return nullptr;

@@ -20,6 +20,12 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr size_t kNumPad = 4;
+constexpr size_t kNumStride = 2;
+constexpr size_t kNumDilation = 2;
+constexpr size_t kNumKernel = 2;
+}  // namespace
 ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
                                                  const caffe::LayerParameter &weight) {
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
@@ -31,28 +37,28 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
   // parse pad
-  std::vector<int64_t> pad(4, 0);
+  std::vector<int64_t> pad(kNumPad, 0);
   if (CaffeConvBaseParser::ParsePads(convParam, &pad) != RET_OK) {
     return nullptr;
   }
   prim->set_pad_list({pad[0], pad[1], pad[2], pad[3]});
 
   // parse stride
-  std::vector<int64_t> stride(2, 0);
+  std::vector<int64_t> stride(kNumStride, 0);
   if (CaffeConvBaseParser::ParseStrides(convParam, &stride) != RET_OK) {
     return nullptr;
   }
   prim->set_stride({stride[0], stride[1]});
 
   // parse dilation
-  std::vector<int64_t> dilation(2, 0);
+  std::vector<int64_t> dilation(kNumDilation, 0);
   if (CaffeConvBaseParser::ParseDilations(convParam, &dilation) != RET_OK) {
     return nullptr;
   }
   prim->set_dilation({dilation[0], dilation[1]});
 
   // parse kernel
-  std::vector<int64_t> kernel(2, 0);
+  std::vector<int64_t> kernel(kNumKernel, 0);
   if (CaffeConvBaseParser::ParseKernels(convParam, &kernel) != RET_OK) {
     return nullptr;
   }

@@ -112,7 +112,6 @@ STATUS FusionPass::MatchPatterns(schema::MetaGraphT *graph) {
 STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pattern) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(pattern != nullptr);
-  //  std::vector<std::unordered_map<std::string, Path *>> patternMatchPaths;
   auto outputOp = pattern->GetPatternOp(pattern->GetOutput());
   if (outputOp == nullptr) {
     MS_LOG(ERROR) << "Can not find the output of the pattern";
@@ -143,7 +142,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
     auto &node = graph->nodes.at(nodeIdx);
     sinkIdes.emplace_back(nodeIdx);
 
-    MS_ASSERT(nullptr != node->primitive);
+    MS_ASSERT(node->primitive != nullptr);
     if (IsContain(outputOp->types, node->primitive->value.type)) {
       entries.emplace_back(nodeIdx);
     }
@@ -158,13 +157,13 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
   std::vector<std::shared_ptr<PatternOp>> paths;
   sinkIdes.clear();
   std::vector<size_t> pathSinkIdes;
-  for (auto nodeIdx : entries) {
-    if (IsContain(sinkIdes, nodeIdx)) {
+  for (auto idx : entries) {
+    if (IsContain(sinkIdes, idx)) {
       continue;
     }
     pathSinkIdes.clear();
     auto path = PatternOp::Copy(outputOp);
-    auto ret = MatchTree(graph, nodeIdx, path, sinkIdes, pathSinkIdes);
+    auto ret = MatchTree(graph, idx, path, sinkIdes, pathSinkIdes);
     if (ret && CheckMatch(graph, path)) {
       paths.emplace_back(path);
     }

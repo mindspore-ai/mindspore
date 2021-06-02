@@ -28,10 +28,10 @@ namespace mindspore {
 namespace {
 std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
 std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+constexpr size_t kFormatTransMatchPathLen2 = 2;
+constexpr size_t kFormatTransMatchPathLen3 = 3;
 }  // namespace
 namespace lite {
-#define kFormatTransMatchPathLen2 2
-#define kFormatTransMatchPathLen3 3
 
 STATUS FormatTransFusionPass::DefinePattern() {
   // nchw2nhwc + nhwc2nchw  ||  nhwc2nchw + nchw2nhwc

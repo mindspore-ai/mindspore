@@ -102,6 +102,5 @@ STATUS NestedLoopExpandPass::Run(schema::MetaGraphT *graph) {
 
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

@@ -23,7 +23,6 @@
 #include "src/tensor.h"
 
 namespace mindspore::lite {
-
 TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
     : Tensor(kObjectTypeTensorType, std::move(shape), schema::Format::Format_NHWC, category),
       element_shape_(std::move(element_shape)) {}
@@ -308,5 +307,4 @@ STATUS TensorList::Decode(const int *data) {
 }
 
 bool TensorList::IsConst() const { return this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR; }
-
 }  // namespace mindspore::lite

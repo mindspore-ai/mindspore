@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace lite {
-// using namespace std;
 
 FusionPattern::FusionPattern(std::string name) { this->name = std::move(name); }
 

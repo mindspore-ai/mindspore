@@ -28,11 +28,17 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
 static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
-
-namespace {
+constexpr size_t kStringBufSplitLen = 4;
+constexpr size_t kNumStringBufDim0 = 0;
+constexpr size_t kNumStringBufDim1 = 1;
+constexpr size_t kNumStringBufDim2 = 2;
+constexpr size_t kNumStringBufDim3 = 3;
+constexpr size_t kNumStringBufDim4 = 4;
+constexpr int kNumBufLen = 5;
 float *ReadFileBuf(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";
@@ -53,7 +59,7 @@ float *ReadFileBuf(const char *file, size_t *size) {
 
   ifs.seekg(0, std::ios::end);
   *size = ifs.tellg();
-  std::unique_ptr<float[]> buf((new (std::nothrow) float[*size / sizeof(float) + 1]));
+  auto buf = std::make_unique<float[]>(*size / sizeof(float) + 1);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
     ifs.close();
@@ -317,9 +323,9 @@ int NetTrain::RunExportedNet() {
     return RET_ERROR;
   }
 
-  if (flags_->cpu_bind_mode_ == 2) {
+  if (flags_->cpu_bind_mode_ == MID_CPU) {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = MID_CPU;
-  } else if (flags_->cpu_bind_mode_ == 1) {
+  } else if (flags_->cpu_bind_mode_ == HIGHER_CPU) {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
   } else {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
@@ -378,9 +384,9 @@ int NetTrain::RunNetTrain() {
     return RET_ERROR;
   }
 
-  if (flags_->cpu_bind_mode_ == 2) {
+  if (flags_->cpu_bind_mode_ == MID_CPU) {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = MID_CPU;
-  } else if (flags_->cpu_bind_mode_ == 1) {
+  } else if (flags_->cpu_bind_mode_ == HIGHER_CPU) {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
   } else {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
@@ -463,8 +469,7 @@ void NetTrainFlags::InitInputDataList() {
 }
 
 void NetTrainFlags::InitResizeDimsList() {
-  std::string content;
-  content = this->resize_dims_in_;
+  std::string content = this->resize_dims_in_;
   std::vector<int64_t> shape;
   auto shape_strs = StringSplit(content, std::string(DELIM_COLON));
   for (const auto &shape_str : shape_strs) {
@@ -609,32 +614,32 @@ int NetTrain::PrintResult(const std::vector<std::string> &title,
     size_t len;
 
     len = iter.first.size();
-    if (len > columnLenMax.at(0)) {
-      columnLenMax.at(0) = len + 4;
+    if (len > columnLenMax.at(kNumStringBufDim0)) {
+      columnLenMax.at(kNumStringBufDim0) = len + kStringBufSplitLen;
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / flags_->epochs_);
-    if (len > columnLenMax.at(1)) {
-      columnLenMax.at(1) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim1], sizeof(stringBuf[1]), "%f", iter.second.second / flags_->epochs_);
+    if (len > columnLenMax.at(kNumStringBufDim1)) {
+      columnLenMax.at(kNumStringBufDim1) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[1]);
+    columns.emplace_back(stringBuf[kNumStringBufDim1]);
 
-    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
-    if (len > columnLenMax.at(2)) {
-      columnLenMax.at(2) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim2], sizeof(stringBuf[2]), "%f", iter.second.second / op_cost_total_);
+    if (len > columnLenMax.at(kNumStringBufDim2)) {
+      columnLenMax.at(kNumStringBufDim2) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[2]);
+    columns.emplace_back(stringBuf[kNumStringBufDim2]);
 
-    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%d", iter.second.first);
-    if (len > columnLenMax.at(3)) {
-      columnLenMax.at(3) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim3], sizeof(stringBuf[3]), "%d", iter.second.first);
+    if (len > columnLenMax.at(kNumStringBufDim3)) {
+      columnLenMax.at(kNumStringBufDim3) = len + kStringBufSplitLen;
     }
-    columns.emplace_back(stringBuf[3]);
+    columns.emplace_back(stringBuf[kNumStringBufDim3]);
 
-    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second);
-    if (len > columnLenMax.at(4)) {
-      columnLenMax.at(4) = len + 4;
+    len = snprintf(stringBuf[kNumStringBufDim4], sizeof(stringBuf[4]), "%f", iter.second.second);
+    if (len > columnLenMax.at(kNumStringBufDim4)) {
+      columnLenMax.at(kNumStringBufDim4) = len + kStringBufSplitLen;
     }
     columns.emplace_back(stringBuf[4]);
 
@@ -642,20 +647,20 @@ int NetTrain::PrintResult(const std::vector<std::string> &title,
   }
 
   printf("-------------------------------------------------------------------------\n");
-  for (int i = 0; i < 5; i++) {
-    auto printBuf = title[i];
-    if (printBuf.size() > columnLenMax.at(i)) {
-      columnLenMax.at(i) = printBuf.size();
+  for (int i = 0; i < kNumBufLen; i++) {
+    auto print_title_buf = title[i];
+    if (print_title_buf.size() > columnLenMax.at(i)) {
+      columnLenMax.at(i) = print_title_buf.size();
     }
-    printBuf.resize(columnLenMax.at(i), ' ');
-    printf("%s\t", printBuf.c_str());
+    print_title_buf.resize(columnLenMax.at(i), ' ');
+    printf("%s\t", print_title_buf.c_str());
   }
   printf("\n");
   for (size_t i = 0; i < rows.size(); i++) {
-    for (int j = 0; j < 5; j++) {
-      auto printBuf = rows[i][j];
-      printBuf.resize(columnLenMax.at(j), ' ');
-      printf("%s\t", printBuf.c_str());
+    for (int j = 0; j < kNumBufLen; j++) {
+      auto print_buf = rows[i][j];
+      print_buf.resize(columnLenMax.at(j), ' ');
+      printf("%s\t", print_buf.c_str());
     }
     printf("\n");
   }

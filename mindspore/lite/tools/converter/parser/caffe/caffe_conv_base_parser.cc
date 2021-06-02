@@ -19,6 +19,15 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kNumPadDims = 2;
+constexpr int kNumStrideDims = 2;
+constexpr int kNumDilationDims = 2;
+constexpr size_t kPadDim0 = 0;
+constexpr size_t kPadDim1 = 1;
+constexpr size_t kPadDim2 = 2;
+constexpr size_t kPadDim3 = 3;
+}  // namespace
 STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *pad) {
   /**
    *  padUp = padH;
@@ -33,34 +42,34 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
     }
 
     if (!convParam.has_pad_h()) {
-      (*pad)[0] = 0;
-      (*pad)[1] = 0;
-      (*pad)[2] = convParam.pad_w();
-      (*pad)[3] = convParam.pad_w();
+      (*pad)[kPadDim0] = 0;
+      (*pad)[kPadDim1] = 0;
+      (*pad)[kPadDim2] = convParam.pad_w();
+      (*pad)[kPadDim3] = convParam.pad_w();
     } else if (!convParam.has_pad_w()) {
-      (*pad)[0] = convParam.pad_h();
-      (*pad)[1] = convParam.pad_h();
-      (*pad)[2] = 0;
-      (*pad)[3] = 0;
+      (*pad)[kPadDim0] = convParam.pad_h();
+      (*pad)[kPadDim1] = convParam.pad_h();
+      (*pad)[kPadDim2] = 0;
+      (*pad)[kPadDim3] = 0;
     } else {
-      (*pad)[0] = convParam.pad_h();
-      (*pad)[1] = convParam.pad_h();
-      (*pad)[2] = convParam.pad_w();
-      (*pad)[3] = convParam.pad_w();
+      (*pad)[kPadDim0] = convParam.pad_h();
+      (*pad)[kPadDim1] = convParam.pad_h();
+      (*pad)[kPadDim2] = convParam.pad_w();
+      (*pad)[kPadDim3] = convParam.pad_w();
     }
   } else {
     const int num_pad_dims = convParam.pad_size();
-    int num_spatial_dims = std::max(num_pad_dims, 2);
+    int num_spatial_dims = std::max(num_pad_dims, kNumPadDims);
 
     std::vector<int64_t> vec;
     vec.reserve(num_spatial_dims);
     for (int i = 0; i < num_spatial_dims; ++i) {
       vec.push_back((num_pad_dims == 0) ? 0 : convParam.pad((num_pad_dims == 1) ? 0 : i));
     }
-    (*pad)[0] = vec[0];
-    (*pad)[1] = vec[0];
-    (*pad)[2] = vec[1];
-    (*pad)[3] = vec[1];
+    (*pad)[kPadDim0] = vec[0];
+    (*pad)[kPadDim1] = vec[0];
+    (*pad)[kPadDim2] = vec[1];
+    (*pad)[kPadDim3] = vec[1];
   }
   return RET_OK;
 }
@@ -79,7 +88,7 @@ STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &conv
     (*stride)[1] = convParam.stride_w();
   } else {
     const int num_stride_dims = convParam.stride_size();
-    int num_spatial_dims = std::max(num_stride_dims, 2);
+    int num_spatial_dims = std::max(num_stride_dims, kNumStrideDims);
 
     std::vector<int64_t> vec;
     vec.reserve(num_spatial_dims);
@@ -95,7 +104,7 @@ STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &conv
 STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &convParam,
                                            std::vector<int64_t> *dilation) {
   const int num_dilation_dims = convParam.dilation_size();
-  int num_spatial_dims = std::max(num_dilation_dims, 2);
+  int num_spatial_dims = std::max(num_dilation_dims, kNumDilationDims);
 
   std::vector<int64_t> vec;
   vec.reserve(num_spatial_dims);

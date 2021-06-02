@@ -30,11 +30,11 @@ std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
 std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
 }  // namespace
 namespace lite {
-
 STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   std::set<size_t> need_del_nodes;
   std::set<size_t> need_trans_format_nodes;
+  STATUS status = RET_OK;
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto type = node->primitive->value.type;
@@ -46,7 +46,7 @@ STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
     }
     std::vector<size_t> pre_nh2nc_nodes;
     std::vector<size_t> pre_not_trans_nodes;
-    auto status = FindPreNh2NcNodes(graph, iter - graph->nodes.begin(), &pre_nh2nc_nodes, &pre_not_trans_nodes);
+    status = FindPreNh2NcNodes(graph, iter - graph->nodes.begin(), &pre_nh2nc_nodes, &pre_not_trans_nodes);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "GenNewScaleTensor failed: " << status;
       return status;
@@ -63,14 +63,14 @@ STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
   }
   for (auto del_node_index : need_del_nodes) {
     auto node_name = graph->nodes.at(del_node_index)->name;
-    auto status = IsolateOneWayNode(graph, del_node_index);
+    status = IsolateOneWayNode(graph, del_node_index);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Isolate Node failed, node: " << node_name << ", error: " << status;
       return status;
     }
   }
 
-  auto status = TransWeightToNhwc(graph, need_trans_format_nodes);
+  status = TransWeightToNhwc(graph, need_trans_format_nodes);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "trans weight to nhwc failed";
     return status;
