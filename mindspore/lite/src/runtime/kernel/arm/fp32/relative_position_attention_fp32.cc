@@ -155,7 +155,7 @@ bool AttentionBiasTensorCheck(lite::Tensor *tensor) {
 }  // namespace
 
 int RelativePositionAttentionCPUKernel::CheckBiases() {
-  if (this->in_tensors_.size() == 16) {
+  if (this->in_tensors_.size() == 15) {
     param_->use_bias_ = true;
   }
   if (!param_->use_bias_) {
@@ -218,10 +218,6 @@ int RelativePositionAttentionCPUKernel::PrepareParam() {
   param_->col_tile_ = C8NUM;
   param_->bias_tile_ = C8NUM;
 #endif
-  if (param_->num_heads_ <= 1) {
-    MS_LOG(ERROR) << "RelativePositionAttention only support multi-heads.";
-    return RET_ERROR;
-  }
   param_->num_heads_ = pos_u_tensor_->shape().at(0);
   param_->batch_ = input_q_tensor_->shape().at(0);
   param_->d_model_ = input_q_tensor_->shape().at(2);
@@ -229,6 +225,10 @@ int RelativePositionAttentionCPUKernel::PrepareParam() {
   param_->k_seq_ = input_k_tensor_->shape().at(1);
   param_->v_seq_ = input_v_tensor_->shape().at(1);
   param_->p_seq_ = input_p_tensor_->shape().at(1);
+  if (param_->num_heads_ <= 1) {
+    MS_LOG(ERROR) << "RelativePositionAttention only support multi-heads.";
+    return RET_ERROR;
+  }
   if (param_->d_model_ % param_->num_heads_ != 0) {
     MS_LOG(ERROR) << "D_model should be a integer multiple of num_heads.";
     return RET_ERROR;
@@ -246,7 +246,7 @@ inline int PackLeftTensor(const lite::Tensor &tensor, Matrix *matrix, int row_ti
   matrix->batch_ = tensor.shape().at(0);
   matrix->row_ = tensor.shape().at(1);
   matrix->col_ = tensor.shape().at(2);
-  auto size = LeftMatrixPackElementSize(matrix, row_tile);
+  auto size = LeftMatrixPackElementSize(matrix, row_tile) * sizeof(float);
   MS_ASSERT(size != 0);
   matrix->packed_data_ = reinterpret_cast<float *>(allocator->Malloc(size));
   return PackLeftMatrix(matrix, row_tile);
@@ -261,7 +261,7 @@ inline int MallocLeftTensor(Matrix *mat, int row_tile, const AllocatorPtr &alloc
     return RET_MEMORY_FAILED;
   }
   if (need_pack_data) {
-    auto size = LeftMatrixPackElementSize(mat, row_tile);
+    auto size = LeftMatrixPackElementSize(mat, row_tile) * sizeof(float);
     MS_ASSERT(size != 0);
     mat->packed_data_ = reinterpret_cast<float *>(allocator->Malloc(size));
     if (mat->packed_data_ == nullptr) {
@@ -280,7 +280,7 @@ inline int MallocRightTensor(Matrix *mat, int col_tile, const AllocatorPtr &allo
     return RET_MEMORY_FAILED;
   }
   if (need_pack_data) {
-    auto size = RightMatrixPackElementSize(mat, col_tile);
+    auto size = RightMatrixPackElementSize(mat, col_tile) * sizeof(float);
     MS_ASSERT(size != 0);
     mat->packed_data_ = reinterpret_cast<float *>(allocator->Malloc(size));
     if (mat->packed_data_ == nullptr) {
@@ -388,8 +388,9 @@ int RelativePositionAttentionCPUKernel::PrepareBiases() {
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersInputs() {
   MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
-  if (input_q_tensor_ != nullptr || input_k_tensor_ != nullptr || input_v_tensor_ != nullptr ||
-      input_p_tensor_ != nullptr) {
+  if (input_q_mat_.data_ != nullptr || input_q_mat_.packed_data_ != nullptr || input_k_mat_.data_ != nullptr ||
+      input_k_mat_.packed_data_ != nullptr || input_v_mat_.data_ != nullptr || input_v_mat_.packed_data_ != nullptr ||
+      input_p_mat_.data_ != nullptr || input_p_mat_.packed_data_ != nullptr) {
     MS_LOG(ERROR) << "Run buffer data should not be packed.";
     return RET_ERROR;
   }
@@ -531,10 +532,7 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersLogits(int batch, int num_
 
 int RelativePositionAttentionCPUKernel::PackRunBuffersAttention(int batch, int num_heads, int depth) {
   MS_ASSERT(context_ != nullptr && context_->allocator != nullptr);
-  auto output_tensor = this->in_tensors_.at(11);
-  if (param_->use_bias_) {
-    output_tensor = this->in_tensors_.at(15);
-  }
+  auto output_tensor = this->out_tensors_.at(0);
 
   (void)InitMatrix(&softmax_mat_, batch * num_heads, param_->q_seq_, param_->k_seq_, false);
   auto ret = MallocLeftTensor(&softmax_mat_, param_->row_tile_, context_->allocator);
@@ -591,19 +589,33 @@ int RelativePositionAttentionCPUKernel::PackRunBuffers() {
   return RET_OK;
 }
 
+namespace {
+inline void FreeData(float **ptr, AllocatorPtr allocator = nullptr) {
+  if (ptr == nullptr) {
+    return;
+  }
+  if (allocator == nullptr) {
+    free(*ptr);
+  } else {
+    allocator->Free(*ptr);
+  }
+  *ptr = nullptr;
+}
+}  // namespace
+
 void RelativePositionAttentionCPUKernel::FreePackedWeights() {
-  free(weight_q_mat_.packed_data_);
-  free(weight_k_mat_.packed_data_);
-  free(weight_v_mat_.packed_data_);
-  free(weight_p_mat_.packed_data_);
-  free(weight_o_mat_.packed_data_);
+  FreeData(&(weight_q_mat_.packed_data_));
+  FreeData(&(weight_k_mat_.packed_data_));
+  FreeData(&(weight_v_mat_.packed_data_));
+  FreeData(&(weight_p_mat_.packed_data_));
+  FreeData(&(weight_o_mat_.packed_data_));
 }
 
 void RelativePositionAttentionCPUKernel::FreePackedBiases() {
-  free(bias_q_mat_.packed_data_);
-  free(bias_k_mat_.packed_data_);
-  free(bias_v_mat_.packed_data_);
-  free(bias_o_mat_.packed_data_);
+  FreeData(&(bias_q_mat_.packed_data_));
+  FreeData(&(bias_k_mat_.packed_data_));
+  FreeData(&(bias_v_mat_.packed_data_));
+  FreeData(&(bias_o_mat_.packed_data_));
 }
 
 void RelativePositionAttentionCPUKernel::FreePackedRunBuffers() {
@@ -611,35 +623,40 @@ void RelativePositionAttentionCPUKernel::FreePackedRunBuffers() {
     return;
   }
   auto allocator = context_->allocator;
-  allocator->Free(input_q_mat_.packed_data_);
-  allocator->Free(input_k_mat_.packed_data_);
-  allocator->Free(input_v_mat_.packed_data_);
-  allocator->Free(input_p_mat_.packed_data_);
-  allocator->Free(q2wq_mat_.data_);
-  allocator->Free(q2wq_with_pos_mat_.data_);
-  allocator->Free(q2wq_with_pu_trans_mat_.data_);
-  allocator->Free(q2wq_with_pu_trans_mat_.packed_data_);
-  allocator->Free(q2wq_with_pv_trans_mat_.data_);
-  allocator->Free(q2wq_with_pv_trans_mat_.packed_data_);
-  allocator->Free(k2wk_mat_.data_);
-  allocator->Free(k2wk_trans_mat_.data_);
-  allocator->Free(k2wk_trans_mat_.packed_data_);
-  allocator->Free(p2wp_mat_.data_);
-  allocator->Free(p2wp_trans_mat_.data_);
-  allocator->Free(p2wp_trans_mat_.packed_data_);
-  allocator->Free(v2wv_mat_.data_);
-  allocator->Free(v2wv_trans_mat_.data_);
-  allocator->Free(v2wv_trans_mat_.packed_data_);
-  allocator->Free(logits_with_u_mat_.data_);
-  allocator->Free(logits_with_v_mat_.data_);
-  allocator->Free(logits_with_v_pad_mat_.data_);
-  allocator->Free(logits_with_v_shifted_mat_.data_);
-  allocator->Free(logits_mat_.data_);
-  allocator->Free(softmax_mat_.data_);
-  allocator->Free(softmax_mat_.packed_data_);
-  allocator->Free(logits2v_mat_.data_);
-  allocator->Free(logits2v_trans_mat_.data_);
-  allocator->Free(logits2v_trans_mat_.packed_data_);
+  FreeData(&(input_q_mat_.packed_data_), allocator);
+  FreeData(&(input_k_mat_.packed_data_), allocator);
+  FreeData(&(input_v_mat_.packed_data_), allocator);
+  FreeData(&(input_p_mat_.packed_data_), allocator);
+
+  FreeData(&(q2wq_mat_.data_), allocator);
+  FreeData(&(q2wq_with_pos_mat_.data_), allocator);
+  FreeData(&(q2wq_with_pu_trans_mat_.data_), allocator);
+  FreeData(&(q2wq_with_pu_trans_mat_.packed_data_), allocator);
+  FreeData(&(q2wq_with_pv_trans_mat_.data_), allocator);
+  FreeData(&(q2wq_with_pv_trans_mat_.packed_data_), allocator);
+
+  FreeData(&(k2wk_mat_.data_), allocator);
+  FreeData(&(k2wk_trans_mat_.data_), allocator);
+  FreeData(&(k2wk_trans_mat_.packed_data_), allocator);
+
+  FreeData(&(p2wp_mat_.data_), allocator);
+  FreeData(&(p2wp_trans_mat_.data_), allocator);
+  FreeData(&(p2wp_trans_mat_.packed_data_), allocator);
+
+  FreeData(&(v2wv_mat_.data_), allocator);
+  FreeData(&(v2wv_trans_mat_.data_), allocator);
+  FreeData(&(v2wv_trans_mat_.packed_data_), allocator);
+
+  FreeData(&(logits_with_u_mat_.data_), allocator);
+  FreeData(&(logits_with_v_mat_.data_), allocator);
+  FreeData(&(logits_with_v_pad_mat_.data_), allocator);
+  FreeData(&(logits_with_v_shifted_mat_.data_), allocator);
+  FreeData(&(logits_mat_.data_), allocator);
+  FreeData(&(softmax_mat_.data_), allocator);
+  FreeData(&(softmax_mat_.packed_data_), allocator);
+  FreeData(&(logits2v_mat_.data_), allocator);
+  FreeData(&(logits2v_trans_mat_.data_), allocator);
+  FreeData(&(logits2v_trans_mat_.packed_data_), allocator);
 }
 
 void RelativePositionAttentionCPUKernel::FreeAllPackData() {
