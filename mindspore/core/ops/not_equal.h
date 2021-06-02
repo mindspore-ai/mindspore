@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,27 @@
 
 #ifndef MINDSPORE_CORE_OPS_NOT_EQUAL_H_
 #define MINDSPORE_CORE_OPS_NOT_EQUAL_H_
+#include <vector>
+#include <memory>
+
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameNotEqual = "NotEqual";
+constexpr auto kNameNotEqual = prim::kNotEqual;
 class NotEqual : public PrimitiveC {
  public:
-  NotEqual() : PrimitiveC(kNameNotEqual) { InitIOName({"x", "y"}, {"output"}); }
+  NotEqual() : PrimitiveC(prim::kPrimNotEqual->name()) { InitIOName({"x", "y"}, {"output"}); }
   ~NotEqual() = default;
   MS_DECLARE_PARENT(NotEqual, PrimitiveC);
   void Init() {}
 };
+
+AbstractBasePtr NotEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const std::vector<AbstractBasePtr> &input_args);
+using PrimitiveNotEqualPtr = std::shared_ptr<NotEqual>;
 }  // namespace ops
 }  // namespace mindspore
 

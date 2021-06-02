@@ -24,6 +24,8 @@
 #include "ops/exp.h"
 #include "ops/real_div.h"
 #include "ops/add.h"
+#include "ops/equal.h"
+#include "ops/not_equal.h"
 #include "abstract/abstract_function.h"
 #include "abstract/infer_functions.h"
 #include "ops/tile.h"
@@ -176,8 +178,9 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimAdd, {ops::AddInfer, nullptr, false}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, nullptr, true}},
     {prim::kPrimSub, {InferImplSub, nullptr, false}},
-    {prim::kPrimEqual, {InferImplEqual, nullptr, true}},
     {prim::kPrimTile, {ops::TileInfer, nullptr, true}},
+    {prim::kPrimEqual, {ops::EqualInfer, nullptr, true}},
+    {prim::kPrimNotEqual, {ops::NotEqualInfer, nullptr, true}},
     {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAll, {InferImplReduceFunc, nullptr, true}},

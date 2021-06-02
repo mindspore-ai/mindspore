@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "ops/equal.h"
 #include <map>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "ops/equal.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
@@ -30,17 +30,27 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kGreaterEqual, 2, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   return BroadCastInferShape(op_name, input_args);
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto op_name = prim->name();
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kGreaterEqual, 2, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, op_name);
 }
 }  // namespace
 
