@@ -741,6 +741,24 @@ class PConstant : public PBase<PConstant<T> > {
     return tmp_data;
   }
 
+  template <typename TD>
+  bool TensorCopyData(const tensor::TensorPtr &src_tensor_ptr, const tensor::TensorPtr &dst_tensor_ptr,
+                      const PrimitivePtr &calcu_type, size_t mem_size) {
+    auto *data = reinterpret_cast<TD *>(src_tensor_ptr->data_c());
+    auto *data2 = reinterpret_cast<TD *>(dst_tensor_ptr->data_c());
+    if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      return false;
+    }
+    for (int i = 0; i < src_tensor_ptr->DataSize(); i++) {
+      if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
+        return false;
+      }
+      data2[i] = CalcuConstant(data2[i], calcu_type);
+    }
+    return true;
+  }
+
+  // calculate const with different operations
   AnfNodePtr CalcuConstantTensor(const AnfNodePtr &node, const ValuePtr &value, const PrimitivePtr &calcu_type) {
     tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(value);
     TypeId tensor_type = tensor_ptr->Dtype()->type_id();
@@ -754,42 +772,18 @@ class PConstant : public PBase<PConstant<T> > {
     }
     if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
         (tensor_type == TypeId::kNumberTypeFloat64)) {
-      float *data = reinterpret_cast<float *>(tensor_ptr->data_c());
-      float *data2 = reinterpret_cast<float *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!TensorCopyData<float>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
         return nullptr;
-      }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
       }
     }
     if ((tensor_type == TypeId::kNumberTypeInt32) || (tensor_type == TypeId::kNumberTypeInt)) {
-      int *data = reinterpret_cast<int *>(tensor_ptr->data_c());
-      int *data2 = reinterpret_cast<int *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!TensorCopyData<int>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
         return nullptr;
-      }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
       }
     }
     if (tensor_type == TypeId::kNumberTypeFloat64) {
-      double *data = reinterpret_cast<double *>(tensor_ptr->data_c());
-      double *data2 = reinterpret_cast<double *>(new_tensor_ptr->data_c());
-      if (memcpy_s(data2, mem_size, data, mem_size) != 0) {
+      if (!TensorCopyData<double>(tensor_ptr, new_tensor_ptr, calcu_type, mem_size)) {
         return nullptr;
-      }
-      for (int i = 0; i < tensor_ptr->DataSize(); i++) {
-        if (data2[i] == 0 && calcu_type == prim::kPrimReciprocal) {
-          return nullptr;
-        }
-        data2[i] = CalcuConstant(data2[i], calcu_type);
       }
     }
     auto new_vnode = NewValueNode(new_tensor_ptr);
@@ -899,43 +893,12 @@ class PConstant : public PBase<PConstant<T> > {
     if (tensor_ptr_1 == nullptr || tensor_ptr_2 == nullptr || node_3->abstract() == nullptr) {
       return nullptr;
     }
-
-    auto tensor_1_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
-    auto tensor_2_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
-    TypePtr tensor_1_type_ptr = tensor_1_abstract->element()->BuildType();
-    TypePtr tensor_2_type_ptr = tensor_2_abstract->element()->BuildType();
-
-    ShapeVector tensor_out_shape;
-    int data_out_size;
-    tensor::TensorPtr new_tensor_ptr;
-
-    if ((tensor_1_abstract->shape()->shape() == tensor_2_abstract->shape()->shape()) &&
-        (tensor_1_type_ptr->type_id() == tensor_2_type_ptr->type_id())) {
-      // If two constant nodes have the same shape, then create a new one with this shape
-      tensor_out_shape = tensor_1_abstract->shape()->shape();
-      data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-
-      new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_1_type_ptr->type_id(), tensor_out_shape);
-    } else {
-      // If two constant nodes have different shapes, then create a new one node with the shape of the 3rd node
-      auto tensor_3_abstract = node_3->abstract()->cast<abstract::AbstractTensorPtr>();
-
-      TypePtr tensor_3_type_ptr = tensor_3_abstract->element()->BuildType();
-      if ((tensor_1_type_ptr->type_id() != tensor_3_type_ptr->type_id()) ||
-          (tensor_2_type_ptr->type_id() != tensor_3_type_ptr->type_id())) {
-        return nullptr;
-      }
-      tensor_out_shape = tensor_3_abstract->shape()->shape();
-      data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
-      if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
-        return nullptr;
-      }
-      if ((tensor_ptr_2->DataSize() > 1) && (tensor_ptr_2->DataSize() != data_out_size)) {
-        return nullptr;
-      }
-      new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
+    tensor::TensorPtr new_tensor_ptr = GetNewTensor(vnode_1, vnode_2, node_3);
+    if (new_tensor_ptr == nullptr) {
+      return nullptr;
     }
-
+    ShapeVector tensor_out_shape = new_tensor_ptr->shape();
+    int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
     size_t mem_size = GetTypeByte(new_tensor_ptr->Dtype()) * IntToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
 
@@ -986,6 +949,44 @@ class PConstant : public PBase<PConstant<T> > {
   mutable bool is_new_value_node_{false};
   mutable bool captured_{false};
   mutable bool changed_shape_{false};
+
+ private:
+  tensor::TensorPtr GetNewTensor(const AnfNodePtr &vnode_1, const AnfNodePtr &vnode_2, const AnfNodePtr &node_3) const {
+    auto value_1 = GetValueNode(vnode_1);
+    auto value_2 = GetValueNode(vnode_2);
+    auto tensor_ptr_1 = dyn_cast<tensor::Tensor>(value_1);
+    auto tensor_ptr_2 = dyn_cast<tensor::Tensor>(value_2);
+    auto tensor_1_abstract = vnode_1->abstract()->cast<abstract::AbstractTensorPtr>();
+    auto tensor_2_abstract = vnode_2->abstract()->cast<abstract::AbstractTensorPtr>();
+
+    TypePtr tensor_1_type_ptr = tensor_1_abstract->element()->BuildType();
+    TypePtr tensor_2_type_ptr = tensor_2_abstract->element()->BuildType();
+    if ((tensor_1_abstract->shape()->shape() == tensor_2_abstract->shape()->shape()) &&
+        (tensor_1_type_ptr->type_id() == tensor_2_type_ptr->type_id())) {
+      // If two constant nodes have the same shape, then create a new one with this shape
+      auto tensor_out_shape = tensor_1_abstract->shape()->shape();
+
+      return std::make_shared<tensor::Tensor>(tensor_1_type_ptr->type_id(), tensor_out_shape);
+    } else {
+      // If two constant nodes have different shapes, then create a new one node with the shape of the 3rd node
+      auto tensor_3_abstract = node_3->abstract()->cast<abstract::AbstractTensorPtr>();
+
+      TypePtr tensor_3_type_ptr = tensor_3_abstract->element()->BuildType();
+      if ((tensor_1_type_ptr->type_id() != tensor_3_type_ptr->type_id()) ||
+          (tensor_2_type_ptr->type_id() != tensor_3_type_ptr->type_id())) {
+        return nullptr;
+      }
+      auto tensor_out_shape = tensor_3_abstract->shape()->shape();
+      int data_out_size = std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int>());
+      if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {
+        return nullptr;
+      }
+      if ((tensor_ptr_2->DataSize() > 1) && (tensor_ptr_2->DataSize() != data_out_size)) {
+        return nullptr;
+      }
+      return std::make_shared<tensor::Tensor>(tensor_3_type_ptr->type_id(), tensor_out_shape);
+    }
+  }
 };
 
 // Macro for binary operation functions

@@ -35,8 +35,8 @@ namespace mindspore {
 namespace prim {
 MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(name) {
   fn_cache_.clear();
-  signatures_ = std::vector<Signature>({// def multitype(*args:ref):
-                                        {"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
+  // def multitype(*args:ref):
+  signatures_ = std::vector<Signature>({{"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
 }
 
 void MultitypeFuncGraph::Register(const TypePtrList &types, specialize_fn s_fn) {

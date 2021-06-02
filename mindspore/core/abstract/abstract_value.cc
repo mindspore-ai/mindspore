@@ -297,7 +297,7 @@ std::size_t AbstractSequeue::hash() const {
   return hash_sum;
 }
 
-bool AbstractTuple::operator==(const AbstractTuple &other) const {
+bool AbstractSequeue::operator==(const AbstractSequeue &other) const {
   if (&other == this) {
     return true;
   }
@@ -312,6 +312,8 @@ bool AbstractTuple::operator==(const AbstractTuple &other) const {
   }
   return true;
 }
+
+bool AbstractTuple::operator==(const AbstractTuple &other) const { return AbstractSequeue::operator==(other); }
 
 bool AbstractTuple::operator==(const AbstractBase &other) const {
   if (&other == this) {
@@ -326,21 +328,7 @@ bool AbstractTuple::operator==(const AbstractBase &other) const {
   return false;
 }
 
-bool AbstractList::operator==(const AbstractList &other) const {
-  if (&other == this) {
-    return true;
-  }
-
-  if (elements_.size() != other.elements_.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < elements_.size(); i++) {
-    if (!(*(elements_[i]) == *(other.elements_[i]))) {
-      return false;
-    }
-  }
-  return true;
-}
+bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequeue::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {
   if (&other == this) {
@@ -465,9 +453,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
     if (element == nullptr) {
       return nullptr;
     }
-    auto shape = ShapeJoin(this->shape(), other_undetermined_tensor->shape());
-    auto ret = std::make_shared<AbstractUndetermined>(element, shape);
-    return ret;
+    return std::make_shared<AbstractUndetermined>(element, ShapeJoin(shape(), other_undetermined_tensor->shape()));
   }
   auto other_tensor = dyn_cast<AbstractTensor>(other);
   if (other_tensor == nullptr) {
@@ -480,8 +466,7 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   if (element == nullptr) {
     return nullptr;
   }
-  auto shape = ShapeJoin(this->shape(), other_tensor->shape());
-  return std::make_shared<AbstractTensor>(element, shape);
+  return std::make_shared<AbstractTensor>(element, ShapeJoin(this->shape(), other_tensor->shape()));
 }
 
 bool AbstractTensor::equal_to(const AbstractTensor &other) const {
@@ -1076,7 +1061,8 @@ std::size_t AbstractBasePtrListHash(const AbstractBasePtrList &args_spec_list) {
   std::size_t hash_value = 0;
   // Hashing all elements is costly, so only take at most 4 elements into account based on
   // some experiments.
-  for (size_t i = 0; (i < args_spec_list.size()) && (i < 4); i++) {
+  constexpr auto kMaxElementsNum = 4;
+  for (size_t i = 0; (i < args_spec_list.size()) && (i < kMaxElementsNum); i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
     hash_value = hash_combine(hash_value, args_spec_list[i]->hash());
   }
