@@ -40,6 +40,7 @@ def _get_tik():
 
 
 def _error_feedback(input_x_shape):
+    """error feedback"""
     support_shape = [(32, 128, 7, 7, 16),
                      (32, 32, 7, 7, 16),
                      (32, 32, 14, 14, 16),

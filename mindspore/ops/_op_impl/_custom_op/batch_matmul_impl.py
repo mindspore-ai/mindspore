@@ -44,6 +44,7 @@ def _get_flattern_shape(shape):
 
 
 def _error_feedback(input_shape):
+    """error feedback"""
     support_shape = [((8, 128, 128), (8, 128, 128), "float32", False, True),
                      ((36, 128, 128), (36, 128, 128), "float32", False, True),
                      ((5, 128, 128), (5, 128, 128), "float32", False, True),

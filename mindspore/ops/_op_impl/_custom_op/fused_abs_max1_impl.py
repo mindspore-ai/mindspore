@@ -55,6 +55,7 @@ def _update_tik(tik_instance, input_x_ub, broadcast_0_local_ub, block_index, res
 
 
 def _error_feedback(input_info):
+    """error feedback"""
     support_shape = [((1, 128, 128), "float32"),
                      ((2, 128, 128), "float32"),
                      ((4, 128, 128), "float32"),

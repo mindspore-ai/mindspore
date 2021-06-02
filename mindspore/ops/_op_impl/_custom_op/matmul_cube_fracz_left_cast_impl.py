@@ -45,6 +45,7 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
 
 
 def _clip_num(num):
+    """clip number"""
     if num == 0:
         num = 1
     return num
