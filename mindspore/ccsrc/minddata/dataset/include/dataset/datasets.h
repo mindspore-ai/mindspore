@@ -2332,6 +2332,78 @@ std::shared_ptr<RandomDataDataset> RandomData(const int32_t &total_rows = 0, con
   return ds;
 }
 
+/// \class SBUDataset
+/// \brief A source dataset that reads and parses SBU dataset.
+class SBUDataset : public Dataset {
+ public:
+  /// \brief Constructor of SBUDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
+                      const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SBUDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+                      const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of SBUDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+                      const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of SBUDataset.
+  ~SBUDataset() = default;
+};
+
+/// \brief Function to create a SBUDataset.
+/// \notes The generated dataset has two columns ["image", "caption"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current SBUDataset.
+inline std::shared_ptr<SBUDataset> SBU(const std::string &dataset_dir, bool decode = false,
+                                       const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SBUDataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a SBUDataset.
+/// \notes The generated dataset has two columns ["image", "caption"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current SBUDataset.
+inline std::shared_ptr<SBUDataset> SBU(const std::string &dataset_dir, bool decode, const Sampler *sampler,
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SBUDataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
+/// \brief Function to create a SBUDataset.
+/// \notes The generated dataset has two columns ["image", "caption"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current SBUDataset.
+inline std::shared_ptr<SBUDataset> SBU(const std::string &dataset_dir, bool decode,
+                                       const std::reference_wrapper<Sampler> sampler,
+                                       const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<SBUDataset>(StringToChar(dataset_dir), decode, sampler, cache);
+}
+
 /// \class TextFileDataset
 /// \brief A source dataset that reads and parses datasets stored on disk in text format.
 class TextFileDataset : public Dataset {

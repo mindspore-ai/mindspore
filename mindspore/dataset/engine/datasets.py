@@ -64,7 +64,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
-    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset
+    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
+    check_sbu_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -5610,6 +5611,120 @@ class CSVDataset(SourceDataset):
     def parse(self, children=None):
         return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
                            self.num_samples, self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class SBUDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the SBU dataset.
+
+    The generated dataset has two columns :py:obj:`[image, caption]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`caption` is of the string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        decode (bool, optional): Decode the images after reading (default=False).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> sbu_dataset_dir = "/path/to/sbu_dataset_directory"
+        >>> # Read 3 samples from SBU dataset
+        >>> dataset = ds.SBUDataset(dataset_dir=sbu_dataset_dir, num_samples=3)
+
+    About SBU dataset:
+
+    SBU dataset is a large captioned photo collection.
+    It contains one million images with associated visually relevant captions.
+
+    You should manually download the images using official download.m by replacing 'urls{i}(24, end)' with
+    'urls{i}(24:1:end)' and keep the directory as below.
+
+    .. code-block::
+
+        .
+        └─ dataset_dir
+           ├── SBU_captioned_photo_dataset_captions.txt
+           ├── SBU_captioned_photo_dataset_urls.txt
+           └── sbu_images
+               ├── m_3326_3596303505_3ce4c20529.jpg
+               ├── ......
+               └── m_2522_4182181099_c3c23ab1cc.jpg
+
+    Citation:
+
+    .. code-block::
+
+        @inproceedings{Ordonez:2011:im2text,
+          Author    = {Vicente Ordonez and Girish Kulkarni and Tamara L. Berg},
+          Title     = {Im2Text: Describing Images Using 1 Million Captioned Photographs},
+          Booktitle = {Neural Information Processing Systems ({NIPS})},
+          Year      = {2011},
+        }
+    """
+
+    @check_sbu_dataset
+    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, decode=False,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.SBUNode(self.dataset_dir, self.decode, self.sampler)
 
 
 class _Flowers102Dataset:

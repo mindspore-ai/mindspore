@@ -18,6 +18,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         minddata_node.cc
         mnist_node.cc
         random_node.cc
+        sbu_node.cc
         text_file_node.cc
         tf_record_node.cc
         usps_node.cc
