@@ -56,6 +56,8 @@ std::vector<PrimitivePtr> GetExpandOps() {
     prim::kPrimLogSoftmax,
     prim::kPrimLogSoftmaxGrad,
     prim::kPrimTile,
+    prim::kPrimMatMul,
+    prim::kPrimBatchMatMul,
 #if ENABLE_D
     prim::kPrimSqrtGrad,
     prim::kPrimClipByNormNoDivSum,
