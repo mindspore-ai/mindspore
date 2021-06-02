@@ -456,9 +456,9 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
       auto primal_debug_infos = nd->primal_debug_infos();
       if (!primal_debug_infos.empty()) {
         gsub->buffer << "      # Corresponding forward node candidate:\n";
-        for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
-          gsub->buffer << trace::GetDebugInfo(*iter, "      # ", kSourceLineTipDiscard) << "#"
-                       << label_manage::Label(*iter) << "\n";
+        for (auto &primal_debug_info : primal_debug_infos) {
+          gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "#"
+                       << label_manage::Label(primal_debug_info) << "\n";
         }
       }
     } else {
@@ -466,8 +466,8 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
       auto primal_debug_infos = nd->primal_debug_infos();
       if (!primal_debug_infos.empty()) {
         gsub->buffer << "      # Corresponding forward node candidate:\n";
-        for (auto iter = primal_debug_infos.begin(); iter != primal_debug_infos.end(); iter++) {
-          gsub->buffer << trace::GetDebugInfo(*iter, "      # ", kSourceLineTipDiscard) << "\n";
+        for (auto &primal_debug_info : primal_debug_infos) {
+          gsub->buffer << trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard) << "\n";
         }
       }
     }
@@ -588,11 +588,11 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   }
   auto realpath = Common::GetRealPath(path);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << path;
+    MS_LOG(ERROR) << "Get real path failed, path=" << path;
     return;
   }
 
-  ChangeFileMode(realpath.value(), S_IRWXU);
+  ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {
@@ -634,7 +634,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
     return;
   }
 
-  ChangeFileMode(realpath.value(), S_IRWXU);
+  ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {

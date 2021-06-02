@@ -127,10 +127,12 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
     }
-    std::ofstream json_copy(realpath.value());
+    const std::string file_path = realpath.value();
+    ChangeFileMode(file_path, S_IWUSR);
+    std::ofstream json_copy(file_path);
     json_copy << json_file.rdbuf();
     json_copy.close();
-    ChangeFileMode(realpath.value(), S_IRUSR);
+    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
@@ -151,10 +153,12 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed in CopyHcclJsonToDir.";
   } else {
-    std::ofstream json_copy(realpath.value());
+    const std::string file_path = realpath.value();
+    ChangeFileMode(file_path, S_IWUSR);
+    std::ofstream json_copy(file_path);
     json_copy << json_file.rdbuf();
     json_copy.close();
-    ChangeFileMode(realpath.value(), S_IRUSR);
+    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
@@ -171,10 +175,12 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     MS_EXCEPTION_IF_NULL(context);
     ms_info["device_target"] = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     ms_info["ms_version"] = "1.2.0";
-    std::ofstream json_create(realpath.value());
+    const std::string file_path = realpath.value();
+    ChangeFileMode(file_path, S_IWUSR);
+    std::ofstream json_create(file_path);
     json_create << ms_info;
     json_create.close();
-    ChangeFileMode(realpath.value(), S_IRUSR);
+    ChangeFileMode(file_path, S_IRUSR);
   }
 }
 
@@ -192,16 +198,18 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     MS_LOG(ERROR) << "Get real path failed.";
     return false;
   }
-  std::ofstream fd;
-  fd.open(realpath.value(), std::ios::binary | std::ios::out);
+  const std::string file_path = realpath.value();
+  ChangeFileMode(file_path, S_IWUSR);
+  std::ofstream fd(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(ERROR) << "Open file " << realpath.value() << " fail.";
+    MS_LOG(ERROR) << "Open file " << file_path << " failed.";
     return false;
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
   fd << npy_header;
   (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
   fd.close();
+  ChangeFileMode(file_path, S_IRUSR);
   return true;
 }
 

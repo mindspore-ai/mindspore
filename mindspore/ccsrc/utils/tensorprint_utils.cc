@@ -21,6 +21,7 @@
 #include <vector>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
+#include "utils/utils.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
 
@@ -288,6 +289,7 @@ void TensorPrint::operator()() {
       }
     }
   } else {
+    ChangeFileMode(print_file_path_, S_IWUSR);
     std::fstream output(print_file_path_, std::ios::out | std::ios::trunc | std::ios::binary);
     while (true) {
       acltdtDataset *acl_dataset = acltdtCreateDataset();
@@ -303,11 +305,7 @@ void TensorPrint::operator()() {
       }
     }
     output.close();
-    std::string path_string = print_file_path_;
-    if (chmod(common::SafeCStr(path_string), S_IRUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << print_file_path_ << " fail.";
-      return;
-    }
+    ChangeFileMode(print_file_path_, S_IRUSR);
   }
 }
 #endif

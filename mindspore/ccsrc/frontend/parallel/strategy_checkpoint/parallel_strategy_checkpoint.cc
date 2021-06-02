@@ -174,6 +174,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
     return FAILED;
   }
   output.close();
+  ChangeFileMode(save_file_, S_IRUSR | S_IWUSR);
   return SUCCESS;
 }
 

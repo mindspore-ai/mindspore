@@ -573,12 +573,15 @@ const std::set<std::string> DynamicShapeConstInputToAttr = {
   kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName, kReduceAllOpName,       kReduceAnyOpName, kConcatOpName};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
+  if (access(file_name.c_str(), F_OK) == -1) {
+    return;
+  }
   try {
-    if (chmod(file_name.c_str(), mode) != 0) {
-      MS_LOG(DEBUG) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+    if (chmod(common::SafeCStr(file_name), mode) != 0) {
+      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
     }
   } catch (std::exception &e) {
-    MS_LOG(DEBUG) << "File `" << file_name << "` change mode failed! May be not exist.";
+    MS_LOG(WARNING) << "File `" << file_name << "` change mode failed! May be not exist.";
   }
 }
 

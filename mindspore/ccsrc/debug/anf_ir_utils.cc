@@ -634,18 +634,23 @@ void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph) {
     return;
   }
 
-  auto real_filename = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
+  auto filepath = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
+  auto real_filepath = Common::GetRealPath(filepath);
+  if (!real_filepath.has_value()) {
+    MS_LOG(ERROR) << "The export ir path: " << filepath << " is not illegal.";
+    return;
+  }
+  ChangeFileMode(real_filepath.value(), S_IWUSR);
   AnfExporter exporter;
-  ChangeFileMode(real_filename, S_IRWXU);
-  exporter.ExportFuncGraph(real_filename, func_graph);
+  exporter.ExportFuncGraph(real_filepath.value(), func_graph);
   // set file mode to read only by user
-  ChangeFileMode(real_filename, S_IRUSR);
+  ChangeFileMode(real_filepath.value(), S_IRUSR);
 }
 
 void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
   auto real_filename = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
+  ChangeFileMode(real_filename, S_IWUSR);
   AnfExporter exporter("", false);
-  ChangeFileMode(real_filename, S_IRWXU);
   exporter.ExportFuncGraph(real_filename, graphs);
   // set file mode to read only by user
   ChangeFileMode(real_filename, S_IRUSR);
