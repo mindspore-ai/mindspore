@@ -84,13 +84,13 @@ std::mutex PynativeExecutor::instance_lock_;
 constexpr auto implcast = "implcast";
 constexpr int zero = 0;
 
-template <typename T, typename... Args>
-void PynativeExecutorTry(const std::function<void(T *ret, const Args &...)> &method, T *ret, const Args &... args) {
+template <typename... Args>
+py::object PynativeExecutorTry(const std::function<py::object(const Args &...)> &method, const Args &... args) {
   const auto inst = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
   try {
-    method(ret, args...);
+    return method(args...);
   } catch (const py::error_already_set &ex) {
     // print function call stack info before release
     std::ostringstream oss;
@@ -600,9 +600,7 @@ py::object RunOp(const py::args &args) {
   OpExecInfoPtr op_exec_info = executor->forward_executor()->GenerateOpExecInfo(args);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_exec_info->op_name << " start, args: " << args.size();
-  py::object ret = py::none();
-  PynativeExecutorTry(executor->forward_executor()->RunOpS, &ret, op_exec_info);
-  return ret;
+  return PynativeExecutorTry(executor->forward_executor()->RunOpS, op_exec_info);
 }
 
 GradExecutorPtr ForwardExecutor::grad() const {
@@ -611,17 +609,14 @@ GradExecutorPtr ForwardExecutor::grad() const {
   return grad_executor;
 }
 
-void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_info) {
-  MS_EXCEPTION_IF_NULL(ret);
+py::object ForwardExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   if (op_exec_info->op_name == prim::kPrimMixedPrecisionCast->name()) {
     py::tuple res = RunOpWithInitBackendPolicy(op_exec_info);
     if (res.size() == 1) {
-      *ret = res[0];
-      return;
+      return res[0];
     }
-    *ret = std::move(res);
-    return;
+    return std::move(res);
   }
   // make cnode for building grad graph if grad flag is set.
   abstract::AbstractBasePtrList args_spec_list;
@@ -637,12 +632,10 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   MS_EXCEPTION_IF_NULL(prim);
   py::dict output = abstract::ConvertAbstractToPython(op_exec_info->abstract);
   if (!output["value"].is_none()) {
-    *ret = output["value"];
-    return;
+    return output["value"];
   }
   if (prim->is_const_prim()) {
-    *ret = py::cast("");
-    return;
+    return py::cast("");
   }
   // add output abstract info into cache
   if (!is_find && !op_exec_info->is_dynamic_shape) {
@@ -677,7 +670,7 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
   } else {
     node_abs_map_.clear();
   }
-  *ret = out_real;
+  return out_real;
 }
 
 OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
@@ -873,9 +866,7 @@ py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type
   if (obj_id != implcast) {
     cast_struct_map_[obj_id] = op_exec;
   }
-  py::object ret = py::none();
-  RunOpInner(&ret, op_exec);
-  return ret;
+  return RunOpInner(op_exec);
 }
 
 py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name,
@@ -908,9 +899,7 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
           }
           grad->op_index_map()[cast_struct->op_name]++;
         }
-        py::object ret = py::none();
-        RunOpInner(&ret, cast_struct);
-        return ret;
+        return RunOpInner(cast_struct);
       } else {
         return DoAutoCast(obj, cast_type->type_id(), op_name, index, id);
       }
@@ -2062,7 +2051,7 @@ bool DynamicAnalysis::IsDynamicCell(const py::object &cell) {
   return ret;
 }
 
-void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const py::args &args) {
+py::object GradExecutor::NewGraphInner(const py::object &cell, const py::args &args) {
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "NewGraphInner start " << args.size() << " " << cell_id;
   // check whether cell needed to construct grad graph
@@ -2086,7 +2075,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     }
     PushCurrentCellOpInfoToStack();
     MS_LOG(INFO) << "NewGraph already compiled";
-    return;
+    return py::none();
   }
   // Init resource for constructing forward graph and grad graph
   curr_g_ = std::make_shared<FuncGraph>();
@@ -2126,6 +2115,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
       }
     }
   }
+  return py::none();
 }
 
 void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args) {
@@ -2246,13 +2236,13 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
   }
 }
 
-void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args) {
+py::object GradExecutor::EndGraphInner(const py::object &cell, const py::object &out, const py::args &args) {
   const auto &cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "EndGraphInner start " << args.size() << " " << cell_id;
   if (graph_stack_.empty() && CheckCellGraph(cell_id) && !CheckDynamicCell(cell_id)) {
     PopCurrentCellOpInfoFromStack();
     MS_LOG(INFO) << "Endgraph already compiled";
-    return;
+    return py::none();
   }
   auto out_id = GetId(out);
   // x =op1, y =op2, return (x, y)
@@ -2277,6 +2267,7 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
     }
   }
   EndGraphByOutId(cell, cell_id, out, out_id, args);
+  return py::none();
 }
 
 void GradExecutor::EndGraphByOutId(const py::object &cell, const std::string &cell_id, const py::object &out,
@@ -2594,8 +2585,8 @@ void GradExecutor::SaveAllValueNodeTensors(const FuncGraphPtr &graph) {
   all_value_node_tensors_ = all_value_node_tensors;
 }
 
-void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, const py::object &cell,
-                                const py::object &weights, const py::args &args) {
+py::object GradExecutor::GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                                      const py::args &args) {
   auto size = args.size();
   py::object sens = py::none();
   py::object forward_args = args;
@@ -2607,7 +2598,7 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
     UpdateTopCellInfo(cell_id, false);
     op_index_map_.clear();
     MS_LOG(INFO) << "Gradgraph already compiled";
-    return;
+    return py::none();
   }
 
   // Nested graph
@@ -2649,6 +2640,7 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
   ClearUselessRes(df_builder, cell, cell_id);
   UpdateTopCellInfo(cell_id, true);
   resource->Clean();
+  return py::none();
 }
 
 void GradExecutor::ClearDynamicTopRes(const std::string &cell_id) {
@@ -3030,8 +3022,7 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
   return BaseRefToPyData(forward_run);
 }
 
-void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args) {
-  MS_EXCEPTION_IF_NULL(ret);
+py::object GradExecutor::RunGradGraph(const py::object &cell, const py::tuple &args) {
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "Run start cell id " << cell_id;
   auto has_sens = std::any_of(top_cell_list_.begin(), top_cell_list_.end(), [&cell_id](const TopCellInfoPtr &value) {
@@ -3062,16 +3053,17 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   BaseRef value = (*run)(arg_list);
   set_grad_runing(false);
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();
-  *ret = BaseRefToPyData(value);
+  py::object out = BaseRefToPyData(value);
   auto do_vm_compiled = std::any_of(
     top_cell_list_.begin(), top_cell_list_.end(),
     [&cell_id](const TopCellInfoPtr &value) { return value->cell_id() == cell_id && value->vm_compiled(); });
   if (do_vm_compiled) {
-    if (MakeBpropNestedCnode(cell, *ret)) {
-      return;
+    if (MakeBpropNestedCnode(cell, out)) {
+      return out;
     }
-    MakeNestedCnode(cell_id, args, resource, *ret, has_sens);
+    MakeNestedCnode(cell_id, args, resource, out, has_sens);
   }
+  return out;
 }
 
 bool GradExecutor::MakeBpropNestedCnode(const py::object &cell, const py::object &out) {
@@ -3216,9 +3208,7 @@ py::object PynativeExecutor::CheckGraph(const py::object &cell, const py::args &
 }
 
 py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args) {
-  py::object ret;
-  PynativeExecutorTry(grad_executor()->RunGraph, &ret, cell, args);
-  return ret;
+  return PynativeExecutorTry(grad_executor()->RunGraph, cell, args);
 }
 
 void PynativeExecutor::ClearCell(const std::string &cell_id) {
@@ -3250,24 +3240,21 @@ void PynativeExecutor::ClearRes() {
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
-  py::object *ret = nullptr;
-  PynativeExecutorTry(grad_executor()->InitGraph, ret, cell, args);
+  (void)PynativeExecutorTry(grad_executor()->InitGraph, cell, args);
 }
 
 void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) {
   MS_LOG(DEBUG) << "Enter end graph process.";
-  py::object *ret = nullptr;
   auto &mem_cleaner = pipeline::Resource::mem_cleaner();
   mem_cleaner.EnterPynativeEndGraphProcess();
-  PynativeExecutorTry(grad_executor()->LinkGraph, ret, cell, out, args);
+  PynativeExecutorTry(grad_executor()->LinkGraph, cell, out, args);
   mem_cleaner.LeavePynativeEndGraphProcess();
   MS_LOG(DEBUG) << "Leave end graph process.";
 }
 
 void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::args &args) {
-  py::object *ret = nullptr;
-  PynativeExecutorTry(grad_executor()->GradGraph, ret, grad, cell, weights, args);
+  PynativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, args);
 }
 
 void PynativeExecutor::Sync() {
