@@ -102,6 +102,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 #endif
 
@@ -1195,6 +1196,14 @@ TextFileDataset::TextFileDataset(const std::vector<std::vector<char>> &dataset_f
                                  const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<TextFileNode>(VectorCharToString(dataset_files), num_samples, shuffle, num_shards,
                                            shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+USPSDataset::USPSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+                         ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                         const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<USPSNode>(CharToString(dataset_dir), CharToString(usage), num_samples, shuffle, num_shards,
+                                       shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

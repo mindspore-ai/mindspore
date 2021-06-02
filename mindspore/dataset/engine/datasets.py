@@ -64,7 +64,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_add_column, check_textfiledataset, check_concat, check_random_dataset, check_split, \
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
-    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset
+    check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -4710,6 +4710,103 @@ class Schema:
         if not isinstance(schema_obj, Schema):
             schema_obj = Schema(schema_obj)
         return schema_obj.cpp_schema.get_num_rows()
+
+
+class USPSDataset(SourceDataset):
+    """
+    A source dataset for reading and parsing the USPS dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "test" or "all". "train" will read from 7,291
+            train samples, "test" will read from 2,007 test samples, "all" will read from all 9,298 samples.
+            (default=None, will read all samples)
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir is not valid or does not exist or does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If usage is invalid.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Examples:
+        >>> usps_dataset_dir = "/path/to/usps_dataset_directory"
+        >>>
+        >>> # Read 3 samples from USPS dataset
+        >>> dataset = ds.USPSDataset(dataset_dir=usps_dataset_dir, num_samples=3)
+        >>>
+        >>> # Note: In USPS dataset, each dictionary has keys "image" and "label"
+
+    About USPS dataset:
+
+    USPS is a digit dataset automatically scanned from envelopes by the U.S. Postal Service
+    containing a total of 9,298 16×16 pixel grayscale samples.
+    The images are centered, normalized and show a broad range of font styles.
+
+    Here is the original USPS dataset structure.
+    You can download and unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── usps_dataset_dir
+             ├── usps
+             ├── usps.t
+
+    Citation:
+
+    .. code-block::
+
+        @article{hull1994database,
+          title={A database for handwritten text recognition research},
+          author={Hull, Jonathan J.},
+          journal={IEEE Transactions on pattern analysis and machine intelligence},
+          volume={16},
+          number={5},
+          pages={550--554},
+          year={1994},
+          publisher={IEEE}
+        }
+    """
+
+    @check_usps_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL,
+                 num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.USPSNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag, self.num_shards,
+                            self.shard_id)
 
 
 class VOCDataset(MappableDataset):

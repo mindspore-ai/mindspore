@@ -44,6 +44,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 #endif
 
@@ -283,6 +284,18 @@ PYBIND_REGISTER(TFRecordNode, 2, ([](const py::module *m) {
                         toShuffleMode(shuffle), num_shards, shard_id, shard_equal_rows, nullptr);
                       THROW_IF_ERROR(tfrecord->ValidateParams());
                       return tfrecord;
+                    }));
+                }));
+
+PYBIND_REGISTER(USPSNode, 2, ([](const py::module *m) {
+                  (void)py::class_<USPSNode, DatasetNode, std::shared_ptr<USPSNode>>(*m, "USPSNode",
+                                                                                     "to create an USPSNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, int32_t num_samples, int32_t shuffle,
+                                     int32_t num_shards, int32_t shard_id) {
+                      auto usps = std::make_shared<USPSNode>(dataset_dir, usage, num_samples, toShuffleMode(shuffle),
+                                                             num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(usps->ValidateParams());
+                      return usps;
                     }));
                 }));
 

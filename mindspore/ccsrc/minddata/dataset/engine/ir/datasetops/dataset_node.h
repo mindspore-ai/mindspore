@@ -91,6 +91,7 @@ constexpr char kMnistNode[] = "MnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
 constexpr char kTextFileNode[] = "TextFileDataset";
 constexpr char kTFRecordNode[] = "TFRecordDataset";
+constexpr char kUSPSNode[] = "USPSDataset";
 constexpr char kVOCNode[] = "VOCDataset";
 
 Status AddShuffleOp(int64_t num_files, int64_t num_devices, int64_t num_rows, int64_t total_rows,
