@@ -91,13 +91,6 @@ kernel::InnerKernel *CpuSmoothL1LossGradFp32KernelCreator(const std::vector<lite
     MS_LOG(ERROR) << "new SmoothL1LossGradWithLogitsCPUKernel failed";
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

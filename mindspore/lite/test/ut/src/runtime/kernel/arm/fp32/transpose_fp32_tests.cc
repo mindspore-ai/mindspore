@@ -56,8 +56,11 @@ TEST_F(TestTransposeFp32, 10D) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+
   float expect[24] = {1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18, 22, 3, 7, 11, 15, 19, 23, 4, 8, 12, 16, 20, 24};
   for (int i = 0; i < 24; ++i) {
     ASSERT_NEAR(out[i], expect[i], 0.001);
@@ -94,8 +97,11 @@ TEST_F(TestTransposeFp32, 10DSingleThread) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
   EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+
   float expect[24] = {1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18, 22, 3, 7, 11, 15, 19, 23, 4, 8, 12, 16, 20, 24};
   for (int i = 0; i < 24; ++i) {
     ASSERT_NEAR(out[i], expect[i], 0.001);
@@ -239,8 +245,11 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(param), &ctx, desc);
-  ASSERT_NE(kernel, nullptr);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+
   for (int i = 0; i < 24; ++i) {
     std::cout << output[i] << " ";
   }

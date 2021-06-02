@@ -130,7 +130,7 @@ class InnerKernel : public Kernel {
     return true;
   }
 
-  schema::PrimitiveType type() override {
+  schema::PrimitiveType type() const override {
     return (this->op_parameter_ != nullptr) ? schema::PrimitiveType(this->op_parameter_->type_)
                                             : schema::PrimitiveType_NONE;
   }

@@ -61,7 +61,9 @@ TEST_F(TestHSwishInt8, HSwish) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect[8] = {-52, -52, -57, -52, 7, 25, 37, 101};  // 0, 0, -0.208333, 0, 2.29167, 3, 3.5, 6

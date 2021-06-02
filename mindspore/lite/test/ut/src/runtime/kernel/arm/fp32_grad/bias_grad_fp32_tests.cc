@@ -59,7 +59,10 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  kernel_obj->Run();
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel_obj->Run();
+  EXPECT_EQ(0, ret);
 
   printf("==================output data=================\n");
   for (int i = 0; i < 7; i++) {
@@ -108,7 +111,10 @@ TEST_F(TestBiasGradFp32, BiasGrad2DFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  kernel_obj->Run();
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel_obj->Run();
+  EXPECT_EQ(0, ret);
 
   printf("==================output data=================\n");
   for (int i = 0; i < 20; i++) {

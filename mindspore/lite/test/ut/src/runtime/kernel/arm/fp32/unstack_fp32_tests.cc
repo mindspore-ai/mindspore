@@ -56,7 +56,9 @@ TEST_F(TestUnstackFp32, Unstack) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   float expect0[] = {1, 2, 9, 10, 17, 18};
@@ -104,7 +106,9 @@ TEST_F(TestUnstackFp32, Unstack2) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   float expect0[] = {1, 2, 3, 4, 5, 6, 7, 8};

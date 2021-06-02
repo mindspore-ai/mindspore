@@ -107,13 +107,6 @@ kernel::InnerKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Ten
     MS_LOG(ERROR) << "DropoutGrad new kernel failed.";
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
   return kernel;
 }
 

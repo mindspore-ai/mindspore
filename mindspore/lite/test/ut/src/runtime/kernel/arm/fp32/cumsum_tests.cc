@@ -54,7 +54,9 @@ TEST_F(TestCumsum, TestThread1) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_NEAR(1.0f, output_data0[0], 0.000001);
   EXPECT_NEAR(1.0f, output_data0[1], 0.000001);
@@ -106,7 +108,9 @@ TEST_F(TestCumsum, TestExclusive) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_NEAR(0.0f, output_data0[0], 0.000001);
   EXPECT_NEAR(0.0f, output_data0[1], 0.000001);
@@ -158,7 +162,9 @@ TEST_F(TestCumsum, TestReverse) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_NEAR(6.0f, output_data0[0], 0.000001);
   EXPECT_NEAR(6.0f, output_data0[1], 0.000001);
@@ -210,7 +216,9 @@ TEST_F(TestCumsum, TestReverseExclusive) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_NEAR(5.0f, output_data0[0], 0.000001);
   EXPECT_NEAR(5.0f, output_data0[1], 0.000001);
@@ -263,7 +271,9 @@ TEST_F(TestCumsum, TestIntRank2) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_EQ(1, output_data0[0]);
   EXPECT_EQ(3, output_data0[1]);
@@ -309,7 +319,9 @@ TEST_F(TestCumsum, TestIntRank2Thread2) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_EQ(1, output_data0[0]);
   EXPECT_EQ(3, output_data0[1]);
@@ -356,7 +368,9 @@ TEST_F(TestCumsum, TestIntRank2Thread4) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
   EXPECT_EQ(1, output_data0[0]);
   EXPECT_EQ(3, output_data0[1]);

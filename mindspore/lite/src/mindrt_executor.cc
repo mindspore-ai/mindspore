@@ -76,15 +76,15 @@ int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inp
 }
 
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-                            const std::vector<Tensor *> &outputs) {
+                            const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) {
   MS_ASSERT(kernels.size() != 0);
 
-  auto ret = MindrtInit(kernels[0]->Context()->enable_parallel_);
+  auto ret = MindrtInit(ctx->enable_parallel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtInit failed";
     return ret;
   }
-  op_actors_ = CreateOpActor(kernels);
+  op_actors_ = CreateOpActor(kernels, ctx);
   if (op_actors_.size() != kernels.size()) {
     MS_LOG(ERROR) << "CreateOpActor failed";
     return RET_ERROR;

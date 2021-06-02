@@ -62,7 +62,9 @@ TEST_F(TestSubInt8, SubInt8) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[10] = {81, 73, 88, -106, 35, 75, 54, 127, -39, 49};
@@ -109,7 +111,9 @@ TEST_F(TestSubInt8, SubInt8T2) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[10] = {0, 0, 0, 0, 0, 5, 5, 5, 5, 5};

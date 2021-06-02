@@ -81,7 +81,10 @@ TEST_F(TestGatherInt8, GatherTest) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   printf("==================output data=================\n");
   for (int i = 0; i < output0_tensor.ElementsNum(); i++) {

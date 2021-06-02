@@ -91,7 +91,10 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   auto output2_tensor_shape = output2_tensor->shape();
   ASSERT_EQ(output1_tensor_shape, output1_shape);
   ASSERT_EQ(output2_tensor_shape, output2_shape);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<int8_t> except_result1 = {1, 2, 7, 8};
   std::vector<int8_t> except_result2 = {3, 4, 5, 6, 9, 10, 11, 12};

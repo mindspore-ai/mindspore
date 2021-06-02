@@ -33,7 +33,7 @@ class ParallelExecutor : public Executor {
   ~ParallelExecutor() override;
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-              const std::vector<Tensor *> &outputs) override;
+              const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
           const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,

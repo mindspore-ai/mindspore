@@ -34,9 +34,10 @@
 #include "include/context.h"
 #include "include/kernel.h"
 #include "src/inner_kernel.h"
+#include "include/delegate.h"
 
 namespace mindspore::kernel {
-enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kKernelArch_MIN = kCPU, kKernelArch_MAX = kNPU };
+enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kDelegate };
 static const char *const kBuiltin = "Builtin";
 
 struct KernelKey {
@@ -45,6 +46,7 @@ struct KernelKey {
   int type;
   std::string kernel_arch;
   std::string provider{kBuiltin};
+  std::shared_ptr<Delegate> delegate = nullptr;
 
   bool operator<(const KernelKey &dst) const {
     if (provider != dst.provider) {
@@ -125,7 +127,13 @@ class LiteKernel {
     return kernel_->Prepare();
   }
 
-  virtual int Init() { return mindspore::lite::RET_OK; }
+  virtual int Init() {
+    MS_ASSERT(kernel_ != nullptr);
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->Init();
+    }
+    return mindspore::lite::RET_OK;
+  }
 
   virtual int ReSize() {
     MS_ASSERT(kernel_ != nullptr);
@@ -136,7 +144,10 @@ class LiteKernel {
 
   OpParameter *op_parameter() const {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->op_parameter();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->op_parameter();
+    }
+    return nullptr;
   }
 
   std::string name() const {
@@ -151,32 +162,49 @@ class LiteKernel {
 
   virtual int Train() {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->Train();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->Train();
+    }
+    return mindspore::lite::RET_OK;
   }
 
   virtual bool IsTrain() const {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrain();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->IsTrain();
+    }
+    return false;
   }
 
   virtual int Eval() {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->Eval();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->Eval();
+    }
+    return mindspore::lite::RET_OK;
   }
 
   virtual bool IsEval() const {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->IsEval();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->IsEval();
+    }
+    return false;
   }
 
   virtual void set_trainable(bool trainable = true) {
     MS_ASSERT(kernel_ != nullptr);
-    std::static_pointer_cast<InnerKernel>(kernel_)->set_trainable(trainable);
+    if (desc_.provider == kBuiltin) {
+      std::static_pointer_cast<InnerKernel>(kernel_)->set_trainable(trainable);
+    }
   }
 
   virtual bool is_trainable() const {
     MS_ASSERT(kernel_ != nullptr);
-    return std::static_pointer_cast<InnerKernel>(kernel_)->is_trainable();
+    if (desc_.provider == kBuiltin) {
+      return std::static_pointer_cast<InnerKernel>(kernel_)->is_trainable();
+    }
+    return false;
   }
 
   void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
@@ -328,13 +356,6 @@ kernel::InnerKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
     free(parameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_;
-    delete kernel;
     return nullptr;
   }
   return kernel;

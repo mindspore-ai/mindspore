@@ -175,26 +175,54 @@ int QuantDTypeCastFp16CPUKernel::Run() {
 
 kernel::InnerKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                         const std::vector<lite::Tensor *> &outputs,
-                                                        OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                        OpParameter *opParameter, const lite::Context *ctx,
                                                         const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
+
   if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
+    MS_LOG(ERROR) << "opParameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, ctx);
+  auto in_tensor = inputs.front();
+  auto out_tensor = outputs.front();
+  auto param = reinterpret_cast<QuantDTypeCastParameter *>(opParameter);
+  if (param->dstT == kNumberTypeInt8) {
+    if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeInt8) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return nullptr;
+    }
+  } else if (param->srcT == kNumberTypeInt8) {
+    if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return nullptr;
+    }
+  } else if (param->dstT == kNumberTypeUInt8) {
+    if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeUInt8) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return nullptr;
+    }
+  } else if (param->srcT == kNumberTypeUInt8) {
+    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return nullptr;
+    }
+  } else {
+    MS_LOG(ERROR) << "param data type not supported:"
+                  << " src: " << param->srcT << " dst: " << param->dstT;
+    return nullptr;
+  }
+
+  kernel::InnerKernel *kernel = nullptr;
+  kernel = new (std::nothrow)
+    QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new QuantDTypeCastFp16CPUKernel fail!";
     free(opParameter);
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed! name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_QuantDTypeCast, LiteKernelCreator<QuantDTypeCastFp16CPUKernel>)
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp16KernelCreator)
 }  // namespace mindspore::kernel

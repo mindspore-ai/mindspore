@@ -76,6 +76,8 @@ void TestReduceFp16::Prepare(const std::vector<int> &input_shape, const std::vec
   ASSERT_NE(creator_, nullptr);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc);
   ASSERT_NE(kernel_, nullptr);
+  auto ret = kernel_->Init();
+  EXPECT_EQ(0, ret);
 }
 TEST_F(TestReduceFp16, Mean) {
   float in[96] = {0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 12.0, 13.0, 14.0, 15.0,

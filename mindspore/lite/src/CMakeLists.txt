@@ -52,6 +52,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc

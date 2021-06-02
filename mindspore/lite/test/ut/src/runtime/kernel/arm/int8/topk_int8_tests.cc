@@ -49,7 +49,9 @@ TEST_F(TestTopKInt8, TopK) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), nullptr, desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   int8_t expect0[] = {3, 2, 6, 5, 9, 8, 12, 11};

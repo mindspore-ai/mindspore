@@ -160,7 +160,10 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
 
-  kernel_obj->Run();
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel_obj->Run();
+  EXPECT_EQ(0, ret);
 
   printf("==================output data=================\n");
   for (int i = 0; i < 20; i++) {
@@ -229,7 +232,10 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
 
-  kernel_obj->Run();
+  auto ret = kernel_obj->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel_obj->Run();
+  EXPECT_EQ(0, ret);
 
   printf("==================output data=================\n");
   for (int i = 0; i < 20; i++) {
@@ -297,9 +303,10 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  kernel->Init();
-
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s2_dx_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
@@ -364,9 +371,10 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  kernel->Init();
-
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::string output_path = "./test_data/pooling/avgpoolgradfp32_s3_dx_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
@@ -498,9 +506,10 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  kernel->Init();
-
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_1_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
@@ -576,9 +585,10 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  kernel->Init();
-
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s2_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);
@@ -654,8 +664,10 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  kernel->Init();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";
   auto res = CompareRelativeOutput(out_data, output_path);

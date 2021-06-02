@@ -128,7 +128,10 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<float> expect_output = {-0, -0.33333334, -0.33333334, 0, 0.6666667, 5, 6, 7};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
@@ -171,7 +174,10 @@ TEST_F(TestActivationFp32, HardTanh1) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<float> expect_output = {-1.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.0, 1.0};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
@@ -214,7 +220,10 @@ TEST_F(TestActivationFp32, HardTanh2) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
   ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
@@ -255,8 +264,10 @@ TEST_F(TestActivationFp32, Softplus) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  auto ret = kernel->Run();
-  ASSERT_EQ(0, ret);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
   std::vector<float> expect_output = {1.3132616,   2.1269281,   3.0485871,  4.0181499,    5.0067153,
                                       0.31326169,  6.0024757,   7.0009117,  0.0000453989, 0.0000000002,
                                       20.00000000, 30.00000000, 14.0000000, 0.69314718};

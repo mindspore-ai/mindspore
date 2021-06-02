@@ -80,13 +80,6 @@ kernel::InnerKernel *CpuHashtableLookupKernelCreator(const std::vector<lite::Ten
     free(parameter);
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 

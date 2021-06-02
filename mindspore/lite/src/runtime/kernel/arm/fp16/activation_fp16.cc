@@ -109,5 +109,34 @@ int ActivationFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Activation, LiteKernelCreator<ActivationFp16CPUKernel>)
+/* creator func */
+kernel::InnerKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                    const std::vector<lite::Tensor *> &outputs,
+                                                    OpParameter *opParameter, const lite::Context *ctx,
+                                                    const kernel::KernelKey &desc) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Activation);
+
+  auto act_param = reinterpret_cast<ActivationParameter *>(opParameter);
+  auto type = act_param->type_;
+  if (type != schema::ActivationType_RELU && type != schema::ActivationType_RELU6 &&
+      type != schema::ActivationType_LEAKY_RELU && type != schema::ActivationType_SIGMOID &&
+      type != schema::ActivationType_TANH && type != schema::ActivationType_HSWISH &&
+      type != schema::ActivationType_SWISH && type != schema::ActivationType_HARD_TANH) {
+    MS_LOG(ERROR) << "Activation fp16 not support type: " << type;
+    return nullptr;
+  }
+
+  kernel::InnerKernel *kernel = nullptr;
+  kernel = new (std::nothrow)
+    kernel::ActivationFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+  if (kernel == nullptr) {
+    MS_LOG(DEBUG) << "Create activation fp16 kernel failed.";
+    free(opParameter);
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Activation, CpuActivationFp16KernelCreator)
 }  // namespace mindspore::kernel

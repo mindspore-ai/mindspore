@@ -103,13 +103,27 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Schedule main subgraph to kernels failed.";
     return ret;
   }
+  if (delegate_ != nullptr) {
+    ret = ReplaceDelegateKernels(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Repalce delegate kernels failed.";
+      return ret;
+    }
+  }
   FindAllInoutKernels(*dst_kernels);
+  // origin kernel init
+  for (size_t i = 0; i < dst_kernels->size(); i++) {
+    ret = (*dst_kernels)[i]->Init();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Kernel " << (*dst_kernels)[i]->name() << " Init failed.";
+      return ret;
+    }
+  }
   ret = RunPass(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule run pass failed.";
     return ret;
   }
-
   auto src_kernel = *dst_kernels;
   dst_kernels->clear();
   std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
@@ -119,6 +133,61 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
   MS_LOG(DEBUG) << "schedule kernels success.";
+  return RET_OK;
+}
+
+int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  std::vector<kernel::Kernel *> kernels;
+  for (size_t i = 0; i < dst_kernels->size(); i++) {
+    kernels.push_back((*dst_kernels)[i]->kernel());
+  }
+  DelegateModel *model = new (std::nothrow) DelegateModel(&kernels, primitives_);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "New delegate model failed.";
+    return RET_NULL_PTR;
+  }
+  auto ret = delegate_->Build(model);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Delegate prepare kernels failed.";
+    return ret;
+  }
+
+  auto src_kernels = *dst_kernels;
+  dst_kernels->clear();
+  std::map<const kernel::LiteKernel *, bool> delegate_support;
+  for (auto kernel : src_kernels) {
+    delegate_support[kernel] = true;
+  }
+  for (auto kernel : kernels) {
+    size_t index = 0;
+    for (; index < src_kernels.size(); index++) {
+      if (kernel == src_kernels[index]->kernel()) {
+        // Kernels that the delegate does not support keep the original backend
+        dst_kernels->push_back(src_kernels[index]);
+        delegate_support[src_kernels[index]] = false;
+        break;
+      }
+    }
+    if (index == src_kernels.size()) {
+      // New liteKernel to save delegate subgraph
+      std::shared_ptr<kernel::Kernel> shared_kernel(kernel);
+      auto lite_kernel = new (std::nothrow) kernel::LiteKernel(shared_kernel);
+      if (lite_kernel == nullptr) {
+        MS_LOG(ERROR) << "New LiteKernel for delegate subgraph failed.";
+        return RET_NULL_PTR;
+      }
+      kernel::KernelKey delegate_desc{
+        kernel::kDelegate, kernel->inputs()[0]->data_type(), schema::PrimitiveType_NONE, "", "", delegate_};
+      lite_kernel->set_desc(delegate_desc);
+      dst_kernels->push_back(lite_kernel);
+    }
+  }
+  // Release the cpu kernel that has been replace by delegate subgraph
+  for (auto kernel : src_kernels) {
+    if (delegate_support[kernel] == true) {
+      delete kernel;
+    }
+  }
   return RET_OK;
 }
 
@@ -393,7 +462,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     RestoreTensorData(&restored_origin_tensors);
   }
   return ret;
-}  // namespace mindspore::lite
+}
 
 int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                              OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
@@ -610,6 +679,13 @@ kernel::LiteKernel *Scheduler::SchedulePartialToKernel(const lite::Model::Node *
     MS_LOG(ERROR) << "Schedule partial failed, name: " << src_node->name_;
     return nullptr;
   }
+  for (auto kernel : sub_kernels) {
+    ret = kernel->Init();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Schedule partial kernel init failed, name: " << kernel->name();
+      return nullptr;
+    }
+  }
 
   FindAllInoutKernels(sub_kernels);
   ret = RunPass(&sub_kernels);
@@ -667,6 +743,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     }
     kernel->set_is_model_output(IsContain(graph_output_node_indexes_, size_t(node_index)));
     dst_kernels->emplace_back(kernel);
+    primitives_.emplace(kernel->kernel(), static_cast<const schema::Primitive *>(primitive));
   }
   if (in_tensors != nullptr) {
     std::transform(subgraph->input_indices_.begin(), subgraph->input_indices_.end(), std::back_inserter(*in_tensors),
@@ -791,25 +868,34 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
 
     head_kernels.push_back(head_kernel);
 
-    auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernels[0]);
-    auto sub_kernels = FindAllSubGraphKernels(head_kernels, is_kernel_finish);
-    auto subgraph = CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type);
-    if (subgraph == nullptr) {
-      MS_LOG(ERROR) << "Create SubGraphKernel failed";
-      return RET_ERROR;
+    auto subgraph_delegate = head_kernel->desc().delegate;
+    if (subgraph_delegate != nullptr) {
+      dst_kernel->emplace_back(head_kernel);
+      (*is_kernel_finish)[head_kernel] = true;
+    } else {
+      auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernels[0]);
+      auto sub_kernels = FindAllSubGraphKernels(head_kernels, is_kernel_finish);
+      auto subgraph = CreateSubGraphKernel(sub_kernels, nullptr, nullptr, cur_sub_graph_type);
+      if (subgraph == nullptr) {
+        MS_LOG(ERROR) << "Create SubGraphKernel failed";
+        return RET_ERROR;
+      }
+      dst_kernel->emplace_back(subgraph);
     }
-    dst_kernel->emplace_back(subgraph);
   } /* end when all kernel converted */
 
   for (auto *subgraph : *dst_kernel) {
-    auto ret = subgraph->Init();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
-      return ret;
+    auto subgraph_delegate = subgraph->desc().delegate;
+    if (subgraph_delegate == nullptr) {
+      auto ret = subgraph->Init();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
+        return ret;
+      }
     }
   }
   return RET_OK;
-}  // namespace mindspore::lite
+}
 
 bool Scheduler::MergeOpIsReady(const kernel::LiteKernel *kernel,
                                std::map<const kernel::LiteKernel *, bool> is_kernel_finish) {

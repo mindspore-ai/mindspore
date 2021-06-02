@@ -54,7 +54,9 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   float expect[] = {2,  3,  0,  1,  4,  5,  6,  7,  12, 13, 10, 11, 8,  9,  14, 15, 22, 23, 20, 21, 18, 19, 16, 17,
@@ -98,7 +100,9 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   float expect[] = {8,  9,  18, 19, 20, 21, 14, 15, 0,  1,  10, 11, 12, 13, 6,  7,  16, 17, 2,  3,  4,  5,  22, 23,
@@ -142,7 +146,9 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
   EXPECT_EQ(0, ret);
 
   float expect[] = {2,  3,  0,  1,  4,  5,  6,  7,  10, 11, 8,  9,  12, 13, 14, 15, 18, 19, 16, 17, 20, 21, 22, 23,

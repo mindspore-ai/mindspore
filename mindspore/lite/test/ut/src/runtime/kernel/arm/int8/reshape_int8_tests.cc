@@ -75,7 +75,10 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor->shape();
   ASSERT_EQ(output_tensor_shape, output_shape);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<int8_t> except_result = {10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25};
   PrintData("output data", output, input1.size());
@@ -134,7 +137,10 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor->shape();
   ASSERT_EQ(output_tensor_shape, output_shape);
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<int8_t> except_result = {6, 7, 7, 8, 8, 9, 11, 12, 12, 13, 13, 14};
   PrintData("output data", output, input1.size());

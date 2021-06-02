@@ -79,7 +79,10 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::vector<int8_t> except_result = {-126, -126, -124, -124, -123, -124, -116, -116, 122, 122, 112, 112,
                                        -127, -127, -127, -127, -59,  -59,  -61,  -59,  58,  58,  59,  58};

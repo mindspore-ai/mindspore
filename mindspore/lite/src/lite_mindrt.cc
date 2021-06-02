@@ -91,11 +91,15 @@ void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *ac
 
     int ref_count = 0;
     /* set op input for calculate */
-    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel_)->in_nodes()) {
-      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
-        if (old_tensor == in_node->in_tensors()[node_in_index]) {
-          in_node->set_in_tensor(new_tensor, node_in_index);
-          ref_count++;
+    if (kernel_->desc().delegate != nullptr) {
+      ref_count++;
+    } else {
+      for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel_)->in_nodes()) {
+        for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
+          if (old_tensor == in_node->in_tensors()[node_in_index]) {
+            in_node->set_in_tensor(new_tensor, node_in_index);
+            ref_count++;
+          }
         }
       }
     }
@@ -162,6 +166,10 @@ int LiteOpActor::CompileArrowThroughOutputKernels() {
 }
 
 int LiteOpActor::CompileArrowThroughPartialCall() {
+  if (kernel_->desc().delegate != nullptr) {
+    MS_LOG(INFO) << "kernel is delegate subgraph kernel.";
+    return RET_OK;
+  }
   auto *subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
   if (subgraph_kernel == nullptr) {
     MS_LOG(INFO) << "kernel is not subgraph kernel, no partial call.";
@@ -330,10 +338,11 @@ int LiteOpActor::PrepareOutputData() {
   return RET_OK;
 }
 
-std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels) {
+std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels,
+                                                        const lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   std::unordered_map<size_t, AID> partial_map{};
-  auto thread_pool = kernels[0]->Context()->thread_pool_;
+  auto thread_pool = ctx->thread_pool_;
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return actors;

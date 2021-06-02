@@ -32,15 +32,15 @@ class MindrtExecutor : public Executor {
   explicit MindrtExecutor(std::unordered_map<Tensor *, Tensor *> *output_map) : output_tensor_map_(output_map) {}
   virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
-                      const std::vector<Tensor *> &outputs);
+  int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
+              const std::vector<Tensor *> &outputs, const lite::InnerContext *ctx) override;
 
-  virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
-                  const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
+  int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+          const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator = nullptr,
+          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
-  virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                     const std::vector<std::vector<int>> &dims);
+  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+             const std::vector<std::vector<int>> &dims) override;
 
  private:
   void TransferGraphOutput();

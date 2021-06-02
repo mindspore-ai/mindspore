@@ -119,7 +119,10 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  kernel->Run();
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   std::cout << "==================output data=================" << std::endl;
   auto output_ptr = reinterpret_cast<float *>(outputs[0]->MutableData());
@@ -169,6 +172,8 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
+  auto ret = kernel->Init();
+  EXPECT_EQ(0, ret);
 
   /* running warm up */
   for (int i = 0; i < 3; i++) {

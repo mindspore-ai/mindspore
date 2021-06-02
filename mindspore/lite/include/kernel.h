@@ -19,8 +19,10 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include "schema/model_generated.h"
 #include "include/lite_utils.h"
 #include "src/common/log_adapter.h"
+#include "include/context.h"
 
 namespace mindspore::kernel {
 class Kernel {
@@ -43,7 +45,7 @@ class Kernel {
 
   virtual int ReSize() = 0;
 
-  virtual schema::PrimitiveType type() { return type_; }
+  virtual schema::PrimitiveType type() const { return type_; }
 
   virtual void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) { this->inputs_ = in_tensors; }
   virtual void set_input(mindspore::tensor::MSTensor *in_tensor, int index) {
