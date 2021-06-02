@@ -232,10 +232,27 @@ std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
   return trt_inputs;
 }
 
-std::vector<session::KernelWithIndex> TrtConverterContext::GetGraphOutputs() const {
-  std::vector<session::KernelWithIndex> graph_outputs;
-  AnfAlgo::GetRealInputs(func_graph_->get_return(), &graph_outputs);
-  return graph_outputs;
+std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> TrtConverterContext::GetGraphOutputs()
+  const {
+  std::vector<session::KernelWithIndex> anf_output_list;
+  AnfAlgo::GetRealInputs(func_graph_->get_return(), &anf_output_list);
+
+  std::map<size_t, size_t> anf_trt_index_map;
+  std::vector<session::KernelWithIndex> trt_output_list(anf_output_list.size());
+  size_t trt_index = 0;
+  for (int32_t i = 0; i < engine_->getNbBindings(); ++i) {
+    if (!engine_->bindingIsInput(i)) {
+      const std::string &name = engine_->getBindingName(i);
+      size_t pos = name.find_last_not_of("return_output_");
+      size_t anf_index = atoi(name.substr(pos).c_str());
+
+      anf_trt_index_map.insert(std::make_pair(anf_index, trt_index));
+      trt_output_list[trt_index] = anf_output_list[anf_index];
+      trt_index++;
+    }
+  }
+
+  return std::make_tuple(anf_trt_index_map, trt_output_list);
 }
 
 std::shared_ptr<tensor::Tensor> TrtConverterContext::CreateTempWeight(const TypeId &type,

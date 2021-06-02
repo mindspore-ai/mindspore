@@ -21,6 +21,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <tuple>
+#include <map>
 #include <NvInfer.h>
 #include "base/base.h"
 #include "ir/anf.h"
@@ -29,6 +31,12 @@
 
 namespace mindspore {
 namespace opt {
+// Class transform ANF graph to Tensor-RT network.
+// It converts the operators in ANF graph to Tensor-RT layer according to the topological order.
+// During the conversion, the cache keep the map between ANF node outputs and Tensor-RT layer outputs.
+//  Before starting the operator conversion, it first caches the weights and constant node int the Anf graph.
+//  During performing operator transformation, it obtains the inputs of the operator from the cache.
+//  After conversion is completed, it store the outputs of the operator to the cache.
 class TrtConverterContext : public std::enable_shared_from_this<TrtConverterContext> {
  public:
   explicit TrtConverterContext(FuncGraphPtr fg)
@@ -41,6 +49,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
         engine_(nullptr) {}
   ~TrtConverterContext() = default;
 
+  // Create Tensor-RT object and cache the ANF graph inputs and constant node.
   bool Init();
 
   // Parser KernelGraph to trt graph
@@ -53,7 +62,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
   std::vector<AnfNodePtr> GetGraphInputs() const;
 
   // Get trt graph outputs. All outputs are flatten to vector with concret shape.
-  std::vector<session::KernelWithIndex> GetGraphOutputs() const;
+  std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> GetGraphOutputs() const;
 
   // Store trt layer outputs to the cache.
   bool StoreLayerOutput(const AnfNodePtr &node, const std::vector<nvinfer1::ITensor *> &inputs);
