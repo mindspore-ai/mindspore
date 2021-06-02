@@ -52,7 +52,7 @@ void GatherNdCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = dim_indices_last - 1; i > 0; --i) {
     batch_strides_[i - 1] = input_shapes_[i - 1];
-    batch_indices_[i - 1] = batch_indices_[i] * input_shapes_[i];
+    batch_indices_[i - 1] = batch_indices_[i] * SizeToInt(input_shapes_[i]);
   }
 }
 
