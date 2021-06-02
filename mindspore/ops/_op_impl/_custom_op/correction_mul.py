@@ -66,9 +66,8 @@ def correction_mul(x, batch_std, running_std, y, channel, kernel_name="correctio
     util.check_kernel_name(kernel_name)
     util.check_shape_rule(shape)
     util.check_shape_size(shape, SHAPE_SIZE_LIMIT)
-    check_list = ["float16", "float32"]
     inp_dtype = x.get("dtype").lower()
-    if not inp_dtype in check_list:
+    if not inp_dtype in ["float16", "float32"]:
         raise RuntimeError("Dtype of input only support float16, float32")
 
     x_t = tvm.placeholder(shape, name="x", dtype=inp_dtype)
