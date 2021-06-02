@@ -59,9 +59,9 @@ bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 template <typename T>
 inline T LogSumExp(const T logprob1, const T logprob2) {
   T kLogZero_ = -std::numeric_limits<T>::infinity();
-  if (logprob1 == kLogZero_) {
+  if (logprob1 <= kLogZero_) {
     return logprob2;
-  } else if (logprob2 == kLogZero_) {
+  } else if (logprob2 <= kLogZero_) {
     return logprob1;
   } else {
     return (logprob1 > logprob2) ? logprob1 + static_cast<T>(log1p(exp(logprob2 - logprob1)))
@@ -103,7 +103,7 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
         }
       }
 
-      (*log_alpha_b)[u][t] = log(y[label_with_blank[u]][t]) + sum_log_alpha_b;
+      (*log_alpha_b)[u][t] = log(static_cast<TT>(y[label_with_blank[u]][t])) + sum_log_alpha_b;
     }
   }
 }
@@ -156,7 +156,7 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
                                      std::vector<std::vector<TT>> *dy) {
   auto dy_b = dy;
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
-  if (log_pzx == kLogZero_) {
+  if (log_pzx <= kLogZero_) {
     MS_LOG(INFO) << "No valid path found";
     return;
   }

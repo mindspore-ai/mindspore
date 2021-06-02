@@ -55,13 +55,13 @@ class MirrorPadCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   TypeId dtype_{kTypeUnknown};
-  uint64_t tensor_size_ = 1;
+  size_t tensor_size_ = 1;
   size_t shape_size_;
-  uint64_t output_size_ = 1;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  int mode_;
-  int num_paddings_;
+  size_t output_size_ = 1;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
+  int64_t mode_;
+  int64_t num_paddings_;
 };
 
 MS_REG_CPU_KERNEL(
