@@ -27,36 +27,39 @@
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
+namespace {
+const int32_t kTotalArgs = 8;
+enum ArgIndex : uint8_t {
+  kProcessName = 0,
+  kRootDir = 1,
+  kNumWorkers = 2,
+  kPort = 3,
+  kSharedMemorySize = 4,
+  kLogLevel = 5,
+  kDemonize = 6,
+  kMemoryCapRatio = 7
+};
+}  // namespace
+
 /// Start the server
 /// \param argv
 /// \return Status object
 ms::Status StartServer(int argc, char **argv) {
   ms::Status rc;
   ds::CacheServer::Builder builder;
-  const int32_t kTotalArgs = 8;
-  enum {
-    kProcessNameIdx = 0,
-    kRootDirArgIdx = 1,
-    kNumWorkersArgIdx = 2,
-    kPortArgIdx = 3,
-    kSharedMemorySizeArgIdx = 4,
-    kLogLevelArgIdx = 5,
-    kDemonizeArgIdx = 6,
-    kMemoryCapRatioArgIdx = 7
-  };
   if (argc != kTotalArgs) {
     return ms::Status(ms::StatusCode::kMDSyntaxError);
   }
 
-  int32_t port = static_cast<int32_t>(strtol(argv[kPortArgIdx], nullptr, ds::kDecimal));
-  builder.SetRootDirectory(argv[kRootDirArgIdx])
-    .SetNumWorkers(static_cast<int32_t>(strtol(argv[kNumWorkersArgIdx], nullptr, ds::kDecimal)))
+  int32_t port = static_cast<int32_t>(strtol(argv[ArgIndex::kPort], nullptr, ds::kDecimal));
+  builder.SetRootDirectory(argv[ArgIndex::kRootDir])
+    .SetNumWorkers(static_cast<int32_t>(strtol(argv[ArgIndex::kNumWorkers], nullptr, ds::kDecimal)))
     .SetPort(port)
-    .SetSharedMemorySizeInGB(static_cast<int32_t>(strtol(argv[kSharedMemorySizeArgIdx], nullptr, ds::kDecimal)))
-    .SetLogLevel(static_cast<int8_t>((strtol(argv[kLogLevelArgIdx], nullptr, ds::kDecimal))))
-    .SetMemoryCapRatio(strtof(argv[kMemoryCapRatioArgIdx], nullptr));
+    .SetSharedMemorySizeInGB(static_cast<int32_t>(strtol(argv[ArgIndex::kSharedMemorySize], nullptr, ds::kDecimal)))
+    .SetLogLevel(static_cast<int8_t>((strtol(argv[ArgIndex::kLogLevel], nullptr, ds::kDecimal))))
+    .SetMemoryCapRatio(strtof(argv[ArgIndex::kMemoryCapRatio], nullptr));
 
-  auto daemonize_string = argv[kDemonizeArgIdx];
+  auto daemonize_string = argv[ArgIndex::kDemonize];
   bool daemonize = strcmp(daemonize_string, "true") == 0 || strcmp(daemonize_string, "TRUE") == 0 ||
                    strcmp(daemonize_string, "t") == 0 || strcmp(daemonize_string, "T") == 0;
 
@@ -81,8 +84,8 @@ ms::Status StartServer(int argc, char **argv) {
       return rc;
     }
     ms::g_ms_submodule_log_levels[SUBMODULE_ID] =
-      static_cast<int>(strtol(argv[kLogLevelArgIdx], nullptr, ds::kDecimal));
-    google::InitGoogleLogging(argv[kProcessNameIdx]);
+      static_cast<int>(strtol(argv[ArgIndex::kLogLevel], nullptr, ds::kDecimal));
+    google::InitGoogleLogging(argv[ArgIndex::kProcessName]);
 #undef google
 #endif
     rc = msg.Create();
