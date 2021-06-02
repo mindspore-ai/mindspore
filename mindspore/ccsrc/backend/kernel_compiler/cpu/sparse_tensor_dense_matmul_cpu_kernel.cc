@@ -24,13 +24,21 @@ template <typename I, typename T>
 void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
   adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
-  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (values_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul requires the values must be a 1-D tensor, but got "
-                      << values_shape.size() << "-D";
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (indices_shape.size() != 2 && indices_shape[1] != 2) {
+    MS_LOG(EXCEPTION)
+      << "SparseTensorDenseMatmul requires 'indices' should be a 2-D Tensor and the second dimension length "
+         "should be 2, but got 'indices' shape: "
+      << indices_shape;
   }
+  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
+    MS_LOG(EXCEPTION)
+      << "SparseTensorDenseMatmul requires 'value's should be a 1-D Tensor and the first dimension length should be "
+         "equal to the first dimension length of 'indices', but got 'values' shape: "
+      << values_shape;
+  }
+  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
   b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 }
@@ -43,21 +51,20 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   auto a_values = reinterpret_cast<T *>(inputs[1]->addr);
   auto b = reinterpret_cast<T *>(inputs[3]->addr);
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
-  memset(out, 0, output_size_);
+  const size_t output_length = outputs[0]->size / sizeof(T);
+  memset(out, 0, output_length);
 
   const size_t out_dim_0 = output_shape_[0];
   const size_t out_dim_1 = output_shape_[1];
   const size_t b_dim_0 = b_shape_[0];
   const size_t b_dim_1 = b_shape_[1];
   const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
-
   for (size_t i = 0; i < values_size_; ++i) {
     const int row = adj_st_ ? a_indices[i * 2 + 1] : a_indices[i * 2];
     const int col = adj_st_ ? a_indices[i * 2] : a_indices[i * 2 + 1];
     if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
-      MS_LOG(ERROR) << "The indices including out of bounds index, row range: [0, " << out_dim_0 << "), col range: [0, "
-                    << same_dim << "), but got row: " << row << ", col: " << col;
-      return false;
+      MS_EXCEPTION(ValueError) << "The indices including out of bounds index, row range: [0, " << out_dim_0
+                               << "), col range: [0, " << same_dim << "), but got row: " << row << ", col: " << col;
     }
 
     for (size_t n = 0; n < out_dim_1; ++n) {

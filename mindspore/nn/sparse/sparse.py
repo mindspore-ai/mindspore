@@ -19,19 +19,19 @@ from ..cell import Cell
 
 class SparseToDense(Cell):
     """
-    Converts a sparse representation into a dense tensor.
+    Converts a sparse tensor into dense.
 
     Not yet supported by any backend at the moment.
 
     Inputs:
-        sparse_tensor (SparseTensor): the sparse tensor to convert.
+        - **sparse_tensor** (SparseTensor): the sparse tensor to convert.
 
     Outputs:
-        Tensor, the tensor converted.
+        Tensor, converted from sparse tensor.
 
     Raises:
-        TypeError: If `sparse_tensor.indices` is neither int32 nor int64.
-        TypeError: If 'sparse_tensor.values' is not a Number.
+        TypeError: If the`sparse_tensor.indices` data type is neither int32 nor int64.
+        TypeError: If the 'sparse_tensor.values' data type is not a Number or bool.
         TypeError: If 'sparse_tensor.dense_shape' is not a tuple.
 
     Supported Platforms:
@@ -52,6 +52,7 @@ class SparseToDense(Cell):
          [0 0 2 0]
          [0 0 0 0]]
     """
+
     def __init__(self):
         super(SparseToDense, self).__init__()
         self.sparse_to_dense = P.SparseToDense()
@@ -61,59 +62,65 @@ class SparseToDense(Cell):
                                     sparse_tensor.values,
                                     sparse_tensor.dense_shape)
 
+
 class SparseTensorDenseMatmul(Cell):
     """
-    Multiply SparseTensor(of rank 2) "A" by dense tensor.
-    The shape of sparse tensor is :math:`(N, C)`, and the shape of dense tensor is :math:`(C, M)`, then the shape of
-    output tensor is :math:`(N, M)`.The output data type is the same as "values".
+    Multiplies sparse matrix `a` and dense matrix `b`.
+    The rank of sparse matrix and dense matrix must equal to `2`.
 
     Args:
-        - *adjoint_st** (Bool) - If true, SparseTensor is transposed before multiplication. Default: False.
-        - *adjoint_dt** (Bool) - If true, DenseTensor is transposed before multiplication. Default: False.
+        - *adjoint_st** (bool) - If true, sparse tensor is transposed before multiplication. Default: False.
+        - *adjoint_dt** (bool) - If true, dense tensor is transposed before multiplication. Default: False.
 
     Inputs:
-        - **indices** (Tensor) - A 2D tensor with shape [N, rank], containing the indices of the nonzero values. The
-          indices of sparse representation, support int32/int64.
-        - **values** (Tensor) - A 1D tensor with shape [N] containing all nonzero values. Values corresponding to
-          each row of indices.
-        - **dense_shape** (tuple) - A 1D tuple with shape (N, M), specifying the shape of the tensor. An int tuple
-          which specifies the shape of dense tensor. The dense_shape is : math:`(N, C)`. If `adjoint_st` is True,
-          its shape must be :math:`(N, C)` after transpose.
-        - **dense** (Tensor) - Dense Matrix. The shape of the tensor is :math:`(C, M)`. If
-          `adjoint_dt` is True, its shape must be :math:`(C, M)` after transpose.
+        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+            Support int32, int64, each element value should be non-negative. The shape is :math:`(n, 2)`.
+        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+            Support float16, float32, float64, int32, int64. The shape should be :math:`(n,).
+        - **sparse_shape** (tuple) - A positive int tuple which specifies the shape of sparse tensor,
+            should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+        - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
+            If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
+            If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
+            If `adjoint_st` is True and `adjoint_dt` is False, the shape must be :math:`(N, M)`.
+            If `adjoint_st` is True and `adjoint_dt` is True, the shape must be :math:`(M, N)`.
 
-    Returns:
-        Tensor, the shape of tensor  is :math:`(N, M)`.The output data type is the same as "values".
+    Outputs:
+        Tensor, the dtype is the same as `values`.
+        If `adjoint_st` is False, the shape is :math:`(N, M)`.
+        If `adjoint_st` is True, the shape is :math:`(C, M)`.
+
+    Raises:
+        TypeError: If the type of `adjoint_st` or `adjoint_dt` is not bool, or the dtype of `indices`,
+            dtype of `values` and dtype of `dense` don't meet the parameter description.
+        ValueError: If `sparse_shape`, shape of `indices, shape of `values`,
+            and shape of `dense` don't meet the parameter description.
 
     Supported Platforms:
         ``CPU``
 
     Examples:
-        >>> class NetSparseDenseMatmul(nn.Cell):
-        ...     def __init__(self):
-        ...         super(NetSparseDenseMatmul, self).__init__()
-        ...         self.matmul = nn.SparseTensorDenseMatmul()
-        ...
-        ...     def construct(self, indices, values, dens_shape, dt):
-        ...         return self.matmul(indices, values, dens_shape, dt)
-        ...
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
+        >>> from mindspore import nn
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
         >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> dense_shape = (3, 4)
-        >>> dsMatrix = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=ms.float32)
-        >>> test_SparseDenseMatmul = NetSparseDenseMatmul()
-        >>> out = test_SparseDenseMatmul(indices, values, dense_shape, dsMatrix)
+        >>> sparse_shape = (3, 4)
+        >>> dense = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=ms.float32)
+        >>> sparse_dense_matmul = nn.SparseTensorDenseMatmul()
+        >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
         [[2 2]
          [0 6]
          [6 0]]
     """
+
     def __init__(self, adjoint_st=False, adjoint_dt=False):
         """Initialize SparseTensorDenseMatmul"""
         super(SparseTensorDenseMatmul, self).__init__()
-        self.adjst = adjoint_st
-        self.adjdt = adjoint_dt
-        self.matmul = P.SparseTensorDenseMatmul(adjoint_st=self.adjst, adjoint_dt=self.adjdt)
+        self.adj_st = adjoint_st
+        self.adj_dt = adjoint_dt
+        self.sparse_dense_matmul = P.SparseTensorDenseMatmul(adjoint_st=self.adj_st, adjoint_dt=self.adj_dt)
 
-    def construct(self, indices, values, dense_shape, dense):
-        return self.matmul(indices, values, dense_shape, dense)
+    def construct(self, indices, values, sparse_shape, dense):
+        return self.sparse_dense_matmul(indices, values, sparse_shape, dense)

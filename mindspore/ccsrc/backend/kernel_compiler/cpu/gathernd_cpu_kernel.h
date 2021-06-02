@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class GatherNdCPUKernel : public CPUKernel {
  public:
   GatherNdCPUKernel() = default;
@@ -31,9 +32,6 @@ class GatherNdCPUKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
  private:
   std::vector<size_t> input_shapes_;
@@ -47,7 +45,18 @@ class GatherNdCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(GatherNd, KernelAttr(), GatherNdCPUKernel);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, bool);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, int8_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, int16_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, uint8_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, uint16_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, uint64_t);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, float);
+MS_REG_CPU_KERNEL_T(GatherNd, KernelAttr(), GatherNdCPUKernel, double);
+
 }  // namespace kernel
 }  // namespace mindspore
 

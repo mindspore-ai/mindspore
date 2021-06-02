@@ -23,24 +23,20 @@ namespace kernel {
 template <typename I, typename T>
 void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
-  indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  values_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  dense_shape_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (indices_shape.size() != 2) {
+    MS_LOG(EXCEPTION) << "SparseToDense requires 'indices' should be a 2-D Tensor, but got " << indices_shape.size()
+                      << "-D";
+  }
+  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
+    MS_LOG(EXCEPTION)
+      << "SparseToDense requires 'values' should be a 1-D Tensor and the first dimension length should be "
+         "equal to the 'indices' first dimension length, but got 'values' shape: "
+      << values_shape;
+  }
+  values_size_ = values_shape[0];
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (!indices_shape_.size() || !values_shape_.size() || !output_shape_.size()) {
-    MS_LOG(EXCEPTION) << "Input NULL";
-  }
-  if (indices_shape_.size() > 2 || indices_shape_[0] != values_shape_[0]) {
-    MS_LOG(EXCEPTION) << "Input Error";
-  }
-}
-
-size_t DenseGetTensorLen(const std::vector<size_t> &shape) {
-  size_t len = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    len *= shape[i];
-  }
-  return len;
 }
 
 template <typename I, typename T>
@@ -50,35 +46,25 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
   auto indices_addr = reinterpret_cast<I *>(inputs[0]->addr);
   auto values_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const size_t output_length = outputs[0]->size / sizeof(T);
+  memset(output_addr, 0, output_length);
 
-  size_t output_len = DenseGetTensorLen(output_shape_);
-  memset(output_addr, 0, output_len * sizeof(T));
-  std::vector<size_t> cargo(output_shape_.size(), 0);
-
-  size_t i = output_shape_.size() - 1;
-  switch (indices_shape_.size()) {
-    case 1:
-      for (i = 0; i < indices_shape_[0]; i++) {
-        output_addr[indices_addr[i]] = values_addr[i];
+  size_t rank = output_shape_.size();
+  for (size_t i = 0; i < values_size_; ++i) {
+    size_t out_index = 0;
+    for (size_t j = 0; j < rank; j++) {
+      int index = indices_addr[i * rank + j];
+      if (index >= SizeToInt(output_shape_[j]) || index < 0) {
+        MS_EXCEPTION(ValueError) << "The " << i << "th value in " << j << "th dimension index: " << index
+                                 << " out of bounds: [0, " << output_shape_[j] << ")";
       }
-      break;
-
-    case 2:
-      cargo[i] = 1;
-      for (; i >= 1; i--) {
-        cargo[i - 1] = cargo[i] * output_shape_[i];
+      size_t count = 1;
+      for (size_t k = j + 1; k < rank; k++) {
+        count *= output_shape_[k];
       }
-      for (i = 0; i < indices_shape_[0]; i++) {
-        size_t out_index = 0;
-        for (size_t j = 0; j < indices_shape_[1]; j++) {
-          out_index += (*(indices_addr + i * indices_shape_[1] + j)) * cargo[j];
-        }
-        output_addr[out_index] = values_addr[i];
-      }
-      break;
-
-    default:
-      break;
+      out_index += SizeToInt(index) * count;
+    }
+    output_addr[out_index] = values_addr[i];
   }
   return true;
 }
@@ -87,11 +73,11 @@ template <typename I, typename T>
 void SparseToDenseCPUKernel<I, T>::CheckParam(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but SparseToDenseCPUKernel needs 3 input.";
+    MS_LOG(EXCEPTION) << "SparseToDense needs 3 inputs, but got " << input_num;
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but SparseToDenseCPUKernel needs 1 output.";
+    MS_LOG(EXCEPTION) << "SparseToDense should have 2 outputs, but got " << output_num;
   }
 }
 }  // namespace kernel
