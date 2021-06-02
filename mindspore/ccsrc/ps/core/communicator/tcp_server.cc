@@ -387,7 +387,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   auto srv = const_cast<TcpServer *>(conn->GetServer());
 
   if (events & BEV_EVENT_EOF) {
-    MS_LOG(INFO) << "Event buffer end of file!";
+    MS_LOG(INFO) << "Event buffer end of file, a client is disconnected from this server!";
     // Notify about disconnection
     if (srv->client_disconnection_) {
       srv->client_disconnection_(*srv, *conn);

@@ -156,6 +156,16 @@ void CommUtil::LogCallback(int severity, const char *msg) {
       break;
   }
 }
+
+bool CommUtil::IsFileExists(const std::string &file) {
+  std::ifstream f(file.c_str());
+  if (!f.good()) {
+    return false;
+  } else {
+    f.close();
+    return true;
+  }
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
