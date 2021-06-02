@@ -54,8 +54,6 @@ class Node {
         current_cluster_state_(ClusterState::ClUSTER_STARTING) {}
   virtual ~Node() = default;
 
-  using OnNodeEventMessage = std::function<void(const ClusterEvent &event)>;
-
   using MessageCallback = std::function<void()>;
 
   virtual bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) = 0;

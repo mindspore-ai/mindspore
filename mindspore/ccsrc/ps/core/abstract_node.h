@@ -27,6 +27,7 @@
 #include "ps/core/node.h"
 #include "ps/core/communicator/message.h"
 #include "utils/ms_exception.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {
@@ -54,7 +55,6 @@ class AbstractNode : public Node {
   bool Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  void set_event_callback(const OnNodeEventMessage &event);
   // When the business layer finish scale out, it should call this function
   void set_ready_for_scale_out();
   // When the business layer finish scale in, it should call this function
@@ -65,6 +65,9 @@ class AbstractNode : public Node {
 
   // Send scale_in_done instructions to the scheduler.
   void set_scale_in_done();
+
+  // Set the callback corresponding to the event.
+  void RegisterEventCallback(const ClusterEvent &event, const EventCallback &event_cb);
 
   bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len, int command,
             const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -135,11 +138,12 @@ class AbstractNode : public Node {
   // Initialize worker num and server num by cluster config.
   void InitNodeNum();
 
+  // Trigger the callback corresponding to the event.
+  void OnEventCallback(const ClusterEvent &event);
+
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
   std::shared_ptr<TcpClient> client_to_scheduler_;
-
-  OnNodeEventMessage on_node_event_message_;
 
   // the key is: <node_role,rank_id>, the value is: <ip, port>
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
@@ -180,6 +184,9 @@ class AbstractNode : public Node {
 
   // Identify whether the current node is a scale in node.
   std::atomic<bool> is_current_node_scale_in_;
+
+  // Each ClusterEvent corresponds to a EventCallback to process the event.
+  std::map<ClusterEvent, EventCallback> event_to_callback_;
 };
 }  // namespace core
 }  // namespace ps

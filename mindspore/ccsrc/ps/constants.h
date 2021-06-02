@@ -24,6 +24,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "ps/core/communicator/request_process_result_code.h"
 
@@ -105,6 +106,8 @@ using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<std::vector<s
 constexpr size_t INDEX_NOT_SEND = UINT_MAX;
 using OptimOriginIdx = std::map<std::string, size_t>;
 using OptimPSSendIdx = std::map<std::string, size_t>;
+
+using EventCallback = std::function<void(void)>;
 
 const OptimOriginIdx kMomentumOriginIdx = {{"weight", 0}, {"accum", 1}, {"lr", 2}, {"grad", 3}, {"momentum", 4}};
 const OptimPSSendIdx kMomentumPSSendIdx = {
