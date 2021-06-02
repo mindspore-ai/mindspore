@@ -54,15 +54,6 @@ bool TcpCommunicator::Start() {
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   server_node_->set_handler(tcp_msg_callback_);
 
-  // Set event callback. For example, event of scaling out/in, etc.
-  event_callback_ = std::bind(
-    [&](const core::ClusterEvent &event) -> void {
-      MS_LOG(INFO) << "Server receives event of " << event;
-      certain_event_to_callback_[event]();
-    },
-    std::placeholders::_1);
-  server_node_->set_event_callback(event_callback_);
-
   server_node_->Start();
   running_ = true;
   running_thread_ = std::thread([&]() {
@@ -86,9 +77,8 @@ void TcpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const Mes
   return;
 }
 
-void TcpCommunicator::RegisterEventCallback(const core::ClusterEvent &event, const CertainEventCallback &event_cb) {
-  certain_event_to_callback_.try_emplace(event, event_cb);
-  return;
+void TcpCommunicator::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
+  server_node_->RegisterEventCallback(event, event_cb);
 }
 
 ServerNode *TcpCommunicator::server_node() { return server_node_; }

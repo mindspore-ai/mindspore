@@ -42,8 +42,6 @@ class CommunicatorBase {
   using OnNodeEventCallback = std::function<void(const ClusterEvent &)>;
   using TcpMsgCallback = std::function<void(std::shared_ptr<core::TcpConnection> conn,
                                             std::shared_ptr<core::MessageMeta> meta, DataPtr data, size_t size)>;
-  using CertainEventCallback = std::function<void(void)>;
-
   CommunicatorBase() = default;
 
   virtual ~CommunicatorBase() = default;

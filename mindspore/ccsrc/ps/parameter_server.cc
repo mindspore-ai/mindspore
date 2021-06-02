@@ -48,12 +48,17 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
 
   InitOptimInfoBuilders();
   server_node_->set_handler(*handler_);
-  server_node_->set_event_callback([&](const core::ClusterEvent &event) {
-    if ((event == core::ClusterEvent::CLUSTER_TIMEOUT) ||
-        (event == core::ClusterEvent::SCHEDULER_TIMEOUT || (event == core::ClusterEvent::NODE_TIMEOUT))) {
-      MS_LOG(ERROR) << "Trigger timeout event:" << event << " begin to exit the system!";
-      Finalize();
-    }
+  server_node_->RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: CLUSTER_TIMEOUT begin to exit the system!";
+    this->Finalize();
+  });
+  server_node_->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: SCHEDULER_TIMEOUT begin to exit the system!";
+    this->Finalize();
+  });
+  server_node_->RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: NODE_TIMEOUT begin to exit the system!";
+    this->Finalize();
   });
   thread_.reset(new std::thread(&ParameterServer::UpdateWeights, this));
   GetEmbeddingTableParamPtr();

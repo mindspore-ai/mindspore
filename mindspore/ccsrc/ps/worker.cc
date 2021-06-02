@@ -32,14 +32,23 @@ void Worker::Run() {
   }
 
   Initialize();
-  worker_node_.set_event_callback([&](const core::ClusterEvent &event) {
-    if ((event == core::ClusterEvent::CLUSTER_TIMEOUT) ||
-        (event == core::ClusterEvent::SCHEDULER_TIMEOUT || (event == core::ClusterEvent::NODE_TIMEOUT))) {
-      MS_LOG(WARNING) << "Trigger timeout event:" << event << " begin to exit the system!";
-      Finalize();
-      exit(0);
-    }
+
+  worker_node_.RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: CLUSTER_TIMEOUT begin to exit the system!";
+    this->Finalize();
+    exit(0);
   });
+  worker_node_.RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: SCHEDULER_TIMEOUT begin to exit the system!";
+    this->Finalize();
+    exit(0);
+  });
+  worker_node_.RegisterEventCallback(core::ClusterEvent::NODE_TIMEOUT, [this]() {
+    MS_LOG(ERROR) << "Trigger timeout event: NODE_TIMEOUT begin to exit the system!";
+    this->Finalize();
+    exit(0);
+  });
+
   MS_LOG(INFO) << "Worker starts connecting to scheduler and server...";
   worker_node_.Start();
   MS_LOG(INFO) << "Worker connected successfully.";

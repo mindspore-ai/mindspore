@@ -88,8 +88,6 @@ bool AbstractNode::Broadcast(const enum NodeRole &node_role, const DataPtr &mess
   return Wait(request_id, timeout);
 }
 
-void AbstractNode::set_event_callback(const OnNodeEventMessage &event) { on_node_event_message_ = event; }
-
 void AbstractNode::set_ready_for_scale_out() {
   Register(client_to_scheduler_);
   connected_nodes_.clear();
@@ -103,7 +101,7 @@ void AbstractNode::set_ready_for_scale_in() {
     current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
     node_info_.rank_id_ = UINT_MAX;
     MS_LOG(WARNING) << "Trigger cluster scale in done event.";
-    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_IN_DONE);
+    OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 }
 
@@ -139,6 +137,10 @@ void AbstractNode::set_scale_in_done() {
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " the node id:" << node_info_.node_id_ << "is send scale_in_done to scheduler!";
+}
+
+void AbstractNode::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
+  event_to_callback_.try_emplace(event, event_cb);
 }
 
 bool AbstractNode::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const DataPtr &data, size_t len,
@@ -339,12 +341,12 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
       if (!Heartbeat(client)) {
         MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                         << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
-        if (CheckSchedulerTimeout() && on_node_event_message_) {
+        if (CheckSchedulerTimeout()) {
           MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                           << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
           is_finish_ = true;
           wait_finish_cond_.notify_all();
-          on_node_event_message_(ClusterEvent::SCHEDULER_TIMEOUT);
+          OnEventCallback(ClusterEvent::SCHEDULER_TIMEOUT);
         }
       } else {
         UpdateSchedulerTime();
@@ -401,10 +403,10 @@ void AbstractNode::ProcessHeartbeatResp(std::shared_ptr<MessageMeta> meta, const
     wait_start_cond_.notify_all();
   }
 
-  if (current_cluster_state_ == ClusterState::CLUSTER_TIMEOUT && on_node_event_message_) {
+  if (current_cluster_state_ == ClusterState::CLUSTER_TIMEOUT) {
     is_ready_ = true;
     wait_start_cond_.notify_all();
-    on_node_event_message_(ClusterEvent::CLUSTER_TIMEOUT);
+    OnEventCallback(ClusterEvent::CLUSTER_TIMEOUT);
   }
 }
 
@@ -455,12 +457,12 @@ void AbstractNode::ProcessSendMetadata(std::shared_ptr<TcpConnection> conn, std:
 
   if (current_cluster_state_ == ClusterState::CLUSTER_SCALE_OUT) {
     MS_LOG(WARNING) << "Trigger cluster scale out done event.";
-    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_OUT_DONE);
+    OnEventCallback(ClusterEvent::CLUSTER_SCALE_OUT_DONE);
   }
 
   if (current_cluster_state_ == ClusterState::CLUSTER_SCALE_IN) {
     MS_LOG(WARNING) << "Trigger cluster scale in done event.";
-    on_node_event_message_(ClusterEvent::CLUSTER_SCALE_IN_DONE);
+    OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 
   MS_LOG(INFO) << "The current cluster state:" << current_cluster_state_;
@@ -509,7 +511,7 @@ void AbstractNode::ProcessScaleOut(std::shared_ptr<TcpConnection> conn, std::sha
   MS_LOG(WARNING) << "The scale out worker num:" << worker_num << ", the server num:" << server_num;
 
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
-  on_node_event_message_(ClusterEvent::READY_FOR_SCALE_OUT);
+  OnEventCallback(ClusterEvent::READY_FOR_SCALE_OUT);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_OUT;
   is_ready_ = false;
 }
@@ -537,7 +539,7 @@ void AbstractNode::ProcessScaleIn(std::shared_ptr<TcpConnection> conn, std::shar
   }
 
   server_->SendMessage(conn, meta, Protos::RAW, data, size);
-  on_node_event_message_(ClusterEvent::READY_FOR_SCALE_IN);
+  OnEventCallback(ClusterEvent::READY_FOR_SCALE_IN);
   current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
   is_ready_ = false;
 }
@@ -781,6 +783,15 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 void AbstractNode::InitNodeNum() {
   worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
   server_num_ = PSContext::instance()->cluster_config().initial_server_num;
+}
+
+void AbstractNode::OnEventCallback(const ClusterEvent &event) {
+  if (!event_to_callback_.count(event)) {
+    MS_LOG(ERROR) << "The event callback of " << event << " is not set.";
+  } else {
+    MS_LOG(INFO) << "Trigger the event:" << event;
+    event_to_callback_[event]();
+  }
 }
 }  // namespace core
 }  // namespace ps
