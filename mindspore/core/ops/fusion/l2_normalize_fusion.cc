@@ -28,8 +28,7 @@ void L2NormalizeFusion::Init(const std::vector<int64_t> &axis, const float epsil
 }
 
 void L2NormalizeFusion::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 

@@ -36,9 +36,7 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto LshProjection_prim = primitive->cast<PrimLshProjectionPtr>();
   MS_EXCEPTION_IF_NULL(LshProjection_prim);
-  //  if (input_args.size() != 2 && input_args.size() != 3) {
-  //    MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << input_args.size() << " is given.";
-  //  }
+
   auto op_name = LshProjection_prim->name();
   auto input0 = CheckAndConvertUtils::ConvertShapePtrToShape("input0_shape", input_args[0]->BuildShape(), op_name);
   auto input1 = CheckAndConvertUtils::ConvertShapePtrToShape("input1_shape", input_args[1]->BuildShape(), op_name);

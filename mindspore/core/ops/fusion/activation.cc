@@ -30,8 +30,7 @@ void Activation::set_min_val(const float min_val) { this->AddAttr(kMinVal, MakeV
 void Activation::set_max_val(const float max_val) { this->AddAttr(kMaxVal, MakeValue(max_val)); }
 
 void Activation::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 

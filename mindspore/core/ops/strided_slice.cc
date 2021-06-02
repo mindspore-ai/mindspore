@@ -277,13 +277,13 @@ int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos,
     if (start_pos < -x_dim || end_pos >= x_dim) {
       slicing_length = 0;
     } else {
-      if (0 < start_pos && start_pos < x_dim) {
+      if (start_pos > 0 && start_pos < x_dim) {
         start_pos += -x_dim;
       }
       if (start_pos >= x_dim) {
         start_pos = -1;
       }
-      if (0 <= end_pos && end_pos < x_dim) {
+      if (end_pos >= 0 && end_pos < x_dim) {
         end_pos += -x_dim;
       }
       if (end_pos < -x_dim - 1) {

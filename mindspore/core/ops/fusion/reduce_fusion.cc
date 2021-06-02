@@ -29,8 +29,7 @@ namespace ops {
 void ReduceFusion::set_keep_dims(const bool keep_dims) { this->AddAttr(kKeepDims, MakeValue(keep_dims)); }
 
 void ReduceFusion::set_mode(const ReduceMode mode) {
-  int64_t swi;
-  swi = mode;
+  int64_t swi = mode;
   this->AddAttr(kMode, MakeValue(swi));
 }
 

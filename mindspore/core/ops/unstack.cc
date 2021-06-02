@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace ops {
-
 void Unstack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unstack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
 int64_t Unstack::get_axis() const {
@@ -36,7 +35,6 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   int64_t dim = x_shape.size();
   int64_t axis = unstack_prim->get_axis();
-  //  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-dim, dim}, prim_name);
   if (axis < 0) {
     axis = axis + dim;
   }

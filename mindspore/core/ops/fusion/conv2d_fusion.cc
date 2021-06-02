@@ -41,8 +41,7 @@ void Conv2DFusion::Init(int64_t in_channel, int64_t out_channel, const std::vect
 void Conv2DFusion::set_in_channel(const int64_t in_channel) { this->AddAttr(kInChannel, MakeValue(in_channel)); }
 void Conv2DFusion::set_pad_list(const std::vector<int64_t> &pad_list) { this->AddAttr(kPadList, MakeValue(pad_list)); }
 void Conv2DFusion::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 int64_t Conv2DFusion::get_in_channel() const {

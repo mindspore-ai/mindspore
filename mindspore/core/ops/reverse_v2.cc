@@ -28,11 +28,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(reverseV2_prim);
   auto prim_name = reverseV2_prim->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  //  auto axis = reverseV2_prim->get_axis();
-  //  int dim = x_shape.size();
-  //  for (auto &axis_value : axis) {
-  //    CheckAndConvertUtils::CheckInRange("axis value", axis_value, kIncludeLeft, {-dim, dim}, prim_name);
-  //  }
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

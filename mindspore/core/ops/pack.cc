@@ -26,7 +26,6 @@ std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::ve
   auto output_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape[0]", x_shapes[0], name);
   int64_t rank_base = SizeToLong(output_shape.size());
   int64_t N = SizeToLong(x_shapes.size());
-  //  CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeBoth, {-rank_base-1, rank_base}, name);
   if (axis < 0) {
     axis = axis + rank_base + 1;
   }
