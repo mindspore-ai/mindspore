@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameEqual = "Equal";
+constexpr auto kNameEqual = prim::kEqual;
 class Equal : public PrimitiveC {
  public:
-  Equal() : PrimitiveC(kNameEqual) { InitIOName({"x", "y"}, {"output"}); }
+  Equal() : PrimitiveC(prim::kPrimEqual->name()) { InitIOName({"x", "y"}, {"output"}); }
   ~Equal() = default;
   MS_DECLARE_PARENT(Equal, PrimitiveC);
   void Init() {}
