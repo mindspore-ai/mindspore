@@ -67,6 +67,7 @@
 #include "backend/optimizer/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
+#include "backend/optimizer/ascend/ir_fusion/bn_reduce_grad_conv2d_backprop_filter_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
@@ -197,6 +198,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
+  ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
 }
 }  // namespace
 void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {

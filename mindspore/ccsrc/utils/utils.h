@@ -281,6 +281,7 @@ constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossE
 constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kSoftmaxCrossEntropyWithLogitsOpName = "SoftmaxCrossEntropyWithLogits";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
+constexpr auto kFusedDbnDwOpName = "FusedDbnDw";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
