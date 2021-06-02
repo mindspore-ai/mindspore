@@ -266,7 +266,11 @@ def run_pretrain():
                                                    accumulation_steps=accumulation_steps,
                                                    enable_global_norm=enable_global_norm)
     else:
-        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, enable_clip_grad=False)
+        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, enable_clip_grad=True)
+        if cfg.optimizer == "Thor":
+            net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, sens=cfg.Thor.loss_scale,
+                                                  enable_clip_grad=False)
+
 
     model = Model(net_with_grads)
     model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)
