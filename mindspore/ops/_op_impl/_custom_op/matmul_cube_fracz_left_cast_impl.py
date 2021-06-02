@@ -44,6 +44,12 @@ matmul_cube_fracz_left_cast_op_info = TBERegOp("CusMatMulCubeFraczLeftCast") \
     .get_op_info()
 
 
+def _clip_num(num):
+    if num == 0:
+        num = 1
+    return num
+
+
 def _get_block(trans_a, trans_b, m_shape, n_shape, km_shape, kn_shape):
     """_get_block"""
     block_in0 = cce.BLOCK_IN
@@ -98,8 +104,7 @@ def cus_matmul_cube_fraczleftcast(input_x1, input_x2, bias=None, output_y=None, 
         n, c, h, w = shape_bb
         c0 = 16
         c1 = c // c0
-        if c1 == 0:
-            c1 = 1
+        c1 = _clip_num(c1)
         shape_bb = [n, c1 * h * w * c0]
         shape_aa = [n, n]
 
@@ -107,8 +112,7 @@ def cus_matmul_cube_fraczleftcast(input_x1, input_x2, bias=None, output_y=None, 
         n, c, h, w = shape_aa
         c0 = 16
         c1 = c // c0
-        if c1 == 0:
-            c1 = 1
+        c1 = _clip_num(c1)
         shape_aa = [n, c1 * h * w * c0]
         shape_bb = [c1 * h * w * c0, c1 * h * w * c0]
 

@@ -43,6 +43,24 @@ def _get_flattern_shape(shape):
     return (flattern_shape,)
 
 
+def _error_feedback(input_shape):
+    support_shape = [((8, 128, 128), (8, 128, 128), "float32", False, True),
+                     ((36, 128, 128), (36, 128, 128), "float32", False, True),
+                     ((5, 128, 128), (5, 128, 128), "float32", False, True),
+                     ((18, 128, 128), (18, 128, 128), "float32", False, True),
+                     ((16, 128, 128), (16, 128, 128), "float32", False, True),
+                     ((9, 128, 128), (9, 128, 128), "float32", False, True),
+                     ((1, 64, 64), (1, 64, 64), "float32", False, True),
+                     ((1, 128, 128), (1, 128, 128), "float32", False, True),
+                     ((4, 128, 128), (4, 128, 128), "float32", False, True),
+                     ((2, 128, 128), (2, 128, 128), "float32", False, True),
+                     ((6, 128, 128), (6, 128, 128), "float32", False, True),
+                     ((24, 128, 128), (24, 128, 128), "float32", False, True),
+                     ((32, 128, 128), (32, 128, 128), 'float32', False, True)]
+    if input_shape not in support_shape:
+        raise RuntimeError("input_shape %s is not supported" % str(input_shape))
+
+
 def _inner_matmul_new(tik_instance, dtype, input_info, res, res_index):
     """_inner_matmul_new"""
     input1, input1_index, input2, input2_index = input_info
@@ -100,9 +118,9 @@ def process_input_shape_640(input_shape, tik_instance, dtype, total_input, res):
     """process input shape of 640"""
     input1, input2 = total_input
     if input_shape == ((5, 128, 128), (5, 128, 128), "float32", False, True):
-        with tik_instance.for_range(0, 30, block_num=30) as block_idx,\
-                tik_instance.for_range(0, 11) as cc1_db,\
-                tik_instance.for_range(0, 2, thread_num=2) as thread_idx,\
+        with tik_instance.for_range(0, 30, block_num=30) as block_idx, \
+                tik_instance.for_range(0, 11) as cc1_db, \
+                tik_instance.for_range(0, 2, thread_num=2) as thread_idx, \
                 tik_instance.if_scope(((((block_idx % 6) * 22) + (cc1_db * 2) + thread_idx) < 128)):
             input_1_local_ub = tik_instance.Tensor(dtype, [128], name="input_1_local_ub",
                                                    scope=tik.scope_ubuf)
@@ -157,17 +175,13 @@ def process_input_shape_1152(input_shape, tik_instance, dtype, total_input, res)
                 input2_index = (block_idx // 3) * 16384
                 res_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + cc0 * 128
                 input_info = input1, input1_index, input2, input2_index
-                _inner_matmul_new(tik_instance, dtype,
-                                  input_info,
-                                  res, res_index)
+                _inner_matmul_new(tik_instance, dtype, input_info, res, res_index)
             with tik_instance.if_scope((block_idx % 3) < 2):
                 input1_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + 42 * 128
                 input2_index = (block_idx // 3) * 16384
                 res_index = (block_idx // 3) * 16384 + (block_idx % 3) * 5504 + 42 * 128
                 input_info = input1, input1_index, input2, input2_index
-                _inner_matmul_new(tik_instance, dtype,
-                                  input_info,
-                                  res, res_index)
+                _inner_matmul_new(tik_instance, dtype, input_info, res, res_index)
 
 
 @op_info_register(cus_batchmatmul_op_info)
@@ -185,23 +199,9 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
         raise RuntimeError("dtype of input_x1 and input_x2 must be same, but got %s vs %s" % (
             dtype, input_x2.get("dtype").lower()))
     input_shape = (tuple(x1_shape), tuple(x2_shape), dtype, transpose_a, transpose_b)
-    support_shape = [((8, 128, 128), (8, 128, 128), "float32", False, True),
-                     ((36, 128, 128), (36, 128, 128), "float32", False, True),
-                     ((5, 128, 128), (5, 128, 128), "float32", False, True),
-                     ((18, 128, 128), (18, 128, 128), "float32", False, True),
-                     ((16, 128, 128), (16, 128, 128), "float32", False, True),
-                     ((9, 128, 128), (9, 128, 128), "float32", False, True),
-                     ((1, 64, 64), (1, 64, 64), "float32", False, True),
-                     ((1, 128, 128), (1, 128, 128), "float32", False, True),
-                     ((4, 128, 128), (4, 128, 128), "float32", False, True),
-                     ((2, 128, 128), (2, 128, 128), "float32", False, True),
-                     ((6, 128, 128), (6, 128, 128), "float32", False, True),
-                     ((24, 128, 128), (24, 128, 128), "float32", False, True),
-                     ((32, 128, 128), (32, 128, 128), 'float32', False, True)]
-    if input_shape not in support_shape:
-        raise RuntimeError("input_shape %s is not supported" % str(input_shape))
 
-    # if not transpose_a and transpose_b:
+    _error_feedback(input_shape)
+
     batch, m, k = x1_shape
 
     input1_shape = _get_flattern_shape(x1_shape)
@@ -215,14 +215,13 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
 
     if input_shape == ((36, 128, 128), (36, 128, 128), "float32", False, True):
         with tik_instance.for_range(0, 18, block_num=18) as block_idx, \
-                tik_instance.for_range(0, 2) as cc0,\
+                tik_instance.for_range(0, 2) as cc0, \
                 tik_instance.for_range(0, 128, thread_num=2) as cc1:
             input1_index = block_idx * 32768 + cc0 * 16384 + cc1 * 128
             input2_index = block_idx * 32768 + cc0 * 16384
             res_index = block_idx * 32768 + cc0 * 16384 + cc1 * 128
             input_info = input1, input1_index, input2, input2_index
-            _inner_matmul_new(tik_instance, dtype,
-                              input_info, res, res_index)
+            _inner_matmul_new(tik_instance, dtype, input_info, res, res_index)
 
     total_input = input1, input2
     process_input_shape_640(input_shape, tik_instance, dtype, total_input, res)
@@ -234,20 +233,18 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
             input2_index = block_idx * 16384
             res_index = block_idx * 16384 + cc0 * 128
             input_info = input1, input1_index, input2, input2_index
-            _inner_matmul_new(tik_instance, dtype,
-                              input_info, res, res_index)
+            _inner_matmul_new(tik_instance, dtype, input_info, res, res_index)
 
     process_input_shape_1152(input_shape, tik_instance, dtype, total_input, res)
 
     if input_shape == ((1, 64, 64), (1, 64, 64), "float32", False, True):
-        with tik_instance.for_range(0, 32, block_num=32) as block_idx,\
+        with tik_instance.for_range(0, 32, block_num=32) as block_idx, \
                 tik_instance.for_range(0, 2, thread_num=2) as cc0:
             input1_index = block_idx * 128 + cc0 * 64
             input2_index = 0
             res_index = block_idx * 128 + cc0 * 64
             input_info = input1, input1_index, input2, input2_index
-            _inner_matmul_new_1_64_32_64(tik_instance, dtype,
-                                         input_info,
+            _inner_matmul_new_1_64_32_64(tik_instance, dtype, input_info,
                                          res, res_index)
 
     input_shape_list = [((1, 128, 128), (1, 128, 128), "float32", False, True),
@@ -257,14 +254,12 @@ def cus_batch_matmul(input_x1, input_x2, output, transpose_a=False,
                         ((8, 128, 128), (8, 128, 128), "float32", False, True),
                         ((16, 128, 128), (16, 128, 128), "float32", False, True),
                         ((24, 128, 128), (24, 128, 128), "float32", False, True),
-                        ((32, 128, 128), (32, 128, 128), 'float32', False, True)
-                        ]
+                        ((32, 128, 128), (32, 128, 128), 'float32', False, True)]
     if input_shape in input_shape_list:
-        block_num = 32
+        block_num, thread_num = 32, 2
         input1_unit_size = 128
         input2_unint_size = 128 * 128
         block_process_ele_num = (batch * m * k) // block_num
-        thread_num = 2
         loop_time = (batch * m * k) // block_num // input1_unit_size
         with tik_instance.for_range(0, block_num, block_num=block_num) as block_idx, \
                 tik_instance.for_range(0, loop_time, thread_num=thread_num) as cc0:

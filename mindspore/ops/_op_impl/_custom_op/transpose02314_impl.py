@@ -39,12 +39,7 @@ def _get_tik():
     return tik_instance
 
 
-@op_info_register(cus_transpose02314_op_info)
-def cus_transpose02314(input_x, output, kernel_name="cus_transpose021354"):
-    """CusTranspose02314"""
-    input_x_shape = input_x.get("shape")
-    output_shape = output.get("shape")
-    input_x_shape = tuple(input_x_shape)
+def _error_feedback(input_x_shape):
     support_shape = [(32, 128, 7, 7, 16),
                      (32, 32, 7, 7, 16),
                      (32, 32, 14, 14, 16),
@@ -59,6 +54,16 @@ def cus_transpose02314(input_x, output, kernel_name="cus_transpose021354"):
                      (32, 4, 112, 112, 16)]
     if input_x_shape not in support_shape:
         raise RuntimeError("input_shape %s is not supported" % str(input_x_shape))
+
+
+@op_info_register(cus_transpose02314_op_info)
+def cus_transpose02314(input_x, output, kernel_name="cus_transpose021354"):
+    """CusTranspose02314"""
+    input_x_shape = input_x.get("shape")
+    output_shape = output.get("shape")
+    input_x_shape = tuple(input_x_shape)
+
+    _error_feedback(input_x_shape)
 
     tik_instance = _get_tik()
 
@@ -302,6 +307,7 @@ def shape9(tik_instance, input_x, res, dtype):
 
 def shape10(tik_instance, input_x, res, dtype):
     """input shape (32, 32, 14, 14, 16)"""
+
     def _inner_compute(split_index):
         input_x_ub = tik_instance.Tensor(dtype, [1, 32, 2, 14, 16], name="input_1_local_ub",
                                          scope=tik.scope_ubuf)
@@ -323,6 +329,7 @@ def shape10(tik_instance, input_x, res, dtype):
 
 def shape11(tik_instance, input_x, res, dtype):
     """input shape (32, 64, 14, 14, 16)"""
+
     def _inner_compute(split_index, block_idx):
         input_x_ub = tik_instance.Tensor(dtype, [1, 64, 2, 14, 16], name="input_1_local_ub",
                                          scope=tik.scope_ubuf)

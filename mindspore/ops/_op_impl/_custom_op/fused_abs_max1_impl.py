@@ -54,6 +54,24 @@ def _update_tik(tik_instance, input_x_ub, broadcast_0_local_ub, block_index, res
     return tik_instance, res
 
 
+def _error_feedback(input_info):
+    support_shape = [((1, 128, 128), "float32"),
+                     ((2, 128, 128), "float32"),
+                     ((4, 128, 128), "float32"),
+                     ((8, 128, 128), "float32"),
+                     ((16, 128, 128), "float32"),
+                     ((5, 128, 128), "float32"),
+                     ((9, 128, 128), "float32"),
+                     ((18, 128, 128), "float32"),
+                     ((36, 128, 128), "float32"),
+                     ((32, 128, 128), "float32"),
+                     ((1, 64, 64), "float32"),
+                     ((32, 64), "float32")
+                     ]
+    if input_info not in support_shape:
+        raise RuntimeError("input_shape %s is not supported" % str(input_info))
+
+
 def shape0(tik_instance, input_x_shape, input_x, res):
     """shape0"""
     total_elements0 = 1
@@ -482,25 +500,13 @@ def cus_fused_abs_max1(input_x, output, origin_shape=None, kernel_name="cus_fuse
 
     tik_instance = _get_tik_instance()
 
-    support_shape = [((1, 128, 128), "float32"),
-                     ((2, 128, 128), "float32"),
-                     ((4, 128, 128), "float32"),
-                     ((8, 128, 128), "float32"),
-                     ((16, 128, 128), "float32"),
-                     ((5, 128, 128), "float32"),
-                     ((9, 128, 128), "float32"),
-                     ((18, 128, 128), "float32"),
-                     ((36, 128, 128), "float32"),
-                     ((32, 128, 128), "float32"),
-                     ((1, 64, 64), "float32"),
-                     ((32, 64), "float32")
-                     ]
     ori_shape = tuple(origin_shape)
     input_info = (tuple(input_x_shape), dtype)
     input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
     res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
-    if input_info not in support_shape:
-        raise RuntimeError("input_shape %s is not supported" % str(input_info))
+
+    _error_feedback(input_info)
+
     if input_info == ((1, 128, 128), "float32"):
         tik_instance, res = shape0(tik_instance, input_x_shape, input_x, res)
     elif input_info == ((2, 128, 128), "float32"):
@@ -534,8 +540,6 @@ def cus_fused_abs_max1(input_x, output, origin_shape=None, kernel_name="cus_fuse
         tik_instance.vmax(64, input_x_ub, input_x_ub, input_x_ub[128], 2, 1, 1, 1, 8, 8, 8)
         tik_instance.vmax(64, input_x_ub, input_x_ub, input_x_ub[64], 1, 1, 1, 1, 8, 8, 8)
         tik_instance.data_move(res[0], input_x_ub, 0, 1, 1, 0, 0)
-    else:
-        raise RuntimeError("UnSupportedShape")
 
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x], outputs=[res])
     return tik_instance
