@@ -1161,7 +1161,6 @@ TFRecordDataset::TFRecordDataset(const std::vector<std::vector<char>> &dataset_f
                                  const std::vector<std::vector<char>> &columns_list, int64_t num_samples,
                                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, bool shard_equal_rows,
                                  std::shared_ptr<DatasetCache> cache) {
-  // std::cout << "SchemaObj.to_string2 " << schema->to_json() << std::endl;
   auto ds = std::make_shared<TFRecordNode>(VectorCharToString(dataset_files), schema, VectorCharToString(columns_list),
                                            num_samples, shuffle, num_shards, shard_id, shard_equal_rows, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);

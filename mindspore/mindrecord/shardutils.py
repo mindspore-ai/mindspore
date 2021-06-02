@@ -133,6 +133,7 @@ def check_parameter(func):
 
     return wrapper
 
+
 def populate_data(raw, blob, columns, blob_fields, schema):
     """
     Reconstruct data form raw and blob data.
