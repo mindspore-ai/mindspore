@@ -179,7 +179,7 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t device_id) {
   }
 }
 
-bool DumpJsonParser::GetIterDumpFlag() { return e2e_dump_enabled_ && IsDumpIter(cur_dump_iter_); }
+bool DumpJsonParser::GetIterDumpFlag() const { return e2e_dump_enabled_ && IsDumpIter(cur_dump_iter_); }
 
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                                 TypeId type) {
@@ -320,7 +320,7 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   }
 }
 
-bool DumpJsonParser::IsDumpIter(uint32_t iteration) {
+bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   // bool DumpJsonParser::IsDumpIter(uint32_t iteration) --> checks if iteration should be dumped or not.
   if (iteration_ == "all") {
     return true;

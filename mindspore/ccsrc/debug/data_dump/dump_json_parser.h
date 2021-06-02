@@ -41,7 +41,7 @@ class DumpJsonParser {
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
-  bool IsDumpIter(uint32_t iteration);
+  bool IsDumpIter(uint32_t iteration) const;
   bool DumpAllIter();
   bool IsSingleIter();
 
@@ -55,7 +55,7 @@ class DumpJsonParser {
   bool trans_flag() const { return trans_flag_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
-  bool GetIterDumpFlag();
+  bool GetIterDumpFlag() const;
   bool InputNeedDump() const;
   bool OutputNeedDump() const;
   std::string GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const;

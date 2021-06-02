@@ -69,6 +69,7 @@ def _tensors_allreduce(degree, mean, allgather, allreduce, allreduce_filter, gra
         return grad
     return grad
 
+
 @reduce_opt.register("Tensor", "Bool", "Bool", "Tensor")
 def _tensors_allreduce_post(degree, mean, allreduce_filter, grad):
     """
@@ -90,6 +91,7 @@ def _tensors_allreduce_post(degree, mean, allreduce_filter, grad):
             grad = F.tensor_mul(grad, F.cast(degree, F.dtype(grad)))
         return grad
     return grad
+
 
 @reduce_opt.register("Tensor", "Bool", "Function", "Function", "Bool", "Tensor", "Bool")
 def _tensors_allreduce_ps(degree, mean, allgather, allreduce, allreduce_filter, grad, ps_parameter):

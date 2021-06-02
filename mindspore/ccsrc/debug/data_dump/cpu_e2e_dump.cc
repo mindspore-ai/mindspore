@@ -66,8 +66,6 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(input, index);
-    std::string tensor_name = node->fullname_with_scope();
-
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
@@ -78,7 +76,8 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     const uint32_t kStreamId = 0;
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
                             std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
-    DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+    MS_EXCEPTION_IF_NULL(addr);
+    DumpMemToFile(file_path, *addr, int_shapes, type);
   }
 }
 
@@ -91,6 +90,7 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(node, j);
+    MS_EXCEPTION_IF_NULL(addr);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
@@ -102,7 +102,7 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
                             std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
-    DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+    DumpMemToFile(file_path, *addr, int_shapes, type);
   }
 }
 
@@ -143,7 +143,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   const uint32_t kStreamId = 0;
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(kTaskId) + '.' +
                           std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output.0";
-  DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
+  DumpMemToFile(file_path, *addr, int_shapes, type);
 }
 
 void CPUE2eDump::DumpParametersAndConst(const session::KernelGraph *graph, uint32_t graph_id) {

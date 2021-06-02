@@ -50,7 +50,7 @@ class E2eDump {
                                      const Debugger *debugger);
 
   static void DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
-                               NotNull<const device::DeviceAddress *> addr, const ShapeVector &int_shapes,
+                               const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                                const TypeId &host_type, const TypeId &device_type, bool trans_flag, size_t slot,
                                const Debugger *debugger);
   static bool IsDeviceTargetGPU();
