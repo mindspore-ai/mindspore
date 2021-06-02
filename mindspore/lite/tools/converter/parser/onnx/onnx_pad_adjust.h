@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_PAD_ADJUST_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_PAD_ADJUST_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_PAD_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_PAD_ADJUST_H_
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
@@ -35,4 +35,4 @@ class OnnxPadAdjust {
   CNodePtr NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node, std::vector<int> perm);
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_PAD_ADJUST_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_PAD_ADJUST_H_
