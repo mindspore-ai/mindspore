@@ -2672,10 +2672,21 @@ class ReverseV2(PrimitiveWithInfer):
         self.axis = axis
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
+
     def infer_shape(self, x_shape):
         dim = len(x_shape)
         for i, each in enumerate(self.axis):
             validator.check_int_range(each, -dim, dim, Rel.INC_LEFT, f'axis[{i}]', self.name)
+        normalized_axis = []
+        for i, v in enumerate(self.axis):
+            if v < 0:
+                normalized_axis.append(v + dim)
+            else:
+                normalized_axis.append(v)
+
+        if len(normalized_axis) != len(set(normalized_axis)):
+            raise ValueError('axis cannot contain duplicate dimensions.')
+
         return x_shape
 
     def infer_dtype(self, x_dtype):
