@@ -17,7 +17,7 @@ import argparse
 import numpy as np
 
 from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
-from src.resnet_thor import resnet50 as resnet
+from src.resnet import resnet50 as resnet
 from src.config import config
 
 parser = argparse.ArgumentParser(description='checkpoint export')
