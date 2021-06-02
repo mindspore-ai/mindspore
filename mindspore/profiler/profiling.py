@@ -37,6 +37,7 @@ from mindspore.profiler.parser.integrator import GpuTimelineGenerator, AscendTim
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
+from mindspore.profiler.parser.flops_parser import FlopsParser
 from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
@@ -240,6 +241,10 @@ class Profiler:
         output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
         aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
         aicpu_data_parser.execute()
+
+        # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id)
+        flops_parser.execute()
 
         # Parsing minddata AICPU profiling
         MinddataParser.execute(source_path, self._output_path, self._dev_id)
