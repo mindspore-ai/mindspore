@@ -34,7 +34,7 @@ class ModelParser {
 
   virtual ~ModelParser() = default;
 
-  virtual FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) { return this->res_graph_; }
+  virtual FuncGraphPtr Parse(const converter::Flags &flag) { return this->res_graph_; }
 
  protected:
   FuncGraphPtr res_graph_ = nullptr;

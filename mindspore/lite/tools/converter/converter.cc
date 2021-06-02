@@ -46,7 +46,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
       MS_LOG(ERROR) << "get funcGraph failed for fmk:" << flag.fmkIn;
       return nullptr;
     }
-    func_graph = model_parser_->Parse(flag.modelFile, flag.weightFile);
+    func_graph = model_parser_->Parse(flag);
   }
   if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {
     MS_LOG(ERROR) << "update graph inputs and outputs dtype failed.";

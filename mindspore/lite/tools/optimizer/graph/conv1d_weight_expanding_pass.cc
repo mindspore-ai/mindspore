@@ -77,8 +77,8 @@ bool Conv1DWeightExpandingPass::Run(const FuncGraphPtr &func_graph) {
     auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
     MS_ASSERT(prim != nullptr);
     schema::Format schema_format = schema::Format::Format_KCHW;
-    if (prim->GetAttr(opt::kWeightFormat) != nullptr) {
-      schema_format = static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(opt::kWeightFormat)));
+    if (prim->GetAttr(ops::kFormat) != nullptr) {
+      schema_format = static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
     }
     // expand weight tensor to 4 dimensions.
     auto status = ExpandFilterShape(weight_node, schema_format);

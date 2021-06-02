@@ -488,7 +488,7 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
                                              bias,       stacked_hidden, input_length};
   auto new_node = func_graph->NewCNode(new_node_inputs);
   auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
-  prim->AddAttr(opt::kWeightFormat, MakeValue<int64_t>(Format::NHWC));
+  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(Format::NHWC));
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }

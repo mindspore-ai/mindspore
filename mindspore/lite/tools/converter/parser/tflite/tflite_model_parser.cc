@@ -32,6 +32,9 @@
 #include "tools/converter/parser/parser_utils.h"
 
 namespace mindspore::lite {
+namespace {
+constexpr size_t kConvWeightIndex = 2;
+}  // namespace
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::string &model_path) {
   size_t size = 0;
   tflite_model_buf_ = ReadFile(model_path.c_str(), &size);
@@ -47,7 +50,9 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
-FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::string &weight_file) {
+FuncGraphPtr TfliteModelParser::Parse(const converter::Flags &flag) {
+  auto model_file = flag.modelFile;
+  quant_type_ = flag.quantType;
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
   if (tflite_model_ == nullptr) {
@@ -96,8 +101,123 @@ FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::
     MS_LOG(ERROR) << "AdjustForOnnxModel failed.";
     return nullptr;
   }
-
+  status = WeightFormatTransform(res_graph_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "WeightFormatTransform failed.";
+    return nullptr;
+  }
   return res_graph_;
+}
+STATUS TfliteModelParser::WeightFormatTransform(const FuncGraphPtr &graph) {
+  MS_ASSERT(graph != nullptr);
+  auto node_list = TopoSort(graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto conv_cnode = node->cast<CNodePtr>();
+    if (!opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
+        !opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
+        !opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+      continue;
+    }
+    MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+    auto weight_node = conv_cnode->input(kConvWeightIndex);
+    MS_ASSERT(weight_node != nullptr);
+    auto tensor_info = opt::GetTensorInfo(weight_node);
+    lite::STATUS status;
+    status = HardCodeTflite(conv_cnode, tensor_info, graph);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS TfliteModelParser::HardCodeTflite(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info,
+                                         const FuncGraphPtr &graph) {
+  MS_ASSERT(conv_cnode != nullptr);
+  auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
+    return lite::RET_ERROR;
+  }
+  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+  schema::Format weight_dst_format = schema::Format::Format_KHWC;
+  STATUS status = RET_OK;
+  schema::Format weight_src_format = Format_NUM_OF_FORMAT;
+  auto weight_node = conv_node->input(kConvWeightIndex);
+  int64_t format = prim->GetAttr(ops::kFormat) != nullptr ? GetValue<int64_t>(prim->GetAttr(ops::kFormat)) : 0;
+  switch (quant_type_) {
+    case QuantType_AwareTraining:
+    case QuantType_PostTraining:
+    case QuantType_WeightQuant:
+    case QuantType_QUANT_NONE: {
+      if (format == KHWC) {
+        weight_src_format = schema::Format::Format_KHWC;
+      } else if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
+        if (!is_depth_wise) {
+          weight_src_format = schema::Format::Format_KHWC;
+        } else {
+          weight_src_format = schema::Format::Format_CHWK;
+        }
+      } else if (opt::CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion) && !is_depth_wise) {
+        weight_src_format = schema::Format::Format_CHWK;
+      }
+    } break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type_)
+                    << ", node: " << conv_node->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
+  status = DoWeightFormatTransform(conv_node, weight_node, graph, weight_src_format, weight_dst_format);
+  if (status != RET_OK) {
+    return RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+int TfliteModelParser::DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node,
+                                               const FuncGraphPtr &graph, schema::Format weight_src_format,
+                                               schema::Format weight_dst_format) {
+  if (utils::isa<CNodePtr>(weight_node)) {
+    auto status =
+      HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-const failed.";
+      return RET_ERROR;
+    }
+  }
+  auto weight_value = opt::GetTensorInfo(weight_node);
+  if (weight_value != nullptr) {
+    auto status = opt::TransFilterFormat(weight_value, weight_src_format, weight_dst_format);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
+                    << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
+                    << "quant type:" << quant_type_;
+      return RET_ERROR;
+    }
+    auto type_id = static_cast<TypeId>(weight_value->data_type());
+    auto shape = weight_value->shape();
+    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
+    auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    weight_node->set_abstract(abstract);
+  }
+  if (utils::isa<ParameterPtr>(weight_node)) {
+    auto status =
+      HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-sharing failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 std::string GetTensorName(size_t index, const tflite::BuiltinOperator &op_type, const std::string &op_name) {

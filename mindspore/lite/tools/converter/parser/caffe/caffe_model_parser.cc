@@ -30,9 +30,13 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {
 namespace {
+namespace {
+constexpr size_t kConvWeightIndex = 2;
+}  // namespace
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
     return true;
@@ -62,7 +66,10 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-FuncGraphPtr CaffeModelParser::Parse(const std::string &model_file, const std::string &weight_file) {
+FuncGraphPtr CaffeModelParser::Parse(const converter::Flags &flag) {
+  auto model_file = flag.modelFile;
+  auto weight_file = flag.weightFile;
+  quant_type_ = flag.quantType;
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -94,7 +101,105 @@ FuncGraphPtr CaffeModelParser::Parse(const std::string &model_file, const std::s
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     return nullptr;
   }
+  status = WeightFormatTransform(res_graph_);
+  if (status != RET_OK) {
+    return nullptr;
+  }
   return res_graph_;
+}
+
+STATUS CaffeModelParser::WeightFormatTransform(const FuncGraphPtr &graph) {
+  MS_ASSERT(graph != nullptr);
+  auto node_list = TopoSort(graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto conv_cnode = node->cast<CNodePtr>();
+    if (!opt::CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
+        !opt::CheckPrimitiveType(node, opt::kPrimConv2DBackpropInputFusion) &&
+        !opt::CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+      continue;
+    }
+    MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+    auto weight_node = conv_cnode->input(kConvWeightIndex);
+    MS_ASSERT(weight_node != nullptr);
+    auto tensor_info = opt::GetTensorInfo(weight_node);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "weight node must param value";
+      return RET_OK;
+    }
+    lite::STATUS status;
+    status = HardCodeCaffe(conv_cnode, tensor_info, graph);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS CaffeModelParser::HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info,
+                                       const FuncGraphPtr &graph) {
+  MS_ASSERT(conv_cnode != nullptr);
+  MS_ASSERT(tensor_info != nullptr);
+  auto weight_node = conv_node->input(kConvWeightIndex);
+  auto weight_value = opt::GetTensorInfo(weight_node);
+  if (weight_value == nullptr) {
+    MS_LOG(DEBUG) << "weight node must param value";
+    return RET_OK;
+  }
+  schema::Format weight_dst_format = schema::Format::Format_KHWC;
+  STATUS status = RET_OK;
+  schema::Format weight_src_format = Format_NUM_OF_FORMAT;
+  switch (quant_type_) {
+    case QuantType_PostTraining:
+    case QuantType_WeightQuant:
+    case QuantType_QUANT_NONE: {
+      weight_src_format = schema::Format::Format_KCHW;
+    } break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported quantType: " << EnumNameQuantType(quant_type_)
+                    << ", node: " << conv_node->fullname_with_scope();
+      return lite::RET_ERROR;
+    }
+  }
+  if (utils::isa<CNodePtr>(weight_node)) {
+    auto status =
+      HandleWeightConst(graph, conv_node, weight_node->cast<CNodePtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-const failed.";
+      return RET_ERROR;
+    }
+  }
+  weight_value = opt::GetTensorInfo(weight_node);
+  if (weight_value != nullptr) {
+    status = opt::TransFilterFormat(weight_value, schema::Format::Format_KCHW, weight_dst_format);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "TransFilter " << EnumNameFormat(schema::EnumValuesFormat()[weight_dst_format]) << "To"
+                    << EnumNameFormat(weight_dst_format) << " failed, node : " << conv_node->fullname_with_scope()
+                    << "quant type:" << quant_type_;
+      return ERROR;
+    }
+    auto type_id = static_cast<TypeId>(weight_value->data_type());
+    auto shape = weight_value->shape();
+    std::vector<int64_t> shape_vector(shape.begin(), shape.end());
+    auto abstract = lite::CreateTensorAbstract(shape_vector, type_id);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Create tensor abstarct failed";
+      return RET_ERROR;
+    }
+    weight_node->set_abstract(abstract);
+  }
+  if (utils::isa<ParameterPtr>(weight_node)) {
+    auto status =
+      HandleWeightSharing(graph, KHWC, weight_node->cast<ParameterPtr>(), weight_src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-sharing failed.";
+      return RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
 }
 
 STATUS CaffeModelParser::ConvertLayers() {

@@ -40,7 +40,7 @@ class TFModelParser : public ModelParser {
   TFModelParser() = default;
   ~TFModelParser() override = default;
 
-  FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile) override;
+  FuncGraphPtr Parse(const converter::Flags &flag) override;
 
   int TFModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
@@ -93,6 +93,13 @@ class TFModelParser : public ModelParser {
 
   STATUS ConnectNullInput();
 
+  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
+
+  STATUS HardCodeTF(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
+
+  int DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node, const FuncGraphPtr &graph,
+                              schema::Format weight_src_format, schema::Format weight_dst_format);
+
   std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
   std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
   std::unordered_map<std::string, AnfNodePtr> anf_root_node_map_;
@@ -104,6 +111,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::string> while_cond_branch_name_;
   std::vector<std::string> if_then_branch_name_;
   std::unordered_map<std::string, int> node_output_num_;
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore

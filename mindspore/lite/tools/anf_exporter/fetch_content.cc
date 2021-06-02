@@ -280,8 +280,11 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
 
   // attr weightFormat is only used by conv-like ops' second input
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (index == 2 && prim->GetAttr(opt::kWeightFormat) != nullptr) {
-    data_info->format_ = GetValue<int64_t>(prim->GetAttr(opt::kWeightFormat));
+  if ((opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
+       opt::CheckPrimitiveType(cnode, opt::kPrimConv2DBackpropInputFusion) ||
+       opt::CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) &&
+      (index == 2 && prim->GetAttr(ops::kFormat) != nullptr)) {
+    data_info->format_ = mindspore::KHWC;
   }
   if (FetchFromDefaultParam(param_node, data_info) != RET_OK) {
     MS_LOG(ERROR) << "fetch information from default param failed.";
@@ -311,8 +314,8 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   MS_ASSERT(prim != nullptr);
   if (value->isa<tensor::Tensor>()) {
     ret = FetchFromTensorValue(value_node, prim, fmk_type, train_flag, data_info);
-    if (index == 2 && prim->GetAttr(opt::kWeightFormat) != nullptr) {
-      data_info->format_ = GetValue<int64_t>(prim->GetAttr(opt::kWeightFormat));
+    if (index == 2 && prim->GetAttr(ops::kFormat) != nullptr) {
+      data_info->format_ = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
     }
   } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
     ret = FetchFromInt32OrInt64ImmValue(value_node, prim, data_info);

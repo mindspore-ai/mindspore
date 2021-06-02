@@ -56,16 +56,10 @@ void GenerateNewWeightConv2D(float *dst_weight, const float *conv_weight, const 
   if (dst_weight == nullptr || conv_weight == nullptr || scale_weight == nullptr) {
     return;
   }
-  if (fmk == lite::converter::FmkType_TF) {
-    for (int i = 0; i < weight_shape_size; i++) {
-      dst_weight[i] = conv_weight[i] * scale_weight[i % kernel_num];
-    }
-  } else {
-    auto kernel_size = weight_shape_size / kernel_num;
-    for (int i = 0; i < kernel_num; i++) {
-      for (int j = 0; j < kernel_size; j++) {
-        dst_weight[i * kernel_size + j] = conv_weight[i * kernel_size + j] * scale_weight[i];
-      }
+  auto kernel_size = weight_shape_size / kernel_num;
+  for (int i = 0; i < kernel_num; i++) {
+    for (int j = 0; j < kernel_size; j++) {
+      dst_weight[i * kernel_size + j] = conv_weight[i * kernel_size + j] * scale_weight[i];
     }
   }
 }
@@ -77,29 +71,13 @@ void GenerateNewWeightConv2DTranspose(float *dst_weight, const float *scale_weig
   }
   MS_ASSERT(group > 0);
   auto weight_data = reinterpret_cast<float *>(weight_tensor->data_c());
-  if (fmk == lite::converter::FmkType_TF) {
-    auto cin_group = weight_tensor->shape()[3] / group;
-    int area_size = weight_tensor->shape()[0] * weight_tensor->shape()[1];
+  auto cin_group = weight_tensor->shape()[0] / group;
+  int area_size = weight_tensor->shape()[1] * weight_tensor->shape()[2];
+  for (int k = 0; k < cin_group; ++k) {
     for (int j = 0; j < area_size; j++) {
       for (int i = 0; i < kernel_num; ++i) {
-        for (int k = 0; k < cin_group; ++k) {
-          dst_weight[k + i * cin_group + j * kernel_num * cin_group] =
-            weight_data[k + i * cin_group + j * kernel_num * cin_group] * scale_weight[i];
-        }
-      }
-    }
-  } else {
-    MS_ASSERT(group > 0);
-    auto cin_group = weight_tensor->shape()[0] / group;
-    int area_size = weight_tensor->shape()[2] * weight_tensor->shape()[3];
-    int cout_size = kernel_num * area_size;
-    for (int k = 0; k < cin_group; ++k) {
-      for (int i = 0; i < kernel_num; ++i) {
-        auto row_addr = weight_data + k * cout_size + i * area_size;
-        auto new_row_addr = dst_weight + k * cout_size + i * area_size;
-        for (int j = 0; j < area_size; j++) {
-          new_row_addr[j] = row_addr[j] * scale_weight[i];
-        }
+        dst_weight[i + j * kernel_num + k * area_size * kernel_num] =
+          weight_data[i + j * kernel_num + k * area_size * kernel_num] * scale_weight[i];
       }
     }
   }

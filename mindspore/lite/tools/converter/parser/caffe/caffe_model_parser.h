@@ -34,7 +34,7 @@ class CaffeModelParser : public ModelParser {
 
   ~CaffeModelParser() override;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) override;
+  FuncGraphPtr Parse(const converter::Flags &flag) override;
 
  private:
   STATUS InitOriginModel(const std::string &model_file, const std::string &weight_file);
@@ -56,10 +56,15 @@ class CaffeModelParser : public ModelParser {
 
   std::string GetOriginLayerName(const std::string &layer_name);
 
+  STATUS WeightFormatTransform(const FuncGraphPtr &graph);
+
+  STATUS HardCodeCaffe(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
+
   caffe::NetParameter caffe_model_;
   caffe::NetParameter caffe_weight_;
   std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;
   std::unordered_map<std::string, AnfNodePtr> nodes_;
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace mindspore::lite
 

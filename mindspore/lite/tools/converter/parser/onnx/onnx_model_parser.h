@@ -42,7 +42,7 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file) override;
+  FuncGraphPtr Parse(const converter::Flags &flag) override;
 
   int OnnxModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
@@ -92,12 +92,17 @@ class OnnxModelParser : public ModelParser {
   STATUS ConvertIfSubgraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
                            const std::string &subgrah_name, const std::string &if_node_name,
                            const std::string &root_node_name);
+  STATUS WeightFormatTransform(const std::set<FuncGraphPtr> &all_func_graphs);
+  STATUS HardCodeONNX(const CNodePtr &conv_node, const tensor::TensorPtr &tensor_info, const FuncGraphPtr &graph);
+  int DoWeightFormatTransform(const CNodePtr &conv_node, const AnfNodePtr &weight_node, const FuncGraphPtr &graph,
+                              schema::Format weight_src_format, schema::Format weight_dst_format);
   onnx::ModelProto onnx_model_;
   onnx::GraphProto onnx_root_graph_;
   std::vector<FuncGraphPtr> all_subgraphs_;
   std::unordered_map<std::string, AnfNodePtr> anf_nodes_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, AnfNodePtr> *> control_nodes_map_;
   std::unordered_map<std::string, std::string> child_root_map_;  // for nest control flow node
+  QuantType quant_type_ = schema::QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore

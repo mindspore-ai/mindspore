@@ -40,10 +40,7 @@
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include "tools/optimizer/fusion/squeeze_fusion.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
-#include "tools/optimizer/graph/weight_format_hardcode_pass.h"
-#include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
-#include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
@@ -154,14 +151,6 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
     graph_pm->AddPass(std::make_shared<opt::WhilePass>());
     graph_pm->AddPass(std::make_shared<opt::IfPass>());
   }
-  auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
-  weight_format_hardcode_pass->SetFmkType(config->fmk);
-  weight_format_hardcode_pass->SetQuantType(config->quantType);
-  graph_pm->AddPass(weight_format_hardcode_pass);
-  auto weight_format_transform_pass = std::make_shared<opt::WeightFormatTransformPass>();
-  weight_format_transform_pass->SetFmkType(config->fmk);
-  weight_format_transform_pass->SetQuantType(config->quantType);
-  graph_pm->AddPass(weight_format_transform_pass);
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
@@ -177,9 +166,6 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
-  if (config->fmk == lite::converter::FmkType_TFLITE) {
-    convert_pm->AddPass(std::make_shared<opt::GroupDepthwiseOpConvertPass>());
-  }
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";
@@ -198,10 +184,6 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   update_conv2d_param_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(update_conv2d_param_pass);
-  auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
-  weight_format_hardcode_pass->SetFmkType(config->fmk);
-  weight_format_hardcode_pass->SetQuantType(config->quantType);
-  const_fold_pm->AddPass(weight_format_hardcode_pass);
   auto infershape_pass = std::make_shared<opt::InferShapePass>();
   infershape_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(infershape_pass);
