@@ -349,6 +349,7 @@ class AbstractSequeue : public AbstractBase {
   std::size_t hash() const override;
   std::string ToString() const override;
   const AbstractBasePtr operator[](const std::size_t &dim) const;
+  virtual bool operator==(const AbstractSequeue &other) const;
 
  protected:
   AbstractBasePtrList elements_;
@@ -406,6 +407,7 @@ class AbstractList : public AbstractSequeue {
   std::string ToString() const override { return type_name() + "[" + AbstractSequeue::ToString() + "]"; }
 
   bool operator==(const AbstractList &other) const;
+
   bool operator==(const AbstractBase &other) const override;
 
  protected:

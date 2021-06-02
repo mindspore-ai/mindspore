@@ -299,6 +299,25 @@ void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo
   gsub->buffer << " }";
 }
 
+void DumpAttrs(const std::unordered_map<std::string, ValuePtr> &attrs, const std::shared_ptr<SubGraphIRInfo> &gsub,
+               bool check_strategy = false) {
+  int i = 0;
+  for (const auto &attr : attrs) {
+    if (check_strategy && attr.first == PARALLEL_STRATEGY) {
+      continue;  // skip the strategy
+    }
+    if (i++ != 0) {
+      gsub->buffer << ", ";
+    }
+    gsub->buffer << attr.first << ": ";
+    if (attr.second == nullptr) {
+      gsub->buffer << "null";
+    } else {
+      gsub->buffer << attr.second->ToString();
+    }
+  }
+}
+
 void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (op == nullptr || gsub == nullptr) {
     return;
@@ -316,21 +335,7 @@ void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo
     auto attrs = primitive->attrs();
     if (!attrs.empty()) {
       gsub->buffer << " primitive_attrs: {";
-      int i = 0;
-      for (const auto &attr : attrs) {
-        if (attr.first == PARALLEL_STRATEGY) {
-          continue;  // skip the strategy
-        }
-        if (i++ != 0) {
-          gsub->buffer << ", ";
-        }
-        gsub->buffer << attr.first << ": ";
-        if (attr.second == nullptr) {
-          gsub->buffer << "null";
-        } else {
-          gsub->buffer << attr.second->ToString();
-        }
-      }
+      DumpAttrs(attrs, gsub, true);
       gsub->buffer << "}";
     }
   }
@@ -347,18 +352,7 @@ void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
 
   auto attrs = op->attrs();
   gsub->buffer << " cnode_attrs: {";
-  int i = 0;
-  for (const auto &attr : attrs) {
-    if (i++ != 0) {
-      gsub->buffer << ", ";
-    }
-    gsub->buffer << attr.first << ": ";
-    if (attr.second == nullptr) {
-      gsub->buffer << "null";
-    } else {
-      gsub->buffer << attr.second->ToString();
-    }
-  }
+  DumpAttrs(attrs, gsub);
   gsub->buffer << "}";
   gsub->buffer << std::endl;
 }
