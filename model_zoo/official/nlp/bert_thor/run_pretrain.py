@@ -19,13 +19,6 @@ python run_pretrain.py
 
 import argparse
 import os
-from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
-from src.bert_net_config import bert_net_cfg
-from src.config import cfg
-from src.dataset import create_bert_dataset
-from src.lr_generator import get_bert_lr, get_bert_damping
-from src.model_thor import Model
-from src.utils import LossCallBack
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
 from mindspore import context
@@ -35,6 +28,14 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMoni
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
+from mindspore.train.model import Model
+from mindspore.train.train_thor import ConvertModelUtils
+from mindspore.nn.optim import thor
+from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+from src.dataset import create_bert_dataset
+from src.config import cfg, bert_net_cfg
+from src.utils import LossCallBack
+
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -69,17 +70,19 @@ def _set_bert_all_reduce_split():
 def _get_optimizer(args_opt, network):
     """get thor optimizer."""
     if cfg.optimizer == "Thor":
-        if args_opt.distribute == "true":
-            from src.thor_for_bert_arg import THOR
-        else:
-            from src.thor_for_bert import THOR
-        lr = get_bert_lr()
-        damping = get_bert_damping()
-        optimizer = THOR(filter(lambda x: x.requires_grad, network.get_parameters()), lr, cfg.Thor.momentum,
-                         filter(lambda x: 'matrix_A' in x.name, network.get_parameters()),
-                         filter(lambda x: 'matrix_G' in x.name, network.get_parameters()),
-                         cfg.Thor.weight_decay, cfg.Thor.loss_scale, bert_net_cfg.num_hidden_layers,
-                         bert_net_cfg.batch_size, damping)
+        from src.utils import get_bert_thor_lr, get_bert_thor_damping
+        lr = get_bert_thor_lr(cfg.Thor.lr_max, cfg.Thor.lr_min, cfg.Thor.lr_power, cfg.Thor.lr_total_steps)
+        damping = get_bert_thor_damping(cfg.Thor.damping_max, cfg.Thor.damping_min, cfg.Thor.damping_power,
+                                        cfg.Thor.damping_total_steps)
+        split_indices = None
+        if bert_net_cfg.num_hidden_layers == 12 and not bert_net_cfg.use_relative_positions:
+            split_indices = [28, 55, 77]
+        elif bert_net_cfg.num_hidden_layers == 24 and not bert_net_cfg.use_relative_positions:
+            split_indices = [38, 93, 149]
+        optimizer = thor(network, lr, damping, cfg.Thor.momentum,
+                         cfg.Thor.weight_decay, cfg.Thor.loss_scale, cfg.batch_size,
+                         decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
+                         split_indices=split_indices, enable_clip_grad=True, frequency=cfg.Thor.frequency)
     else:
         raise ValueError("Don't support optimizer {}, only support [Thor]".format(cfg.optimizer))
     return optimizer
@@ -113,7 +116,6 @@ def run_pretrain():
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
                         device_id=args_opt.device_id, save_graphs=False)
     context.set_context(reserve_class_name_in_scope=False)
-    context.set_context(max_call_depth=3000)
     ckpt_save_dir = args_opt.save_checkpoint_path
     if args_opt.distribute == "true":
         D.init()
@@ -144,7 +146,7 @@ def run_pretrain():
         logger.info("train steps: {}".format(args_opt.train_steps))
 
     optimizer = _get_optimizer(args_opt, net_with_loss)
-    callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack()]
+    callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack(ds.get_dataset_size())]
     if args_opt.enable_save_ckpt == "true" and rank == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
@@ -162,11 +164,13 @@ def run_pretrain():
         net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
                                                            scale_update_cell=update_cell)
     else:
-        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
+        net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer, sens=cfg.Thor.loss_scale,
+                                              enable_clip_grad=False)
 
-    model = Model(net_with_grads, frequency=cfg.Thor.frequency)
-    model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=(args_opt.enable_data_sink == "true"),
-                sink_size=args_opt.data_sink_steps)
+    model = Model(net_with_grads)
+    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer)
+    model.train(new_repeat_count, ds, callbacks=callback,
+                dataset_sink_mode=(args_opt.enable_data_sink == "true"), sink_size=args_opt.data_sink_steps)
 
 
 if __name__ == '__main__':
