@@ -82,9 +82,6 @@ const size_t ARG_SIZE = 2;
 const std::set<std::string> kVmOperators = {"make_ref", "HookBackward", "InsertGradientOf", "stop_gradient",
                                             "mixed_precision_cast"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
-const char kMSDtypeModelName[] = "mindspore.common.dtype";
-const char kImplcast[] = "implcast";
-
 std::shared_ptr<session::SessionBasic> kSession = nullptr;
 std::shared_ptr<compile::MindRTBackend> mind_rt_backend = nullptr;
 
@@ -652,6 +649,33 @@ void CheckPyNativeContext() {
     MS_LOG(EXCEPTION) << "PyNative Only support STAND_ALONE and DATA_PARALLEL, but got:" << parallel_mode;
   }
 }
+
+py::object GetDstType(const TypeId &type_id) {
+  ValuePtr value = nullptr;
+  if (type_id == kNumberTypeBool) {
+    value = std::make_shared<Bool>();
+  } else if (type_id == kNumberTypeInt8) {
+    value = std::make_shared<Int>(8);
+  } else if (type_id == kNumberTypeUInt8) {
+    value = std::make_shared<UInt>(8);
+  } else if (type_id == kNumberTypeInt16) {
+    value = std::make_shared<Int>(16);
+  } else if (type_id == kNumberTypeInt32) {
+    value = std::make_shared<Int>(32);
+  } else if (type_id == kNumberTypeInt64) {
+    value = std::make_shared<Int>(64);
+  } else if (type_id == kNumberTypeFloat16) {
+    value = std::make_shared<Float>(16);
+  } else if (type_id == kNumberTypeFloat32) {
+    value = std::make_shared<Float>(32);
+  } else if (type_id == kNumberTypeFloat64) {
+    value = std::make_shared<Float>(64);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support dst type";
+  }
+  MS_EXCEPTION_IF_NULL(value);
+  return py::cast(value);
+}
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
@@ -718,7 +742,7 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
 
   // 1.Set cast for inputs
   SetCastForInputs(op_exec_info);
-  // 2.Construct graph, fist step abs will update by node
+  // 2.Construct graph, first step abs will update by node
   auto cnode = ConstructForwardGraph(op_exec_info);
   // 3.Get inputs abstract
   abstract::AbstractBasePtrList args_spec_list;
@@ -734,8 +758,7 @@ void ForwardExecutor::RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_i
 
 OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   if (args.size() != PY_ARGS_NUM) {
-    MS_LOG(ERROR) << "Three args are needed by RunOp";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
   auto op_exec_info = std::make_shared<OpExecInfo>();
   auto op_name = py::cast<std::string>(args[PY_NAME]);
@@ -961,12 +984,12 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
 }
 
 py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name,
-                                       size_t index, const std::string &obj_id) {
-  py::tuple cast_args(3);
-  cast_args[PY_PRIM] = parse::python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+                                       size_t index) {
+  static py::object cast_prim = parse::python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+  py::tuple cast_args(PY_ARGS_NUM);
+  cast_args[PY_PRIM] = cast_prim;
   cast_args[PY_NAME] = prim::kPrimCast->name();
-  std::string dst_type_str = TypeIdToMsTypeStr(type_id);
-  py::object dst_type = parse::python_adapter::GetPyFn(kMSDtypeModelName, dst_type_str);
+  py::object dst_type = GetDstType(type_id);
   py::tuple inputs(ARG_SIZE);
   inputs[0] = arg;
   inputs[1] = dst_type;
@@ -976,9 +999,6 @@ py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type
   op_exec->next_op_name = op_name;
   op_exec->next_input_index = index;
   // Cache the cast struct
-  if (obj_id != kImplcast) {
-    cast_struct_map_[obj_id] = op_exec;
-  }
   py::object ret = py::none();
   RunOpInner(&ret, op_exec);
   return ret;
@@ -996,20 +1016,7 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
     if (source_element != nullptr && IsSubType(source_element, kFloat) && *source_element != *cast_type) {
       MS_LOG(DEBUG) << "Cast to " << cast_type->ToString();
       *is_cast = true;
-      // Get obj id
-      auto id = GetId(obj);
-      // Find obj id in unorder map
-      auto cast_struct_pair = cast_struct_map_.find(id);
-      if (cast_struct_pair != cast_struct_map_.end()) {
-        // Update input for cast struct
-        auto cast_struct = cast_struct_pair->second;
-        cast_struct->op_inputs[0] = obj;
-        py::object ret = py::none();
-        RunOpInner(&ret, cast_struct);
-        return ret;
-      } else {
-        return DoAutoCast(obj, cast_type->type_id(), op_name, index, id);
-      }
+      return DoAutoCast(obj, cast_type->type_id(), op_name, index);
     }
   }
   return cast_output;
@@ -1090,7 +1097,7 @@ void ForwardExecutor::DoSignatrueCast(const PrimitivePyPtr &prim, const std::map
                               << py::cast<std::string>(obj.attr("__class__").attr("__name__")) << ", and the value is "
                               << py::cast<py::str>(obj) << ".";
     }
-    py::object cast_output = DoAutoCast(out_args[i], it->second, op_exec_info->op_name, i, kImplcast);
+    py::object cast_output = DoAutoCast(out_args[i], it->second, op_exec_info->op_name, i);
     out_args[i] = cast_output;
   }
 }
@@ -1436,6 +1443,10 @@ void GradExecutor::UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_e
   MS_LOG(DEBUG) << "Current op info: " << op_info;
 
   std::vector<tensor::TensorPtr> all_op_tensors;
+  // Get input tensors
+  for (size_t i = 0; i < op_exec_info->op_inputs.size(); ++i) {
+    TensorValueToTensor(parse::data_converter::PyDataToValue(op_exec_info->op_inputs[i]), &all_op_tensors);
+  }
   // Get output tensors
   TensorValueToTensor(parse::data_converter::PyDataToValue(out_real), &all_op_tensors);
   // Save all tensors info of current op
@@ -1704,7 +1715,6 @@ void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
   prim_abs_list_.clear();
   node_abs_map_.clear();
-  cast_struct_map_.clear();
 }
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -2309,13 +2319,14 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
   std::size_t size = args.size();
   abstract::AbstractBasePtrList args_spec;
   auto bprop_params = bprop_graph->parameters();
+  // bprop_params include inputs, parameters, more than size(inputs)
   if (bprop_params.size() < size) {
-    MS_LOG(WARNING) << "Df parameters size " << bprop_params.size() << " less than " << size;
+    MS_LOG(EXCEPTION) << "Df parameters size " << bprop_params.size() << " less than " << size;
   }
   // Update abstract info for parameters in bprop graph
   size_t index = 0;
   for (const auto &param : bprop_params) {
-    auto param_node = std::static_pointer_cast<Parameter>(param);
+    auto param_node = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_node);
     if (param_node->has_default()) {
       // update abstract info for weights
@@ -2329,6 +2340,23 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
       ValuePtr input_value = parse::data_converter::PyDataToValue(args[index]);
       MS_EXCEPTION_IF_NULL(input_value);
       auto abs = abstract::FromValue(input_value, true);
+      if (param_node->abstract() != nullptr) {
+        auto input_shape = param_node->abstract()->Broaden()->BuildShape()->ToString();
+        auto ir_shape = abs->BuildShape()->ToString();
+        // Exclude const input
+        if (input_shape != "()" && ir_shape != "()") {
+          if (input_shape != ir_shape) {
+            MS_EXCEPTION(ValueError) << "The shape should be " << ir_shape << ", but got " << input_shape << " ,"
+                                     << param->DebugString();
+          }
+          auto input_dtype = param_node->abstract()->BuildType()->ToString();
+          auto ir_dtype = abs->BuildType()->ToString();
+          if (input_dtype != ir_dtype) {
+            MS_EXCEPTION(TypeError) << "The dtype should be " << ir_dtype << ", but got " << input_dtype << " ,"
+                                    << param->DebugString();
+          }
+        }
+      }
       args_spec.emplace_back(abs);
       param_node->set_abstract(abs->Broaden());
       index++;
