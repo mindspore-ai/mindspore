@@ -200,6 +200,8 @@ void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &grap
 }
 
 void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   // Graph optimization relevant to device data format
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -211,7 +213,9 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
-  pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+  }
   pm->AddPass(std::make_shared<opt::ReluV2Pass>());
   pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
   pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
