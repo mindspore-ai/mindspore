@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_ACTOR_COMMON_H_
 
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include <utility>
 #include "mindrt/include/actor/op_actor.h"
@@ -52,8 +53,11 @@ constexpr int kFailure = 1;
 int64_t GetMaxThreadNum();
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node);
+
+// Host parameters are parameters of root funcgraph, in control flow, only the parameters of the root funcgraph are
+// in the host data source.
 bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph = nullptr,
-                        const TensorPtr &tensor = nullptr);
+                        const TensorPtr &tensor = nullptr, const std::vector<AnfNodePtr> &host_parameters = {});
 bool IsKernelActor(const AnfNodePtr &node);
 // The skip kernel doesn't run, it exists in the inplace optimizer.
 bool IsSkippedKernelActor(const AnfNodePtr &node);

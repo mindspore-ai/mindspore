@@ -24,10 +24,21 @@
 
 namespace mindspore {
 namespace runtime {
-
-GatherActor::GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid)
-    : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid) {
+void GatherActor::Init() {
   input_datas_num_ = data_nodes_.size();
+  input_device_tensors_.resize(input_datas_num_);
+  output_data_by_output_index_.resize(input_datas_num_);
+
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    if (IntToSize(data_arrow->from_output_index_) >= input_datas_num_) {
+      MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
+    }
+
+    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+    output_data_.emplace_back(data.get());
+    output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
+  }
 }
 
 size_t GatherActor::FetchDataNodePosition(const AnfNodePtr &data_node) const {
@@ -52,6 +63,73 @@ void GatherActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   }
 }
 
+void GatherActor::FetchBackendInputNode(const FuncGraphPtr &func_graph,
+                                        const std::vector<AnfNodePtr> &origin_parameters_order,
+                                        const FrontToBackendNodeWithContext &front_to_backend_parameters,
+                                        const FuncGraphToParameter &func_graph_to_parameters,
+                                        const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel) {
+  const auto func_iter = func_graph_to_parameters.find(func_graph);
+  if (func_iter == func_graph_to_parameters.end()) {
+    return;
+  }
+
+  std::vector<AnfNodePtr> graph_inputs;
+  for (const auto &input : func_graph->get_inputs()) {
+    // Monad input would not send to gather actor.
+    if (!HasAbstractMonad(input)) {
+      graph_inputs.emplace_back(input);
+    }
+  }
+
+  // Collect all backend input node to gather, There are two situations:
+  // 1. The parameter from the host data source.
+  // 2. Output the kernel actor.
+  for (const auto parameters : func_iter->second) {
+    if (parameters.size() != graph_inputs.size()) {
+      MS_LOG(EXCEPTION) << "Parameters num is invalid, current:" << parameters.size()
+                        << " need:" << graph_inputs.size();
+    }
+
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      if (parameters[i]->isa<Parameter>()) {
+        // Input node is a parameter from host data source actor.
+        std::vector<AnfNodePtr> invalid_inputs;
+        std::vector<AnfNodePtr> front_inputs = ControlNodeParser::FetchInputNodeByParameter(
+          parameters[i], origin_parameters_order, &invalid_inputs, func_graph_to_parameters);
+
+        for (const auto &front_input : front_inputs) {
+          const auto node_with_index = AnfAlgo::VisitKernelWithReturnType(front_input, 0);
+
+          if (node_with_index.first->isa<Parameter>()) {
+            const auto &iter = front_to_backend_parameters.find(parameters[i]);
+            if (iter == front_to_backend_parameters.end()) {
+              MS_LOG(EXCEPTION) << "Cannot find backend node of node:"
+                                << AnfAlgo::GetNodeDebugString(node_with_index.first);
+            }
+            front_to_backend_parameter_[graph_inputs[i]].push_back({iter->second.first, 0});
+          } else {
+            const auto iter = front_to_backend_kernel.find(node_with_index.first);
+            if (iter == front_to_backend_kernel.end()) {
+              MS_LOG(EXCEPTION) << "Cannot find actor of front node:"
+                                << AnfAlgo::GetNodeDebugString(node_with_index.first);
+            }
+            front_to_backend_parameter_[graph_inputs[i]].push_back({iter->second, node_with_index.second});
+          }
+        }
+      } else {
+        // Input node is a cnode.
+        const auto node_with_index = AnfAlgo::VisitKernelWithReturnType(parameters[i], 0);
+        const auto iter = front_to_backend_kernel.find(node_with_index.first);
+        if (iter == front_to_backend_kernel.end()) {
+          MS_LOG(EXCEPTION) << "Cannot find backend node of node:"
+                            << AnfAlgo::GetNodeDebugString(node_with_index.first);
+        }
+        front_to_backend_parameter_[graph_inputs[i]].push_back({iter->second, node_with_index.second});
+      }
+    }
+  }
+}
+
 void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
 
@@ -67,11 +145,16 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *context) const {
     Async(output_control, &OpActor::RunOpControl, source_aid, context);
   }
 
+  if (branch_id_ > kInvalidBranchID) {
+    Async(loop_count_aid_, &LoopCountActor::CollectBranchId, branch_id_, context);
+  }
+
   // Send graph output result.
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
     size_t from_index = result_arrow->from_output_index_;
     const auto &front_node = data_nodes_[from_index];
+
     for (const auto &backend_node : front_to_backend_parameter_.at(front_node)) {
       if (AnfAlgo::GetMutableOutputAddr(backend_node.first, backend_node.second).get() ==
           input_device_tensors_[from_index]) {

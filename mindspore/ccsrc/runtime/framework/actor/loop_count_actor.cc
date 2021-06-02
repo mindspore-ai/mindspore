@@ -29,25 +29,18 @@ void LoopCountActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *c
   MS_EXCEPTION_IF_NULL(context);
   auto sequential_num = context->sequential_num_;
   input_op_controls_[sequential_num].emplace_back(input_control);
-  if (input_op_controls_[sequential_num].size() == input_controls_num_) {
-    auto ret = input_op_controls_.erase(sequential_num);
-    if (ret == 0) {
-      std::string error_info = "Erase input controls failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-    }
 
-    total_running_count_++;
-    current_count_++;
-    MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
-                 << ", current count: " << current_count_ << ", total running count: " << total_running_count_;
+  if (CheckExecuteCondition(context)) {
+    Execute(context);
+  }
+}
 
-    // Debug actor is blocked, must wait debug actor callback message to process continue.
-    if (debug_aid_ != nullptr) {
-      SendDebugReq(context);
-      return;
-    }
+void LoopCountActor::CollectBranchId(const int branch_id, OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  branch_id_ = branch_id;
 
-    SendOutput(context);
+  if (CheckExecuteCondition(context)) {
+    Execute(context);
   }
 }
 
@@ -57,6 +50,29 @@ void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *context) {
 
 void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
+  SendOutput(context);
+}
+
+void LoopCountActor::Execute(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto sequential_num = context->sequential_num_;
+  auto ret = input_op_controls_.erase(sequential_num);
+  if (ret == 0) {
+    std::string error_info = "Erase input controls failed: " + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+
+  total_running_count_++;
+  current_count_++;
+  MS_LOG(INFO) << "Loop count actor(" << GetAID().Name() << ") running, loop count: " << loop_count_
+               << ", current count: " << current_count_ << ", total running count: " << total_running_count_;
+
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr) {
+    SendDebugReq(context);
+    return;
+  }
+
   SendOutput(context);
 }
 
@@ -82,6 +98,20 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *context) {
   for (auto &kernel_aid : no_input_kernel_aids_) {
     Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
   }
+}
+
+bool LoopCountActor::CheckExecuteCondition(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto sequential_num = context->sequential_num_;
+  if (branch_id_ == kInvalidBranchID) {
+    return false;
+  }
+
+  if (branch_id_ >= SizeToInt(branch_id_to_input_controls_num_.size())) {
+    MS_LOG(ERROR) << "Branch id is invalid, id:" << branch_id_
+                  << " total branch num:" << branch_id_to_input_controls_num_.size();
+  }
+  return input_op_controls_[sequential_num].size() == branch_id_to_input_controls_num_[branch_id_];
 }
 }  // namespace runtime
 }  // namespace mindspore

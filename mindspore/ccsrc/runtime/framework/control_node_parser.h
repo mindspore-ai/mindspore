@@ -38,7 +38,8 @@ constexpr int kMainBranchID = 0;
 constexpr int kSubBranchStartID = 1;
 
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
-
+using FuncGraphToParameter = std::unordered_map<FuncGraphPtr, std::vector<std::vector<AnfNodePtr>>>;
+using HostParameterToWeight = std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>>;
 // ControlNodeParser is a series of tool functions used to parse control nodes.
 class ControlNodeParser {
  public:
@@ -67,15 +68,33 @@ class ControlNodeParser {
   // Find all funcgraphs that the call node will call.
   static std::vector<FuncGraphPtr> FetchFuncGraphbyCallNode(const CNodePtr &node);
 
+  // Get the funcgraph to which the node belongs.
+  static FuncGraphPtr GetFuncgraphByBackendNode(const AnfNodePtr &backend_node);
+  static FuncGraphPtr FetchFuncGraphByNode(const AnfNodePtr &node);
+
   // Get front node by backend node.
   static AnfNodePtr GetFrontNodeByBackendNode(const AnfNodePtr &backend_node);
+  // Get the funcgraph in partial node.
+  static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node);
+
+  // Get all the input parameters of funcgraph. The call of funcgraph is realized through the call node,
+  // and the input of the call node is the input parameter of the corresponding funcgraph.
+  static void FetchFuncGraphToParameterMap(const std::vector<AnfNodePtr> &control_nodes,
+                                           FuncGraphToParameter *graph_to_real_parameters);
+
+  // Get all the front weight parameters related to the weight in the host parameter.
+  static void FetchHostParameterToWeightMap(const std::vector<AnfNodePtr> &control_nodes,
+                                            HostParameterToWeight *host_parameter_to_weights);
+
+  // Fetch all backend input nodes by parameter for gather actor.
+  static std::vector<AnfNodePtr> FetchInputNodeByParameter(const AnfNodePtr &parameter,
+                                                           const std::vector<AnfNodePtr> &host_ds_parameters,
+                                                           std::vector<AnfNodePtr> *invalid_inputs,
+                                                           const FuncGraphToParameter &graph_to_real_parameters);
 
  private:
   // Get the pos input of call node to funcgraph.
   AnfNodePtr GetCallNodeInputByPos(const AnfNodePtr &call_node, const FuncGraphPtr &func_graph, const size_t pos);
-
-  // Get the funcgraph in partial node.
-  static FuncGraphPtr GetFuncGraphFromPartial(const AnfNodePtr &node);
 
   // Find the output of the funcgraph, if the output is a call node, return the output of the funcgraph
   // called by the call node.

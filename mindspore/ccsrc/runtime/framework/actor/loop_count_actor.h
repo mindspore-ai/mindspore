@@ -24,6 +24,7 @@
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/framework/device_tensor_store.h"
+#include "runtime/framework/control_node_parser.h"
 
 namespace mindspore {
 namespace runtime {
@@ -36,9 +37,11 @@ class LoopCountActor : public DebugAwareActor {
         loop_count_(loop_count),
         current_count_(0),
         total_running_count_(0),
-        input_controls_num_(0),
         debug_aid_(debug_aid),
-        recorder_aid_(recorder_aid) {}
+        recorder_aid_(recorder_aid) {
+    branch_id_to_input_controls_num_[kMainBranchID] = 0;
+  }
+
   ~LoopCountActor() override = default;
 
   // The loop count actor run when receive the input control.
@@ -49,11 +52,18 @@ class LoopCountActor : public DebugAwareActor {
   // The callback after debug finished.
   void OnDebugFinish(OpContext<DeviceTensor> *context) override;
 
+  // In control flow, there are multi-branch output situations. In this case, the gather actor will be numbered
+  // branch id, and the branch id will be sent to the loop count actor during operation. The interface is used
+  // to receive the branch id message.
+  void CollectBranchId(const int branch_id_, OpContext<DeviceTensor> *context);
+
  private:
   friend class GraphScheduler;
 
+  void Execute(OpContext<DeviceTensor> *context);
   void SendOutput(OpContext<DeviceTensor> *context);
 
+  bool CheckExecuteCondition(OpContext<DeviceTensor> *context);
   // The loop count is constant, the current count is increased after each step running finished.
   size_t loop_count_;
   size_t current_count_;
@@ -61,7 +71,9 @@ class LoopCountActor : public DebugAwareActor {
   size_t total_running_count_;
 
   // The dependent input controls number.
-  size_t input_controls_num_;
+  // In the multi-branch output scenario of the control flow, the control of each branch needs to be recorded
+  // separately with the branch id as the key. When the output has only one branch, the branch id is 0.
+  std::unordered_map<int, size_t> branch_id_to_input_controls_num_;
 
   // The output controls contain the data source actors and the no input kernel actors and output actor.
   std::vector<AID> data_source_aids_;
@@ -72,6 +84,10 @@ class LoopCountActor : public DebugAwareActor {
   const AID *debug_aid_;
   // The id of recorder actor. Send message to it for clearing recorder info before loop count actor exits.
   const AID *recorder_aid_;
+
+  // When the result of the graph is sent to the output actor, the gather actor of the graph needs
+  // to send branch_id to the output actor to determine the corresponding weight.
+  int branch_id_{kInvalidBranchID};
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;

@@ -44,7 +44,8 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node) {
   return false;
 }
 
-bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor) {
+bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, const TensorPtr &tensor,
+                        const std::vector<AnfNodePtr> &host_parameters) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
     // There is device address in tensor, indicating the input tensor is certain kernel's output,
@@ -57,9 +58,14 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph, con
       return true;
     }
 
+    // In control flow, only the parameters of the root funcgraph are in the host data source.
+    const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
+    bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
+                    find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
+
     //  Judge whether node is internal parameter.
-    const auto &front_node = graph->GetFrontNodeByInternalParameter(node);
-    if (front_node.first == nullptr) {
+    const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
+    if (internal_front_node.first == nullptr && is_host) {
       return true;
     }
   }

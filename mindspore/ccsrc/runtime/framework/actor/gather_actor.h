@@ -37,7 +37,8 @@ namespace runtime {
 // Gather actor is the entrance of sub funcgraph. Graph input is sent to it and sent to other actors by gather actor.
 class GatherActor : public OpActor<DeviceTensor> {
  public:
-  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid);
+  GatherActor(const std::string &name, const std::vector<AnfNodePtr> &parameters, const AID loop_count_aid)
+      : OpActor(name), data_nodes_(parameters), loop_count_aid_(loop_count_aid) {}
   ~GatherActor() override = default;
 
   // Get the index of the parameter, the data_node needs to be the front node.
@@ -46,9 +47,16 @@ class GatherActor : public OpActor<DeviceTensor> {
   // The kernel actor run when receive the input data.
   void RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *context) override;
 
+  void Init() override;
+
  private:
   friend class GraphScheduler;
 
+  // Collect the inputs of gather actor.
+  void FetchBackendInputNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &origin_parameters_order,
+                             const FrontToBackendNodeWithContext &front_to_backend_parameters,
+                             const FuncGraphToParameter &func_graph_to_parameters,
+                             const std::unordered_map<AnfNodePtr, AnfNodePtr> &front_to_backend_kernel);
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *context);
   // Check whether satisfy the condition for launch.
   bool CheckLaunchCondition(OpContext<DeviceTensor> *context) const;
