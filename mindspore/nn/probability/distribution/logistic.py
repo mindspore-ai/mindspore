@@ -166,8 +166,8 @@ class Logistic(Distribution):
         too_large = self.greater(x, -self.threshold)
         too_small_value = self.exp(x)
         too_large_value = x
-        ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
         too_small_or_too_large = self.logicalor(too_small, too_large)
+        ones = self.fill(self.dtypeop(x), self.shape(x), 1.0)
         x = self.select(too_small_or_too_large, ones, x)
         y = self.log(self.exp(x) + 1.0)
         return self.select(too_small, too_small_value, self.select(too_large, too_large_value, y))
@@ -197,14 +197,14 @@ class Logistic(Distribution):
         return "Logistic"
 
     def _get_dist_args(self, loc=None, scale=None):
-        if loc is not None:
-            self.checktensor(loc, 'loc')
-        else:
+        if loc is None:
             loc = self.loc
-        if scale is not None:
-            self.checktensor(scale, 'scale')
         else:
+            self.checktensor(loc, 'loc')
+        if scale is None:
             scale = self.scale
+        else:
+            self.checktensor(scale, 'scale')
         return loc, scale
 
     def _mean(self, loc=None, scale=None):

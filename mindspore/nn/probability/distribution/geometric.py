@@ -165,17 +165,16 @@ class Geometric(Distribution):
         self.uniform = C.uniform
 
     def extend_repr(self):
-        if self.is_scalar_batch:
-            s = f'probs = {self.probs}'
-        else:
+        if not self.is_scalar_batch:
             s = f'batch_shape = {self._broadcast_shape}'
+        else:
+            s = f'probs = {self.probs}'
         return s
 
     @property
     def probs(self):
         """
-        Return the probability of success of the Bernoulli trial,
-        after casting to dtype.
+        Return the probability of success of the Bernoulli trial, after casting to dtype.
         """
         return self._probs
 

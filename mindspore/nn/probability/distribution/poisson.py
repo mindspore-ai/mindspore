@@ -147,19 +147,19 @@ class Poisson(Distribution):
         self.igamma = nn.IGamma()
         self.poisson = C.poisson
 
-    def extend_repr(self):
-        if self.is_scalar_batch:
-            s = f'rate = {self.rate}'
-        else:
-            s = f'batch_shape = {self._broadcast_shape}'
-        return s
-
     @property
     def rate(self):
         """
         Return `rate` of the distribution after casting to dtype.
         """
         return self._rate
+
+    def extend_repr(self):
+        if self.is_scalar_batch:
+            s = f'rate = {self.rate}'
+        else:
+            s = f'batch_shape = {self._broadcast_shape}'
+        return s
 
     def _get_dist_type(self):
         return "Poisson"

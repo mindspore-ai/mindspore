@@ -163,6 +163,12 @@ class Categorical(Distribution):
         self.index_type = mstype.int32
         self.nan = np.nan
 
+    @property
+    def probs(self):
+        """
+        Return the probability after casting to dtype.
+        """
+        return self._probs
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -170,13 +176,6 @@ class Categorical(Distribution):
         else:
             s = f'batch_shape = {self._broadcast_shape}'
         return s
-
-    @property
-    def probs(self):
-        """
-        Return the probability after casting to dtype.
-        """
-        return self._probs
 
     def _get_dist_type(self):
         return "Categorical"
@@ -333,23 +332,15 @@ class Categorical(Distribution):
         value = self._check_value(value, 'value')
         probs = self._check_param_type(probs)
 
-        # find the right integer to compute index
-        # here we simulate casting to int but still keeping float dtype
         value = self.cast(value, self.dtypeop(probs))
 
         zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
-        between_zero_neone = self.logicand(self.less(value, 0,),
-                                           self.greater(value, -1.))
-        value = self.select(between_zero_neone,
-                            zeros,
-                            P.Floor()(value))
+        between_zero_neone = self.logicand(self.less(value, 0,), self.greater(value, -1.))
+        value = self.select(between_zero_neone, zeros, P.Floor()(value))
 
-        # handle the case when value is of shape () and probs is a scalar batch
         drop_dim = False
         if self.shape(value) == () and self.shape(probs)[:-1] == ():
             drop_dim = True
-            # manually add one more dimension: () -> (1,)
-            # drop this dimension before return
             value = self.expand_dim(value, -1)
 
         value = self.expand_dim(value, -1)
