@@ -24,8 +24,6 @@
 
 namespace mindspore {
 namespace ps {
-int64_t Util::rank_id_ = -1;
-
 std::unordered_map<std::string, int64_t> Util::optimizer_to_ids{
   {kApplyMomentum, 0},
   {kSparseAdam, 1},

@@ -135,7 +135,7 @@ class AbstractNode : public Node {
   bool Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout);
   bool WaitForDisconnect(const uint32_t &timeout);
   bool InitClientToScheduler();
-  const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const int &rank_id);
+  const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id);
 
   void ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
   void RunMessageCallback(const uint64_t &request_id);
@@ -162,7 +162,7 @@ class AbstractNode : public Node {
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
   std::mutex client_mutex_;
   // the map's key is: rank_id
-  std::unordered_map<int, std::shared_ptr<TcpClient>> connected_nodes_;
+  std::unordered_map<uint32_t, std::shared_ptr<TcpClient>> connected_nodes_;
 
   // the key is: request_id, the value is: <rank_id, RecvMessage>
   std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> receive_messages_;

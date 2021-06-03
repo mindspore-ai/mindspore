@@ -67,8 +67,8 @@ class PSContext {
   uint32_t initial_worker_num() const;
   uint32_t initial_server_num() const;
   std::string scheduler_host() const;
-  void SetPSRankId(int rank_id);
-  int ps_rank_id() const;
+  void SetPSRankId(uint32_t rank_id);
+  uint32_t ps_rank_id() const;
   void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                            size_t vocab_size) const;
   void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
@@ -77,7 +77,7 @@ class PSContext {
   void InsertAccumuInitInfo(const std::string &param_name, float init_val) const;
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
   void set_cache_enable(bool cache_enable) const;
-  void set_rank_id(int rank_id) const;
+  void set_rank_id(uint32_t rank_id) const;
   bool enable_ssl() const;
   void set_enable_ssl(bool enabled);
 
@@ -155,7 +155,7 @@ class PSContext {
         is_pserver_(false),
         is_sched_(false),
         enable_ssl_(false),
-        rank_id_(-1),
+        rank_id_(0),
         worker_num_(0),
         server_num_(0),
         scheduler_host_(""),
@@ -182,7 +182,7 @@ class PSContext {
   bool is_pserver_;
   bool is_sched_;
   bool enable_ssl_;
-  int rank_id_;
+  uint32_t rank_id_;
   uint32_t worker_num_;
   uint32_t server_num_;
   std::string scheduler_host_;

@@ -27,9 +27,9 @@ void NodeManager::InitNode() {
   total_node_num_ = initial_total_node_num_;
 }
 
-int NodeManager::NextRankId(const RegisterMessage &register_message) {
+uint32_t NodeManager::NextRankId(const RegisterMessage &register_message) {
   std::lock_guard<std::mutex> lock(assign_rank_id_mutex_);
-  int rank_id = -1;
+  uint32_t rank_id = UINT_MAX;
 
   const std::string &node_id = register_message.node_id();
   if (nodes_info_.find(node_id) != nodes_info_.end()) {
@@ -43,9 +43,9 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     uint32_t port = register_message.port();
 
     rank_id = ++next_server_rank_id_;
-    if (IntToUint(rank_id) >= meta_data_->server_num) {
+    if (rank_id >= meta_data_->server_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of servers:" << meta_data_->server_num;
-      rank_id = -1;
+      rank_id = UINT_MAX;
       --next_server_rank_id_;
     }
     NodeInfo node_info;
@@ -61,9 +61,9 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
     rank_id = ++next_worker_rank_id_;
-    if (IntToUint(rank_id) >= meta_data_->worker_num) {
+    if (rank_id >= meta_data_->worker_num) {
       MS_LOG(WARNING) << "The rank id is greater than the number of workers:" << meta_data_->worker_num;
-      rank_id = -1;
+      rank_id = UINT_MAX;
       --next_worker_rank_id_;
     }
     NodeInfo node_info;

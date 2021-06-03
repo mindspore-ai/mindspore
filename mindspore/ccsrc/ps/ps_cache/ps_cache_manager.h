@@ -126,7 +126,7 @@ class PsCacheManager {
   const size_t &QueryHashTableSize(const std::string &param_name) const;
   bool IsHashTable(const std::string &param_name) { return hash_tables_.count(param_name) != 0; }
   void set_batch_elements(size_t batch_elements) { batch_elements_ = batch_elements; }
-  void set_rank_id(int rank_id) { rank_id_ = rank_id; }
+  void set_rank_id(uint32_t rank_id) { rank_id_ = rank_id; }
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   size_t vocab_cache_size() const { return vocab_cache_size_; }
   int cache_indices_lower_bound() const;
@@ -203,7 +203,7 @@ class PsCacheManager {
   std::pair<int, int> emb_table_slice_bounds_;
   std::pair<int, int> cache_indices_bounds_;
   int vocab_cache_size_diff_{0};
-  int rank_id_{0};
+  uint32_t rank_id_{0};
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
   std::atomic_bool running_{false};

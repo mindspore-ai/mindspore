@@ -124,9 +124,9 @@ uint32_t PSContext::initial_server_num() const { return server_num_; }
 
 std::string PSContext::scheduler_host() const { return scheduler_host_; }
 
-void PSContext::SetPSRankId(int rank_id) { rank_id_ = rank_id; }
+void PSContext::SetPSRankId(uint32_t rank_id) { rank_id_ = rank_id; }
 
-int PSContext::ps_rank_id() const { return rank_id_; }
+uint32_t PSContext::ps_rank_id() const { return rank_id_; }
 
 void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                                     size_t vocab_size) const {
@@ -166,7 +166,7 @@ void PSContext::set_cache_enable(bool cache_enable) const {
 #endif
 }
 
-void PSContext::set_rank_id(int rank_id) const {
+void PSContext::set_rank_id(uint32_t rank_id) const {
 #if (ENABLE_CPU && !_WIN32)
   ps_cache_instance.set_rank_id(rank_id);
 #endif
