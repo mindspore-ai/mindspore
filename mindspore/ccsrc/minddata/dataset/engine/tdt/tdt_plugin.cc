@@ -33,8 +33,13 @@ TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
 }
 
 TdtPlugin::~TdtPlugin() {
-  if (acl_handle_ != nullptr && acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed to destroy channel for tdt queue.";
+  if (acl_handle_ != nullptr) {
+    if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to destroy channel for tdt queue.";
+    } else {
+      TdtHandle::DelHandle(&acl_handle_);
+      acl_handle_ = nullptr;
+    }
   }
 }
 
