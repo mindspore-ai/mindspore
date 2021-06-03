@@ -48,9 +48,12 @@ def test_retinaface_resnet50():
     old_list = ["sink_mode=True", "model.train(max_epoch,"]
     new_list = ["sink_mode=True, sink_size=100", "model.train(4,"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
+    old_list = ["python train.py"]
+    new_list = ["python train.py --distributed 1 --device_target GPU"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "scripts/run_distribute_gpu_train.sh"))
     exec_network_shell = "cd retinaface_resnet50; bash scripts/run_distribute_gpu_train.sh 4 1,2,3,4"
     os.system(exec_network_shell)
-    cmd = "ps -ef | grep train.py | grep -v grep"
+    cmd = "ps -ef | grep train.py | grep distributed | grep device_target | grep -v grep"
     ret = utils.process_check(120, cmd)
     if not ret:
         cmd = "{} | awk -F' ' '{{print $2}}' | xargs kill -9".format(cmd)
