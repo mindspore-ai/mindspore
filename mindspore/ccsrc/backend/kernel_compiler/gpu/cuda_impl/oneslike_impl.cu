@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,17 @@ void CalOnesLike(const size_t size, const T* input, T* output, cudaStream_t cuda
   return;
 }
 
+template void CalOnesLike<double>(const size_t size, const double* input, double* output, cudaStream_t cuda_stream);
 template void CalOnesLike<float>(const size_t size, const float* input, float* output, cudaStream_t cuda_stream);
 template void CalOnesLike<half>(const size_t size, const half* input, half* output, cudaStream_t cuda_stream);
-template void CalOnesLike<int>(const size_t size, const int* input, int* output, cudaStream_t cuda_stream);
+template void CalOnesLike<int8_t>(const size_t size, const int8_t* input, int8_t* output, cudaStream_t cuda_stream);
+template void CalOnesLike<int16_t>(const size_t size, const int16_t* input, int16_t* output, cudaStream_t cuda_stream);
+template void CalOnesLike<int32_t>(const size_t size, const int32_t* input, int32_t* output, cudaStream_t cuda_stream);
+template void CalOnesLike<int64_t>(const size_t size, const int64_t* input, int64_t* output, cudaStream_t cuda_stream);
+template void CalOnesLike<uint8_t>(const size_t size, const uint8_t* input, uint8_t* output, cudaStream_t cuda_stream);
+template void CalOnesLike<uint16_t>(const size_t size, const uint16_t* input, uint16_t* output,
+                                    cudaStream_t cuda_stream);
+template void CalOnesLike<uint32_t>(const size_t size, const uint32_t* input, uint32_t* output,
+                                    cudaStream_t cuda_stream);
+template void CalOnesLike<uint64_t>(const size_t size, const uint64_t* input, uint64_t* output,
+                                    cudaStream_t cuda_stream);

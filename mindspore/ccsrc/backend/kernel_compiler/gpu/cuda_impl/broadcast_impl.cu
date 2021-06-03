@@ -323,6 +323,28 @@ struct FloorModFunc<half2> {
   }
 };
 
+// the FloorModFunc specializations for uint32_t and uint64_t are there
+// because of a 'more than one instance of overloaded function "std::abs"'
+// error. I realize the specializations are exactly the same, but I found
+// no good alternative.
+template <>
+struct FloorModFunc<uint32_t> {
+  __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) {
+    int32_t res = lhs - floorf(lhs / rhs) * rhs;
+    res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
+    return res;
+  }
+};
+
+template <>
+struct FloorModFunc<uint64_t> {
+  __device__ __host__ __forceinline__ int64_t operator()(const int64_t &lhs, const int64_t &rhs) {
+    int64_t res = lhs - floorf(lhs / rhs) * rhs;
+    res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
+    return res;
+  }
+};
+
 template <typename T>
 struct AbsGradFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
@@ -429,6 +451,12 @@ template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int64_t
                          cudaStream_t stream);
 template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int16_t *x0, const int16_t *x1, bool *y,
                          cudaStream_t stream);
+template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint16_t *x0, const uint16_t *x1, bool *y,
+                         cudaStream_t stream);
+template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint32_t *x0, const uint32_t *x1, bool *y,
+                         cudaStream_t stream);
+template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint64_t *x0, const uint64_t *x1, bool *y,
+                         cudaStream_t stream);
 template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1, bool *y,
                          cudaStream_t stream);
 // Element-wise ArithMetic
@@ -510,6 +538,12 @@ template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int64
                            cudaStream_t stream);
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int16_t *x0, const int16_t *x1, int16_t *y,
                            cudaStream_t stream);
+template void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint16_t *x0, const uint16_t *x1,
+                           uint16_t *y, cudaStream_t stream);
+template void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint32_t *x0, const uint32_t *x1,
+                           uint32_t *y, cudaStream_t stream);
+template void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint64_t *x0, const uint64_t *x1,
+                           uint64_t *y, cudaStream_t stream);
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1, bool *y,
                            cudaStream_t stream);
 // Broadcast comparison
@@ -628,6 +662,15 @@ template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector
 template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int16_t *x0,
                            const int16_t *x1, bool *y, cudaStream_t stream);
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint16_t *x0,
+                           const uint16_t *x1, bool *y, cudaStream_t stream);
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint32_t *x0,
+                           const uint32_t *x1, bool *y, cudaStream_t stream);
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint64_t *x0,
+                           const uint64_t *x1, bool *y, cudaStream_t stream);
 template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const bool *x0,
                            const bool *x1, bool *y, cudaStream_t stream);
@@ -780,6 +823,15 @@ template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vect
 template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                              const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int16_t *x0,
                              const int16_t *x1, int16_t *y, cudaStream_t stream);
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint16_t *x0,
+                             const uint16_t *x1, uint16_t *y, cudaStream_t stream);
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint32_t *x0,
+                             const uint32_t *x1, uint32_t *y, cudaStream_t stream);
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint64_t *x0,
+                             const uint64_t *x1, uint64_t *y, cudaStream_t stream);
 template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                              const std::vector<size_t> &y_dims, enum BroadcastOpType op, const bool *x0,
                              const bool *x1, bool *y, cudaStream_t stream);
