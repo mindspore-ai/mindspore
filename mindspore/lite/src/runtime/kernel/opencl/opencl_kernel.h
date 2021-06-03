@@ -17,16 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_OPENCL_KERNEL_H_
 #define MINDSPORE_LITE_SRC_OPENCL_KERNEL_H_
 #define MAX_PROFILING_TIME_MILLI_SECOND 10 * 1000  // 10 seconds
-#define INPUT_TENSOR_SIZE_1 1
-#define INPUT_TENSOR_SIZE_2 2
-#define INPUT_TENSOR_SIZE_3 3
-#define INPUT_TENSOR_SIZE_4 4
-#define INPUT_TENSOR_SIZE_5 5
-#define INPUT_TENSOR_SIZE_6 6
-#define OUTPUT_TENSOR_SIZE_1 1
-#define OUTPUT_TENSOR_SIZE_2 2
-#define OUTPUT_TENSOR_SIZE_3 3
-#define OUTPUT_TENSOR_SIZE_4 4
 #include <vector>
 #include <set>
 #include <map>
@@ -42,6 +32,17 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+constexpr int INPUT_TENSOR_SIZE_1 = 1;
+constexpr int INPUT_TENSOR_SIZE_2 = 2;
+constexpr int INPUT_TENSOR_SIZE_3 = 3;
+constexpr int INPUT_TENSOR_SIZE_4 = 4;
+constexpr int INPUT_TENSOR_SIZE_5 = 5;
+constexpr int INPUT_TENSOR_SIZE_6 = 6;
+constexpr int OUTPUT_TENSOR_SIZE_1 = 1;
+constexpr int OUTPUT_TENSOR_SIZE_2 = 2;
+constexpr int OUTPUT_TENSOR_SIZE_3 = 3;
+constexpr int OUTPUT_TENSOR_SIZE_4 = 4;
+
 struct OpenCLToFormatParameter {
   OpParameter op_parameter{};
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};

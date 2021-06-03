@@ -184,38 +184,20 @@ std::string CLErrorCode(cl_int error_code) {
   }
 }
 
-int WriteToBin(const std::string &file_path, void *data, size_t size) {
-  MS_ASSERT(data);
-  std::ofstream out_file;
-
-  out_file.open(file_path.c_str(), std::ios::binary);
-  if (!out_file.good()) {
-    MS_LOG(ERROR) << "file is bad";
-    return -1;
-  }
-
-  if (!out_file.is_open()) {
-    MS_LOG(ERROR) << "file open failed";
-    return -1;
-  }
-  out_file.write(reinterpret_cast<char *>(data), size);
-  return 0;
-}
-
 int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   if (ori_axis >= ndim) {
     return ndim - 1;
   }
   int axis = 0;
-  if (ndim == 1) {
+  if (ndim == DIMENSION_1D) {
     axis = 3;
-  } else if (ndim == 2) {
+  } else if (ndim == DIMENSION_2D) {
     axis = ori_axis == 0 ? 0 : 3;
-  } else if (ndim == 3) {
+  } else if (ndim == DIMENSION_3D) {
     axis = ori_axis == 0 ? 0 : ori_axis == 1 ? 2 : 3;
-  } else if (ndim == 4) {
+  } else if (ndim == DIMENSION_4D) {
     axis = ori_axis;
-  } else if (ndim > 4) {
+  } else if (ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << "GPU doesn't support ndim>=" << ndim;
   }
   return axis;

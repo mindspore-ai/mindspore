@@ -48,8 +48,6 @@ int GetMaxDivisorStrategy1(int x, int divisor);
 
 std::string CLErrorCode(cl_int error_code);
 
-int WriteToBin(const std::string &file_path, void *data, size_t size);
-
 int GetBroadcastGpuAxis(int ndim, int ori_axis);
 
 void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,

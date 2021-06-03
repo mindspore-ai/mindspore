@@ -69,9 +69,9 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
     EltwiseOperator act_operator = Activation2Operator(act_type);
     support = SupportedOperators.count(operator_) && SupportedOperators.count(act_operator);
     if (node_type == schema::PrimitiveType_ScaleFusion) {
-      support = support && node->in_tensors().size() == 3 && scale_param->axis_ == -1;
+      support = support && node->in_tensors().size() == INPUT_TENSOR_SIZE_3 && scale_param->axis_ == -1;
     } else {
-      support = support && (node->in_tensors().size() == 2);
+      support = support && (node->in_tensors().size() == INPUT_TENSOR_SIZE_2);
     }
     if (create_param) {
       param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
@@ -85,7 +85,7 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
       }
     }
   } else if (IsArithmeticSelf(node_type)) {
-    support = node->in_tensors().size() == 1 && SupportedOperators.count(operator_);
+    support = node->in_tensors().size() == INPUT_TENSOR_SIZE_1 && SupportedOperators.count(operator_);
     if (create_param) {
       param = new (std::nothrow) FusionEltwiseParameter(operator_, node->name(), node->in_tensors(), replace_map);
       MS_ASSERT(param);
@@ -124,9 +124,10 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
   for (auto *in_tensor : node->in_tensors()) {
     MS_ASSERT(in_tensor);
     auto shape = in_tensor->shape();
-    bool is_scalar = shape.empty() || (shape.size() == 1 && shape.front() == 1);
-    bool is_vector = shape.size() == 1 && shape.front() == output_info.C;
-    bool _111C = shape.size() == 4 && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output_info.C;
+    bool is_scalar = shape.empty() || (shape.size() == DIMENSION_1D && shape.front() == 1);
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == output_info.C;
+    bool _111C =
+      shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output_info.C;
     bool same_with_out = shape == output_shape;
     if (!(is_scalar || is_vector || _111C || same_with_out)) {
       return false;

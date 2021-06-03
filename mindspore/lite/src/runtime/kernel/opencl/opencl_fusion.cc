@@ -85,7 +85,7 @@ inline bool NC_N11C(const LiteKernel *node) {
     MS_ASSERT(node->out_tensors().front());
     auto input_shape = node->in_tensors().front()->shape();
     auto output_shape = node->out_tensors().front()->shape();
-    return input_shape.size() == 2 && output_shape.size() == 4 &&
+    return input_shape.size() == DIMENSION_2D && output_shape.size() == DIMENSION_4D &&
            output_shape == std::vector<int>({input_shape[0], 1, 1, input_shape[1]});
   }
 }
@@ -99,7 +99,7 @@ inline bool N11C_NC(const LiteKernel *node) {
     MS_ASSERT(node->out_tensors().front());
     auto input_shape = node->in_tensors().front()->shape();
     auto output_shape = node->out_tensors().front()->shape();
-    return input_shape.size() == 4 && output_shape.size() == 2 &&
+    return input_shape.size() == DIMENSION_4D && output_shape.size() == DIMENSION_2D &&
            input_shape == std::vector<int>({output_shape[0], 1, 1, output_shape[1]});
   }
 }
@@ -112,7 +112,7 @@ inline bool NC11_NC(const LiteKernel *node) {
     MS_ASSERT(node->out_tensors().front());
     auto input_shape = node->in_tensors().front()->shape();
     auto output_shape = node->out_tensors().front()->shape();
-    return input_shape.size() == 4 && output_shape.size() == 2 &&
+    return input_shape.size() == DIMENSION_4D && output_shape.size() == DIMENSION_2D &&
            input_shape == std::vector<int>({output_shape[0], output_shape[1], 1, 1});
   }
 }
@@ -122,7 +122,7 @@ std::vector<T *> RemoveDuplicationsButKeepOrder(const std::vector<T *> &vec) {
   std::vector<T *> ret;
   std::set<T *> s;
   for (auto *x : vec) {
-    if (0 == s.count(x)) {
+    if (s.count(x) == 0) {
       ret.push_back(x);
       s.insert(x);
     }
@@ -428,11 +428,11 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   MS_ASSERT(conv_kernel);
   MS_ASSERT(scale_kernel);
   auto *scale_param =
-    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel->kernel())->GetParameter());
+    reinterpret_cast<ScaleParameter *>(reinterpret_cast<OpenCLKernel *>(scale_kernel)->GetParameter());
   MS_ASSERT(scale_param);
-  MS_ASSERT(conv_kernel->in_tensors().size() >= 2);
+  MS_ASSERT(conv_kernel->in_tensors().size() >= INPUT_TENSOR_SIZE_2);
   auto *filter = conv_kernel->in_tensors().at(1);
-  auto *bias = conv_kernel->in_tensors().size() == 3 ? conv_kernel->in_tensors().at(2) : nullptr;
+  auto *bias = conv_kernel->in_tensors().size() == INPUT_TENSOR_SIZE_3 ? conv_kernel->in_tensors().at(2) : nullptr;
   auto *scale = scale_kernel->in_tensors().at(1);
   auto *offset = scale_kernel->in_tensors().at(2);
   MS_ASSERT(filter);
@@ -440,10 +440,10 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   MS_ASSERT(scale);
   MS_ASSERT(offset);
 
-  if (scale_kernel->in_tensors().size() != 3) {
+  if (scale_kernel->in_tensors().size() != INPUT_TENSOR_SIZE_3) {
     return RET_ERROR;
   }
-  if (scale->shape().size() != 1 || scale->shape().at(0) != filter->shape().back() ||
+  if (scale->shape().size() != DIMENSION_1D || scale->shape().at(0) != filter->shape().back() ||
       scale->shape() != offset->shape()) {
     return RET_ERROR;
   }
@@ -456,7 +456,7 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   }
 
   // update filter: filter*=scale
-  MS_ASSERT(filter->shape().size() == 4);
+  MS_ASSERT(filter->shape().size() == DIMENSION_4D);
   int CI = filter->shape()[0];
   int KH = filter->shape()[1];
   int KW = filter->shape()[2];

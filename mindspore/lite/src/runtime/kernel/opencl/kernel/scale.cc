@@ -151,12 +151,12 @@ int ScaleOpenCLKernel::Prepare() {
     if (scale_tensor->ElementsNum() == 1) {
       weight_vector_flag_ = false;
       kernel_name = "BoardcastScale";
-    } else if (scale_shape.size() == 1) {
+    } else if (scale_shape.size() == DIMENSION_1D) {
       weight_vector_flag_ = true;
       broadcast_flag_ = true;
-      if ((in_shape.size() == 4 && axis_ == 3) || (in_shape.size() == 2 && axis_ == 1)) {
+      if ((in_shape.size() == DIMENSION_4D && axis_ == 3) || (in_shape.size() == DIMENSION_2D && axis_ == 1)) {
         kernel_name = "Scale_C";
-      } else if (in_shape.size() == 4 && axis_ == 1) {
+      } else if (in_shape.size() == DIMENSION_4D && axis_ == 1) {
         kernel_name = "Scale_H";
         broadcast_H_flag_ = true;
       } else {
