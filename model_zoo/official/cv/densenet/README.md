@@ -15,6 +15,10 @@
         - [Distributed Training](#distributed-training)  
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Export Process](#export-process)
+        - [Export](#Export)
+    - [Inferenct Process](#Inferenct-process)
+        - [Inferenct](#Inferenct)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Training accuracy results](#training-accuracy-results)
@@ -189,12 +193,16 @@ After installing MindSpore via the official website, you can start training and 
     ├── README.md                          // descriptions about all the models
     ├── densenet
         ├── README.md                    // descriptions about densenet
-        ├── README.md                    // descriptions about densenet
+        ├── README_CN.md                    // descriptions about densenet
+        ├── ascend310_infer              // application for 310 inference
         ├── scripts
         │   ├── run_distribute_train.sh             // shell script for distributed on Ascend
         │   ├── run_distribute_train_gpu.sh             // shell script for distributed on GPU
         │   ├── run_distribute_eval.sh              // shell script for evaluation on Ascend
+        │   ├── run_infer_310.sh                    // shell script for 310 inference
         │   ├── run_distribute_eval_gpu.sh              // shell script for evaluation on GPU
+        │   ├── run_eval_cpu.sh                        // shell script for train on cpu
+        │   ├── run_train_cpu.sh                      //  shell script for evaluation on cpu
         ├── src
         │   ├── datasets             // dataset processing function
         │   ├── losses
@@ -379,6 +387,37 @@ You can modify the training behaviour through the various flags in the `densenet
 
   ```log
   2021-03-18 09:06:43,247:INFO:after allreduce eval: top1_correct=9492, tot=9984, acc=95.07%
+  ```
+
+## [Export Process](#contents)
+
+### export
+
+```shell
+python export.py --net [NET_NAME] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
+```
+
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Inference
+
+Before performing inference, we need to export the model first. Air model can only be exported in Ascend 910 environment, mindir can be exported in any environment.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET] [DATA_PATH] [LABEL_FILE] [DEVICE_ID]
+```
+
+-NOTE:Ascend310 inference use Imagenet dataset . The label of the image is the number of folder which is started from 0 after sorting.
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+The accuracy of evaluating DenseNet121 on the test dataset of ImageNet will be as follows:
+
+  ```log
+  2020-08-24 09:21:50,551:INFO:after allreduce eval: top1_correct=37657, tot=49920, acc=75.56%
+  2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.74%
   ```
 
 # [Model Description](#contents)
