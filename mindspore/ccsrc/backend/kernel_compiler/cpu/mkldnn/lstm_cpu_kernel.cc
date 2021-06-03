@@ -26,6 +26,17 @@ const int kOutputWorkSpaceIndex = 3;
 void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
+  auto output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  auto output_type = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
+  auto output_types = std::vector<TypeId>(output_num, output_type);
+  std::vector<std::vector<size_t>> output_shapes;
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+    output_shapes.emplace_back(shape);
+  }
+  size_t len = reserve_size_ / 4;
+  output_shapes[kOutputWorkSpaceIndex] = {len, 1};
+  AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
 }
 
 void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -60,9 +71,10 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
   if (!kernel_node->HasAttr(kAttrIsTraining)) {
-    MS_LOG(WARNING) << "LSTM has no attr is_training";
+    is_training = true;
+  } else {
+    is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
   }
-  is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
   auto prop_kind = dnnl::prop_kind::forward_training;
   if (!is_training) {
     prop_kind = dnnl::prop_kind::forward_inference;

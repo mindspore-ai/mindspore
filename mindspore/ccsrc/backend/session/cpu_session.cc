@@ -89,11 +89,18 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
     }
   }
 #endif
-  pm->AddPass(std::make_shared<opt::InsertCastCPU>());
-  MS_LOG(INFO) << "insert cast pass";
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
-  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
 
+void CPUSession::ProcessCast(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
+  MS_LOG(INFO) << "Insert cast pass";
+  pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -112,6 +119,7 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   FinalOptimize(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
+  ProcessCast(graph);
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
@@ -209,6 +217,7 @@ void CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
   SetKernelInfo(kernel_graph.get());
   Optimize(kernel_graph);
   BuildKernel(kernel_graph.get());
+  ProcessCast(kernel_graph);
   run_op_graphs_[graph_info] = kernel_graph;
 }
 

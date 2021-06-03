@@ -23,12 +23,11 @@
 
 namespace mindspore {
 namespace opt {
-class InsertCastCPU : public PatternProcessPass {
+class InsertCastCPU : public Pass {
  public:
-  explicit InsertCastCPU(bool multigraph = true) : PatternProcessPass("insert_cast_cpu", multigraph) {}
+  explicit InsertCastCPU(const std::string &name) : Pass("insert_cast_cpu") {}
   ~InsertCastCPU() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore

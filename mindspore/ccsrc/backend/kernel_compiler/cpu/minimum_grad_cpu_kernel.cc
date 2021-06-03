@@ -48,6 +48,13 @@ void GetShape(std::vector<size_t> *shape, const std::vector<size_t> &shape_, con
     (*shape)[k] = shape_[i];
   }
 }
+
+void CheckShape(std::vector<size_t> *shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->empty()) {
+    shape->push_back(1);
+  }
+}
 }  // namespace
 
 void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -58,9 +65,9 @@ void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dy_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  if (!x_shape_.size() || !y_shape_.size() || !dout_shape.size()) {
-    MS_LOG(EXCEPTION) << "Input NULL";
-  }
+  CheckShape(&x_shape_);
+  CheckShape(&y_shape_);
+  CheckShape(&dout_shape);
 }
 
 bool MinimumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

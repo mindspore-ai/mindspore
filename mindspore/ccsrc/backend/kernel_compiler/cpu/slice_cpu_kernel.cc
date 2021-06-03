@@ -48,7 +48,7 @@ void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   InitSliceParam(input_shape, begin, size);
 
-  TypeId dtype = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  TypeId dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto size_pair = type_size_map.find(dtype);
   if (size_pair == type_size_map.end()) {
     MS_LOG(EXCEPTION) << "Slice supports bool, int32, float32 and float64 input tensor, but got "

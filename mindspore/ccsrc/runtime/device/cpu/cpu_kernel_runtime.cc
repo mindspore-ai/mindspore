@@ -196,6 +196,12 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
   if (is_internal_output) {
     tensor = kernel_graph->GetInternalOutputTensor(node, index);
     if (tensor == nullptr) {
+      size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
+      size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
+      if (tensor_size < address->size_) {
+        temp_shape.clear();
+        temp_shape.emplace_back(address->size_ / type_size);
+      }
       tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
     kernel_graph->AddInternalOutputTensor(node, index, tensor);
@@ -209,6 +215,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
       address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
+      address->size_ = tensor_size;
     } else {
       address->ptr_ = nullptr;
     }
@@ -296,6 +303,15 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       auto tensor = inputs[input_idx];
       MS_EXCEPTION_IF_NULL(address);
       MS_EXCEPTION_IF_NULL(tensor);
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+        auto tensor_address = tensor->device_address();
+        if (AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()) && tensor_address != nullptr &&
+            tensor_address != address) {
+          tensor->data_sync();
+        }
+      }
       if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {
         address->ptr_ = tensor->data_c();
       } else {

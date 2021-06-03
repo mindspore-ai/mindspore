@@ -90,7 +90,7 @@ void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::InsertCastCPU>());
+  pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   optimizer->AddPassManager(pm);

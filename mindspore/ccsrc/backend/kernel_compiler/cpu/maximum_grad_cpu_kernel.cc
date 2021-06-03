@@ -20,6 +20,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+void CheckShape(std::vector<size_t> *shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->empty()) {
+    shape->push_back(1);
+  }
+}
+}  // namespace
+
 void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -28,9 +37,9 @@ void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dy_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (!x_shape_.size() || !y_shape_.size() || !dout_shape.size()) {
-    MS_LOG(EXCEPTION) << "Input NULL";
-  }
+  CheckShape(&x_shape_);
+  CheckShape(&y_shape_);
+  CheckShape(&dout_shape);
 }
 
 bool MaximumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
