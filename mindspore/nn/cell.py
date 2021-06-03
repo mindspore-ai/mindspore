@@ -1018,11 +1018,13 @@ class Cell(Cell_):
 
     def add_flags_recursive(self, **flags):
         self.add_flags(**flags)
-        if hasattr(self, '_cell_init_args'):
-            self._cell_init_args += str({**flags})
         for cell in self.cells():
             cell.add_flags_recursive(**flags)
         return self
+
+    def _add_init_args(self, **args):
+        if hasattr(self, '_cell_init_args'):
+            self._cell_init_args += str({**args})
 
     def get_flags(self):
         if not hasattr(self, "_mindspore_flags"):
