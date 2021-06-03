@@ -246,6 +246,11 @@ void GetTupleGetItemOutputNodes(const FuncGraphManagerPtr &mng, const AnfNodePtr
   }
 }
 
+bool SetRecomputedScope(const CNodePtr &node) {
+  return WithRecomputedScope(node) ||
+         (IsPrimitiveCNode(node, prim::kPrimDepend) && WithRecomputedScope(node->input(kRealInputIndexInDepend)));
+}
+
 // Set 'recompute' cnode attr for the nodes according to its scope.
 // A node set 'recompute' cnode attr can become the candidate recomputed node.
 void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &origin_nodes_topological) {
@@ -280,7 +285,7 @@ void SetRecomputedAttr(const FuncGraphPtr &graph, const std::vector<CNodePtr> &o
     if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>()) {
       prim_recompute_val = GetValue<bool>(prim_recompute_attr);
     }
-    if ((WithRecomputedScope(node) && prim_recompute_val != 0) || prim_recompute_val == 1) {
+    if ((SetRecomputedScope(cnode) && prim_recompute_val != 0) || prim_recompute_val == 1) {
       cnode->AddAttr(kAttrRecompute, MakeValue(true));
     }
     if (!HasRecomputeCNodeAttr(node)) {
