@@ -163,12 +163,13 @@ class GPUEnvChecker(EnvChecker):
         """Get gpu lib path by ldd command."""
         path_list = []
         current_path = os.path.split(os.path.realpath(__file__))[0]
+        mindspore_path = os.path.join(current_path, "../")
         try:
-            ldd_result = subprocess.run(["ldd " + current_path + "/_c_expression*.so* | grep " + lib_name],
+            ldd_result = subprocess.run(["ldd " + mindspore_path + "/_c_expression*.so* | grep " + lib_name],
                                         timeout=10, text=True, capture_output=True, check=False, shell=True)
             if ldd_result.returncode:
                 logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
-                             f"confirm that _c_expression.so is in directory:{current_path} and the correct cuda "
+                             f"confirm that _c_expression.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
@@ -298,7 +299,8 @@ class AscendEnvChecker(EnvChecker):
             return
 
         try:
-            import te
+            import te # pylint: disable=unused-import
+        # pylint: disable=broad-except
         except Exception:
             if Path(self.tbe_path).is_dir():
                 if os.getenv('LD_LIBRARY_PATH'):
@@ -391,7 +393,7 @@ def check_version_and_env_config():
     try:
         # check version of ascend site or cuda
         env_checker.check_version()
-        from .. import _c_expression
+        from .. import _c_expression # pylint: disable=unused-import
         env_checker.set_env()
     except ImportError as e:
         env_checker.check_env(e)

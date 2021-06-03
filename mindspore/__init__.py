@@ -22,10 +22,9 @@ from .train import *
 from .log import *
 from .version import __version__
 
-all = ["run_check"]
-__all__ = []
+
+__all__ = ["run_check"]
 __all__.extend(__version__)
-__all__.extend(run_check.__all__)
 __all__.extend(common.__all__)
 __all__.extend(train.__all__)
 __all__.extend(log.__all__)
