@@ -846,7 +846,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
         infer_max_value = infer_max_value / value;
       }
     }
-    shape[index] = infer_value;
+    shape[IntToSize(index)] = infer_value;
     min_shape[index] = infer_min_value;
     max_shape[index] = infer_max_value;
   }
