@@ -21,4 +21,8 @@ template <typename T>
 void CalResizeBilinear(const T *input, const int n_, const int c_, const int input_h_, const int input_w_,
   const int output_h_, const int output_w_, const float h_scale, const float w_scale, float *output,
   cudaStream_t cuda_stream);
+template <typename T>
+void CalResizeBilinearGrad(const float *input, const int n_, const int c_, const int input_h_, const int input_w_,
+  const int output_h_, const int output_w_, const float h_scale, const float w_scale, T *output,
+  cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_RESIZE_BILINEAR_H_
