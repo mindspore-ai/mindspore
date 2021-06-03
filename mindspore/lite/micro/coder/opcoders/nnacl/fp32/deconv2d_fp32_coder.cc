@@ -186,7 +186,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
     if (!support_parallel_) {
       code.CodeFunction("DeConvFp32Run", kRunArgsAddr, kDefaultTaskId);
     } else {
-      code.CodeFunction(kParallelLaunch, gThreadPool, "DeConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
+      code.CodeFunction(kParallelLaunch, "DeConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
     }
   }
   context->AppendCode(code.str());

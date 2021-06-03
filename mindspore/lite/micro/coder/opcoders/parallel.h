@@ -28,10 +28,8 @@ constexpr auto kDefaultThreadNum = 1;
 constexpr auto kParallelLaunch = "ParallelLaunch";
 
 // g_thread_pool and g_thread_num are global variable,
-// assign g_thread_pool by CreateThreadPool,
 // and g_thread_num is equal to GetCurrentThreadNum
 constexpr auto gThreadNum = "g_thread_num";
-constexpr auto gThreadPool = "g_thread_pool";
 
 // args represents the parameters required for operator to run
 constexpr auto kRunArgs = "args";

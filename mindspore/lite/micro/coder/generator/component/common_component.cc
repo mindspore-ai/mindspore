@@ -77,12 +77,9 @@ void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config) 
          "  MS_NULLPTR_IF_ERROR(ret);\n";
   if (config->support_parallel()) {
     ofs << "  MS_NULLPTR_IF_NULL(context);\n"
-           "  struct ThreadPool *thread_pool =\n"
-           "    CreateThreadPool(context->thread_num_, "
-           "context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);\n"
-           "  MS_NULLPTR_IF_NULL(thread_pool);\n"
-           "  ret = SetThreadPool(thread_pool);\n"
-           "  MS_NULLPTR_IF_ERROR(ret);\n";
+           "  ret = CreateThreadPool(context->thread_num_);\n"
+           "  MS_NULLPTR_IF_ERROR(ret);\n"
+           "  SetCoreAffinity(context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_);\n";
   }
   ofs << "  return session;\n"
          "}\n\n";
@@ -97,6 +94,33 @@ void CodeCreateSessionImplement(std::ofstream &ofs, const Configurator *config) 
          "  return session;\n"
          "}\n"
          "}  // namespace mindspore\n\n";
+}
+
+void CodeCreateSessionDestructor(std::ofstream &ofs, const Configurator *config) {
+  ofs << "LiteSession::~LiteSession() {\n"
+         "  FreeResource();\n"
+         "  if (runtime_buffer_ != nullptr) {\n"
+         "    free(runtime_buffer_);\n"
+         "    runtime_buffer_ = nullptr;\n"
+         "  }\n"
+         "  for (auto &input : inputs_) {\n"
+         "    if (input == nullptr) {\n"
+         "      continue;\n"
+         "    }\n"
+         "    delete input;\n"
+         "    input = nullptr;\n"
+         "  }\n"
+         "  for (auto &output : outputs_) {\n"
+         "    if (output == nullptr) {\n"
+         "      continue;\n"
+         "    }\n"
+         "    delete output;\n"
+         "    output = nullptr;\n"
+         "  }\n";
+  if (config->support_parallel()) {
+    ofs << "  ClearThreadPool();\n";
+  }
+  ofs << "}\n";
 }
 
 void CodeCopyOutputsState(std::ofstream &ofs) { ofs << "int CopyOutputsData(void **outputs, int num);\n\n"; }

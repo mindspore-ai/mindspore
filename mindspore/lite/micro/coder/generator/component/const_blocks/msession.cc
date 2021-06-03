@@ -124,28 +124,6 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   return RET_OK;
 }
 
-LiteSession::~LiteSession() {
-  FreeResource();
-  if (runtime_buffer_ != nullptr) {
-    free(runtime_buffer_);
-    runtime_buffer_ = nullptr;
-  }
-  for (auto &input : inputs_) {
-    if (input == nullptr) {
-      continue;
-    }
-    delete input;
-    input = nullptr;
-  }
-  for (auto &output : outputs_) {
-    if (output == nullptr) {
-      continue;
-    }
-    delete output;
-    output = nullptr;
-  }
-}
-
 int LiteSession::InitRuntimeBuffer() {
   int buffer_size = GetBufferSize();
   runtime_buffer_ = malloc(buffer_size);

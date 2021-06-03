@@ -40,6 +40,8 @@ constexpr auto kNameSpaceLite = "namespace lite";
 
 constexpr auto kDebugUtils = "debug_utils.h";
 
+constexpr auto kThreadWrapper = "thread_wrapper.h";
+
 constexpr auto kExternCpp =
   "#ifdef __cplusplus\n"
   "extern \"C\" {\n"

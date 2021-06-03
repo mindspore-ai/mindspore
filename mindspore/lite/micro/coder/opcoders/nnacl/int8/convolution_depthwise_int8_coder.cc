@@ -123,7 +123,7 @@ int ConvolutionDepthwiseINT8Coder::DoCode(CoderContext *const context) {
   code.CodeBaseStruct("ConvDepthwiseInt8Args", kRunArgs, output_tensor_, row_buffer_, input_tensor_, packed_weight_,
                       bias_data_, "&conv_param");
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "ConvDepthwiseInt8Run", kRunArgsAddr, "conv_param.thread_num_");
+    code.CodeFunction(kParallelLaunch, "ConvDepthwiseInt8Run", kRunArgsAddr, "conv_param.thread_num_");
   } else {
     code.CodeFunction("ConvDepthwiseInt8Run", kRunArgsAddr, kDefaultTaskId);
   }

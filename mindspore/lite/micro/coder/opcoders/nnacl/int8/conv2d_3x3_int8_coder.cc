@@ -163,7 +163,7 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
   if (thread_num_ > 1) {
     code.CodeBaseStruct("Conv3x3Int8Args", kRunArgs, c8_input_, transformed_filter_addr_, new_bias_addr_,
                         output_tensor_, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_, tmp_out_, "&conv_param_");
-    code.CodeFunction(kParallelLaunch, gThreadPool, "Conv3x3Int8Run", kRunArgsAddr, gThreadNum);
+    code.CodeFunction(kParallelLaunch, "Conv3x3Int8Run", kRunArgsAddr, gThreadNum);
   } else {
     code.CodeFunction("Conv3x3Int8", c8_input_, transformed_filter_addr_, new_bias_addr_, output_tensor_, tile_buffer_,
                       block_unit_buffer_, tmp_dst_buffer_, tmp_out_, kDefaultTaskId, "&conv_param_");
