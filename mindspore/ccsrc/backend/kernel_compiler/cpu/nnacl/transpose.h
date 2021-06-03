@@ -34,7 +34,7 @@ typedef struct TransposeParameter {
 
   // other parameter
   int num_axes_;
-  int data_size_;
+  int data_num_;
 } TransposeParameter;
 
 #endif  // MINDSPORE_NNACL_TRANSPOSE_H_

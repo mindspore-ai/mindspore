@@ -47,7 +47,7 @@ int TransposeInt8CPUKernel::ReSize() {
   auto in_shape = in_tensor->shape();
   auto out_shape = out_tensor->shape();
 
-  transpose_param_->data_size_ = in_tensor->Size();
+  transpose_param_->data_num_ = in_tensor->ElementsNum();
 
   // get perm data
   auto perm_tensor = in_tensors_.at(1);

@@ -126,7 +126,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) { /* 1x2x3x4 */
   }
   param->num_axes_ = 4;
   param->conjugate_ = false;
-  param->data_size_ = 24 * sizeof(float);
+  param->data_num_ = 24;
   for (int i = 0; i < 8; i++) {
     param->perm_[i] = perm[i];
     param->strides_[i] = strides[i];
@@ -158,7 +158,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) { /* 2x3x4 */
   }
   param->num_axes_ = 3;
   param->conjugate_ = false;
-  param->data_size_ = 24 * sizeof(float);
+  param->data_num_ = 24;
   for (int i = 0; i < 8; i++) {
     param->perm_[i] = perm[i];
     param->strides_[i] = strides[i];
@@ -190,7 +190,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) { /* 6x4 */
   }
   param->num_axes_ = 2;
   param->conjugate_ = false;
-  param->data_size_ = 24 * sizeof(float);
+  param->data_num_ = 24;
   for (int i = 0; i < 8; i++) {
     param->perm_[i] = perm[i];
     param->strides_[i] = strides[i];

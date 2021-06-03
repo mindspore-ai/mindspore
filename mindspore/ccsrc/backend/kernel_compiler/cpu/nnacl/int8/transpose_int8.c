@@ -193,7 +193,7 @@ int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_s
   }
 
   if (!needTranspose) {
-    (void)memcpy(out_data, in_data, transpose_param->data_size_);
+    (void)memcpy(out_data, in_data, transpose_param->data_num_ * sizeof(int8_t));
     return NNACL_OK;
   }
 

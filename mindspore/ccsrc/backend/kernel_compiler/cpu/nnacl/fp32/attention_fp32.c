@@ -295,7 +295,7 @@ static void GetTransposeParameter(TransposeParameter *param, const int in_shape[
     param->perm_[i] = perm[i];
     shape_size *= perm[i];  // check overflow
   }
-  param->data_size_ = (int)(shape_size * sizeof(float));  // check overflow
+  param->data_num_ = (int)shape_size;  // check overflow
   param->strides_[param->num_axes_ - 1] = 1;
   param->out_strides_[param->num_axes_ - 1] = 1;
   for (int i = param->num_axes_ - 2; i >= 0; i--) {
