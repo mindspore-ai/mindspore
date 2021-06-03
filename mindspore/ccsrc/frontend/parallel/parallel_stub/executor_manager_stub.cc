@@ -17,7 +17,7 @@
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 namespace mindspore {
 namespace parallel {
-std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &name, int id) {
+std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &name, uint32_t id) {
   std::string key_device = name + "_" + std::to_string(id);
   auto iter = executors_.find(key_device);
   if (iter != executors_.end()) {

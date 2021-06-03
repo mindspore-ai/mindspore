@@ -32,7 +32,7 @@ namespace {
 void UpdateOutputTensors(const VectorRef *outputs,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
       UpdateOutputTensors(&vector_ref, tensor_to_node);
@@ -64,7 +64,7 @@ void UpdateOutputTensors(const VectorRef *outputs,
 
 void NotifyOutputTensors(const VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
       NotifyOutputTensors(&vector_ref);
@@ -78,7 +78,7 @@ void NotifyOutputTensors(const VectorRef *outputs) {
 
 bool TensorInVector(const VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
-  for (auto item : *outputs) {
+  for (auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {
       auto vector_ref = utils::cast<VectorRef>(item);
       if (TensorInVector(&vector_ref)) {
@@ -153,7 +153,13 @@ Executor::Executor(const std::string &device_name, uint32_t device_id) {
   worker_ = std::make_shared<std::thread>(&Executor::WorkerLoop, this);
 }
 
-Executor::~Executor() { WorkerJoin(); }
+Executor::~Executor() {
+  try {
+    WorkerJoin();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Executor call destructor failed: " << e.what();
+  }
+}
 
 void Executor::WorkerJoin() {
   // Avoid worker thread join itself which will cause deadlock
@@ -205,7 +211,7 @@ std::vector<std::shared_ptr<RunGraphTask>> Executor::GetNewReadyTasks() {
   for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end();) {
     auto task = *iter;
     if (IsTaskReady(task)) {
-      ready_tasks.emplace_back(task);
+      (void)ready_tasks.emplace_back(task);
       pending_tasks_.erase(iter++);
     } else {
       ++iter;
@@ -234,13 +240,13 @@ void Executor::OnException() {
   {
     std::lock_guard<std::mutex> lock(task_mutex_);
     while (!ready_tasks_.empty()) {
-      done_tasks.emplace_back(ready_tasks_.front());
+      (void)done_tasks.emplace_back(ready_tasks_.front());
       ready_tasks_.pop();
     }
   }
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
-    std::copy(pending_tasks_.begin(), pending_tasks_.end(), std::back_inserter(done_tasks));
+    (void)std::copy(pending_tasks_.begin(), pending_tasks_.end(), std::back_inserter(done_tasks));
     pending_tasks_.clear();
   }
   {
@@ -455,7 +461,7 @@ void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
   *outputs = task->outputs_;
 }
 
-bool Executor::CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks) {
+bool Executor::CreateCommGroup(const std::string &group_name, const std::vector<uint32_t> &ranks) {
   auto task = std::make_shared<CreateCommGroupTask>();
   task->group_name_ = group_name;
   task->ranks_ = ranks;

@@ -166,7 +166,7 @@ class Executor {
              const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
-  bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
+  bool CreateCommGroup(const std::string &group_name, const std::vector<uint32_t> &ranks);
   bool DestroyCommGroup(const std::string &group_name);
   void OnEvent(const ExecutorEvent &event);
 

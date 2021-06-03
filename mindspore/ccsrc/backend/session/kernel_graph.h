@@ -200,8 +200,8 @@ class KernelGraph : public FuncGraph {
   void AddInternalOutputTensor(const AnfNodePtr &node, size_t output_idx, const tensor::TensorPtr &tensor);
   tensor::TensorPtr GetInternalOutputTensor(const AnfNodePtr &node, size_t output_idx);
 
-  uint32_t current_epoch() const { return current_epoch_; }
-  void set_current_epoch(uint32_t epoch) { current_epoch_ = epoch; }
+  int32_t current_epoch() const { return current_epoch_; }
+  void set_current_epoch(int32_t epoch) { current_epoch_ = epoch; }
   void UpdateChildGraphOrder();
   const std::vector<AnfNodePtr> &child_graph_result() const { return child_graph_result_; }
   void AddChildGraphResult(const AnfNodePtr &parameter) { child_graph_result_.push_back(parameter); }
@@ -256,13 +256,13 @@ class KernelGraph : public FuncGraph {
     pre_graph_finished_count_ = 0;
   }
   void OnRunGraphFinished() {
-    for (auto post_graph : post_graphs_) {
+    for (auto &post_graph : post_graphs_) {
       auto post_graph_ptr = post_graph.second.lock();
       if (post_graph_ptr != nullptr) {
         post_graph_ptr->IncPreGraphFinishedCount();
       }
     }
-    for (auto pre_graph : pre_graphs_) {
+    for (auto &pre_graph : pre_graphs_) {
       auto pre_graph_ptr = pre_graph.second.lock();
       if (pre_graph_ptr != nullptr) {
         pre_graph_ptr->IncPostGraphFinishedCount();
@@ -283,15 +283,10 @@ class KernelGraph : public FuncGraph {
                             std::unordered_set<AnfNodePtr> *visited_nodes, bool comm_first = true);
   // update node edge list
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
-  // add node depend edge by data edge or control depend
+  // add node depend edge by data edge
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
-  void UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
-                                  const std::vector<AnfNodePtr> &real_depend_nodes);
-  // handle control depend
+
   std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
-  bool HandleControlDependNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
-                               std::unordered_set<AnfNodePtr> *visited_nodes);
-  void UpdateControlDependRelations(const std::vector<AnfNodePtr> &depends);
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value);
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
@@ -344,7 +339,7 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::unordered_map<size_t, std::pair<AnfNodePtr, bool>>>
     internal_outputs_to_front_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;
-  uint32_t current_epoch_;
+  int32_t current_epoch_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> tuple_parameter_to_make_tuple_map_;
   std::set<AnfNodePtr> visited_nodes_;
   std::map<AnfNodePtr, AnfNodePtr> edge_to_;

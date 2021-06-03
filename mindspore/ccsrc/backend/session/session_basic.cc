@@ -300,7 +300,6 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   // set loop_count to zero
   MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(cur_loop_tensor);
-
   // update next loop tensor to 0 per iterator
   auto next_loop_tensor = (*inputs_params)[kLoopSinkNextLoopIndex];
   MS_EXCEPTION_IF_NULL(next_loop_tensor);
@@ -309,9 +308,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *next_val = 0;
   next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  MS_EXCEPTION_IF_NULL(inputs);
   inputs->push_back(next_loop_tensor);
-
   auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
   auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
@@ -320,9 +317,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
   inputs->push_back(epoch_tensor);
   MS_LOG(INFO) << "Load epoch_val:" << *epoch_val;
-
   graph->set_current_epoch(graph->current_epoch() + 1);
-
   return inputs_params->size();
 }
 
@@ -793,7 +788,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   auto origin_inputs = cnode->inputs();
-  bool optimize_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend) && origin_inputs.size() >= 3;
+  bool is_depend = IsPrimitiveCNode(cnode, prim::kPrimDepend);
   // if has multiple depends,only select first depend as parameter
   for (size_t input_idx = 1; input_idx < origin_inputs.size(); input_idx++) {
     auto anf = origin_inputs[input_idx];
@@ -802,7 +797,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if (optimize_depend && input_idx > kRealInputIndexInDepend) {
+    } else if (is_depend && input_idx > kRealInputIndexInDepend) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
@@ -1701,7 +1696,6 @@ void SessionBasic::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::Ten
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(inputs_name);
   auto kernel_graph_inputs = kernel_graph->inputs();
-  vector<ParameterPtr> paras;
   // find parameters of graph inputs
   for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
     if (!kernel_graph_inputs[i]->isa<Parameter>()) {
