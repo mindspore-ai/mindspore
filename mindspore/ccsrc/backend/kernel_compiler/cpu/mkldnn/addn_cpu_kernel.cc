@@ -35,7 +35,7 @@ void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);

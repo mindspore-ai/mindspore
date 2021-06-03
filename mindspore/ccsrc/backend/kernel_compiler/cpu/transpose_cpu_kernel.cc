@@ -31,10 +31,7 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   auto tmp = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
   axes_ = {tmp.begin(), tmp.end()};
-  dtype_ = AnfAlgo ::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
-  if (dtype_ == kTypeUnknown) {
-    dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  }
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
     MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
                       << axes_.size() << "D.";
@@ -52,7 +49,6 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
     transpose_param_.strides_[i] = input_shape_[i + 1] * transpose_param_.strides_[i + 1];
     transpose_param_.out_strides_[i] = output_shape_[i + 1] * transpose_param_.out_strides_[i + 1];
   }
-
   launch_map_[kNumberTypeInt8] = &TransposeCPUFwdKernel::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TransposeCPUFwdKernel::LaunchKernel<int16_t>;
   launch_map_[kNumberTypeInt32] = &TransposeCPUFwdKernel::LaunchKernel<int>;

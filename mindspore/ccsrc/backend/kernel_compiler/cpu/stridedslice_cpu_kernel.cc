@@ -52,7 +52,7 @@ void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION)
       << "StridedSLice requires the length of begin, stride and end must be equal and less than input dimension.";
   }
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   InitSliceParam(begin, end, stride);
 
   parallel_ = MatchParallelPattern();
