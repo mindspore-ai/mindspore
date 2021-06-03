@@ -117,6 +117,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::AddAdditionalToRefOutput(const Fun
   auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
   auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
   auto cur_shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
+  auto detail_shape = AnfAlgo::GetOutputDetailShape(cnode, output_index);
   // insert trans
   if (origin_format != cur_format && cur_shape.size() > 1) {
     auto kernel_select = std::make_shared<KernelSelect>();
@@ -131,7 +132,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::AddAdditionalToRefOutput(const Fun
   // insert cast
   if (origin_type != cur_type) {
     final_node =
-      AddCastOpNodeToGraph(func_graph, final_node, origin_format, cur_type, origin_type, cur_shape, cur_type);
+      AddCastOpNodeToGraph(func_graph, final_node, origin_format, cur_type, origin_type, detail_shape, cur_type);
     MS_EXCEPTION_IF_NULL(final_node);
     final_node->set_scope(cnode->scope());
     final_index = 0;
