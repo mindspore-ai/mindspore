@@ -239,7 +239,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
 
  private:
-  bool TbePre(const std::string &mode);
+  void TbePre(const std::string &mode);
   AscendKernelBuildClient() { Open(); }
   ~AscendKernelBuildClient() override { Close(); }
 };

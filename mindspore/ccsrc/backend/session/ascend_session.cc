@@ -269,7 +269,7 @@ bool IsBackward(const CNodePtr &cnode) {
 bool comp(const CNodePtr &node1, const CNodePtr &node2) {
   auto prim1 = GetValueNode<PrimitivePtr>(node1->input(0));
   MS_EXCEPTION_IF_NULL(prim1);
-  auto prim2 = GetValueNode<PrimitivePtr>(node1->input(0));
+  auto prim2 = GetValueNode<PrimitivePtr>(node2->input(0));
   MS_EXCEPTION_IF_NULL(prim2);
   auto sr_tag_value1 = prim1->GetAttr(SR_TAG);
   MS_EXCEPTION_IF_NULL(sr_tag_value1);
@@ -546,8 +546,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
 
 bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
 
-void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                                 VectorRef *const outputs) {
+void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *) {
   MS_LOG(INFO) << "Start";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -1160,7 +1159,7 @@ void AscendSession::SyncInitialTenosrToDevice() {
     auto backend_parameter = graph_inputs[input_idx];
     // sync data from host to device
     MS_EXCEPTION_IF_NULL(front_tensor);
-    size_t tensor_size = front_tensor->data().nbytes();
+    size_t tensor_size = LongToSize(front_tensor->data().nbytes());
     auto addr = AnfAlgo::GetOutputAddr(backend_parameter, 0);
     MS_EXCEPTION_IF_NULL(addr);
     if (!addr->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_parameter, 0), tensor_size,
@@ -1210,7 +1209,7 @@ void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
   size_t reduce_precision_count = 0;
 
   std::set<KernelGraphPtr> memo;
-  (void)RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
+  RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
   memo.clear();
 
   auto ms_context = MsContext::GetInstance();

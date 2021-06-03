@@ -76,9 +76,9 @@ bool KernelBuildClient::AkgWait() {
   return true;
 }
 
-bool AscendKernelBuildClient::TbePre(const std::string &mode) {
+void AscendKernelBuildClient::TbePre(const std::string &mode) {
   auto res = SendRequest(kTbePre);
-  if (res.find(kSuccess) == res.npos) {
+  if (res.find(kSuccess) == std::string::npos) {
     MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
   }
   MS_LOG(INFO) << "Pre " << res;
@@ -91,15 +91,11 @@ bool AscendKernelBuildClient::TbePre(const std::string &mode) {
   if (res != kSuccess) {
     MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
   }
-
-  return true;
 }
 
 int AscendKernelBuildClient::TbeStart(const std::string &json, const std::string &mode) {
   if (!init_flag) {
-    if (!TbePre(mode)) {
-      MS_LOG(EXCEPTION) << "START failed";
-    }
+    TbePre(mode);
     init_flag = true;
   }
   // Start compiling..
