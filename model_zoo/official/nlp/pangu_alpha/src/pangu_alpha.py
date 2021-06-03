@@ -742,10 +742,6 @@ class PanguAlpha_Model(nn.Cell):
             # in other words, in backward process each block will be almosttotally recomputed.
             if config.use_recompute:
                 per_block.recompute()
-                # Dropout will not be recomputed to ensure the consistency between forward and the corresponding backward.
-                per_block.attention.dropout.dropout_gen_mask.recompute(False)
-                per_block.attention.prob_dropout.dropout_gen_mask.recompute(False)
-                per_block.output.dropout.dropout_gen_mask.recompute(False)
             if config.param_init_type == mstype.float16:
                 # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
                 # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
@@ -799,18 +795,15 @@ class PanguAlpha_Model(nn.Cell):
             # If the model is initialized with fp16, the fusion of layernorm (fp32 gradient) will mix up with
             # the bias parameter in linear models (fp16 gradient), causing dtype error for communication operators.
             # so we fuse communications of embedding to a large value(+100)
-            self.top_query_embedding.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 200)
+            self.top_query_embedding.set_comm_fusion(int((config.num_layers - 1) / fusion_group_size) + 200)
             self.top_query_embedding.embedding_table.parallel_optimizer = False
             self.top_query_embedding.gather.shard(((1, 1), (config.dp,)))
             self.top_query_embedding.expand.shard(((config.dp, 1),))
             self.top_query_layer = QueryLayer(config)
             if config.use_recompute:
                 self.top_query_layer.recompute()
-                self.top_query_layer.output.dropout.dropout_gen_mask.recompute(False)
-                self.top_query_layer.attention.dropout.dropout_gen_mask.recompute(False)
-                self.top_query_layer.attention.prob_dropout.dropout_gen_mask.recompute(False)
 
-            self.top_query_layer.set_comm_fusion(int((config.num_layers - 1) / fusion_group_num) + 2)
+            self.top_query_layer.set_comm_fusion(int((config.num_layers - 1) / fusion_group_size) + 2)
             self.top_query_layer.layernorm1.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
             self.top_query_layer.layernorm2.set_comm_fusion(int(config.num_layers / fusion_group_size + 100))
 
@@ -1057,13 +1050,15 @@ class EvalNet(nn.Cell):
         self.argmax = P.Argmax()
         self.generate = generate
         self.topk = P.TopK(sorted=True).shard(((1, 1),))
-        self.gather = P.GatherV2().shard(((1, 1), (1,)))
+        self.gather = P.GatherV2().shard(((1, 1, 1), (1,)))
         self.log_softmax = P.LogSoftmax().shard(((1, 1),))
 
     def construct(self, input_ids, current_index):
         """evaluation net"""
         input_mask = F.cast(F.not_equal(input_ids, 0), mstype.float32)
         logits = self.backbone(input_ids, input_mask)
-        logits = self.gather(logits, current_index)
+        bs, seq_length = F.shape(input_ids)
+        logits = F.reshape(logits, (bs, seq_length, -1))
+        logits = self.gather(logits, current_index, 1)
         log_probs = self.log_softmax(logits)
         return log_probs

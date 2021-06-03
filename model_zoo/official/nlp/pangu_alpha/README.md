@@ -77,11 +77,11 @@ on 8 cards as follows:
 
 # run distributed training example
 
-bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8 fp32
+bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8 fp32 2.6B
 
 ```
 
-We recommend to run the code on 32 Ascend cards for training 13B models.
+By replacing `2.6B` with `13B`, the program will switch to train 13B model (at least 16P).
 
 For distributed training, an hccl configuration file with JSON format needs to be created in advance.
 Please follow the instructions in the link below:
@@ -94,7 +94,7 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 Please refer to the [website](https://git.openi.org.cn/PCL-Platform.Intelligence/PanGu-Alpha) to download the following parts:
 
 - tokenizer: vocab.txt and vocab.model
-- checkpint file: \*.part\[0-4\] and *.npy under the same parameter size
+- checkpoint file: \*.part\[0-4\] and *.npy under the same parameter size
 - strategy file: a file described how the parameters are sliced across different devices.
 
 Here we suppose the downloaded checkpoint, tokenizer and strategy file is organized as follows:

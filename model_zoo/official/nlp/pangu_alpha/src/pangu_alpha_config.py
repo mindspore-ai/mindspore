@@ -86,26 +86,20 @@ def set_parse(args_opt):
        Set config according to the mode
     """
     if args_opt.mode == "200B":
-        args_opt.seq_length = 1024
-        args_opt.vocab_size = 40000
         args_opt.embedding_size = 16384
         args_opt.num_layers = 64
         args_opt.num_heads = 128
         if args_opt.run_type == "train":
             args_opt.start_lr = 6e-5
             args_opt.end_lr = 6e-6
-            args_opt.optimizer_shard = False
+            args_opt.optimizer_shard = 0
             args_opt.stage_num = 16
             args_opt.micro_size = 32
             args_opt.tensor_model_parallel_num = 16
-            args_opt.per_batch_size = 1
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 4
             args_opt.micro_size = 1
-            args_opt.per_batch_size = 1
     elif args_opt.mode == "13B":
-        args_opt.seq_length = 1024
-        args_opt.vocab_size = 40000
         args_opt.embedding_size = 5120
         args_opt.num_layers = 40
         args_opt.num_heads = 40
@@ -113,17 +107,13 @@ def set_parse(args_opt):
         if args_opt.run_type == "train":
             args_opt.start_lr = 5e-5
             args_opt.end_lr = 1e-6
-            args_opt.optimizer_shard = True
+            args_opt.optimizer_shard = 1
             args_opt.stage_num = 1
             args_opt.micro_size = 1
-            args_opt.per_batch_size = 16
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 1
             args_opt.micro_size = 1
-            args_opt.per_batch_size = 1
     elif args_opt.mode == "2.6B":
-        args_opt.seq_length = 1024
-        args_opt.vocab_size = 40000
         args_opt.embedding_size = 2560
         args_opt.num_layers = 32
         args_opt.num_heads = 32
@@ -131,11 +121,9 @@ def set_parse(args_opt):
         if args_opt.run_type == "train":
             args_opt.start_lr = 1e-4
             args_opt.end_lr = 1e-6
-            args_opt.optimizer_shard = True
+            args_opt.optimizer_shard = 1
             args_opt.stage_num = 1
             args_opt.micro_size = 1
-            args_opt.per_batch_size = 2
         elif args_opt.run_type == "predict":
             args_opt.stage_num = 1
             args_opt.micro_size = 1
-            args_opt.per_batch_size = 1
