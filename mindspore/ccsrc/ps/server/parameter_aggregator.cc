@@ -36,8 +36,14 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   required_pull_count_ = threshold_count;
 
   MS_LOG(DEBUG) << "Start initializing kernels for " << AnfAlgo::GetCNodeName(cnode);
-  InitAggregationKernels(cnode);
-  InitOptimizerKernels(cnode);
+  if (!InitAggregationKernels(cnode)) {
+    MS_LOG(EXCEPTION) << "Initializing aggregation kernels failed.";
+    return false;
+  }
+  if (!InitOptimizerKernels(cnode)) {
+    MS_LOG(EXCEPTION) << "Initializing optimizer kernels failed.";
+    return false;
+  }
   return true;
 }
 
@@ -183,9 +189,10 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
 }
 
 bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
-  if (PSContext::instance()->server_mode() == kServerModeFL) {
+  if (PSContext::instance()->server_mode() == kServerModeFL ||
+      PSContext::instance()->server_mode() == kServerModeHybrid) {
     MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
-    return false;
+    return true;
   }
   MS_EXCEPTION_IF_NULL(cnode);
   const std::string &name = AnfAlgo::GetCNodeName(cnode);

@@ -43,11 +43,11 @@ constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
 // 2: Server is in mixed training mode.
 // 3: Server enables sucure aggregation.
 // For example: 1010 stands for that the server is in federated learning mode and sucure aggregation  is enabled.
-enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kWorkerUploadWeights };
+enum class ResetterRound { kNoNeedToReset, kUpdateModel, kReconstructSeccrets, kPushWeight };
 const std::map<uint32_t, ResetterRound> kServerContextToResetRoundMap = {{0b0010, ResetterRound::kUpdateModel},
                                                                          {0b1010, ResetterRound::kReconstructSeccrets},
-                                                                         {0b1100, ResetterRound::kWorkerUploadWeights},
-                                                                         {0b0100, ResetterRound::kWorkerUploadWeights},
+                                                                         {0b1100, ResetterRound::kPushWeight},
+                                                                         {0b0100, ResetterRound::kPushWeight},
                                                                          {0b0100, ResetterRound::kUpdateModel}};
 
 class PSContext {

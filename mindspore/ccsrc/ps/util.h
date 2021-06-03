@@ -18,8 +18,10 @@
 #define MINDSPORE_CCSRC_PS_UTIL_H_
 
 #include <map>
+#include <vector>
 #include <string>
 #include <unordered_map>
+#include "frontend/optimizer/optimizer.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
@@ -35,6 +37,9 @@ struct ParamInitInfo {
   float init_val_{0};
 };
 
+constexpr size_t kNodeInputWeightNameOffset = 1;
+constexpr size_t kNodeInputWeightIndexOffset = 2;
+
 class Util {
  public:
   static bool IsRoleOfPServer();
@@ -48,8 +53,12 @@ class Util {
   static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
                                    const size_t first_dim_size, const size_t outer_dim_size,
                                    mindspore::kernel::SparseGradient<int> *unique_sparse_grad);
+  static bool FuseServerCommOps(const pipeline::ResourcePtr &res);
 
  private:
+  static void DoFusion(FuncGraphPtr func_graph, const std::string &cnode_name, const std::string &fused_cnode_name);
+  static kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
+
   static std::unordered_map<std::string, int64_t> optimizer_to_ids;
   static std::unordered_map<int64_t, std::string> id_to_optimizers;
   static std::unordered_map<int64_t, std::string> id_to_optimizer_nodes;

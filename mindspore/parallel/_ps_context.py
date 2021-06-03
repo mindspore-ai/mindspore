@@ -57,7 +57,8 @@ _set_ps_context_func_map = {
 }
 
 _get_ps_context_func_map = {
-    "enable_ps": ps_context().is_ps_mode
+    "enable_ps": ps_context().is_ps_mode,
+    "ms_role": ps_context().ms_role
 }
 
 

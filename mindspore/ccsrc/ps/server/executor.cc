@@ -135,7 +135,7 @@ bool Executor::HandleModelUpdateAsync(const std::map<std::string, UploadData> &f
   return true;
 }
 
-bool Executor::HandleOverwriteWeightsByKey(const std::map<std::string, Address> &feature_map) {
+bool Executor::HandlePushWeight(const std::map<std::string, Address> &feature_map) {
   for (const auto &trainable_param : feature_map) {
     const std::string &param_name = trainable_param.first;
     if (param_aggrs_.count(param_name) == 0) {
@@ -193,7 +193,7 @@ AddressPtr Executor::HandlePull(const std::string &param_name) {
   return addr;
 }
 
-std::map<std::string, AddressPtr> Executor::HandleGetWeightsByKey(const std::vector<std::string> &param_names) {
+std::map<std::string, AddressPtr> Executor::HandlePullWeight(const std::vector<std::string> &param_names) {
   std::map<std::string, AddressPtr> weights;
   for (const auto &param_name : param_names) {
     if (param_aggrs_.count(param_name) == 0) {

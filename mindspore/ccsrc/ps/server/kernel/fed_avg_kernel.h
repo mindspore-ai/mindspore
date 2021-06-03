@@ -95,6 +95,7 @@ class FedAvgKernel : public AggregationKernel {
       return;
     };
     DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler, last_cnt_handler});
+    GenerateReuseKernelNodeInfo();
     return;
   }
 
@@ -124,7 +125,6 @@ class FedAvgKernel : public AggregationKernel {
     participated_ = true;
     DistributedCountService::GetInstance().Count(
       name_, std::to_string(DistributedCountService::GetInstance().local_rank()) + "_" + std::to_string(accum_count_));
-    GenerateReuseKernelNodeInfo();
     return true;
   }
 

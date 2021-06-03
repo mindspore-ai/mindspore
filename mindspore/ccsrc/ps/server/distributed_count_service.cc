@@ -45,7 +45,7 @@ void DistributedCountService::RegisterCounter(const std::string &name, size_t gl
     return;
   }
   if (global_threshold_count_.count(name) != 0) {
-    MS_LOG(ERROR) << "Counter for " << name << " is already set.";
+    MS_LOG(WARNING) << "Counter for " << name << " is already set.";
     return;
   }
 
