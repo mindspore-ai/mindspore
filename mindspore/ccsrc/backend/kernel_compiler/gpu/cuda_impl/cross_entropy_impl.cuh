@@ -19,6 +19,9 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 
+// The batch size limit to judge whether to use multiple threads.
+constexpr int kLargeBatchLowLimit = 32768;
+
 template <typename T, typename S>
 void CrossEntropyWithSparse(const T *logits, const S *labels, const size_t batch_size, const size_t class_num, T *loss,
                             cudaStream_t cuda_stream);
