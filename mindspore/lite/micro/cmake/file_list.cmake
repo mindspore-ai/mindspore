@@ -23,7 +23,6 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
         ${MICRO_DIR}/coder/generator/component/train_component.cc
-        ${MICRO_DIR}/coder/generator/component/parallel_component.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/cmake_lists.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/debug_utils.cc
         ${MICRO_DIR}/coder/generator/component/const_blocks/msession.cc

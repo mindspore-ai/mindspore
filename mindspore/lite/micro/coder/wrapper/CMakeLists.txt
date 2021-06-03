@@ -25,3 +25,4 @@ include(${MICRO_DIR}/cmake/package_wrapper.cmake)
 # generate static library
 add_library(wrapper_mid OBJECT ${WRAPPER_SRC})
 add_library(wrapper STATIC $<TARGET_OBJECTS:wrapper_mid>)
+target_link_libraries(wrapper_mid -lpthread)

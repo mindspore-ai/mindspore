@@ -89,7 +89,7 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   /* input transpose and input sum */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "OcOptPre", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "OcOptPre", kRunArgsAddr, "args.thread_count_hw");
   } else {
     code.CodeFunction("OcOptPre", kRunArgsAddr, kDefaultTaskId);
   }
@@ -108,13 +108,13 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   /* matmul parallel by oc */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArm64OptOc", kRunArgsAddr, "args.thread_count_oc");
+    code.CodeFunction(kParallelLaunch, "RunArm64OptOc", kRunArgsAddr, "args.thread_count_oc");
   } else {
     code.CodeFunction("RunArm64OptOc", kRunArgsAddr, kDefaultTaskId);
   }
   code << "} else {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArmOc", kRunArgsAddr, "args.thread_count_oc");
+    code.CodeFunction(kParallelLaunch, "RunArmOc", kRunArgsAddr, "args.thread_count_oc");
   } else {
     code.CodeFunction("RunArmOc", kRunArgsAddr, kDefaultTaskId);
   }
@@ -123,13 +123,13 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   /* matmul parallel by hw */
   code << "if (GetSupportOptFlag()) {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArm64OptHw", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "RunArm64OptHw", kRunArgsAddr, "args.thread_count_hw");
   } else {
     code.CodeFunction("RunArm64OptHw", kRunArgsAddr, kDefaultTaskId);
   }
   code << "} else {\n";
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "RunArmHw", kRunArgsAddr, "args.thread_count_hw");
+    code.CodeFunction(kParallelLaunch, "RunArmHw", kRunArgsAddr, "args.thread_count_hw");
   } else {
     code.CodeFunction("RunArmHw", kRunArgsAddr, kDefaultTaskId);
   }

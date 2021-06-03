@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include "coder/generator/component/common_component.h"
-#include "coder/generator/component/parallel_component.h"
 #include "coder/generator/component/weight_component.h"
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/generator/component/component.h"
@@ -31,17 +30,11 @@ int InferenceGenerator::CodeNetHFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   ofs << g_hwLicense;
-  if (config_->support_parallel()) {
-    ofs << "#include \"thread_pool.h\"\n";
-  }
   ofs << kExternCpp;
   CodeInputState(ofs);
   CodeCopyOutputsState(ofs);
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs);
-  }
-  if (config_->support_parallel()) {
-    CodeSetGlobalThreadPoolState(ofs);
   }
   if (config_->target() != kARM32M) {
     CodeInitWeightState(ofs);
@@ -60,11 +53,11 @@ int InferenceGenerator::CodeNetCFile() {
   ofs << g_hwLicense << "\n"
       << "#include \"" << net_weight_hfile_ << "\"\n"
       << "#include \"" << net_inc_hfile_ << "\"\n\n";
+  if (config_->support_parallel()) {
+    ofs << "#include \"" << kThreadWrapper << "\"\n\n";
+  }
   if (config_->debug_mode()) {
     ofs << "#include \"" << kDebugUtils << "\"\n";
-  }
-  if (config_->support_parallel()) {
-    CodeSetGlobalThreadPoolImplement(ofs);
   }
   CodeInputImplement(ofs, ctx_);
   CodeCopyOutputsImplement(ofs, ctx_);

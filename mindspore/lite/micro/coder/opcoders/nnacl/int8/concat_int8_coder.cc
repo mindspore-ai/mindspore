@@ -113,7 +113,7 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   code.CodeBaseStruct<false>("ConcatInt8Args", kRunArgs, "input_data", output_tensor_, "&concat_param", axis_,
                              before_axis_size, count_unit_);
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, gThreadPool, "ConcatInt8Run", kRunArgsAddr, gThreadNum);
+    code.CodeFunction(kParallelLaunch, "ConcatInt8Run", kRunArgsAddr, gThreadNum);
   } else {
     code.CodeFunction("ConcatInt8Run", kRunArgsAddr, kDefaultTaskId);
   }
