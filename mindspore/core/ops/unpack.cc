@@ -36,7 +36,6 @@ AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   int64_t dim = SizeToLong(x_shape.size());
   int64_t axis = unpack_prim->get_axis();
-  //  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-dim, dim}, prim_name);
   if (axis < 0) {
     axis = axis + dim;
   }

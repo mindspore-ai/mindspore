@@ -28,7 +28,6 @@ AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, 
   MS_EXCEPTION_IF_NULL(extract_prim);
   auto prim_name = extract_prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  // auto input = input_args[0];
 
   // Infer type
   auto output0_type = TypeIdToType(kNumberTypeInt32);

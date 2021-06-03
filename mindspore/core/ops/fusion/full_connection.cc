@@ -39,8 +39,7 @@ bool FullConnection::get_use_axis() const {
 }
 
 void FullConnection::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 ActivationType FullConnection::get_activation_type() const {

@@ -34,8 +34,7 @@ void AvgPoolFusion::Init(const std::vector<int64_t> &kernel_size, const std::vec
 void AvgPoolFusion::set_global(const bool global) { AddAttr(kGlobal, MakeValue(global)); }
 
 void AvgPoolFusion::set_activation_type(ActivationType activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 

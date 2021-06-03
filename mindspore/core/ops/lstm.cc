@@ -68,7 +68,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
   current_offset += ws_diff_states_size;
   current_offset = ((current_offset / page_size - 1) / page_size) * page_size;
   std::vector<int64_t> x_shape = {x_input_shape};
-  // std::vector<int64_t> h_shape = {h_input_shape};
+
   std::vector<int64_t> c_shape = {c_input_shape};
   std::vector<int64_t> reverse_shape = {current_offset, 1};
   std::vector<int64_t> state_shape = {1, 1};

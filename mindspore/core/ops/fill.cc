@@ -47,11 +47,11 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(x_type_id, out_shape);
   auto mem_size = IntToSize(tensor->ElementsNum());
   if (x_type_id == kNumberTypeInt) {
-    auto num = GetValue<int>(x_value);
-    SetTensorData(tensor->data_c(), num, mem_size);
+    auto int_value = GetValue<int>(x_value);
+    SetTensorData(tensor->data_c(), int_value, mem_size);
   } else if (x_type_id == kNumberTypeFloat || x_type_id == kNumberTypeFloat32) {
-    auto num = GetValue<float>(x_value);
-    SetTensorData(tensor->data_c(), num, mem_size);
+    auto float_value = GetValue<float>(x_value);
+    SetTensorData(tensor->data_c(), float_value, mem_size);
   } else {
     MS_LOG(ERROR) << " Fill not supported to flod the constant type " << input_args[2]->ToString();
   }

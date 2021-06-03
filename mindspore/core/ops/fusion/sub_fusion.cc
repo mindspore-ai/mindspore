@@ -23,8 +23,7 @@ namespace ops {
 void SubFusion::Init(const ActivationType &activation_type) { this->set_activation_type(activation_type); }
 
 void SubFusion::set_activation_type(const ActivationType &activation_type) {
-  int64_t swi;
-  swi = activation_type;
+  int64_t swi = activation_type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 
