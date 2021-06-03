@@ -45,7 +45,10 @@ device_id=0
 if [ $# == 4 ]; then
     device_id=$4
 fi
-
+BASEPATH=$(dirname "$(pwd)") 
+config_path=$BASEPATH"/default_config.yaml"
+echo "base path :"$BASEPATH
+echo "config path :"$config_path 
 echo "mindir name: "$model
 echo "dataset name: "$dataset_name
 echo "dataset path: "$dataset_path
@@ -91,7 +94,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --dataset=$dataset_name --data_path=$dataset_path --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py --config_path=$config_path --dataset_name=$dataset_name --data_path=$dataset_path 
 }
 
 function compile_app()
@@ -112,20 +115,13 @@ function infer()
     mkdir result_Files
     mkdir time_Result
 
-    if [ "$dataset_name" == "cifar10" ]; then
-        ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=./preprocess_Result/00_data --device_id=$device_id  &> infer.log
-    else
-        ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=$dataset_path --device_id=$device_id  &> infer.log
-    fi
+    ../ascend310_infer/out/main --mindir_path=$model --dataset_name=$dataset_name --input0_path=./preprocess_Result/00_data --device_id=$device_id  &> infer.log
+
 }
 
 function cal_acc()
 {
-    if [ "$dataset_name" == "cifar10" ]; then
-        python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/cifar10_label_ids.npy --dataset_name=$dataset_name  &> acc.log
-    else
-        python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/imagenet_label.json --dataset_name=$dataset_name  &> acc.log
-    fi
+    python3.7 ../postprocess.py  --dataset_name=$dataset_name  &> acc.log
 }
 
 if [ $need_preprocess == "y" ]; then

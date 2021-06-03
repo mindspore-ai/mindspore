@@ -22,10 +22,9 @@ import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as CV
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_rank, get_group_size
-from .config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
 
 
-def create_dataset_cifar10(data_path, cfg, batch_size=32, repeat_size=1, training=True, target="Ascend"):
+def create_dataset_cifar10(cfg, data_path, batch_size=32, repeat_size=1, status="train", target="Ascend"):
     """
     create dataset for train or test
     """
@@ -40,18 +39,18 @@ def create_dataset_cifar10(data_path, cfg, batch_size=32, repeat_size=1, trainin
                                      num_shards=device_num, shard_id=rank_id)
     rescale = 1.0 / 255.0
     shift = 0.0
-    cfg = alexnet_cifar10_cfg
+    # cfg = alexnet_cifar10_cfg
 
     resize_op = CV.Resize((cfg.image_height, cfg.image_width))
     rescale_op = CV.Rescale(rescale, shift)
     normalize_op = CV.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    if training:
+    if status == "train":
         random_crop_op = CV.RandomCrop([32, 32], [4, 4, 4, 4])
         random_horizontal_op = CV.RandomHorizontalFlip()
     channel_swap_op = CV.HWC2CHW()
     typecast_op = C.TypeCast(mstype.int32)
     cifar_ds = cifar_ds.map(input_columns="label", operations=typecast_op, num_parallel_workers=8)
-    if training:
+    if status == "train":
         cifar_ds = cifar_ds.map(input_columns="image", operations=random_crop_op, num_parallel_workers=8)
         cifar_ds = cifar_ds.map(input_columns="image", operations=random_horizontal_op, num_parallel_workers=8)
     cifar_ds = cifar_ds.map(input_columns="image", operations=resize_op, num_parallel_workers=8)
@@ -65,7 +64,7 @@ def create_dataset_cifar10(data_path, cfg, batch_size=32, repeat_size=1, trainin
     return cifar_ds
 
 
-def create_dataset_imagenet(dataset_path, cfg, batch_size=32, repeat_num=1, training=True,
+def create_dataset_imagenet(cfg, dataset_path, batch_size=32, repeat_num=1, training=True,
                             num_parallel_workers=None, shuffle=None, sampler=None, class_indexing=None):
     """
     create a train or eval imagenet2012 dataset for resnet50
@@ -82,7 +81,7 @@ def create_dataset_imagenet(dataset_path, cfg, batch_size=32, repeat_num=1, trai
     """
 
     device_num, rank_id = _get_rank_info()
-    cfg = alexnet_imagenet_cfg
+    # cfg = alexnet_imagenet_cfg
 
     num_parallel_workers = 16
     if device_num == 1:
