@@ -46,7 +46,7 @@ class TcpMessageHandler {
  private:
   messageReceive message_callback_;
   bool is_parsed_;
-  std::unique_ptr<unsigned char> message_buffer_;
+  std::unique_ptr<unsigned char[]> message_buffer_;
   size_t remaining_length_;
   char header_[16]{0};
   int header_index_;

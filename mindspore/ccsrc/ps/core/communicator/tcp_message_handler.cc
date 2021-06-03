@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <utility>
+#include <memory>
 
 namespace mindspore {
 namespace ps {
@@ -41,7 +42,7 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
           message_header_.message_length_ = *reinterpret_cast<const size_t *>(
             header_ + sizeof(message_header_.message_proto_) + sizeof(message_header_.message_meta_length_));
           remaining_length_ = message_header_.message_length_;
-          message_buffer_.reset(new unsigned char[remaining_length_]);
+          message_buffer_ = std::make_unique<unsigned char[]>(remaining_length_);
           buffer_data += (i + 1);
           break;
         }
