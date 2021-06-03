@@ -60,7 +60,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
         """init"""
 
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
-            validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.name)
+            validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
                 raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s should be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
@@ -99,6 +99,11 @@ class ExtractImagePatches(PrimitiveWithInfer):
             out_col = (in_col - 1) // stride_col + 1
 
         out_shape = [out_batch, out_depth, out_row, out_col]
+        # avoiding empty outputs
+        validator.check("out_batch", out_batch, "", 0, Rel.GT, self.name)
+        validator.check("out_depth", out_depth, "", 0, Rel.GT, self.name)
+        validator.check("out_row", out_row, "", 0, Rel.GT, self.name)
+        validator.check("out_col", out_col, "", 0, Rel.GT, self.name)
         return out_shape
 
     def infer_dtype(self, input_x):
