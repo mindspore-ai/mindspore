@@ -68,9 +68,10 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &p
 
 AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
-  // Inputs: index, branch
+  // Inputs: {index, MakeTuple{branch1,branch2,branch3....}}
+  constexpr auto kSwitchLayerInputNum = 2;
   const std::string op_name = primitive->name();
-  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  abstract::CheckArgsSize(op_name, args_spec_list, kSwitchLayerInputNum);
   auto index = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto &input_shape = index->shape()->shape();
   if (input_shape.size() != 0) {

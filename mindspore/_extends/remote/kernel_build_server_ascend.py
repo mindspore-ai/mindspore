@@ -46,7 +46,6 @@ class TbeBuilder:
 
 
 class AscendMessager(Messager):
-
     '''
     Ascend Messager
     It works as a server, communicating with c++ client.
