@@ -44,7 +44,7 @@ int OneHotOpenCLKernel::Prepare() {
   in_shape_ = GpuTensorInfo(in_tensors_[0]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
   axis_ = out_shape_.AlignAxis(param->axis_);
-  if (in_tensors_[0]->shape().size() == 1 && axis_ == 0) {
+  if (in_tensors_[0]->shape().size() == DIMENSION_1D && axis_ == 0) {
     kernel_name += "2DAxis0";
   } else {
     kernel_name += "Axis" + std::to_string(axis_);

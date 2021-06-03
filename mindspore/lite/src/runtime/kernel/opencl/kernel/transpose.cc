@@ -56,7 +56,7 @@ int TransposeOpenCLKernel::Prepare() {
   tensor_size_ = GpuTensorInfo(out_tensors_.front());
   auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
   int num_axes = in_tensors_.at(1)->shape().at(0);
-  if (tensor_size_.NDim == 2) {
+  if (tensor_size_.NDim == DIMENSION_2D) {
     perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
     perm_4d_[1] = 1;
     perm_4d_[2] = 2;
@@ -67,12 +67,12 @@ int TransposeOpenCLKernel::Prepare() {
       perm_4d_[2] = 2;
       perm_4d_[3] = 3;
     }
-  } else if (tensor_size_.NDim == 3) {
+  } else if (tensor_size_.NDim == DIMENSION_3D) {
     perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
     perm_4d_[1] = 1;
     perm_4d_[2] = tensor_size_.AlignAxis(perm[1]);
     perm_4d_[3] = tensor_size_.AlignAxis(perm[2]);
-  } else if (tensor_size_.NDim == 4) {
+  } else if (tensor_size_.NDim == DIMENSION_4D) {
     perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
     perm_4d_[1] = tensor_size_.AlignAxis(perm[1]);
     perm_4d_[2] = tensor_size_.AlignAxis(perm[2]);
@@ -98,7 +98,7 @@ int TransposeOpenCLKernel::Prepare() {
   } else {
     kernel_name += "_general";
   }
-  if (in_tensors_[0]->shape().size() == 4 &&
+  if (in_tensors_[0]->shape().size() == DIMENSION_4D &&
       in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > ocl_runtime_->GetMaxImage2DWidth()) {
     // just for input
     kernel_name += "_oversize";

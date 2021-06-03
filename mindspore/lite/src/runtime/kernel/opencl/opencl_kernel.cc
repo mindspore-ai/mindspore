@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include <mindspore/lite/src/runtime/infer_manager.h>
+#include "src/runtime/infer_manager.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "mindspore/lite/src/dequant.h"
+#include "src/dequant.h"
+#include "src/common/file_utils.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -144,7 +145,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   printf("\n");
 
   if (!out_file.empty()) {
-    (void)WriteToBin(out_file, data.data(), data.size());
+    (void)lite::WriteToBin(out_file, data.data(), data.size());
   }
 }
 

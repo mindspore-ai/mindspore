@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/depthwise_conv2d.h"
-#include <float.h>
 #include <string>
 #include <set>
 #include <map>

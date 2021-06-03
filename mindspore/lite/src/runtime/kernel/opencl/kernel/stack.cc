@@ -125,12 +125,13 @@ void StackOpenCLKernel::SetConstArgs() {
 }
 
 void StackOpenCLKernel::SetGlobalLocal() {
-  if (((in_tensors_[0]->shape().size() == 2 || in_tensors_[0]->shape().size() == 3) && axis_ == 1) ||
-      (in_tensors_[0]->shape().size() == 3 && axis_ == 2)) {
+  if (((in_tensors_[0]->shape().size() == DIMENSION_2D || in_tensors_[0]->shape().size() == DIMENSION_3D) &&
+       axis_ == 1) ||
+      (in_tensors_[0]->shape().size() == DIMENSION_3D && axis_ == 2)) {
     OH_ = out_shape_.s[0] * out_shape_.s[1];
     OW_ = out_shape_.s[2];
     OC_ = out_shape_.s[3];
-  } else if (in_tensors_[0]->shape().size() == 1) {
+  } else if (in_tensors_[0]->shape().size() == DIMENSION_1D) {
     OH_ = UP_DIV(out_shape_.s[0], C4NUM);
     OW_ = out_shape_.s[3];
   } else {
@@ -149,7 +150,7 @@ int StackOpenCLKernel::Prepare() {
   if (axis_ == 0) {
     return RET_OK;
   }
-  if (in_tensors_[0]->shape().size() == 1 && axis_ == 1) {
+  if (in_tensors_[0]->shape().size() == DIMENSION_1D && axis_ == 1) {
     axis_ += 2;
   } else if (in_tensors_[0]->shape().size() == axis_) {
     buffer_button_ = true;  // boundary stack judge

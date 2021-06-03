@@ -115,7 +115,7 @@ void WinogradOpenCLKernel::InitFilter() {
   auto winograd_filter = GenerateWinogradFilter(filter_tensor->data_c(), filter_tensor->data_type(), CO_, CI_);
   void *src_data = winograd_filter.data();
 #else
-  std::unique_ptr<float[]> winograd_filter(new float[CO_ * 6 * 6 * CI_]);
+  auto winograd_filter = std::make_unique<float[]>(CO_ * 6 * 6 * CI_);
   WinogradWeightTransform(reinterpret_cast<const float *>(filter_tensor->data_c()),
                           reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
 
