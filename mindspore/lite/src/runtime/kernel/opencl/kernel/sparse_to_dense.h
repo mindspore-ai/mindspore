@@ -22,7 +22,6 @@
 #include "mindspore/lite/nnacl/fp32/sparse_to_dense_fp32.h"
 
 namespace mindspore::kernel {
-
 class SparseToDenseOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

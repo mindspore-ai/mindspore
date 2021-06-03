@@ -22,7 +22,6 @@
 #include "nnacl/gather_parameter.h"
 
 namespace mindspore::kernel {
-
 class GatherOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

@@ -32,9 +32,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-
 bool IsUseStrassenMatmul(const std::vector<lite::Tensor *> &in_tensors_) {
-  if (in_tensors_.at(0)->shape().size() == 2) {
+  if (in_tensors_.at(0)->shape().size() == DIMENSION_2D) {
     auto shape0 = in_tensors_.at(0)->shape();
     auto shape1 = in_tensors_.at(1)->shape();
     if (in_tensors_.at(1)->IsConst() && (shape0[0] == shape0[1]) && (shape1[0] == shape1[1]) &&
@@ -49,7 +48,8 @@ bool IsUseStrassenMatmul(const std::vector<lite::Tensor *> &in_tensors_) {
 }
 
 int MatMulOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (!(in_tensors_.size() == INPUT_TENSOR_SIZE_2 || in_tensors_.size() == INPUT_TENSOR_SIZE_3) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -62,8 +62,8 @@ int MatMulOpenCLKernel::CheckSpecs() {
   transposeB = param->b_transpose_;
   act_weight_ = !in_tensors_[1]->IsConst();
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() || in_tensors_[0]->shape().size() < 2 ||
-      in_tensors_[0]->shape().size() > 4) {
+  if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
+      in_tensors_[0]->shape().size() < DIMENSION_2D || in_tensors_[0]->shape().size() > DIMENSION_4D) {
     MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
     return RET_ERROR;
   }

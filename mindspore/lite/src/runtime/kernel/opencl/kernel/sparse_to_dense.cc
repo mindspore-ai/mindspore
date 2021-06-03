@@ -31,7 +31,6 @@ using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore::kernel {
-
 int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
@@ -92,17 +91,17 @@ int SparseToDenseOpenCLKernel::InitWeights() {
 }
 
 int SparseToDenseOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() < 3 || out_tensors_.at(0)->shape().size() > 4) {
+  if (in_tensors_.size() < DIMENSION_3D || out_tensors_.at(0)->shape().size() > DIMENSION_4D) {
     MS_LOG(ERROR) << " only support out_tensors_ dim <= 4 and in_tensors_.size >= 3";
     return RET_ERROR;
   }
-  if (in_tensors_.at(0)->shape().size() > 4 || out_tensors_.at(0)->shape().size() > 4) {
+  if (in_tensors_.at(0)->shape().size() > DIMENSION_4D || out_tensors_.at(0)->shape().size() > DIMENSION_4D) {
     MS_LOG(ERROR) << "Unsupported inputdim: " << in_tensors_[0]->shape().size() << "outdim"
                   << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
-  if (input_dim_ == 2) {
-    if ((in_tensors_[0]->shape()[1] > 4)) {
+  if (input_dim_ == DIMENSION_2D) {
+    if ((in_tensors_[0]->shape()[1] > DIMENSION_4D)) {
       MS_LOG(ERROR) << "in_tensors_indices shape[1] must be 1 2 or 3  && input_dim_=2 ,but your shapes is: "
                     << in_tensors_[0]->shape()[1] << "your input_dim_ is: " << input_dim_;
       return ERROR;

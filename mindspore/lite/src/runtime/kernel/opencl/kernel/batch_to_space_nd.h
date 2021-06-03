@@ -22,7 +22,6 @@
 #include "nnacl/batch_to_space.h"
 
 namespace mindspore::kernel {
-
 class BatchToSpaceNDOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

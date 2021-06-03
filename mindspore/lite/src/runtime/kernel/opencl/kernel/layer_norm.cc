@@ -30,15 +30,14 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
-
 int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  if (in_tensors_.size() != 3 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_3 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "UnSupported in_tensors_.size: " << in_tensors_.size()
                   << " out_tensors_.size(): " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (in_tensors_.at(0)->shape().size() != 4) {
+  if (in_tensors_.at(0)->shape().size() != DIMENSION_4D) {
     MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size();
     return RET_ERROR;
   }

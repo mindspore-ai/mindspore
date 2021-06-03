@@ -22,7 +22,6 @@
 #include "nnacl/concat_parameter.h"
 
 namespace mindspore::kernel {
-
 class ConcatOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

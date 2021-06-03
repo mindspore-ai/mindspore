@@ -36,13 +36,12 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace kernel {
-
 int PoolingOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() != 4) {
+  if (in_tensors_[0]->shape().size() != DIMENSION_4D) {
     MS_LOG(ERROR) << "Only support 4d tensor.";
     return RET_ERROR;
   }

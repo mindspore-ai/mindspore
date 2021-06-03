@@ -32,7 +32,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
-
 int PReluOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_tensor = in_tensors_.at(1);
@@ -76,7 +75,7 @@ int PReluOpenCLKernel::InitWeights() {
 }
 
 int PReluOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "PRelu Only supported in_tensors_.size=2 and out_tensors_.size()=1 but your in_tensors_.size="
                   << in_tensors_.size() << " out_tensors_.size()=" << out_tensors_.size();
     return RET_ERROR;

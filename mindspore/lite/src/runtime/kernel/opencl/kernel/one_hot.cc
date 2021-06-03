@@ -30,7 +30,8 @@ using mindspore::schema::PrimitiveType_OneHot;
 
 namespace mindspore::kernel {
 int OneHotOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() < 2 || in_tensors_.size() > 4) || out_tensors_.size() != 1) {
+  if ((in_tensors_.size() < INPUT_TENSOR_SIZE_2 || in_tensors_.size() > INPUT_TENSOR_SIZE_4) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -65,10 +66,10 @@ int OneHotOpenCLKernel::Prepare() {
 
 int OneHotOpenCLKernel::InitWeights() {
   depth_ = static_cast<int32_t *>(in_tensors_[1]->data_c())[0];
-  if (in_tensors_.size() > 2) {
+  if (in_tensors_.size() > INPUT_TENSOR_SIZE_2) {
     on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
   }
-  if (in_tensors_.size() > 3) {
+  if (in_tensors_.size() > INPUT_TENSOR_SIZE_3) {
     off_value_ = static_cast<float *>(in_tensors_[3]->data_c())[0];
   }
   return RET_OK;

@@ -34,9 +34,9 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::kernel {
-
 int Conv2dTransposeOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() != 2 && in_tensors_.size() != 3) || out_tensors_.size() != 1) {
+  if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -49,7 +49,7 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant filter yet.";
     return RET_ERROR;
   }
-  if (in_tensors_.size() == 3 && !in_tensors_.at(2)->IsConst()) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(2)->IsConst()) {
     MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant bias yet.";
     return RET_ERROR;
   }
@@ -212,7 +212,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   bias_ = allocator->Malloc(img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
@@ -253,8 +253,8 @@ kernel::LiteKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor 
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);
-  MS_ASSERT(inputs.front()->shape().size() == 4);
-  MS_ASSERT(outputs.front()->shape().size() == 4);
+  MS_ASSERT(inputs.front()->shape().size() == DIMENSION_4D);
+  MS_ASSERT(outputs.front()->shape().size() == DIMENSION_4D);
   auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int input_channel = inputs.front()->shape().at(3);
   int output_channel = outputs.front()->shape().at(3);

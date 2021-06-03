@@ -20,7 +20,6 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::opencl {
-
 int OpenCLExecutor::Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
                         const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
