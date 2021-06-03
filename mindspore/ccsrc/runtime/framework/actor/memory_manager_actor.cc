@@ -83,6 +83,9 @@ void MemoryManagerActor::FreeMemory(std::vector<DeviceTensor *> *free_list, cons
   MS_EXCEPTION_IF_NULL(device_context);
   for (auto &device_tensor : *free_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
+    if (device_tensor->original_ref_count() == SIZE_MAX) {
+      continue;
+    }
     // The reference count is decremented to zero to free memory, and reset to the original count.
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {
@@ -111,6 +114,9 @@ void MemoryManagerActor::FreeBatchMemory(std::vector<DeviceTensor *> *free_list,
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_tensor);
     MS_EXCEPTION_IF_NULL(device_context);
+    if (device_tensor->original_ref_count() == SIZE_MAX) {
+      continue;
+    }
     // The reference count is decremented to zero to free memory, and reset to the original count.
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {

@@ -248,6 +248,7 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(node, index, false);
     MS_EXCEPTION_IF_NULL(device_address);
     device_address->set_original_ref_count(SIZE_MAX);
+    device_address->ResetRefCount();
   }
 }
 }  // namespace
