@@ -53,12 +53,12 @@ class DataProcessor:
         """ collect weight """
         vocab_size = self.get_dict_len()
         embedding_index = {}
-        f = open(glove_path)
-        for line in f:
-            values = line.split()
-            word = values[0]
-            vec = np.array(values[1:], dtype='float32')
-            embedding_index[word] = vec
+        with open(glove_path) as f:
+            for line in f:
+                values = line.split()
+                word = values[0]
+                vec = np.array(values[1:], dtype='float32')
+                embedding_index[word] = vec
         weight_np = np.zeros((vocab_size, embed_size)).astype(np.float32)
 
         for word, vec in embedding_index.items():
@@ -129,10 +129,10 @@ class MovieReview(DataProcessor):
         self.Pos = []
         self.Neg = []
         for filename in self.files:
-            f = codecs.open(filename, 'r')
-            ff = f.read()
-            file_object = codecs.open(filename, 'w', 'utf-8')
-            file_object.write(ff)
+            with codecs.open(filename, 'r') as f:
+                ff = f.read()
+            with codecs.open(filename, 'w', 'utf-8') as file_object:
+                file_object.write(ff)
             self.read_data(filename)
         self.PosNeg = self.Pos + self.Neg
         self.text2vec(maxlen=maxlen)
@@ -394,10 +394,10 @@ class SST2(DataProcessor):
         self.maxlen = float("-inf")
         for filename in self.files:
             if 'train' in filename or 'dev' in filename:
-                f = codecs.open(filename, 'r')
-                ff = f.read()
-                file_object = codecs.open(filename, 'w', 'utf-8')
-                file_object.write(ff)
+                with codecs.open(filename, 'r') as f:
+                    ff = f.read()
+                with codecs.open(filename, 'w', 'utf-8') as file_object:
+                    file_object.write(ff)
                 self.read_data(filename)
         self.text2vec(maxlen=maxlen)
         self.split_dataset(split=split)
