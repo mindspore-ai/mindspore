@@ -132,6 +132,7 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
     MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc kernel.";
     return RET_ERROR;
   }
+  nh2nc_tensor->set_allocator(context_->allocator.get());
   nh2nc_tensor->set_tensor_name(nh2nc_name + "/output0");
   std::vector<Tensor *> nh2nc_tensors = {nh2nc_tensor};
   all_tensors_->push_back(nh2nc_tensors[0]);
@@ -142,6 +143,7 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
     MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw kernel.";
     return RET_ERROR;
   }
+  nc2nh_tensor->set_allocator(context_->allocator.get());
   nc2nh_tensor->set_tensor_name(nc2nh_name + "/output0");
   std::vector<Tensor *> nc2nh_tensors = {nc2nh_tensor};
   all_tensors_->push_back(nc2nh_tensors[0]);

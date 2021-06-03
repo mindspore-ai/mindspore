@@ -51,6 +51,7 @@ int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<ker
       MS_LOG(ERROR) << "New nchw tensor failed when inserting pre nhwc2nchw kernel.";
       return RET_ERROR;
     }
+    tensor->set_allocator(context_->allocator.get());
     auto name = kernel->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
     tensor->set_tensor_name(name + "/output0");
     std::vector<Tensor *> pre_trans_out_tensors = {tensor};
@@ -111,6 +112,7 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
       MS_LOG(ERROR) << "New nchw tensor failed when inserting post nchw2nhwc kernel.";
       return RET_ERROR;
     }
+    nc2nh_tensor->set_allocator(context_->allocator.get());
     all_tensors_->push_back(nc2nh_tensor);
     auto name = kernel->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
     nc2nh_tensor->set_tensor_name(name + "/input0");

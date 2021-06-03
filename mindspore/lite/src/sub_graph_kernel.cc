@@ -188,7 +188,6 @@ int CpuSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &aft
   }
   return RET_OK;
 }
-
 #ifdef ENABLE_FP16
 void CpuFp16SubGraph::FreeOriginInputData() {
   for (auto &iter : this->origin_input_data_) {

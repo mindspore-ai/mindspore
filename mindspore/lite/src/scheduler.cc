@@ -886,6 +886,11 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
       delete innerkernel;
       return nullptr;
     }
+    for (auto out_tensor : output_tensors) {
+      if (out_tensor->data_type() == kNumberTypeFloat32) {
+        out_tensor->set_data_type(kNumberTypeFloat16);
+      }
+    }
     return sub_kernel;
 #else
     delete innerkernel;

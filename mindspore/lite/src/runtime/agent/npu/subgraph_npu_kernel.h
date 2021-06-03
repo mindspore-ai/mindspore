@@ -55,6 +55,17 @@ class SubGraphNpuKernel : public SubGraphKernel {
     return RET_ERROR;
   }
 
+  void set_out_tensor(lite::Tensor *out_tensor, int index) override {
+    MS_ASSERT(index < out_tensor_sorted_.size());
+    auto src_output_tensor = out_tensors()[index];
+    LiteKernel::set_out_tensor(out_tensor, index);
+    for (int i = 0; i < out_tensor_sorted_.size(); i++) {
+      if (out_tensor_sorted_[i] == src_output_tensor) {
+        out_tensor_sorted_[i] = out_tensor;
+      }
+    }
+  }
+
  private:
   std::shared_ptr<domi::ModelBufferData> BuildIRModel();
 

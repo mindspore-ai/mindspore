@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include "include/lite_utils.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore::kernel {
 class Kernel {
@@ -45,10 +46,18 @@ class Kernel {
   virtual schema::PrimitiveType type() { return type_; }
 
   virtual void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) { this->inputs_ = in_tensors; }
-  virtual void set_input(mindspore::tensor::MSTensor *in_tensor, int index) { this->inputs_[index] = in_tensor; }
+  virtual void set_input(mindspore::tensor::MSTensor *in_tensor, int index) {
+    MS_ASSERT(index < inputs_.size());
+    this->inputs_[index] = in_tensor;
+  }
 
   virtual void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) {
     this->outputs_ = out_tensors;
+  }
+
+  virtual void set_output(mindspore::tensor::MSTensor *out_tensor, int index) {
+    MS_ASSERT(index < outputs_.size());
+    this->outputs_[index] = out_tensor;
   }
 
   virtual const std::vector<mindspore::tensor::MSTensor *> &inputs() { return this->inputs_; }

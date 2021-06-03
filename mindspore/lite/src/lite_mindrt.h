@@ -37,64 +37,18 @@ const constexpr int kSwitchFalsePartialInputIndex = 2;
 
 class LiteOpActor : public OpActor<lite::Tensor> {
  public:
-  explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {}
-  ~LiteOpActor() override = default;
-  void RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *context = nullptr) override {
-    auto op_uuid = context->sequential_num_;
-    input_op_datas_[op_uuid].push_back(inputs);
-    inputs_data_.push_back(inputs->data_);
-    if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
-      return;
-    }
-
-    int ret = CheckInputData();
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-
-    ret = SetInputData();
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-    for (auto &arrow : output_data_arrows_) {
-      kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
-    }
-
-    ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
-                    *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
-    if (ret != RET_OK) {
-      input_op_datas_.erase(op_uuid);
-      context->SetFailed(ret);
-      return;
-    }
-    input_op_datas_.erase(op_uuid);
-    inputs_data_.clear();
-    AsyncOutput(context);
-
-    SetOutputData(context);
-
-    for (auto &input_data : inputs_data_) {
-      input_data->DecRefCount();
+  explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {
+    inputs_data_.resize(kernel_->in_tensors().size());
+  }
+  ~LiteOpActor() override {
+    for (auto map : isolate_input_map_) {
+      auto isolate_input_tensor = map.second;
+      isolate_input_tensor->set_data(nullptr);
+      delete isolate_input_tensor;
     }
   }
+  void RunOpData(OpData<lite::Tensor> *input_data, OpContext<lite::Tensor> *context = nullptr) override;
   int CastTensorData(Tensor *dst, Tensor *src);
-  void Init() override {
-    auto ret = CompileArrow();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "CompileArrow failed, name: " << kernel_->name();
-      // do not support return error
-    }
-
-    ret = PrepareOutputData();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "PrepareOutputData failed, name: " << kernel_->name();
-      // do not support return error
-    }
-  }
   virtual int CompileArrow();
   int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
     auto ret = kernel_->Execute(before, after);
@@ -104,6 +58,9 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     return ret;
   }
+  int LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors);
+  int ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                       const std::vector<std::vector<int>> &dims);
 
  public:
   void AddResultIndex(size_t index);
@@ -112,8 +69,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  protected:
   int CheckInputData();
   int SetInputData();
-  void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
-  void CopyInputData(Tensor *dst_tensor, Tensor *src_tensor);
   void SetOutputData(OpContext<Tensor> *context);
   void AsyncOutput(OpContext<Tensor> *context);
   int CompileArrowThroughPartialCall();
@@ -127,8 +82,14 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::vector<Tensor *> inputs_data_{};
 
  private:
+  void IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors);
+  void MoveInputData(Tensor *dst_tensor, Tensor *src_tensor);
+  void CopyInputData(Tensor *dst_tensor, Tensor *src_tensor);
+
+ private:
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
+  std::unordered_map<Tensor *, Tensor *> isolate_input_map_;
 };
 
 class LiteSwitchOpActor : public LiteOpActor {
@@ -221,10 +182,9 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<OpDataPtr<Tensor>> false_branch_outputs_data_;
 };
 
-int MindrtInit();
+int MindrtInit(bool subgraph_split = false);
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels);
-
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_

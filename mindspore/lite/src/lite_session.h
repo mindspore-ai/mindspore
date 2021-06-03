@@ -86,6 +86,8 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphInOutTensors(const lite::Model *model);
 
+  void IsolateOutputTensor();
+
   void InitGraphInputTensors(const lite::Model *model);
 
   void InitGraphInputMSTensors();
@@ -102,7 +104,7 @@ class LiteSession : public session::LiteSession {
 
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
-  int PrepareKernels(Model *model);
+  int PrepareKernels(Model *model, bool use_mindrt_run);
 
   static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
@@ -112,6 +114,8 @@ class LiteSession : public session::LiteSession {
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
   int InitGPURuntime();
+
+  bool IfUseMindrtExecutor();
 
  protected:
   InnerContext *context_ = nullptr;
@@ -131,6 +135,7 @@ class LiteSession : public session::LiteSession {
   std::vector<std::string> output_tensor_names_;
   // graph output tensor name -- output tensor
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
+  std::unordered_map<Tensor *, Tensor *> graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = false;

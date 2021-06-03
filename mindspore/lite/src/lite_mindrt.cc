@@ -20,9 +20,118 @@
 #include "src/lite_kernel_util.h"
 #include "nnacl/partial_fusion_parameter.h"
 #include "src/common/tensor_util.h"
-#include "nnacl/base/cast_base.h"
+#ifdef ENABLE_FP16
+#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#endif
 
 namespace mindspore::lite {
+void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
+  auto op_uuid = context->sequential_num_;
+  input_op_datas_[op_uuid].push_back(inputs);
+
+  inputs_data_[inputs->index_] = inputs->data_;
+  /* in-case infershape done in runtime */
+  kernel_->in_tensors()[inputs->index_]->set_shape(inputs->data_->shape());
+  kernel_->in_tensors()[inputs->index_]->set_format(inputs->data_->format());
+
+  if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
+    return;
+  }
+
+  auto ret = CheckInputData();
+  if (ret != RET_OK) {
+    input_op_datas_.erase(op_uuid);
+    context->SetFailed(ret);
+    return;
+  }
+
+  ret = SetInputData();
+  if (ret != RET_OK) {
+    input_op_datas_.erase(op_uuid);
+    context->SetFailed(ret);
+    return;
+  }
+
+  for (auto &arrow : output_data_arrows()) {
+    kernel_->out_tensors().at(arrow->from_output_index_)->IncRefCount();
+  }
+
+  ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                  *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
+  if (ret != RET_OK) {
+    input_op_datas_.erase(op_uuid);
+    context->SetFailed(ret);
+    return;
+  }
+  input_op_datas_.erase(op_uuid);
+  AsyncOutput(context);
+
+  SetOutputData(context);
+
+  return;
+}
+
+void LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+  size_t in_tensor_size = kernel_->in_tensors().size();
+  for (size_t i = 0; i < in_tensor_size; i++) {
+    Tensor *old_tensor = kernel_->in_tensors()[i];
+
+    TypeId new_data_type = old_tensor->data_type();
+    if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
+      new_data_type = kernel_->desc().data_type;
+    }
+
+    Tensor *new_tensor = new Tensor(new_data_type, old_tensor->shape(), old_tensor->format(), old_tensor->category());
+    new_tensor->set_allocator(old_tensor->allocator()); /* GPU use opencl allocator */
+    new_tensor->set_tensor_name(kernel_->name() + "_duplicate_" + old_tensor->tensor_name());
+    for (QuantArg quant : old_tensor->quant_params()) {
+      new_tensor->AddQuantParam(quant);
+    }
+    isolate_input_map_.insert(std::make_pair(old_tensor, new_tensor));
+
+    int ref_count = 0;
+    /* set op input for calculate */
+    for (auto in_node : reinterpret_cast<kernel::SubGraphKernel *>(kernel_)->in_nodes()) {
+      for (size_t node_in_index = 0; node_in_index < in_node->in_tensors().size(); node_in_index++) {
+        if (old_tensor == in_node->in_tensors()[node_in_index]) {
+          in_node->set_in_tensor(new_tensor, node_in_index);
+          ref_count++;
+        }
+      }
+    }
+    new_tensor->set_init_ref_count(ref_count);
+    /* set subgraph input for copy data */
+    kernel_->set_in_tensor(new_tensor, i);
+  }
+  return;
+}
+
+int LiteOpActor::LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
+  /* Init output arrow */
+  CompileArrow();
+
+  /* Init Actor output data*/
+  PrepareOutputData();
+
+  /* subgraph transaction isolation */
+  IsolateInputData(actors);
+
+  return RET_OK;
+}
+
+int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                                  const std::vector<std::vector<int>> &dims) {
+  for (auto map : isolate_input_map_) {
+    auto src_tensor = map.first;
+    auto isolate_tensor = map.second;
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (src_tensor == inputs[i]) {
+        isolate_tensor->set_shape(dims[i]);
+      }
+    }
+  }
+  return RET_OK;
+}
 
 int LiteOpActor::CompileArrowThroughOutputKernels() {
   output_data_arrows_.clear();
@@ -110,7 +219,7 @@ int LiteOpActor::CompileArrow() {
 
 int LiteOpActor::CheckInputData() {
   if (kernel_->in_tensors().size() != inputs_data_.size()) {
-    MS_LOG(ERROR) << "kernel:" << kernel_->name() << "inputs_data_.size(): " << inputs_data_.size()
+    MS_LOG(ERROR) << "kernel:" << kernel_->name() << " inputs_data_.size(): " << inputs_data_.size()
                   << " vs kernel_->in_tensors().size(): " << kernel_->in_tensors().size() << " are not equal.";
     return RET_PARAM_INVALID;
   }
@@ -126,17 +235,37 @@ int LiteOpActor::CheckInputData() {
 }
 
 void LiteOpActor::MoveInputData(Tensor *dst_tensor, Tensor *src_tensor) {
-  memcpy(dst_tensor->MutableData(), src_tensor->data_c(), src_tensor->Size());
-  dst_tensor->IncRefCount();
-  src_tensor->DecRefCount();
+  MS_ASSERT(src_tensor != dst_tensor);
+
+  dst_tensor->FreeData();
+  dst_tensor->ResetRefCount();
+  dst_tensor->set_allocator(src_tensor->allocator());
+  if (src_tensor->allocator() != nullptr) {
+    src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+  }
+  // todo fix tensorlist
+  dst_tensor->set_data(src_tensor->data());
+
+  if (src_tensor->IsConst() || src_tensor->IsGraphInput()) {
+    dst_tensor->set_own_data(false);
+  } else {
+    dst_tensor->set_own_data(true);
+    src_tensor->DecRefCount();
+  }
+  return;
 }
+
 void LiteOpActor::CopyInputData(Tensor *dst_tensor, Tensor *src_tensor) {
+  dst_tensor->ResetRefCount();
+  dst_tensor->MallocData();
+
   CastTensorData(dst_tensor, src_tensor);
-  dst_tensor->IncRefCount();
+
   src_tensor->DecRefCount();
 }
 
 int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
+#ifdef ENABLE_FP16
   if (dst->shape() != src->shape()) {
     MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
                   << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
@@ -149,14 +278,16 @@ int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
   auto src_data_type = static_cast<int>(src->data_type());
 
   if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeFloat16) {
-    Fp16ToFloat32(static_cast<uint16_t *>(src_data), static_cast<float *>(dst_data), src_nums_size);
+    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size);
   } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
-    Float32ToFp16(static_cast<float *>(src_data), static_cast<uint16_t *>(dst_data), src_nums_size);
+    Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size);
   } else {
     MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
+#endif
+  return RET_ERROR;
 }
 
 int LiteOpActor::SetInputData() {
@@ -173,9 +304,9 @@ int LiteOpActor::SetInputData() {
 }
 
 void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
-  for (const auto &op_arrow : output_data_arrows_) {
-    auto data = outputs_data_.at(op_arrow->from_output_index_);
-    Async(op_arrow->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+  for (size_t i = 0; i < output_data_arrows_.size(); i++) {
+    auto data = outputs_data_.at(i);
+    Async(output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 
@@ -188,10 +319,13 @@ void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
 }
 
 int LiteOpActor::PrepareOutputData() {
-  for (auto &arrow : output_data_arrows_) {
+  outputs_data_.resize(output_data_arrows_.size());
+
+  for (size_t i = 0; i < output_data_arrows_.size(); i++) {
+    auto &arrow = output_data_arrows_[i];
     auto data = std::make_shared<OpData<Tensor>>(arrow->to_op_id_, kernel_->out_tensors().at(arrow->from_output_index_),
                                                  static_cast<int>(arrow->to_input_index_));
-    outputs_data_.emplace_back(data);
+    outputs_data_.at(i) = data;
   }
   return RET_OK;
 }
@@ -424,12 +558,14 @@ void LiteSwitchOpActor::AsyncFalseBranchOutput(OpContext<Tensor> *context) {
   }
 }
 
-int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", 1); }
+int MindrtInit(bool subgraph_split) {
+  int thread_count = subgraph_split ? 2 : 1;
+  return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", thread_count);
+}
 
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list) {
   for (const auto &actor : actor_list) {
     mindspore::Terminate(actor->GetAID());
   }
 }
-
 }  // namespace mindspore::lite

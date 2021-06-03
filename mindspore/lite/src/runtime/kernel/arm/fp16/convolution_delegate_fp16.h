@@ -48,6 +48,22 @@ class ConvolutionDelegateFP16CPUKernel : public InnerKernel {
     return fp16_conv_kernel_->Run();
   }
 
+  void set_in_tensor(lite::Tensor *in_tensor, int index) override {
+    MS_ASSERT(index < in_tensors_.size());
+    this->in_tensors_[index] = in_tensor;
+    if (fp16_conv_kernel_ != nullptr) {
+      fp16_conv_kernel_->set_in_tensor(in_tensor, index);
+    }
+  }
+
+  void set_out_tensor(lite::Tensor *out_tensor, int index) override {
+    MS_ASSERT(index < out_tensors_.size());
+    this->out_tensors_[index] = out_tensor;
+    if (fp16_conv_kernel_ != nullptr) {
+      fp16_conv_kernel_->set_out_tensor(out_tensor, index);
+    }
+  }
+
  private:
   uint8_t need_free_ = 0b00;
   void *origin_weight_ = nullptr;
