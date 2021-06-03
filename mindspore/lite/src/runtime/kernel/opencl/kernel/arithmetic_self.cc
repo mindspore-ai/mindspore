@@ -27,9 +27,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 int ArithmeticSelfOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -37,7 +36,7 @@ int ArithmeticSelfOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) {
+  if (in_tensors_[0]->shape().size() != DIMENSION_4D && in_tensors_[0]->shape().size() != DIMENSION_2D) {
     MS_LOG(ERROR) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
@@ -61,12 +60,12 @@ void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<s
 void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
   auto output_shape = out_tensors_[0]->shape();
   uint32_t OH = 1, OW = 1, OC = 1;
-  if (output_shape.size() == 4) {
+  if (output_shape.size() == DIMENSION_4D) {
     output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
     OH = output_shape[0] * output_shape[1];
     OW = output_shape[2];
     OC = UP_DIV(output_shape[3], C4NUM);
-  } else if (output_shape.size() == 2) {
+  } else if (output_shape.size() == DIMENSION_2D) {
     output_shape_ = {output_shape[0], 1, 1, UP_DIV(output_shape[1], C4NUM)};
     OH = output_shape[0];
     OW = 1;

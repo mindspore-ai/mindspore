@@ -24,7 +24,6 @@
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {
-
 class PReluOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

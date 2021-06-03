@@ -24,7 +24,6 @@
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::kernel {
-
 class MatMulOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

@@ -28,7 +28,6 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
-
 struct GpuTensorInfo;
 
 // for fusion

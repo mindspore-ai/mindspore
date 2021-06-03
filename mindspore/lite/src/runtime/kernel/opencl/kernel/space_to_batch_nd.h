@@ -22,7 +22,6 @@
 #include "nnacl/fp32/space_to_batch_fp32.h"
 
 namespace mindspore::kernel {
-
 class SpaceToBatchNDOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

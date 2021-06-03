@@ -40,7 +40,6 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-
 int ArithmeticInt8OpenCLKernel::CheckSpecs() {
   for (auto &tensor : in_tensors_) {
     if (tensor->data_type() != kNumberTypeInt8) {
@@ -55,7 +54,7 @@ int ArithmeticInt8OpenCLKernel::CheckSpecs() {
     }
   }
 
-  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }

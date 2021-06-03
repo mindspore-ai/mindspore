@@ -22,7 +22,6 @@
 #include "src/runtime/kernel/opencl/kernel/conv2d.h"
 
 namespace mindspore::kernel {
-
 class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
  public:
   WinogradOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

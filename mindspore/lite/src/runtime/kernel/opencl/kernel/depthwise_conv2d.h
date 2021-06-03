@@ -24,7 +24,6 @@
 using mindspore::lite::opencl::MemType;
 
 namespace mindspore::kernel {
-
 class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
  public:
   DepthwiseConv2dOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

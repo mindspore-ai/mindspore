@@ -50,7 +50,6 @@ else()
     include_directories(${JAVA_HOME}/include/linux) ## jni
 endif()
 set(JNI_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/model.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/version.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_config.cpp

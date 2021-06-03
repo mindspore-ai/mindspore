@@ -46,9 +46,7 @@ using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_NONE;
 
 namespace mindspore::kernel {
-
 namespace {
-
 template <typename T0, typename T1>
 inline bool AIsInB(const T0 *a, const T1 *b) {
   MS_ASSERT(a);

@@ -23,7 +23,6 @@
 #include "nnacl/fp32/pooling_fp32.h"
 
 namespace mindspore::kernel {
-
 class PoolingOpenCLKernel : public OpenCLKernel {
  public:
   PoolingOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

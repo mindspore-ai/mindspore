@@ -169,7 +169,7 @@ mindspore::session::LiteSession *Compile(mindspore::lite::Model *model) {
 
 int CompileAndRun(int argc, const char **argv) {
   if (argc < 2) {
-    std::cerr << "Usage: mindspore_quick_start_cpp ../model/mobilenetv2.ms\n";
+    std::cerr << "Model file must be provided.\n";
     return -1;
   }
   // Read model file.

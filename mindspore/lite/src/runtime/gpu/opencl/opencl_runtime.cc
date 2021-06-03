@@ -37,7 +37,6 @@
 using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::lite::opencl {
-
 static std::map<std::string, std::string> g_source_map;
 static std::mutex g_mtx;
 static std::mutex g_init_mtx;

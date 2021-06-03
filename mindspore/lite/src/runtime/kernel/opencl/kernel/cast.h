@@ -23,7 +23,6 @@
 #include "nnacl/cast_parameter.h"
 
 namespace mindspore::kernel {
-
 class CastOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

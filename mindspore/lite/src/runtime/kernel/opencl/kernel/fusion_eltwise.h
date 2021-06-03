@@ -34,7 +34,6 @@ using mindspore::schema::PrimitiveType;
 using mindspore::schema::PrimitiveType_MAX;
 
 namespace mindspore::kernel {
-
 constexpr schema::PrimitiveType PrimitiveType_FusionEltwise = static_cast<schema::PrimitiveType>(-100);
 
 enum EltwiseOperator {

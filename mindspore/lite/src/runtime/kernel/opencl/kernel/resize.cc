@@ -31,15 +31,16 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore::kernel {
-
 int ResizeOpenCLKernel::CheckSpecs() {
-  if (!(in_tensors_.size() == 1 || in_tensors_.size() == 2) || out_tensors_.size() != 1) {
+  if (!(in_tensors_.size() == INPUT_TENSOR_SIZE_1 || in_tensors_.size() == INPUT_TENSOR_SIZE_2) ||
+      out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();
-  if (in_shape.size() != 4 || out_shape.size() != 4 || in_shape[0] != out_shape[0] || in_shape[3] != out_shape[3]) {
+  if (in_shape.size() != DIMENSION_4D || out_shape.size() != DIMENSION_4D || in_shape[0] != out_shape[0] ||
+      in_shape[3] != out_shape[3]) {
     MS_LOG(ERROR) << "resize op only support 4D and axes HW";
     return RET_PARAM_INVALID;
   }
@@ -121,7 +122,7 @@ int ResizeOpenCLKernel::Run() {
 }
 
 int ResizeOpenCLKernel::PreProcess() {
-  if (type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == 2) {
+  if (type() == PrimitiveType_Resize && !InferShapeDone() && in_tensors_.size() == INPUT_TENSOR_SIZE_2) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();

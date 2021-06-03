@@ -22,7 +22,6 @@
 #include "nnacl/arg_min_max_parameter.h"
 
 namespace mindspore::kernel {
-
 class ArgMinMaxOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

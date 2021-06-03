@@ -30,13 +30,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
-
 int GatherOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 3) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
     MS_LOG(ERROR) << "GatherOpenCLKernel only supports 3 input Tensor but get " << in_tensors_.size();
     return RET_ERROR;
   }
-  if (out_tensors_.size() != 1) {
+  if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1 output Tensor but get " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -46,12 +45,12 @@ int GatherOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   int input_ndim = in_tensors_.front()->shape().size();
-  if (input_ndim < 0 || input_ndim > 4) {
+  if (input_ndim < 0 || input_ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1-4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
   int indices_ndim = in_tensors_.at(1)->shape().size();
-  if (indices_ndim > 1) {
+  if (indices_ndim > DIMENSION_1D) {
     MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1D indices Tensor but get " << indices_ndim << "D.";
     return RET_ERROR;
   }

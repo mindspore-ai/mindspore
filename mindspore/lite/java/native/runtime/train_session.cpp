@@ -16,7 +16,6 @@
 
 #include <jni.h>
 #include "common/ms_log.h"
-#include "common/jni_utils.h"
 #include "include/lite_session.h"
 #include "include/train/train_cfg.h"
 #include "include/errorcode.h"

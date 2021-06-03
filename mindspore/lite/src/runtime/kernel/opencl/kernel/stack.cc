@@ -29,7 +29,6 @@ using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
-
 int StackOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
@@ -65,7 +64,7 @@ void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
 int StackOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
   axis_ = param->axis_;
-  if (in_tensors_.size() != 2 && out_tensors_.size() != 1) {
+  if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 && out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << " only support input size = 2 and output size = 1";
     return RET_ERROR;
   }
@@ -81,7 +80,7 @@ int StackOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
-  if (in_tensors_[0]->shape().size() > 4 || in_tensors_[0]->shape().size() <= 0) {
+  if (in_tensors_[0]->shape().size() > DIMENSION_4D || in_tensors_[0]->shape().size() <= 0) {
     MS_LOG(ERROR) << " only support 0<dim<=4";
     return RET_ERROR;
   }

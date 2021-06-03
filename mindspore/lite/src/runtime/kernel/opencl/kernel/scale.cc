@@ -35,7 +35,6 @@ using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
-
 int ScaleOpenCLKernel::CheckSpecs() {
   auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   if (param->activation_type_ != ActType_No && param->activation_type_ != ActType_Relu &&

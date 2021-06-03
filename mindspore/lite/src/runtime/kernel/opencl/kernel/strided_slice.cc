@@ -31,10 +31,9 @@ using mindspore::schema::PrimitiveType_SliceFusion;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
-
 int StridedSliceOpenCLKernel::CheckSpecs() {
   if (type() == PrimitiveType_SliceFusion) {
-    if (in_tensors_.size() != 3) {
+    if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
       MS_LOG(ERROR) << "Slice only supports 3 input Tensor.";
       return RET_ERROR;
     }
@@ -46,7 +45,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   } else if (type() == PrimitiveType_StridedSlice) {
-    if (in_tensors_.size() != 4) {
+    if (in_tensors_.size() != INPUT_TENSOR_SIZE_4) {
       MS_LOG(ERROR) << "StridedSlice only supports 4 input Tensor.";
       return RET_ERROR;
     }
@@ -65,17 +64,17 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   const std::string kernel_name = type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
-  if (out_tensors_.size() != 1) {
+  if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(ERROR) << kernel_name + " only supports 1 output Tensor.";
     return RET_ERROR;
   }
   auto in_ndim = in_tensors_.front()->shape().size();
-  if (in_ndim == 0 || in_ndim > 4) {
+  if (in_ndim == 0 || in_ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << kernel_name + " only supports 1D-4D input tensor";
     return RET_ERROR;
   }
   auto out_ndim = out_tensors_.front()->shape().size();
-  if (out_ndim > 4) {
+  if (out_ndim > DIMENSION_4D) {
     MS_LOG(ERROR) << kernel_name + " only supports 0D-4D output tensor";
     return RET_ERROR;
   }
