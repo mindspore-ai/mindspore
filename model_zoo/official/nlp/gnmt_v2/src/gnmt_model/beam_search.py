@@ -103,40 +103,6 @@ class TileBeam(nn.Cell):
         return output
 
 
-class Mod(nn.Cell):
-    """
-    Mod operation.
-
-    Args:
-        compute_type (mstype): Mindspore data type. Default: mstype.float32.
-    """
-
-    def __init__(self,
-                 compute_type=mstype.float32):
-        super(Mod, self).__init__()
-        self.compute_type = compute_type
-
-        self.floor_div = P.FloorDiv()
-        self.sub = P.Sub()
-        self.multiply = P.Mul()
-
-    def construct(self, input_x, input_y):
-        """
-        Get the remainder of input_x and input_y.
-
-        Inputs:
-            input_x (Tensor): Divisor.
-            input_y (Tensor): Dividend.
-
-        Returns:
-            Tensor, remainder.
-        """
-        x = self.floor_div(input_x, input_y)
-        x = self.multiply(x, input_y)
-        x = self.sub(input_x, x)
-        return x
-
-
 class BeamSearchDecoder(nn.Cell):
     """
     Beam search decoder.
@@ -199,10 +165,8 @@ class BeamSearchDecoder(nn.Cell):
         self.select = P.Select()
         self.flat_shape = (batch_size, beam_width * vocab_size)
         self.topk = P.TopK(sorted=True)
-        self.floor_div = P.FloorDiv()
         self.vocab_size_tensor = Tensor(self.vocab_size, mstype.int32)
         self.real_div = P.RealDiv()
-        self.mod = Mod()
         self.equal = P.Equal()
         self.eos_ids = Tensor(np.full([batch_size, beam_width], eos_id), mstype.int32)
 
@@ -308,12 +272,6 @@ class BeamSearchDecoder(nn.Cell):
         # select topk, [batch, beam]
         topk_scores, topk_indices = self.topk(flat_scores, self.beam_width)
 
-        # convert to beam and word indices, [batch, beam]
-        # beam_indices = self.floor_div(topk_indices, self.vocab_size_tensor)
-        # word_indices = self.mod(topk_indices, self.vocab_size_tensor)
-        # ======================================================================
-        # replace floor_div and mod op, since these two ops only support fp16 on
-        # Ascend310, which will cause overflow.
         temp = topk_indices
         beam_indices = self.zeroslike(topk_indices)
         for _ in range(self.beam_width - 1):
