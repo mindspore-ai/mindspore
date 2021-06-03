@@ -48,6 +48,7 @@ class KernelActor : public DebugAwareActor {
       : DebugAwareActor(name),
         kernel_(kernel),
         kernel_info_(nullptr),
+        is_dynamic_shape_(false),
         device_context_(device_context),
         memory_manager_aid_(memory_manager_aid),
         debug_aid_(debug_aid),
@@ -102,6 +103,7 @@ class KernelActor : public DebugAwareActor {
   // The info of kernel.
   CNodePtr kernel_;
   KernelInfo *kernel_info_;
+  bool is_dynamic_shape_;
 
   // The device interface of kernel launch.
   const DeviceContext *device_context_;

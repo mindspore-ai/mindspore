@@ -28,6 +28,7 @@ void KernelActor::Init() {
   MS_EXCEPTION_IF_NULL(kernel_);
   real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = static_cast<KernelInfo *>(kernel_->kernel_info());
+  is_dynamic_shape_ = AnfAlgo::IsDynamicShape(kernel_);
 
   // Init the device tensors and kernel launch info.
   input_device_tensors_.resize(real_input_num_);
@@ -73,7 +74,7 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *input_data, OpContext<DeviceTe
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
-    if (AnfAlgo::IsDynamicShape(kernel_)) {
+    if (is_dynamic_shape_) {
       device_context_->UpdateKernelDynamicShape(kernel_);
     }
 
@@ -90,7 +91,7 @@ void KernelActor::RunOpControl(AID *input_control, OpContext<DeviceTensor> *cont
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckLaunchCondition(context)) {
     // Infer kernel shape and update abstract info for dynamic shape kernel.
-    if (AnfAlgo::IsDynamicShape(kernel_)) {
+    if (is_dynamic_shape_) {
       device_context_->UpdateKernelDynamicShape(kernel_);
     }
 
@@ -131,8 +132,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *context) {
 
   PreLaunchKernel(context);
 
-  auto ret =
-    device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_);
+  auto ret = device_context_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                           launch_info_.outputs_, is_dynamic_shape_);
   if (!ret) {
     std::string error_info = "Launch kernel failed: " + kernel_->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

@@ -32,7 +32,7 @@ const float kNanosecondToMillisecond = 1000000;
 
 class CPUProfiler : public Profiler {
  public:
-  static std::shared_ptr<CPUProfiler> GetInstance();
+  static std::shared_ptr<CPUProfiler> &GetInstance();
   ~CPUProfiler() = default;
   CPUProfiler(const CPUProfiler &) = delete;
   CPUProfiler &operator=(const CPUProfiler &) = delete;

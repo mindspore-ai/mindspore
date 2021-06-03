@@ -60,7 +60,8 @@ namespace gpu {
     }                                                            \
   } while (0)
 
-std::shared_ptr<GPUProfiler> GPUProfiler::profiler_inst_ = nullptr;
+std::shared_ptr<GPUProfiler> GPUProfiler::profiler_inst_ =
+  std::shared_ptr<GPUProfiler>(new (std::nothrow) GPUProfiler());
 
 int32_t GetThreadID() {
   uint32_t thread_id = static_cast<uint32_t>(pthread_self());
@@ -206,12 +207,7 @@ std::string GetKernelFuncName(std::string kernel_name) {
   return kernel_name.substr(func_name_begin_iter);
 }
 
-std::shared_ptr<GPUProfiler> GPUProfiler::GetInstance() {
-  if (profiler_inst_ == nullptr) {
-    profiler_inst_ = std::shared_ptr<GPUProfiler>(new (std::nothrow) GPUProfiler());
-  }
-  return profiler_inst_;
-}
+std::shared_ptr<GPUProfiler> &GPUProfiler::GetInstance() { return profiler_inst_; }
 
 void GPUProfiler::SyncEnable(const bool enable_flag) {
   MS_LOG(INFO) << "GPU Profiler synchronous enable flag:" << enable_flag;

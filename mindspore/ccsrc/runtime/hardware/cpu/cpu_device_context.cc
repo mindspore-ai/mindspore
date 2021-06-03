@@ -129,11 +129,11 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 }
 
 bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) const {
+                                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                    bool) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
-  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag()) {
     return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
