@@ -27,6 +27,12 @@ config.feature_shapes = [(lss[2*i], lss[2*i+1]) for i in range(int(len(lss)/2))]
 config.roi_layer = dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2)
 config.warmup_ratio = 1/3.0
 config.mask_shape = (28, 28)
+train_cls = [i for i in re.findall(r'[a-zA-Z\s]+', config.coco_classes) if i != ' ']
+config.coco_classes = np.array(train_cls)
+config.batch_size = config.batch_size_export
+
+if not config.enable_modelarts:
+    config.ckpt_file = config.ckpt_file_local
 
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
 if config.device_target == "Ascend":

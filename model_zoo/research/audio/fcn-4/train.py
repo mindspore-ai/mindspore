@@ -34,7 +34,6 @@ from src.loss import BCELoss
 
 def modelarts_pre_process():
     pass
-    # config.ckpt_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train(model, dataset_direct, filename, columns_list, num_consumer=4,

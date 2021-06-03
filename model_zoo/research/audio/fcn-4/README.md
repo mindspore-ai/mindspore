@@ -56,7 +56,7 @@ After installing MindSpore via the official website, you can start training and 
 3. The information file of each clip should contain the label and path. Please refer to the annotations_final.csv in MagnaTagATune Dataset.
 4. The provided pre-processing script use MagnaTagATune Dataset as an example. Please modify the code accprding to your own need.
 
-### 2. setup parameters (src/config.py)
+### 2. setup parameters (src/model_utils/default_config.yaml)
 
 ### 3. Train
 
@@ -79,6 +79,67 @@ Then you can test your model
 ```shell
 SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
 ```
+
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "data_dir='/cache/data'" on default_config.yaml file.
+    #          Set "checkpoint_path='/cache/data/musicTagger'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "data_dir=/cache/data" on the website UI interface.
+    #          Add "checkpoint_path='/cache/data/musicTagger'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Upload the original MusicTagger dataset to S3 bucket.
+    # (5) Set the code directory to "/path/fcn-4" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "data_dir='/cache/data'" on default_config.yaml file.
+    #          Set "checkpoint_path='/cache/data/musicTagger'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_dir='/cache/data'" on the website UI interface.
+    #          Add "checkpoint_path='/cache/data/musicTagger'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Upload the original MusicTagger dataset to S3 bucket.
+    # (5) Set the code directory to "/path/fcn-4" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "data_dir='/cache/data'" on default_config.yaml file.
+    #          Set "checkpoint_path='/cache/data/musicTagger'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_dir='/cache/data'" on the website UI interface.
+    #          Add "checkpoint_path='/cache/data/musicTagger'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Upload the original MusicTagger dataset to S3 bucket.
+    # (5) Set the code directory to "/path/fcn-4" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
 
 ## [Script Description](#contents)
 
@@ -113,7 +174,7 @@ SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
 
 ### [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in default_config.yaml
 
 - config for FCN-4
 
