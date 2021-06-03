@@ -66,6 +66,10 @@ enum class GraphExecutionStrategy {
 // The origin parameters order is used to correspond to the input args.
 // The origin outputs order is used to correspond to the output args.
 // The front to backend parameters is used to build and link the host data source actor in the control flow scenario.
+// The funcgraph to parameters map records the input parameters of funcgraph and is used to initialize
+// the input node of gather,
+// host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
+// When initializing the weights, all related weights need to be recorded as the same device tensor.
 // The front output_node is used to link the output actor in multi-branch output scenario.
 struct GraphCompilerInfo {
   GraphCompilerInfo(
@@ -73,6 +77,7 @@ struct GraphCompilerInfo {
     const std::vector<std::vector<int64_t> *> &tensors_mask, const std::vector<std::vector<TensorPtr> *> &input_tensors,
     const std::vector<AnfNodePtr> &control_nodes, const std::vector<AnfNodePtr> &origin_parameters_order,
     const KernelMapPosition &origin_outputs_order, const FrontToBackendNodeWithContext &front_to_backend_parameters,
+    const FuncGraphToParameter &func_graph_to_parameters, const HostParameterToWeight &host_parameter_to_weights,
     const std::vector<AnfNodePtr> &front_output_nodes, const size_t outputs_num, const std::string &name)
       : graphs_(graphs),
         device_contexts_(device_contexts),
@@ -82,6 +87,8 @@ struct GraphCompilerInfo {
         origin_parameters_order_(origin_parameters_order),
         origin_outputs_order_(origin_outputs_order),
         front_to_backend_parameters_(front_to_backend_parameters),
+        func_graph_to_parameters_(func_graph_to_parameters),
+        host_parameter_to_weights_(host_parameter_to_weights),
         front_output_nodes_(front_output_nodes),
         outputs_num_(outputs_num),
         name_(name) {}
@@ -93,6 +100,8 @@ struct GraphCompilerInfo {
   std::vector<AnfNodePtr> origin_parameters_order_;
   KernelMapPosition origin_outputs_order_;
   FrontToBackendNodeWithContext front_to_backend_parameters_;
+  FuncGraphToParameter func_graph_to_parameters_;
+  HostParameterToWeight host_parameter_to_weights_;
   std::vector<AnfNodePtr> front_output_nodes_;
   size_t outputs_num_;
   std::string name_;
@@ -187,11 +196,13 @@ class GraphScheduler {
 
   // The processing of actors link statically.
   // The gather of linking data allows of kernel, it will call following functions by the different from actor type.
-  void LinkDataArrow(KernelActor *to_actor, const ActorSet *actor_set, const KernelGraphPtr &graph,
+  void LinkDataArrow(KernelActor *to_actor, const GraphCompilerInfo &graph_compiler_info, const KernelGraphPtr &graph,
                      KernelWithIndex from_kernel_with_output_idx, KernelWithIndex to_kernel_with_input_idx,
                      const TensorPtr &tensor);
+
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
-  void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter, const KernelGraphPtr &graph,
+  void LinkDataArrowForInternalParameter(const AnfNodePtr &internal_parameter,
+                                         const std::vector<AnfNodePtr> &host_parameters, const KernelGraphPtr &graph,
                                          KernelActor *to_actor, KernelWithIndex to_kernel_with_input_idx);
   // Link data arrows in the copy actor scene, insert the copy actor between from_actor and to_actor.
   void LinkDataArrowForCopyActor(OpActor<DeviceTensor> *from_actor, KernelActor *to_actor,
@@ -218,7 +229,7 @@ class GraphScheduler {
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<KernelActor *> &auto_monad_actors);
 
   // Control flow link interface.
-  void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info);
+  void LinkArrowByControlNode(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set);
   void LinkDataArrowForGatherActor(GatherActor *from_actor, KernelActor *to_actor,
                                    KernelWithIndex from_kernel_with_output_idx,
                                    KernelWithIndex to_kernel_with_input_idx);
@@ -231,6 +242,10 @@ class GraphScheduler {
   void LinkDataArrowByCallInput(const GraphCompilerInfo &graph_compiler_info, const AnfNodePtr &call_node,
                                 OpActor<DeviceTensor> *to_actor, const size_t to_index);
   void LinkControlArrowForGatherActor(std::vector<GatherActorPtr> *from_actors, LoopCountActor *to_actor);
+  // In control flow, there are scenarios where there are multi-branch outputs, and the gather actor needs to
+  // send the branch id to the loop count actor.
+  void LinkBranchArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
+  void LinkOutputResultArrowForGatherActor(const GraphCompilerInfo &graph_compiler_info, const ActorSet *actor_set);
 
   // The processing of actors link dynamically.
   // Analyze necessary input data of current actor, generate and cache op arrow
@@ -264,7 +279,6 @@ class GraphScheduler {
   void DumpOutputActor(const OutputActor *actor, std::ofstream &ofs) const;
   void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
-
   // The global maps, only be cleared in the deconstruction.
   std::unordered_map<ActorInfo, ActorSetPtr> actors_;
   std::unordered_map<std::string, OpActor<DeviceTensor> *> actor_name_to_actor_;

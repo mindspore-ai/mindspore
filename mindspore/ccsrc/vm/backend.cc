@@ -547,11 +547,22 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   ControlNodeParser::FetchFrontToBackendParameterMap(graphs, device_contexts, control_nodes_,
                                                      &front_to_backend_parameter);
 
+  // The funcgraph to parameters map records the input parameters of funcgraph and is used to initialize
+  // the input node of gather,
+  FuncGraphToParameter func_graph_to_parameters;
+  ControlNodeParser::FetchFuncGraphToParameterMap(control_nodes_, &func_graph_to_parameters);
+
+  // host parameter to weights records the weights in the subgraph corresponding to the node in the root funcgraph.
+  // When initializing the weights, all related weights need to be recorded as the same device tensor.
+  HostParameterToWeight host_parameter_to_weights;
+  ControlNodeParser::FetchHostParameterToWeightMap(control_nodes_, &host_parameter_to_weights);
+
   std::vector<std::vector<int64_t> *> tensors_mask;
   std::vector<std::vector<tensor::TensorPtr> *> input_tensors;
   return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
                                              root_graph->parameters(), outputs_order, front_to_backend_parameter,
-                                             all_branch_output, outputs_num, name);
+                                             func_graph_to_parameters, host_parameter_to_weights, all_branch_output,
+                                             outputs_num, name);
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
@@ -583,10 +594,10 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
   std::vector<std::vector<int64_t> *> tensors_mask_list(1, const_cast<std::vector<int64_t> *>(tensors_mask));
   std::vector<std::vector<TensorPtr> *> input_tensors_list(1,
                                                            const_cast<std::vector<tensor::TensorPtr> *>(input_tensors));
-  return std::make_unique<GraphCompilerInfo>(graphs, device_contexts, tensors_mask_list, input_tensors_list,
-                                             std::vector<AnfNodePtr>(), std::vector<AnfNodePtr>(), outputs_order,
-                                             FrontToBackendNodeWithContext(), std::vector<AnfNodePtr>(),
-                                             outputs_order.size(), name);
+  return std::make_unique<GraphCompilerInfo>(
+    graphs, device_contexts, tensors_mask_list, input_tensors_list, std::vector<AnfNodePtr>(),
+    std::vector<AnfNodePtr>(), outputs_order, FrontToBackendNodeWithContext(), FuncGraphToParameter(),
+    HostParameterToWeight(), std::vector<AnfNodePtr>(), outputs_order.size(), name);
 }
 
 VectorRef MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
