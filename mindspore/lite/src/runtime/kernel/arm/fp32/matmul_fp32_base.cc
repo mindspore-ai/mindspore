@@ -72,15 +72,11 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-#ifdef SUPPORT_TRAIN
   if (op_parameter_->is_train_session_) {
     a_pack_ptr_ = reinterpret_cast<float *>(workspace());
   } else {
     a_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
   }
-#else
-  a_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
-#endif
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
     return RET_ERROR;
@@ -92,15 +88,11 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-#ifdef SUPPORT_TRAIN
   if (op_parameter_->is_train_session_) {
     b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
     b_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
   }
-#else
-  b_pack_ptr_ = reinterpret_cast<float *>(context_->allocator->Malloc(matrix_b_pack_size_ * sizeof(float)));
-#endif
   if (b_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
     return RET_ERROR;
@@ -328,9 +320,9 @@ int MatmulFp32BaseCPUKernel::ReSize() {
                   << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size" << matrix_b_pack_size_;
     return RET_ERROR;
   }
-#ifdef SUPPORT_TRAIN
-  set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * sizeof(float));
-#endif
+  if (op_parameter_->is_train_session_) {
+    set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * sizeof(float));
+  }
 
   if (params_->b_const_ == true && src_b_ != nullptr) {
     if (RET_OK != InitBufferB()) {

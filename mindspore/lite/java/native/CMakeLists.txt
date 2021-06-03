@@ -60,7 +60,6 @@ set(JNI_SRC
 set(LITE_SO_NAME mindspore-lite)
 
 if(SUPPORT_TRAIN)
-  set(LITE_SO_NAME mindspore-lite-train)
   set(JNI_SRC
       ${JNI_SRC}
       ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp

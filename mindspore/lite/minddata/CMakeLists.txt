@@ -297,6 +297,7 @@ if(BUILD_MINDDATA STREQUAL "full")
             ${CORE_DIR}/utils/ms_utils.cc
             ${MINDDATA_FULL_SRC}
             )
+    set_target_properties(minddata-lite_static PROPERTIES OUTPUT_NAME "minddata-lite")
 
     add_dependencies(minddata-lite fbs_src)
     add_dependencies(minddata-lite_static fbs_src)

@@ -506,11 +506,11 @@ build_lite_x86_64_jni_and_jar()
     tar -zxf ${BASEPATH}/output/tmp/${pkg_name}.tar.gz
     rm -rf ${LITE_JAVA_PATH}/java/linux_x86/libs/   && mkdir -pv ${LITE_JAVA_PATH}/java/linux_x86/libs/
     rm -rf ${LITE_JAVA_PATH}/native/libs/linux_x86/ && mkdir -pv ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
-    cp ./${pkg_name}/${inference_or_train}/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
+    cp ./${pkg_name}/inference/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
+    cp ./${pkg_name}/inference/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
     if [ -f "mindspore-lite-${VERSION_STR}-train-linux-x64.tar.gz" ]; then
-        cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
-        cp ./${pkg_name}/train/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
+        cp ./${pkg_name}/inference/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
+        cp ./${pkg_name}/inference/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/linux_x86/
     fi
     # build jni so
     cd ${BASEPATH}/mindspore/lite/build
@@ -525,7 +525,7 @@ build_lite_x86_64_jni_and_jar()
     fi
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/${inference_or_train}/lib/
+    cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/inference/lib/
 
     # build java common
     cd ${LITE_JAVA_PATH}/java/common
@@ -537,7 +537,7 @@ build_lite_x86_64_jni_and_jar()
     cd ${LITE_JAVA_PATH}/java/linux_x86/
     gradle clean
     gradle releaseJar
-    cp ./build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/${inference_or_train}/lib/
+    cp ./build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/inference/lib/
 
     # package
     cd ${BASEPATH}/output/tmp
