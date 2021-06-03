@@ -60,7 +60,8 @@ class GraphBuilder:
                 self.gb.graphs.append(self.gb.current.graph)
                 self.gb.current = None
 
-        assert self.current is None
+        if self.current is not None:
+            raise ValueError("self.current wrong value")
         self.current = self.GraphWrapper(name)
         return GraphScope(self)
 
