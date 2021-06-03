@@ -157,7 +157,6 @@ def tensor_index_by_number(data, number_index):
     return const_utils.raise_index_error("Only support integers, slices(`:`), ellipsis(`...`), None and bool.")
 
 
-# TODO wait to remove after setitem by Yang Linfeng
 def _tensor_index_by_bool(data, bool_index):
     """Tensor getitem by a single bool value"""
     if bool_index:
