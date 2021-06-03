@@ -32,8 +32,8 @@ AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEngin
   auto softmax_prim = primitive->cast<PrimSoftmaxCrossEntropyWithLogitsPtr>();
   MS_EXCEPTION_IF_NULL(softmax_prim);
   auto prim_name = softmax_prim->name();
-  CheckAndConvertUtils::CheckInteger("softmax_cross_entropy_with_logics_infer", input_args.size(), kEqual, 2,
-                                     prim_name);
+  CheckAndConvertUtils::CheckInteger("softmax_cross_entropy_with_logics_infer", SizeToLong(input_args.size()), kEqual,
+                                     2, prim_name);
 
   // Infer shape
   auto logits_shape =

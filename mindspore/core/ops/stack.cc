@@ -39,7 +39,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
     }
-    for (int64_t j = 0; j < (int64_t)input_shape.size(); ++j) {
+    for (int64_t j = 0; j < SizeToLong(input_shape.size()); ++j) {
       if (input_shape_tmp.at(j) != input_shape.at(j)) {
         MS_LOG(ERROR) << "All input shape should be the same!";
       }

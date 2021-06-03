@@ -32,7 +32,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(batch_prim);
   auto prim_name = batch_prim->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
-  CheckAndConvertUtils::CheckInteger("input_x rank", x_shape.size(), kEqual, 4, prim_name);
+  CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, 4, prim_name);
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
   int64_t offset = 2;
@@ -54,7 +54,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -64,7 +64,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 
 void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
-  CheckAndConvertUtils::CheckInteger(kCrops, crops.size(), kEqual, 2, this->name());
+  CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, 2, this->name());
   int64_t h = crops.size();
   int64_t w = crops[0].size();
   std::vector<int64_t> temp_w = {2, 2};
@@ -82,7 +82,7 @@ std::vector<std::vector<int64_t>> BatchToSpaceND::get_crops() const {
   return GetValue<std::vector<std::vector<int64_t>>>(value_ptr);
 }
 void BatchToSpaceND::set_block_shape(std::vector<int64_t> block_shape) {
-  CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape.size(), kEqual, 2, this->name());
+  CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, 2, this->name());
   for (int64_t i = 0; i < (int64_t)block_shape.size(); i++) {
     CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1, this->name());
   }
@@ -100,8 +100,7 @@ void BatchToSpaceND::Init(std::vector<int64_t> block_shape, std::vector<std::vec
 }
 AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameBatchToSpaceND, BatchToSpaceND);
 }  // namespace ops
