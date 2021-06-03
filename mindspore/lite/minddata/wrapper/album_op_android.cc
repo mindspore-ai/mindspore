@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "album_op_android.h"  //NOLINT
+#include "album_op_android.h"  // NOLINT
 #include <fstream>
 #include <iomanip>
 #include "minddata/dataset/core/tensor_shape.h"
