@@ -44,7 +44,9 @@ enum class TcpUserCommand {
   kResetCount,
   kGetMetadata,
   kUpdateMetadata,
-  kCounterEvent
+  kCounterEvent,
+  kPullWeight,
+  kPushWeight
 };
 
 const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
@@ -56,7 +58,8 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kGetMetadata, "getMetadata"},
   {TcpUserCommand::kUpdateMetadata, "updateMetadata"},
   {TcpUserCommand::kCounterEvent, "counterEvent"},
-};
+  {TcpUserCommand::kPullWeight, "PullWeight"},
+  {TcpUserCommand::kPushWeight, "PushWeight"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:

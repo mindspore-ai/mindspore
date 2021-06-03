@@ -365,6 +365,9 @@ inline const PrimitivePtr kPrimAllGather = std::make_shared<Primitive>("AllGathe
 inline const PrimitivePtr kPrimReduceScatter = std::make_shared<Primitive>("ReduceScatter");
 inline const PrimitivePtr kPrimMemCpyAsync = std::make_shared<Primitive>("memcpy_async");
 inline const PrimitivePtr kPrimFill = std::make_shared<Primitive>("Fill");
+inline const PrimitivePtr kPrimFusedPushWeight = std::make_shared<Primitive>("FusedPushWeight");
+inline const PrimitivePtr kPrimFusedPullWeight = std::make_shared<Primitive>("FusedPullWeight");
+
 // Quant ops
 inline const PrimitivePtr kPrimBatchNormFold = std::make_shared<Primitive>("BatchNormFold");
 inline const PrimitivePtr kPrimFakeQuantWithMinMaxVarsPerChannel =

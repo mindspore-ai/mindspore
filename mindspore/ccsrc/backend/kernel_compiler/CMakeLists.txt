@@ -32,6 +32,7 @@ if(ENABLE_CPU)
     file(GLOB CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "cpu/*.cc"
         "cpu/mkldnn/*.cc"
+        "cpu/fl/*.cc"
         "cpu/ps/*.cc"
         "cpu/quantum/*.cc"
     )
@@ -85,6 +86,8 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/sparse_apply_adam_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/sparse_apply_ftrl_ps_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "cpu/ps/sparse_apply_lazy_adam_ps_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/fused_pull_weight_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "cpu/fl/fused_push_weight_kernel.cc")
 endif()
 
 if(ENABLE_GPU)
