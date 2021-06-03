@@ -659,7 +659,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
 bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
 
 void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                    const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
+                                    const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
   if (debugger_) {
     debugger_->PreExecute(kernel_graph, graph_sum_);
   }
@@ -674,7 +674,7 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
 }
 
 void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {
+                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
   // summary
   Summary(kernel_graph.get());
   // load tensor from device for debugger

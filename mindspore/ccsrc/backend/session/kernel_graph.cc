@@ -18,6 +18,7 @@
 #include <queue>
 #include <unordered_set>
 #include <set>
+#include <exception>
 #include "base/core_ops.h"
 #include "ir/param_info.h"
 #include "utils/utils.h"
@@ -831,18 +832,6 @@ std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
   return output_nodes;
 }
 
-void KernelGraph::UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
-                                             const std::vector<AnfNodePtr> &real_depend_nodes) {
-  for (auto &first_node : real_prior_nodes) {
-    for (auto &second_node : real_depend_nodes) {
-      MS_EXCEPTION_IF_NULL(first_node);
-      MS_EXCEPTION_IF_NULL(second_node);
-      MS_LOG(DEBUG) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
-      AddDependEdge(second_node, first_node, 1);
-    }
-  }
-}
-
 void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
   MS_EXCEPTION_IF_NULL(seed_nodes);
   node_output_edges_.clear();
@@ -1275,8 +1264,12 @@ void KernelGraph::SetOptimizerFlag() {
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {
-  device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_, *inputs_, graph_value_nodes_,
-                                                              execution_order_);
+  try {
+    device::KernelRuntimeManager::Instance().ClearGraphResource(graph_id_, *inputs_, graph_value_nodes_,
+                                                                execution_order_);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "KernelGraph call destructor failed: " << e.what();
+  }
 }
 }  // namespace session
 }  // namespace mindspore

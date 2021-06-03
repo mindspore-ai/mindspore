@@ -1618,7 +1618,6 @@ void SessionBasic::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::Ten
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(inputs_name);
   auto kernel_graph_inputs = kernel_graph->inputs();
-  vector<ParameterPtr> paras;
   // find parameters of graph inputs
   for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
     if (!kernel_graph_inputs[i]->isa<Parameter>()) {

@@ -30,7 +30,7 @@ class ExecutorManager {
     static ExecutorManager instance;
     return instance;
   }
-  std::shared_ptr<Executor> GetExecutor(const std::string &device_name, int device_id);
+  std::shared_ptr<Executor> GetExecutor(const std::string &device_name, uint32_t device_id);
 
  private:
   ExecutorManager() = default;

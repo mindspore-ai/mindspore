@@ -326,8 +326,6 @@ class KernelGraph : public FuncGraph {
   void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
-  void UpdateNodeInputOutputEdges(const std::vector<AnfNodePtr> &real_prior_nodes,
-                                  const std::vector<AnfNodePtr> &real_depend_nodes);
   std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
   AnfNodePtr TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value);
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
