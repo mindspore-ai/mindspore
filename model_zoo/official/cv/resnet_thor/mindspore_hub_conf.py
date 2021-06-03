@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.resnet_thor import resnet50
+from src.resnet import resnet50
 
 def create_network(name, *args, **kwargs):
     if name == 'resnet50_thor':

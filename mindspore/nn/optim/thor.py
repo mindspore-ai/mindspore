@@ -246,7 +246,7 @@ class ThorGpu(Optimizer):
         self.matrix_g = ParameterTuple(self.matrix_g)
         self.weight_decay = weight_decay
         self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
-        self.update_gradient = P.UpdateThorGradient(split_dim=split_dim)
+        self.update_gradient = P.UpdateThorGradient(split_dim=self.split_dim)
         self.enable_clip_grad = enable_clip_grad
         self.frequency = frequency
         self._define_gpu_reducer(split_indices)
@@ -271,9 +271,9 @@ class ThorGpu(Optimizer):
         self.cast = P.Cast()
         self.sqrt = P.Sqrt()
         self.eye = P.Eye()
-        split_dim = 128
+        self.split_dim = 128
         self.embedding_cholesky = P.CholeskyTrsm()
-        self.cholesky = P.CholeskyTrsm(split_dim=split_dim)
+        self.cholesky = P.CholeskyTrsm(split_dim=self.split_dim)
         self.vector_matmul = P.BatchMatMul(transpose_a=True)
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.inv = P.Reciprocal()
@@ -312,7 +312,7 @@ class ThorGpu(Optimizer):
                 if layer_type == Conv:
                     matrix_a_dim = in_channels * weight_shape[2] * weight_shape[3]
                 matrix_g_dim = out_channels
-                matrix_a_shape, matrix_g_shape = caculate_matmul_shape(matrix_a_dim, matrix_g_dim, split_dim)
+                matrix_a_shape, matrix_g_shape = caculate_matmul_shape(matrix_a_dim, matrix_g_dim, self.split_dim)
                 matrix_a_inv = Parameter(np.zeros(matrix_a_shape).astype(np.float32),
                                          name='matrix_a_inv_' + str(self.thor_layer_count), requires_grad=False)
                 matrix_g_inv = Parameter(np.zeros(matrix_g_shape).astype(np.float32),
