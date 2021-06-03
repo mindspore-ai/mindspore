@@ -60,10 +60,10 @@ Status WordpieceTokenizerOp::FoundNoToken(const std::string &input_token, const 
   out_tokens->clear();
   offsets_start->push_back(basic_start);
   if (unknown_token_.empty()) {
-    out_tokens->emplace_back(input_token);
+    (void)out_tokens->emplace_back(input_token);
     offsets_limit->push_back(basic_start + input_token.length());
   } else {
-    out_tokens->emplace_back(unknown_token_);
+    (void)out_tokens->emplace_back(unknown_token_);
     offsets_limit->push_back(basic_start + input_token.length());
   }
   return Status::OK();
@@ -76,7 +76,7 @@ Status WordpieceTokenizerOp::AddSubword(const std::string &input_token, const in
   if (start > 0) {
     subword = suffix_indicator_ + subword;
   }
-  out_tokens->emplace_back(subword);
+  (void)out_tokens->emplace_back(subword);
   return Status::OK();
 }
 
@@ -87,9 +87,9 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uin
     offsets_start->push_back(basic_start);
     if (!unknown_token_.empty()) {
       offsets_limit->push_back(basic_start + unknown_token_.size());
-      out_tokens->emplace_back(unknown_token_);
+      (void)out_tokens->emplace_back(unknown_token_);
     } else {
-      out_tokens->emplace_back(input_token);
+      (void)out_tokens->emplace_back(input_token);
       offsets_limit->push_back(basic_start + input_token.size());
     }
     return Status::OK();
@@ -135,11 +135,11 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
     count++;
   }
   if (out_tokens.empty()) {
-    out_tokens.emplace_back("");
+    (void)out_tokens.emplace_back("");
     offsets_start.push_back(0);
     offsets_limit.push_back(0);
   }
-  Tensor::CreateFromVector(out_tokens, &token_tensor);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_tokens, &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
     RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));

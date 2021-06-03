@@ -34,7 +34,7 @@ Status JiebaTokenizerOp::Tokenize(std::string_view sentence_v, std::vector<std::
   std::string sentence{sentence_v};
 
   if (sentence == "") {
-    words->push_back("");
+    (void)words->emplace_back("");
   } else {
     std::vector<cppjieba::Word> tmp;
     if (jieba_mode_ == JiebaMode::kMp) {

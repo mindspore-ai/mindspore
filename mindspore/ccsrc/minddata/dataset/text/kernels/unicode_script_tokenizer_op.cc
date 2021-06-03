@@ -63,7 +63,7 @@ Status UnicodeScriptTokenizerOp::Tokenize(std::string_view str, std::vector<std:
         offsets_start->push_back(static_cast<uint32_t>(start));
         offsets_limit->push_back(static_cast<uint32_t>(start + len));
         std::string temp(str.substr(start, len));
-        splits->emplace_back(std::move(temp));
+        (void)splits->emplace_back(std::move(temp));
       }
       start = runes[i].offset;
       len = runes[i].len;
@@ -78,7 +78,7 @@ Status UnicodeScriptTokenizerOp::Tokenize(std::string_view str, std::vector<std:
     offsets_start->push_back(static_cast<uint32_t>(start));
     offsets_limit->push_back(static_cast<uint32_t>(start + len));
     std::string temp(str.substr(start, len));
-    splits->emplace_back(std::move(temp));
+    (void)splits->emplace_back(std::move(temp));
   }
 
   return Status::OK();
