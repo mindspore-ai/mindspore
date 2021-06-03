@@ -741,8 +741,8 @@ class Conv2dBnFoldQuant(Cell):
         self.batchnorm_fold = BatchNormFoldCell(epsilon=eps, momentum=momentum, freeze_bn=freeze_bn)
         self.correct_mul = Q.CorrectionMul(channel_axis)
         if context.get_context('device_target') == "Ascend":
-            self.batchnorm_fold2_train = Q.BatchNormFold2_D(freeze_bn=freeze_bn)
-            self.batchnorm_fold2_infer = Q.BatchNormFold2_D(freeze_bn=0)
+            self.batchnorm_fold2_train = Q.BatchNormFold2D(freeze_bn=freeze_bn)
+            self.batchnorm_fold2_infer = Q.BatchNormFold2D(freeze_bn=0)
         elif context.get_context('device_target') == "GPU":
             self.batchnorm_fold2_train = Q.BatchNormFold2(freeze_bn=freeze_bn)
             self.batchnorm_fold2_infer = Q.BatchNormFold2(freeze_bn=0)

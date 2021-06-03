@@ -41,7 +41,7 @@ __all__ = ["MinMaxUpdatePerLayer",
            "BatchNormFold2Grad",
            "BatchNormFoldD",
            "BatchNormFoldGradD",
-           "BatchNormFold2_D",
+           "BatchNormFold2D",
            "BatchNormFold2GradD",
            "BatchNormFold2GradReduce",
            "IFMR",
@@ -1088,7 +1088,7 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
         return x_type
 
 
-class BatchNormFold2_D(PrimitiveWithInfer):
+class BatchNormFold2D(PrimitiveWithInfer):
     """
     Scales the bias with a correction factor to the long term statistics
     prior to quantization. This ensures that there is no jitter in the quantized bias
