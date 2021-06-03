@@ -58,7 +58,8 @@ class LARS(Optimizer):
     .. math::
 
         \begin{array}{ll} \\
-            \lambda  = \frac{\theta  \text{ * } || \omega  ||  }{|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
+            \lambda  = \frac{\theta  \text{ * } || \omega  ||  } \\
+                            {|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
             \lambda  =
             \begin{cases}
                 \min(\frac{\lambda}{\alpha }, 1)
@@ -70,7 +71,7 @@ class LARS(Optimizer):
         \end{array}
 
     :math:`\theta` represents `coefficient`, :math:`\omega` represents `parameters`, :math:`g` represents `gradients`,
-    :math:`t` represents updateing step, :math:`\delta` represents `weight_decay`,
+    :math:`t` represents updating step, :math:`\delta` represents `weight_decay`,
     :math:`\alpha` represents `learning_rate`, :math:`clip` represents `use_clip`.
 
     Args:

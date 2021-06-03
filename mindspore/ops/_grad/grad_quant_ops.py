@@ -138,6 +138,7 @@ def get_bprop_BatchNormFold(self):
 
 @bprop_getters.register(P.BNTrainingReduce)
 def get_bprop_BNTrainingReduce(self):
+    """Generate bprop for BNTrainingReduce for Ascend"""
     def bprop(x, out, dout):
         return (zeros_like(x),)
 

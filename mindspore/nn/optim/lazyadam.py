@@ -107,7 +107,8 @@ class LazyAdam(Optimizer):
     r"""
     This optimizer will apply a lazy adam algorithm when gradient is sparse.
 
-    The original adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
+    The original adam algorithm is proposed in
+    `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
     The updating formulas are as follows,
 
