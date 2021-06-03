@@ -166,11 +166,11 @@ void ParallelContext::SetAllReduceFusionSplitSizes(const std::vector<uint32_t> &
   if (!group.empty() && group.find(TypeIdLabel(kNumberTypeFloat)) == std::string::npos &&
       group.find(TypeIdLabel(kNumberTypeFloat16)) == std::string::npos &&
       group.find(TypeIdLabel(kNumberTypeFloat32)) == std::string::npos) {
-    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat)] = sizes;
-    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat16)] = sizes;
-    all_reduce_fusion_split_indices_[group + TypeIdLabel(kNumberTypeFloat32)] = sizes;
+    all_reduce_fusion_split_sizes_[group + TypeIdLabel(kNumberTypeFloat)] = sizes;
+    all_reduce_fusion_split_sizes_[group + TypeIdLabel(kNumberTypeFloat16)] = sizes;
+    all_reduce_fusion_split_sizes_[group + TypeIdLabel(kNumberTypeFloat32)] = sizes;
   } else {
-    all_reduce_fusion_split_indices_[group] = sizes;
+    all_reduce_fusion_split_sizes_[group] = sizes;
   }
 }
 
