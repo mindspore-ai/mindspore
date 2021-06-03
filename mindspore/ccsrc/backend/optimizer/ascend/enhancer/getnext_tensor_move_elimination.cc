@@ -56,10 +56,15 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
     return nullptr;
   }
 
-  // 3. next_node is not nop node, not graph output and it has only one input which is tensor move's output
+  // 3. next_node is not nop node, not communicaiton node, not graph output and it has only one input which is tensor
+  // move's output
   for (auto &item : next_nodes) {
     auto next_node = item.first->cast<CNodePtr>();
     if (opt::IsNopNode(next_node)) {
+      return nullptr;
+    }
+
+    if (AnfAlgo::IsCommunicationOp(next_node)) {
       return nullptr;
     }
 
