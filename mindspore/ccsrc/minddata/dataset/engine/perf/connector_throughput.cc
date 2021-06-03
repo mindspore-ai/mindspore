@@ -52,7 +52,8 @@ Status ConnectorThroughput::Sample() {
     }
     auto prev_out_buffer_count = out_buffer_count_table_[col][out_buffer_count_table_.size() - 1];
     if (dt != 0) {
-      auto thr = (cur_out_buffer_count - prev_out_buffer_count) / (1000 * dt);
+      constexpr int convert_to_seconds = 1000;
+      auto thr = (cur_out_buffer_count - prev_out_buffer_count) / (convert_to_seconds * dt);
       throughput_row[col] = thr;
     } else {
       throughput_row[col] = 0;

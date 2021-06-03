@@ -161,7 +161,8 @@ Status DeviceCpu::Analyze(std::string *name, double *utilization, std::string *e
   int sum = 0;
   // Only analyze the middle half of the samples
   // Starting and ending may be impacted by startup or ending pipeline activities
-  int start_analyze = total_samples / 4;
+  constexpr float pct_ignore = 0.25;
+  int start_analyze = total_samples * pct_ignore;
   int end_analyze = total_samples - start_analyze;
 
   for (int i = start_analyze; i < end_analyze; i++) {

@@ -42,9 +42,10 @@ Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr
   // gray is allocated without using the allocator
   cv::cvtColor(m1, gray, cv::COLOR_RGB2GRAY);
   // luminosity is not preserved, consider using weights.
-  cv::Mat temp[3] = {gray, gray, gray};
+  constexpr int num_channels_rgb = 3;
+  cv::Mat temp[num_channels_rgb] = {gray, gray, gray};
   cv::Mat cv_out;
-  cv::merge(temp, 3, cv_out);
+  cv::merge(temp, num_channels_rgb, cv_out);
   std::shared_ptr<CVTensor> cvt_out;
   CVTensor::CreateFromMat(cv_out, &cvt_out);
   if (abs(t - 0.0) < eps) {
