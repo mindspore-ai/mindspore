@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/cos.h"
 
 #include <set>
 #include <map>
 #include <string>
-#include "ops/cos.h"
+
+#include "utils/infer_base.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,22 +35,13 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   return std::make_shared<abstract::Shape>(in_shape);
 }
-
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
-  std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return TypeIdToType(infer_type);
-}
 }  // namespace
 
 AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  size_t input_num = 1;
+  auto type = InferBase::CheckSameInferType(primitive, input_args, common_valid_types, input_num);
+  return std::make_shared<abstract::AbstractTensor>(type, InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameCos, Cos);
 }  // namespace ops

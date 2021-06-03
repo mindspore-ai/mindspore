@@ -454,7 +454,7 @@ TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Typ
   if (types_id.size() > 1) {
     buffer << "'s input type is not same : ";
     for (const auto &item : types) {
-      buffer << "[ name : " << item.first << " ,type : " << item.second->ToString() << "]";
+      buffer << "[ input " << item.first << " ' type : " << item.second->ToString() << "]";
     }
     MS_EXCEPTION(TypeError) << buffer.str();
   }

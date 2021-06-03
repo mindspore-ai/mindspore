@@ -22,6 +22,7 @@
 #include "ops/sub.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/infer_base.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
@@ -34,23 +35,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = sub_prim->name();
   return BroadCastInferShape(prim_name, input_args);
 }
-
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  std::map<std::string, TypePtr> types;
-  types.emplace("x", input_args[0]->BuildType());
-  types.emplace("y", input_args[1]->BuildType());
-  auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return TypeIdToType(infer_type);
-}
 }  // namespace
 
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  size_t input_num = 2;
+  auto type = InferBase::CheckSameInferType(primitive, input_args, common_valid_types, input_num);
+  auto shape = InferShape(primitive, input_args);
+  return std::make_shared<abstract::AbstractTensor>(type, shape);
 }
 REGISTER_PRIMITIVE_C(kNameSub, Sub);
 }  // namespace ops

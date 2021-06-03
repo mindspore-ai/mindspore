@@ -25,17 +25,18 @@ AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   auto atan_prim = primitive->cast<PrimAtanPtr>();
   MS_EXCEPTION_IF_NULL(atan_prim);
-  auto prim_name = atan_prim->name();
-  CheckAndConvertUtils::CheckInteger("Atan_infer", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  auto op_name = atan_prim->name();
+  CheckAndConvertUtils::CheckInteger("Atan_infer", SizeToLong(input_args.size()), kEqual, 1, op_name);
 
   // Infer Shape
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);
   auto infer_shape = std::make_shared<abstract::Shape>(x_shape);
 
   // Infer Type
   auto dtype = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(dtype);
   const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeInt32};
-  CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", dtype, valid_types, prim_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", dtype, valid_types, op_name);
   auto tensor_type = dtype->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto element = tensor_type->element();
