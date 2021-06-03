@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <limits.h>
-#include <math.h>
+#include <climits>
+#include <cmath>
 #include <vector>
 
 #include "lite_cv/lite_mat.h"

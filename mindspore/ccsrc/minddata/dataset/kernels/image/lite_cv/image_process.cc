@@ -16,8 +16,8 @@
 
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
-#include <float.h>
-#include <limits.h>
+#include <cfloat>
+#include <climits>
 #include <cstring>
 #include <cmath>
 #include <limits>
