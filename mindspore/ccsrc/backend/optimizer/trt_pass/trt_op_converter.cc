@@ -24,11 +24,35 @@
 namespace mindspore {
 namespace opt {
 namespace {
+nvinfer1::ITensor *ToShape(LayerInput *input, const std::vector<size_t> &shape,
+                           std::shared_ptr<TrtConverterContext> context) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(context);
+
+  if (!input->IsTensor()) {
+    MS_LOG(ERROR) << "Expect Tensor but got weight";
+    return nullptr;
+  }
+
+  const nvinfer1::Dims &src_dim = input->tensor()->getDimensions();
+  const nvinfer1::Dims &dst_dim = TrtUtils::MsDimsToTrtDims(shape, false);
+  if (TrtUtils::IsSameShape(src_dim, dst_dim)) {
+    return input->tensor();
+  }
+
+  auto *layer = context->network()->addShuffle(*input->tensor());
+  MS_EXCEPTION_IF_NULL(layer);
+  layer->setReshapeDimensions(dst_dim);
+
+  return layer->getOutput(0);
+}
+
 nvinfer1::ITensor *ToTensor(LayerInput *input, const std::vector<size_t> &shape,
                             std::shared_ptr<TrtConverterContext> context) {
+  MS_EXCEPTION_IF_NULL(input);
   MS_EXCEPTION_IF_NULL(context);
   if (input->IsTensor()) {
-    return input->tensor();
+    return ToShape(input, shape, context);
   }
 
   const nvinfer1::Dims &dim = TrtUtils::MsDimsToTrtDims(shape, false);
@@ -553,31 +577,42 @@ MS_TRT_CONVERTER_FUNC_REG(BatchMatMul) {
 
   std::vector<size_t> shape1 = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   std::vector<size_t> shape2 = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-
-  auto SwapLastDims = [](std::vector<size_t> shape, const bool &transpose) {
-    if (shape.size() < 2) {
-      MS_LOG(EXCEPTION) << "Operation not support: input rank should >= 2";
-    }
-
-    if (!transpose) {
-      return shape;
-    }
-
-    size_t tmp = shape[shape.size() - 2];
-    shape[shape.size() - 2] = shape[shape.size() - 1];
-    shape[shape.size() - 1] = tmp;
-    return shape;
-  };
-
-  nvinfer1::ITensor *tensor1 = ToTensor(&inputs[0], SwapLastDims(shape1, transpose_a), context);
-  nvinfer1::ITensor *tensor2 = ToTensor(&inputs[1], SwapLastDims(shape2, transpose_b), context);
+  nvinfer1::ITensor *tensor1 = ToTensor(&inputs[0], shape1, context);
+  nvinfer1::ITensor *tensor2 = ToTensor(&inputs[1], shape2, context);
   auto *layer = context->network()->addMatrixMultiply(*tensor1, trt_transpose1, *tensor2, trt_transpose2);
   MS_EXCEPTION_IF_NULL(layer);
 
   return {true, {layer->getOutput(0)}};
 }
 
-MS_TRT_CONVERTER_FUNC_REG(BiasAdd) { return AddElementLayer(node, context, nvinfer1::ElementWiseOperation::kSUM); }
+MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
+  std::vector<LayerInput> inputs;
+  bool ret = context->LoadLayerInput(node, &inputs);
+  if (!ret || inputs.size() != 2) {
+    MS_LOG(ERROR) << "Input num not match: " << inputs.size() << ", with 1 expected.";
+    return {false, {}};
+  }
+
+  const auto &x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &bias_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  const auto &format = AnfAlgo::GetNodeAttr<std::string>(node, "format");
+  const string::size_type &pos = format.find("C");
+  if (pos == std::string::npos || pos >= x_shape.size()) {
+    MS_LOG(ERROR) << "The format " << format << "' invalid";
+    return {false, {}};
+  }
+
+  // Convert bias to ITensor same dims as x.
+  std::vector<size_t> unsqueeze_bias_dims(x_shape.size(), 1);
+  unsqueeze_bias_dims[pos] = SizeToInt(bias_shape[0]);
+  nvinfer1::ITensor *bias = ToTensor(&inputs[1], unsqueeze_bias_dims, context);
+
+  // Create Broadcast Add layer.
+  auto *layer = context->network()->addElementWise(*inputs[0].tensor(), *bias, nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+
+  return {true, {layer->getOutput(0)}};
+}
 
 // NoOp
 MS_TRT_CONVERTER_FUNC_REG(Reshape) { return AddReshapeLayer(node, context); }
@@ -847,13 +882,20 @@ MS_TRT_CONVERTER_FUNC_REG(Cast) {
   auto trt_type = TrtUtils::MsDtypeToTrtDtype(dst_type);
   auto *layer = context->network()->addIdentity(*input);
   layer->setOutputType(0, trt_type);
+
+  if (trt_type == nvinfer1::DataType::kHALF) {
+    MS_LOG(WARNING) << "The model is exported with auto-mixed-precsion or manual precision mode. "
+                    << "Retreat inference with native backend. It is recommended that export FP32 model "
+                    << "and then inference with FP16 precision mode configuration.";
+    return {false, {}};
+  }
   return {true, {layer->getOutput(0)}};
 }
 
 MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
   std::vector<LayerInput> inputs;
   bool ret = context->LoadLayerInput(node, &inputs);
-  if (!ret || inputs.size() != 3 || !inputs[0].IsTensor() || !inputs[1].IsWeight() || !inputs[2].IsWeight()) {
+  if (!ret || inputs.size() != 3 || !inputs[0].IsTensor()) {
     MS_LOG(ERROR) << "Get inputs failed. Input num: " << inputs.size();
     return {false, {}};
   }

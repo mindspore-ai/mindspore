@@ -79,6 +79,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
  private:
   bool InitInputTable();
   bool InitValueNodeTable();
+  LayerInput *LoadInputOnDemand(const AnfNodePtr &node);
 
   FuncGraphPtr func_graph_;
   uint32_t batch_size_;
