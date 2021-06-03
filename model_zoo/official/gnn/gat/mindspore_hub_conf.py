@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,34 @@
 # ============================================================================
 """hub config."""
 from src.gat import GAT
-
-def gat(*args, **kwargs):
-    return GAT(*args, **kwargs)
-
+from src.config import GatConfig
 
 def create_network(name, *args, **kwargs):
+    """ create net work"""
     if name == "gat":
-        return gat(*args, **kwargs)
+
+        if "ftr_dims" in kwargs:
+            featureDims = kwargs.get("ftr_dims")
+        else:
+            featureDims = 3706
+
+        if "num_class" in kwargs:
+            numClass = kwargs.get("num_class")
+        else:
+            numClass = 10
+
+        if "num_nodes" in kwargs:
+            numNodes = kwargs.get("num_nodes")
+        else:
+            numNodes = 30
+
+        gat_net = GAT(featureDims,
+                      numClass,
+                      numNodes,
+                      GatConfig.hid_units,
+                      GatConfig.n_heads,
+                      attn_drop=GatConfig.attn_dropout,
+                      ftr_drop=GatConfig.feature_dropout)
+
+        return gat_net
     raise NotImplementedError(f"{name} is not implemented in the repo")
