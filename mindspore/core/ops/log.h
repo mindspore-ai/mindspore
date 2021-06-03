@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLog = "Log";
+constexpr auto kNameLog = prim::kLog;
 class Log : public PrimitiveC {
  public:
-  Log() : PrimitiveC(kNameLog) { InitIOName({"x"}, {"y"}); }
+  Log() : PrimitiveC(prim::kPrimLog->name()) { InitIOName({"x"}, {"y"}); }
   ~Log() = default;
   MS_DECLARE_PARENT(Log, PrimitiveC);
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReciprocal = "Reciprocal";
+constexpr auto kNameReciprocal = prim::kReciprocal;
 class Reciprocal : public PrimitiveC {
  public:
-  Reciprocal() : PrimitiveC(kNameReciprocal) { InitIOName({"x"}, {"y"}); }
+  Reciprocal() : PrimitiveC(prim::kPrimReciprocal->name()) { InitIOName({"x"}, {"y"}); }
   ~Reciprocal() = default;
   MS_DECLARE_PARENT(Reciprocal, PrimitiveC);
   void Init() {}

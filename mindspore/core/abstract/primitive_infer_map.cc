@@ -17,11 +17,12 @@
  */
 
 #include "abstract/primitive_infer_map.h"
-
 #include <map>
 #include <string>
 #include <vector>
 #include "ops/exp.h"
+#include "ops/log.h"
+#include "ops/reciprocal.h"
 #include "ops/real_div.h"
 #include "ops/add.h"
 #include "ops/equal.h"
@@ -183,6 +184,8 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimTile, {ops::TileInfer, nullptr, true}},
     {prim::kPrimEqual, {ops::EqualInfer, nullptr, true}},
     {prim::kPrimNotEqual, {ops::NotEqualInfer, nullptr, true}},
+    {prim::kPrimLog, {ops::LogInfer, nullptr, true}},
+    {prim::kPrimReciprocal, {ops::ReciprocalInfer, nullptr, true}},
     {prim::kPrimReduceSum, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMean, {InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAll, {InferImplReduceFunc, nullptr, true}},
