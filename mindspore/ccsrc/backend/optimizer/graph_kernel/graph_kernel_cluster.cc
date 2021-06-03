@@ -32,6 +32,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
 namespace mindspore {
 namespace opt {
@@ -481,6 +482,7 @@ void GraphKernelCluster::Init(const FuncGraphPtr &func_graph) {
 }
 
 bool GraphKernelCluster::Run(const FuncGraphPtr &func_graph) {
+  (void)std::make_shared<ShrinkUpdateState>()->Run(func_graph);
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   Init(func_graph);
@@ -493,6 +495,7 @@ bool GraphKernelCluster::Run(const FuncGraphPtr &func_graph) {
     mng->KeepRoots({func_graph});
   }
   Clean();
+  (void)std::make_shared<SpreadUpdateState>()->Run(func_graph);
   return changed;
 }
 }  // namespace opt

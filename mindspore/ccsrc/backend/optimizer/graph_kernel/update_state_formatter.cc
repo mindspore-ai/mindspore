@@ -50,7 +50,8 @@ AnfNodePtrList SpreadTuples(const AnfNodePtrList &nodes, size_t begin_index) {
   return result;
 }
 
-AnfNodePtrList SpreadUpdateState::ExtendInputsOfUpdate(const AnfNodePtrList &nodes, const FuncGraphPtr &func_graph) {
+AnfNodePtrList SpreadUpdateState::ExtendInputsOfUpdateState(const AnfNodePtrList &nodes,
+                                                            const FuncGraphPtr &func_graph) {
   AnfNodePtrList result;
   for (auto node : nodes) {
     if (node->abstract()->isa<abstract::AbstractTuple>()) {
@@ -65,7 +66,6 @@ AnfNodePtrList SpreadUpdateState::ExtendInputsOfUpdate(const AnfNodePtrList &nod
 
         auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
         MS_EXCEPTION_IF_NULL(tuple_getitem);
-        tuple_getitem->set_fullname_with_scope(node->fullname_with_scope() + "_TupleGetItem_" + std::to_string(i));
         tuple_getitem->set_abstract(node_abstract[i]);
         tuple_getitem->set_kernel_info(std::make_shared<device::KernelInfo>());
         result.push_back(tuple_getitem);
@@ -76,29 +76,28 @@ AnfNodePtrList SpreadUpdateState::ExtendInputsOfUpdate(const AnfNodePtrList &nod
   }
   return result;
 }
+
 bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
   auto todos = GetUpdateStateList(func_graph);
   bool changed = false;
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() <= kUpdateStateRealInput) continue;
     auto inputs = SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
-    // extend inputs of update if which have multiple outputs
-    inputs = ExtendInputsOfUpdate(inputs, func_graph);
-    if (inputs.size() + 2 != cnode->size() || inputs[0] != cnode->input(2)) {
-      AnfNodePtrList node_inputs = {cnode->input(0), cnode->input(1)};
+    // extend inputs of UpdateState if which have multiple outputs
+    inputs = ExtendInputsOfUpdateState(inputs, func_graph);
+    if (inputs.size() + kUpdateStateRealInput != cnode->size() || inputs[0] != cnode->input(kUpdateStateRealInput)) {
+      AnfNodePtrList node_inputs = {cnode->input(kAnfPrimitiveIndex), cnode->input(kUpdateStateStateInput)};
       node_inputs.insert(node_inputs.end(), inputs.begin(), inputs.end());
-      cnode->set_inputs(node_inputs);
+      // Create a new UpdateState
+      auto new_node = func_graph->NewCNode(node_inputs);
+      new_node->set_abstract(node->abstract());
+      mng->Replace(node, new_node);
       changed = true;
     }
-  }
-
-  if (changed) {
-    auto mng = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(mng);
-    mng->RemoveRoots();
-    mng->KeepRoots({func_graph});
   }
   return changed;
 }
