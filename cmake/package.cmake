@@ -326,6 +326,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/profiler
         ${CMAKE_SOURCE_DIR}/mindspore/explainer
         ${CMAKE_SOURCE_DIR}/mindspore/compression
+        ${CMAKE_SOURCE_DIR}/mindspore/run_check
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
