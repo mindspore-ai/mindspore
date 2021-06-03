@@ -131,7 +131,7 @@ def _set_graph_kernel_context(device_target, enable_graph_kernel, is_auto_enable
         if device_target == 'GPU':
             if cfg.bert_network == 'base':
                 context.set_context(enable_graph_kernel=True,
-                                    graph_kernel_flags="--enable_stitch_fusion=false --enable_parallel_fusion=true")
+                                    graph_kernel_flags="--enable_stitch_fusion=true --enable_parallel_fusion=true")
             else:
                 context.set_context(enable_graph_kernel=True)
         else:
