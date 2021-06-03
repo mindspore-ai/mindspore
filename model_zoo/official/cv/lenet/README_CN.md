@@ -82,6 +82,69 @@ sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/data'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "data_path=/cache/data"
+    #          在网页上设置 "ckpt_path=/cache/data"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 上传原始 mnist_data 数据集到 S3 桶上。
+    # (5) 在网页上设置你的代码路径为 "/path/lenet"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/data'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ckpt_path='/cache/data'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 上传原始 mnist_data 数据集到 S3 桶上。
+    # (5) 在网页上设置你的代码路径为 "/path/lenet"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ckpt_file='/cache/data/checkpoint_lenet-10_1875.ckpt'"
+    #          在网页上设置 其他参数
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 上传原始 mnist_data 数据集到 S3 桶上。
+    # (5) 在网页上设置你的代码路径为 "/path/lenet"
+    # (6) 在网页上设置启动文件为 "eval.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
 ## 脚本说明
 
 ### 脚本及样例代码
@@ -119,7 +182,7 @@ sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ## 脚本参数
 
 ```python
-train.py和config.py中主要参数如下：
+train.py和default_config.yaml中主要参数如下：
 
 --data_path: 到训练和评估数据集的绝对全路径
 --epoch_size: 训练轮次数
@@ -136,7 +199,7 @@ train.py和config.py中主要参数如下：
 ### 训练
 
 ```bash
-python train.py --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
+python train.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_train_ascend.sh Data ckpt
 ```
@@ -162,7 +225,7 @@ epoch:1 step:1538, loss is 1.0221305
 在运行以下命令之前，请检查用于评估的检查点路径。
 
 ```bash
-python eval.py --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
+python eval.py --config_path CONFIG_PATH --data_path Data --ckpt_path ckpt/checkpoint_lenet-1_1875.ckpt > log.txt 2>&1 &  
 # or enter script dir, and run the script
 sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ```
@@ -179,7 +242,7 @@ sh run_standalone_eval_ascend.sh Data ckpt/checkpoint_lenet-1_1875.ckpt
 ### 导出MindIR
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 参数ckpt_file为必填项，
@@ -213,33 +276,33 @@ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 ### 评估性能
 
 | 参数                 | LeNet                                                   |
-| -------------------------- | ----------------------------------------------------------- |
-| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8             |
-| 上传日期              | 2020-06-09                                 |
-| MindSpore版本          | 0.5.0-beta                                                      |
-| 数据集                    | MNIST                                                    |
-| 训练参数        | epoch=10, steps=1875, batch_size = 32, lr=0.01              |
-| 优化器                  | Momentum                                                         |
-| 损失函数              | Softmax交叉熵                                       |
-| 输出                    | 概率                                                 |
-| 损失                       | 0.002                                                      |
-| 速度                      | 1.70毫秒/步                          |
-| 总时长                 | 43.1秒                          |                                       |
-| 微调检查点 | 482k (.ckpt文件)                                         |
-| 脚本                    | [LeNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
+| -------------------- | ------------------------------------------------------- |
+| 资源                 | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8|
+| 上传日期             | 2020-06-09                                              |
+| MindSpore版本        | 0.5.0-beta                                              |
+| 数据集               | MNIST                                                   |
+| 训练参数             | epoch=10, steps=1875, batch_size = 32, lr=0.01          |
+| 优化器               | Momentum                                                |
+| 损失函数             | Softmax交叉熵                                           |
+| 输出                 | 概率                                                    |
+| 损失                 | 0.002                                                   |
+| 速度                 | 1.70毫秒/步                                             |
+| 总时长               | 43.1秒                                                  |
+| 微调检查点 | 482k (.ckpt文件)                                                  |
+| 脚本                 | [LeNet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet) |
 
 ### 推理性能
 
-| 参数            | Ascend                      |
-| ------------- | ----------------------------|
-| 模型版本        | LeNet                       |
-| 资源           | Ascend 310；系统 CentOS 3.10 |
-| 上传日期        | 2021-05-07                  |
-| MindSpore版本  | 1.2.0                       |
-| 数据集          | Mnist                      |
-| batch_size     | 1                          |
-| 输出            | Accuracy                   |
-| 准确率          | Accuracy=0.9843            |
+| 参数            | Ascend                       |
+| --------------- | -----------------------------|
+| 模型版本        | LeNet                        |
+| 资源            | Ascend 310；系统 CentOS 3.10 |
+| 上传日期        | 2021-05-07                   |
+| MindSpore版本   | 1.2.0                        |
+| 数据集          | Mnist                        |
+| batch_size      | 1                            |
+| 输出            | Accuracy                     |
+| 准确率          | Accuracy=0.9843              |
 | 推理模型        | 482K（.ckpt文件）            |
 
 ## 随机情况说明

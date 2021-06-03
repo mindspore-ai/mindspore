@@ -66,6 +66,98 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+    # Train 8p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "distribute=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='ImageNet_Original'" on default_config.yaml file.
+    #          Set "lr_init=0.00004" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "epoch_size=250" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='ImageNet_Original'" on the website UI interface.
+    #          Add "distribute=True" on the website UI interface.
+    #          Add "lr_init=0.00004" on the website UI interface.
+    #          Add "dataset_path=/cache/data" on the website UI interface.
+    #          Add "epoch_size=250" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/inceptionv3" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Train 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='ImageNet_Original'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set "epoch_size=250" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='ImageNet_Original'" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add "epoch_size=250" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Perform a or b. (suggested option a)
+    #       a. zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/inceptionv3" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    # Eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "need_modelarts_dataset_unzip=True" on default_config.yaml file.
+    #          Set "modelarts_dataset_unzip_name='ImageNet_Original'" on default_config.yaml file.
+    #          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on base_config.yaml file.
+    #          Set "checkpoint='./inceptionv3/inceptionv3-rank3_1-247_1251.ckpt'" on default_config.yaml file.
+    #          Set "dataset_path='/cache/data'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "need_modelarts_dataset_unzip=True" on the website UI interface.
+    #          Add "modelarts_dataset_unzip_name='ImageNet_Original'" on the website UI interface.
+    #          Add "checkpoint_url='s3://dir_to_your_trained_model/'" on the website UI interface.
+    #          Add "checkpoint='./inceptionv3/inceptionv3-rank3_1-247_1251.ckpt'" on the website UI interface.
+    #          Add "dataset_path='/cache/data'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (2) Prepare model code
+    # (3) Upload or copy your trained model to S3 bucket.
+    # (4) Perform a or b. (suggested option a)
+    #       a. First, zip MindRecord dataset to one zip file.
+    #          Second, upload your zip dataset to S3 bucket.(you could also upload the origin mindrecord dataset, but it can be so slow.)
+    #       b. Upload the original coco dataset to S3 bucket.
+    #           (Data set conversion occurs during training process and costs a lot of time. it happens every time you train.)
+    # (5) Set the code directory to "/path/inceptionv3" on the website UI interface.
+    # (6) Set the startup file to "eval.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    ```
+
 # [Script description](#contents)
 
 ## [Script and sample code](#contents)
@@ -167,8 +259,8 @@ sh scripts/run_standalone_train_cpu.sh DATA_PATH
 ```python
 # training example
   python:
-      Ascend: python train.py --dataset_path DATA_PATH --platform Ascend
-      CPU: python train.py --dataset_path DATA_PATH --platform CPU
+      Ascend: python train.py --config_path CONFIG_FILE --dataset_path DATA_PATH --platform Ascend
+      CPU: python train.py --config_path CONFIG_FILE --dataset_path DATA_PATH --platform CPU
 
   shell:
       Ascend:
@@ -229,8 +321,8 @@ You can start training using python or shell scripts. The usage of shell scripts
 ```python
 # eval example
   python:
-      Ascend: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform Ascend
-      CPU: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
+      Ascend: python eval.py --config_path CONFIG_FILE --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform Ascend
+      CPU: python eval.py --config_path CONFIG_FILE --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
       Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
@@ -250,7 +342,7 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 ## Model Export
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --config_path CONFIG_FILE --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
@@ -290,7 +382,7 @@ accuracy:78.742
 | MindSpore Version          | 0.6.0-beta                                     |
 | Dataset                    | 1200k images                                   |
 | Batch_size                 | 128                                            |
-| Training Parameters        | src/config.py                                  |
+| Training Parameters        | src/model_utils/default_config.yaml            |
 | Optimizer                  | RMSProp                                        |
 | Loss Function              | SoftmaxCrossEntropy                            |
 | Outputs                    | probability                                    |

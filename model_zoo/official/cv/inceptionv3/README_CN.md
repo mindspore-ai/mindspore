@@ -77,6 +77,98 @@ InceptionV3的总体网络架构如下：
 - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
 - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在 default_config.yaml 文件中设置 "lr_init=0.00004"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=250"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "lr_init=0.00004"
+    #          在网页上设置 "dataset_path=/cache/data"
+    #          在网页上设置 "epoch_size=250"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/inceptionv3"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "epoch_size=250"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 "epoch_size=250"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/inceptionv3"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "need_modelarts_dataset_unzip=True"
+    #          在 default_config.yaml 文件中设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在 default_config.yaml 文件中设置 "checkpoint='./inceptionv3/inceptionv3-rank3_1-247_1251.ckpt'"
+    #          在 default_config.yaml 文件中设置 "dataset_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "need_modelarts_dataset_unzip=True"
+    #          在网页上设置 "modelarts_dataset_unzip_name='imagenet_original'"
+    #          在网页上设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+    #          在网页上设置 "checkpoint='./inceptionv3/inceptionv3-rank3_1-247_1251.ckpt'"
+    #          在网页上设置 "dataset_path='/cache/data'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 执行a或者b (推荐选择 a)
+    #       a. 第一, 将该数据集压缩为一个 ".zip" 文件。
+    #          第二, 上传你的压缩数据集到 S3 桶上 (你也可以上传未压缩的数据集，但那可能会很慢。)
+    #       b. 上传原始 coco 数据集到 S3 桶上。
+    #           (数据集转换发生在训练过程中，需要花费较多的时间。每次训练的时候都会重新进行转换。)
+    # (5) 在网页上设置你的代码路径为 "/path/inceptionv3"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
 # 脚本说明
 
 ## 脚本和样例代码
@@ -172,8 +264,8 @@ train.py和config.py中主要参数如下：
 ``` launch
 # 训练示例
   python:
-      Ascend: python train.py --dataset_path /dataset/train --platform Ascend
-      CPU: python train.py --dataset_path DATA_PATH --platform CPU
+      Ascend: python train.py --config_path default_config.yaml --dataset_path /dataset/train --platform Ascend
+      CPU: python train.py --config_path CONFIG_FILE --dataset_path DATA_PATH --platform CPU
 
   shell:
       Ascend:
@@ -234,8 +326,8 @@ epoch time: 6358482.104 ms, per step time: 16303.800 ms
 ``` launch
 # 评估示例
   python:
-      Ascend: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform Ascend
-      CPU: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
+      Ascend: python eval.py --config_path CONFIG_FILE --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform Ascend
+      CPU: python eval.py --config_path CONFIG_FILE --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
       Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
@@ -255,7 +347,7 @@ metric:{'Loss':1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 ## 模型导出
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+python export.py --config_path [CONFIG_FILE] --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"]
@@ -287,39 +379,39 @@ accuracy:78.742
 
 ### 训练性能
 
-| 参数                 | Ascend                                    |
-| -------------------------- | ---------------------------------------------- |
-| 模型版本              | InceptionV3                                    |
-| 资源                   | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8   |
-| 上传日期              | 2020-08-21                                     |
-| MindSpore版本          | 0.6.0-beta                                     |
-| 数据集                    | 120万张图像                                   |
-| Batch_size                 | 128                                            |
-| 训练参数        | src/config.py                                  |
-| 优化器                  | RMSProp                                        |
-| 损失函数              | Softmax交叉熵                            |
-| 输出                    | 概率                                    |
-| 损失                       | 1.98                                           |
-| 总时长（8卡）            | 11小时                                            |
-| 参数(M)                 | 103M                                           |
-| 微调检查点 | 313M                                           |
-| 训练速度 | 单卡：1050img/s;8卡：8000 img/s                                           |
-| 脚本                    | [inceptionv3脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
+| 参数                       | Ascend                                                  |
+| -------------------------- | ------------------------------------------------------- |
+| 模型版本                   | InceptionV3                                             |
+| 资源                       | Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8|
+| 上传日期                   | 2020-08-21                                              |
+| MindSpore版本              | 0.6.0-beta                                              |
+| 数据集                     | 120万张图像                                             |
+| Batch_size                 | 128                                                     |
+| 训练参数                   | src/model_utils/default_config.yaml                     |
+| 优化器                     | RMSProp                                                 |
+| 损失函数                   | Softmax交叉熵                                           |
+| 输出                       | 概率                                                    |
+| 损失                       | 1.98                                                    |
+| 总时长（8卡）              | 11小时                                                  |
+| 参数(M)                    | 103M                                                    |
+| 微调检查点                 | 313M                                                    |
+| 训练速度                   | 单卡：1050img/s;8卡：8000 img/s                         |
+| 脚本                       | [inceptionv3脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
 
 #### 推理性能
 
-| 参数          | Ascend                 |
+| 参数             | Ascend                 |
 | ------------------- | --------------------------- |
-| 模型版本       | InceptionV3    |
-| 资源            |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8                 |
-| 上传日期       | 2020-08-22                  |
+| 模型版本         | InceptionV3    |
+| 资源             |  Ascend 910；CPU 2.60GHz，192核；内存 755G；系统 Euler2.8|
+| 上传日期         | 2020-08-22                  |
 | MindSpore 版本   | 0.6.0-beta                  |
-| 数据集             | 5万张图像                  |
-| Batch_size          | 128                         |
+| 数据集           | 5万张图像                  |
+| Batch_size       | 128                         |
 | 输出             | 概率                 |
-| 准确率            | ACC1[78.8%] ACC5[94.2%]     |
-| 总时长          | 2分钟                       |
-| 推理模型 | 92M (.onnx文件)            |
+| 准确率           | ACC1[78.8%] ACC5[94.2%]     |
+| 总时长           | 2分钟                       |
+| 推理模型         | 92M (.onnx文件)            |
 
 # 随机情况说明
 

@@ -71,6 +71,70 @@ sh run_standalone_train_ascend.sh [DATA_PATH] [CKPT_SAVE_PATH]
 sh run_standalone_eval_ascend.sh [DATA_PATH] [CKPT_NAME]
 ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    ```bash
+    # 在 ModelArts 上使用8卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "distribute=True"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/train'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "distribute=True"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ckpt_path='/cache/train'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，请上传你的预训练模型到 S3 桶上
+    # (4) 上传原始 cifar10 数据集到 S3 桶上
+    # (5) 在网页上设置你的代码路径为 "/path/alexnet"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡训练
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_path='/cache/train'"
+    #          (可选)在 default_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ckpt_path='/cache/train'"
+    #          (可选)在网页上设置 "checkpoint_url='s3://dir_to_your_pretrained/'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 如果选择微调您的模型，上传你的预训练模型到 S3 桶上
+    # (4) 上传原始 cifar10 数据集到 S3 桶上
+    # (5) 在网页上设置你的代码路径为 "/path/alexnet"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    #
+    # 在 ModelArts 上使用单卡验证
+    # (1) 执行a或者b
+    #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+    #          在 default_config.yaml 文件中设置 "data_path='/cache/data'"
+    #          在 default_config.yaml 文件中设置 "ckpt_file='/cache/train/checkpoint_alexnet-30_1562.ckpt'"
+    #          在 default_config.yaml 文件中设置 其他参数
+    #       b. 在网页上设置 "enable_modelarts=True"
+    #          在网页上设置 "data_path='/cache/data'"
+    #          在网页上设置 "ckpt_file='/cache/train/checkpoint_alexnet-30_1562.ckpt'"
+    #          在网页上设置 其他参数
+    # (2) 准备模型代码
+    # (3) 上传你训练好的模型到 S3 桶上
+    # (4) 上传原始 cifar10 数据集到 S3 桶上
+    # (5) 在网页上设置你的代码路径为 "/path/alexnet"
+    # (6) 在网页上设置启动文件为 "train.py"
+    # (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+    # (8) 创建训练作业
+    ```
+
 ## 脚本说明
 
 ### 脚本及样例代码
@@ -121,7 +185,7 @@ train.py和config.py中主要参数如下：
 - Ascend处理器环境运行
 
   ```bash
-  python train.py --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
+  python train.py --config_path default_config.yaml --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # 或进入脚本目录，执行脚本
   sh run_standalone_train_ascend.sh cifar-10-batches-bin ckpt
   ```
@@ -143,7 +207,7 @@ train.py和config.py中主要参数如下：
 - GPU环境运行
 
   ```bash
-  python train.py --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
+  python train.py --config_path default_config.yaml --device_target "GPU" --data_path cifar-10-batches-bin --ckpt_path ckpt > log 2>&1 &
   # 或进入脚本目录，执行脚本
   sh run_standalone_train_for_gpu.sh cifar-10-batches-bin ckpt
   ```
@@ -168,7 +232,7 @@ train.py和config.py中主要参数如下：
 - Ascend处理器环境运行
 
   ```bash
-  python eval.py --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
+  python eval.py --config_path default_config.yaml --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-1_1562.ckpt > eval_log.txt 2>&1 &
   #或进入脚本目录，执行脚本
   sh run_standalone_eval_ascend.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-1_1562.ckpt
   ```
@@ -183,7 +247,7 @@ train.py和config.py中主要参数如下：
 - GPU环境运行
 
   ```bash
-  python eval.py --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > eval_log 2>&1 &
+  python eval.py --config_path default_config.yaml --device_target "GPU" --data_path cifar-10-verify-bin --ckpt_path ckpt/checkpoint_alexnet-30_1562.ckpt > eval_log 2>&1 &
   #或进入脚本目录，执行脚本
   sh run_standalone_eval_for_gpu.sh cifar-10-verify-bin ckpt/checkpoint_alexnet-30_1562.ckpt
   ```
@@ -200,7 +264,7 @@ train.py和config.py中主要参数如下：
 ### [导出MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 参数ckpt_file为必填项，

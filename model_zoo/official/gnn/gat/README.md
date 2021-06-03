@@ -114,6 +114,29 @@ After installing MindSpore via the official website and Dataset is correctly gen
   sh run_train_ascend.sh [DATASET_NAME]
   ```
 
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+    ```bash
+
+    # Train/eval 1p with Ascend
+    # (1) Perform a or b.
+    #       a. Set "enable_modelarts=True" on default_config.yaml file.
+    #          Set "data_dir='/cache/data'" on default_config.yaml file.
+    #          (optional)Set "checkpoint_url='s3://dir_to_your_pretrained/'" on default_config.yaml file.
+    #          Set other parameters on default_config.yaml file you need.
+    #       b. Add "enable_modelarts=True" on the website UI interface.
+    #          Add "data_dir='/cache/data'" on the website UI interface.
+    #          (optional)Add "checkpoint_url='s3://dir_to_your_pretrained/'" on the website UI interface.
+    #          Add other parameters on the website UI interface.
+    # (3) Upload or copy your pretrained model to S3 bucket if you want to finetune.
+    # (4) Upload the original Cora/Citeseer dataset to S3 bucket.
+    # (5) Set the code directory to "/path/gat" on the website UI interface.
+    # (6) Set the startup file to "train.py" on the website UI interface.
+    # (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+    # (8) Create your job.
+    #
+    ```
+
 ## [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -142,7 +165,7 @@ After installing MindSpore via the official website and Dataset is correctly gen
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in default_config.yaml.
 
 - config for GAT, CORA dataset
 
@@ -191,7 +214,7 @@ Parameters for both training and evaluation can be set in config.py.
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [CONFIG_PATH]--ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,
