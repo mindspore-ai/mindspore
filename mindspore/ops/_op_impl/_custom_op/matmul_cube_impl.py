@@ -110,12 +110,12 @@ def cus_matmul_cube(input_x1, input_x2, bias=None, output_y=None, trans_a=False,
     result = te.lang.cce.matmul(tensor_a, tensor_b, trans_a, trans_b, format_a=format_a,
                                 format_b=format_b, dst_dtype=dst_dtype, tensor_bias=tensor_bias)
 
-    with tvm.target.cce():
-        schedule = generic.auto_schedule(result)
-
     tensor_list = [tensor_a, tensor_b, result]
     if shape_bias:
         tensor_list = [tensor_a, tensor_b, tensor_bias, result]
+
+    with tvm.target.cce():
+        schedule = generic.auto_schedule(result)
 
     config = {"print_ir": False,
               "name": kernel_name,
@@ -163,19 +163,21 @@ def _get_block(shape_a, shape_b, trans_a, trans_b):
     km_shape = shape_a[len(shape_a) - 1]
     kn_shape = shape_b[len(shape_a) - 2]
     n_shape = shape_b[len(shape_a) - 1]
-    block_in = cce.BLOCK_IN
     block_out = cce.BLOCK_OUT
-    if trans_a and km_shape == 1:
-        block_in = cce.BLOCK_VECTOR
-
-    if not trans_a and m_shape == 1:
-        block_in = cce.BLOCK_VECTOR
+    block_in = cce.BLOCK_IN
 
     if trans_b and kn_shape == 1:
         block_out = cce.BLOCK_VECTOR
 
     if not trans_b and n_shape == 1:
         block_out = cce.BLOCK_VECTOR
+
+    if trans_a and km_shape == 1:
+        block_in = cce.BLOCK_VECTOR
+
+    if not trans_a and m_shape == 1:
+        block_in = cce.BLOCK_VECTOR
+
     return block_in, block_out
 
 
