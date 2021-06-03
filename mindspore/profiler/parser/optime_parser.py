@@ -24,6 +24,7 @@ from mindspore.profiler.parser.container import HWTSContainer
 
 TIMELINE_FILE_COLUMN_TITLE = 'op_name, stream_id, start_time(ms), duration(ms)'
 
+
 class OPComputeTimeParser:
     """
     Join hwts info and framework info, get op time info, and output to the result file.
@@ -203,7 +204,8 @@ class OPComputeTimeParser:
 
         return tmp_result_data
 
-    def _convert_op_time_unit(self, op_data_list, op_name_time_dict, op_name_stream_dict,
+    @staticmethod
+    def _convert_op_time_unit(op_data_list, op_name_time_dict, op_name_stream_dict,
                               op_name_count_dict, op_name_task_dict, op_name_start_time):
         """
         Calculate the execution time of operator and convert it into millisecond.

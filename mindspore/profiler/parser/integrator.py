@@ -17,11 +17,12 @@ import csv
 import json
 import os
 import stat
+from abc import abstractmethod
 from decimal import Decimal
 
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException, \
-    ProfilerFileNotFoundException, ProfilerRawFileException, ProfilerParamValueErrorException
+    ProfilerFileNotFoundException, ProfilerParamValueErrorException
 from mindspore.profiler.common.util import query_latest_trace_time_file, to_int, to_millisecond
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.container import TimelineContainer
@@ -99,7 +100,7 @@ class Integrator:
         op_name_type_cache = {}
         with open(framework_file, 'r') as src_file:
             csv_reader = csv.reader(src_file)
-            _ = next(csv_reader)
+            next(csv_reader)
 
             for row in csv_reader:
                 op_name_type_cache[row[3]] = row[5]
@@ -143,10 +144,10 @@ class Integrator:
         with open(aicore_detail_file, 'r') as src_file:
             row = src_file.readline()
             if row.startswith('op_name'):
-                _ = src_file.readline()
+                src_file.readline()
             elif row.startswith('====='):
-                _ = src_file.readline()
-                _ = src_file.readline()
+                src_file.readline()
+                src_file.readline()
             else:
                 return
 
@@ -208,7 +209,7 @@ class Integrator:
 
         with open(op_type_file_path, 'r') as file:
             csv_reader = csv.reader(file)
-            _ = next(csv_reader)
+            next(csv_reader)
             for info in csv_reader:
                 self._aicore_data.append([info[0], float(info[1]), int(info[2]), float(info[3])])
 
@@ -234,14 +235,14 @@ class Integrator:
         framework_infos = dict()
         with open(framework_file_path, 'r') as file:
             csv_reader = csv.reader(file)
-            _ = next(csv_reader)
+            next(csv_reader)
             for info in csv_reader:
                 framework_infos[info[3]] = [
                     info[3], info[4], info[5], info[6], json.loads(info[7]) if info[7] else None]
 
         with open(op_detail_file_path, 'r') as file:
             csv_reader = csv.reader(file)
-            _ = next(csv_reader)
+            next(csv_reader)
             for info in csv_reader:
                 framework_info = framework_infos.get(info[0])
                 self._aicore_detail_data.append(
@@ -261,22 +262,8 @@ class Integrator:
         file_path = validate_and_normalize_path(file_path)
         with open(file_path, 'r') as handle:
             csv_reader = csv.reader(handle)
-            self.__column__ = next(csv_reader)
+            self._columns = next(csv_reader)
             self._aicore_trace_data = list(csv_reader)
-        self._size = len(self._aicore_trace_data) - 1
-        self._load_point_info()
-
-    def _load_point_info(self):
-        """Load point info."""
-        file_path = os.path.join(self._profiling_dir, 'step_trace_point_info.json')
-        file_path = validate_and_normalize_path(file_path)
-        if os.path.isfile(file_path):
-            with open(file_path, 'r', encoding='utf-8') as file:
-                try:
-                    self._point_info = json.load(file)
-                except (json.JSONDecodeError, TypeError) as err:
-                    logger.warning(err)
-                    raise ProfilerRawFileException('Fail to parse point info file.')
 
     def _query_for_all_reduce(self):
         """
@@ -310,7 +297,7 @@ class Integrator:
             dict, step trace information. The key is in `__column__`.
         """
         row_info_dict = {}
-        for key, value in zip(self.__column__, row_info):
+        for key, value in zip(self._columns, row_info):
             if key == 'step_num':
                 continue
             value = to_int(value, key)
@@ -335,7 +322,7 @@ class Integrator:
         factor = 1e5  # convert time unit from 10ns to 1ms
         reduce_pid = 10000
         reduce_info = []
-        reduce_fields = [field_name for field_name in self.__column__
+        reduce_fields = [field_name for field_name in self._columns
                          if field_name.startswith('stream_') and not field_name.endswith('point')]
         for reduce_field in reduce_fields:
             reduce_start = row_info_dict.get(reduce_field + '_start_point')
@@ -447,7 +434,8 @@ class Integrator:
                         return False
         return True
 
-    def _is_match_condition(self, exp_key, exp_value, actual_value):
+    @staticmethod
+    def _is_match_condition(exp_key, exp_value, actual_value):
         """
         Check whether the actual value meets the expect condition.
 
@@ -507,14 +495,21 @@ class BaseTimelineGenerator:
         'op_exe_times': 0
     }
 
-    def _load_timeline_data(self):
-        """Load timeline data from file."""
+    @abstractmethod
+    def get_display_filename(self):
+        """Get the display_filename."""
 
-    def _parse_timeline_data(self):
-        """Parse timeline data."""
+    @abstractmethod
+    def get_profiling_dir(self):
+        """Get the profiling_dir."""
 
-    def init_timeline(self):
-        """Init timeline metadata, adding all collected info."""
+    @abstractmethod
+    def get_timeline_summary_filename(self):
+        """Get the timeline_summary_filename."""
+
+    @abstractmethod
+    def get_device_id(self):
+        """Get the device_id."""
 
     def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
         """Load data according to the parsed profiling files."""
@@ -525,11 +520,11 @@ class BaseTimelineGenerator:
 
     def write_timeline_to_json_by_limitation(self, size_limit):
         """Write timeline to json by limitation."""
-        display_filename = self._display_filename.format(self._device_id)
-        display_file_path = os.path.join(
-            self._profiling_dir,
-            display_filename
-        )
+        display_filename = self.get_display_filename()
+        profiling_dir = self.get_profiling_dir()
+        device_id = self.get_device_id()
+        display_filename = display_filename.format(device_id)
+        display_file_path = os.path.join(profiling_dir, display_filename)
         display_file_path = validate_and_normalize_path(display_file_path)
 
         length = len(self._timeline_meta)
@@ -552,9 +547,12 @@ class BaseTimelineGenerator:
 
     def write_timeline_summary(self):
         """Write timeline summary to json."""
+        device_id = self.get_device_id()
+        profiling_dir = self.get_profiling_dir()
+        timeline_summary_filename = self.get_timeline_summary_filename()
         timeline_summary_file_path = os.path.join(
-            self._profiling_dir,
-            self._timeline_summary_filename.format(self._device_id)
+            profiling_dir,
+            timeline_summary_filename.format(device_id)
         )
 
         timeline_summary_file_path = validate_and_normalize_path(timeline_summary_file_path)
@@ -583,9 +581,11 @@ class BaseTimelineGenerator:
         Returns:
             float, the minimum value of the cycle counter.
         """
+        device_id = self.get_device_id()
+        profiling_dir = self.get_profiling_dir()
         file_path = os.path.join(
-            self._profiling_dir,
-            self._min_cycle_counter_file_path.format(self._device_id)
+            profiling_dir,
+            self._min_cycle_counter_file_path.format(device_id)
         )
 
         file_path = validate_and_normalize_path(file_path)
@@ -638,6 +638,7 @@ class BaseTimelineGenerator:
                 timeline_item['args'] = framework_item.get('args')
         logger.debug('Finished adding framework info into timeline...')
 
+
 class GpuTimelineGenerator(BaseTimelineGenerator):
     """Generate gpu Timeline data from file."""
     _display_filename = 'gpu_timeline_display_{}.json'
@@ -658,6 +659,22 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             'op_exe_times': 0
             }
 
+    def get_display_filename(self):
+        """Get the display_filename."""
+        return self._display_filename
+
+    def get_profiling_dir(self):
+        """Get the profiling_dir."""
+        return self._profiling_dir
+
+    def get_timeline_summary_filename(self):
+        """Get the timeline_summary_filename."""
+        return self._timeline_summary_filename
+
+    def get_device_id(self):
+        """Get the device_id."""
+        return self._device_id
+
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
         file_path = os.path.join(
@@ -676,11 +693,12 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         # factor to convert the time unit of start_time(ts) from 1ns to 1us for timeline display
         factor = 1000
         op_meta = TimelineContainer(timeline)
-        timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name
-        timeline_dict['ph'] = 'X'
-        timeline_dict['tid'] = op_meta.stream_id
-        timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) / factor
+        timeline_dict = {
+            'name': op_meta.op_name,
+            'ph': 'X',
+            'tid': op_meta.stream_id,
+            'ts': (op_meta.start_time - min_cycle_counter) / factor
+        }
         dur = op_meta.duration
         timeline_dict['dur'] = dur
         if op_meta.pid is None:
@@ -783,7 +801,6 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
         return activity_timeline_list
 
-
     def init_timeline(self):
         """Init timeline metadata, adding all collected info."""
         timeline_list = self._load_timeline_data()
@@ -817,6 +834,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 return True
         return False
 
+
 class AscendTimelineGenerator(BaseTimelineGenerator):
     """Generate ascend Timeline data from file."""
     _display_filename = 'ascend_timeline_display_{}.json'
@@ -825,6 +843,22 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def __init__(self, profiling_dir, device_id):
         self._profiling_dir = profiling_dir
         self._device_id = device_id
+
+    def get_display_filename(self):
+        """Get the display_filename."""
+        return self._display_filename
+
+    def get_profiling_dir(self):
+        """Get the profiling_dir."""
+        return self._profiling_dir
+
+    def get_timeline_summary_filename(self):
+        """Get the timeline_summary_filename."""
+        return self._timeline_summary_filename
+
+    def get_device_id(self):
+        """Get the device_id."""
+        return self._device_id
 
     def _load_timeline_data(self):
         """Load timeline data from file."""
@@ -855,11 +889,12 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         # factor to convert the time unit from 1ms to 1us for timeline display
         factor = 1000
         op_meta = TimelineContainer(timeline)
-        timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name
-        timeline_dict['ph'] = 'X'
-        timeline_dict['tid'] = op_meta.stream_id
-        timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) * factor
+        timeline_dict = {
+            'name': op_meta.op_name,
+            'ph': 'X',
+            'tid': op_meta.stream_id,
+            'ts': (op_meta.start_time - min_cycle_counter) * factor
+        }
         dur = op_meta.duration * factor
         timeline_dict['dur'] = dur
         if op_meta.pid is None:
@@ -955,6 +990,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             cycle_counter = int(float(time_item[start_time]) * factor_ms_to_ten_ns)
             host_monotonic_time = host_monotonic + (cycle_counter - dev_cntvct) * factor_ten_ns_to_ns
             timeline_list[idx][start_time] = host_monotonic_time / factor_ns_to_ms
+
 
 class CpuTimelineGenerator(GpuTimelineGenerator):
     """Generate gpu Timeline data from file."""

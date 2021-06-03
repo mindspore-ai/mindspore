@@ -44,11 +44,13 @@ from mindspore.nn.cell import Cell
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
+
 class ProfileOption(Enum):
     """
     Profile Option Enum which be used in Profiler.profile.
     """
     trainable_parameters = 0
+
 
 class Profiler:
     """
@@ -120,70 +122,78 @@ class Profiler:
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
         if self._device_target:
-            CPUProfiler = c_expression.CPUProfiler
-            self._cpu_profiler = CPUProfiler.get_instance()
+            cpu_profiler = c_expression.CPUProfiler
+            self._cpu_profiler = cpu_profiler.get_instance()
             self._cpu_profiler.init(self._output_path)
             self._cpu_profiler.step_profiling_enable(True)
         if self._device_target and self._device_target == "GPU":
-            GPUProfiler = c_expression.GPUProfiler
-            self._gpu_profiler = GPUProfiler.get_instance()
-            self._gpu_profiler.init(self._output_path)
-            self._gpu_profiler.step_profiling_enable(True)
-            if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
-                self._dev_id = str(get_rank())
-            os.environ['DEVICE_ID'] = self._dev_id
-
-            if kwargs:
-                logger.warning("Params not be supported yet on GPU.")
+            self._init_gpu(kwargs)
         elif self._device_target and self._device_target == "Ascend":
-            optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
-            if not isinstance(optypes_not_deal, str):
-                raise TypeError("The parameter optypes_not_deal must be str.")
-            job_dir = kwargs.pop("ascend_job_id", "")
-            if job_dir:
-                job_dir = validate_and_normalize_path(job_dir)
-                if not os.path.exists(job_dir):
-                    msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
-                    logger.error(msg)
-                    raise ValueError(msg)
-                self._output_path, _ = os.path.split(job_dir)
-            if kwargs:
-                logger.warning("There are invalid params which don't work.")
+            self._init_ascend(kwargs)
 
-            os.environ['DEVICE_ID'] = self._dev_id
-            fp_point = os.environ.get("PROFILING_FP_START", "")
-            bp_point = os.environ.get("PROFILING_BP_END", "")
+    def _init_gpu(self, kwargs):
+        """Initialize in gpu scene."""
+        gpu_profiler = c_expression.GPUProfiler
+        self._gpu_profiler = gpu_profiler.get_instance()
+        self._gpu_profiler.init(self._output_path)
+        self._gpu_profiler.step_profiling_enable(True)
+        if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
+            self._dev_id = str(get_rank())
+        os.environ['DEVICE_ID'] = self._dev_id
 
-            profiling_options = {
-                "output": self._output_path,
-                "fp_point": fp_point,
-                "bp_point": bp_point,
-                "training_trace": "on",
-                "task_trace": "on",
-                "aic_metrics": "PipeUtilization",
-                "aicpu": "on"
-            }
+        if kwargs:
+            logger.warning("Params not be supported yet on GPU.")
 
-            profiling_options = json.dumps(profiling_options)
-            # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
-            if len(profiling_options) > 2048:
-                msg = "The parameter length exceeds the limit (2048), please input valid parameters."
+    def _init_ascend(self, kwargs):
+        """Initialize in ascend scene."""
+        optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
+        if not isinstance(optypes_not_deal, str):
+            raise TypeError("The parameter optypes_not_deal must be str.")
+        job_dir = kwargs.pop("ascend_job_id", "")
+        if job_dir:
+            job_dir = validate_and_normalize_path(job_dir)
+            if not os.path.exists(job_dir):
+                msg = f"Invalid ascend_job_id: {job_dir}, Please pass the absolute path of the JOB dir"
                 logger.error(msg)
                 raise ValueError(msg)
-            # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-            context.set_context(enable_profiling=True, profiling_options=profiling_options)
-            base_profiling_container_path = os.path.join(self._output_path, "container")
-            container_path = os.path.join(base_profiling_container_path, self._dev_id)
-            data_path = os.path.join(container_path, "data")
-            data_path = validate_and_normalize_path(data_path)
-            if not os.path.exists(data_path):
-                os.makedirs(data_path, exist_ok=True)
+            self._output_path, _ = os.path.split(job_dir)
+        if kwargs:
+            logger.warning("There are invalid params which don't work.")
 
-            self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
-            # add job id env through user input later
-            self._job_id_env = 0
-            self._start_time = int(time.time() * 10000000)
-            logger.info("Profiling: profiling start time: %d", self._start_time)
+        os.environ['DEVICE_ID'] = self._dev_id
+        fp_point = os.environ.get("PROFILING_FP_START", "")
+        bp_point = os.environ.get("PROFILING_BP_END", "")
+
+        profiling_options = {
+            "output": self._output_path,
+            "fp_point": fp_point,
+            "bp_point": bp_point,
+            "training_trace": "on",
+            "task_trace": "on",
+            "aic_metrics": "PipeUtilization",
+            "aicpu": "on"
+        }
+
+        profiling_options = json.dumps(profiling_options)
+        # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
+        if len(profiling_options) > 2048:
+            msg = "The parameter length exceeds the limit (2048), please input valid parameters."
+            logger.error(msg)
+            raise ValueError(msg)
+        # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
+        context.set_context(enable_profiling=True, profiling_options=profiling_options)
+        base_profiling_container_path = os.path.join(self._output_path, "container")
+        container_path = os.path.join(base_profiling_container_path, self._dev_id)
+        data_path = os.path.join(container_path, "data")
+        data_path = validate_and_normalize_path(data_path)
+        if not os.path.exists(data_path):
+            os.makedirs(data_path, exist_ok=True)
+
+        self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
+        # add job id env through user input later
+        self._job_id_env = 0
+        self._start_time = int(time.time() * 10000000)
+        logger.info("Profiling: profiling start time: %d", self._start_time)
 
     def analyse(self):
         """
@@ -459,7 +469,8 @@ class Profiler:
 
         return job_id
 
-    def _parse_host_start_log(self, input_file):
+    @staticmethod
+    def _parse_host_start_log(input_file):
         """
         Parse host start log file, get the start time of the job.
 

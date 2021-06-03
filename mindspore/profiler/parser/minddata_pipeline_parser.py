@@ -127,11 +127,7 @@ class MinddataPipelineParser:
         Returns:
             str, the save path.
         """
-        try:
-            output_dir = validate_and_normalize_path(output_path)
-        except ValidationError:
-            logger.warning('Output path is invalid.')
-            raise ProfilerPathErrorException('Output path is invalid.')
+        output_dir = validate_and_normalize_path(output_path)
         if not os.path.isdir(output_dir):
             logger.warning('The output dir <%s> not found.', output_dir)
             raise ProfilerDirNotFoundException(output_dir)
@@ -242,7 +238,8 @@ class MinddataPipelineParser:
 
         node['children'] = new_child_op_ids
 
-    def _get_op_info(self, op_node, sample_interval):
+    @staticmethod
+    def _get_op_info(op_node, sample_interval):
         """
         Get the operator information.
 
@@ -281,7 +278,8 @@ class MinddataPipelineParser:
         ]
         return op_info
 
-    def _cp_list_item_to_queue(self, inner_list, queue):
+    @staticmethod
+    def _cp_list_item_to_queue(inner_list, queue):
         """
         Copy the contents of a list to a queue.
 
