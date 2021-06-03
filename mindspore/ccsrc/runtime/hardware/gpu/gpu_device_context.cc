@@ -304,34 +304,31 @@ void GPUDeviceContext::UpdateKernelDynamicShape(const CNodePtr &kernel) const {
 }
 
 bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) const {
+                                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                    bool is_dynamic_shape) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
 
-  std::lock_guard<std::mutex> locker(launch_mutex_);
-
-  bool ret = true;
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-
-  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-
+  bool ret = true;
   if (!profiler_inst->GetEnableFlag()) {
     ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
   } else {
     ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
+
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
     return false;
   }
 
   // Processing after execution of dynamic kernel to update output shape.
-  if (AnfAlgo::IsDynamicShape(kernel)) {
+  if (is_dynamic_shape) {
     kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
     gpu_kernel->PostExecute();
@@ -343,6 +340,8 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
+  std::lock_guard<std::mutex> locker(launch_mutex_);
+
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
@@ -373,6 +372,7 @@ bool GPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<A
                                       const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  std::lock_guard<std::mutex> locker(launch_mutex_);
   return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
 }
 

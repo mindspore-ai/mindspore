@@ -60,7 +60,8 @@ class GPUDeviceContext : public DeviceContext {
   void UpdateKernelDynamicShape(const CNodePtr &kernel) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                    bool is_dynamic_shape = false) const override;
 
   bool SyncStream(size_t stream_id = 0) const override;
 

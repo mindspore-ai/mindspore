@@ -110,7 +110,7 @@ class ProfilingOp {
 
 class GPUProfiler : public Profiler {
  public:
-  static std::shared_ptr<GPUProfiler> GetInstance();
+  static std::shared_ptr<GPUProfiler> &GetInstance();
   ~GPUProfiler() { StopCUPTI(); }
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;

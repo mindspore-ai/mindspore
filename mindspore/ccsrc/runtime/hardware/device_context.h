@@ -87,15 +87,12 @@ class DeviceContext {
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
   // Infer kernel shape and update abstract info for dynamic shape kernel.
-  virtual void UpdateKernelDynamicShape(const CNodePtr &kernel) const {
-    if (AnfAlgo::IsDynamicShape(kernel)) {
-      AnfAlgo::InferShape(kernel);
-    }
-  }
+  virtual void UpdateKernelDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
 
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const = 0;
+                            const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                            bool is_dynamic_shape = false) const = 0;
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.

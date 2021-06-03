@@ -49,7 +49,8 @@ class CPUDeviceContext : public DeviceContext {
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                    bool is_dynamic_shape = false) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);

@@ -27,14 +27,10 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ = nullptr;
+std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ =
+  std::shared_ptr<CPUProfiler>(new (std::nothrow) CPUProfiler());
 
-std::shared_ptr<CPUProfiler> CPUProfiler::GetInstance() {
-  if (profiler_inst_ == nullptr) {
-    profiler_inst_ = std::shared_ptr<CPUProfiler>(new (std::nothrow) CPUProfiler());
-  }
-  return profiler_inst_;
-}
+std::shared_ptr<CPUProfiler> &CPUProfiler::GetInstance() { return profiler_inst_; }
 
 void CPUProfiler::Init(const std::string &profileDataPath = "") {
   MS_LOG(INFO) << "Initialize CPU Profiling";
