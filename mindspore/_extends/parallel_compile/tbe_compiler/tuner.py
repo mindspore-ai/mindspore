@@ -19,10 +19,11 @@ import json
 import sys
 import traceback
 from te.platform.cce_conf import te_set_version
-from te.platform.fusion_manager import set_current_op_name
-from te.platform.fusion_util import fusion_op, dump_fusion_json
-from te.platform.parallel_compilation import init_multi_process_env, get_finished_compilation_task, \
-    deinit_multi_process_env, dispatch_autotune_task, start_ga_multi_process, import_py_module
+from te_fusion.fusion_manager import set_current_op_name
+from te_fusion.fusion_util import fusion_op, dump_fusion_json
+from te_fusion.parallel_compilation import init_multi_process_env, get_finished_compilation_task, \
+    deinit_multi_process_env, start_ga_multi_process
+from te_fusion.compile_task_manager import dispatch_autotune_task, import_py_module
 import auto_tune
 from schedule_search.rl_online_tune import rl_tune_init, dispatch_fusion_tune_task, dispatch_single_tune_task, \
     rl_tune_deinit
