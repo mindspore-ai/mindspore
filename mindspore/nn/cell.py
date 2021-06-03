@@ -344,11 +344,11 @@ class Cell(Cell_):
                     default_args += 1
 
         if len(inputs) < positional_args:
-            raise ValueError(
+            raise TypeError(
                 f"The function construct need {positional_args} positional argument, but only provided {len(inputs)}.")
 
         if len(inputs) > positional_args + default_args:
-            raise ValueError(
+            raise TypeError(
                 f"The function construct need {positional_args} positional argument and {default_args} default "
                 f"argument, but provided {len(inputs)}")
 

@@ -93,7 +93,10 @@ class TraceGuard {
   TraceGuard(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info) {
     TraceManager::DebugTrace(debug_info, trace_info);
   }
-  ~TraceGuard() { TraceManager::EndTrace(); }
+  ~TraceGuard() {
+    TraceManager::EndTrace();
+    TraceManager::ClearParseOrResolveDebugInfo();
+  }
 };
 
 class TraceContext {

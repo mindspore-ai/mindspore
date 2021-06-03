@@ -87,7 +87,7 @@ def test_l1_regularizer07():
     try:
         l1_regularizer = Net_l1_regularizer(scale)
         l1_regularizer()
-    except ValueError:
+    except TypeError:
         assert True
 
 

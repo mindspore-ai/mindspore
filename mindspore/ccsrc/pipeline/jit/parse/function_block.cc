@@ -101,7 +101,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
     }
     return node;
   }
-  // Get var from predecessor block ,if can't get the make a resolve node to it
+  // Get var from predecessor block ,if can't get then make a resolve node to it
   if (matured_) {
     // If only one predecessor block, read the definition of var from it.
     if (prev_blocks_.size() == 1) {
@@ -317,7 +317,7 @@ void FunctionBlock::Mature() {
   matured_ = true;
 }
 
-// Force the conditIon node to bool using bool operation
+// Force the condition node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
   TraceGuard trace_guard(std::make_shared<TraceForceBool>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph()->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
