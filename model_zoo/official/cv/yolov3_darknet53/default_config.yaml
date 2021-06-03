@@ -73,7 +73,7 @@ batch_size: 1
 ckpt_file: ""
 file_name: "yolov3_darknet53"
 file_format: "AIR" # ["AIR", "ONNX", "MINDIR"]
-
+keep_detect: True
 
 # convert weight option
 input_file: "./darknet53.conv.74"
@@ -170,6 +170,7 @@ ckpt_file: "Checkpoint file path."
 file_name: "output file name."
 file_format: "file format choices in ['AIR', 'ONNX', 'MINDIR']"
 device_target: "device target. choices in ['Ascend', 'GPU'] for train. choices in ['Ascend', 'GPU', 'CPU'] for export."
+keep_detect: "keep the detect module or not, default: True"
 
 # convert weight option
 input_file: "input file path."

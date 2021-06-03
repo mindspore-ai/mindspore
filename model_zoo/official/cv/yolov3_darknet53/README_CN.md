@@ -383,10 +383,11 @@ bash run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
 ## 导出mindir模型
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --keep_detect [Bool]
 ```
 
 参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`keep_detect` 是否保留坐标检测模块, 默认为True
 
 ## 推理过程
 
