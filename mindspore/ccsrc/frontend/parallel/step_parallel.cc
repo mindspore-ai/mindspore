@@ -861,6 +861,9 @@ void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   replace_node->set_scope(scope);
   replace_node->set_in_forward_flag(true);
   replace_input[0]->set_scope(scope);
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
+  PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
+  SetUserAttrs(origin_prim->attrs(), prim);
   (void)manager->Replace(node, replace_node);
 }
 
@@ -898,11 +901,8 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(scope);
     replace_node->set_scope(scope);
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
-    if (prim->name() == EMBEDDING_LOOKUP) {
-      auto attrs = prim->attrs();
-      attrs[TARGET] = MakeValue(CPU);
-      (void)prim->SetAttrs(attrs);
-    }
+    PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
+    SetUserAttrs(origin_prim->attrs(), prim);
     if (index == replace_op.size() - 1) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
     }

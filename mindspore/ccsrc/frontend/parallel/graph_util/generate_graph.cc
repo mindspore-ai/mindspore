@@ -15,13 +15,13 @@
  */
 
 #include "frontend/parallel/graph_util/generate_graph.h"
-
 #include <algorithm>
 #include <memory>
 #include <string>
 
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/convert_utils_py.h"
+#include "frontend/parallel/graph_util/node_info.h"
 
 using mindspore::tensor::Tensor;
 
@@ -150,6 +150,8 @@ Status GenerateGraph::Init(const CNodePtr &cnode) {
 AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
   CNodePtr cnode = func_graph_->NewCNode(inputs);  // using NewCNode to create anfnode
   MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  SetUserAttrs(origin_attrs_, prim);
   cnode->set_scope(scope_);
   if (inputs.size() < 2) {
     MS_LOG(EXCEPTION) << "inputs.size() must be more than 1";
