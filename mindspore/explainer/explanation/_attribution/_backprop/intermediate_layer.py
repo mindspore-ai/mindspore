@@ -29,6 +29,9 @@ class IntermediateLayerAttribution(Gradient):
         layer (str, optional): string that specifies the layer to generate
             intermediate _attribution. When using default value, the input layer
             will be specified. Default: ''.
+
+    Raises:
+        TypeError: Be raised for any argument type problem.
     """
 
     def __init__(self, network, layer=''):
