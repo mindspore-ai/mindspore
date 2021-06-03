@@ -80,7 +80,7 @@ float DataSaver::GetTotalOpTime(const OpInfoMap &op_info_maps) const {
   return sum;
 }
 
-void DataSaver::WriteOpType(const std::string &saver_base_dir) {
+void DataSaver::WriteOpType(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_type_info_" + device_id_ + ".csv";
   std::ofstream ofs(file_path);
   // check if the file is writable
@@ -110,7 +110,7 @@ void DataSaver::WriteOpType(const std::string &saver_base_dir) {
   MS_LOG(INFO) << "Write " << op_type_infos_.size() << " op type infos into file: " << file_path;
 }
 
-void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
+void DataSaver::WriteOpDetail(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_detail_info_" + device_id_ + ".csv";
   std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
@@ -139,7 +139,7 @@ void DataSaver::WriteOpDetail(const std::string &saver_base_dir) {
   MS_LOG(INFO) << "Write " << op_detail_infos_.size() << " op detail infos into file: " << file_path;
 }
 
-void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) {
+void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) const {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_op_execute_timestamp_" + device_id_ + ".txt";
   std::ofstream ofs(file_path);
   // check if the file is writable

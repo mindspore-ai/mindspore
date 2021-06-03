@@ -23,17 +23,6 @@ namespace profiler {
 namespace ascend {
 CallbackManager::CallbackManager(rtStream_t stream) : stream_(stream) {}
 
-Status CallbackManager::Init() {
-  MS_LOG(INFO) << "CallbackManager init, Start to async process event";
-  ret_future_ = std::async([&] { return CallbackProcess(); });
-  if (!ret_future_.valid()) {
-    MS_LOG(ERROR) << "Failed to init callback manager.";
-    return kFail;
-  }
-
-  return kSuccess;
-}
-
 Status CallbackManager::CallbackProcess() {
   std::pair<rtEvent_t, std::pair<rtCallback_t, const void *>> entry;
   while (true) {

@@ -45,13 +45,13 @@ struct OpDetailInfo {
            "cuda_activity_cost_time(us),cuda_activity_call_count";
   }
 
-  void OutputCpuOpDetailInfo(std::ostream &os) {
+  void OutputCpuOpDetailInfo(std::ostream &os) const {
     os << "Host," << op_type_ << ',' << op_name_ << ',' << op_full_name_ << ',' << op_info_->op_count << ','
        << op_info_->op_host_cost_time << ',' << op_avg_time_ << ',' << proportion_ << ",Default," << op_info_->pid
        << std::endl;
   }
 
-  void OutputGpuOpDetailInfo(std::ostream &os) {
+  void OutputGpuOpDetailInfo(std::ostream &os) const {
     os << "Device," << op_type_ << ',' << op_name_ << ',' << op_full_name_ << ',' << op_info_->op_count << ','
        << op_info_->op_host_cost_time << ',' << op_avg_time_ << ',' << proportion_ << ','
        << op_info_->cupti_activity_time << ',' << op_info_->op_kernel_count << std::endl;
@@ -72,12 +72,12 @@ struct OpType {
   }
   std::string GetGpuHeader() const { return "op_type,type_occurrences,total_time(us),total_proportion,avg_time(us)"; }
 
-  void OutputCpuOpTypeInfo(std::ostream &os) {
+  void OutputCpuOpTypeInfo(std::ostream &os) const {
     os << op_type_ << ',' << count_ << ',' << count_ / step_ << ',' << total_time_ << ',' << total_time_ / count_ << ','
        << proportion_ << std::endl;
   }
 
-  void OutputGpuOpTypeInfo(std::ostream &os) {
+  void OutputGpuOpTypeInfo(std::ostream &os) const {
     os << op_type_ << ',' << count_ << ',' << total_time_ << ',' << proportion_ << ',' << avg_time_ << std::endl;
   }
 
@@ -107,11 +107,11 @@ class DataSaver {
 
   float GetTotalOpTime(const OpInfoMap &op_info_maps) const;
 
-  void WriteOpType(const std::string &saver_base_dir);
+  void WriteOpType(const std::string &saver_base_dir) const;
 
-  void WriteOpDetail(const std::string &saver_base_dir);
+  void WriteOpDetail(const std::string &saver_base_dir) const;
 
-  void WriteOpTimestamp(const std::string &saver_base_dir);
+  void WriteOpTimestamp(const std::string &saver_base_dir) const;
 
   void ChangeFileMode(const std::string &file_path) const;
 
