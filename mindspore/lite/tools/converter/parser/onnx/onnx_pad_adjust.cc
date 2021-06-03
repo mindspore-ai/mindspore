@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/onnx/onnx_pad_adjust_pass.h"
+#include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include <string>
 #include <vector>
 #include <algorithm>

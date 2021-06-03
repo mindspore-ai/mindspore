@@ -55,7 +55,7 @@ void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all
   }
 }
 
-int PostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     {
       auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();

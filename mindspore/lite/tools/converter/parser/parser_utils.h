@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace lite {
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
-int PostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
+int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm);
 int TransposeInsertForWeightConst(const FuncGraphPtr &graph, const CNodePtr &conv_node, const CNodePtr &weight_node,

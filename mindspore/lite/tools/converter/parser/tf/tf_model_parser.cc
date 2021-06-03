@@ -558,12 +558,12 @@ FuncGraphPtr TFModelParser::Parse(const converter::Flags &flag) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
 
-  if (PostAdjust(all_func_graphs) != RET_OK) {
+  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     return nullptr;
   }
-  if (TFModelPostAdjust(all_func_graphs) != RET_OK) {
-    MS_LOG(ERROR) << "AdjustForOnnxModel failed.";
+  if (TF2AnfAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "TF2AnfAdjust failed.";
     return nullptr;
   }
   status = WeightFormatTransform(res_graph_);
@@ -1225,7 +1225,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
   return RET_OK;
 }
 
-int TFModelParser::TFModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
     if (!functionalize_control_op_pass->Run(func_graph)) {

@@ -93,12 +93,12 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::Flags &flag) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
 
-  if (PostAdjust(all_func_graphs) != RET_OK) {
+  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     return nullptr;
   }
-  if (TfliteModelPostAdjust(all_func_graphs) != RET_OK) {
-    MS_LOG(ERROR) << "AdjustForOnnxModel failed.";
+  if (Tflite2AnfAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "Tflite2AnfAdjust failed.";
     return nullptr;
   }
   status = WeightFormatTransform(res_graph_);
@@ -618,7 +618,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
   return RET_OK;
 }
 
-int TfliteModelParser::TfliteModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     auto tflite_inputs_adjust = std::make_shared<TfliteInputsAdjust>();
     if (!tflite_inputs_adjust->Run(func_graph)) {

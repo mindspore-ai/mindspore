@@ -27,7 +27,7 @@ namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
 }  // namespace
-STATUS MindsporeImporter::AdjustForMindir(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
+STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
   auto primitive_adjust_pass = std::make_shared<PrimitiveAdjust>();
   primitive_adjust_pass->SetFmkType(flag.fmk);
   if (!primitive_adjust_pass->Run(func_graph)) {
@@ -146,8 +146,8 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
-  if (AdjustForMindir(func_graph, flag) != RET_OK) {
-    MS_LOG(ERROR) << "AdjustForMindir failed.";
+  if (Mindir2AnfAdjust(func_graph, flag) != RET_OK) {
+    MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     return nullptr;
   }
   auto status = WeightFormatTransform(func_graph);

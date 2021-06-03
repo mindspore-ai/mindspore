@@ -97,7 +97,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::Flags &flag) {
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
-  if (PostAdjust(all_func_graphs) != RET_OK) {
+  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     return nullptr;
   }

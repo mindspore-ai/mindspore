@@ -42,7 +42,7 @@ class TFModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const converter::Flags &flag) override;
 
-  int TFModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
+  int TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
   static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, tensor::TensorPtr *tensor_info);

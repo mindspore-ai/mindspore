@@ -31,8 +31,8 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/parser/onnx/onnx_inputs_adjust_pass.h"
-#include "tools/converter/parser/onnx/onnx_pad_adjust_pass.h"
+#include "tools/converter/parser/onnx/onnx_inputs_adjust.h"
+#include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "ops/transpose.h"
 
@@ -79,12 +79,12 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::Flags &flag) {
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(res_graph_, &all_func_graphs);
-  if (PostAdjust(all_func_graphs) != RET_OK) {
+  if (CommonAnfAdjust(all_func_graphs) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     return nullptr;
   }
-  if (OnnxModelPostAdjust(all_func_graphs) != RET_OK) {
-    MS_LOG(ERROR) << "OnnxModelPostAdjust failed.";
+  if (Onnx2AnfAdjust(all_func_graphs) != RET_OK) {
+    MS_LOG(ERROR) << "Onnx2AnfAdjust failed.";
     return nullptr;
   }
   status = WeightFormatTransform(all_func_graphs);
@@ -1332,7 +1332,7 @@ TypeId OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type
   return iter->second;
 }
 
-int OnnxModelParser::OnnxModelPostAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int OnnxModelParser::Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     auto onnx_adjust = std::make_shared<OnnxInputAdjust>();
     if (!onnx_adjust->Run(func_graph)) {
