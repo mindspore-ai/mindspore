@@ -24,6 +24,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_CustomPredict;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int INPUT_INDEX = 0;
+constexpr int KEY_INDEX = 1;
+constexpr int LABEL_INDEX = 2;
+constexpr int WEIGHT_INDEX = 3;
+}  // namespace
 int PredictCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -35,10 +41,10 @@ int PredictCPUKernel::ReSize() { return RET_OK; }
 
 std::vector<LabelInfo> PredictCPUKernel::GetLabelInfo() {
   std::vector<LabelInfo> label_info_vec;
-  auto input_tensor = in_tensors_.at(0);
-  auto keys_tensor = in_tensors_.at(1);
-  auto labels_tensor = in_tensors_.at(2);
-  auto weights_tensor = in_tensors_.at(3);
+  auto input_tensor = in_tensors_.at(INPUT_INDEX);
+  auto keys_tensor = in_tensors_.at(KEY_INDEX);
+  auto labels_tensor = in_tensors_.at(LABEL_INDEX);
+  auto weights_tensor = in_tensors_.at(WEIGHT_INDEX);
 
   int32_t *input = reinterpret_cast<int32_t *>(input_tensor->MutableData());
   int32_t *key_begin = reinterpret_cast<int32_t *>(keys_tensor->MutableData());

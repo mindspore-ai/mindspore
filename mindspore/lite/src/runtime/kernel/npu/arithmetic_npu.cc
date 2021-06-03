@@ -44,6 +44,10 @@ using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int RELU_MODE = 1;
+constexpr int RELU6_MODE = 14;
+}  // namespace
 int ArithmeticNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
   if (inputs[0]->shape() != inputs[1]->shape()) {
@@ -84,9 +88,9 @@ int ArithmeticNPUKernel::SetActivation() {
     }
     act_->set_input_x(*op_);
     if (activation_type_ == ActivationType_RELU) {
-      act_->set_attr_mode(1);
+      act_->set_attr_mode(RELU_MODE);
     } else if (activation_type_ == ActivationType_RELU6) {
-      act_->set_attr_mode(14);
+      act_->set_attr_mode(RELU6_MODE);
     } else {
       MS_LOG(ERROR) << "Unsupported activation type for op " << name_;
       return RET_ERROR;

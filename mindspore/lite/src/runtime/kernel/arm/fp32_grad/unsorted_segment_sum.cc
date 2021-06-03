@@ -30,7 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_UnsortedSegmentSum;
 
 namespace mindspore::kernel {
-
 int UnsortedSegmentSumCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAddGrad;
 
 namespace mindspore::kernel {
-
 int BiasGradCPUKernel::ReSize() {
   auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
@@ -37,7 +36,7 @@ int BiasGradCPUKernel::ReSize() {
     bias_param->out_shape_[i] = 1;  // 1 dimension for N,H,W,
   }
   bias_param->out_shape_[bias_param->ndim_ - 1] = dims[bias_param->ndim_ - 1];
-  for (auto i = bias_param->ndim_; i < 4; i++) {
+  for (auto i = bias_param->ndim_; i < DIMENSION_4D; i++) {
     bias_param->in_shape0_[i] = 0;
     bias_param->out_shape_[i] = 0;
   }

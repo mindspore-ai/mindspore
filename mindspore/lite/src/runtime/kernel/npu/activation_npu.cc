@@ -43,6 +43,26 @@ int ActivationNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     return RET_ERROR;
   }
   act_->set_input_x(*npu_inputs[0]);
+  /*
+   *    mode  : Activation mode, with options as follows:
+   *           0 : Sigmoid
+   *           1 : ReLU
+   *           2 : Tanh
+   *           3 : Clipped ReLU
+   *           4 : ELU
+   *           5 : PReLU
+   *           6 : Abs
+   *           7 : Relu1
+   *           8 : Softsign
+   *           9 : Softplus
+   *           10 : Hardsigmoid
+   *           11 : Threshold ReLU
+   *           12 : Selu
+   *           13 : Linear
+   *           14 : Relu6
+   *           15 : GeLU.
+   *           Defaults to 1 (ReLU). 1.
+   */
   switch (act_param_->type_) {
     case schema::ActivationType_SIGMOID:
       act_->set_attr_mode(0);

@@ -22,5 +22,4 @@
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-
 }  // namespace mindspore::kernel

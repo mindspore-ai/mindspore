@@ -77,8 +77,8 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
-  int k_h = conv_param->kernel_h_;  // out_dw->shape()[1];
-  int k_w = conv_param->kernel_w_;  // out_dw->shape()[2];
+  int k_h = conv_param->kernel_h_;
+  int k_w = conv_param->kernel_w_;
   int batch = conv_param->output_batch_;
   int out_ch = conv_param->output_channel_;
   int groups = conv_param->group_;

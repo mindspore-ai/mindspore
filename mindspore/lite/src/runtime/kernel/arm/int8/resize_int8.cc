@@ -33,6 +33,9 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::KernelRegistrar;
 
 namespace mindspore::kernel {
+namespace {
+constexpr unsigned int OFFSET_BASE = 10;
+}  // namespace
 void ResizeInt8CPUKernel::FreeResizeBiLinear() {
   free(resize_quant_arg_.x_axis_index_);
   free(resize_quant_arg_.x_axis_lower_);
@@ -96,32 +99,32 @@ int ResizeInt8CPUKernel::Init() {
 
 int ResizeInt8CPUKernel::InitResizeQuantArg() {
   auto out_shape = out_tensors_.front()->shape();
-  resize_quant_arg_.x_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_W) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc x axis index array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_W) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_W) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_upper_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_H) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_index_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_H) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(kNHWC_H) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_upper_ array failed.";
     return RET_ERROR;
@@ -136,14 +139,14 @@ int ResizeInt8CPUKernel::CalRatio() {
   auto out_tensor = out_tensors_.front();
   auto out_width = out_tensor->Width();
   auto out_height = out_tensor->Height();
-  resize_quant_arg_.ratio_x_ = ((1 << 10) * in_width + out_width / 2) / out_width;
-  resize_quant_arg_.ratio_y_ = ((1 << 10) * in_height + out_height / 2) / out_height;
+  resize_quant_arg_.ratio_x_ = ((1 << OFFSET_BASE) * in_width + out_width / 2) / out_width;
+  resize_quant_arg_.ratio_y_ = ((1 << OFFSET_BASE) * in_height + out_height / 2) / out_height;
   bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
   if (align_corners && out_width > 1) {
-    resize_quant_arg_.ratio_x_ = ((1 << 10) * (in_width - 1) + (out_width - 1) / 2) / (out_width - 1);
+    resize_quant_arg_.ratio_x_ = ((1 << OFFSET_BASE) * (in_width - 1) + (out_width - 1) / 2) / (out_width - 1);
   }
   if (align_corners && out_height > 1) {
-    resize_quant_arg_.ratio_y_ = ((1 << 10) * (in_height - 1) + (out_height - 1) / 2) / (out_height - 1);
+    resize_quant_arg_.ratio_y_ = ((1 << OFFSET_BASE) * (in_height - 1) + (out_height - 1) / 2) / (out_height - 1);
   }
   return RET_OK;
 }
@@ -152,46 +155,48 @@ int ResizeInt8CPUKernel::CalInterpolationRange() {
   for (int i = 0; i < out_tensors_.front()->Height(); ++i) {
     int32_t scaled_index = i * resize_quant_arg_.ratio_y_;
     resize_quant_arg_.y_axis_index_[i] = scaled_index;
-    resize_quant_arg_.y_axis_lower_[i] = std::max(scaled_index / (1 << 10), 0);
-    resize_quant_arg_.y_axis_upper_[i] = std::min(scaled_index / (1 << 10) + 1, in_tensors_.front()->Height() - 1);
+    resize_quant_arg_.y_axis_lower_[i] = std::max(scaled_index / (1 << OFFSET_BASE), 0);
+    resize_quant_arg_.y_axis_upper_[i] =
+      std::min(scaled_index / (1 << OFFSET_BASE) + 1, in_tensors_.front()->Height() - 1);
   }
   for (int i = 0; i < out_tensors_.front()->Width(); ++i) {
     int32_t scaled_index = i * resize_quant_arg_.ratio_x_;
     resize_quant_arg_.x_axis_index_[i] = scaled_index;
-    resize_quant_arg_.x_axis_lower_[i] = std::max(scaled_index / (1 << 10), 0);
-    resize_quant_arg_.x_axis_upper_[i] = std::min(scaled_index / (1 << 10) + 1, in_tensors_.front()->Width() - 1);
+    resize_quant_arg_.x_axis_lower_[i] = std::max(scaled_index / (1 << OFFSET_BASE), 0);
+    resize_quant_arg_.x_axis_upper_[i] =
+      std::min(scaled_index / (1 << OFFSET_BASE) + 1, in_tensors_.front()->Width() - 1);
   }
   return RET_OK;
 }
 
 int ResizeInt8CPUKernel::InitResizeFloatQuantArg() {
   auto out_shape = out_tensors_.front()->shape();
-  resize_float_quant_arg_.x_axis_index_ = reinterpret_cast<float *>(malloc(out_shape[2] * sizeof(float)));
+  resize_float_quant_arg_.x_axis_index_ = reinterpret_cast<float *>(malloc(out_shape[kNHWC_W] * sizeof(float)));
   if (resize_float_quant_arg_.x_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc x axis index array failed.";
     return RET_ERROR;
   }
-  resize_float_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[2] * sizeof(int32_t)));
+  resize_float_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[kNHWC_W] * sizeof(int32_t)));
   if (resize_float_quant_arg_.x_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_float_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[2] * sizeof(int32_t)));
+  resize_float_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[kNHWC_W] * sizeof(int32_t)));
   if (resize_float_quant_arg_.x_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_upper_ array failed.";
     return RET_ERROR;
   }
-  resize_float_quant_arg_.y_axis_index_ = reinterpret_cast<float *>(malloc(out_shape[1] * sizeof(float)));
+  resize_float_quant_arg_.y_axis_index_ = reinterpret_cast<float *>(malloc(out_shape[kNHWC_H] * sizeof(float)));
   if (resize_float_quant_arg_.y_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_index_ array failed.";
     return RET_ERROR;
   }
-  resize_float_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[1] * sizeof(int32_t)));
+  resize_float_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[kNHWC_H] * sizeof(int32_t)));
   if (resize_float_quant_arg_.y_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_float_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[1] * sizeof(int32_t)));
+  resize_float_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[kNHWC_H] * sizeof(int32_t)));
   if (resize_float_quant_arg_.y_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_upper_ array failed.";
     return RET_ERROR;

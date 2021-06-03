@@ -80,15 +80,15 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
 void TransposeInt8CPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor,
                                                   TransposeParameter *param) {
   auto out_shape = out_tensor->shape();
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
-      param->perm_[3] == 1) {
+  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[0] == 0 && param->perm_[1] == 2 &&
+      param->perm_[2] == 3 && param->perm_[3] == 1) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[1] * out_shape[2];
     nhnc_param_[2] = out_shape[3];
     NHNCTransposeFunc_ = PackNCHWToNHWCInt8;
   }
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
-      param->perm_[3] == 2) {
+  if (in_tensor->shape().size() == DIMENSION_4D && param->perm_[0] == 0 && param->perm_[1] == 3 &&
+      param->perm_[2] == 1 && param->perm_[3] == 2) {
     nhnc_param_[0] = out_shape[0];
     nhnc_param_[1] = out_shape[2] * out_shape[3];
     nhnc_param_[2] = out_shape[1];

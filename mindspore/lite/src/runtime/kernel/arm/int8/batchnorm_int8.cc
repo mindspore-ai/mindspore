@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/batchnorm_int8.h"
-#include <math.h>
+#include <cmath>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

@@ -29,10 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SGD;
 
 namespace mindspore::kernel {
-
 int SgdCPUKernel::ReSize() { return RET_OK; }
 
-int DoSgd(float *weight, float *accumulate, float *gradient, float learning_rate, float dampening, float moment,
+int DoSgd(float *weight, float *accumulate, const float *gradient, float learning_rate, float dampening, float moment,
           bool nesterov, int start, int end) {
   if (moment > 0.f) {
     if (nesterov) {
@@ -54,8 +53,8 @@ int DoSgd(float *weight, float *accumulate, float *gradient, float learning_rate
   return RET_OK;
 }
 
-int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, float learning_rate, float dampening,
-              float moment, bool nesterov, int start, int end) {
+int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, float learning_rate, float moment,
+              bool nesterov, int start, int end) {
   std::copy(&(gradient[start]), &(gradient[end]), &(accumulate[start]));
   if (nesterov) {
     for (int i = start; i < end; ++i) {
@@ -106,8 +105,7 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
   int end = start + count;
 
   if (count > 0) {
-    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, sgd_param_->dampening_, moment,
-              sgd_param_->use_nesterov_, start, end);
+    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
   }
   return RET_OK;
 }
@@ -192,8 +190,7 @@ int SgdCPUKernel::OptimizerStep() {
       DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
             start, end);
     } else {
-      DoSgdInit(weight, accumulate, grad_sum_, stat, learning_rate, sgd_param_->dampening_, moment,
-                sgd_param_->use_nesterov_, start, end);
+      DoSgdInit(weight, accumulate, grad_sum_, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
     }
     std::fill(grad_sum_, grad_sum_ + length, 0);
     OptimizerKernel::OptimizerStep();

@@ -23,6 +23,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kConvDepthwise3x3BufferSize = 64 * 10 * 10;
+constexpr int kChannelUnit = 8;
+}  // namespace
 ConvolutionDepthwise3x3Int8CPUKernel::~ConvolutionDepthwise3x3Int8CPUKernel() {
   if (sliding_ != nullptr) {
     delete sliding_;
@@ -40,7 +44,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
-  if (channel % 8 != 0) {
+  if (channel % kChannelUnit != 0) {
     MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8CPUKernel doesn't support channel " << channel;
     return RET_ERROR;
   }
@@ -63,8 +67,8 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   if (filter_per_channel) {
     for (int i = 0; i < weight_tensor->Height() * weight_tensor->Width(); i++) {
       for (int c = 0; c < channel; c++) {
-        int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[c].zp_;
-        packed_weight_[i * channel + c] = (int16_t)(tmp_weight[i * channel + c] - weight_zp);
+        int per_channel_weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[c].zp_;
+        packed_weight_[i * channel + c] = (int16_t)(tmp_weight[i * channel + c] - per_channel_weight_zp);
       }
     }
   } else {
@@ -119,7 +123,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::Execute(int task_id) {
-  auto buffer = buffer_ + 64 * 10 * 10 * task_id;
+  auto buffer = buffer_ + kConvDepthwise3x3BufferSize * task_id;
   ConvDw3x3Int8(output_ptr_, buffer, input_ptr_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), conv_param_,
                 sliding_, task_id);
   return RET_OK;
@@ -136,7 +140,7 @@ int ConvDw3x3Int8Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::InitBuffer() {
-  int buffer_size = 64 * 10 * 10 * conv_param_->thread_num_;
+  int buffer_size = kConvDepthwise3x3BufferSize * conv_param_->thread_num_;
   buffer_ = reinterpret_cast<int8_t *>(context_->allocator->Malloc(buffer_size * sizeof(int8_t)));
   if (buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
