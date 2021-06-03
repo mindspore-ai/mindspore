@@ -203,12 +203,6 @@ class BeamSearchDecoder(nn.Cell):
         # select topk
         topk_scores, topk_indices = self.topk(flat_scores, self.beam_width)
 
-        # convert to beam and word indices
-        #beam_indices = self.floor_div(topk_indices, self.vocab_size_tensor)
-        #word_indices = self.mod(topk_indices, self.vocab_size_tensor)
-        #======================================================================
-        #replace floor_div and mod op, since these two ops only support fp16 on
-        #Ascend310, which will cause overflow.
         temp = topk_indices
         beam_indices = self.zeroslike(topk_indices)
         for _ in range(self.beam_width - 1):

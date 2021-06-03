@@ -14,54 +14,34 @@
 # ============================================================================
 """Gradient clip."""
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 5.0
 
+clip_grad = C.MultitypeFuncGraph("clip_grad")
 
-class ClipGradients(nn.Cell):
+
+@clip_grad.register("Number", "Number", "Tensor")
+def _clip_grad(clip_type, clip_value, grad):
     """
     Clip gradients.
 
-    Returns:
-        List, a list of clipped_grad tuples.
+    Inputs:
+        clip_type (int): The way to clip, 0 for 'value', 1 for 'norm'.
+        clip_value (float): Specifies how much to clip.
+        grad (tuple[Tensor]): Gradients.
+
+    Outputs:
+        tuple[Tensor], clipped gradients.
     """
-
-    def __init__(self):
-        super(ClipGradients, self).__init__()
-        self.clip_by_norm = nn.ClipByNorm()
-        self.cast = P.Cast()
-        self.dtype = P.DType()
-
-    def construct(self,
-                  grads,
-                  clip_type,
-                  clip_value):
-        """
-        Construct gradient clip network.
-
-        Args:
-            grads (list): List of gradient tuples.
-            clip_type (Tensor): The way to clip, 'value' or 'norm'.
-            clip_value (Tensor): Specifies how much to clip.
-
-        Returns:
-            List, a list of clipped_grad tuples.
-        """
-        if clip_type not in (0, 1):
-            return grads
-
-        new_grads = ()
-        for grad in grads:
-            dt = self.dtype(grad)
-            if clip_type == 0:
-                t = C.clip_by_value(grad, self.cast(F.tuple_to_array((-clip_value,)), dt),
-                                    self.cast(F.tuple_to_array((clip_value,)), dt))
-            else:
-                t = self.clip_by_norm(grad, self.cast(F.tuple_to_array((clip_value,)), dt))
-            new_grads = new_grads + (t,)
-
-        return new_grads
+    if clip_type not in (0, 1):
+        return grad
+    dt = F.dtype(grad)
+    if clip_type == 0:
+        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+    else:
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+    return new_grad
