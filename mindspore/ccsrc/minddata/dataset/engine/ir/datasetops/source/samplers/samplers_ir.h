@@ -65,7 +65,7 @@ class SamplerObj {
   /// \return the Status code returned
   Status AddChildSampler(std::shared_ptr<SamplerObj> child);
 
-  virtual Status to_json(nlohmann::json *const out_json) { return Status::OK(); }
+  virtual Status to_json(nlohmann::json *const out_json);
 
   std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
 

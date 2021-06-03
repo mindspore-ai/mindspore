@@ -46,7 +46,7 @@ std::shared_ptr<DatasetNode> CelebANode::Copy() {
 }
 
 void CelebANode::Print(std::ostream &out) const {
-  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+  out << (Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")");
 }
 
 Status CelebANode::ValidateParams() {

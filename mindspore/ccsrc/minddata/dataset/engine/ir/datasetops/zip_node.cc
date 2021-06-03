@@ -42,8 +42,9 @@ std::shared_ptr<DatasetNode> ZipNode::Copy() {
 void ZipNode::Print(std::ostream &out) const { out << Name(); }
 
 Status ZipNode::ValidateParams() {
+  constexpr size_t kMinChildrenSize = 2;
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (children_.size() < 2) {
+  if (children_.size() < kMinChildrenSize) {
     std::string err_msg = "ZipNode: input datasets are not specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

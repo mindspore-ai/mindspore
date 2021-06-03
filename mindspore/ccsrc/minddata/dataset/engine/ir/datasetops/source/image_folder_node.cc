@@ -49,7 +49,7 @@ std::shared_ptr<DatasetNode> ImageFolderNode::Copy() {
 }
 
 void ImageFolderNode::Print(std::ostream &out) const {
-  out << Name() + "(path:" + dataset_dir_ + ",decode:" + (decode_ ? "true" : "false") + ",...)";
+  out << (Name() + "(path:" + dataset_dir_ + ",decode:" + (decode_ ? "true" : "false") + ",...)");
 }
 
 Status ImageFolderNode::ValidateParams() {

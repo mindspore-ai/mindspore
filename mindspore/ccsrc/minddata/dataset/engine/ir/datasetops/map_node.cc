@@ -50,8 +50,8 @@ std::shared_ptr<DatasetNode> MapNode::Copy() {
 }
 
 void MapNode::Print(std::ostream &out) const {
-  out << Name() + "(<ops>" + ",input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) +
-           ",<project_cols>" + ",num_tensor_ops:"
+  out << (Name() + "(<ops>" + ",input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) +
+          ",<project_cols>" + ",num_tensor_ops:")
       << operations_.size() << ",...)";
 }
 

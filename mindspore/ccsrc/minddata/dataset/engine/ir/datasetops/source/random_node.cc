@@ -39,7 +39,9 @@ std::shared_ptr<DatasetNode> RandomNode::Copy() {
   return node;
 }
 
-void RandomNode::Print(std::ostream &out) const { out << Name() + "(num_row:" + std::to_string(total_rows_) + ",...)"; }
+void RandomNode::Print(std::ostream &out) const {
+  out << (Name() + "(num_row:" + std::to_string(total_rows_) + ",...)");
+}
 
 // ValidateParams for RandomNode
 Status RandomNode::ValidateParams() {
@@ -129,8 +131,7 @@ Status RandomNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows;
-  num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
+  int64_t num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
   *dataset_size = num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();

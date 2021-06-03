@@ -37,7 +37,7 @@ std::shared_ptr<DatasetNode> ProjectNode::Copy() {
   return node;
 }
 
-void ProjectNode::Print(std::ostream &out) const { out << Name() + "(column: " + PrintColumns(columns_) + ")"; }
+void ProjectNode::Print(std::ostream &out) const { out << (Name() + "(column: " + PrintColumns(columns_) + ")"); }
 
 Status ProjectNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());

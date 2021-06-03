@@ -95,21 +95,13 @@ std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDa
 
 Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SamplerObj::to_json(&args));
   args["sampler_name"] = "DistributedSampler";
   args["num_shards"] = num_shards_;
   args["shard_id"] = shard_id_;
   args["shuffle"] = shuffle_;
-  args["num_samples"] = num_samples_;
   args["offset"] = offset_;
-  if (!children_.empty()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : children_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
+  args["num_samples"] = num_samples_;
   *out_json = args;
   return Status::OK();
 }
