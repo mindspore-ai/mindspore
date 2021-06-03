@@ -32,9 +32,9 @@ class Robustness(LabelSensitiveMetric):
     Args:
         num_labels (int): Number of classes in the dataset.
         activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
-            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
-            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
-            when combining this function with network, the final output is the probability of the input.
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
+            tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
+            as when combining this function with network, the final output is the probability of the input.
     """
 
     def __init__(self, num_labels, activation_fn):
@@ -95,14 +95,13 @@ class Robustness(LabelSensitiveMetric):
         if inputs.shape[0] > 1:
             raise ValueError('Robustness only support a sample each time, but receive {}'.format(inputs.shape[0]))
 
-        inputs_np = inputs.asnumpy()
         if isinstance(targets, int):
             targets = ms.Tensor([targets], ms.int32)
         if saliency is None:
             saliency = explainer(inputs, targets)
-        saliency_np = saliency.asnumpy()
+        saliency = saliency.asnumpy()
 
-        norm = np.sqrt(np.sum(np.square(saliency_np), axis=tuple(range(1, len(saliency_np.shape)))))
+        norm = np.sqrt(np.sum(np.square(saliency), axis=tuple(range(1, len(saliency.shape)))))
         if (norm == 0).any():
             log.warning('Get saliency norm equals 0, robustness return NaN for zero-norm saliency currently.')
             norm[norm == 0] = np.nan
@@ -110,22 +109,22 @@ class Robustness(LabelSensitiveMetric):
         full_network = nn.SequentialCell([explainer.network, self._activation_fn])
         original_outputs = full_network(inputs).asnumpy()
         sensitivities = []
+        inputs = inputs.asnumpy()
         for _ in range(self._num_perturbations):
             perturbations = []
-            for j, sample in enumerate(inputs_np):
+            for j, sample in enumerate(inputs):
                 perturbation_on_single_sample = self._perturb_with_threshold(full_network,
                                                                              np.expand_dims(sample, axis=0),
                                                                              original_outputs[j])
                 perturbations.append(perturbation_on_single_sample)
             perturbations = np.vstack(perturbations)
-            perturbations_saliency = explainer(ms.Tensor(perturbations, ms.float32), targets).asnumpy()
-            sensitivity = np.sqrt(np.sum((perturbations_saliency - saliency_np) ** 2,
-                                         axis=tuple(range(1, len(saliency_np.shape)))))
+            perturbations = explainer(ms.Tensor(perturbations, ms.float32), targets).asnumpy()
+            sensitivity = np.sqrt(np.sum((perturbations - saliency) ** 2,
+                                         axis=tuple(range(1, len(saliency.shape)))))
             sensitivities.append(sensitivity)
         sensitivities = np.stack(sensitivities, axis=-1)
-        max_sensitivity = np.max(sensitivities, axis=1) / norm
-        robustness_res = 1 / np.exp(max_sensitivity)
-        return robustness_res
+        sensitivity = np.max(sensitivities, axis=1) / norm
+        return 1 / np.exp(sensitivity)
 
     def _perturb_with_threshold(self, network: nn.Cell, sample: np.ndarray, original_output: np.ndarray) -> np.ndarray:
         """

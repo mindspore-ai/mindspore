@@ -149,8 +149,7 @@ class Localization(LabelSensitiveMetric):
             result = 1 if (mask_np.astype(bool) & max_region).any() else 0
 
         elif self._metric == "IoSR":
-            mask_out = _mask_out_saliency(saliency, self._metric_arg)
-            mask_out_np = format_tensor_to_ndarray(mask_out)
+            mask_out_np = format_tensor_to_ndarray(_mask_out_saliency(saliency, self._metric_arg))
             overlap = np.sum(mask_np.astype(bool) & mask_out_np.astype(bool))
             saliency_area = np.sum(mask_out_np)
             result = overlap / saliency_area.clip(min=1e-10)

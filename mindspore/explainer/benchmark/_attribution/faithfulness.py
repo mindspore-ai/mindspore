@@ -350,18 +350,18 @@ class Faithfulness(LabelSensitiveMetric):
     drop curve can be obtained. "DeletionAUC" is then obtained as the area under this probability drop curve.
 
     For metric "InsertionAUC", a series of perturbed images are created by accumulatively inserting pixels of the
-    original image to a reference image (e.g. a black image). The insertion starts from pixels with high saliency values
-    to pixels with low saliency values. Feeding the perturbed images into the model in order, an output probability
-    increase curve can be obtained. "InsertionAUC" is then obtained as the area under this curve.
+    original image to a reference image (e.g. a black image). The insertion starts from pixels with high saliency
+    values to pixels with low saliency values. Feeding the perturbed images into the model in order, an output
+    probability increase curve can be obtained. "InsertionAUC" is then obtained as the area under this curve.
 
     For all the three metrics, higher value indicates better faithfulness.
 
     Args:
         num_labels (int): Number of labels.
         activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
-            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
-            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
-            when combining this function with network, the final output is the probability of the input.
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification
+            tasks, `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long
+            as when combining this function with network, the final output is the probability of the input.
         metric (str, optional): The specifi metric to quantify faithfulness.
             Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
