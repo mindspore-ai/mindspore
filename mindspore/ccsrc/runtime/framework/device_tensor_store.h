@@ -90,6 +90,8 @@ class DeviceTensorStore {
     return nullptr;
   }
 
+  void Clear() { device_tensors_.clear(); }
+
  private:
   DeviceTensorStore() = default;
   ~DeviceTensorStore() = default;

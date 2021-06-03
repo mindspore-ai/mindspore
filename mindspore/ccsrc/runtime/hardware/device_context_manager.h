@@ -48,7 +48,6 @@ class DeviceContextManager {
   std::map<std::string, DeviceContextPtr> device_contexts_;
   // The name of device -> DeviceContextCreator.
   std::map<std::string, DeviceContextCreator> device_context_creators_;
-  std::mutex lock_;
 };
 
 class DeviceContextRegister {

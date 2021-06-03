@@ -51,9 +51,12 @@
 #include "ps/ps_context.h"
 #include "abstract/abstract_value.h"
 #endif
+#include "backend/session/session_factory.h"
 
 namespace mindspore {
 namespace session {
+MS_REG_SESSION(kSessionBasic, SessionBasic);
+
 namespace {
 const int kSummaryGetItem = 2;
 const size_t max_depth = 128;
@@ -1164,7 +1167,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   }
   // add a make_tuple at the end of graph as output
   graph->set_output(ConstructOutput(outputs, graph));
-  MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});
   if (manager) {
     manager->AddFuncGraph(graph);

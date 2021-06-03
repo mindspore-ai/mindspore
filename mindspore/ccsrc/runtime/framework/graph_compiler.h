@@ -24,36 +24,32 @@
 #include <map>
 #include "runtime/hardware/device_context.h"
 #include "backend/session/session_basic.h"
+#include "backend/session/session_factory.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
 using device::DeviceContext;
-using mindspore::tensor::TensorPtr;
 using session::CallBackFunc;
 using session::InputTensorInfo;
+using session::KernelGraph;
 using session::KernelWithIndex;
 using session::OpRunInfo;
+using tensor::TensorPtr;
 
 namespace runtime {
 class GraphCompiler {
  public:
-  static GraphCompiler &GetInstance() {
-    static GraphCompiler instance;
-    return instance;
-  }
-
-  // Set device context which is initialized, the function must be called
-  // before using GraphCompiler and after changing device type or device id.
-  void set_device_context(DeviceContext *device_context);
+  GraphCompiler() { session_ = session::SessionFactory::Get().Create(kSessionBasic); }
+  ~GraphCompiler() = default;
 
   // Construct kernel graph from anf nodes list and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
-  GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs);
+  GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs, const DeviceContext *device_context);
 
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
   GraphId CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
                        const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *input_tensors,
-                       bool *single_op_cache_hit);
+                       bool *single_op_cache_hit, const DeviceContext *device_context);
 
   // Get graph by graph id, if not exist return nullptr, used in Graph mode.
   KernelGraphPtr Fetch(GraphId graph_id) const;
@@ -101,25 +97,23 @@ class GraphCompiler {
   void Summary(const std::vector<KernelGraphPtr> &graphs) const;
 
  private:
-  GraphCompiler() = default;
-  ~GraphCompiler() = default;
   DISABLE_COPY_AND_ASSIGN(GraphCompiler);
 
   // The implementation of compiling graph in Graph Mode, including optimizing graph,
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
-  GraphId CompileGraphImpl(const KernelGraphPtr &graph) const;
+  GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Create device address for all anf nodes of graph.
-  void CreateDeviceAddress(const KernelGraphPtr &graph) const;
-
-  DeviceContext *device_context_{nullptr};
+  void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Single op kernel graph cache for PyNative mode.
   std::unordered_map<GraphInfo, KernelGraphPtr> run_op_graphs_;
 
   // The member variable 'session_' will be removed after removing session module.
-  session::SessionPtr session_{nullptr};
+  // Now all the GraphCompiler share the same 'session_'.
+  session::SessionPtr session_;
 };
+
 }  // namespace runtime
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_GRAPH_COMPILER_H_

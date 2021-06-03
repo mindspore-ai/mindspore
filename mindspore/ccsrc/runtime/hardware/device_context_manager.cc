@@ -25,7 +25,6 @@ void DeviceContextManager::Register(const std::string &device_name, DeviceContex
 }
 
 void DeviceContextManager::ClearDeviceContexts() {
-  std::lock_guard<std::mutex> guard(lock_);
   for (auto &iter : device_contexts_) {
     MS_LOG(INFO) << "Release device " << iter.first;
     MS_EXCEPTION_IF_NULL(iter.second);
@@ -36,7 +35,6 @@ void DeviceContextManager::ClearDeviceContexts() {
 
 DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
   std::string device_context_key_str = device_context_key.ToString();
-  std::lock_guard<std::mutex> guard(lock_);
 
   auto device_context_iter = device_contexts_.find(device_context_key_str);
   if (device_context_iter != device_contexts_.end()) {

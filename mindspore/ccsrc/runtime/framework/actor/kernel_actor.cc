@@ -297,19 +297,19 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *context) const {
     Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
   }
 
+  // Send graph output result.
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
+          result_arrow->to_input_index_, context);
+  }
+
   // Send output control.
   if (output_control_arrows_.size() > 0) {
     auto source_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
       Async(output_control, &OpActor::RunOpControl, source_aid, context);
     }
-  }
-
-  // Send graph output result.
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
   }
 
   // Send recorder info.
