@@ -29,7 +29,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
-
 int ReshapeInt8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();

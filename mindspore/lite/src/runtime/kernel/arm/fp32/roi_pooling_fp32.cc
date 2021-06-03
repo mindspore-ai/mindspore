@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ROIPooling;
 
 namespace mindspore::kernel {
-
 int ROIPoolingCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

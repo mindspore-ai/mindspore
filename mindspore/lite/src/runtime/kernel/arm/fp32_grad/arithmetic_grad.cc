@@ -28,7 +28,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-
 int ArithmeticGradCPUKernel::Init() {
   auto dx1 = out_tensors_[0];
   auto dx2 = out_tensors_[1];
@@ -239,7 +238,7 @@ kernel::LiteKernel *CpuArithmeticGradFp32KernelCreator(const std::vector<lite::T
                                                        const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::InnerContext *ctx,
                                                        const kernel::KernelKey &desc) {
-  MS_ASSERT(nullptr != opParameter);
+  MS_ASSERT(opParameter != nullptr);
   if (opParameter == nullptr) {
     return nullptr;
   }

@@ -25,7 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SmoothL1LossGrad;
 
 namespace mindspore::kernel {
-
 int SmoothL1LossGradCPUKernel::ReSize() { return RET_OK; }
 
 int SmoothL1LossGradCPUKernel::Execute(int task_id) {

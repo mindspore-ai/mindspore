@@ -22,14 +22,18 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t WITH_AXES_SIZE = 3;
+constexpr int AXIS_INDEX = 2;
+}  // namespace
 int GatherNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
   if (inputs[1]->data_type() != kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
     return RET_ERROR;
   }
-  if (inputs.size() >= 3 && inputs[2]->ElementsNum() == 1) {
-    axis_ = static_cast<int *>(inputs[2]->data_c())[0];
+  if (inputs.size() >= WITH_AXES_SIZE && inputs[AXIS_INDEX]->ElementsNum() == 1) {
+    axis_ = static_cast<int *>(inputs[AXIS_INDEX]->data_c())[0];
   } else {
     MS_LOG(WARNING) << "NPU axis is attribute.";
     return RET_ERROR;

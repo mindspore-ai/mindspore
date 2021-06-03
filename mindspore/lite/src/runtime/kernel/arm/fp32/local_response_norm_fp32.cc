@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LRN;
 
 namespace mindspore::kernel {
-
 int LocalResponseNormCPUKernel::Init() { return RET_OK; }
 
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }

@@ -238,7 +238,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, size * sizeof(int32_t));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(int32_t));
   }
 
@@ -270,7 +270,7 @@ int Convolution1x1Int8CPUKernel::InitWeightBiasArm32() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, col2 * sizeof(int32_t));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     memcpy(bias_data_, in_tensors_.at(kBiasIndex)->data_c(), output_channel * sizeof(int32_t));
   }
 

@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ResizeGrad;
 
 namespace mindspore::kernel {
-
 float Scaling(size_t in_size, size_t out_size, bool align_corners) {
   return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
                                          : in_size / static_cast<float>(out_size);

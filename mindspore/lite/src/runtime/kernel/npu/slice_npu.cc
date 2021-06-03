@@ -22,6 +22,11 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int INPUT_INDEX = 0;
+constexpr int OFFSET_INDEX = 1;
+constexpr int SIZE_INDEX = 2;
+}  // namespace
 int SliceNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *opParameter) {
   return RET_OK;
@@ -34,9 +39,9 @@ int SliceNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_offsets(*npu_inputs[1]);
-  op_->set_input_size(*npu_inputs[2]);
+  op_->set_input_x(*npu_inputs[INPUT_INDEX]);
+  op_->set_input_offsets(*npu_inputs[OFFSET_INDEX]);
+  op_->set_input_size(*npu_inputs[SIZE_INDEX]);
 
   return RET_OK;
 }

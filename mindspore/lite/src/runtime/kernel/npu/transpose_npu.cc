@@ -22,13 +22,17 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t TRANSPOSE_INPUT_SIZE = 2;
+
+}  // namespace
 int TransposeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                   OpParameter *opParameter) {
   if (conjugate_) {
     MS_LOG(ERROR) << "Unsupported conjugate transpose.";
     return RET_ERROR;
   }
-  if (inputs.size() >= 2 && inputs[1]->data_c() != nullptr) {
+  if (inputs.size() == TRANSPOSE_INPUT_SIZE && inputs[1]->data_c() != nullptr) {
     for (int i = 0; i < inputs[1]->ElementsNum(); i++) {
       perm_.push_back(static_cast<int *>(inputs[1]->data_c())[i]);
     }

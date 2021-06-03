@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <math.h>
+#include <cmath>
 #include "src/kernel_registry.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/fp32/softmax_fp32.h"
@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
@@ -127,7 +126,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   param->number_of_classes_ = dims.at(1);
   param->batch_size_ = dims.at(0);
   for (unsigned int i = 0; i < dims.size(); i++) param->input_shape_[i] = dims.at(i);
-  if (2 != this->in_tensors_.size()) {
+  if (this->in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "sparse softmax entropy loss should have two inputs";
     return RET_ERROR;
   }
