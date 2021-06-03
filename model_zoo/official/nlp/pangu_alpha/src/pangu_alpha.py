@@ -1047,6 +1047,7 @@ class EvalNet(nn.Cell):
         generate: enable generate mode
     Inputs:
         input_ids: the tokenized inpus
+        current_index: the index of current token
     Returns:
         outputs: Tensor, corresponding output for different tasks
     """
@@ -1056,10 +1057,13 @@ class EvalNet(nn.Cell):
         self.argmax = P.Argmax()
         self.generate = generate
         self.topk = P.TopK(sorted=True).shard(((1, 1),))
+        self.gather = P.GatherV2().shard(((1, 1), (1,)))
+        self.log_softmax = P.LogSoftmax().shard(((1, 1),))
 
-    def construct(self, input_ids):
+    def construct(self, input_ids, current_index):
         """evaluation net"""
         input_mask = F.cast(F.not_equal(input_ids, 0), mstype.float32)
         logits = self.backbone(input_ids, input_mask)
-        value, index = self.topk(logits, 5)
-        return value, index
+        logits = self.gather(logits, current_index)
+        log_probs = self.log_softmax(logits)
+        return log_probs

@@ -188,6 +188,32 @@ class LearningRate(LearningRateSchedule):
             lr = decay_lr
         return lr * self.lr_scale
 
+def add_inference_params(opt):
+    """Add inference params"""
+    opt.add_argument("--frequency_penalty",
+                     type=float,
+                     default=1.5,
+                     help="coefficient for frequency_penalty")
+    opt.add_argument("--presence_penalty",
+                     type=float,
+                     default=0.3,
+                     help="coefficient for presence_penalty")
+    opt.add_argument("--max_generate_length",
+                     type=int,
+                     default=500,
+                     help="the maximum number of generated token")
+    opt.add_argument("--top_k_num",
+                     type=int,
+                     default=3,
+                     help="the number for top_k sampling")
+    opt.add_argument("--top_p",
+                     type=float,
+                     default=1.0,
+                     help="top_p sampling threshold, enabled if less than 1.0")
+    opt.add_argument("--end_token",
+                     type=int,
+                     default=9,
+                     help="the token id for <end of document>")
 
 def add_training_params(opt):
     """Add training params"""
@@ -245,7 +271,7 @@ def add_training_params(opt):
                      default=2,
                      help="The sink size of the training")
 
-def get_args():
+def get_args(inference=False):
     """train function for PanguAlpha"""
     parser = argparse.ArgumentParser(description="PanguAlpha training")
     parser.add_argument('--device_id',
@@ -301,6 +327,8 @@ def get_args():
                         help="The initialization type for parameters. Default fp32.")
 
     add_training_params(parser)
+    if inference:
+        add_inference_params(parser)
     args_opt = parser.parse_args()
 
     return args_opt

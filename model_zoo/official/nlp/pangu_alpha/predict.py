@@ -134,12 +134,12 @@ def run_predict(args_opt):
     start_sentence = tokenizer.convert_tokens_to_ids(tokenized_token)
     input_ids = np.array(start_sentence).reshape(1, -1)
     # Call inference
-    output_ids = generate(model_predict, input_ids, config.seq_length, 9)
+    output_ids = generate(model_predict, input_ids, opt)
     # Decode output ids to sentence
     output_samples = tokenizer.convert_ids_to_tokens(output_ids.tolist())
     print('Output is:', output_samples, flush=True)
 
 if __name__ == "__main__":
-    opt = get_args()
+    opt = get_args(True)
     set_parse(opt)
     run_predict(opt)
