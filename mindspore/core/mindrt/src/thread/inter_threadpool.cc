@@ -48,7 +48,6 @@ void InterThreadPool::ActorThreadRun() {
 
 void InterThreadPool::ThreadAsyncRun(Worker *worker) {
   THREAD_RETURN_IF_NULL(worker);
-  sem_post(&worker->init);
   while (alive_) {
     if (worker->type == kKernelThread) {
       KernelThreadRun(worker);
