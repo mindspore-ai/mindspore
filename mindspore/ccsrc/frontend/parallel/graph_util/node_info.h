@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include "base/base.h"
 #include "ir/anf.h"
@@ -51,6 +52,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
 
 bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
                                   size_t curr_depth);
+void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, PrimitivePtr self_prim);
 }  // namespace parallel
 }  // namespace mindspore
 

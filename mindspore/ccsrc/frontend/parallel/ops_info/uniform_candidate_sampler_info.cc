@@ -212,7 +212,7 @@ ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode
 }
 
 Status UniformCandidateSamplerInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
-  GenerateGraph gen_g = GenerateGraph();
+  GenerateGraph gen_g = GenerateGraph(attrs_);
   auto input_strategy = strategy_->GetInputDim().at(0);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";

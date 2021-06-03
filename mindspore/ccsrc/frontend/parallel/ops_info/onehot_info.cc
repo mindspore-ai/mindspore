@@ -157,7 +157,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "ExtractInputInfo failed";
     return FAILED;
   }
-  GenerateGraph gen_g = GenerateGraph();
+  GenerateGraph gen_g = GenerateGraph(attrs_);
   Status status = gen_g.Init(cnode);
   if (status != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
