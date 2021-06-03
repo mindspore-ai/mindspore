@@ -80,7 +80,7 @@ std::unordered_map<AnfNodePtr, NodeInfo> CollectNodeInfo(const FuncGraphPtr &fun
     const auto &converter_factory = TrtOpFactory::GetInstance();
     ConvertFunc convert_func = converter_factory.GetConvertFunc(op_name);
     if (!convert_func) {
-      res[node] = NodeInfo(NodeType::kUnSupport, i);
+      res[node] = NodeInfo(NodeType::kUnsupported, i);
       continue;
     }
 
