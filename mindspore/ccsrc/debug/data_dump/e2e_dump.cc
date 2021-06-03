@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,10 +90,11 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(node, j);
     std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
     uint64_t timestamp = GetTimeStamp();
-    std::string file_path = dump_path + '/' + op_type + '.' + *kernel_name + '.' + std::to_string(task_id) + '.' +
+    std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
     if (IsDeviceTargetGPU()) {
@@ -103,12 +104,6 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
       DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type, trans_flag);
     }
   }
-}
-
-uint64_t E2eDump::GetTimeStamp() {
-  auto cur_sys_time = std::chrono::system_clock::now();
-  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
-  return timestamp;
 }
 
 void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger) {
@@ -161,10 +156,11 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(input, index);
     std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = GetTimeStamp();
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
-    std::string file_path = dump_path + '/' + op_type + '.' + *kernel_name + '.' + std::to_string(task_id) + '.' +
+    std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     if (IsDeviceTargetGPU()) {
       DumpGPUMemToFile(file_path, tensor_name, NOT_NULL(addr), int_shapes, type, device_type, trans_flag, slot,
@@ -207,7 +203,11 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   auto device_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
-  std::string file_path = dump_path + '/' + dump_name + "_output_0";
+  uint64_t timestamp = GetTimeStamp();
+  uint32_t task_id = 0;
+  uint32_t stream_id = 0;
+  std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(task_id) + '.' +
+                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input.0";
   if (IsDeviceTargetGPU()) {
     DumpGPUMemToFile(file_path, node_name, NOT_NULL(addr), int_shapes, type, device_type, trans_flag, 0, debugger);
   } else {
@@ -281,9 +281,10 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
   uint32_t graph_id = graph->graph_id();
   if (starting_graph_id == INT32_MAX) {
     starting_graph_id = graph_id;
-  }
-  if (starting_graph_id == graph_id) {
-    dump_json_parser.UpdateDumpIter();
+  } else {
+    if (starting_graph_id == graph_id) {
+      dump_json_parser.UpdateDumpIter();
+    }
   }
 
   if (dump_json_parser.GetIterDumpFlag()) {
@@ -296,7 +297,7 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
     DumpParametersAndConst(graph, dump_path, debugger);
     return true;
   } else if (dump_json_parser.AsyncDumpEnabled()) {
-    uint32_t prev_dump_iter = dump_json_parser.cur_dump_iter() - 1;
+    uint32_t prev_dump_iter = dump_json_parser.cur_dump_iter();
 
     auto zero_dir_dump_path =
       dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";

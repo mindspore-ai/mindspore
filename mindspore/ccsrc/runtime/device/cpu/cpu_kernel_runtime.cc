@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,7 +380,6 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  dump_json_parser.UpdateDumpIter();
   bool iter_dump_flag = dump_json_parser.GetIterDumpFlag();
   uint32_t graph_id = kernel_graph->graph_id();
 
@@ -444,6 +443,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool) {
   if (iter_dump_flag) {
     CPUE2eDump::DumpParametersAndConst(kernel_graph, graph_id);
   }
+  dump_json_parser.UpdateDumpIter();
   return true;
 }
 }  // namespace cpu

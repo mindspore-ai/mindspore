@@ -141,7 +141,11 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t device_id) {
   }
   std::string config_path = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path.empty()) {
-    return;
+    config_path = common::GetEnv("RANK_TABLE_FILE");
+    if (config_path.empty()) {
+      MS_LOG(INFO) << "Get hccl json config failed.";
+      return;
+    }
   }
   std::ifstream json_file(config_path);
   auto realpath = Common::GetRealPath(path_ + "/rank_" + std::to_string(device_id) + "/.dump_metadata/hccl.json");

@@ -71,7 +71,13 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(input, index);
-    std::string file_path = dump_path + '/' + *kernel_name + '_' + "input_" + std::to_string(j);
+    std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
+    uint64_t timestamp = GetTimeStamp();
+    const uint32_t kTaskId = 0;
+    const uint32_t kStreamId = 0;
+    std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
+                            std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
   }
 }
@@ -88,7 +94,14 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
     auto type = AnfAlgo::GetOutputInferDataType(node, j);
-    std::string file_path = dump_path + '/' + *kernel_name + '_' + "output_" + std::to_string(j);
+    std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
+    const uint32_t kTaskId = 0;
+    const uint32_t kStreamId = 0;
+    uint64_t timestamp = GetTimeStamp();
+    std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
+                            std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output." +
+                            std::to_string(j);
     DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
   }
 }
@@ -125,7 +138,11 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes));
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
-  std::string file_path = dump_path + '/' + dump_name + '_' + "output_0";
+  uint64_t timestamp = GetTimeStamp();
+  const uint32_t kTaskId = 0;
+  const uint32_t kStreamId = 0;
+  std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(kTaskId) + '.' +
+                          std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output.0";
   DumpMemToFile(file_path, NOT_NULL(addr), int_shapes, type);
 }
 
