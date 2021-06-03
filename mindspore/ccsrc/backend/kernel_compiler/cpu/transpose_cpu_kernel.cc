@@ -36,8 +36,8 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
     dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   }
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
-    MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_SHAPE_SIZE << "D, but got " << axes_.size()
-                      << "D.";
+    MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
+                      << axes_.size() << "D.";
   }
 
   for (size_t i = 0; i < axes_.size(); ++i) {
@@ -89,8 +89,8 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
-
-  if (axes_.size() <= DIMENSION_6D) {
+  size_t data_count = (inputs[0]->size) / sizeof(T);
+  if (axes_.size() <= DIMENSION_6D && data_count < MAX_TRANSPOSE_SERIAL_SIZE) {
     int res = NNACL_OK;
     if constexpr (std::is_same_v<T, int8_t>) {
       res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
@@ -117,7 +117,6 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       MS_LOG(ERROR) << "Transpose run failed";
     }
   } else {
-    size_t data_count = (inputs[0]->size) / sizeof(T);
     ParallelRun(input_addr, output_addr, output_shape, data_count);
   }
 }
