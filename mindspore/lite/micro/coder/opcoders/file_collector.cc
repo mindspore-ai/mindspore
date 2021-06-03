@@ -22,6 +22,8 @@ namespace mindspore::lite::micro {
 class Collector {
  public:
   explicit Collector(CoderContext *const ctx) : ctx_(ctx) {}
+  Collector(const Collector &) = delete;
+  Collector &operator=(const Collector &) = delete;
 
   virtual ~Collector() = default;
   virtual void operator+=(std::string file) = 0;
