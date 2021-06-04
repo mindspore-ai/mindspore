@@ -16,6 +16,7 @@
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
+    - [导出mindir模型](#导出mindir模型)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -333,6 +334,15 @@ sh run_eval.sh dataset/coco2014/ checkpoint/0-319_102400.ckpt
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.442
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.551
 ```
+
+## 导出mindir模型
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`keep_detect` 是否保留坐标检测模块, 默认为True
 
 # 模型描述
 

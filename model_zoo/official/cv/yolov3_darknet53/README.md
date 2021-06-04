@@ -14,6 +14,8 @@
             - [Distributed Training](#distributed-training)
         - [Evaluation Process](#evaluation-process)
             - [Evaluation](#evaluation)
+        - [Convert Process](#convert-process)
+            - [Convert](#convert)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Evaluation Performance](#evaluation-performance)
@@ -330,6 +332,20 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.442
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.551
 ```
+
+## [Convert Process](#contents)
+
+### Convert
+
+If you want to infer the network on Ascend 310, you should convert the model to MINDIR:
+
+```python
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --keep_detect [Bool]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+`keep_detect` keep the detect module or not, default: True
 
 ## [Model Description](#contents)
 
