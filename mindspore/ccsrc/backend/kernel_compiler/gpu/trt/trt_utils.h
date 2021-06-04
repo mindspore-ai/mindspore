@@ -86,6 +86,20 @@ class TrtUtils {
                    [](const uint32_t &value) { return static_cast<int64_t>(value); });
     return shape;
   }
+
+  static bool IsSameShape(const nvinfer1::Dims &lhs, const nvinfer1::Dims &rhs) {
+    if (lhs.nbDims != rhs.nbDims) {
+      return false;
+    }
+
+    for (int32_t i = 0; i < lhs.nbDims; i++) {
+      if (lhs.d[i] != rhs.d[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 };
 
 class TrtLogger : public nvinfer1::ILogger {

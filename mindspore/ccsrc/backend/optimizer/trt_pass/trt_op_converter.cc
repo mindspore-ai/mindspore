@@ -236,7 +236,7 @@ ConvertResult AddReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContex
 
     nvinfer1::Dims dim;
     dim.nbDims = 1;
-    dim.d[1] = 1;
+    dim.d[0] = 1;
     reshape_layer->setReshapeDimensions(dim);
 
     return {true, {reshape_layer->getOutput(0)}};
@@ -496,17 +496,17 @@ MS_TRT_CONVERTER_FUNC_REG(HSwish) {
     return layer->getOutput(0);
   };
 
-  // y = x * (Relu6(x) + 3.0) / 6.0
-  // relu6(x) = min(max(x, 0.0), 6.0)
+  // y = x * Relu6(x + 3.0) / 6.0
+  // Relu6(x) = min(max(x, 0.0), 6.0)
   auto *c0 = AddConst(0.0f);
   auto *c1 = AddConst(3.0f);
   auto *c2 = AddConst(6.0f);
   auto *x = inputs[0].tensor();
-  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c0, nvinfer1::ElementWiseOperation::kMAX);
+  nvinfer1::ILayer *layer = context->network()->addElementWise(*x, *c1, nvinfer1::ElementWiseOperation::kSUM);
+  MS_EXCEPTION_IF_NULL(layer);
+  layer = context->network()->addElementWise(*layer->getOutput(0), *c0, nvinfer1::ElementWiseOperation::kMAX);
   MS_EXCEPTION_IF_NULL(layer);
   layer = context->network()->addElementWise(*layer->getOutput(0), *c2, nvinfer1::ElementWiseOperation::kMIN);
-  MS_EXCEPTION_IF_NULL(layer);
-  layer = context->network()->addElementWise(*layer->getOutput(0), *c1, nvinfer1::ElementWiseOperation::kSUM);
   MS_EXCEPTION_IF_NULL(layer);
   layer = context->network()->addElementWise(*layer->getOutput(0), *c2, nvinfer1::ElementWiseOperation::kDIV);
   MS_EXCEPTION_IF_NULL(layer);
@@ -526,7 +526,7 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
 
   const auto &transpose_a = AnfAlgo::GetNodeAttr<bool>(node, "transpose_a");
   const auto &transpose_b = AnfAlgo::GetNodeAttr<bool>(node, "transpose_b");
-  if (inputs[0].IsTensor() && inputs[1].IsWeight()) {
+  if (inputs[0].IsTensor() && inputs[1].IsWeight() && transpose_a == false && transpose_b == true) {
     // Reshape x from (M, K) to (M, K, 1, 1)
     nvinfer1::Dims unsqueeze_dims = inputs[0].tensor()->getDimensions();
     for (size_t i = 0; i < 2; i++) {
