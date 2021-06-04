@@ -390,11 +390,12 @@ This the standard format from `pycocotools`, you can refer to [cocodataset](http
 Currently, batchsize can only set to 1.
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] --keep_detect [Bool]
 ```
 
 The ckpt_file parameter is required,
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+`keep_detect` keep the detect module or not, default: True
 
 ### [Inference Process](#contents)
 

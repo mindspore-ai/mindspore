@@ -64,7 +64,7 @@ testing_shape: 608
 ckpt_file: ""
 file_name: "yolov4"
 file_format: "AIR"
-
+keep_detect: True
 
 # Other default config
 hue: 0.1
@@ -163,3 +163,4 @@ testing_shape: "shape for test"
 ckpt_file: "Checkpoint file path for export"
 file_name: "output file name for export"
 file_format: "file format for export"
+keep_detect: "keep the detect module or not, default: True"

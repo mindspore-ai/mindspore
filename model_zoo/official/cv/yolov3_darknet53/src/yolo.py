@@ -364,6 +364,7 @@ class YOLOV3DarkNet53(nn.Cell):
     def __init__(self, is_training, config=default_config):
         super(YOLOV3DarkNet53, self).__init__()
         self.config = config
+        self.keep_detect = self.config.keep_detect
         self.tenser_to_array = P.TupleToArray()
 
         # YOLOv3 network
@@ -383,6 +384,8 @@ class YOLOV3DarkNet53(nn.Cell):
         input_shape = F.shape(x)[2:4]
         input_shape = F.cast(self.tenser_to_array(input_shape), ms.float32)
         big_object_output, medium_object_output, small_object_output = self.feature_map(x)
+        if not self.keep_detect:
+            return big_object_output, medium_object_output, small_object_output
         output_big = self.detect_1(big_object_output, input_shape)
         output_me = self.detect_2(medium_object_output, input_shape)
         output_small = self.detect_3(small_object_output, input_shape)

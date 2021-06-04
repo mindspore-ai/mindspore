@@ -432,6 +432,7 @@ class YOLOV4CspDarkNet53(nn.Cell):
     def __init__(self):
         super(YOLOV4CspDarkNet53, self).__init__()
         self.config = default_config
+        self.keep_detect = self.config.keep_detect
         self.test_img_shape = Tensor(tuple(self.config.test_img_shape), ms.float32)
 
         # YOLOv4 network
@@ -448,6 +449,8 @@ class YOLOV4CspDarkNet53(nn.Cell):
         if input_shape is None:
             input_shape = self.test_img_shape
         big_object_output, medium_object_output, small_object_output = self.feature_map(x)
+        if not self.keep_detect:
+            return big_object_output, medium_object_output, small_object_output
         output_big = self.detect_1(big_object_output, input_shape)
         output_me = self.detect_2(medium_object_output, input_shape)
         output_small = self.detect_3(small_object_output, input_shape)
