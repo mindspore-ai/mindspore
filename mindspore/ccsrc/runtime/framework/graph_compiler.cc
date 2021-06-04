@@ -266,7 +266,11 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
 
   // Execute optimization pass.
+  auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
   device_context->OptimizeGraph(graph);
+  auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
+  // Update the output map of kernel graph by modified output nodes.
+  graph->UpdateGraphOutputMap(outputs_before_optimizer, outputs_after_optimizer);
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.

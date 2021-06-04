@@ -297,6 +297,58 @@ std::vector<AnfNodePtr> AnfRuntimeAlgorithm::GetAllOutput(const AnfNodePtr &node
   return ret;
 }
 
+std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const AnfNodePtr &node) {
+  std::vector<KernelWithIndex> ret;
+  std::vector<KernelWithIndex> ret_empty;
+
+  // The MakeTuple node need expand and recurse.
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    auto make_tuple = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    for (size_t i = 1; i < make_tuple->inputs().size(); i++) {
+      auto input_i_vector = GetAllOutputWithIndex(make_tuple->input(i));
+      (void)std::copy(input_i_vector.begin(), input_i_vector.end(), std::back_inserter(ret));
+    }
+    return ret;
+  }
+
+  auto outputs_num = AnfAlgo::GetOutputTensorNum(node);
+  if (!IsRealCNodeKernel(node)) {
+    outputs_num = 1;
+  }
+  // The output may be the tuple, so need visit all the outputs of node.
+  for (size_t i = 0; i < outputs_num; ++i) {
+    const auto &output_with_index = AnfAlgo::VisitKernelWithReturnType(node, i, false);
+    MS_EXCEPTION_IF_NULL(output_with_index.first);
+
+    // The MakeTuple node need recurse.
+    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimMakeTuple)) {
+      auto input_vector = GetAllOutputWithIndex(output_with_index.first);
+      (void)std::copy(input_vector.begin(), input_vector.end(), std::back_inserter(ret));
+      continue;
+    }
+
+    // Ignore the output of front call node.
+    if (output_with_index.first->isa<CNode>()) {
+      auto cnode = output_with_index.first->cast<CNodePtr>();
+      auto inputs = cnode->inputs();
+      if (inputs[0]->isa<CNode>()) {
+        MS_LOG(INFO) << "The output is call node: " << output_with_index.first->DebugString();
+        return ret_empty;
+      }
+    }
+
+    // The InitDataSetQueue node has no output.
+    if (AnfAlgo::CheckPrimitiveType(output_with_index.first, prim::kPrimInitDataSetQueue)) {
+      return ret_empty;
+    }
+
+    ret.push_back(output_with_index);
+  }
+
+  return ret;
+}
+
 AnfNodePtr AnfRuntimeAlgorithm::GetCNodePrimitiveNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->input(kAnfPrimitiveIndex);
