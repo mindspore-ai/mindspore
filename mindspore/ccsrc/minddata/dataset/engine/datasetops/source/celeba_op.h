@@ -44,91 +44,6 @@ namespace mindspore {
 namespace dataset {
 class CelebAOp : public MappableLeafOp {
  public:
-  class Builder {
-   public:
-    // Constructor for Builder class of CelebAOp
-    // @return Builder setter method returns reference to the builder.
-    Builder();
-
-    // Destructor.
-    ~Builder() = default;
-
-    // Setter method
-    // @param int32_t size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t size) {
-      builder_op_connector_size_ = size;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::set<std::string> & exts, file extensions to be read
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetExtensions(const std::set<std::string> &exts) {
-      builder_extensions_ = exts;
-      return *this;
-    }
-
-    // Setter method
-    // @param bool decode
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetDecode(bool decode) {
-      builder_decode_ = decode;
-      return *this;
-    }
-
-    // Setter method
-    // @param int32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string &dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetCelebADir(const std::string &dir) {
-      builder_dir_ = dir;
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string usage: type to be read
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetUsage(const std::string &usage) {
-      builder_usage_ = usage;
-      return *this;
-    }
-    // Check validity of input args
-    // @return Status The status code returned
-    Status SanityCheck();
-
-    // The builder "build" method creates the final object.
-    // @param std::shared_ptr<CelebAOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<CelebAOp> *op);
-
-   private:
-    bool builder_decode_;
-    std::string builder_dir_;
-    int32_t builder_num_workers_;
-    int32_t builder_rows_per_buffer_;
-    int32_t builder_op_connector_size_;
-    std::set<std::string> builder_extensions_;
-    std::shared_ptr<SamplerRT> builder_sampler_;
-    std::unique_ptr<DataSchema> builder_schema_;
-    std::string builder_usage_;
-  };
-
   // Constructor
   // @param int32_t - num_workers - Num of workers reading images in parallel
   // @param std::string - dir directory of celeba dataset
@@ -153,17 +68,17 @@ class CelebAOp : public MappableLeafOp {
   // @return
   Status LaunchThreadsAndInitOp() override;
 
-  // Parse attribute file
-  // @return
+  /// Parse attribute file
+  /// @return
   Status ParseAttrFile();
 
-  // Parse each image line in attribute file
-  // @return
+  /// Parse each image line in attribute file
+  /// @return
   Status ParseImageAttrInfo();
 
-  // Split attribute info with space
-  // @param std::string - line - Line from att or partition file
-  // @return std::vector<std::string> - string after split
+  /// Split attribute info with space
+  /// @param std::string - line - Line from att or partition file
+  /// @return std::vector<std::string> - string after split
   std::vector<std::string> Split(const std::string &line);
 
   // Load a tensor row according to a pair
@@ -173,8 +88,8 @@ class CelebAOp : public MappableLeafOp {
   // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
-  // Check if need read according to dataset type
-  // @return bool - if need read
+  /// Check if need read according to dataset type
+  /// @return bool - if need read
   bool CheckDatasetTypeValid();
 
   // Private function for computing the assignment of the column name map.
@@ -183,10 +98,10 @@ class CelebAOp : public MappableLeafOp {
 
   std::string folder_path_;  // directory of celeba folder
   bool decode_;
-  std::set<std::string> extensions_;  // extensions allowed
+  std::set<std::string> extensions_;  /// extensions allowed
   std::unique_ptr<DataSchema> data_schema_;
   std::unique_ptr<Queue<std::vector<std::string>>> attr_info_queue_;
-  int64_t num_rows_in_attr_file_;  // rows number specified in attr file
+  int64_t num_rows_in_attr_file_;  /// rows number specified in attr file
   std::vector<std::pair<std::string, std::vector<int32_t>>> image_labels_vec_;
   std::string usage_;
   std::ifstream partition_file_;

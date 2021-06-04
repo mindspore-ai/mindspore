@@ -26,28 +26,6 @@ namespace mindspore {
 namespace dataset {
 class ProjectOp : public PipelineOp {
  public:
-  // The nested builder class inside of the ProjectOp is used to help manage all of the arguments
-  // for constructing it.  This repeat op is very simple though, so this builder is really just
-  // provided for a consistent look and feel for creators of Dataset operators overall.
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @param columns_to_project -
-    // @return This is a constructor.
-    explicit Builder(const std::vector<std::string> &columns_to_project);
-
-    // Builder destructor.
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new ProjectOp object.
-    Status Build(std::shared_ptr<ProjectOp> *);
-
-   private:
-    std::vector<std::string> builder_columns_to_project_;
-    Status SanityCheck() const;
-  };
-
   // Constructor of the ProjectOp.
   // @param columnsToProject -
   explicit ProjectOp(const std::vector<std::string> &columns_to_project);

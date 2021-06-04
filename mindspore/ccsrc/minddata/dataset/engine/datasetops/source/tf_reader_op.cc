@@ -40,15 +40,6 @@
 namespace mindspore {
 namespace dataset {
 const int64_t kTFRecordFileLimit = 0x140000000;
-TFReaderOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_equal_rows_per_shard_(false) {
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  builder_num_workers_ = config_manager->num_parallel_workers();
-  builder_worker_connector_size_ = config_manager->worker_connector_size();
-  builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_shuffle_files_ = false;
-  builder_data_schema_ = std::make_unique<DataSchema>();
-}
 
 bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
   std::ifstream reader;
@@ -78,55 +69,6 @@ bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
     system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
 
   return masked_crc == generated_crc;
-}
-
-Status TFReaderOp::Builder::ValidateInputs() const {
-  std::string err_msg;
-
-  if (builder_num_workers_ <= 0) {
-    err_msg += "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-               std::to_string(builder_num_workers_) + ".\n";
-  }
-
-  if (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1) {
-    err_msg += "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
-               std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n";
-  }
-
-  std::vector<std::string> invalid_files(builder_dataset_files_list_.size());
-  auto it = std::copy_if(builder_dataset_files_list_.begin(), builder_dataset_files_list_.end(), invalid_files.begin(),
-                         [](const std::string &filename) { return !ValidateFirstRowCrc(filename); });
-  invalid_files.resize(std::distance(invalid_files.begin(), it));
-
-  if (!invalid_files.empty()) {
-    err_msg += "Invalid file, the following files either cannot be opened, or are not valid tfrecord files:\n";
-
-    std::string accumulated_filenames = std::accumulate(
-      invalid_files.begin(), invalid_files.end(), std::string(""),
-      [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
-    err_msg += accumulated_filenames;
-  }
-
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
-Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op) {
-  RETURN_IF_NOT_OK(ValidateInputs());
-
-  // Throttle the number of workers if we have more workers than files!
-  if (static_cast<size_t>(builder_num_workers_) > builder_dataset_files_list_.size()) {
-    builder_num_workers_ = builder_dataset_files_list_.size();
-    MS_LOG(WARNING) << "TFReader operator parallelism reduced to " << builder_num_workers_ << " workers.";
-  }
-
-  std::shared_ptr<TFReaderOp> new_tf_reader_op = std::make_shared<TFReaderOp>(
-    builder_num_workers_, builder_worker_connector_size_, builder_total_rows_, builder_dataset_files_list_,
-    std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_, builder_shuffle_files_,
-    builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
-
-  RETURN_IF_NOT_OK(new_tf_reader_op->Init());
-  *out_tf_reader_op = std::move(new_tf_reader_op);
-  return Status::OK();
 }
 
 TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t total_num_rows,

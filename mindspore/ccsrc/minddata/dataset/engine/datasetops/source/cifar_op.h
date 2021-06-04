@@ -40,86 +40,6 @@ class CifarOp : public MappableLeafOp {
  public:
   enum CifarType { kCifar10, kCifar100 };
 
-  class Builder {
-   public:
-    // Constructor for Builder class of CifarOp
-    // @return Builder setter method returns reference to the builder.
-    Builder();
-
-    // Destructor.
-    ~Builder() = default;
-
-    // Setter method
-    // @param uint32_t size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t size) {
-      op_connect_size_ = size;
-      return *this;
-    }
-
-    // Setter method
-    // @param uint32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string & dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetCifarDir(const std::string &dir) {
-      dir_ = dir;
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string &usage
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetUsage(const std::string &usage) {
-      usage_ = usage;
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string & dir
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetCifarType(const bool cifar10) {
-      if (cifar10) {
-        cifar_type_ = kCifar10;
-      } else {
-        cifar_type_ = kCifar100;
-      }
-      return *this;
-    }
-
-    // Check validity of input args
-    // @return Status The status code returned
-    Status SanityCheck();
-
-    // The builder "build" method creates the final object.
-    // @param std::shared_ptr<CifarOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<CifarOp> *op);
-
-   private:
-    std::string dir_;
-    std::string usage_;
-    int32_t num_workers_;
-    int32_t op_connect_size_;
-    std::shared_ptr<SamplerRT> sampler_;
-    std::unique_ptr<DataSchema> schema_;
-    CifarType cifar_type_;
-  };
-
   // Constructor
   // @param CifarType type - Cifar10 or Cifar100
   // @param const std::string &usage - Usage of this dataset, can be 'train', 'test' or 'all'
@@ -137,15 +57,15 @@ class CifarOp : public MappableLeafOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  // Function to count the number of samples in the CIFAR dataset
-  // @param dir path to the CIFAR directory
-  // @param isCIFAR10 true if CIFAR10 and false if CIFAR100
-  // @param count output arg that will hold the actual dataset size
-  // @return
+  /// Function to count the number of samples in the CIFAR dataset
+  /// @param dir path to the CIFAR directory
+  /// @param isCIFAR10 true if CIFAR10 and false if CIFAR100
+  /// @param count output arg that will hold the actual dataset size
+  /// @return
   static Status CountTotalRows(const std::string &dir, const std::string &usage, bool isCIFAR10, int64_t *count);
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return "CifarOp"; }
 
  private:
@@ -164,29 +84,29 @@ class CifarOp : public MappableLeafOp {
   // @return
   Status LaunchThreadsAndInitOp() override;
 
-  // Get cifar files in dir
-  // @return
+  /// Get cifar files in dir
+  /// @return
   Status GetCifarFiles();
 
-  // Read cifar10 data as block
-  // @return
+  /// Read cifar10 data as block
+  /// @return
   Status ReadCifar10BlockData();
 
-  // Read cifar100 data as block
-  // @return
+  /// Read cifar100 data as block
+  /// @return
   Status ReadCifar100BlockData();
 
-  // Parse cifar data
-  // @return
+  /// Parse cifar data
+  /// @return
   Status ParseCifarData();
 
-  // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
-  // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
-  // @return Status The status code returned
+  /// Method derived from RandomAccess Op, enable Sampler to get all ids for each class
+  /// @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
+  /// @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
-  // Private function for computing the assignment of the column name map.
-  // @return - Status
+  /// Private function for computing the assignment of the column name map.
+  /// @return - Status
   Status ComputeColMap() override;
 
   CifarType cifar_type_;
@@ -201,4 +121,4 @@ class CifarOp : public MappableLeafOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_CIFAR_OP_H_
+#endif  /// MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_CIFAR_OP_H_

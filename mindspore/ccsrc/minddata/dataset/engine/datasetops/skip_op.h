@@ -25,28 +25,6 @@ namespace mindspore {
 namespace dataset {
 class SkipOp : public PipelineOp {
  public:
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @param count - The number of skip to do
-    // @return This is a constructor.
-    explicit Builder(int32_t count);
-
-    // Default destructor
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new SkipOp object
-    Status Build(std::shared_ptr<SkipOp> *);
-
-   private:
-    int32_t build_max_skips_;
-    int32_t builder_op_connector_size_;
-
-    Status SanityCheck() const;
-  };
-
   // Constructor of the SkipOp.
   // @note The builder class should be used to call it
   // @param count - The number of skips to do

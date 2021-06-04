@@ -30,11 +30,9 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
-
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
@@ -52,10 +50,7 @@ TEST_F(MindDataTestCocoOp, TestCocoDetection) {
   std::string task("Detection");
   std::shared_ptr<CocoOp> my_coco_op;
   CocoOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-                     .SetFile(annotation_path)
-                     .SetTask(task)
-                     .Build(&my_coco_op);
+  Status rc = builder.SetDir(dataset_path).SetFile(annotation_path).SetTask(task).Build(&my_coco_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_coco_op);
@@ -80,7 +75,7 @@ TEST_F(MindDataTestCocoOp, TestCocoDetection) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
@@ -105,10 +100,7 @@ TEST_F(MindDataTestCocoOp, TestCocoStuff) {
   std::string task("Stuff");
   std::shared_ptr<CocoOp> my_coco_op;
   CocoOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-    .SetFile(annotation_path)
-    .SetTask(task)
-    .Build(&my_coco_op);
+  Status rc = builder.SetDir(dataset_path).SetFile(annotation_path).SetTask(task).Build(&my_coco_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_coco_op);
@@ -133,7 +125,7 @@ TEST_F(MindDataTestCocoOp, TestCocoStuff) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
@@ -158,10 +150,7 @@ TEST_F(MindDataTestCocoOp, TestCocoKeypoint) {
   std::string task("Keypoint");
   std::shared_ptr<CocoOp> my_coco_op;
   CocoOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-    .SetFile(annotation_path)
-    .SetTask(task)
-    .Build(&my_coco_op);
+  Status rc = builder.SetDir(dataset_path).SetFile(annotation_path).SetTask(task).Build(&my_coco_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_coco_op);
@@ -186,7 +175,7 @@ TEST_F(MindDataTestCocoOp, TestCocoKeypoint) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
@@ -210,10 +199,7 @@ TEST_F(MindDataTestCocoOp, TestCocoPanoptic) {
   std::string task("Panoptic");
   std::shared_ptr<CocoOp> my_coco_op;
   CocoOp::Builder builder;
-  Status rc = builder.SetDir(dataset_path)
-    .SetFile(annotation_path)
-    .SetTask(task)
-    .Build(&my_coco_op);
+  Status rc = builder.SetDir(dataset_path).SetFile(annotation_path).SetTask(task).Build(&my_coco_op);
   ASSERT_TRUE(rc.IsOk());
 
   rc = my_tree->AssociateNode(my_coco_op);
@@ -238,7 +224,7 @@ TEST_F(MindDataTestCocoOp, TestCocoPanoptic) {
   while (!tensor_list.empty()) {
     MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
-    //Display the tensor by calling the printer on it
+    // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;

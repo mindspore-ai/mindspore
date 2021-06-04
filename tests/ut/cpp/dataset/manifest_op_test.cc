@@ -37,9 +37,9 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
+// std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 
-std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<ManifestOp> Manifest(int32_t num_works, int32_t rows, int32_t conns, const std::string &file,
                                      std::string usage = "train", std::shared_ptr<SamplerRT> sampler = nullptr,

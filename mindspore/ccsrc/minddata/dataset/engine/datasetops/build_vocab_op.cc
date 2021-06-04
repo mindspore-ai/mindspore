@@ -191,30 +191,6 @@ Status BuildVocabOp::CollectorThread() {
   return Status::OK();
 }
 
-Status BuildVocabOp::Builder::Build(std::shared_ptr<BuildVocabOp> *op) {
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    builder_num_workers_ > 0,
-    "Invalid parameter, num_parallel_workers must be greater than 0, but got " + std::to_string(builder_num_workers_));
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    builder_top_k_ > 0, "Invalid parameter, top_k must be greater than 0, but got " + std::to_string(builder_top_k_));
-  CHECK_FAIL_RETURN_UNEXPECTED(builder_max_freq_ >= builder_min_freq_ && builder_min_freq_ >= 0,
-                               "Invalid parameter, frequency range [a,b] must be 0 <= a <= b (a,b are inclusive).");
-  (*op) = std::make_shared<BuildVocabOp>(
-    builder_vocab_, builder_col_names_, std::make_pair(builder_min_freq_, builder_max_freq_), builder_top_k_,
-    builder_speical_tokens_, builder_special_first_, builder_num_workers_, builder_connector_size_);
-  return Status::OK();
-}
-
-BuildVocabOp::Builder::Builder()
-    : builder_top_k_(std::numeric_limits<int64_t>::max()),
-      builder_min_freq_(0),
-      builder_max_freq_(std::numeric_limits<int64_t>::max()),
-      builder_special_first_(true) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_connector_size_ = cfg->op_connector_size();
-}
-
 // A print method typically used for debugging
 void BuildVocabOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {

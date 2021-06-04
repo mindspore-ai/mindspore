@@ -30,38 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor.  Creates the builder object.
-RandomDataOp::Builder::Builder()
-    : builder_data_schema_(nullptr),
-      builder_num_workers_(0),
-      builder_op_connector_size_(0),
-      builder_rows_per_buffer_(0),
-      builder_total_rows_(0) {
-  // Some arguments to the RandomDataOp have a default argument that is taken from the config.
-  // The user may override these defaults by using the builder set methods.
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-// The build method that produces the instantiated RandomDataOp as a shared pointer
-Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
-  RETURN_IF_NOT_OK(SanityCheck());
-
-  *out_op = std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_total_rows_,
-                                           std::move(builder_data_schema_));
-
-  return Status::OK();
-}
-
-// Check if the required parameters are set by the builder.
-Status RandomDataOp::Builder::SanityCheck() const {
-  // There actually is no required arguments for the random data op at all.
-  // Some arguments are preset with global values from config, and if they are not given by the user
-  // then we create them randomly.  Leaving this function here for consistency with other operators.
-  return Status::OK();
-}
-
 // Constructor for RandomDataOp
 RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t total_rows,
                            std::unique_ptr<DataSchema> data_schema)

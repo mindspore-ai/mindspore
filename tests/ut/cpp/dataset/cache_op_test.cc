@@ -21,6 +21,8 @@
 #include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
@@ -78,7 +80,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
 
   // Create a schema using the C api's
   int32_t rank = 0;  // not used
-  std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> test_schema = std::make_unique<DataSchema>();
   // 2 columns. First column is an "image" 640,480,3
   TensorShape c1Shape({640, 480, 3});
   ColDescriptor c1("image", DataType(DataType::DE_INT8), TensorImpl::kFlexible,
@@ -88,11 +90,11 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   TensorShape c2Shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor c2("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, rank, &c2Shape);
 
-  testSchema->AddColumn(c1);
-  testSchema->AddColumn(c2);
+  test_schema->AddColumn(c1);
+  test_schema->AddColumn(c2);
 
   std::unordered_map<std::string, int32_t> map;
-  rc = testSchema->GetColumnNameMap(&map);
+  rc = test_schema->GetColumnNameMap(&map);
   ASSERT_TRUE(rc.IsOk());
 
   // Test the CacheSchema api
@@ -235,7 +237,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   auto myTree = std::make_shared<ExecutionTree>();
 
   // Create a schema using the C api's
-  std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> test_schema = std::make_unique<DataSchema>();
 
   // 2 columns. First column is an "image" 640,480,3
   TensorShape c1Shape({640, 480, 3});
@@ -247,18 +249,15 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   TensorShape c2Shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor c2("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, rank, &c2Shape);
 
-  testSchema->AddColumn(c1);
-  testSchema->AddColumn(c2);
+  test_schema->AddColumn(c1);
+  test_schema->AddColumn(c2);
 
   // RandomDataOp
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  rc = RandomDataOp::Builder()
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(4, op_connector_size, 50, std::move(test_schema));
 
-         .SetNumWorkers(4)
-         .SetDataSchema(std::move(testSchema))
-         .SetTotalRows(50)  // 50 samples for now
-         .Build(&myRandomDataOp);
-  ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
 
@@ -285,16 +284,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
-  uint32_t numRepeats = 4;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
+  uint32_t num_repeats = 4;
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(num_repeats);
   rc = myTree->AssociateNode(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
-  myCacheOp->set_total_repeats(numRepeats);
-  myCacheOp->set_num_repeats_per_epoch(numRepeats);
+  myCacheOp->set_total_repeats(num_repeats);
+  myCacheOp->set_num_repeats_per_epoch(num_repeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
   // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
@@ -361,7 +358,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   auto myTree = std::make_shared<ExecutionTree>();
 
   // Create a schema using the C api's
-  std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> test_schema = std::make_unique<DataSchema>();
 
   // 2 columns. First column is an "image" 640,480,3
   TensorShape c1Shape({640, 480, 3});
@@ -373,18 +370,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   TensorShape c2Shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor c2("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, rank, &c2Shape);
 
-  testSchema->AddColumn(c1);
-  testSchema->AddColumn(c2);
+  test_schema->AddColumn(c1);
+  test_schema->AddColumn(c2);
 
   // RandomDataOp
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  rc = RandomDataOp::Builder()
-
-         .SetNumWorkers(4)
-         .SetDataSchema(std::move(testSchema))
-         .SetTotalRows(10)
-         .Build(&myRandomDataOp);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(4, op_connector_size, 10, std::move(test_schema));
   rc = myTree->AssociateNode(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
 
@@ -404,16 +397,14 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
-  uint32_t numRepeats = 4;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
+  uint32_t num_repeats = 4;
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(num_repeats);
   rc = myTree->AssociateNode(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
-  myCacheOp->set_total_repeats(numRepeats);
-  myCacheOp->set_num_repeats_per_epoch(numRepeats);
+  myCacheOp->set_total_repeats(num_repeats);
+  myCacheOp->set_num_repeats_per_epoch(num_repeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
   // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
@@ -475,23 +466,25 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   std::shared_ptr<CacheMergeOp> myMergeOp;
   rc = CacheMergeOp::Builder().SetNumWorkers(4).SetClient(myClient).Build(&myMergeOp);
 
-  std::shared_ptr<ImageFolderOp> so;
-  ImageFolderOp::Builder builder;
-  builder.SetOpConnectorSize(3)
-    .SetNumWorkers(3)
-
-    .SetExtensions({".jpg", ".JPEG"})
-    .SetRecursive(true)
-    .SetImageFolderDir(datasets_root_path_ + "/testPK/data");
-  rc = builder.Build(&so);
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  TensorShape scalar = TensorShape::CreateScalar();
+  rc = schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  ASSERT_TRUE(rc.IsOk());
+  rc = schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar));
+  ASSERT_TRUE(rc.IsOk());
+  std::string dataset_path = datasets_root_path_ + "/testPK/data";
+  std::set<std::string> ext = {".jpg", ".JPEG"};
+  bool recursive = true;
+  bool decode = false;
+  std::map<std::string, int32_t> columns_to_load = {};
+  std::shared_ptr<ImageFolderOp> so = std::make_shared<ImageFolderOp>(
+    3, dataset_path, 3, recursive, decode, ext, columns_to_load, std::move(schema), std::move(seq_sampler));
   so->SetSampler(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
-  uint32_t numRepeats = 4;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
+  uint32_t num_repeats = 4;
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(num_repeats);
 
   auto myTree = std::make_shared<ExecutionTree>();
   rc = myTree->AssociateNode(so);
@@ -507,16 +500,16 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
-  myMergeOp->set_total_repeats(numRepeats);
-  myMergeOp->set_num_repeats_per_epoch(numRepeats);
+  myMergeOp->set_total_repeats(num_repeats);
+  myMergeOp->set_num_repeats_per_epoch(num_repeats);
   rc = myRepeatOp->AddChild(myMergeOp);
   ASSERT_TRUE(rc.IsOk());
-  myLookupOp->set_total_repeats(numRepeats);
-  myLookupOp->set_num_repeats_per_epoch(numRepeats);
+  myLookupOp->set_total_repeats(num_repeats);
+  myLookupOp->set_num_repeats_per_epoch(num_repeats);
   rc = myMergeOp->AddChild(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
-  so->set_total_repeats(numRepeats);
-  so->set_num_repeats_per_epoch(numRepeats);
+  so->set_total_repeats(num_repeats);
+  so->set_num_repeats_per_epoch(num_repeats);
   rc = myMergeOp->AddChild(so);
   ASSERT_TRUE(rc.IsOk());
 

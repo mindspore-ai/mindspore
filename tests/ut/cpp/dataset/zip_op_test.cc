@@ -19,9 +19,10 @@
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/engine/datasetops/zip_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "common/common.h"
 #include "utils/ms_utils.h"
 
@@ -53,29 +54,28 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpDefault) {
 
   std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-         .SetDatasetFilesList({dataset_path})
-         .SetWorkerConnectorSize(16)
-         .SetNumWorkers(1)
-         .Build(&my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  std::vector<std::string> columns_to_load = {};
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::vector<std::string> files1 = {dataset_path};
+  auto op_connector_size = config_manager->op_connector_size();
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 16, 0, files1, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<TFReaderOp> my_tfreader_op2;
-  rc = TFReaderOp::Builder()
-         .SetDatasetFilesList({dataset_path2})
-         .SetWorkerConnectorSize(1)
-         .SetNumWorkers(1)
-         .Build(&my_tfreader_op2);
+  std::vector<std::string> files2 = {dataset_path2};
+  std::unique_ptr<DataSchema> schema2 = std::make_unique<DataSchema>();
+  std::shared_ptr<TFReaderOp> my_tfreader_op2 = std::make_shared<TFReaderOp>(
+    1, 1, 0, files2, std::make_unique<DataSchema>(), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op2->Init();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
 
   // Creating DatasetOp
-  std::shared_ptr<ZipOp> zip_op;
-  rc = ZipOp::Builder().Build(&zip_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>(op_connector_size);
 
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
@@ -135,30 +135,31 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   uint32_t num_repeats = 3;
   std::string dataset_path = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
   std::string dataset_path2 = datasets_root_path_ + "/testBatchDataset/test.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-         .SetDatasetFilesList({dataset_path})
-
-         .SetWorkerConnectorSize(16)
-         .SetNumWorkers(1)
-         .Build(&my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files1 = {dataset_path};
+  std::unique_ptr<DataSchema> schema1 = std::make_unique<DataSchema>();
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 16, 0, files1, std::move(schema1), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
   EXPECT_TRUE(rc.IsOk());
+
+  rc = my_tree->AssociateNode(my_tfreader_op);
+
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<TFReaderOp> my_tfreader_op2;
-  rc = TFReaderOp::Builder()
-         .SetDatasetFilesList({dataset_path2})
-
-         .SetWorkerConnectorSize(1)
-         .SetNumWorkers(1)
-         .Build(&my_tfreader_op2);
+  std::vector<std::string> files2 = {dataset_path2};
+  std::unique_ptr<DataSchema> schema2 = std::make_unique<DataSchema>();
+  std::shared_ptr<TFReaderOp> my_tfreader_op2 = std::make_shared<TFReaderOp>(
+    1, 1, 0, files2, std::move(schema2), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op2->Init();
   EXPECT_TRUE(rc.IsOk());
+
   rc = my_tree->AssociateNode(my_tfreader_op2);
   EXPECT_TRUE(rc.IsOk());
   // Creating DatasetOp
-  std::shared_ptr<ZipOp> zip_op;
-  rc = ZipOp::Builder().Build(&zip_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ZipOp> zip_op = std::make_shared<ZipOp>(op_connector_size);
   rc = my_tree->AssociateNode(zip_op);
   EXPECT_TRUE(rc.IsOk());
   my_tfreader_op->set_total_repeats(num_repeats);
@@ -170,10 +171,7 @@ TEST_F(MindDataTestZipOp, MindDataTestZipOpRepeat) {
   rc = zip_op->AddChild(std::move(my_tfreader_op2));
   EXPECT_TRUE(rc.IsOk());
 
-  // Builder(num_of_repeats)
-  std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
   zip_op->set_total_repeats(num_repeats);

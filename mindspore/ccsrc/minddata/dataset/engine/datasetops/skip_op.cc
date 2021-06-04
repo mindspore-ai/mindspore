@@ -26,27 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor.  Creates the builder object.
-SkipOp::Builder::Builder(int32_t count) : build_max_skips_(count) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status SkipOp::Builder::SanityCheck() const {
-  if (build_max_skips_ < 0) {
-    std::string err_msg("Invalid parameter, skip count should be greater than or equal to 0.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object.
-Status SkipOp::Builder::Build(std::shared_ptr<SkipOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<SkipOp>(build_max_skips_);
-  return Status::OK();
-}
-
 // Constructor of the SkipOp.
 SkipOp::SkipOp(int32_t count) : PipelineOp(0), max_skips_(count), skip_count_(0) {}
 

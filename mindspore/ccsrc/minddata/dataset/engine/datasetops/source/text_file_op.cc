@@ -29,49 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-TextFileOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_shuffle_files_(false) {
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  builder_num_workers_ = config_manager->num_parallel_workers();
-  builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_worker_connector_size_ = config_manager->worker_connector_size();
-}
-
-Status TextFileOp::Builder::ValidateInputs() const {
-  std::string err_msg;
-  err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                           std::to_string(builder_num_workers_) + ".\n"
-                                       : "";
-  err_msg += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
-               ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
-                   std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
-               : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
-Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
-  RETURN_IF_NOT_OK(ValidateInputs());
-
-  // Throttle the number of workers if we have more workers than files!
-  if (static_cast<size_t>(builder_num_workers_) > builder_text_files_list_.size()) {
-    builder_num_workers_ = builder_text_files_list_.size();
-    MS_LOG(DEBUG) << "TextFileOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
-  }
-
-  builder_schema_ = std::make_unique<DataSchema>();
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-
-  std::shared_ptr<TextFileOp> text_file_op =
-    std::make_shared<TextFileOp>(builder_num_workers_, builder_total_rows_, builder_worker_connector_size_,
-                                 std::move(builder_schema_), builder_text_files_list_, builder_op_connector_size_,
-                                 builder_shuffle_files_, builder_num_devices_, builder_device_id_);
-  RETURN_IF_NOT_OK(text_file_op->Init());
-  *op = std::move(text_file_op);
-
-  return Status::OK();
-}
-
 TextFileOp::TextFileOp(int32_t num_workers, int64_t total_rows, int32_t worker_connector_size,
                        std::unique_ptr<DataSchema> schema, std::vector<std::string> text_files_list,
                        int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id)
@@ -203,7 +160,8 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
   return Status::OK();
 }
 
-int64_t TextFileOp::CountTotalRows(const std::string &file) {
+// Internal helper function to calculate rows
+int64_t CountTotalRows(const std::string &file) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
@@ -238,11 +196,9 @@ Status TextFileOp::CalculateNumRowsPerShard() {
 }
 
 Status TextFileOp::CountAllFileRows(const std::vector<std::string> &files, int64_t *count) {
-  std::shared_ptr<TextFileOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetTextFilesList(files).Build(&op));
   for (auto file : files) {
-    *count += op->CountTotalRows(file);
+    *count += CountTotalRows(file);
   }
   return Status::OK();
 }

@@ -37,38 +37,46 @@ class MindDataTestSentencePieceVocabOp : public UT::DatasetOpTesting {
   }
 };
 
+// Testing helper to create TextFileOp
+std::shared_ptr<TextFileOp> TextFile(std::vector<std::string> text_files_list, int32_t num_workers,
+                                     int32_t op_connector_size) {
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  (void)schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto worker_connector_size = config_manager->worker_connector_size();
+  int32_t device_id = 0;
+  int32_t num_devices = 1;
+  int32_t num_rows = 0;
+  bool shuffle = false;
+
+  std::shared_ptr<TextFileOp> text_file_op =
+    std::make_shared<TextFileOp>(num_workers, num_rows, worker_connector_size, std::move(schema), text_files_list,
+                                 op_connector_size, shuffle, num_devices, device_id);
+  (void)text_file_op->Init();
+  return text_file_op;
+}
+
 TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromDatasetFuntions) {
   MS_LOG(INFO) << "Doing MindDataTestSentencePieceVocabOp  TestSentencePieceFromDatasetFuntions.";
-
+  Status rc;
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
   auto tree = std::make_shared<ExecutionTree>();
 
-  std::shared_ptr<TextFileOp> file_op;
-  TextFileOp::Builder builder_file;
-  builder_file.SetTextFilesList({dataset_path}).SetNumWorkers(1).SetOpConnectorSize(2);
-
-  Status rc = builder_file.Build(&file_op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<TextFileOp> file_op = TextFile({dataset_path}, 1, 2);
 
   rc = tree->AssociateNode(file_op);
   ASSERT_TRUE(rc.IsOk());
-
-  std::shared_ptr<SentencePieceVocab> spm = std::make_unique<SentencePieceVocab>();
-  std::shared_ptr<BuildSentencePieceVocabOp> spv_op;
-  BuildSentencePieceVocabOp::Builder builder_spv;
   std::vector<std::string> cols;
   std::unordered_map<std::string, std::string> m_params;
-  builder_spv.SetVocab(spm)
-    .SetVocabSize(5000)
-    .SetColumnNames(cols)
-    .SetCharacterCoverage(0.9995)
-    .SetModelType(SentencePieceModel::kUnigram)
-    .SetParams(m_params)
-    .SetOpConnectorSize(2);
 
-  rc = builder_spv.Build(&spv_op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<SentencePieceVocab> spm = std::make_unique<SentencePieceVocab>();
+  // Sample construstructor for reference
+  // BuildSentencePieceVocabOp(std::shared_ptr<SentencePieceVocab> vocab, std::vector<std::string> col_names,
+  //                          int32_t vocab_size, float character_coverage, SentencePieceModel model_type,
+  //                          const std::unordered_map<std::string, std::string> &params, int32_t op_conn_size);
+  std::shared_ptr<BuildSentencePieceVocabOp> spv_op = std::make_shared<BuildSentencePieceVocabOp>(
+    std::move(spm), cols, 5000, 0.9995, SentencePieceModel::kUnigram, m_params, 2);
   rc = tree->AssociateNode(spv_op);
   ASSERT_TRUE(rc.IsOk());
 
@@ -116,33 +124,17 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceTokenizerFuntions) {
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
   auto tree = std::make_shared<ExecutionTree>();
+  std::shared_ptr<TextFileOp> file_op = TextFile({dataset_path}, 1, 2);
 
-  std::shared_ptr<TextFileOp> file_op;
-  TextFileOp::Builder builder_file;
-  builder_file.SetTextFilesList({dataset_path}).SetNumWorkers(1).SetOpConnectorSize(2);
-
-  Status rc = builder_file.Build(&file_op);
-  ASSERT_TRUE(rc.IsOk());
-
-  rc = tree->AssociateNode(file_op);
+  Status rc = tree->AssociateNode(file_op);
   ASSERT_TRUE(rc.IsOk());
 
   std::shared_ptr<SentencePieceVocab> spm = std::make_unique<SentencePieceVocab>();
-  std::shared_ptr<BuildSentencePieceVocabOp> spv_op;
-  BuildSentencePieceVocabOp::Builder builder_spv;
   std::vector<std::string> cols;
   std::unordered_map<std::string, std::string> m_params;
 
-  builder_spv.SetVocab(spm)
-    .SetVocabSize(5000)
-    .SetColumnNames(cols)
-    .SetCharacterCoverage(0.9995)
-    .SetModelType(SentencePieceModel::kUnigram)
-    .SetParams(m_params)
-    .SetOpConnectorSize(2);
-
-  rc = builder_spv.Build(&spv_op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<BuildSentencePieceVocabOp> spv_op = std::make_shared<BuildSentencePieceVocabOp>(
+    spm, cols, 5000, 0.9995, SentencePieceModel::kUnigram, m_params, 2);
   rc = tree->AssociateNode(spv_op);
   ASSERT_TRUE(rc.IsOk());
 

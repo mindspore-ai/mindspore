@@ -25,22 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor. Creates the builder object.
-ConcatOp::Builder::Builder() {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-  builder_sampler_ = nullptr;
-}
-
-// The builder "build" method creates the final object.
-Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
-  if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<DistributedSamplerRT>(1, 0, false, 0);
-  }
-  *ptr = std::make_shared<ConcatOp>(builder_sampler_, children_flag_and_nums_, children_start_end_index_);
-  return Status::OK();
-}
-
 // Constructor of the ConcatOp.
 ConcatOp::ConcatOp(const std::shared_ptr<SamplerRT> &sampler,
                    const std::vector<std::pair<int, int>> &children_flag_and_nums,

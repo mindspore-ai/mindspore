@@ -35,65 +35,6 @@ class ExecutionTree;
 
 class BarrierOp : public PipelineOp {
  public:
-  //  The nested builder class inside of the BarrierOp is used to help manage all of
-  //  the arguments for constructing it.  Use the builder by setting each argument
-  //  with the provided set methods, and then finally call the build method to execute
-  //  the actual construction.
-
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method.
-    // @param int32_t op_connector_size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
-    // Setter method.
-    // @param const std::string & condition_name
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetConditionName(const std::string &condition_name) {
-      builder_condition_name_ = condition_name;
-      return *this;
-    }
-
-    // Setter method.
-    // @param py::function condition_func - blocking condition function
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetConditionFunc(py::function condition_func) {
-      builder_condition_func_ = condition_func;
-      return *this;
-    }
-
-    // The builder "build" method creates the BarrierOp dataset Operator.
-    // @return shared_ptr to the new BarrierOp object
-    Status Build(std::shared_ptr<BarrierOp> *);
-
-   private:
-    int32_t builder_rows_per_buffer_;
-    int32_t builder_op_connector_size_;
-    std::string builder_condition_name_;
-    py::function builder_condition_func_;
-
-    Status SanityCheck() const;
-  };
-
   // Constructor for BarrierOp
   // @param op_connector_size - connector size
   // @param condition_name - the condition name associated with this operator
@@ -102,32 +43,32 @@ class BarrierOp : public PipelineOp {
   // One example of such case is having batch after barrier.
   BarrierOp(int32_t op_connector_size, const std::string &condition_name, py::function condition_func);
 
-  // Destructor
+  /// Destructor
   ~BarrierOp();
 
   Status EofReceived(int32_t) override;
 
   Status EoeReceived(int32_t) override;
 
-  // Print function for Barrier
-  // @param out - output stream to print to
-  // @param show_all - if it should print everything
+  /// Print function for Barrier
+  /// @param out - output stream to print to
+  /// @param show_all - if it should print everything
   void Print(std::ostream &out, bool show_all) const override;
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return kBarrierOp; }
 
-  // Provide stream operator for displaying it
+  /// Provide stream operator for displaying it
   friend std::ostream &operator<<(std::ostream &out, const BarrierOp &bo) {
     bo.Print(out, false);
     return out;
   }
 
-  // Class functor operator () override.
-  // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
-  // provide the master loop that drives the logic for performing the work
-  // @return Status The status code returned
+  /// Class functor operator () override.
+  /// All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
+  /// provide the master loop that drives the logic for performing the work
+  /// @return Status The status code returned
   Status operator()() override;
 
   // Handles preprocessing of the main loop, used when starting new epoch
@@ -137,7 +78,7 @@ class BarrierOp : public PipelineOp {
   // Gets next tensor row and sets control signals
   Status getNextTensorRow(TensorRow *new_row);
 
-  // This function runs the wait function on condition
+  /// This function runs the wait function on condition
   Status blockCond();
 
  private:

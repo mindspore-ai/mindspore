@@ -18,6 +18,14 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "minddata/dataset/core/client.h"
+#include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/core/pybind_support.h"
+#include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 
 namespace UT {
 #ifdef __cplusplus
@@ -74,6 +82,66 @@ mindspore::MSTensor DatasetOpTesting::ReadFileToTensor(const std::string &file) 
   ifs.close();
 
   return buf;
+}
+
+// Helper function to create a batch op
+std::shared_ptr<mindspore::dataset::BatchOp> DatasetOpTesting::Batch(int32_t batch_size, bool drop,
+                                                                     mindspore::dataset::PadInfo pad_map) {
+  /*
+  std::shared_ptr<mindspore::dataset::ConfigManager> cfg = mindspore::dataset::GlobalContext::config_manager();
+  int32_t num_workers = cfg->num_parallel_workers();
+  int32_t op_connector_size = cfg->op_connector_size();
+  std::vector<std::string> output_columns = {};
+  std::vector<std::string> input_columns = {};
+  mindspore::dataset::py::function batch_size_func;
+  mindspore::dataset::py::function batch_map_func;
+  bool pad = false;
+  if (!pad_map.empty()) {
+    pad = true;
+  }
+  std::shared_ptr<mindspore::dataset::BatchOp> op =
+    std::make_shared<mindspore::dataset::BatchOp>(batch_size, drop, pad, op_connector_size, num_workers, input_columns,
+  output_columns, batch_size_func, batch_map_func, pad_map); return op;
+  */
+  Status rc;
+  std::shared_ptr<mindspore::dataset::BatchOp> op;
+  rc = mindspore::dataset::BatchOp::Builder(batch_size).SetDrop(drop).SetPaddingMap(pad_map).Build(&op);
+  EXPECT_TRUE(rc.IsOk());
+  return std::move(op);
+}
+
+std::shared_ptr<mindspore::dataset::RepeatOp> DatasetOpTesting::Repeat(int repeat_cnt) {
+  std::shared_ptr<mindspore::dataset::RepeatOp> op = std::make_shared<mindspore::dataset::RepeatOp>(repeat_cnt);
+  return std::move(op);
+}
+
+std::shared_ptr<mindspore::dataset::TFReaderOp> DatasetOpTesting::TFReader(std::string file, int num_works) {
+  std::shared_ptr<mindspore::dataset::ConfigManager> config_manager =
+    mindspore::dataset::GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  auto worker_connector_size = config_manager->worker_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {file};
+  std::shared_ptr<mindspore::dataset::TFReaderOp> so = std::make_shared<mindspore::dataset::TFReaderOp>(
+    num_works, worker_connector_size, 0, files, std::make_unique<mindspore::dataset::DataSchema>(), op_connector_size,
+    columns_to_load, false, 1, 0, false);
+  (void)so->Init();
+  return std::move(so);
+}
+
+std::shared_ptr<mindspore::dataset::ExecutionTree> DatasetOpTesting::Build(
+  std::vector<std::shared_ptr<mindspore::dataset::DatasetOp>> ops) {
+  std::shared_ptr<mindspore::dataset::ExecutionTree> tree = std::make_shared<mindspore::dataset::ExecutionTree>();
+  for (int i = 0; i < ops.size(); i++) {
+    tree->AssociateNode(ops[i]);
+    if (i > 0) {
+      ops[i]->AddChild(std::move(ops[i - 1]));
+    }
+    if (i == ops.size() - 1) {
+      tree->AssignRoot(ops[i]);
+    }
+  }
+  return std::move(tree);
 }
 
 #ifdef __cplusplus

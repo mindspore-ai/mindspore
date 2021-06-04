@@ -57,10 +57,10 @@ class CsvOp : public NonMappableLeafOp {
     T value;
   };
 
-  // CsvParser is a class that parsing CSV file.
-  // We design a state machine to implement CSV syntactic analysis. It contains two state diagram,'sd' and 'sdl'.
-  // The 'sd' is used for parsing CSV syntactic, it's complete and complicate.
-  // The 'sdl' is used for counting the record rows, it's concise and it runs fast.
+  /// CsvParser is a class that parsing CSV file.
+  /// We design a state machine to implement CSV syntactic analysis. It contains two state diagram,'sd' and 'sdl'.
+  /// The 'sd' is used for parsing CSV syntactic, it's complete and complicate.
+  /// The 'sdl' is used for counting the record rows, it's concise and it runs fast.
   struct CsvParser {
    public:
     CsvParser() = delete;
@@ -146,95 +146,95 @@ class CsvOp : public NonMappableLeafOp {
 
   class Builder {
    public:
-    // Builder constructor. Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
+    /// Builder constructor. Creates the builder object.
+    /// @note No default args
+    /// @return This is a constructor.
     Builder();
 
-    // Default destructor
+    /// Default destructor
     ~Builder() = default;
 
-    // Checks if the inputs of the builder is valid.
-    // @return Status - the error code returned.
+    /// Checks if the inputs of the builder is valid.
+    /// @return Status - the error code returned.
     Status ValidateInputs() const;
 
-    // Create the final object.
-    // @param op - dataset op.
-    // @return - the error code return.
+    /// Create the final object.
+    /// @param op - dataset op.
+    /// @return - the error code return.
     Status Build(std::shared_ptr<CsvOp> *op);
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetNumWorkers(int32_t num_workers) {
       builder_num_workers_ = num_workers;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetOpConnectorSize(int32_t op_connector_size) {
       builder_op_connector_size_ = op_connector_size;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetRowsPerBuffer(int64_t rows_per_buffer) {
       builder_rows_per_buffer_ = rows_per_buffer;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetNumDevices(int64_t num_dev) {
       builder_num_devices_ = num_dev;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetDeviceId(int64_t dev_id) {
       builder_device_id_ = dev_id;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetCsvFilesList(const std::vector<std::string> &files_list) {
       builder_csv_files_list_ = files_list;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetShuffleFiles(bool shuffle_files) {
       builder_shuffle_files_ = shuffle_files;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetNumSamples(int64_t num_samples) {
       builder_num_samples_ = num_samples;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetFieldDelim(char field_delim) {
       builder_field_delim_ = field_delim;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetColumDefault(std::vector<std::shared_ptr<CsvOp::BaseRecord>> record_list) {
       builder_column_default_list_ = record_list;
       return *this;
     }
 
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
+    /// Setter method.
+    /// @return Builder - setter method returns reference to the builder.
     Builder &SetColumName(std::vector<std::string> col_name_list) {
       builder_column_name_list_ = col_name_list;
       return *this;
@@ -255,7 +255,7 @@ class CsvOp : public NonMappableLeafOp {
     std::vector<std::string> builder_column_name_list_;
   };
 
-  // Constructor of CsvOp
+  /// Constructor of CsvOp
   CsvOp() = delete;
 
   CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
@@ -263,31 +263,31 @@ class CsvOp : public NonMappableLeafOp {
         int32_t num_workers, int64_t num_samples, int32_t worker_connector_size, int32_t op_connector_size,
         bool shuffle_files, int32_t num_devices, int32_t device_id);
 
-  // Default destructor
+  /// Default destructor
   ~CsvOp() = default;
 
-  // A print method typically used for debugging
-  // @param out - The output stream to write output to
-  // @param show_all - A bool to control if you want to show all info or just a summary
+  /// A print method typically used for debugging
+  /// @param out - The output stream to write output to
+  /// @param show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
 
   // Instantiates the internal queues and connectors
   // @return Status - the error code returned
   Status Init() override;
 
-  // Get total rows in files.
-  // @param files - all csv files.
-  // @param csv_header - a bool that indicates csv file include header line
-  // @param count - number of rows.
-  // @return Status - the error coed returned.
+  /// Get total rows in files.
+  /// @param files - all csv files.
+  /// @param csv_header - a bool that indicates csv file include header line
+  /// @param count - number of rows.
+  /// @return Status - the error coed returned.
   static Status CountAllFileRows(const std::vector<std::string> &files, bool csv_header, int64_t *count);
 
-  // File names getter
-  // @return Vector of the input file names
+  /// File names getter
+  /// @return Vector of the input file names
   std::vector<std::string> FileNames() { return csv_files_list_; }
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return "CsvOp"; }
 
  private:
@@ -315,19 +315,19 @@ class CsvOp : public NonMappableLeafOp {
   // @return Status - the error code returned.
   Status CalculateNumRowsPerShard() override;
 
-  // Count number of rows in each file.
-  // @param filename - csv file name.
-  // @return int64_t - the total number of rows in file.
+  /// Count number of rows in each file.
+  /// @param filename - csv file name.
+  /// @return int64_t - the total number of rows in file.
   int64_t CountTotalRows(const std::string &file);
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  // Split string based on a character delimiter
-  // @param str - the input string
-  // @param str - the delimiter
-  // @return - the a string vector
+  /// Split string based on a character delimiter
+  /// @param str - the input string
+  /// @param str - the delimiter
+  /// @return - the a string vector
   std::vector<std::string> split(const std::string &s, char delim);
 
   // Private function for analysing the column name in every CSV file

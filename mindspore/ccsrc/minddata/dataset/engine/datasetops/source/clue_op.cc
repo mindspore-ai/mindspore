@@ -30,60 +30,6 @@
 
 namespace mindspore {
 namespace dataset {
-ClueOp::Builder::Builder()
-    : builder_device_id_(0), builder_num_devices_(1), builder_num_samples_(0), builder_shuffle_files_(false) {
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  builder_num_workers_ = config_manager->num_parallel_workers();
-  builder_op_connector_size_ = config_manager->op_connector_size();
-  builder_worker_connector_size_ = config_manager->worker_connector_size();
-}
-
-Status ClueOp::Builder::ValidateInputs() const {
-  std::string err;
-  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                       std::to_string(builder_num_workers_) + ".\n"
-                                   : "";
-  err += (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1)
-           ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
-               std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
-           : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err);
-}
-
-Status ClueOp::Builder::Build(std::shared_ptr<ClueOp> *op) {
-  RETURN_IF_NOT_OK(ValidateInputs());
-
-  // Throttle the number of workers if we have more workers than files!
-  if (static_cast<size_t>(builder_num_workers_) > builder_clue_files_list_.size()) {
-    builder_num_workers_ = builder_clue_files_list_.size();
-    MS_LOG(WARNING) << "ClueOp operator parallelism reduced to " << builder_num_workers_ << " workers.";
-  }
-
-  ColKeyMap ck_map;
-  for (auto &p : builder_cols_to_keyword_) {
-    ck_map.insert({p.first, split(p.second, '/')});
-  }
-
-  std::shared_ptr<ClueOp> clue_op = std::make_shared<ClueOp>(
-    builder_num_workers_, builder_num_samples_, builder_worker_connector_size_, ck_map, builder_clue_files_list_,
-    builder_op_connector_size_, builder_shuffle_files_, builder_num_devices_, builder_device_id_);
-  RETURN_IF_NOT_OK(clue_op->Init());
-  *op = std::move(clue_op);
-
-  return Status::OK();
-}
-
-std::vector<std::string> ClueOp::Builder::split(const std::string &s, char delim) {
-  std::vector<std::string> res;
-  std::stringstream ss(s);
-  std::string item;
-
-  while (getline(ss, item, delim)) {
-    res.push_back(item);
-  }
-  return res;
-}
-
 ClueOp::ClueOp(int32_t num_workers, int64_t num_samples, int32_t worker_connector_size, ColKeyMap cols_to_keyword,
                std::vector<std::string> clue_files_list, int32_t op_connector_size, bool shuffle_files,
                int32_t num_devices, int32_t device_id)
@@ -271,7 +217,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
   return Status::OK();
 }
 
-int64_t ClueOp::CountTotalRows(const std::string &file) {
+int64_t CountTotalRowsPerFile(const std::string &file) {
   std::ifstream handle(file);
   if (!handle.is_open()) {
     MS_LOG(ERROR) << "Invalid file, failed to open file: " << file;
@@ -289,12 +235,13 @@ int64_t ClueOp::CountTotalRows(const std::string &file) {
   return count;
 }
 
+int64_t ClueOp::CountTotalRows(const std::string &file) { return CountTotalRowsPerFile(file); }
+
 Status ClueOp::CountAllFileRows(const std::vector<std::string> &files, int64_t *count) {
   std::shared_ptr<ClueOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetClueFilesList(files).Build(&op));
   for (auto file : files) {
-    *count += op->CountTotalRows(file);
+    *count += CountTotalRowsPerFile(file);
   }
   return Status::OK();
 }

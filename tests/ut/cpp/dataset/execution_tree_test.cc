@@ -19,20 +19,19 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestExecutionTree : public UT::DatasetOpTesting {
  public:
-
 };
-
 
 // Construct some tree nodes and play with them
 TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
@@ -98,24 +97,29 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::string dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  TFReaderOp::Builder()
-    .SetDatasetFilesList({dataset_path})
-
-    .SetWorkerConnectorSize(2)
-    .SetNumWorkers(2)
-      .Build(&my_tfreader_op);
-
-  my_tree->AssociateNode(my_tfreader_op);
-  my_tree->AssignRoot(my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
+  ASSERT_OK(rc);
+  rc = my_tree->AssociateNode(my_tfreader_op);
+  ASSERT_OK(rc);
+  rc = my_tree->AssignRoot(my_tfreader_op);
+  ASSERT_OK(rc);
 
   // prepare the tree
-  my_tree->Prepare();
+  rc = my_tree->Prepare();
+  ASSERT_OK(rc);
 
   // Launch the tree execution to kick off threads
   // and start running the pipeline
   MS_LOG(INFO) << "Launching my tree.";
-  my_tree->Launch();
+  rc = my_tree->Launch();
+  ASSERT_OK(rc);
 
   // Simulate a parse of data from our pipeline.
   std::shared_ptr<DatasetOp> root_node = my_tree->root();
@@ -134,6 +138,4 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
 }
 
 // Construct some tree nodes and play with them
-TEST_F(MindDataTestExecutionTree, TestExecutionTree3) {
-  MS_LOG(INFO) << "Doing MindDataTestExecutionTree3.";
-}
+TEST_F(MindDataTestExecutionTree, TestExecutionTree3) { MS_LOG(INFO) << "Doing MindDataTestExecutionTree3."; }

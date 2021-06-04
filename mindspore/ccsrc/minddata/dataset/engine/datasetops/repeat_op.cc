@@ -22,24 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor.  Creates the builder object.
-RepeatOp::Builder::Builder(int32_t count) : build_num_repeats_(count) {}
-
-Status RepeatOp::Builder::SanityCheck() const {
-  if (build_num_repeats_ < kInfiniteRepeat || build_num_repeats_ == 0) {
-    std::string err_msg("Invalid parameter, repeat count must be greater than 0 or equal to -1.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object.
-Status RepeatOp::Builder::Build(std::shared_ptr<RepeatOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<RepeatOp>(build_num_repeats_);
-  return Status::OK();
-}
-
 // Constructor of the RepeatOp.
 RepeatOp::RepeatOp(int32_t count) : PipelineOp(0), num_repeats_(count), repeat_count_(0) {}
 

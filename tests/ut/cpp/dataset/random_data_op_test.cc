@@ -23,15 +23,14 @@
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/data_schema.h"
+#include "minddata/dataset/util/random.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestRandomDataOp : public UT::DatasetOpTesting {
-
-};
+class MindDataTestRandomDataOp : public UT::DatasetOpTesting {};
 
 // Test info:
 // - Simple test with a user-provided schema generated purely from DataSchema C API
@@ -43,7 +42,7 @@ class MindDataTestRandomDataOp : public UT::DatasetOpTesting {
 //
 TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic1) {
   Status rc;
-  int32_t rank = 0; // not used
+  int32_t rank = 0;  // not used
   MS_LOG(INFO) << "UT test RandomDataOpBasic1";
 
   // Start with an empty execution tree
@@ -56,28 +55,21 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic1) {
   // Most other ops cannot do that as they are limited by the physical data itself. We're
   // more flexible with random data since it is just making stuff up on the fly.
   TensorShape c1Shape({TensorShape::kDimUnknown, TensorShape::kDimUnknown, 3});
-  ColDescriptor c1("image",
-                   DataType(DataType::DE_INT8),
-                   TensorImpl::kFlexible,
+  ColDescriptor c1("image", DataType(DataType::DE_INT8), TensorImpl::kFlexible,
                    rank,  // not used
                    &c1Shape);
 
   // Column 2 will just be a scalar label number
   TensorShape c2Shape({});  // empty shape is a 1-value scalar Tensor
-  ColDescriptor c2("label",
-                   DataType(DataType::DE_UINT32),
-                   TensorImpl::kFlexible,
-                   rank,
-                   &c2Shape);
+  ColDescriptor c2("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, rank, &c2Shape);
 
   testSchema->AddColumn(c1);
   testSchema->AddColumn(c2);
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
-
-  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(25).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(1, op_connector_size, 25, std::move(testSchema));
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
@@ -127,11 +119,10 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic2) {
   // Start with an empty execution tree
   auto myTree = std::make_shared<ExecutionTree>();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  rc = builder.SetNumWorkers(1).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp = std::make_shared<RandomDataOp>(1, op_connector_size, 0, nullptr);
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
@@ -161,12 +152,11 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic3) {
   std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
   rc = testSchema->LoadSchemaFile(datasets_root_path_ + "/testRandomData/datasetSchema.json", {});
   EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
-
-  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(1, op_connector_size, 10, std::move(testSchema));
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
@@ -221,21 +211,17 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic4) {
   std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
   rc = testSchema->LoadSchemaFile(datasets_root_path_ + "/testRandomData/datasetSchema2.json", {});
   EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
-
-  rc = builder.SetNumWorkers(1).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(1, op_connector_size, 10, std::move(testSchema));
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   uint32_t numRepeats = 2;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats)
-    .Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(numRepeats);
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -297,21 +283,17 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic5) {
   std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
   rc = testSchema->LoadSchemaFile(datasets_root_path_ + "/testRandomData/datasetSchema2.json", {});
   EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
-
-  rc = builder.SetNumWorkers(4).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(4, op_connector_size, 10, std::move(testSchema));
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
   uint32_t numRepeats = 3;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats)
-    .Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(numRepeats);
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -373,30 +355,22 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpTree1) {
   std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
   rc = testSchema->LoadSchemaFile(datasets_root_path_ + "/testRandomData/datasetSchema2.json", {});
   EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto op_connector_size = cfg->op_connector_size();
 
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  RandomDataOp::Builder builder;
-
-  rc = builder.SetNumWorkers(4).SetDataSchema(std::move(testSchema)).SetTotalRows(10).Build(&myRandomDataOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> myRandomDataOp =
+    std::make_shared<RandomDataOp>(4, op_connector_size, 10, std::move(testSchema));
 
   rc = myTree->AssociateNode(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
+  uint32_t shuffle_seed = GetSeed();
+  std::shared_ptr<ShuffleOp> myShuffleOp = std::make_shared<ShuffleOp>(4, shuffle_seed, op_connector_size, true);
 
-  std::shared_ptr<ShuffleOp> myShuffleOp;
-  rc = ShuffleOp::Builder()
-
-         .SetShuffleSize(4)
-         .Build(&myShuffleOp);
-  EXPECT_TRUE(rc.IsOk());
   rc = myTree->AssociateNode(myShuffleOp);
   EXPECT_TRUE(rc.IsOk());
 
   uint32_t numRepeats = 3;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats)
-    .Build(&myRepeatOp);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> myRepeatOp = std::make_shared<RepeatOp>(numRepeats);
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 

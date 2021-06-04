@@ -46,7 +46,7 @@ class Queue;
 
 using mindrecord::ShardOperator;
 using mindrecord::ShardReader;
-using ShardTuple = std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>;  // Row of data from ShardReader
+using ShardTuple = std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>;  /// Row of data from ShardReader
 
 const int32_t LOG_INTERVAL = 19;
 
@@ -161,19 +161,19 @@ class MindRecordOp : public MappableLeafOp {
                const ShuffleMode shuffle_mode_, std::unique_ptr<ShardReader> shard_reader,
                std::shared_ptr<SamplerRT> sampler);
 
-  // Destructor
+  /// Destructor
   ~MindRecordOp() override;
 
-  // A print method typically used for debugging
-  // @param out - The output stream to write output to
-  // @param show_all - A bool to control if you want to show all info or just a summary
+  /// A print method typically used for debugging
+  /// @param out - The output stream to write output to
+  /// @param show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
 
-  // << Stream output operator overload
-  // @notes This allows you to write the debug print info using stream operators
-  // @param out - reference to the output stream being overloaded
-  // @param op - reference to the MindRecordOp to display
-  // @return - the output stream must be returned
+  /// << Stream output operator overload
+  /// @notes This allows you to write the debug print info using stream operators
+  /// @param out - reference to the output stream being overloaded
+  /// @param op - reference to the MindRecordOp to display
+  /// @return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const MindRecordOp &op) {
     op.Print(out, false);
     return out;
@@ -188,10 +188,10 @@ class MindRecordOp : public MappableLeafOp {
   // @return
   Status LaunchThreadsAndInitOp() override;
 
-  // Overrides base class reset method.  When an operator does a reset, it cleans up any state
-  // info from it's previous execution and then initializes itself so that it can be executed
-  // again.
-  // @return Status The status code returned
+  /// Overrides base class reset method.  When an operator does a reset, it cleans up any state
+  /// info from it's previous execution and then initializes itself so that it can be executed
+  /// again.
+  /// @return Status The status code returned
   Status Reset() override;
 
   static Status CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
@@ -200,24 +200,24 @@ class MindRecordOp : public MappableLeafOp {
   // Getter method
   std::vector<std::string> dataset_file() const { return dataset_file_; }
 
-  // Getter method
+  /// Getter method
   std::vector<std::string> columns_to_load() const { return columns_to_load_; }
 
   bool load_dataset() const { return load_dataset_; }
 
   Status Init();
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return "MindRecordOp"; }
 
  private:
   Status GetRowFromReader(TensorRow *fetched_row, int64_t row_id, int32_t worker_id);
 
-  // Parses a single cell and puts the data into a tensor
-  // @param tensor_row - the tensor row to put the parsed data in
-  // @param columns_blob - the blob data received from the reader
-  // @param columns_json - the data for fields received from the reader
+  /// Parses a single cell and puts the data into a tensor
+  /// @param tensor_row - the tensor row to put the parsed data in
+  /// @param columns_blob - the blob data received from the reader
+  /// @param columns_json - the data for fields received from the reader
   Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
                        const mindrecord::json &columns_json, const mindrecord::TaskType task_type);
 

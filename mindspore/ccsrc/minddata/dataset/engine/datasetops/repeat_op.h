@@ -26,30 +26,6 @@ namespace mindspore {
 namespace dataset {
 class RepeatOp : public PipelineOp {
  public:
-  // The nested builder class inside of the RepeatOp is used to help manage all of the arguments
-  // for constructing it.  This repeat op is very simple though, so this builder is really just
-  // provided for a consistent look and feel for creators of Dataset operators overall.
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @param count - The number of repeats to do
-    // @return This is a constructor.
-    explicit Builder(int32_t count);
-
-    // Default destructor
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new RepeatOp object
-    Status Build(std::shared_ptr<RepeatOp> *);
-
-   protected:
-    int32_t build_num_repeats_;
-
-    Status SanityCheck() const;
-  };
-
   // Constructor of the RepeatOp.
   // @note The builder class should be used to call it
   // @param count - The number of repeats to do

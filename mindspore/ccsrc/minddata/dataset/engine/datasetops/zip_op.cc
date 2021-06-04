@@ -26,24 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-ZipOp::Builder::Builder() {
-  // Some arguments to the ZipOp constructor have a default argument that is taken
-  // from the client config.
-  // The user may choose to change these values for the construction of the ZipOp by
-  // using the various builder set methods.
-
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status ZipOp::Builder::SanityCheck() const { return Status::OK(); }
-
-Status ZipOp::Builder::Build(std::shared_ptr<ZipOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<ZipOp>(builder_op_connector_size_);
-  return Status::OK();
-}
-
 // Construct ZipOp here, local variables initialized in operator due to tree construction restrictions
 ZipOp::ZipOp(int32_t op_connector_size) : PipelineOp(0) {}
 

@@ -19,10 +19,14 @@
 #include "gtest/gtest.h"
 #include "include/api/status.h"
 #include "include/api/types.h"
+#include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/type_id.h"
 #include "utils/log_adapter.h"
+#include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 
 using mindspore::Status;
 using mindspore::StatusCode;
@@ -64,16 +68,17 @@ using mindspore::StatusCode;
   } while (false)
 
 // Macro to compare 2 MSTensors; compare shape-size, shape and data
-#define EXPECT_MSTENSOR_EQ(_mstensor1, _mstensor2)                                                            \
-do {                                                                                                          \
-    EXPECT_EQ(_mstensor1.Shape().size(), _mstensor2.Shape().size());                                          \
-    for (int i = 0; i < _mstensor1.Shape().size(); i++) {                                                     \
-      EXPECT_EQ(_mstensor1.Shape()[i], _mstensor2.Shape()[i]);                                                \
-    }                                                                                                         \
-    EXPECT_EQ(_mstensor1.DataSize(), _mstensor2.DataSize());                                                  \
-    EXPECT_EQ(std::memcmp((const void *)_mstensor1.Data().get(), (const void *)_mstensor2.Data().get(),       \
-                          _mstensor2.DataSize()), 0);                                                         \
-} while (false)
+#define EXPECT_MSTENSOR_EQ(_mstensor1, _mstensor2)                                                      \
+  do {                                                                                                  \
+    EXPECT_EQ(_mstensor1.Shape().size(), _mstensor2.Shape().size());                                    \
+    for (int i = 0; i < _mstensor1.Shape().size(); i++) {                                               \
+      EXPECT_EQ(_mstensor1.Shape()[i], _mstensor2.Shape()[i]);                                          \
+    }                                                                                                   \
+    EXPECT_EQ(_mstensor1.DataSize(), _mstensor2.DataSize());                                            \
+    EXPECT_EQ(std::memcmp((const void *)_mstensor1.Data().get(), (const void *)_mstensor2.Data().get(), \
+                          _mstensor2.DataSize()),                                                       \
+              0);                                                                                       \
+  } while (false)
 
 // Macro to invoke MS_LOG for MSTensor
 #define TEST_MS_LOG_MSTENSOR(_loglevel, _msg, _mstensor)           \
@@ -94,6 +99,17 @@ class Common : public testing::Test {
 
 class DatasetOpTesting : public Common {
  public:
+  // Helper functions for creating datasets
+  std::shared_ptr<mindspore::dataset::BatchOp> Batch(int32_t batch_size = 1, bool drop = false,
+                                                     mindspore::dataset::PadInfo = {});
+
+  std::shared_ptr<mindspore::dataset::RepeatOp> Repeat(int repeat_cnt = 1);
+
+  std::shared_ptr<mindspore::dataset::TFReaderOp> TFReader(std::string file, int num_works = 8);
+
+  std::shared_ptr<mindspore::dataset::ExecutionTree> Build(
+    std::vector<std::shared_ptr<mindspore::dataset::DatasetOp>> ops);
+
   std::vector<mindspore::dataset::TensorShape> ToTensorShapeVec(const std::vector<std::vector<int64_t>> &v);
   std::vector<mindspore::dataset::DataType> ToDETypes(const std::vector<mindspore::DataType> &t);
   mindspore::MSTensor ReadFileToTensor(const std::string &file);

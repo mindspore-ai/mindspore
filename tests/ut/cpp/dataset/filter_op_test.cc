@@ -22,20 +22,20 @@
 using namespace mindspore::dataset;
 namespace de = mindspore::dataset;
 
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestfilter_op : public UT::DatasetOpTesting {
-
-};
-
+class MindDataTestfilter_op : public UT::DatasetOpTesting {};
 
 std::shared_ptr<de::FilterOp> Filter() {
-  Status rc;
-  std::shared_ptr<de::FilterOp> op;
-  rc = de::FilterOp::Builder().Build(&op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  int32_t num_workers = config_manager->num_parallel_workers();
+  std::shared_ptr<TensorOp> predicate_func;
+  std::vector<std::string> in_col_names = {};
+  std::shared_ptr<de::FilterOp> op =
+    std::make_shared<FilterOp>(in_col_names, num_workers, op_connector_size, predicate_func);
   return op;
 }
 

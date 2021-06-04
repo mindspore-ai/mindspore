@@ -42,8 +42,6 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
-
 std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);

@@ -26,23 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-ProjectOp::Builder::Builder(const std::vector<std::string> &columns_to_project)
-    : builder_columns_to_project_(columns_to_project) {}
-
-Status ProjectOp::Builder::SanityCheck() const {
-  if (builder_columns_to_project_.empty()) {
-    std::string err_msg("Invalid parameter, no column is specified for project.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
-Status ProjectOp::Builder::Build(std::shared_ptr<ProjectOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<ProjectOp>(builder_columns_to_project_);
-  return Status::OK();
-}
-
 ProjectOp::ProjectOp(const std::vector<std::string> &columns_to_project)
     : PipelineOp(0), columns_to_project_(columns_to_project) {}
 

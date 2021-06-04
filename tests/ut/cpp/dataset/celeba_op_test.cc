@@ -19,6 +19,7 @@
 #include "common/common.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
@@ -30,22 +31,28 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
+// std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
-std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<CelebAOp> Celeba(int32_t num_workers, int32_t queue_size, const std::string &dir,
                                  std::shared_ptr<SamplerRT> sampler = nullptr, bool decode = false,
                                  const std::string &dataset_type = "all") {
-  std::shared_ptr<CelebAOp> so;
-  CelebAOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_workers)
-                .SetCelebADir(dir)
-                .SetOpConnectorSize(queue_size)
-                .SetSampler(std::move(sampler))
-                .SetDecode(decode)
-                .SetUsage(dataset_type)
-                .Build(&so);
+  if (sampler == nullptr) {
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+  }
+
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  (void)schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  (void)schema->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1));
+
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::set<std::string> extensions = {};
+  std::shared_ptr<CelebAOp> so = std::make_shared<CelebAOp>(num_workers, dir, op_connector_size, decode, dataset_type,
+                                                            extensions, std::move(schema), std::move(sampler));
   return so;
 }
 

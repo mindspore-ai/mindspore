@@ -22,29 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-GeneratorOp::Builder::Builder() {
-  // Some arguments to the GeneratorOp constructor have a default argument that is taken
-  // from the client config.
-  build_buffer_size_ = kCfgRowsPerBuffer;
-  build_op_connector_size_ = kCfgOpConnectorSize;
-}
-
-Status GeneratorOp::Builder::SanityCheck() {
-  // Update queue size to fit the prefetch requirement
-  MS_LOG(DEBUG) << "Generator operator sanity check, prefetch size is " << build_prefetch_size_ << ".";
-  if (build_prefetch_size_ > 0) {
-    build_op_connector_size_ = (build_prefetch_size_ + build_buffer_size_ - 1) / build_buffer_size_;
-  }
-  return Status::OK();
-}
-
-Status GeneratorOp::Builder::Build(std::shared_ptr<GeneratorOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<GeneratorOp>(build_generator_function_, build_column_names_, build_column_types_,
-                                       build_prefetch_size_, build_op_connector_size_, nullptr);
-  return (*ptr)->Init();
-}
-
 GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
                          std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
                          std::shared_ptr<SamplerRT> sampler)

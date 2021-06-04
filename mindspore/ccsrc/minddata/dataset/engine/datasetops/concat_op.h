@@ -29,44 +29,6 @@ namespace mindspore {
 namespace dataset {
 class ConcatOp : public PipelineOp {
  public:
-  // The nested builder class inside of the ConcatOp is used to help manage all of the arguments
-  // for constructing it.  This Concat op is very simple though, so this builder is really just
-  // provided for a consistent look and feel for creators of Dataset operators overall.
-  class Builder {
-   public:
-    // Builder constructor. Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new ConcatOp object
-    Status Build(std::shared_ptr<ConcatOp> *);
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    Builder &SetChildrenFlagAndNums(std::vector<std::pair<int, int>> children_flag_and_nums) {
-      children_flag_and_nums_ = std::move(children_flag_and_nums);
-      return *this;
-    }
-
-    Builder &SetChildrenStartEndIndex(std::vector<std::pair<int, int>> children_start_end_index) {
-      children_start_end_index_ = std::move(children_start_end_index);
-      return *this;
-    }
-
-   private:
-    int32_t builder_op_connector_size_;
-    std::shared_ptr<SamplerRT> builder_sampler_;
-    std::vector<std::pair<int, int>> children_flag_and_nums_;
-    std::vector<std::pair<int, int>> children_start_end_index_;
-  };
-
   // Constructor of the ConcatOp.
   // @note The builder class should be used to call it
   // @param op_connector_size - connector size

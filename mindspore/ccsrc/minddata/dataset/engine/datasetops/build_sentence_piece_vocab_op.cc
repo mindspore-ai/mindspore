@@ -164,18 +164,6 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   ret_status_ = Status::OK();
 }
 
-Status BuildSentencePieceVocabOp::Builder::Build(std::shared_ptr<BuildSentencePieceVocabOp> *op) {
-  (*op) = std::make_shared<BuildSentencePieceVocabOp>(builder_vocab_, builder_col_names_, builder_vocab_size_,
-                                                      builder_character_coverage_, builder_model_type_, builder_params_,
-                                                      builder_connector_size_);
-  return Status::OK();
-}
-
-BuildSentencePieceVocabOp::Builder::Builder() {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_connector_size_ = cfg->op_connector_size();
-}
-
 BuildSentencePieceVocabOp::DatasetSentenceIterator::DatasetSentenceIterator(BuildSentencePieceVocabOp *s_p_vocab_ptr)
     : s_p_vocab_ptr_(s_p_vocab_ptr) {}
 

@@ -21,6 +21,8 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/datasetops/source/image_folder_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/kernels/image/decode_op.h"
 #include "minddata/dataset/kernels/image/resize_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -106,20 +108,16 @@ class MindDataTestMapOp : public UT::DatasetOpTesting {
   }
 
   std::shared_ptr<TFReaderOp> CreateTFReaderOp() {
-    std::shared_ptr<TFReaderOp> my_tfreader_op;
-    TFReaderOp::Builder builder;
-    builder.SetDatasetFilesList({dataset_path_})
-      .SetColumnsToLoad({"image", "label", "A", "B"})
-
-      .SetWorkerConnectorSize(2)
-      .SetNumWorkers(2);
+    std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+    auto op_connector_size = config_manager->op_connector_size();
 
     std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-    schema->LoadSchemaFile(schema_path_, {});
-    builder.SetDataSchema(std::move(schema));
-
-    Status rc = builder.Build(&my_tfreader_op);
-    EXPECT_TRUE(rc.IsOk());
+    std::vector<std::string> columns_to_load = {"image", "label", "A", "B"};
+    (void)schema->LoadSchemaFile(schema_path_, columns_to_load);
+    std::vector<std::string> files = {dataset_path_};
+    std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+      1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+    (void)my_tfreader_op->Init();
     return my_tfreader_op;
   }
 
@@ -134,7 +132,7 @@ std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int6
                                            bool shuf = false, std::shared_ptr<SamplerRT> sampler = nullptr,
                                            std::map<std::string, int32_t> map = {}, bool decode = false);
 
-std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 // TestAsMap scenario:
 //    TFReaderOp reads a dataset that have column ordering |image|label|A|B|.
@@ -152,10 +150,12 @@ TEST_F(MindDataTestMapOp, TestAsMap) {
   auto my_no_op = std::make_shared<mindspore::dataset::test::NoOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_no_op);
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"image"}).SetOutColNames({"X"}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(1);
-  rc = builder.Build(&my_map_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> in_columns = {"image"};
+  std::vector<std::string> out_columns = {"X"};
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(in_columns, out_columns, std::move(my_func_list), 1, op_connector_size);
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_map_op->AddChild(my_tfreader_op);
@@ -200,14 +200,14 @@ TEST_F(MindDataTestMapOp, Test3to1) {
   auto my_op = std::make_shared<mindspore::dataset::test::ThreeToOneOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_op);
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"image", "A", "B"})
-    .SetOutColNames({"X"})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(1);
-  rc = builder.Build(&my_map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> in_columns = {"image", "A", "B"};
+  std::vector<std::string> out_columns = {"X"};
+
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(in_columns, out_columns, std::move(my_func_list), 1, op_connector_size);
+
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_map_op->AddChild(my_tfreader_op);
@@ -252,13 +252,13 @@ TEST_F(MindDataTestMapOp, Test1to3) {
   auto my_op = std::make_shared<mindspore::dataset::test::OneToThreeOp>();
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_op);
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"image"})
-    .SetOutColNames({"X", "Y", "Z"})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(1);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> in_columns = {"image"};
+  std::vector<std::string> out_columns = {"X", "Y", "Z"};
 
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(in_columns, out_columns, std::move(my_func_list), 1, op_connector_size);
   // ProjectOp
   std::vector<std::string> columns_to_project = {"X", "Y", "Z", "label", "A", "B"};
   std::shared_ptr<ProjectOp> my_project_op = std::make_shared<ProjectOp>(columns_to_project);
@@ -268,7 +268,6 @@ TEST_F(MindDataTestMapOp, Test1to3) {
   rc = my_tree_->AssignRoot(my_project_op);
   ASSERT_TRUE(rc.IsOk());
 
-  rc = builder.Build(&my_map_op);
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -341,14 +340,14 @@ TEST_F(MindDataTestMapOp, TestMultiTensorOp) {
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_op1);
   my_func_list.push_back(my_op2);
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"image", "A", "B"})
-    .SetOutColNames({"X", "Y", "Z"})
-    .SetTensorFuncs(std::move(my_func_list))
-    .SetNumWorkers(1);
-  rc = builder.Build(&my_map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> in_columns = {"image", "A", "B"};
+  std::vector<std::string> out_columns = {"X", "Y", "Z"};
+
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(in_columns, out_columns, std::move(my_func_list), 1, op_connector_size);
+
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_map_op->AddChild(my_tfreader_op);
@@ -398,17 +397,18 @@ TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_no_op);
 
-  std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree_->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"label"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(5);
-  rc = builder.Build(&my_map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> in_columns = {"label"};
+  std::vector<std::string> out_columns = {};
+
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(in_columns, out_columns, std::move(my_func_list), 5, op_connector_size);
+
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -458,17 +458,17 @@ TEST_F(MindDataTestMapOp, TestTFReaderMapRepeat) {
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(my_no_op);
 
-  std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree_->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  std::shared_ptr<MapOp> my_map_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"label"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(50);
-  rc = builder.Build(&my_map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> input_columns = {"label"};
+  std::vector<std::string> output_columns = {};
+  std::shared_ptr<MapOp> my_map_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(my_func_list), 50, op_connector_size);
+
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -511,16 +511,15 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   MS_LOG(INFO) << "Doing TFReader_Decode_Repeat_Resize.";
   uint32_t num_repeats = 2;
 
-  std::string dataset_path_ = datasets_root_path_ + "/" + "test_tf_file_3_images/train-0000-of-0001.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  TFReaderOp::Builder sobuilder;
-  sobuilder.SetDatasetFilesList({dataset_path_})
-    .SetColumnsToLoad({"image", "label"})
-
-    .SetWorkerConnectorSize(2)
-    .SetNumWorkers(2);
-  rc = sobuilder.Build(&my_tfreader_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::string dataset_path = datasets_root_path_ + "/" + "test_tf_file_3_images/train-0000-of-0001.data";
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::vector<std::string> columns_to_load = {"image", "label"};
+  std::vector<std::string> files = {dataset_path};
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  (void)my_tfreader_op->Init();
 
   rc = my_tree_->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
@@ -528,28 +527,21 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   std::vector<std::shared_ptr<TensorOp>> my_func_list;
   my_func_list.push_back(decode_op);
 
-  std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&my_repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree_->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
-
-  std::shared_ptr<MapOp> my_map_decode_op;
-  MapOp::Builder builder;
-  builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list)).SetNumWorkers(4);
-  rc = builder.Build(&my_map_decode_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::vector<std::string> input_columns = {"image"};
+  std::vector<std::string> output_columns = {};
+  std::shared_ptr<MapOp> my_map_decode_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(my_func_list), 4, op_connector_size);
   rc = my_tree_->AssociateNode(my_map_decode_op);
   EXPECT_TRUE(rc.IsOk());
 
   auto resize_op = std::make_shared<ResizeOp>(300, 300);
   std::vector<std::shared_ptr<TensorOp>> my_func_list2;
   my_func_list2.push_back(resize_op);
-  std::shared_ptr<MapOp> my_map_resize_op;
-  MapOp::Builder builder2;
-  builder2.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(std::move(my_func_list2)).SetNumWorkers(5);
-  rc = builder2.Build(&my_map_resize_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<MapOp> my_map_resize_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(my_func_list2), 5, op_connector_size);
   rc = my_tree_->AssociateNode(my_map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -597,30 +589,27 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
 
   uint32_t num_repeats = 2;
-  std::shared_ptr<RepeatOp> repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&repeat_op);
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(num_repeats);
   EXPECT_TRUE(rc.IsOk());
 
   auto decode_op = std::make_shared<DecodeOp>();
   std::vector<std::shared_ptr<TensorOp>> func_list;
   func_list.push_back(decode_op);
-
-  std::shared_ptr<MapOp> map_decode_map;
-  MapOp::Builder map_decode_builder;
-  map_decode_builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(func_list).SetNumWorkers(4);
-  rc = map_decode_builder.Build(&map_decode_map);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  int32_t num_parallel_workers = config_manager->num_parallel_workers();
+  std::vector<std::string> input_columns = {"image"};
+  std::vector<std::string> output_columns = {};
+  std::shared_ptr<MapOp> map_decode_map =
+    std::make_shared<MapOp>(input_columns, output_columns, func_list, 4, op_connector_size);
 
   auto resize_op = std::make_shared<ResizeOp>(300, 300);
   std::vector<std::shared_ptr<TensorOp>> func_list2;
   func_list2.push_back(resize_op);
-  std::shared_ptr<MapOp> map_resize_op;
-  MapOp::Builder map_resize_builder;
-  map_resize_builder.SetInColNames({"image"}).SetOutColNames({}).SetTensorFuncs(func_list2).SetNumWorkers(5);
-  rc = map_resize_builder.Build(&map_resize_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<MapOp> map_resize_op =
+    std::make_shared<MapOp>(input_columns, output_columns, func_list2, 5, op_connector_size);
 
-  auto image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
+  auto image_folder_op = ImageFolder(num_parallel_workers, 2, 32, folder_path, false);
   image_folder_op->set_total_repeats(num_repeats);
   image_folder_op->set_num_repeats_per_epoch(num_repeats);
   map_decode_map->set_total_repeats(num_repeats);
@@ -653,22 +642,11 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
 
   // Part-2 : creating mapop with performance mode = false, to check if the result is the same
   // as when performance mode = true.
-  rc = RepeatOp::Builder(num_repeats).Build(&repeat_op);
+  repeat_op = std::make_shared<RepeatOp>(num_repeats);
   EXPECT_TRUE(rc.IsOk());
+  map_decode_map = std::make_shared<MapOp>(input_columns, output_columns, func_list, 14, op_connector_size);
 
-  map_decode_builder.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(func_list)
-    .SetNumWorkers(14);
-  rc = map_decode_builder.Build(&map_decode_map);
-  EXPECT_TRUE(rc.IsOk());
-
-  map_resize_builder.SetInColNames({"image"})
-    .SetOutColNames({})
-    .SetTensorFuncs(func_list2)
-    .SetNumWorkers(15);
-  rc = map_resize_builder.Build(&map_resize_op);
-  EXPECT_TRUE(rc.IsOk());
+  map_resize_op = std::make_shared<MapOp>(input_columns, output_columns, func_list2, 15, op_connector_size);
 
   image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
   image_folder_op->set_total_repeats(num_repeats);
@@ -710,28 +688,26 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
 
   uint32_t num_repeats = 2;
-  std::shared_ptr<RepeatOp> repeat_op;
-  rc = RepeatOp::Builder(num_repeats).Build(&repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(num_repeats);
+  ;
 
   auto decode_op = std::make_shared<DecodeOp>();
   std::vector<std::shared_ptr<TensorOp>> func_list;
   func_list.push_back(decode_op);
-
-  std::shared_ptr<MapOp> map_decode_map;
-  MapOp::Builder map_decode_builder;
-  map_decode_builder.SetInColNames({}).SetOutColNames({}).SetTensorFuncs(func_list).SetNumWorkers(4);
-  rc = map_decode_builder.Build(&map_decode_map);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> input_columns = {};
+  std::vector<std::string> output_columns = {};
+  std::shared_ptr<MapOp> map_decode_map =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(func_list), 4, op_connector_size);
+  ;
 
   auto resize_op = std::make_shared<ResizeOp>(300, 300);
   std::vector<std::shared_ptr<TensorOp>> func_list2;
   func_list2.push_back(resize_op);
-  std::shared_ptr<MapOp> map_resize_op;
-  MapOp::Builder map_resize_builder;
-  map_resize_builder.SetTensorFuncs(func_list2).SetNumWorkers(5);
-  rc = map_resize_builder.Build(&map_resize_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<MapOp> map_resize_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(func_list2), 5, op_connector_size);
+  ;
 
   auto image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
   image_folder_op->set_total_repeats(num_repeats);

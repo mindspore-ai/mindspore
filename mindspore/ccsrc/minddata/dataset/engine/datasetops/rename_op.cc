@@ -27,26 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-// builds
-RenameOp::Builder::Builder() {
-  // Some arguments to the RenameOp constructor have a default argument that is taken
-  // from the client config.
-  // The user may choose to change these values for the construction of the RenameOp by
-  // using the various builder set methods.
-
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status RenameOp::Builder::SanityCheck() const { return Status::OK(); }
-
-// build method for RenameOp
-Status RenameOp::Builder::Build(std::shared_ptr<RenameOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<RenameOp>(builder_in_columns_, builder_out_columns_);
-  return Status::OK();
-}
-
 //  constructor
 RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names)
     : PipelineOp(0), in_columns_(in_col_names), out_columns_(out_col_names) {}
