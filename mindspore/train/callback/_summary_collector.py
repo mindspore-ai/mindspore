@@ -285,14 +285,16 @@ class SummaryCollector(Callback):
 
         return custom_lineage_data
 
-    def _check_custom_lineage_type(self, param_name, custom_lineage):
+    @staticmethod
+    def _check_custom_lineage_type(param_name, custom_lineage):
         """Check custom lineage type."""
         check_value_type(param_name, custom_lineage, [dict, type(None)])
         for key, value in custom_lineage.items():
             check_value_type(f'{param_name} -> {key}', key, str)
             check_value_type(f'the value of {param_name} -> {key}', value, (int, str, float))
 
-    def _collect_optimizer_custom_lineage_data(self):
+    @staticmethod
+    def _collect_optimizer_custom_lineage_data():
         """Collect custom lineage data if mindoptimizer has set the hyper config"""
         auto_custom_lineage_data = {}
 

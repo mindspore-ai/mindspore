@@ -692,9 +692,9 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
 }
 
 #ifdef ENABLE_DEBUGGER
-bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order,
-                                        const std::string &host_fmt, const ShapeVector &host_shape, TypeId host_type,
-                                        size_t slot, bool keep_prev) const {
+bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,
+                                        const ShapeVector &host_shape, TypeId host_type, size_t slot,
+                                        bool keep_prev) const {
   bool ret = false;
   if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name)) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
