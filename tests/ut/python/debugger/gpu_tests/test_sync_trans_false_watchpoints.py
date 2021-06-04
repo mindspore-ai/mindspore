@@ -17,13 +17,16 @@ Watchpoints test script for offline debugger APIs.
 """
 
 import mindspore.offline_debug.dbg_services as d
-from dump_test_utils import compare_actual_with_expected
+from dump_test_utils import compare_actual_with_expected, skip_test
 
 GENERATE_GOLDEN = False
 test_name = "sync_trans_false_watchpoints"
 
 
 def test_sync_trans_false_watchpoints():
+
+    if skip_test():
+        return
 
     if GENERATE_GOLDEN:
         f_write = open(test_name + ".expected", "w")

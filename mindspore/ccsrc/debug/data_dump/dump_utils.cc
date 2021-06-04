@@ -42,8 +42,9 @@ std::string GenerateDumpPath(uint32_t graph_id, const uint32_t *device_id) {
   if (dump_path.back() != '/') {
     dump_path += "/";
   }
+  uint32_t physical_device = device_id == nullptr ? 0 : ConvertPhysicalDeviceId(*device_id);
   dump_path +=
-    ("rank_" + std::to_string(*device_id) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator);
+    ("rank_" + std::to_string(physical_device) + "/" + net_name + "/" + std::to_string(graph_id) + "/" + iterator);
   return dump_path;
 }
 

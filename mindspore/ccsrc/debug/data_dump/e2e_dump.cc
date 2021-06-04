@@ -277,15 +277,9 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t device_id) {
 
 bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
+  bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
-  if (starting_graph_id == INT32_MAX) {
-    starting_graph_id = graph_id;
-  } else {
-    if (starting_graph_id == graph_id) {
-      dump_json_parser.UpdateDumpIter();
-    }
-  }
 
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
@@ -295,21 +289,21 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
     DumpParametersAndConst(graph, dump_path, debugger);
-    return true;
+    success = true;
   } else if (dump_json_parser.AsyncDumpEnabled()) {
-    uint32_t prev_dump_iter = dump_json_parser.cur_dump_iter();
+    uint32_t current_iter = dump_json_parser.cur_dump_iter();
 
     auto zero_dir_dump_path =
       dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
 
     auto cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(device_id) + "/" +
                               dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id()) + "/" +
-                              std::to_string(prev_dump_iter);
+                              std::to_string(current_iter);
 
     MS_LOG(INFO) << "zero_dir_dump_path: " << zero_dir_dump_path;
     MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
 
-    if (dump_json_parser.IsDumpIter(prev_dump_iter)) {
+    if (dump_json_parser.IsDumpIter(current_iter)) {
       // remove symlink to active dump dir
       std::string command = "rm -f " + cur_iter_dump_path;
       MS_LOG(INFO) << "rm command: " << command;
@@ -338,8 +332,17 @@ bool E2eDump::DumpData(const session::KernelGraph *graph, uint32_t device_id, co
       }
     }
 
-    return true;
+    success = true;
   }
-  return false;
+
+  if (starting_graph_id == INT32_MAX) {
+    starting_graph_id = graph_id;
+  } else {
+    if (starting_graph_id == graph_id) {
+      dump_json_parser.UpdateDumpIter();
+    }
+  }
+
+  return success;
 }
 }  // namespace mindspore

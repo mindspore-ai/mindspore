@@ -27,3 +27,7 @@ def compare_actual_with_expected(test_name):
     if os.path.exists(test_name + ".actual"):
         os.remove(test_name + ".actual")
     return is_eq
+
+def skip_test():
+    """Skips the test."""
+    return True

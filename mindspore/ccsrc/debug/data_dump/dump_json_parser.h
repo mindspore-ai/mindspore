@@ -50,7 +50,6 @@ class DumpJsonParser {
   uint32_t dump_mode() const { return dump_mode_; }
   std::string path() const { return path_; }
   std::string net_name() const { return net_name_; }
-  uint32_t iteration() const { return iteration_; }
   uint32_t input_output() const { return input_output_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
@@ -74,8 +73,7 @@ class DumpJsonParser {
   uint32_t dump_mode_{0};
   std::string path_;
   std::string net_name_;
-  uint32_t iteration_{0};
-  std::string async_iteration_;
+  std::string iteration_;
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
   std::set<uint32_t> support_devices_;
