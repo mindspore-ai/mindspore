@@ -63,28 +63,28 @@ class Particle_Mesh_Ewald():
         while number > 0:
             if number == 1:
                 return 1
-            tempn = number / 2
+            tempn = int(number / 2)
             if tempn * 2 != number:
                 break
             number = tempn
         while number > 0:
             if number == 1:
                 return 1
-            tempn = number / 3
+            tempn = int(number / 3)
             if tempn * 3 != number:
                 break
             number = tempn
         while number > 0:
             if number == 1:
                 return 1
-            tempn = number / 5
+            tempn = int(number / 5)
             if tempn * 5 != number:
                 break
             number = tempn
         while number > 0:
             if number == 1:
                 return 1
-            tempn = number / 7
+            tempn = int(number / 7)
             if tempn * 7 != number:
                 break
             number = tempn

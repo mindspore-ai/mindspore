@@ -26,7 +26,7 @@ __device__ __host__ float fc(float Rij) {
 
 __global__ void Record_Box_Map_Times(int atom_numbers, const float *crd, const float *old_crd, float *box,
                                      int *box_map_times) {
-  float half_box[3] = {0.5 * box[0], 0.5 * box[1], 0.5 * box[2]};
+  float half_box[3] = {0.5F * box[0], 0.5F * box[1], 0.5F * box[2]};
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < atom_numbers) {
     if (crd[3 * i + 0] - old_crd[3 * i + 0] > half_box[0]) {
