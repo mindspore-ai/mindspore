@@ -202,14 +202,6 @@ void Server::RegisterCommCallbacks() {
 
 void Server::RegisterExceptionEventCallback(const std::shared_ptr<core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
-  communicator->RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [&]() {
-    MS_LOG(ERROR) << "Event CLUSTER_TIMEOUT is captured. This is because some nodes(Scheduler/Server/Worker) are not "
-                     "started during network building phase.";
-    std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
-                  [](const std::shared_ptr<core::CommunicatorBase> &communicator) { communicator->Stop(); });
-    communicator_with_server_->Stop();
-  });
-
   communicator->RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [&]() {
     MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
     std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),

@@ -33,11 +33,6 @@ void Worker::Run() {
 
   Initialize();
 
-  worker_node_.RegisterEventCallback(core::ClusterEvent::CLUSTER_TIMEOUT, [this]() {
-    MS_LOG(ERROR) << "Trigger timeout event: CLUSTER_TIMEOUT begin to exit the system!";
-    this->Finalize();
-    exit(0);
-  });
   worker_node_.RegisterEventCallback(core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
     MS_LOG(ERROR) << "Trigger timeout event: SCHEDULER_TIMEOUT begin to exit the system!";
     this->Finalize();

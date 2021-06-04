@@ -119,7 +119,7 @@ void NodeManager::UpdateCluster() {
     }
   }
   if (!timeout_nodes_info_.empty()) {
-    UpdateClusterState(ClusterState::CLUSTER_TIMEOUT);
+    UpdateClusterState(ClusterState::NODE_TIMEOUT);
     for (auto it = timeout_nodes_info_.begin(); it != timeout_nodes_info_.end(); ++it) {
       finish_nodes_id_.insert(it->first);
     }
@@ -128,7 +128,7 @@ void NodeManager::UpdateCluster() {
   // 2. update cluster finish state
   if (SizeToInt(finish_nodes_id_.size()) == total_node_num_ ||
       SizeToInt(finish_nodes_id_.size()) == current_node_num_) {
-    UpdateClusterState(ClusterState::CLUSTER_FINISH);
+    UpdateClusterState(ClusterState::CLUSTER_EXIT);
   }
 }
 
@@ -139,7 +139,7 @@ void NodeManager::CheckClusterTimeout() {
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
                     << nodes_info_.size();
     current_node_num_ = nodes_info_.size();
-    UpdateClusterState(ClusterState::CLUSTER_TIMEOUT);
+    UpdateClusterState(ClusterState::NODE_TIMEOUT);
   }
 }
 
