@@ -55,5 +55,4 @@ int MatMulInt8Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_MatMul, CPUOpCoderCreator<MatMulInt8Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

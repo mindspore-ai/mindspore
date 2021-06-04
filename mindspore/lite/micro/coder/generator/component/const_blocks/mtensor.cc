@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/mtensor.h"
 
 namespace mindspore::lite::micro {
-
-const char *tensor_header = R"RAW(
+const char tensor_header[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -86,9 +85,10 @@ class MTensor : public mindspore::tensor::MSTensor {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
+
 )RAW";
 
-const char *tensor_source = R"RAW(
+const char tensor_source[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -171,6 +171,6 @@ void *MTensor::MutableData() {
 }
 }  // namespace lite
 }  // namespace mindspore
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro

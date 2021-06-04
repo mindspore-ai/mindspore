@@ -23,7 +23,6 @@
 #include "coder/opcoders/file_collector.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 int DivInt8Coder::Prepare(CoderContext *context) {
   input0 = input_tensors_.at(0);
   input1 = input_tensors_.at(1);
@@ -74,5 +73,4 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
 
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl

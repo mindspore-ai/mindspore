@@ -59,5 +59,4 @@ int FullConnectionInt8Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_FullConnection,
                    CPUOpCoderCreator<FullConnectionInt8Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

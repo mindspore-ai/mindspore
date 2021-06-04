@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int DeconvolutionInt8Coder::Init(CoderContext *const context) {
   CheckSupportOptimize();
   MS_CHECK_RET_CODE(SetQuantParam(), "deconv int8 SetQuantParam error!");

@@ -26,7 +26,6 @@
 #include "src/common/prim_util.h"
 
 namespace mindspore::lite::micro {
-
 std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
   std::set<OperatorCoder *> subgraph;
   std::queue<OperatorCoder *> to_visit;
@@ -94,5 +93,4 @@ int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::
   context->set_train_blocks(train_blocks);
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro

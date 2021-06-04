@@ -19,7 +19,6 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-
 OperatorCoder::~OperatorCoder() {
   node_ = nullptr;
   if (parameter_ != nullptr) {

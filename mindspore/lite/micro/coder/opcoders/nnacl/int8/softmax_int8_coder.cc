@@ -16,8 +16,7 @@
 
 #include "coder/opcoders/nnacl/int8/softmax_int8_coder.h"
 #include <vector>
-#include <string>
-#include <memory>
+#include <type_traits>
 #include <limits>
 #include "schema/inner/ops_generated.h"
 #include "nnacl/softmax_parameter.h"
@@ -52,7 +51,8 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   exp_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, exp_data_size_, kWorkspace));
   MS_CHECK_PTR(exp_data_);
   int inner_size = 1;
-  MS_CHECK_TRUE(softmax_param_->n_dim_ < 5, "n_dim should be less than the length of maximum value of input_shape");
+  MS_CHECK_TRUE(softmax_param_->n_dim_ <= static_cast<int>(std::extent<decltype(softmax_param_->input_shape_)>::value),
+                "n_dim should be less than the length of maximum value of input_shape");
   for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
     inner_size *= softmax_param_->input_shape_[i];
   }
@@ -68,7 +68,8 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   for (int i = 0; i < softmax_param_->axis_; i++) {
     outter_size *= softmax_param_->input_shape_[i];
   }
-  MS_CHECK_TRUE(softmax_param_->n_dim_ < 5, "n_dim should be less than the length of maximum value of input_shape");
+  MS_CHECK_TRUE(softmax_param_->n_dim_ <= static_cast<int>(std::extent<decltype(softmax_param_->input_shape_)>::value),
+                "n_dim should be less than the length of maximum value of input_shape");
   Collect(context,
           {
             "nnacl/int8/softmax_int8.h",
