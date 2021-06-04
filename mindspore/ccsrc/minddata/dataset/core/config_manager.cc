@@ -36,6 +36,7 @@ ConfigManager::ConfigManager()
     : num_parallel_workers_(kCfgParallelWorkers),
       worker_connector_size_(kCfgWorkerConnectorSize),
       op_connector_size_(kCfgOpConnectorSize),
+      sending_batches_(kCfgSendingBatch),
       rank_id_(kCfgDefaultRankId),
       seed_(kCfgDefaultSeed),
       numa_enable_(false),
@@ -133,6 +134,8 @@ void ConfigManager::set_worker_connector_size(int32_t connector_size) { worker_c
 
 // Setter function
 void ConfigManager::set_op_connector_size(int32_t connector_size) { op_connector_size_ = connector_size; }
+
+void ConfigManager::set_sending_batches(int64_t sending_batches) { sending_batches_ = sending_batches; }
 
 uint32_t ConfigManager::seed() const { return seed_; }
 
