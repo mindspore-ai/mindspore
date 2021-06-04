@@ -14,7 +14,6 @@ enable_profiling: False
 pre_trained: "/cache/data"
 coco_root: "/cache/data"
 ckpt_path: './ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'
-ckpt_file: '/cache/data/cocodataset/ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'
 ann_file: "./annotations/instances_val2017.json"
 # ==============================================================================
 modelarts_dataset_unzip_name: 'cocodataset'
@@ -171,10 +170,14 @@ do_eval: False
 dataset: "coco"
 device_id: 0 
 device_num: 1
-rank_id: 0  
-# batch_size_export: 1
+rank_id: 0
+
+# maskrcnn export
+batch_size_export: 1
 file_name: "maskrcnn"
-file_format: "AIR"
+file_format: "MINDIR"
+ckpt_file: '/cache/data/cocodataset/ckpt_maskrcnn/mask_rcnn-12_7393.ckpt'
+ckpt_file_local: './maskrcnn_b3/scripts/train_parallel0/ckpt_0/mask_rcnn-12_7393.ckpt'
 
 # other
 learning_rate: 0.002

@@ -15,13 +15,13 @@
 '''python dataset.py'''
 
 import os
-import argparse
 import pandas as pd
 import numpy as np
 import librosa
 from mindspore.mindrecord import FileWriter
 from mindspore import context
 from model_utils.config import config as cfg
+from model_utils.device_adapter import get_device_id
 
 
 def compute_melgram(audio_path, save_path='', filename='', save_npy=True):
@@ -192,12 +192,6 @@ def convert_to_mindrecord(info_name, file_path, store_path, mr_name,
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='get feature')
-    parser.add_argument('--device_id',
-                        type=int,
-                        help='device ID',
-                        default=None)
-    args = parser.parse_args()
 
     if cfg.get_npy:
         GetLabel(cfg.info_path, cfg.info_name)
@@ -211,14 +205,8 @@ if __name__ == "__main__":
                                 "{}/{}/".format(cfg.npy_path, d), f)
 
     if cfg.get_mindrecord:
-        if args.device_id is not None:
-            context.set_context(device_target='Ascend',
-                                mode=context.GRAPH_MODE,
-                                device_id=args.device_id)
-        else:
-            context.set_context(device_target='Ascend',
-                                mode=context.GRAPH_MODE,
-                                device_id=cfg.device_id)
+        context.set_context(device_target='Ascend', mode=context.GRAPH_MODE, device_id=get_device_id())
+
         for cmn in cfg.mr_nam:
             if cmn in ['train', 'val']:
                 convert_to_mindrecord('music_tagging_{}_tmp.csv'.format(cmn),

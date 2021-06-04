@@ -40,6 +40,10 @@ checkpoint_path: "/cache/data/musicTagger"
 prefix: 'MusicTagger'
 model_name: 'MusicTagger-10_543.ckpt'
 
+# export
+file_name: "/cache/data/musicTagger/fcn-4.air" 
+file_format: "MINDIR"
+
 ---
 # Config description for each option
 enable_modelarts: 'Whether training on modelarts, default: False'
