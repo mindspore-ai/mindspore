@@ -23,6 +23,7 @@ from src.dataset import create_dataset
 from src.crossentropysmooth import CrossEntropySmooth
 from src.model_utils.config import config
 from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_id
 
 
 set_seed(1)
@@ -31,7 +32,7 @@ set_seed(1)
 @moxing_wrapper(pre_process=None)
 def test():
     context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
-                        device_id=config.device_id)
+                        device_id=get_device_id())
 
     # create dataset
     dataset = create_dataset(config.eval_dataset_path, do_train=False, device_num=1, rank=0)
