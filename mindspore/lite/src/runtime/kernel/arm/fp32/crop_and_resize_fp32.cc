@@ -20,7 +20,7 @@
 #include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/resize_fp32.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INVALID_OP_ATTR;

@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;

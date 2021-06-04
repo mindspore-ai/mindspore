@@ -18,7 +18,7 @@
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

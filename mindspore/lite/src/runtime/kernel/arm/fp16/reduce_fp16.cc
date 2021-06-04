@@ -23,7 +23,7 @@
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "nnacl/fp16/cast_fp16.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;

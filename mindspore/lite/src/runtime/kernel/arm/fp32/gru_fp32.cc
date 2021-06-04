@@ -21,7 +21,7 @@
 #include "nnacl/fp32/gru_fp32.h"
 #include "nnacl/fp32/lstm_fp32.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

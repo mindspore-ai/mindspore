@@ -24,7 +24,7 @@
 #include "src/runtime/runtime_api.h"
 #include "nnacl/int8/gatherNd_int8.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

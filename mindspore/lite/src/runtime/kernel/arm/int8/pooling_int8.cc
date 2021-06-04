@@ -20,7 +20,7 @@
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
