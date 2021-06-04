@@ -125,13 +125,12 @@ Status CacheAdminArgHandler::AssignArg(std::string option, std::vector<uint32_t>
 
   uint32_t value_as_uint;
   while (arg_stream->rdbuf()->in_avail() != 0) {
+    std::stringstream::pos_type pos = arg_stream->tellg();
     *arg_stream >> value_as_uint;
     if (arg_stream->fail()) {
       arg_stream->clear();
-      std::string value_as_string;
-      *arg_stream >> value_as_string;
-      std::string err_msg = "Invalid numeric value: " + value_as_string;
-      return Status(StatusCode::kMDSyntaxError, err_msg);
+      arg_stream->seekg(pos, arg_stream->beg);
+      break;
     } else {
       out_arg->push_back(value_as_uint);
     }
@@ -492,18 +491,18 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   if (spill_dir.empty()) spill_dir = "None";
 
   int name_w = 20;
-  int value_w = 15;
+  int value_w = 50;
   std::cout << "Cache Server Configuration: " << std::endl;
-  std::cout << "----------------------------------------" << std::endl;
+  std::cout << std::string(name_w + value_w, '-') << std::endl;
   std::cout << std::setw(name_w) << "config name" << std::setw(value_w) << "value" << std::endl;
-  std::cout << "----------------------------------------" << std::endl;
+  std::cout << std::string(name_w + value_w, '-') << std::endl;
   std::cout << std::setw(name_w) << "hostname" << std::setw(value_w) << hostname_ << std::endl;
   std::cout << std::setw(name_w) << "port" << std::setw(value_w) << port_ << std::endl;
   std::cout << std::setw(name_w) << "number of workers" << std::setw(value_w) << std::to_string(num_workers)
             << std::endl;
   std::cout << std::setw(name_w) << "log level" << std::setw(value_w) << std::to_string(log_level) << std::endl;
   std::cout << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
-  std::cout << "----------------------------------------" << std::endl;
+  std::cout << std::string(name_w + value_w, '-') << std::endl;
 
   std::cout << "Active sessions: " << std::endl;
   if (!session_ids.empty()) {
