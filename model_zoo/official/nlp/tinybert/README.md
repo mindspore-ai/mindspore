@@ -26,6 +26,10 @@
             - [evaluation on SST-2 dataset](#evaluation-on-sst-2-dataset)
             - [evaluation on MNLI dataset](#evaluation-on-mnli-dataset)
             - [evaluation on QNLI dataset](#evaluation-on-qnli-dataset)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
     - [Model Description](#model-description)
     - [Performance](#performance)
         - [training Performance](#training-performance)
@@ -407,6 +411,39 @@ The best acc is 0.875183
 ...
 The best acc is 0.891176
 ...
+```
+
+## Inference Process
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must be exported by `export.py` script. We only provide an example of inference using MINDIR model.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATASET_PATH] [SCHEMA_DIR] [DATASET_TYPE] [TASK_NAME] [ASSESSMENT_METHOD] [NEED_PREPROCESS] [DEVICE_ID]
+```
+
+- `NEED_PREPROCESS` means weather need preprocess or not, it's value is 'y' or 'n'.
+- `DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+=================================================================
+============== acc is 0.8862132352941177
+=================================================================
 ```
 
 ## [Model Description](#contents)

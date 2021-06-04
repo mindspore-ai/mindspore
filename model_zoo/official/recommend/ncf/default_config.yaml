@@ -28,9 +28,15 @@ checkpoint_file_path: "./checkpoint/NCF-14_19418.ckpt"
 
 # Export options
 device_id: 0
-ckpt_file: ""
-file_name: ""
-file_format: ""
+ckpt_file: "./checkpoint/NCF-25_19418.ckpt"
+file_name: "ncf"
+file_format: "MINDIR"
+
+# Preprocess options
+pre_result_path: "./preprocess_Result"
+
+# Postprocess options
+post_result_path: "./result_Files"
 
 ---
 
@@ -52,3 +58,5 @@ num_factors: "The Embedding size of MF model."
 checkpoint_path: "The location of the checkpoint file."
 eval_file_name: "Eval output file."
 checkpoint_file_path: "The location of the checkpoint file."
+pre_result_path: "saving dataset to numpy format path."
+post_result_path: "inference result path."
