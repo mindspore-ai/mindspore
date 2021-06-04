@@ -6,10 +6,6 @@ echo ${basepath}
 # Example:sh run_ut_gpu.sh -r /home/temp_test -d "8KE5T19620002408"
 while getopts "r:d:" opt; do
     case ${opt} in
-        r)
-            lite_test_path=${OPTARG}
-            echo "lite_test_path is ${OPTARG}"
-            ;;
         d)
             device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
@@ -32,9 +28,7 @@ echo 'run gpu ut logs: ' > ${run_gpu_ut_log_file}
 ut_gpu_config=${basepath}/ut_gpu.cfg
 
 function Run_gpu_ut() {
-    cd ${lite_test_path} || exit 1
-
-    cp -a ${lite_test_path}/lite-test ${ut_test_path}/lite-test || exit 1
+    cp -a ${basepath}/build/lite-test ${ut_test_path}/lite-test || exit 1
     cp -r ${basepath}/ut/src/runtime/kernel/opencl/test_data ${ut_test_path} || exit 1
 
     # adb push all needed files to the phone
