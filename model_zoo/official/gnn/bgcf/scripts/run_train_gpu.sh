@@ -36,8 +36,10 @@ fi
 mkdir ./ckpts
 
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
+cp -r ../model_utils ./train
 cd ./train || exit
 env > env.log
 echo "start training"

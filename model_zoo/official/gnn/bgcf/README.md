@@ -90,17 +90,17 @@ To ultilize the strong computation power of Ascend chip, and accelerate the trai
 
 After installing MindSpore via the official website and Dataset is correctly generated, you can start training and evaluation as follows.
 
-- running on Ascend
+- Running on Ascend
 
   ```python
   # run training example with Amazon-Beauty dataset
-  sh run_train_ascend.sh
+  sh run_train_ascend.sh dataset_path
 
   # run evaluation example with Amazon-Beauty dataset
-  sh run_eval_ascend.sh
+  sh run_eval_ascend.sh dataset_path
   ```  
 
-- running on GPU
+- Running on GPU
 
   ```python
   # run training example with Amazon-Beauty dataset
@@ -110,6 +110,62 @@ After installing MindSpore via the official website and Dataset is correctly gen
   sh run_eval_gpu.sh 0 dataset_path
   ```  
 
+- Running on ModelArts (If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows)
+
+    - Train 1p on ModelArts Ascend/GPU
+
+      ```python
+      # (1) Perform a or b.
+      #       a. Set "enable_modelarts=True" on default_config.yaml file.
+      #          Set "datapath='/cache/data/amazon_beauty/data_mr'" on default_config.yaml file.
+      #          Set "ckptpath='./ckpts'" on default_config.yaml file.
+      #          (options)Set "device_target='GPU'" on default_config.yaml file if run on GPU.
+      #          (options)Set "num_epoch=680" on default_config.yaml file if run on GPU.
+      #          (options)Set "dist_reg=0" on default_config.yaml file if run on GPU.
+      #          Set other parameters on default_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "datapath=/cache/data/amazon_beauty/data_mr" on the website UI interface.
+      #          Add "ckptpath=./ckpts" on the website UI interface.
+      #          (options)Add "device_target=GPU" on the website UI interface if run on GPU.
+      #          (options)Add "num_epoch=680" on the website UI interface if run on GPU.
+      #          (options)Add "dist_reg=0" on the website UI interface if run on GPU.
+      #          Add other parameters on the website UI interface.
+      # (2) Prepare the converted dataset and zip it to one file like "amazon_beauty.zip" locally. (The conversion process can refer to the above data set processing code.)
+      # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (4) Set the code directory to "/path/bgcf" on the website UI interface.
+      # (5) Set the startup file to "train.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
+
+    - Eval 1p on ModelArts Ascend/GPU
+
+      ```python
+      # (1) Perform a or b.
+      #       a. Set "enable_modelarts=True" on default_config.yaml file.
+      #          Set "datapath='/cache/data/amazon_beauty/data_mr'" on default_config.yaml file.
+      #          Set "ckptpath='/cache/checkpoint_path'" on default_config.yaml file.
+      #          Set "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on default_config.yaml file.
+      #          (options)Set "device_target='GPU'" on default_config.yaml file if run on GPU.
+      #          (options)Set "num_epoch=680" on default_config.yaml file if run on GPU.
+      #          (options)Set "dist_reg=0" on default_config.yaml file if run on GPU.
+      #          Set other parameters on default_config.yaml file you need.
+      #       b. Add "enable_modelarts=True" on the website UI interface.
+      #          Add "datapath=/cache/data/amazon_beauty/data_mr" on the website UI interface.
+      #          Add "ckptpath='/cache/checkpoint_path'" on the website UI interface.
+      #          Add "checkpoint_url='s3://dir_to_your_trained_ckpt/'" on the website UI interface.
+      #          (options)Add "device_target=GPU" on the website UI interface if run on GPU.
+      #          (options)Add "num_epoch=680" on the website UI interface if run on GPU.
+      #          (options)Add "dist_reg=0" on the website UI interface if run on GPU.
+      #          Add other parameters on the website UI interface.
+      # (2) Prepare the converted dataset and zip it to one file like "amazon_beauty.zip" locally. (The conversion process can refer to the above data set processing code.)
+      # (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+      # (4) Set the code directory to "/path/bgcf" on the website UI interface.
+      # (5) Set the startup file to "eval.py" on the website UI interface.
+      # (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+      # (7) Create your job.
+      ```
+
 ## [Script Description](#contents)
 
 ### [Script and Sample Code](#contents)
@@ -118,28 +174,35 @@ After installing MindSpore via the official website and Dataset is correctly gen
 .
 └─bgcf
   ├─README.md
+  ├─README_CN.md
+  ├─model_utils
+  | ├─__init__.py           # Module init file
+  | ├─config.py             # Parse arguments
+  | ├─device_adapter.py     # Device adapter for ModelArts
+  | ├─local_adapter.py      # Local adapter
+  | └─moxing_adapter.py     # Moxing adapter for ModelArts
   ├─scripts
   | ├─run_eval_ascend.sh          # Launch evaluation in ascend
   | ├─run_eval_gpu.sh             # Launch evaluation in gpu
   | ├─run_process_data_ascend.sh  # Generate dataset in mindrecord format
   | └─run_train_ascend.sh         # Launch training in ascend
   | └─run_train_gpu.sh            # Launch training in gpu
-  |
   ├─src
   | ├─bgcf.py              # BGCF model
   | ├─callback.py          # Callback function
-  | ├─config.py            # Training configurations
   | ├─dataset.py           # Data preprocessing
   | ├─metrics.py           # Recommendation metrics
   | └─utils.py             # Utils for training bgcf
-  |
+  ├─default_config.yaml    # Configurations file
+  ├─mindspore_hub_conf.py  # Mindspore hub file
+  ├─export.py              # Export net
   ├─eval.py                # Evaluation net
   └─train.py               # Train net
 ```
 
 ### [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in default_config.yaml.
 
 - config for BGCF dataset
 
@@ -154,7 +217,7 @@ Parameters for both training and evaluation can be set in config.py.
   "neighbor_dropout": [0.0, 0.2, 0.3] # Dropout ratio for different aggregation layer
   ```
 
-  config.py for more configuration.
+  default_config.yaml for more configuration.
 
 ### [Training Process](#contents)
 
@@ -163,7 +226,7 @@ Parameters for both training and evaluation can be set in config.py.
 - running on Ascend
 
   ```python
-  sh run_train_ascend.sh
+  sh run_train_ascend.sh dataset_path
   ```
 
   Training result will be stored in the scripts path, whose folder name begins with "train". You can find the result like the
@@ -206,7 +269,7 @@ Parameters for both training and evaluation can be set in config.py.
 - Evaluation on Ascend
 
   ```python
-  sh run_eval_ascend.sh
+  sh run_eval_ascend.sh dataset_path
   ```
 
   Evaluation result will be stored in the scripts path, whose folder name begins with "eval". You can find the result like the
@@ -279,7 +342,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 ## [Description of random situation](#contents)
 
-BGCF model contains lots of dropout operations, if you want to disable dropout, set the neighbor_dropout to [0.0, 0.0, 0.0] in src/config.py.
+BGCF model contains lots of dropout operations, if you want to disable dropout, set the neighbor_dropout to [0.0, 0.0, 0.0] in default_config.yaml.
 
 ## [ModelZoo Homepage](#contents)
 

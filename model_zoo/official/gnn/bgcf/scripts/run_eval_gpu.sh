@@ -32,8 +32,10 @@ fi
 mkdir ./eval
 
 cp ../*.py ./eval
+cp ../*.yaml ./eval
 cp *.sh ./eval
 cp -r ../src ./eval
+cp -r ../model_utils ./eval
 cd ./eval || exit
 env > env.log
 echo "start evaluation"

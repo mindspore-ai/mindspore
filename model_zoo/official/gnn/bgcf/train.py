@@ -15,6 +15,7 @@
 """
 BGCF training script.
 """
+import os
 import time
 
 from mindspore import Tensor
@@ -24,35 +25,107 @@ from mindspore.train.serialization import save_checkpoint
 from mindspore.common import set_seed
 
 from src.bgcf import BGCF
-from src.config import parser_args
 from src.utils import convert_item_id
 from src.callback import TrainBGCF
 from src.dataset import load_graph, create_dataset
 
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
+
 set_seed(1)
 
-def train():
+
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+    config.ckptpath = os.path.join(config.output_path, config.ckptpath)
+    if not os.path.isdir(config.ckptpath):
+        os.makedirs(config.ckptpath)
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_train():
     """Train"""
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=config.device_target,
+                        save_graphs=False)
+
+    if config.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+
+    train_graph, _, sampled_graph_list = load_graph(config.datapath)
+    train_ds = create_dataset(train_graph, sampled_graph_list, config.workers, batch_size=config.batch_pairs,
+                              num_samples=config.raw_neighs, num_bgcn_neigh=config.gnew_neighs, num_neg=config.num_neg)
+
     num_user = train_graph.graph_info()["node_num"][0]
     num_item = train_graph.graph_info()["node_num"][1]
     num_pairs = train_graph.graph_info()['edge_num'][0]
 
-    bgcfnet = BGCF([parser.input_dim, num_user, num_item],
-                   parser.embedded_dimension,
-                   parser.activation,
-                   parser.neighbor_dropout,
+    bgcfnet = BGCF([config.input_dim, num_user, num_item],
+                   config.embedded_dimension,
+                   config.activation,
+                   config.neighbor_dropout,
                    num_user,
                    num_item,
-                   parser.input_dim)
+                   config.input_dim)
 
-    train_net = TrainBGCF(bgcfnet, parser.num_neg, parser.l2, parser.learning_rate,
-                          parser.epsilon, parser.dist_reg)
+    train_net = TrainBGCF(bgcfnet, config.num_neg, config.l2, config.learning_rate,
+                          config.epsilon, config.dist_reg)
     train_net.set_train(True)
 
-    itr = train_ds.create_dict_iterator(parser.num_epoch, output_numpy=True)
-    num_iter = int(num_pairs / parser.batch_pairs)
+    itr = train_ds.create_dict_iterator(config.num_epoch, output_numpy=True)
+    num_iter = int(num_pairs / config.batch_pairs)
 
-    for _epoch in range(1, parser.num_epoch + 1):
+    for _epoch in range(1, config.num_epoch + 1):
 
         epoch_start = time.time()
         iter_num = 1
@@ -98,22 +171,9 @@ def train():
                       '{}, cost:{:.4f}'.format(train_loss, time.time() - epoch_start))
             iter_num += 1
 
-        if _epoch % parser.eval_interval == 0:
-            save_checkpoint(bgcfnet, parser.ckptpath + "/bgcf_epoch{}.ckpt".format(_epoch))
+        if _epoch % config.eval_interval == 0:
+            save_checkpoint(bgcfnet, config.ckptpath + "/bgcf_epoch{}.ckpt".format(_epoch))
 
 
 if __name__ == "__main__":
-    parser = parser_args()
-
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target=parser.device_target,
-                        save_graphs=False)
-
-    if parser.device_target == "Ascend":
-        context.set_context(device_id=int(parser.device))
-
-    train_graph, _, sampled_graph_list = load_graph(parser.datapath)
-    train_ds = create_dataset(train_graph, sampled_graph_list, parser.workers, batch_size=parser.batch_pairs,
-                              num_samples=parser.raw_neighs, num_bgcn_neigh=parser.gnew_neighs, num_neg=parser.num_neg)
-
-    train()
+    run_train()
