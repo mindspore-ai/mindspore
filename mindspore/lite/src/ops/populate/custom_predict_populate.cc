@@ -40,7 +40,6 @@ OpParameter *PopulateCustomPredictParameter(const void *prim) {
   param->weight_threshold = value->weight_threshold();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_CustomPredict, PopulateCustomPredictParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/scale_fp16.h"
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -31,7 +31,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
-
 int ScaleFp16CPUKernel::InitScaleOffset() {
   auto scale_tensor = in_tensors_.at(1);
   malloc_scale_ = scale_tensor->data_type() == kNumberTypeFloat32;

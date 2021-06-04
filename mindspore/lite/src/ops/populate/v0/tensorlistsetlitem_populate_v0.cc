@@ -39,9 +39,7 @@ OpParameter *PopulateTensorListSetItemParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(setItem_param);
 }
 }  // namespace
-
 Registry g_tensorListSetItemV0ParameterRegistry(schema::v0::PrimitiveType_TensorListSetItem,
                                                 PopulateTensorListSetItemParameter, SCHEMA_V0);
-
 }  // namespace lite
 }  // namespace mindspore

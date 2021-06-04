@@ -33,7 +33,6 @@ OpParameter *PopulateUniqueParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Unique, PopulateUniqueParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

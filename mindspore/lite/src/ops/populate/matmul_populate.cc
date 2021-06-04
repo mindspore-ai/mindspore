@@ -42,7 +42,6 @@ OpParameter *PopulateMatMulParameter(const void *prim) {
   param->act_type_ = ActType_No;
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

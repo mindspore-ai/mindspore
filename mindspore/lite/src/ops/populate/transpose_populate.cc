@@ -33,7 +33,6 @@ OpParameter *PopulateTransposeParameter(const void *prim) {
   param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Transpose, PopulateTransposeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

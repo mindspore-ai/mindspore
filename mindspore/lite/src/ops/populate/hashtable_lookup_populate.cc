@@ -32,8 +32,6 @@ OpParameter *PopulateHashtableLookupParameter(const void *prim) {
   param->type_ = primitive->value_type();
   return param;
 }
-
 REG_POPULATE(PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

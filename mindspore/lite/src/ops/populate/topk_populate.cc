@@ -39,7 +39,6 @@ OpParameter *PopulateTopKParameter(const void *prim) {
   param->sorted_ = value->sorted();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

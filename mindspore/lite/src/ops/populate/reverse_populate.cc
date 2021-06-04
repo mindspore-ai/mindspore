@@ -49,7 +49,6 @@ OpParameter *PopulateReverseParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_ReverseV2, PopulateReverseParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

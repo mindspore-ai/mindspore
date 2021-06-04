@@ -100,7 +100,6 @@ OpParameter *PopulatePriorBoxParameter(const void *prim) {
   param->step_w = value->step_w();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_PriorBox, PopulatePriorBoxParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

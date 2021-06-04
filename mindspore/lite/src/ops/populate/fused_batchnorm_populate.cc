@@ -41,7 +41,6 @@ OpParameter *PopulateFusedBatchNorm(const void *prim) {
   param->fused_ = true;
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_FusedBatchNorm, PopulateFusedBatchNorm, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

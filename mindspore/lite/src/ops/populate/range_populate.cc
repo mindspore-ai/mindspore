@@ -42,7 +42,6 @@ OpParameter *PopulateRangeParameter(const void *prim) {
   param->dType_ = value->d_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Range, PopulateRangeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

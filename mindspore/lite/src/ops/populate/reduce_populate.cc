@@ -42,7 +42,6 @@ OpParameter *PopulateReduceParameter(const void *prim) {
   param->mode_ = static_cast<int>(value->mode());
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_ReduceFusion, PopulateReduceParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

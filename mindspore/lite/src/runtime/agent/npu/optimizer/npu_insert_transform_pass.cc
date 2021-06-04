@@ -21,7 +21,7 @@
 
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
-enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
+enum class InsertState : int { InsertNone, PreInsert, PostInsert, BothInsert };
 std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
   schema::PrimitiveType_Concat,      schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
   schema::PrimitiveType_Activation,  schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
@@ -31,7 +31,6 @@ std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
 // fusion pass. If transpose inserted are more than half of input output, we will insert remaining input
 // output with transpose and hopefully do a fusion pass. Otherwise, we don't insert anything.
-//
 // Typically concat accept output from nchw2nhwc, we fill other input with nh2nc and nc2nh so that inputs to concat are
 // format same and then fusion all nchw2nhwc op.
 // e.g.
@@ -39,9 +38,7 @@ std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
 // current pass (conv->nchw2nhwc, add->nhwc2nchw->nchw2nhwc) -> concat -> (nhwc2nchw->conv)
 // fusion pass  (conv, add->nhwc2nchw) -> concat -> conv
 // original 2 cpusubgraph, after 2 pass, only 1 cpu subgraph
-//
-// node:
-// Such ops require inputs all have same format, could be nchw or nhwc or other format.
+// note: Such ops require inputs all have same format, could be nchw or nhwc or other format.
 // Their inputs outputs may not be 4d, or are already format ok,
 // so we won't insert nc2nh or nh2nc when op's in kernels and out kernels contains no nc2nh or nh2nc.
 // This pass should be run after npu_transform_pass, which insert transpose for nchw-input-limited op like conv2d.
@@ -49,7 +46,7 @@ std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
 int NPUInsertTransformPass::GetInsertState(kernel::LiteKernel *kernel) {
   // filter out irrelevant kernel
   if (npu_insert_nodes.find(kernel->type()) == npu_insert_nodes.end()) {
-    return InsertNone;
+    return static_cast<int>(InsertState::InsertNone);
   }
 
   // current kernel is target kernel
@@ -87,20 +84,20 @@ int NPUInsertTransformPass::GetInsertState(kernel::LiteKernel *kernel) {
   size_t transpose_tensor_num = transpose_input_num + transpose_output_num;
   if (transpose_tensor_num == 0 || transpose_tensor_num * 2 < in_out_tensor_num ||
       transpose_tensor_num == in_out_tensor_num) {
-    return InsertNone;
+    return static_cast<int>(InsertState::InsertNone);
   }
   InsertState ret;
   if (need_pre_insert && !need_post_insert) {
-    ret = PreInsert;
+    ret = InsertState::PreInsert;
   } else if (need_pre_insert && need_post_insert) {
-    ret = BothInsert;
+    ret = InsertState::BothInsert;
   } else if (!need_pre_insert && need_post_insert) {
-    ret = PostInsert;
+    ret = InsertState::PostInsert;
   } else {
-    ret = InsertNone;
+    ret = InsertState::InsertNone;
   }
 
-  return ret;
+  return static_cast<int>(ret);
 }
 
 int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteKernel *post_kernel,
@@ -274,7 +271,7 @@ int NPUInsertTransformPass::Run() {
       // If the every output kernel is nhwc2nchw, insert
       // modify loop index add post_kernels.size() to the next kernel in the origin vector
       switch (insert_state) {
-        case PreInsert: {
+        case static_cast<int>(InsertState::PreInsert): {
           auto ret = InsertPreNodes(kernel, &insert_kernels);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw kernel and nchw2nhwc kernel before kernel " << kernel->name()
@@ -285,7 +282,7 @@ int NPUInsertTransformPass::Run() {
           i += insert_kernels.size();
           break;
         }
-        case PostInsert: {
+        case static_cast<int>(InsertState::PostInsert): {
           auto ret = InsertPostNodes(kernel, &insert_kernels);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw kernel and nchw2nhwc kernel after kernel " << kernel->name()
@@ -296,7 +293,7 @@ int NPUInsertTransformPass::Run() {
           i += insert_kernels.size();
           break;
         }
-        case BothInsert: {
+        case static_cast<int>(InsertState::BothInsert): {
           auto ret = InsertPreNodes(kernel, &insert_kernels);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw kernel and nchw2nhwc kernel before kernel " << kernel->name()

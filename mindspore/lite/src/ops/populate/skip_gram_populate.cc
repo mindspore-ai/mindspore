@@ -41,7 +41,6 @@ OpParameter *PopulateSkipGramParameter(const void *prim) {
   param->include_all_ngrams = value->include_all_grams();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_SkipGram, PopulateSkipGramParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -32,7 +32,6 @@ OpParameter *PopulateScatterNDParameter(const void *prim) {
   param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_ScatterNd, PopulateScatterNDParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

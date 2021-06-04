@@ -63,9 +63,9 @@ int ReduceBaseCPUKernel::CheckParameters() {
   }
 
   for (auto i = 0; i < num_axes_; i++) {
-    if (axes_[i] < -static_cast<int>(input_rank) || axes_[i] >= static_cast<int>(input_rank)) {
+    if (axes_[i] < -(static_cast<int>(input_rank)) || axes_[i] >= static_cast<int>(input_rank)) {
       MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in ["
-                    << -static_cast<int>(input_rank) << ", " << input_rank - 1 << "].";
+                    << -(static_cast<int>(input_rank)) << ", " << input_rank - 1 << "].";
       return RET_ERROR;
     }
     if (axes_[i] < 0) {

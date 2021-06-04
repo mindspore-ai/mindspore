@@ -77,7 +77,6 @@ OpParameter *PopulateDeconvDwParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 }  // namespace
-
 Registry g_deDepthwiseConv2DV0ParameterRegistry(schema::v0::PrimitiveType_DeDepthwiseConv2D, PopulateDeconvDwParameter,
                                                 SCHEMA_V0);
 }  // namespace lite

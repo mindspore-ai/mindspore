@@ -55,7 +55,6 @@ OpParameter *PopulateDetectionPostProcessParameter(const void *prim) {
   param->use_regular_nms_ = value->use_regular_nms();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_DetectionPostProcess, PopulateDetectionPostProcessParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

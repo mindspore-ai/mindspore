@@ -39,7 +39,6 @@ OpParameter *PopulateLshProjectionParameter(const void *prim) {
   param->lsh_type_ = value->type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_LshProjection, PopulateLshProjectionParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore
