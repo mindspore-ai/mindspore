@@ -126,9 +126,23 @@ void MsContext::CreateTensorPrintThread(PrintThreadCrt ctr) {
   acl_tdt_print_ = ctr(print_file_path, acl_handle_);
 }
 
+static void JoinAclPrintThread(std::thread *thread) {
+  try {
+    if (thread->joinable()) {
+      MS_LOG(INFO) << "join acl tdt host receive process";
+      thread->join();
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
+  }
+}
+
 void MsContext::DestroyTensorPrintThread() {
+  // if TdtHandle::DestroyHandle called at taskmanger, all acl_handle_ will be set to nullptr;
+  // but not joined the print thread, so add a protect to join the thread.
   if (acl_handle_ == nullptr) {
     MS_LOG(INFO) << "The acl handle has been destroyed and the point is nullptr";
+    JoinAclPrintThread(&acl_tdt_print_);
     return;
   }
   aclError stopStatus = acltdtStopChannel(acl_handle_);
@@ -137,14 +151,7 @@ void MsContext::DestroyTensorPrintThread() {
     return;
   }
   MS_LOG(INFO) << "Succeed stop acl data channel for host queue ";
-  try {
-    if (acl_tdt_print_.joinable()) {
-      MS_LOG(INFO) << "join acl tdt host receive process";
-      acl_tdt_print_.join();
-    }
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
-  }
+  JoinAclPrintThread(&acl_tdt_print_);
   aclError destroydStatus = acltdtDestroyChannel(acl_handle_);
   if (destroydStatus != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Failed destroy acl channel and the destroyStatus is " << destroydStatus << std::endl;
