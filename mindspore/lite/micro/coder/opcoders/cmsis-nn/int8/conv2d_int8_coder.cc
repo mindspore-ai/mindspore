@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::cmsis {
-
 int Conv2DInt8Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
   MS_CHECK_RET_CODE(micro::Conv2DBaseCoder::CheckLayout(input_tensor_), "CheckLayout failed");
@@ -78,13 +77,12 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
       MS_LOG(ERROR) << "opt enum value is not defined";
       return RET_ERROR;
   }
-
   context->AppendCode(code.str());
   return RET_OK;
 }
 
 int Conv2DInt8Coder::SetParameters() {
-  MS_CHECK_TRUE(input_tensor_->Channel() == filter_tensor_->DimensionSize(3),
+  MS_CHECK_TRUE(input_tensor_->Channel() == filter_tensor_->DimensionSize(kInputSize2),
                 "input Channel and filter size not match!");
   MS_CHECK_TRUE(output_tensor_->Channel() == filter_tensor_->DimensionSize(0),
                 "output Channel and filter size not match!");
@@ -94,7 +92,7 @@ int Conv2DInt8Coder::SetParameters() {
   input_ch_ = input_tensor_->Channel();
   input_batches_ = input_tensor_->Batch();
 
-  kernel_x_ = filter_tensor_->DimensionSize(2);
+  kernel_x_ = filter_tensor_->DimensionSize(kInputSize1);
   kernel_y_ = filter_tensor_->DimensionSize(1);
   pad_x_ = conv_param_->pad_l_;
   pad_y_ = conv_param_->pad_u_;
@@ -110,7 +108,7 @@ int Conv2DInt8Coder::SetParameters() {
   input_offset_ = -input_quant_arg.zeroPoint;
   out_offset_ = output_quant_arg.zeroPoint;
 
-  output_x_ = output_tensor_->DimensionSize(2);
+  output_x_ = output_tensor_->DimensionSize(kInputSize1);
   output_y_ = output_tensor_->DimensionSize(1);
   output_ch_ = output_tensor_->Channel();
 
@@ -121,13 +119,14 @@ int Conv2DInt8Coder::SetParameters() {
 }
 
 void Conv2DInt8Coder::CheckSupportOptimize() {
-  if ((pad_x_ == 0) && (pad_y_ == 0) && (input_ch_ % 4 == 0) && (stride_x_ == 1) && (stride_y_ == 1) &&
+  if ((pad_x_ == 0) && (pad_y_ == 0) && (input_ch_ % (kInputSize2 + 1) == 0) && (stride_x_ == 1) && (stride_y_ == 1) &&
       (kernel_x_ == 1) && (kernel_y_ == 1)) {
     opt_ = Convolve_1x1_fast;
     return;
   }
 
-  if ((output_x_ == 1) && (input_x_ == 1) && (kernel_y_ == 1) && (output_x_ % 4 == 0) && (input_batches_ == 1)) {
+  if ((output_x_ == 1) && (input_x_ == 1) && (kernel_y_ == 1) && (output_x_ % (kInputSize2 + 1) == 0) &&
+      (input_batches_ == 1)) {
     opt_ = Convolve_1_x_n;
     return;
   }
@@ -137,12 +136,12 @@ void Conv2DInt8Coder::CheckSupportOptimize() {
 int Conv2DInt8Coder::InitTmpBuffer() {
   switch (opt_) {
     case Basic:
-      buffer_size_ =
-        (2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) * (int32_t)sizeof(int16_t);
+      buffer_size_ = (kInputSize1 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) *
+                     (int32_t)sizeof(int16_t);
       break;
     case Convolve_1_x_n:
       buffer_size_ =
-        (2 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) * sizeof(int16_t);
+        (kInputSize1 * input_tensor_->Channel() * filter_tensor_->Width() * filter_tensor_->Height()) * sizeof(int16_t);
       break;
     case Convolve_1x1_fast:
       // do nothing
@@ -171,6 +170,5 @@ std::unique_ptr<OperatorCoder> CmsisConv2DInt8OpCoderCreator(const std::vector<T
     std::make_unique<Conv2DInt8Coder>(in_tensors, out_tensors, node, node_index, target);
   return coder;
 }
-
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUOpCoderCreator<Conv2DInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

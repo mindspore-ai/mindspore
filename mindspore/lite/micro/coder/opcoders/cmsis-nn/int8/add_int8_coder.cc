@@ -26,7 +26,6 @@
 using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::lite::micro::cmsis {
-
 int AddInt8Coder::Prepare(CoderContext *const context) {
   input1_ = input_tensors_.at(0);
   input2 = input_tensors_.at(1);
@@ -45,19 +44,19 @@ int AddInt8Coder::Prepare(CoderContext *const context) {
   const double input2_scale = input2->quant_params().at(0).scale;
   const double output_scale = output_tensor_->quant_params().at(0).scale;
   left_shift_ = 20;
-  const double twice_max_input_scale = 2 * std::max(input1_scale, input2_scale);
+  const double twice_max_input_scale = kInputSize1 * std::max(input1_scale, input2_scale);
   const double real_input1_multiplier = static_cast<double>(input1_scale) / twice_max_input_scale;
   const double real_input2_multiplier = static_cast<double>(input2_scale) / twice_max_input_scale;
   const double real_output_multiplier =
     twice_max_input_scale / ((1 << static_cast<size_t>(left_shift_)) * static_cast<double>(output_scale));
 
-  MS_CHECK_TRUE(0 <= real_input1_multiplier && real_input1_multiplier <= 1,
+  MS_CHECK_TRUE(real_input1_multiplier >= 0 && real_input1_multiplier <= 1,
                 "real_input1_multiplier should be in (0, 1)");
   QuantizeMultiplier(real_input1_multiplier, &input_1_mult_, &input_1_shift_);
-  MS_CHECK_TRUE(0 <= real_input2_multiplier && real_input2_multiplier <= 1,
+  MS_CHECK_TRUE(real_input2_multiplier >= 0 && real_input2_multiplier <= 1,
                 "real_input2_multiplier should be in (0, 1)");
   QuantizeMultiplier(real_input2_multiplier, &input_2_mult_, &input_2_shift_);
-  MS_CHECK_TRUE(0 <= real_output_multiplier && real_output_multiplier <= 1,
+  MS_CHECK_TRUE(real_output_multiplier >= 0 && real_output_multiplier <= 1,
                 "real_output_multiplier should be in (0, 1)");
   QuantizeMultiplier(real_output_multiplier, &out_mult_, &out_shift_);
 

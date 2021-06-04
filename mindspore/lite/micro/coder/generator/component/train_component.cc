@@ -19,7 +19,6 @@
 #include "coder/utils/type_cast.h"
 
 namespace mindspore::lite::micro {
-
 void CodeTrainParams(std::ofstream &ofs) {
   ofs << "struct TrainParameter {\n"
          "  float beta1_;\n"

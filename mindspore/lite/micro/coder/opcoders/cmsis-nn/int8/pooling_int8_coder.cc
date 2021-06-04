@@ -69,7 +69,7 @@ int PoolingInt8Coder::SetParameters() {
   dim_src_height_ = input_tensor_->Height();
   dim_src_width_ = input_tensor_->Width();
   dim_dst_height_ = output_tensor_->DimensionSize(1);
-  dim_dst_width_ = output_tensor_->DimensionSize(2);
+  dim_dst_width_ = output_tensor_->DimensionSize(kInputSize1);
   ch_src_ = input_tensor_->Channel();
 
   stride_height_ = pooling_parameter_->stride_h_;
@@ -96,5 +96,4 @@ int PoolingInt8Coder::SetParameters() {
 
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
 REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
-
 }  // namespace mindspore::lite::micro::cmsis

@@ -118,9 +118,9 @@ int CoderGraph::InitGraphInOutTensors() {
   }
   std::vector<size_t> graph_input_node_indexes = lite::GetGraphInputNodes(model_);
   std::vector<uint32_t> input_indices;
-  for (auto in_node_index : graph_input_node_indexes) {
-    in_node_index = static_cast<uint32_t>(in_node_index);
-    auto *in_node = model_->all_nodes_.at(in_node_index);
+  for (const auto &in_node_index : graph_input_node_indexes) {
+    auto input_node_index = static_cast<uint32_t>(in_node_index);
+    auto *in_node = model_->all_nodes_.at(input_node_index);
     if (in_node == nullptr) {
       return RET_ERROR;
     }
@@ -146,9 +146,9 @@ int CoderGraph::InitGraphInOutTensors() {
   SetInputIndices(input_indices);
   std::vector<uint32_t> output_indices;
   auto graph_output_node_indexes = lite::GetGraphOutputNodes(model_);
-  for (auto out_node_index : graph_output_node_indexes) {
-    out_node_index = static_cast<uint32_t>(out_node_index);
-    auto *out_node = model_->all_nodes_.at(out_node_index);
+  for (const auto &out_node_index : graph_output_node_indexes) {
+    auto output_node_index = static_cast<uint32_t>(out_node_index);
+    auto *out_node = model_->all_nodes_.at(output_node_index);
     for (uint32_t i = 0; i < out_node->output_indices_.size(); i++) {
       auto out_tensor_index = size_t(out_node->output_indices_.at(i));
       bool is_graph_output = false;

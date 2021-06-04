@@ -21,7 +21,6 @@
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::lite::micro::cmsis {
-
 int FullConnectionInt8Coder::Prepare(CoderContext *const context) {
   FullConnectionBaseCoder::Init();
   ConfigInputOutput();
@@ -45,7 +44,7 @@ int FullConnectionInt8Coder::DoCode(CoderContext *const context) {
 }
 
 int FullConnectionInt8Coder::SetParameters() {
-  MS_CHECK_TRUE(output_tensor_->shape().size() == 2, "output tensor size should be 2");
+  MS_CHECK_TRUE(output_tensor_->shape().size() == kInputSize1, "output tensor size should be 2");
   MS_CHECK_TRUE(!input_tensor_->quant_params().empty(), "input quant_params is empty");
   MS_CHECK_TRUE(!filter_tensor_->quant_params().empty(), "filter quant_params is empty");
   MS_CHECK_TRUE(!output_tensor_->quant_params().empty(), "output quant_params is empty");

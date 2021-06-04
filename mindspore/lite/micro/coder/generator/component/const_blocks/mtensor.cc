@@ -15,7 +15,6 @@
  */
 
 #include "coder/generator/component/const_blocks/mtensor.h"
-
 namespace mindspore::lite::micro {
 const char tensor_header[] = R"RAW(
 /**
@@ -168,6 +167,5 @@ void *MTensor::MutableData() {
 }
 }  // namespace lite
 }  // namespace mindspore
-
 )RAW";
 }  // namespace mindspore::lite::micro

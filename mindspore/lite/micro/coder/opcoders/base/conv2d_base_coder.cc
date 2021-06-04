@@ -21,7 +21,6 @@
 #include "nnacl/int8/quantize.h"
 #include "coder/log.h"
 namespace mindspore::lite::micro {
-
 Conv2DBaseCoder::~Conv2DBaseCoder() {
   FreeConvQuantParams();
   conv_param_ = nullptr;
@@ -288,7 +287,7 @@ void Conv2DBaseCoder::SetRoundingAndMultipilerMode() {
     case 1:
       conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
       break;
-    case 2:
+    case kInputSize2:
       conv_quant_arg_->round_mode_ = Rounding_Up;
       break;
     default:

@@ -44,8 +44,8 @@ int ReduceBaseCoder::CheckParameters() {
 
   for (auto i = 0; i < num_axes_; i++) {
     if (axes_[i] < -static_cast<int>(input_rank) || axes_[i] >= static_cast<int>(input_rank)) {
-      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in ["
-                    << -static_cast<int>(input_rank) << ", " << input_rank - 1 << "].";
+      MS_LOG(ERROR) << "Reduce got invalid axis " << axes_[i] << ", axis should be in [" << static_cast<int>(input_rank)
+                    << ", " << input_rank - 1 << "].";
       return RET_ERROR;
     }
     if (axes_[i] < 0) {
@@ -57,8 +57,8 @@ int ReduceBaseCoder::CheckParameters() {
     // actual num of axes to reduce
     num_axes_ = static_cast<int>(input_rank) - axes_[0];
     MS_CHECK_TRUE(num_axes_ <= MAX_SHAPE_SIZE, "invalid num_axes_, greater than 8.");
-    for (auto i = 1; i < num_axes_; ++i) {
-      axes_[i] = axes_[0] + i;
+    for (auto j = 1; j < num_axes_; ++j) {
+      axes_[j] = axes_[0] + j;
     }
   }
 

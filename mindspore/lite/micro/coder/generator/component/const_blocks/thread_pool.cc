@@ -15,7 +15,6 @@
  */
 
 #include "coder/generator/component/const_blocks/thread_pool.h"
-
 namespace mindspore::lite::micro {
 const char thread_header[] = R"RAW(
 /**
@@ -98,6 +97,5 @@ void DestroyThreadPool(struct ThreadPool *thread_pool);
 }
 #endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_THREAD_POOL_H_
-
 )RAW";
 }  // namespace mindspore::lite::micro
