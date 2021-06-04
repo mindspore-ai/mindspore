@@ -112,8 +112,9 @@ int PReluCPUKernel::Run() {
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
   MS_ASSERT(ori_input_);
   MS_ASSERT(output_data_);
+  int ret;
   if (prelu_param_->channelShared) {
-    auto ret = ProcessShareChannelInput();
+    ret = ProcessShareChannelInput();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ProcessShareChannel failed.";
       return ret;
@@ -126,7 +127,7 @@ int PReluCPUKernel::Run() {
   auto negative_slope_tensor = in_tensors_.at(1);
   prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->data_c());
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  ret = ParallelLaunch(this->context_->thread_pool_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     context_->allocator->Free(input_data_);
