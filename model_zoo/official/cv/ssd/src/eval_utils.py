@@ -17,7 +17,7 @@
 import json
 import numpy as np
 from mindspore import Tensor
-from .config import config
+from src.model_utils.config import config
 
 def apply_eval(eval_param_dict):
     net = eval_param_dict["net"]

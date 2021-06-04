@@ -30,22 +30,16 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
 
-    old_list = ["/data/MindRecord_COCO",
-                "/ckpt/mobilenet_v1.ckpt",
-                "/data/coco2017"]
-    new_list = [os.path.join(utils.data_root, "coco/coco2017/mindrecord_train/ssd_mindrecord"),
-                os.path.join(utils.ckpt_root, "ssd_mobilenet_v1/mobilenet-v1.ckpt"),
-                os.path.join(utils.data_root, "coco/coco2017")]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config_ssd_mobilenet_v1_fpn.py"))
-    old_list = ["ssd300"]
-    new_list = ["ssd_mobilenet_v1_fpn"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config.py"))
-    old_list = ["args_opt.epoch_size", "dataset_sink_mode=dataset_sink_mode"]
+    old_list = ["/cache/data", "MindRecord_COCO", "coco_ori", "/ckpt/mobilenet_v1.ckpt"]
+    new_list = [os.path.join(utils.data_root, "coco/coco2017"), "mindrecord_train/ssd_mindrecord", ".",
+                os.path.join(utils.ckpt_root, "ssd_mobilenet_v1/mobilenet-v1.ckpt")]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "ssd_mobilenet_v1_fpn_config.yaml"))
+    old_list = ["config.epoch_size", "dataset_sink_mode=dataset_sink_mode"]
     new_list = ["5", "dataset_sink_mode=dataset_sink_mode, sink_size=20"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
-    exec_network_shell = "cd {0}; sh -x scripts/run_distribute_train.sh 8 {1} 0.2 coco {2}"\
-        .format(model_name, 60, utils.rank_table_path)
+    exec_network_shell = "cd {0}; sh -x scripts/run_distribute_train.sh 8 {1} 0.2 coco \
+        {2} ssd_mobilenet_v1_fpn_config.yaml".format(model_name, 60, utils.rank_table_path)
     os.system(exec_network_shell)
     cmd = "ps -ef | grep train.py | grep coco | grep device_num | grep device_id | grep -v grep"
     ret = utils.process_check(120, cmd)

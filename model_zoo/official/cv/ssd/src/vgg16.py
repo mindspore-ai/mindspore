@@ -16,7 +16,7 @@
 """VGG16 backbone for SSD"""
 
 from mindspore import nn
-from .config_ssd_vgg16 import config
+from src.model_utils.config import config
 
 pretrain_vgg_bn = config.pretrain_vgg_bn
 ssd_vgg_bn = config.ssd_vgg_bn

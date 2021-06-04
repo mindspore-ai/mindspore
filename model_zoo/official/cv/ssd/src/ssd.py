@@ -25,7 +25,6 @@ from mindspore.communication.management import get_group_size
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-
 from .fpn import mobilenet_v1_fpn, resnet50_fpn
 from .vgg16 import vgg16
 

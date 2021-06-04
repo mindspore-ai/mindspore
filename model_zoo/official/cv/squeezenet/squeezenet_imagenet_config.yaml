@@ -5,48 +5,44 @@ data_url: ""
 train_url: ""
 checkpoint_url: ""
 # Path for local
+run_distribute: False
+enable_profiling: False
 data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path/"
+device_num: 1
+device_id: 0
 device_target: 'Ascend'
-enable_profiling: False
+checkpoint_path: './checkpoint/'
+checkpoint_file_path: 'suqeezenet_imagenet-200_5004.ckpt'
 
 # ==============================================================================
 # Training options
-model_name: 'unet_medical'
-run_eval: False
-run_distribute: False
-crop: [388, 388]
-image_size : [572, 572]
-lr: 0.0001
-epochs: 400
-repeat: 400
-distribute_epochs: 1600
-batch_size: 16
-cross_valid_ind: 1
-num_classes: 2
-num_channels: 1
-weight_decay: 0.0005
-loss_scale: 1024.0
-FixedLossScaleManager: 1024.0
-resume: False
-resume_ckpt: './'
-transfer_training: False
-filter_weight: ['outc.weight', 'outc.bias']
-
-#Eval options
+net_name: "suqeezenet"
+dataset : "imagenet"
+class_num: 1000
+batch_size: 32
+loss_scale: 1024
+momentum: 0.9
+weight_decay: 0.00007
+epoch_size: 200
+pretrain_epoch_size: 0
+save_checkpoint: True
+save_checkpoint_epochs: 1
 keep_checkpoint_max: 10
-eval_activate: 'Softmax'
-eval_resize: False
-checkpoint_path: './checkpoint/'
-checkpoint_file_path: 'ckpt_unet_medical_adam-4-75.ckpt'
-rst_path: './result_Files/'
-result_path: ""
+warmup_epochs: 0
+lr_decay_mode: "poly"
+use_label_smooth: True
+label_smooth_factor: 0.1
+lr_init: 0
+lr_end: 0
+lr_max: 0.01
+pre_trained: ""
 
-# Export options
-width: 572
-height: 572
-file_name: "unet"
+# export
+width: 227
+height: 227
+file_name: "squeezenet"
 file_format: "AIR"
 
 ---
@@ -62,7 +58,7 @@ device_target: 'Target device type, available: [Ascend, GPU, CPU]'
 enable_profiling: 'Whether enable profiling while training, default: False'
 num_classes: 'Class for dataset'
 batch_size: "Batch size for training and evaluation"
-weight_decay: "Weight decay."
+epoch_size: "Total training epochs."
 keep_checkpoint_max: "keep the last keep_checkpoint_max checkpoint"
 checkpoint_path: "The location of the checkpoint file."
 checkpoint_file_path: "The location of the checkpoint file."

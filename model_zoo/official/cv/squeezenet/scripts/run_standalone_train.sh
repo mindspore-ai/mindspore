@@ -16,7 +16,7 @@
 
 if [ $# != 4 ] && [ $# != 5 ]
 then 
-    echo "Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    echo "Usage: sh scripts/run_standalone_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATA_PATH] [PRETRAINED_CKPT_PATH](optional)"
 exit 1
 fi
 
@@ -65,6 +65,22 @@ export DEVICE_ID=$3
 export RANK_ID=0
 export RANK_SIZE=1
 
+BASE_PATH=$(dirname "$(dirname "$(readlink -f $0)")")
+CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
+
+if [ $1 == "squeezenet" ] && [ $2 == "cifar10" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_cifar10_config.yaml"
+elif [ $1 == "squeezenet" ] && [ $2 == "imagenet" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_imagenet_config.yaml"
+elif [ $1 == "squeezenet_residual" ] && [ $2 == "cifar10" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_cifar10_config.yaml"
+elif [ $1 == "squeezenet_residual" ] && [ $2 == "imagenet" ]; then
+    CONFIG_FILE="${BASE_PATH}/squeezenet_residual_imagenet_config.yaml"
+else
+     echo "error: the selected dataset is not in supported set{squeezenet, squeezenet_residual, cifar10, imagenet}"
+exit 1
+fi
+
 if [ -d "train" ];
 then
     rm -rf ./train
@@ -72,16 +88,18 @@ fi
 mkdir ./train
 cp ./train.py ./train
 cp -r ./src ./train
+cp -r ./model_utils ./train
+cp -r ./*.yaml ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
 if [ $# == 4 ]
 then
-    python train.py --net=$1 --dataset=$2 --dataset_path=$PATH1 &> log &
+   python train.py --net_name=$1 --dataset=$2 --data_path=$PATH1 --config_path=$CONFIG_FILE --output_path './output' &> log &
 fi
 
 if [ $# == 5 ]
 then
-    python train.py --net=$1 --dataset=$2 --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+    python train.py --net_name=$1 --dataset=$2 --data_path=$PATH1 --pre_trained=$PATH2 --config_path=$CONFIG_FILE --output_path './output' &> log &
 fi
 cd ..

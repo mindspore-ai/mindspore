@@ -21,10 +21,10 @@ echo "for example: sh run_distribute_train.sh 8 500 0.2 coco /data/hccl.json /op
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-if [ $# != 5 ] && [ $# != 7 ]
+if [ $# != 6 ] && [ $# != 8 ]
 then
     echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] \
-[RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
+[RANK_TABLE_FILE] [CONFIG_PATH] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
     exit 1
 fi
 
@@ -39,8 +39,9 @@ export RANK_SIZE=$1
 EPOCH_SIZE=$2
 LR=$3
 DATASET=$4
-PRE_TRAINED=$6
-PRE_TRAINED_EPOCH_SIZE=$7
+PRE_TRAINED=$7
+CONFIG_PATH=$6
+PRE_TRAINED_EPOCH_SIZE=$8
 export RANK_TABLE_FILE=$5
 
 for((i=0;i<RANK_SIZE;i++))
@@ -49,33 +50,38 @@ do
     rm -rf LOG$i
     mkdir ./LOG$i
     cp ./*.py ./LOG$i
+    cp ./*.yaml ./LOG$i
     cp -r ./src ./LOG$i
     cd ./LOG$i || exit
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
-    if [ $# == 5 ]
+    if [ $# == 6 ]
     then
         python train.py  \
-        --distribute=True  \
+        --run_distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --epoch_size=$EPOCH_SIZE \
+        --config_path=$CONFIG_PATH \
+        --output_path './output' > log.txt 2>&1 &
     fi
 
-    if [ $# == 7 ]
+    if [ $# == 8 ]
     then
         python train.py  \
-        --distribute=True  \
+        --run_distribute=True  \
         --lr=$LR \
         --dataset=$DATASET \
         --device_num=$RANK_SIZE  \
         --device_id=$DEVICE_ID  \
         --pre_trained=$PRE_TRAINED \
         --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
-        --epoch_size=$EPOCH_SIZE > log.txt 2>&1 &
+        --epoch_size=$EPOCH_SIZE \
+        --config_path=$CONFIG_PATH \
+        --output_path './output' > log.txt 2>&1 &
     fi
 
     cd ../

@@ -102,7 +102,7 @@ UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督
 
 我们提供了一个脚本来将 COCO 和 Cell_Nuclei 数据集（[Unet++ 原论文](https://arxiv.org/abs/1912.05074) 中使用）转换为multi-class格式。
 
-1. 在`src/config.py`中修改`cfg_unet`，修改细节请参考`src/config.py`中的`cfg_unet_nested_cell` 和 `cfg_unet_simple_coco`。
+1. 在`src/model_utils/`下选择对应的yaml文件。
 
 2. 运行转换脚本:
 
@@ -126,24 +126,24 @@ python preprocess_dataset.py -d /data/save_data_path
 
 - 选择模型及数据集
 
-1. 在`src/config.py`中选择相应的配置项赋给`cfg_unet`，现在支持unet和unet++，我们在`src/config.py`预备了一些网络及数据集的参数配置用于快速体验。
-2. 如果使用其他的参数，也可以参考`src/config.py`通过设置`'model'` 为 `'unet_nested'` 或者 `'unet_simple'` 来选择使用什么网络结构。我们支持`ISBI` 和 `Cell_nuclei`两种数据集处理，默认使用`ISBI`，可以设置`'dataset'` 为 `'Cell_nuclei'`使用`Cell_nuclei`数据集。
+1. 在`unet/`中选择相应的配置项，现在支持unet和unet++，我们在`unet/`预备了一些网络及数据集的参数配置用于快速体验。
+2. 如果使用其他的参数，也可以参考`unet/`下的yaml文件，通过设置`'model'` 为 `'unet_nested'` 或者 `'unet_simple'` 来选择使用什么网络结构。我们支持`ISBI` 和 `Cell_nuclei`两种数据集处理，默认使用`ISBI`，可以设置`'dataset'` 为 `'Cell_nuclei'`使用`Cell_nuclei`数据集。
 
 - Ascend处理器环境运行
 
   ```python
   # 训练示例
-  python train.py --data_url=/path/to/data/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
   OR
-  bash scripts/run_standalone_train.sh [DATASET]
+  bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
 
   # 分布式训练示例
-  bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]
+  bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET] [CONFIG_PATH]
 
   # 评估示例
-  python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/checkpoint/ > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
   OR
-  bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
+  bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
   ```
 
 - Docker中运行
@@ -184,9 +184,11 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 # 在modelarts上使用模型推理的示例
 # (1) 把训练好的模型地方到桶的对应位置。
 # (2) 选址a或者b其中一种方式。
-#       a. 设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
+#       a.  设置 "enable_modelarts=True"
+#          设置 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt" 在 yaml 文件.
 #          设置 "checkpoint_url=/The path of checkpoint in S3/" 在 yaml 文件.
-#       b. 增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
+#       b. 增加 "enable_modelarts=True" 参数在modearts的界面上。
+#          增加 "checkpoint_file_path='/cache/checkpoint_path/model.ckpt'" 参数在modearts的界面上。
 #          增加 "checkpoint_url=/The path of checkpoint in S3/" 参数在modearts的界面上。
 # (3) 设置网络配置文件的路径 "config_path=/The path of config in S3/"
 # (4) 在modelarts的界面上设置代码的路径 "/path/unet"。
@@ -305,9 +307,9 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 - Ascend处理器环境运行
 
   ```shell
-  python train.py --data_url=/path/to/data/ > train.log 2>&1 &
+python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.log 2>&1 &
   OR
-  bash scripts/run_standalone_train.sh [DATASET]
+  bash scripts/run_standalone_train.sh [DATASET] [CONFIG_PATH]
   ```
 
   上述python命令在后台运行，可通过`train.log`文件查看结果。
@@ -361,9 +363,9 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
   在运行以下命令之前，请检查用于评估的检查点路径。将检查点路径设置为绝对全路径，如"username/unet/ckpt_unet_medical_adam-48_600.ckpt"。
 
   ```shell
-  python eval.py --data_url=/path/to/data/ --ckpt_path=/path/to/unet.ckpt/ > eval.log 2>&1 &
+python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/yaml > eval.log 2>&1 &
   OR
-  bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
+  bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
   ```
 
   上述python命令在后台运行。可通过"eval.log"文件查看结果。测试数据集的准确率如下：
@@ -408,10 +410,10 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 导出mindir模型
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --checkpoint_file_path [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
-参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+参数`checkpoint_file_path` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
 
 在执行推理前，MINDIR文件必须在910上通过export.py文件导出。
 目前仅可处理batch_Size为1。
@@ -435,7 +437,7 @@ Cross valid dice coeff is: 0.9054352151297033
 
 ```python
     'resume': True,
-    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+    'resume_ckpt': 'ckpt_unet_medical_adam_1-1_600.ckpt',
     'transfer_training': False,
     'filter_weight': ["final.weight"]
 ```
@@ -446,7 +448,7 @@ Cross valid dice coeff is: 0.9054352151297033
 
 ```python
     'resume': True,
-    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+    'resume_ckpt': 'ckpt_unet_medical_adam_1-1_600.ckpt',
     'transfer_training': True,
     'filter_weight': ["final.weight"]
 ```

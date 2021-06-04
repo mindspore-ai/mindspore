@@ -16,30 +16,30 @@
 """Evaluation for SSD"""
 
 import os
-import argparse
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
 from src.dataset import create_ssd_dataset, create_mindrecord
-from src.config import config
 from src.eval_utils import apply_eval
 from src.box_utils import default_boxes
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
 
 def ssd_eval(dataset_path, ckpt_path, anno_json):
     """SSD evaluation."""
     batch_size = 1
     ds = create_ssd_dataset(dataset_path, batch_size=batch_size, repeat_num=1,
                             is_training=False, use_multiprocessing=False)
-    if config.model == "ssd300":
+    if config.model_name == "ssd300":
         net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
-    elif config.model == "ssd_vgg16":
+    elif config.model_name == "ssd_vgg16":
         net = ssd_vgg16(config=config)
-    elif config.model == "ssd_mobilenet_v1_fpn":
+    elif config.model_name == "ssd_mobilenet_v1_fpn":
         net = ssd_mobilenet_v1_fpn(config=config)
-    elif config.model == "ssd_resnet50_fpn":
+    elif config.model_name == "ssd_resnet50_fpn":
         net = ssd_resnet50_fpn(config=config)
     else:
-        raise ValueError(f'config.model: {config.model} is not supported')
+        raise ValueError(f'config.model: {config.model_name} is not supported')
     net = SsdInferWithDecoder(net, Tensor(default_boxes), config)
 
     print("Load Checkpoint!")
@@ -57,27 +57,30 @@ def ssd_eval(dataset_path, ckpt_path, anno_json):
     print("\n========================================\n")
     print(f"mAP: {mAP}")
 
-def get_eval_args():
-    parser = argparse.ArgumentParser(description='SSD evaluation')
-    parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
-    parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
-    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
-                        help="run platform, support Ascend ,GPU and CPU.")
-    return parser.parse_args()
+@moxing_wrapper()
+def eval_net():
+    if hasattr(config, 'num_ssd_boxes') and config.num_ssd_boxes == -1:
+        num = 0
+        h, w = config.img_shape
+        for i in range(len(config.steps)):
+            num += (h // config.steps[i]) * (w // config.steps[i]) * config.num_default[i]
+        config.num_ssd_boxes = num
 
-if __name__ == '__main__':
-    args_opt = get_eval_args()
-    if args_opt.dataset == "coco":
-        json_path = os.path.join(config.coco_root, config.instances_set.format(config.val_data_type))
-    elif args_opt.dataset == "voc":
-        json_path = os.path.join(config.voc_root, config.voc_json)
+    if config.dataset == "coco":
+        coco_root = os.path.join(config.data_path, config.coco_root)
+        json_path = os.path.join(coco_root, config.instances_set.format(config.val_data_type))
+    elif config.dataset == "voc":
+        voc_root = os.path.join(config.data_path, config.voc_root)
+        json_path = os.path.join(voc_root, config.voc_json)
     else:
         raise ValueError('SSD eval only support dataset mode is coco and voc!')
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.run_platform, device_id=args_opt.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=config.device_id)
 
-    mindrecord_file = create_mindrecord(args_opt.dataset, "ssd_eval.mindrecord", False)
+    mindrecord_file = create_mindrecord(config.dataset, "ssd_eval.mindrecord", False)
 
     print("Start Eval!")
-    ssd_eval(mindrecord_file, args_opt.checkpoint_path, json_path)
+    ssd_eval(mindrecord_file, config.checkpoint_file_path, json_path)
+
+if __name__ == '__main__':
+    eval_net()
