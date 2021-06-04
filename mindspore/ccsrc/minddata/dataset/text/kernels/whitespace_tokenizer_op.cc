@@ -42,7 +42,7 @@ Status WhitespaceTokenizerOp::Tokenize(std::string_view str, std::vector<std::st
         offsets_start->push_back(static_cast<uint32_t>(start));
         offsets_limit->push_back(static_cast<uint32_t>(start + len));
         std::string temp(str.substr(start, len));
-        splits->emplace_back(std::move(temp));
+        (void)splits->emplace_back(std::move(temp));
         len = 0;
       }
     } else {
@@ -56,10 +56,10 @@ Status WhitespaceTokenizerOp::Tokenize(std::string_view str, std::vector<std::st
     offsets_start->push_back(static_cast<uint32_t>(start));
     offsets_limit->push_back(static_cast<uint32_t>(start + len));
     std::string temp(str.substr(start, len));
-    splits->emplace_back(std::move(temp));
+    (void)splits->emplace_back(std::move(temp));
   }
   if (splits->empty()) {
-    splits->emplace_back("");
+    (void)splits->emplace_back("");
     offsets_start->push_back(0);
     offsets_limit->push_back(0);
   }

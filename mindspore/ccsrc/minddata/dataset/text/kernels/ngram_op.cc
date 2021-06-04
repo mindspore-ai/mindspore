@@ -46,7 +46,7 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   offsets.push_back(str_buffer.size());  // insert 0 as the starting pos
   for (int l_i = 0; l_i < l_len_; l_i++) offsets.push_back((str_buffer += l_pad_with_sp_).size());
 
-  for (auto itr = input->begin<std::string_view>(); itr != input->end<std::string_view>(); itr++) {
+  for (auto itr = input->begin<std::string_view>(); itr != input->end<std::string_view>(); ++itr) {
     str_buffer += (*itr);
     str_buffer += separator_;
     offsets.push_back(str_buffer.size());

@@ -97,7 +97,7 @@ Status CacheBase::FetchSamplesToWorkers() {
     RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     while (!sample_row.eoe()) {
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); itr++) {
+      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
         ++row_cnt_;
         prefetch_keys.push_back(*itr);
         // Batch enough rows for performance reason.

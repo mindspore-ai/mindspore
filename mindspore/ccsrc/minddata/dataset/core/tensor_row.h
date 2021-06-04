@@ -44,7 +44,7 @@ class TensorRow {
   };
 
   // Type definitions
-  using size_type = dsize_t;
+  using size_type = size_t;
   using value_type = std::shared_ptr<Tensor>;
   using reference = std::shared_ptr<Tensor> &;
   using const_reference = const std::shared_ptr<Tensor> &;

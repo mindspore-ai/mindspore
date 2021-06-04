@@ -135,7 +135,7 @@ Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
       }
 
       *id_ptr = sampled_id;
-      id_ptr++;
+      ++id_ptr;
       cnt_++;
     }
 

@@ -56,7 +56,7 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
       CHECK_FAIL_RETURN_UNEXPECTED(!new_row[col]->type().IsNumeric(),
                                    "Invalid data, build_vocab only works on string data, but got numeric data type: " +
                                      new_row[col]->type().ToString());
-      for (auto itr = new_row[col]->begin<std::string_view>(); itr != new_row[col]->end<std::string_view>(); itr++) {
+      for (auto itr = new_row[col]->begin<std::string_view>(); itr != new_row[col]->end<std::string_view>(); ++itr) {
         (*wrkr_map)[std::string(*itr)] += 1;
       }
     }

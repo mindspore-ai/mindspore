@@ -247,8 +247,7 @@ void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output)
   auto out_itr = (*output)->begin<TO>();
   auto out_end = (*output)->end<TO>();
 
-  for (; out_itr != out_end; static_cast<void>(in_itr++), static_cast<void>(out_itr++))
-    *out_itr = static_cast<TO>(*in_itr);
+  for (; out_itr != out_end; ++in_itr, ++out_itr) *out_itr = static_cast<TO>(*in_itr);
 }
 
 template <typename T>
@@ -358,7 +357,7 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   auto out_itr = (*output)->begin<float16>();
   auto out_end = (*output)->end<float16>();
 
-  for (; out_itr != out_end; in_itr++, out_itr++) {
+  for (; out_itr != out_end; ++in_itr, ++out_itr) {
     float element = *in_itr;
     float float16_max = static_cast<float>(std::numeric_limits<float16>::max());
     float float16_min = static_cast<float>(std::numeric_limits<float16>::lowest());
@@ -413,13 +412,13 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
     if (pad_val == 0) {  // if pad with zero, don't care what type it is
       RETURN_IF_NOT_OK((*dst)->Zero());
     } else if (tensor_type == DataType::DE_INT8) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(static_cast<int8_t>(pad_val)));
     } else if (tensor_type == DataType::DE_BOOL) {
-      RETURN_IF_NOT_OK((*dst)->Fill<bool>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<bool>(static_cast<bool>(pad_val)));
     } else if (tensor_type == DataType::DE_UINT8) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint8_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<uint8_t>(static_cast<uint8_t>(pad_val)));
     } else if (tensor_type == DataType::DE_INT16) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int16_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<int16_t>(static_cast<int16_t>(pad_val)));
     }
 #ifndef ENABLE_MD_LITE_X86_64
     else if (tensor_type == DataType::DE_FLOAT16) {  // NOLINT
@@ -427,19 +426,19 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
     }
 #endif
     else if (tensor_type == DataType::DE_UINT16) {  // NOLINT
-      RETURN_IF_NOT_OK((*dst)->Fill<uint16_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<uint16_t>(static_cast<uint16_t>(pad_val)));
     } else if (tensor_type == DataType::DE_INT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int32_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<int32_t>(static_cast<int32_t>(pad_val)));
     } else if (tensor_type == DataType::DE_UINT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint32_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<uint32_t>(static_cast<uint32_t>(pad_val)));
     } else if (tensor_type == DataType::DE_INT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<int64_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<int64_t>(static_cast<int64_t>(pad_val)));
     } else if (tensor_type == DataType::DE_UINT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<uint64_t>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<uint64_t>(static_cast<uint64_t>(pad_val)));
     } else if (tensor_type == DataType::DE_FLOAT32) {
-      RETURN_IF_NOT_OK((*dst)->Fill<float>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<float>(static_cast<float>(pad_val)));
     } else if (tensor_type == DataType::DE_FLOAT64) {
-      RETURN_IF_NOT_OK((*dst)->Fill<double>(pad_val));
+      RETURN_IF_NOT_OK((*dst)->Fill<double>(static_cast<double>(pad_val)));
     } else {
       RETURN_STATUS_UNEXPECTED("PadEnd: Incorrect/Unknown datatype");
     }
@@ -513,7 +512,7 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
   RETURN_IF_NOT_OK(value_tensor->GetItemAt(&value, {}));
   auto in_itr = input->begin<T>();
   auto out_itr = output->begin<bool>();
-  for (; in_itr != input->end<T>(); in_itr++, out_itr++) {
+  for (; in_itr != input->end<T>(); in_itr++, ++out_itr) {
     switch (op) {
       case RelationalOp::kEqual:
         *out_itr = (*in_itr == value);
@@ -665,7 +664,7 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
 
     for (dsize_t i = 0; i < tensor_list.size(); i++) {
       auto itr = tensor_list[i]->begin<std::string_view>();
-      for (; itr != tensor_list[i]->end<std::string_view>(); itr++) {
+      for (; itr != tensor_list[i]->end<std::string_view>(); ++itr) {
         strings.emplace_back(*itr);
       }
     }

@@ -146,7 +146,7 @@ MSRStatus ShardSample::Execute(ShardTaskList &tasks) {
     no_of_samples_ = std::min(no_of_samples_, total_no);
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    if (indices_.size() > total_no) {
+    if (indices_.size() > static_cast<size_t>(total_no)) {
       MS_LOG(ERROR) << "parameter indices's size is greater than dataset size.";
       return FAILED;
     }

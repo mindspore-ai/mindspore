@@ -51,7 +51,7 @@ Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
 
       *idPtr = sampled_id;
       current_id_++;  // Move the current id to the next one in the sequence
-      idPtr++;
+      ++idPtr;
     }
 
     id_count_ += num_elements;  // Count the packed ids towards our overall sample count

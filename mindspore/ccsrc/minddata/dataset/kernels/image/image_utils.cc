@@ -155,13 +155,13 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kJpegMagic = (unsigned char *)"\xFF\xD8\xFF";
-  constexpr size_t kJpegMagicLen = 3;
+  constexpr dsize_t kJpegMagicLen = 3;
   return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input) {
   const unsigned char *kPngMagic = (unsigned char *)"\x89\x50\x4E\x47";
-  constexpr size_t kPngMagicLen = 4;
+  constexpr dsize_t kPngMagicLen = 4;
   return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetBuffer(), kPngMagic, kPngMagicLen) == 0;
 }
 

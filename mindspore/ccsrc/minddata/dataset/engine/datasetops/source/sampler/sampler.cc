@@ -128,7 +128,7 @@ Status SamplerRT::SetNumSamples(int64_t num_samples) {
   return Status::OK();
 }
 
-int64_t SamplerRT::GetNumSamples() { return num_samples_; }
+int64_t SamplerRT::GetNumSamples() const { return num_samples_; }
 
 int64_t SamplerRT::CalculateNumSamples(int64_t num_rows) {
   int64_t child_num_rows = num_rows;
@@ -172,7 +172,7 @@ Status SamplerRT::AddChild(std::shared_ptr<SamplerRT> child) {
   return Status::OK();
 }
 
-bool SamplerRT::HasChildSampler() { return !child_.empty(); }
+bool SamplerRT::HasChildSampler() const { return !child_.empty(); }
 
 Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   if (child_ids_.empty()) {

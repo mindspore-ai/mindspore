@@ -231,7 +231,7 @@ Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const
   uchar *buf = (*out)->GetStringsBuffer();
 
   offset_t offset = buf - (*out)->data_;  // the first string will start here
-  uint32_t i = 0;
+  int32_t i = 0;
   for (; i < bytes_list.value_size(); i++) {
     const std::string &str = bytes_list.value(i);
     //  insert the start index of the string.
@@ -716,7 +716,7 @@ Status Tensor::GetDataAsNumpy(py::array *data) {
 Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   auto itr = begin<std::string_view>();
   uint64_t max_value = 0;
-  for (; itr != end<std::string_view>(); itr++) {
+  for (; itr != end<std::string_view>(); ++itr) {
 #if defined(__APPLE__)
     max_value = fmax((*itr).length(), max_value);
 #else
@@ -1017,10 +1017,10 @@ Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std:
 
   // to handle partial slices
   dsize_t current_stride = shape_.Strides()[indices[0].size() - 1];
-
-  for (dsize_t i = 0; i < indices.size(); i++) {
+  dsize_t indices_size = static_cast<dsize_t>(indices.size());
+  for (dsize_t i = 0; i < indices_size; i++) {
     std::vector<dsize_t> cur_index = HandleNegIndices(indices[i], dim_length);
-    if (i < indices.size() - 1) {
+    if (i < indices_size - 1) {
       std::vector<dsize_t> next_index = HandleNegIndices(indices[i + 1], dim_length);
       dsize_t flat_idx_curr;
       dsize_t flat_idx_next;
@@ -1038,7 +1038,7 @@ Status Tensor::SliceNumeric(std::shared_ptr<Tensor> *out, const std::vector<std:
                                data_ + src_start_index * type_size, count * type_size * current_stride);
     CHECK_FAIL_RETURN_UNEXPECTED(return_code == 0, "memcpy_s failed in SliceNumeric");
     out_index += count * current_stride;
-    if (i < indices.size() - 1) {
+    if (i < indices_size - 1) {
       src_start = HandleNegIndices(indices[i + 1], dim_length);  // next index
       RETURN_IF_NOT_OK(shape_.ToFlatIndex(src_start, &src_start_index));
     }

@@ -95,7 +95,7 @@ Status SubsetSamplerRT::GetNextSample(TensorRow *out) {
       }
 
       *id_ptr = sampled_id;
-      id_ptr++;
+      ++id_ptr;
       sample_id_++;
     }
 
