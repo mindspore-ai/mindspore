@@ -235,7 +235,7 @@
     const int *perm = transpose_param->perm_;                                                                 \
     const int *strides = transpose_param->strides_;                                                           \
     const int *out_strides = transpose_param->out_strides_;                                                   \
-    int data_size = transpose_param->data_size_;                                                              \
+    int data_size = transpose_param->data_num_ * sizeof(TYPE);                                                \
     int num_axes = transpose_param->num_axes_;                                                                \
     bool needTranspose = false;                                                                               \
     for (int i = 1; i < num_axes; ++i) {                                                                      \

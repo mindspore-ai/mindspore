@@ -105,7 +105,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransposePar
   CodeBaseStruct<false>(
     "TransposeParameter", name, transpose_parameter.op_parameter_, ToString(transpose_parameter.perm_),
     transpose_parameter.perm_size_, transpose_parameter.conjugate_, ToString(transpose_parameter.strides_),
-    ToString(transpose_parameter.out_strides_), transpose_parameter.num_axes_, transpose_parameter.data_size_);
+    ToString(transpose_parameter.out_strides_), transpose_parameter.num_axes_, transpose_parameter.data_num_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const LstmParameter &lstm_parameter) {

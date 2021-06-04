@@ -42,7 +42,7 @@ int TransposeFp32Coder::Resize() {
   auto out_shape = output_tensor_->shape();
   param_->strides_[param_->num_axes_ - 1] = 1;
   param_->out_strides_[param_->num_axes_ - 1] = 1;
-  param_->data_size_ = input_tensor_->Size();
+  param_->data_num_ = input_tensor_->ElementsNum();
   for (int i = param_->num_axes_ - 2; i >= 0; i--) {
     param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];

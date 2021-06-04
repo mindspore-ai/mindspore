@@ -208,7 +208,7 @@ int DoTransposeFp32(const float *in_data, float *out_data, const int *output_sha
   int *perm = transpose_param->perm_;
   int *strides = transpose_param->strides_;
   int *out_strides = transpose_param->out_strides_;
-  int data_size = transpose_param->data_size_;
+  int data_size = transpose_param->data_num_ * sizeof(float);
   int num_axes = transpose_param->num_axes_;
 
   // check if transpose is needed

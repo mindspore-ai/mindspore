@@ -209,7 +209,7 @@ int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *ou
   int *perm = param->perm_;
   int *strides = param->strides_;
   int *out_strides = param->out_strides_;
-  int data_size = param->data_size_;
+  int data_size = param->data_num_ * sizeof(float16_t);
   int num_axes = param->num_axes_;
 
   // check if transpose is needed
