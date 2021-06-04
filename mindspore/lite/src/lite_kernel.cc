@@ -69,7 +69,7 @@ void LiteKernel::InitOutTensorInitRefCount() {
 int LiteKernel::DecOutTensorRefCount() {
   for (auto *tensor : this->out_tensors_) {
     tensor->set_ref_count(tensor->ref_count() - 1);
-    if (0 >= tensor->ref_count()) {
+    if (tensor->ref_count() <= 0) {
       tensor->FreeData();
     }
   }
@@ -129,7 +129,7 @@ int LiteKernel::PostProcess() {
       continue;
     }
     auto ret = input_kernel->DecOutTensorRefCount();
-    if (0 != ret) {
+    if (ret != RET_OK) {
       MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << this->name() << " failed";
     }
   }

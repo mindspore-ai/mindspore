@@ -214,6 +214,5 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
   }
   return ret;
 }
-
 }  // namespace lite
 }  // namespace mindspore

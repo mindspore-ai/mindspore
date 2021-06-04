@@ -178,5 +178,4 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
     return iter->device_info_.npu_device_info_;
   }
 }
-
 }  // namespace mindspore::lite

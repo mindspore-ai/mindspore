@@ -90,7 +90,7 @@ void GenerateRandomData(int size, void *data, Distribution distribution) {
   std::mt19937 random_engine;
   int elements_num = size / sizeof(T);
   (void)std::generate_n(static_cast<T *>(data), elements_num,
-                        [&]() { return static_cast<T>(distribution(random_engine)); });
+                        [&distribution, &random_engine]() { return static_cast<T>(distribution(random_engine)); });
 }
 
 int GenerateInputDataWithRandom(std::vector<mindspore::tensor::MSTensor *> inputs) {

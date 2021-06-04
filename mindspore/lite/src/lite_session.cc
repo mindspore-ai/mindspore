@@ -426,7 +426,7 @@ int LiteSession::CompileGraph(Model *model) {
 #else
   executor_ = new (std::nothrow) Executor();
 #endif
-  if (nullptr == executor_) {
+  if (executor_ == nullptr) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
     return RET_ERROR;

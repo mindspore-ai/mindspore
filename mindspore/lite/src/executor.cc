@@ -45,7 +45,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
                   const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   auto ret = this->CheckInputs(in_tensors);
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "CheckInputs failed";
     return ret;
   }
@@ -64,7 +64,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
   while (!kernel_queue.empty()) {
     auto cur_kernel = kernel_queue.front();
     kernel_queue.pop();
-    MS_ASSERT(nullptr != cur_kernel);
+    MS_ASSERT(cur_kernel != nullptr);
     ret = cur_kernel->PreProcess();
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "PreProcess kernel failed, name: " << cur_kernel->name();
@@ -92,7 +92,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
 int CpuExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                      const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                      const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
+  MS_ASSERT(allocator != nullptr);
   //  not check input for merge. too hard
   if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
     auto ret = this->CheckInputs(in_tensors);
@@ -107,7 +107,7 @@ int CpuExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
   }
 #endif
   for (auto *kernel : kernels) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel != nullptr);
     auto ret = kernel->PreProcess();
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();

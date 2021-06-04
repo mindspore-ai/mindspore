@@ -20,7 +20,6 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
-
 int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   auto ret = MindrtInit();
   if (ret != RET_OK) {
@@ -60,7 +59,7 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
 int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                         const std::vector<kernel::LiteKernel *> &kernels, mindspore::Allocator *allocator,
                         const KernelCallBack &before, const KernelCallBack &after) {
-  MS_ASSERT(nullptr != allocator);
+  MS_ASSERT(allocator != nullptr);
   if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
     auto ret = this->CheckInputs(in_tensors);
     if (RET_OK != ret) {
@@ -77,5 +76,4 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
 
   return MindrtRun<Tensor>(inputData_, &outputData_, &before, &after);
 }
-
 }  // namespace mindspore::lite

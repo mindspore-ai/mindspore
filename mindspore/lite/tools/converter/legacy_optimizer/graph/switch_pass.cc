@@ -212,11 +212,11 @@ std::unique_ptr<schema::CNodeT> SingleSwitchPass::MakeMergeNode(const std::strin
   // double merge inputs to contain the outputs of body  node
   auto old_merge_input = merge_node->inputIndex;
   for (size_t i = 0; i < old_merge_input.size(); i++) {
-    auto &old_merge__in_tensor = graph_->allTensors.at(old_merge_input[i]);
+    auto &old_merge_in_tensor = graph_->allTensors.at(old_merge_input[i]);
     if (IsContain(const_input, i)) {
       merge_node->inputIndex.push_back(old_merge_input[i]);
     } else {
-      auto merge_tensor = NewTensor(old_merge__in_tensor);
+      auto merge_tensor = NewTensor(old_merge_in_tensor);
       merge_tensor->nodeType = NodeType_CNode;
       graph_->allTensors.push_back(std::move(merge_tensor));
       merge_node->inputIndex.push_back(graph_->allTensors.size() - 1);
