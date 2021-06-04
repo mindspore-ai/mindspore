@@ -32,11 +32,18 @@ class Loss(Cell):
     """
     Base class for other losses.
 
-    Other losses derived from this could use method `self.get_loss` to apply reduction to loss values.
+    Other losses derived from this should implement their own `construct` and use method `self.get_loss`
+    to apply reduction to loss values.
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             Default: "mean".
+
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     def __init__(self, reduction='mean'):
         super(Loss, self).__init__()
