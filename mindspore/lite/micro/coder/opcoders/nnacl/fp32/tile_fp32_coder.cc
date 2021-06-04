@@ -58,7 +58,6 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("tile_parameter", *tile_param_);
   // call the op function
   code.CodeFunction("Tile", input_tensor_, output_tensor_, "&tile_parameter");
-
   context->AppendCode(code.str());
   return RET_OK;
 }

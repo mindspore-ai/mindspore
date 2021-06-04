@@ -44,7 +44,7 @@ int MatMulFP32BaseCoder::ReSize() {
 }
 
 int MatMulFP32BaseCoder::InitBiasData() {
-  if (input_tensors_.size() == 3) {
+  if (input_tensors_.size() == DIMENSION_3D) {
     int max_bias_data = UP_ROUND(bias_tensor_->ElementsNum(), C16NUM);
     bias_pack_ptr_size_ = static_cast<size_t>(max_bias_data * sizeof(float));
     bias_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));

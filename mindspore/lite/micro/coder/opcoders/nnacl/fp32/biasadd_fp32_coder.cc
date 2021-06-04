@@ -22,7 +22,6 @@
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::lite::micro::nnacl {
-
 int BiasAddFP32Coder::Prepare(CoderContext *context) {
   arithmetic_parameter_ = reinterpret_cast<ArithmeticParameter *>(parameter_);
   size_t data_size = input_tensors_.at(0)->ElementsNum();
