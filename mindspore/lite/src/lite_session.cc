@@ -119,7 +119,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
           return RET_NULL_PTR;
         }
         if (NeedUnPack()) {
-          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
+          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data, dst_tensor->Size());
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "unpack to int failed.";
             return RET_NULL_PTR;
@@ -135,7 +135,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
             MS_LOG(ERROR) << "Data from tensor is nullptr";
             return RET_ERROR;
           }
-          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
+          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data, dst_tensor->Size());
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "unpack to int failed.";
             return RET_ERROR;

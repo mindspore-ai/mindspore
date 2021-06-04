@@ -38,7 +38,6 @@
 
 namespace mindspore {
 namespace lite {
-
 std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size) {
   std::ifstream ifs(filename);
   if (!ifs.good()) {
@@ -222,7 +221,7 @@ int TrainSession::SaveToFile(const std::string &filename) const {
     return lite::RET_NULL_PTR;
   }
   std::ofstream ofs(filename);
-  if ((true != ofs.good()) || (true != ofs.is_open())) {
+  if (!ofs.good() || !ofs.is_open()) {
     MS_LOG(ERROR) << "Could not open file \"" << filename << "\" for writing";
     return RET_ERROR;
   }
@@ -276,31 +275,34 @@ void TrainSession::CompileEvalOutputs() {
   eval_output_tensor_map_.clear();
   eval_output_tensor_names_.clear();
   for (auto kernel : this->train_kernels_) {
-    if (IsLossKernel(kernel) && !(IsGradKernel(kernel))) {
-      for (auto in_kernel : kernel->in_kernels()) {
-        if (IsLossKernel(in_kernel) || IsGradKernel(in_kernel)) continue;
-        // insert if not already in
-        if (eval_output_node_map_.find(in_kernel->name()) == eval_output_node_map_.end()) {
-          auto *ms_tensor = in_kernel->out_tensors().at(0);
-          if (ms_tensor != nullptr) {
-            eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
-            auto index = TSFindTensor(tensors_, ms_tensor);
-            if (index != tensors_.size()) {
-              eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
-              if (!ms_tensor->tensor_name().empty()) {
-                eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
-              } else {
-                eval_output_tensor_names_.emplace_back(std::to_string(index));
-              }
-            }
-          }
+    if (!IsLossKernel(kernel) || IsGradKernel(kernel)) {
+      continue;
+    }
+    for (auto in_kernel : kernel->in_kernels()) {
+      if (IsLossKernel(in_kernel) || IsGradKernel(in_kernel)) continue;
+      // insert if not already in
+      if (eval_output_node_map_.find(in_kernel->name()) != eval_output_node_map_.end()) {
+        continue;
+      }
+      auto *ms_tensor = in_kernel->out_tensors().at(0);
+      if (ms_tensor != nullptr) {
+        eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
+        auto index = TSFindTensor(tensors_, ms_tensor);
+        if (index == tensors_.size()) {
+          continue;
+        }
+        eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
+        if (!ms_tensor->tensor_name().empty()) {
+          eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
+        } else {
+          eval_output_tensor_names_.emplace_back(std::to_string(index));
         }
       }
     }
   }
-  if (eval_output_node_map_.size() == 0) eval_output_node_map_ = orig_output_node_map_;
-  if (eval_output_tensor_map_.size() == 0) eval_output_tensor_map_ = orig_output_tensor_map_;
-  if (eval_output_tensor_names_.size() == 0) eval_output_tensor_names_ = orig_output_tensor_names_;
+  if (eval_output_node_map_.empty()) eval_output_node_map_ = orig_output_node_map_;
+  if (eval_output_tensor_map_.empty()) eval_output_tensor_map_ = orig_output_tensor_map_;
+  if (eval_output_tensor_names_.empty()) eval_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::CompileTrainOutputs() {
@@ -328,9 +330,9 @@ void TrainSession::CompileTrainOutputs() {
       }
     }
   }
-  if (train_output_node_map_.size() == 0) train_output_node_map_ = orig_output_node_map_;
-  if (train_output_tensor_map_.size() == 0) train_output_tensor_map_ = orig_output_tensor_map_;
-  if (train_output_tensor_names_.size() == 0) train_output_tensor_names_ = orig_output_tensor_names_;
+  if (train_output_node_map_.empty()) train_output_node_map_ = orig_output_node_map_;
+  if (train_output_tensor_map_.empty()) train_output_tensor_map_ = orig_output_tensor_map_;
+  if (train_output_tensor_names_.empty()) train_output_tensor_names_ = orig_output_tensor_names_;
 }
 
 void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
@@ -363,7 +365,7 @@ void TrainSession::CompileInferenceKernels() {
     auto kernel = TSFindKernel(train_kernels_, kernel_name);
     BuildInferenceKernelsRecursive(kernel, &inference_kernels_);
   }
-  if (inference_kernels_.size() == 0) {
+  if (inference_kernels_.empty()) {
     inference_kernels_ = this->train_kernels_;
   }
 }
@@ -574,5 +576,4 @@ session::TrainSession *session::TrainSession::CreateSession(const std::string &f
   }
   return session::TrainSession::CreateSession(buf.get(), size, context, train_mode);
 }
-
 }  // namespace mindspore

@@ -59,5 +59,7 @@ Registry g_floorDivParameterRegistry(schema::PrimitiveType_FloorDiv, PopulateAri
 Registry g_floorModParameterRegistry(schema::PrimitiveType_FloorMod, PopulateArithmetic, SCHEMA_CUR);
 Registry g_modParameterRegistry(schema::PrimitiveType_Mod, PopulateArithmetic, SCHEMA_CUR);
 Registry g_squaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic, SCHEMA_CUR);
+Registry g_populateBiasGradParameterParameterRegistry(schema::PrimitiveType_BiasAddGrad, PopulateArithmetic,
+                                                      SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

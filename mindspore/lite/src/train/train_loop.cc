@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace lite {
-
 using dataset::Dataset;
 using dataset::Iterator;
 using dataset::MSTensorVec;
@@ -133,8 +132,8 @@ int TrainLoop::LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTenso
   }
 
   for (unsigned int i = 0; i < num_of_inputs; i++) {
-    unsigned char *input_data = reinterpret_cast<unsigned char *>(inputs.at(i)->MutableData());
-    const unsigned char *row_data = reinterpret_cast<const unsigned char *>(row_vec->at(i).MutableData());
+    auto *input_data = reinterpret_cast<unsigned char *>(inputs.at(i)->MutableData());
+    const auto *row_data = reinterpret_cast<const unsigned char *>(row_vec->at(i).MutableData());
     auto data_size = row_vec->at(i).DataSize();
     if (data_size != inputs.at(i)->Size()) {
       MS_LOG(WARNING) << "Model Input tensor " << i << " size (" << inputs.at(i)->Size()
@@ -145,32 +144,10 @@ int TrainLoop::LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTenso
   }
   return RET_OK;
 }
-
-int TrainLoop::LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *row_vec) {
-  auto num_of_inputs = inputs.size();
-  if ((num_of_inputs == 0) || (row_vec == nullptr) || (num_of_inputs < row_vec->size())) {
-    return RET_STOP_TRAINING;
-  }
-
-  for (unsigned int i = 0; i < row_vec->size(); i++) {
-    unsigned char *input_data = reinterpret_cast<unsigned char *>(inputs.at(i)->MutableData());
-    const unsigned char *row_data = reinterpret_cast<const unsigned char *>(row_vec->at(i).MutableData());
-    auto data_size = row_vec->at(i).DataSize();
-    if (data_size != inputs.at(i)->Size()) {
-      MS_LOG(WARNING) << "Model Input tensor " << i << " size (" << inputs.at(i)->Size()
-                      << ") does not match dataset size (" << data_size << ")\n";
-      return RET_STOP_TRAINING;
-    }
-    std::copy(row_data, row_data + data_size, input_data);
-  }
-  return RET_OK;
-}
-
 }  // namespace lite
 
 session::TrainLoop *session::TrainLoop::CreateTrainLoop(session::TrainSession *train_session) {
   auto loop = new (std::nothrow) lite::TrainLoop(train_session);
   return loop;
 }
-
 }  // namespace mindspore

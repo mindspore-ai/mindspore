@@ -31,7 +31,10 @@
 #include "nnacl/fp32_grad/resize_grad.h"
 namespace mindspore {
 namespace kernel {
-
+namespace {
+constexpr int kNHWCWDim = 2;
+constexpr int kNHWCCDim = 3;
+}  //  namespace
 OpParameter *PopulateSmoothL1LossParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
@@ -152,91 +155,6 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
-OpParameter *PopulateMaxPoolGradParameter(const void *prim) {
-  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
-  if (pooling_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
-    return nullptr;
-  }
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_MaxPoolGrad();
-  pooling_param->op_parameter_.type_ = primitive->value_type();
-
-  pooling_param->global_ = false;
-  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
-  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
-
-  pooling_param->pad_u_ = 0;
-  pooling_param->pad_d_ = 0;
-  pooling_param->pad_l_ = 0;
-  pooling_param->pad_r_ = 0;
-  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
-  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
-  pooling_param->round_mode_ = RoundMode_No;
-  pooling_param->pool_mode_ = PoolMode_MaxPool;
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      pooling_param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      pooling_param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      pooling_param->pad_mode_ = Pad_pad;
-      break;
-  }
-
-  return reinterpret_cast<OpParameter *>(pooling_param);
-}
-
-OpParameter *PopulateAvgPoolGradParameter(const void *prim) {
-  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
-  if (pooling_param == nullptr) {
-    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
-    return nullptr;
-  }
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_AvgPoolGrad();
-  pooling_param->op_parameter_.type_ = primitive->value_type();
-
-  pooling_param->global_ = false;
-  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
-  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
-
-  pooling_param->pad_u_ = 0;
-  pooling_param->pad_d_ = 0;
-  pooling_param->pad_l_ = 0;
-  pooling_param->pad_r_ = 0;
-  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
-  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
-
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      pooling_param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      pooling_param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      pooling_param->pad_mode_ = Pad_pad;
-      break;
-  }
-  pooling_param->round_mode_ = RoundMode_No;
-  pooling_param->pool_mode_ = PoolMode_AvgPool;
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      pooling_param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      pooling_param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      pooling_param->pad_mode_ = Pad_pad;
-      break;
-  }
-  return reinterpret_cast<OpParameter *>(pooling_param);
-}
-
 OpParameter *PopulateActivationGradParameter(const void *prim) {
   ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
@@ -251,6 +169,21 @@ OpParameter *PopulateActivationGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(act_param);
 }
 
+void SetConvParam(ConvParameter *param, const flatbuffers::Vector<int64_t> *kernel_size,
+                  const flatbuffers::Vector<int64_t> *stride, const flatbuffers::Vector<int64_t> *dilation,
+                  const flatbuffers::Vector<int64_t> *pad_list) {
+  param->kernel_h_ = kernel_size->Get(0);
+  param->kernel_w_ = kernel_size->Get(1);
+  param->stride_h_ = stride->Get(0);
+  param->stride_w_ = stride->Get(1);
+  param->dilation_h_ = dilation->Get(0);
+  param->dilation_w_ = dilation->Get(1);
+  param->pad_u_ = pad_list->Get(0);
+  param->pad_d_ = pad_list->Get(1);
+  param->pad_l_ = pad_list->Get(kNHWCWDim);
+  param->pad_r_ = pad_list->Get(kNHWCCDim);
+}
+
 OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
@@ -261,17 +194,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_Conv2DBackpropFilterFusion();
   param->op_parameter_.type_ = primitive->value_type();
-
-  param->kernel_h_ = value->kernel_size()->Get(0);
-  param->kernel_w_ = value->kernel_size()->Get(1);
-  param->stride_h_ = value->stride()->Get(0);
-  param->stride_w_ = value->stride()->Get(1);
-  param->dilation_h_ = value->dilation()->Get(0);
-  param->dilation_w_ = value->dilation()->Get(1);
-  param->pad_u_ = value->pad_list()->Get(0);
-  param->pad_d_ = value->pad_list()->Get(1);
-  param->pad_l_ = value->pad_list()->Get(2);
-  param->pad_r_ = value->pad_list()->Get(3);
+  SetConvParam(param, value->kernel_size(), value->stride(), value->dilation(), value->pad_list());
   param->group_ = value->group();
   param->act_type_ = ActType_No;
   switch (value->activation_type()) {
@@ -284,7 +207,6 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
     default:
       break;
   }
-
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -297,17 +219,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_Conv2DBackpropInputFusion();
   param->op_parameter_.type_ = primitive->value_type();
-
-  param->kernel_h_ = value->kernel_size()->Get(0);
-  param->kernel_w_ = value->kernel_size()->Get(1);
-  param->stride_h_ = value->stride()->Get(0);
-  param->stride_w_ = value->stride()->Get(1);
-  param->dilation_h_ = value->dilation()->Get(0);
-  param->dilation_w_ = value->dilation()->Get(1);
-  param->pad_u_ = value->pad_list()->Get(0);
-  param->pad_d_ = value->pad_list()->Get(1);
-  param->pad_l_ = value->pad_list()->Get(2);
-  param->pad_r_ = value->pad_list()->Get(3);
+  SetConvParam(param, value->kernel_size(), value->stride(), value->dilation(), value->pad_list());
   param->group_ = value->group();
   param->act_type_ = ActType_No;
   switch (value->activation_type()) {
@@ -337,17 +249,6 @@ OpParameter *PopulatePowerGradParameter(const void *prim) {
   power_param->scale_ = value->scale();
   power_param->shift_ = value->shift();
   return reinterpret_cast<OpParameter *>(power_param);
-}
-
-OpParameter *PopulateBiasGradParameter(const void *prim) {
-  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
-    return nullptr;
-  }
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  arithmetic_param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
 OpParameter *PopulateBNGradParameter(const void *prim) {
@@ -430,32 +331,9 @@ OpParameter *PopulateResizeGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(resize_grad_param);
 }
 
-OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
-  StridedSliceParameter *strided_slice_param =
-    reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
-  if (strided_slice_param == nullptr) {
-    MS_LOG(ERROR) << "malloc StridedSliceParameter failed.";
-    return nullptr;
-  }
-  memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
-
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_StridedSliceGrad();
-  strided_slice_param->op_parameter_.type_ = primitive->value_type();
-
-  strided_slice_param->begins_mask_ = value->begin_mask();
-  strided_slice_param->ends_mask_ = value->end_mask();
-  strided_slice_param->ellipsisMask_ = value->ellipsis_mask();
-  strided_slice_param->newAxisMask_ = value->new_axis_mask();
-  strided_slice_param->shrinkAxisMask_ = value->shrink_axis_mask();
-  return reinterpret_cast<OpParameter *>(strided_slice_param);
-}
-
 void PopulateTrainParameters() {
   lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                                 lite::SCHEMA_CUR);
-  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasAddGrad, PopulateBiasGradParameter,
-                                           lite::SCHEMA_CUR);
   lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropyWithLogits,
                                                       PopulateSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
   lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
@@ -469,10 +347,6 @@ void PopulateTrainParameters() {
                                                    PopulateConvolutionGradFilterParameter, lite::SCHEMA_CUR);
   lite::Registry Conv2DGradInputParameterRegistry(schema::PrimitiveType_Conv2DBackpropInputFusion,
                                                   PopulateConvolutionGradInputParameter, lite::SCHEMA_CUR);
-  lite::Registry avgPoolParameterRegistry(schema::PrimitiveType_AvgPoolGrad, PopulateAvgPoolGradParameter,
-                                          lite::SCHEMA_CUR);
-  lite::Registry maxPoolParameterRegistry(schema::PrimitiveType_MaxPoolGrad, PopulateMaxPoolGradParameter,
-                                          lite::SCHEMA_CUR);
   lite::Registry PowerGradParameterRegistry(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter,
                                             lite::SCHEMA_CUR);
   lite::Registry SgdParameterRegistry(schema::PrimitiveType_SGD, PopulateSgdParameter, lite::SCHEMA_CUR);
@@ -508,8 +382,6 @@ void PopulateTrainParameters() {
                                                            lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
   lite::Registry FlattenGradParameterRegistry(schema::PrimitiveType_FlattenGrad, lite::DefaultPopulateParameter,
                                               lite::SCHEMA_CUR);
-  lite::Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad,
-                                                   PopulateStridedSliceGradParameter, lite::SCHEMA_CUR);
   lite::Registry SqrtGradParameterRegistry(schema::PrimitiveType_SqrtGrad, lite::DefaultPopulateParameter,
                                            lite::SCHEMA_CUR);
   lite::Registry RsqrtGradParameterRegistry(schema::PrimitiveType_RsqrtGrad, lite::DefaultPopulateParameter,

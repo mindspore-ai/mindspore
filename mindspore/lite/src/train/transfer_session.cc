@@ -26,18 +26,16 @@
 #include "src/common/utils.h"
 #include "src/tensor.h"
 #include "src/train/loss_kernel.h"
-#include "src/train/optimizer_kernel.h"
-#include "src/sub_graph_kernel.h"
-#include "src/train/train_populate_parameter.h"
-#include "src/runtime/runtime_api.h"
 #include "src/executor.h"
-#include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "nnacl/fp32/pack_fp32.h"
 
 namespace mindspore {
 namespace lite {
-
+namespace {
+constexpr int kNHWCHDim = 2;
+constexpr int kNHWCCDim = 3;
+constexpr int kNHWCDims = 4;
+}  //  namespace
 TransferSession::TransferSession(const char *model_buf_backbone, size_t size_backbone, lite::Context *context)
     : is_valid_(false) {
   lite_model_ = reinterpret_cast<char *>(malloc(size_backbone));
@@ -84,23 +82,23 @@ int TransferSession::CompileTransferGraph() {
             break;
           }
         }
-        if (match == false && input->shape().size() == 4) {
+        if (!match && input->shape().size() == kNHWCDims) {
           int nchw2nhwc_mask[4] = {0, 3, 1, 2};
-          nchw2nhwc_ = CompileFormatTransform(output, input, nchw2nhwc_mask, 4);
+          nchw2nhwc_ = CompileFormatTransform(output, input, nchw2nhwc_mask, kNHWCDims);
           match = nchw2nhwc_;
         }
-        if (true == match) {
+        if (match) {
           break;
         }
       }
     }
-    if (true == match) {
+    if (match) {
       backbone_head_map_.push_back(std::make_pair(input, output));
     } else {
       combined_inputs_.push_back(input);
     }
   }
-  if (0 == backbone_head_map_.size()) {
+  if (backbone_head_map_.empty()) {
     ret = RET_ERROR;
   }
   return ret;
@@ -110,7 +108,7 @@ mindspore::tensor::MSTensor *TransferSession::GetInputsByTensorName(const std::s
   /* First look in backbone netwok */
   auto ret = backbone_session_->GetInputsByTensorName(tensor_name);
   /* If not found look in head network */
-  if (nullptr == ret) {
+  if (ret == nullptr) {
     ret = TrainSession::GetInputsByTensorName(tensor_name);
   }
   return ret;
@@ -142,9 +140,9 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
     char *input_data = reinterpret_cast<char *>(input->MutableData());
     char *output_data = reinterpret_cast<char *>(output->MutableData());
     if (nchw2nhwc_) {
-      int plane = input->shape().at(1) * input->shape().at(2);
+      int plane = input->shape().at(1) * input->shape().at(kNHWCHDim);
       int batch = input->shape().at(0);
-      int channel = input->shape().at(3);
+      int channel = input->shape().at(kNHWCCDim);
       PackNCHWToNHWCFp32(output_data, input_data, batch, plane, channel, 0, 1);
     } else {
       std::copy(output_data, output_data + output->Size(), input_data);
@@ -153,7 +151,6 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
   ret = lite::TrainSession::RunGraph(before, after);
   return ret;
 }
-
 }  // namespace lite
 
 session::TrainSession *session::TrainSession::CreateTransferSession(const char *model_buf_backbone,
@@ -239,5 +236,4 @@ session::TrainSession *session::TrainSession::CreateTransferSession(const std::s
   return session::TrainSession::CreateTransferSession(buf_backbone.get(), size_backbone, buf_head.get(), size_head,
                                                       context, train_mode);
 }
-
 }  // namespace mindspore

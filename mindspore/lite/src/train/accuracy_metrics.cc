@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace lite {
-
 AccuracyMetrics::AccuracyMetrics(int accuracy_metrics, const std::vector<int> &input_indexes,
                                  const std::vector<int> &output_indexes)
     : Metrics() {
@@ -66,6 +65,5 @@ float AccuracyMetrics::Eval() {
 
   return (total_accuracy_ / total_steps_);
 }
-
 }  // namespace lite
 }  // namespace mindspore
