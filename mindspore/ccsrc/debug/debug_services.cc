@@ -571,9 +571,12 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       pos += dstlen;
     }
 
-    std::string prefix_dump_file_name = dump_style_kernel_name;
+    std::string prefix_dump_file_name;
     if (is_sync_mode) {
+      prefix_dump_file_name = dump_style_kernel_name.substr(dump_style_kernel_name.rfind("--") + 2);
       prefix_dump_file_name += ".output." + std::to_string(slot[i]);
+    } else {
+      prefix_dump_file_name = dump_style_kernel_name;
     }
 
     std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
@@ -717,6 +720,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       ReplaceSrcFileName(is_sync_mode, &dump_style_name);
 
       if (is_sync_mode) {
+        dump_style_name = dump_style_name.substr(dump_style_name.rfind("--") + 2);
         dump_style_name.append(".output.");
       }
 
