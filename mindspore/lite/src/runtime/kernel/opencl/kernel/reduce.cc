@@ -66,15 +66,15 @@ cl_float4 ReduceOpenCLKernel::GenC4Mask() {
   return mask;
 }
 
-bool IsHWReduce(bool *reduce_axes_) {
+bool IsHWReduce(const bool *reduce_axes_) {
   return !reduce_axes_[0] && reduce_axes_[1] && reduce_axes_[2] && !reduce_axes_[3];
 }
 
-bool IsWCReduce(bool *reduce_axes_) {
+bool IsWCReduce(const bool *reduce_axes_) {
   return !reduce_axes_[0] && !reduce_axes_[1] && reduce_axes_[2] && reduce_axes_[3];
 }
 
-bool IsCReduce(bool *reduce_axes_) {
+bool IsCReduce(const bool *reduce_axes_) {
   return !reduce_axes_[0] && !reduce_axes_[1] && !reduce_axes_[2] && reduce_axes_[3];
 }
 

@@ -270,8 +270,8 @@ kernel::InnerKernel *OpenCLConv2dTransposeCreator(const std::vector<lite::Tensor
   MS_ASSERT(!inputs.empty());
   MS_ASSERT(!outputs.empty());
   MS_ASSERT(opParameter);
-  MS_ASSERT(inputs.front()->shape().size() == 4);
-  MS_ASSERT(outputs.front()->shape().size() == 4);
+  MS_ASSERT(inputs.front()->shape().size() == DIMENSION_4D);
+  MS_ASSERT(outputs.front()->shape().size() == DIMENSION_4D);
   auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   int input_channel = inputs.front()->shape().at(3);
   int output_channel = outputs.front()->shape().at(3);

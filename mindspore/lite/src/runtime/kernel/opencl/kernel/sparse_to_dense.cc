@@ -156,7 +156,7 @@ int SparseToDenseOpenCLKernel::Prepare() {
   }
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);
 
-  if (in_tensors_.size() > 3) {
+  if (in_tensors_.size() > INPUT_TENSOR_SIZE_3) {
     auto input_tensor3 = in_tensors_[3];
     if (input_tensor3->data_type() == kNumberTypeFloat16) {
       default_ = static_cast<float>(*reinterpret_cast<float16_t *>(input_tensor3->data_c()));
@@ -173,21 +173,21 @@ int SparseToDenseOpenCLKernel::Prepare() {
 }
 
 int SparseToDenseOpenCLKernel::InferShapeTo4D() {
-  if (in_tensors_[0]->shape().size() <= 4) {
-    if (in_tensors_[0]->shape().size() == 1) {
+  if (in_tensors_[0]->shape().size() <= DIMENSION_4D) {
+    if (in_tensors_[0]->shape().size() == DIMENSION_1D) {
       n_ = in_tensors_[0]->shape()[0];
-    } else if (in_tensors_[0]->shape().size() == 2) {
+    } else if (in_tensors_[0]->shape().size() == DIMENSION_2D) {
       n_ = in_tensors_[0]->shape()[0];
       c_ = in_tensors_[0]->shape()[1];
     }
   }
-  if (out_tensors_[0]->shape().size() <= 4) {
-    if (out_tensors_[0]->shape().size() == 1) {
+  if (out_tensors_[0]->shape().size() <= DIMENSION_4D) {
+    if (out_tensors_[0]->shape().size() == DIMENSION_1D) {
       out_n_ = out_tensors_[0]->shape()[0];
-    } else if (out_tensors_[0]->shape().size() == 2) {
+    } else if (out_tensors_[0]->shape().size() == DIMENSION_2D) {
       out_n_ = out_tensors_[0]->shape()[0];
       out_c_ = out_tensors_[0]->shape()[1];
-    } else if (out_tensors_[0]->shape().size() == 3) {
+    } else if (out_tensors_[0]->shape().size() == DIMENSION_3D) {
       out_n_ = out_tensors_[0]->shape()[0];
       out_w_ = out_tensors_[0]->shape()[1];
       out_c_ = out_tensors_[0]->shape()[2];
