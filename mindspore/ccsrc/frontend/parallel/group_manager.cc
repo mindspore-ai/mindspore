@@ -152,12 +152,12 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
   (void)CommManager::GetInstance().GetRankSize(world_group_, &world_size);
 
   if (devices.size() == world_size) {
-    auto it = groups_.find(world_group_);
-    if (it == groups_.end()) {
+    auto iter = groups_.find(world_group_);
+    if (iter == groups_.end()) {
       (void)group->Init(world_group_, devices);
       groups_[world_group_] = *group;
     } else {
-      *group = it->second;
+      *group = iter->second;
     }
     MS_LOG(INFO) << "It is world group " << world_group_ << ", no need to create it.";
     return Status::SUCCESS;

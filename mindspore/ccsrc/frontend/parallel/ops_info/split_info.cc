@@ -136,16 +136,16 @@ Status SplitInfo::InferTensorMap() {
 Status SplitInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> SplitInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape input_split;
+  Shape split_flag;
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
     if (i == axis_) {
-      input_split.push_back(0);
+      split_flag.push_back(0);
     } else {
-      input_split.push_back(1);
+      split_flag.push_back(1);
     }
   }
 
-  Shapes splittable_input = {input_split};
+  Shapes splittable_input = {split_flag};
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
 
   std::vector<StrategyPtr> sp_vector;

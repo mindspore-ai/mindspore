@@ -114,7 +114,7 @@ Status StackInfo::InferTensorMap() {
     inputs_tensor_map_.push_back(in_tensor_map);
   }
 
-  out_tensor_map.insert(out_tensor_map.begin() + SizeToLong(axis_), MAP_NONE);
+  (void)out_tensor_map.insert(out_tensor_map.begin() + SizeToLong(axis_), MAP_NONE);
   outputs_tensor_map_.push_back(out_tensor_map);
   return SUCCESS;
 }
