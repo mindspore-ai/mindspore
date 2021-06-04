@@ -124,7 +124,7 @@ void CodeTrainState(std::ofstream &ofs) {
 void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   size_t inputs_num = inputs.size();
-  auto inputs_tostring = [&]() {
+  auto inputs_tostring = [&inputs, &ctx]() {
     std::string result;
     result += "{";
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -134,7 +134,7 @@ void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     return result;
   };
   auto wrap = [](size_t i) { return "[" + std::to_string(i) + "]"; };
-  auto offset_inputs = [&]() {
+  auto offset_inputs = [&inputs, &wrap]() {
     std::string src = "origin_inputs";
     std::string dst = "input_ptr";
     std::string result;
@@ -143,7 +143,7 @@ void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     }
     return result;
   };
-  auto varify_inputs = [&]() {
+  auto varify_inputs = [&inputs, &wrap]() {
     std::string result;
     for (size_t i = 0; i < inputs.size(); ++i) {
       result += "origin_input" + wrap(i) + " + iterations * " + std::to_string(inputs[i]->Size()) + " == NULL";
