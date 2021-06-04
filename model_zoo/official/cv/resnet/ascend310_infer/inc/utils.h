@@ -24,12 +24,10 @@
 #include <memory>
 #include "include/api/types.h"
 
-std::vector<std::string> GetAllFiles(std::string_view dirName);
 DIR *OpenDir(std::string_view dirName);
 std::string RealPath(std::string_view path);
 mindspore::MSTensor ReadFileToTensor(const std::string &file);
 int WriteResult(const std::string& imageFile, const std::vector<mindspore::MSTensor> &outputs);
 std::vector<std::string> GetAllFiles(std::string dir_name);
-std::vector<std::vector<std::string>> GetAllInputData(std::string dir_name);
 
 #endif

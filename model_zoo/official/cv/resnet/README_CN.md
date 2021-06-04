@@ -487,18 +487,51 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [NET_TYPE] [DATASET] [DATA_PATH] [DEVICE_ID]
 ```
 
-- `NET_TYPE` 选择范围：[resnet18, se-resnet50]。
+- `NET_TYPE` 选择范围：[resnet18, se-resnet50, resnet50, resnet101]。
+- `DATASET` 选择范围：[cifar10, imagenet]。
 - `DEVICE_ID` 可选，默认值为0。
 
 ### 结果
 
 推理结果保存在脚本执行的当前路径，你可以在acc.log中看到以下精度计算结果。
 
+- 使用CIFAR-10数据集评估ResNet18
+
 ```bash
-top1_accuracy:70.42, top5_accuracy:89.7
+Total data: 10000, top1 accuracy: 0.94.26, top5 accuracy: 0.9987.
+```
+
+- 使用ImageNet2012数据集评估ResNet18
+
+```bash
+Total data: 50000, top1 accuracy: 0.70668, top5 accuracy: 0.89698.
+```
+
+- 使用CIFAR-10数据集评估ResNet50
+
+```text
+Total data: 10000, top1 accuracy: 0.9310, top5 accuracy: 0.9980.
+```
+
+- 使用ImageNet2012数据集评估ResNet50
+
+```text
+Total data: 50000, top1 accuracy: 0.0.7696, top5 accuracy: 0.93432.
+```
+
+- 使用ImageNet2012数据集评估ResNet101
+
+```text
+Total data: 50000, top1 accuracy: 0.7871, top5 accuracy: 0.94354.
+```
+
+- 使用ImageNet2012数据集评估SE-ResNet50
+
+```text
+Total data: 50000, top1 accuracy: 0.76844, top5 accuracy: 0.93522.
 ```
 
 # 模型描述

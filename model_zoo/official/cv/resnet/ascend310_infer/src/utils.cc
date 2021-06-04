@@ -22,83 +22,43 @@
 using mindspore::MSTensor;
 using mindspore::DataType;
 
-
-std::vector<std::vector<std::string>> GetAllInputData(std::string dir_name) {
-  std::vector<std::vector<std::string>> ret;
-
-  DIR *dir = OpenDir(dir_name);
-  if (dir == nullptr) {
-    return {};
-  }
-  struct dirent *filename;
-  /* read all the files in the dir ~ */
-  std::vector<std::string> sub_dirs;
-  while ((filename = readdir(dir)) != nullptr) {
-    std::string d_name = std::string(filename->d_name);
-    // get rid of "." and ".."
-    if (d_name == "." || d_name == ".." || d_name.empty()) {
-      continue;
+std::vector<std::string> GetAllFiles(std::string dirName) {
+    struct dirent *filename;
+    DIR *dir = OpenDir(dirName);
+    if (dir == nullptr) {
+        return {};
     }
-    std::string dir_path = RealPath(std::string(dir_name) + "/" + filename->d_name);
-    struct stat s;
-    lstat(dir_path.c_str(), &s);
-    if (!S_ISDIR(s.st_mode)) {
-      continue;
+    std::vector<std::string> dirs;
+    std::vector<std::string> files;
+    while ((filename = readdir(dir)) != nullptr) {
+        std::string dName = std::string(filename->d_name);
+        if (dName == "." || dName == "..") {
+            continue;
+        } else if (filename->d_type == DT_DIR) {
+            dirs.emplace_back(std::string(dirName) + "/" + filename->d_name);
+        } else if (filename->d_type == DT_REG) {
+            files.emplace_back(std::string(dirName) + "/" + filename->d_name);
+        } else {
+            continue;
+        }
     }
 
-    sub_dirs.emplace_back(dir_path);
-  }
-  std::sort(sub_dirs.begin(), sub_dirs.end());
-
-  (void)std::transform(sub_dirs.begin(), sub_dirs.end(), std::back_inserter(ret),
-                       [](const std::string &d) { return GetAllFiles(d); });
-
-  return ret;
+    for (auto d : dirs) {
+        dir = OpenDir(d);
+        while ((filename = readdir(dir)) != nullptr) {
+            std::string dName = std::string(filename->d_name);
+            if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
+                continue;
+            }
+            files.emplace_back(std::string(d) + "/" + filename->d_name);
+        }
+    }
+    std::sort(files.begin(), files.end());
+    for (auto &f : files) {
+        std::cout << "image file: " << f << std::endl;
+    }
+    return files;
 }
-
-
-std::vector<std::string> GetAllFiles(std::string dir_name) {
-  struct dirent *filename;
-  DIR *dir = OpenDir(dir_name);
-  if (dir == nullptr) {
-    return {};
-  }
-
-  std::vector<std::string> res;
-  while ((filename = readdir(dir)) != nullptr) {
-    std::string d_name = std::string(filename->d_name);
-    if (d_name == "." || d_name == ".." || d_name.size() <= 3) {
-      continue;
-    }
-    res.emplace_back(std::string(dir_name) + "/" + filename->d_name);
-  }
-  std::sort(res.begin(), res.end());
-
-  return res;
-}
-
-
-std::vector<std::string> GetAllFiles(std::string_view dirName) {
-  struct dirent *filename;
-  DIR *dir = OpenDir(dirName);
-  if (dir == nullptr) {
-    return {};
-  }
-  std::vector<std::string> res;
-  while ((filename = readdir(dir)) != nullptr) {
-    std::string dName = std::string(filename->d_name);
-    if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
-      continue;
-    }
-    res.emplace_back(std::string(dirName) + "/" + filename->d_name);
-  }
-  std::sort(res.begin(), res.end());
-  for (auto &f : res) {
-    std::cout << "image file: " << f << std::endl;
-  }
-  return res;
-}
-
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
   std::string homePath = "./result_Files";
