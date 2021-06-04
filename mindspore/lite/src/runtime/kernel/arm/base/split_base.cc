@@ -106,7 +106,7 @@ int SplitBaseCPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-static int SplitRun(void *cdata, int task_id) {
+static int SplitRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<SplitBaseCPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {

@@ -47,7 +47,7 @@ int SigmoidCrossEntropyWithLogitsGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SigmoidCrossEntropyWithLogitsGradRun(void *cdata, int task_id) {
+int SigmoidCrossEntropyWithLogitsGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sig_crs_ent_kernel = reinterpret_cast<SigmoidCrossEntropyWithLogitsGradCPUKernel *>(cdata);
   auto error_code = sig_crs_ent_kernel->Execute(task_id);
   if (error_code != RET_OK) {

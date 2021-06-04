@@ -47,7 +47,7 @@ class ReshapeInt8CPUKernel : public InnerKernel {
   ReshapeParameter *reshape_param_ = nullptr;
 };
 
-int ReshapeInt8Run(void *cdata, int task_id);
+int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESHAPE_INT8_H_

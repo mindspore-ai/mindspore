@@ -48,10 +48,10 @@ typedef struct {
 
 void Conv1x1PreRun(Conv1x1Args *args, int thread_num);
 void Pre1x1Trans(Conv1x1Args *args, int8_t *src_input, int8_t *src_output);
-int OcOptPre(void *cdata, int task_id);
-int RunArm64OptOc(void *cdata, int task_id);
-int RunArmOc(void *cdata, int task_id);
-int RunArm64OptHw(void *cdata, int task_id);
-int RunArmHw(void *cdata, int task_id);
+int OcOptPre(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int RunArm64OptOc(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int RunArmOc(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int RunArm64OptHw(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int RunArmHw(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_RUN_H_

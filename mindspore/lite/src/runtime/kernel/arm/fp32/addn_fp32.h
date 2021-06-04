@@ -32,7 +32,7 @@ class AddNCPUKernel : public InnerKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int AddNParallelRun(int thread_id);
+  int AddNParallelRun(int thread_id, float lhs_scale, float rhs_scale);
 
  private:
   float *in1_addr_;

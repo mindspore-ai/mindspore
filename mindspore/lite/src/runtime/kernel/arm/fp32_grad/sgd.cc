@@ -109,7 +109,7 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
   return RET_OK;
 }
 
-int SgdRun(void *cdata, int task_id) {
+int SgdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
   auto error_code = RET_OK;
   if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
@@ -124,7 +124,7 @@ int SgdRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int SgdRunInit(void *cdata, int task_id) {
+int SgdRunInit(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sgd_kernel = reinterpret_cast<SgdCPUKernel *>(cdata);
   auto error_code = RET_OK;
   if (sgd_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {

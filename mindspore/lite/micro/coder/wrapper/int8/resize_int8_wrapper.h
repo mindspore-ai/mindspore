@@ -32,7 +32,7 @@ typedef struct {
   int thread_num_;
 } ResizeInt8Args;
 
-int ResizeInt8Run(void *cdata, int task_id);
+int ResizeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }

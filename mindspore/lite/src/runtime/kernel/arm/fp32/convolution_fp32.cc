@@ -130,7 +130,7 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionImpl(void *cdata, int task_id) {
+int ConvolutionImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv = reinterpret_cast<ConvolutionCPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

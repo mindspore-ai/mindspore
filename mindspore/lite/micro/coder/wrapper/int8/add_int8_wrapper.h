@@ -38,9 +38,9 @@ typedef struct {
   int8_t *output_data_;
 } AddInt8Args;
 
-int AddBroadcastInt8Run(void *cdata, int task_id);
+int AddBroadcastInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
-int AddInt8Run(void *cdata, int task_id);
+int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }

@@ -279,7 +279,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwSWInt8Run(void *cdata, int task_id) {
+int ConvDwSWInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw_int8 = reinterpret_cast<ConvolutionDepthwiseSWInt8CPUKernel *>(cdata);
   auto ret = conv_dw_int8->Execute(task_id);
   if (ret != RET_OK) {

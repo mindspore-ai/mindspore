@@ -30,7 +30,7 @@ void Pre1x1Trans(Conv1x1Args *args, int8_t *src_input, int8_t *src_output) {
   }
 }
 
-int OcOptPre(void *cdata, int task_id) {
+int OcOptPre(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv1x1Args *args = (Conv1x1Args *)(cdata);
   int cur_stride = args->thread_stride_hw_ * C4NUM;
   int res_stride = args->matmul_param_->row_ - task_id * args->thread_stride_hw_ * C4NUM;
@@ -51,7 +51,7 @@ int OcOptPre(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-int RunArm64OptOc(void *cdata, int task_id) {
+int RunArm64OptOc(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv1x1Args *args = (Conv1x1Args *)(cdata);
   int stride = args->thread_stride_oc_ * C16NUM;
   int cur_stride = task_id * stride;
@@ -77,7 +77,7 @@ int RunArm64OptOc(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-int RunArmOc(void *cdata, int task_id) {
+int RunArmOc(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv1x1Args *args = (Conv1x1Args *)(cdata);
 #ifdef ENABLE_ARM32
   int col_tile = C2NUM;
@@ -108,7 +108,7 @@ int RunArmOc(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-int RunArm64OptHw(void *cdata, int task_id) {
+int RunArm64OptHw(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv1x1Args *args = (Conv1x1Args *)(cdata);
   int cur_stride = args->thread_stride_hw_ * C4NUM;
   int res_stride = args->matmul_param_->row_ - task_id * args->thread_stride_hw_ * C4NUM;
@@ -134,7 +134,7 @@ int RunArm64OptHw(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-int RunArmHw(void *cdata, int task_id) {
+int RunArmHw(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   Conv1x1Args *args = (Conv1x1Args *)(cdata);
   int cur_stride = args->thread_stride_hw_ * C4NUM;
   int res_stride = args->matmul_param_->row_ - task_id * args->thread_stride_hw_ * C4NUM;

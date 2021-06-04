@@ -88,7 +88,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   return ret;
 }
 
-int PowerInt8Run(void *cdata, int task_id) {
+int PowerInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto power_kernel = reinterpret_cast<PowerInt8CPUKernel *>(cdata);
   auto ret = power_kernel->DoPower(task_id);
   if (ret != RET_OK) {

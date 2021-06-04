@@ -79,7 +79,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
+int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto softmax_kernel = reinterpret_cast<SoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = softmax_kernel->Execute(task_id);
   if (error_code != RET_OK) {

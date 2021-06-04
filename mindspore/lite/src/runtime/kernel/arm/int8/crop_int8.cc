@@ -56,7 +56,7 @@ int CropInt8CPUKernel::Run() {
   return ret;
 }
 
-int CropInt8Run(void *cdata, int task_id) {
+int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto crop = reinterpret_cast<CropInt8CPUKernel *>(cdata);
   crop->DoExecute(task_id);
   return RET_OK;

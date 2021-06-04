@@ -30,7 +30,7 @@ int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *>
   return RET_OK;
 }
 
-static int RunKernel(void *data, int index) {
+static int RunKernel(void *data, int index, float lhs_scale, float rhs_scale) {
   auto *executor = reinterpret_cast<ParallelExecutor *>(data);
   auto kernel = executor->GetReadyKernel(index);
   auto ret = kernel->Execute();

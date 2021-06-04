@@ -84,7 +84,7 @@ int ScaleFp16CPUKernel::Scale(int task_id) {
   return RET_OK;
 }
 
-int ScaleFp16Run(void *cdata, int task_id) {
+int ScaleFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto scale = reinterpret_cast<ScaleFp16CPUKernel *>(cdata);
   auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {

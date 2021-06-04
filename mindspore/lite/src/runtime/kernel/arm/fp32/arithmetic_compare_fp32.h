@@ -69,7 +69,7 @@ class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
   ArithmeticCompareFp32Func func_fp32_ = nullptr;
   ArithmeticCompareIntFunc func_int32_ = nullptr;
 };
-int ArithmeticCompareRun(void *cdata, int task_id);
+int ArithmeticCompareRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_COMPARE_H_

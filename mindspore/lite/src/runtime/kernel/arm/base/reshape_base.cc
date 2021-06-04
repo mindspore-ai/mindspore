@@ -53,7 +53,7 @@ int ReshapeBaseCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int ReshapeRun(void *cdata, int task_id) {
+int ReshapeRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reshape = reinterpret_cast<ReshapeBaseCPUKernel *>(cdata);
   auto ret = reshape->RunImpl(task_id);
   if (ret != RET_OK) {

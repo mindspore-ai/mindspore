@@ -66,7 +66,7 @@ int SliceInt8CPUKernel::DoSlice(int task_id) {
   return ret;
 }
 
-int SliceInt8Run(void *cdata, int task_id) {
+int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto slice_kernel = reinterpret_cast<SliceInt8CPUKernel *>(cdata);
   auto ret = slice_kernel->DoSlice(task_id);
   if (ret != RET_OK) {

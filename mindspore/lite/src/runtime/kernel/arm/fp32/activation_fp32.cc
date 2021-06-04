@@ -93,7 +93,7 @@ int ActivationCPUKernel::DoActivation(int task_id) {
   return ret;
 }
 
-int ActivationRun(void *cdata, int task_id) {
+int ActivationRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto activation_kernel = reinterpret_cast<ActivationCPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

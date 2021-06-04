@@ -188,13 +188,13 @@ int MulInt8CPUKernel::Run() {
   return ret;
 }
 
-int FastHWBroadcatMulInt8Run(void *cdata, int task_id) {
+int FastHWBroadcatMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->FastDoExecute(task_id);
   return lite::RET_OK;
 }
 
-int MulInt8Run(void *cdata, int task_id) {
+int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->DoExecute(task_id);
   return lite::RET_OK;

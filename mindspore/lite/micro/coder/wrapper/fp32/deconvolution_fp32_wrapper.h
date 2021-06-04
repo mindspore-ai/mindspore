@@ -40,7 +40,7 @@ int DoDeconvFp32(const float *packed_input, const float *packed_weight, const fl
                  float *output, float *tmp_ori_buffer, const MatMulParameter *matmul_param,
                  const ConvParameter *conv_param, int task_id);
 
-int DeConvFp32Run(void *cdata, int task_id);
+int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }

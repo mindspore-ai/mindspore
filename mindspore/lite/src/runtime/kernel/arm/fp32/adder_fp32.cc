@@ -104,7 +104,7 @@ int AdderCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int AdderImpl(void *cdata, int task_id) {
+int AdderImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto adder = reinterpret_cast<AdderCPUKernel *>(cdata);
   auto error_code = adder->RunImpl(task_id);
   if (error_code != RET_OK) {

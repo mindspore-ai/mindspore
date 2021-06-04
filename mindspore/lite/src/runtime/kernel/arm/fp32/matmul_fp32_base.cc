@@ -18,7 +18,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 
 namespace mindspore::kernel {
-int MatmulBaseFloatRun(void *cdata, int task_id) {
+int MatmulBaseFloatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<MatmulFp32BaseCPUKernel *>(cdata);
   auto error_code = op->FloatRun(task_id);
   if (error_code != RET_OK) {

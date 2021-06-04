@@ -18,7 +18,6 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-
 InterThreadPool::~InterThreadPool() {
   {
     THREAD_INFO("wait util actor queue is empty");
@@ -29,6 +28,17 @@ InterThreadPool::~InterThreadPool() {
   alive_ = false;
   actor_cond_var_.notify_all();
   DestructThreads();
+}
+
+void InterThreadPool::ThreadAsyncRun(Worker *worker) {
+  THREAD_RETURN_IF_NULL(worker);
+  while (alive_) {
+    if (worker->type == kKernelThread) {
+      KernelThreadRun(worker);
+    } else if (worker->type == kActorThread) {
+      ActorThreadRun();
+    }
+  }
 }
 
 void InterThreadPool::ActorThreadRun() {
@@ -44,17 +54,6 @@ void InterThreadPool::ActorThreadRun() {
   }
   actor->Run();
   finish_cond_var_.notify_one();
-}
-
-void InterThreadPool::ThreadAsyncRun(Worker *worker) {
-  THREAD_RETURN_IF_NULL(worker);
-  while (alive_) {
-    if (worker->type == kKernelThread) {
-      KernelThreadRun(worker);
-    } else if (worker->type == kActorThread) {
-      ActorThreadRun();
-    }
-  }
 }
 
 void InterThreadPool::EnqueReadyActor(const ActorReference &actor) {

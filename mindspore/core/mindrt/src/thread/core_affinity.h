@@ -26,7 +26,6 @@
 #endif
 
 namespace mindspore {
-
 enum BindMode {
   Power_NoBind = 0,  // free schedule
   Power_Higher = 1,
@@ -61,6 +60,9 @@ class CoreAffinity {
   // sorted_id contains the ordered CPU core id
   // the size of sorted_id is equal to the size of hardware_concurrency
   std::vector<int> sorted_id_;
+  // used to store the frequency of core
+  // the core id corresponds to the index
+  std::vector<int> core_freq_;
   size_t core_num_{0};
   size_t higher_num_{0};
 };

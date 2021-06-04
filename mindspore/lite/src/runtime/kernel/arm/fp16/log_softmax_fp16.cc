@@ -84,7 +84,7 @@ int LogSoftmaxFp16CPUKernel::DoLogSoftmaxLastAxis(int task_id) {
   return RET_OK;
 }
 
-int LogSoftmaxLastAxisFp16Run(void *cdata, int task_id) {
+int LogSoftmaxLastAxisFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LogSoftmaxFp16CPUKernel *>(cdata);
   auto ret = kernel->DoLogSoftmaxLastAxis(task_id);
   if (ret != RET_OK) {

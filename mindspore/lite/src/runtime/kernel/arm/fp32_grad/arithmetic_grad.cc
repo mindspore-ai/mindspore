@@ -213,7 +213,7 @@ int ArithmeticGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ArithmeticGradRun(void *cdata, int task_id) {
+int ArithmeticGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto Arithmetic_kernel = reinterpret_cast<ArithmeticGradCPUKernel *>(cdata);
   auto error_code = Arithmetic_kernel->Execute(task_id);

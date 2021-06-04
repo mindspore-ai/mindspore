@@ -123,7 +123,7 @@ int ConvolutionDepthwiseSWCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwSWRun(void *cdata, int task_id) {
+int ConvDwSWRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseSWCPUKernel *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {

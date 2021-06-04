@@ -60,7 +60,7 @@ int ArithmeticSelfGradFp16CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ArithmeticSelfGradFp16Run(void *cdata, int task_id) {
+int ArithmeticSelfGradFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto activationGrad_kernel = reinterpret_cast<ArithmeticSelfGradFp16CPUKernel *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);

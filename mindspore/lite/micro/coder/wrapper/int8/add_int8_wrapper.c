@@ -17,7 +17,7 @@
 #include "wrapper/int8/add_int8_wrapper.h"
 #include "nnacl/errorcode.h"
 
-int AddBroadcastInt8Run(void *cdata, int task_id) {
+int AddBroadcastInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   AddInt8Args *args = (AddInt8Args *)(cdata);
   int stride = UP_DIV(args->out_size_, args->thread_count_);
   int real_out_count = MSMIN(stride, args->out_size_ - stride * task_id);
@@ -42,7 +42,7 @@ int AddBroadcastInt8Run(void *cdata, int task_id) {
   return NNACL_OK;
 }
 
-int AddInt8Run(void *cdata, int task_id) {
+int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   AddInt8Args *args = (AddInt8Args *)(cdata);
   /* no need broadcast */
   int stride = UP_DIV(args->elements_num_, args->thread_count_);

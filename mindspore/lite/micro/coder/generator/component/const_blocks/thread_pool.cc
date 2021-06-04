@@ -47,7 +47,7 @@ int SetCoreAffinity(int bind_mode);
 
 int GetCurrentThreadNum();
 
-int ParallelLaunch(int (*func)(void *, int), void *content, int task_num);
+int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int task_num);
 
 void ClearThreadPool();
 

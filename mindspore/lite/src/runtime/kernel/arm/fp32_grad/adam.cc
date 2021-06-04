@@ -82,7 +82,7 @@ int AdamCPUKernel::Execute(int task_id) {
                 adam_param_->use_nesterov_, start, end);
 }
 
-int AdamRun(void *cdata, int task_id) {
+int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
   auto error_code = RET_OK;

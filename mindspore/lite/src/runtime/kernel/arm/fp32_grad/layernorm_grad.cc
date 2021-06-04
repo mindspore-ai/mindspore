@@ -89,7 +89,7 @@ int LayerNormGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int LayerNormGradRun(void *cdata, int task_id) {
+int LayerNormGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto ln_kernel = reinterpret_cast<LayerNormGradCPUKernel *>(cdata);
   auto error_code = ln_kernel->Execute(task_id);

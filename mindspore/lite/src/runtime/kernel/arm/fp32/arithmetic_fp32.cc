@@ -398,7 +398,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
                  static_cast<uint8_t *>(output_ptr_) + offset, count, false);
 }
 
-int ArithmeticsRun(void *cdata, int task_id) {
+int ArithmeticsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<ArithmeticCPUKernel *>(cdata);
   auto ret = kernel->DoArithmetic(task_id);
   if (ret != RET_OK) {

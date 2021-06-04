@@ -27,13 +27,13 @@ using mindspore::schema::PrimitiveType_AddN;
 
 namespace mindspore::kernel {
 namespace {
-int AddNLaunch(void *cdata, int task_id) {
+int AddNLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "Input cdata is nullptr!";
     return RET_NULL_PTR;
   }
   auto kernel = reinterpret_cast<AddNCPUKernel *>(cdata);
-  return kernel->AddNParallelRun(task_id);
+  return kernel->AddNParallelRun(task_id, lhs_scale, rhs_scale);
 }
 }  // namespace
 
@@ -41,7 +41,7 @@ int AddNCPUKernel::Init() { return RET_OK; }
 
 int AddNCPUKernel::ReSize() { return RET_OK; }
 
-int AddNCPUKernel::AddNParallelRun(int thread_id) {
+int AddNCPUKernel::AddNParallelRun(int thread_id, float lhs_scale, float rhs_scale) {
   int count_per_thread = UP_DIV(elements_num_, op_parameter_->thread_num_);
   int count = MSMIN(count_per_thread, elements_num_ - thread_id * count_per_thread);
   auto stride = count_per_thread * thread_id;

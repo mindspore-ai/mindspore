@@ -45,7 +45,7 @@ int AssignCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int AssignRun(void *cdata, int task_id) {
+int AssignRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto Assign_kernel = reinterpret_cast<AssignCPUKernel *>(cdata);
   auto error_code = Assign_kernel->Execute(task_id);

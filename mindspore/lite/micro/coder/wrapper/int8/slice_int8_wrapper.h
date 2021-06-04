@@ -26,6 +26,6 @@ typedef struct SliceArgs {
   SliceParameter *param_;
 } SliceArgs;
 
-int SliceInt8Run(void *cdata, int task_id);
+int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_SLICE_INT8_WRAPPER_H_

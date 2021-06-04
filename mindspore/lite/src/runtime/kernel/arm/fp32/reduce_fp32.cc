@@ -81,7 +81,7 @@ int ReduceCPUKernel::CallReduceUnit(int task_id) {
   return RET_OK;
 }
 
-int ReduceImpl(void *cdata, int task_id) {
+int ReduceImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto reduce = reinterpret_cast<ReduceCPUKernel *>(cdata);
   auto error_code = reduce->CallReduceUnit(task_id);
   if (error_code != RET_OK) {

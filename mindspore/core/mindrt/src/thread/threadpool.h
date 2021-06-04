@@ -24,46 +24,24 @@
 #include <condition_variable>
 #include <mutex>
 #include <new>
+#include "thread/threadlog.h"
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+constexpr int kDefaultFrequency = 1;
+constexpr float kMaxScale = 1.;
 
-#ifdef THREAD_POOL_DEBUG
-#include <stdio.h>
-#define THREAD_INFO(content, args...) \
-  { printf("[INFO] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
-#define THREAD_ERROR(content, args...) \
-  { printf("[ERROR] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
-#else
-#define THREAD_INFO(content, ...)
-#define THREAD_ERROR(content, ...)
-#endif
-
-#define THREAD_ERROR_IF_NULL(ptr) \
-  do {                            \
-    if ((ptr) == nullptr) {       \
-      return THREAD_ERROR;        \
-    }                             \
-  } while (0)
-
-#define THREAD_RETURN_IF_NULL(ptr) \
-  do {                             \
-    if ((ptr) == nullptr) {        \
-      return;                      \
-    }                              \
-  } while (0)
-
-enum ThreadRet { THREAD_OK = 0, THREAD_ERROR = 1 };
 enum ThreadType { kActorThread = 0, kKernelThread = 1 };
 
-using Func = int (*)(void *arg, int);
-using Contend = void *;
+// used in scenarios with unequal division of task
+// the parameters indicate the start and end coefficients
+using Func = int (*)(void *, int, float, float);
+using Content = void *;
 
 typedef struct Task {
-  Task(Func f, Contend c) : func(f), content(c) {}
+  Task(Func f, Content c) : func(f), content(c) {}
   Func func;
-  Contend content;
-  std::atomic_int task_id{0};
+  Content content;
   std::atomic_int finished{0};
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
@@ -72,9 +50,13 @@ typedef struct Worker {
   std::thread thread;
   std::atomic_int type{kActorThread};
   std::atomic_bool active{false};
-  Task *task{nullptr};
   std::mutex mutex;
   std::condition_variable cond_var;
+  Task *task{nullptr};
+  int task_id{0};
+  float lhs_scale{0.};
+  float rhs_scale{kMaxScale};
+  int frequency{kDefaultFrequency};
   int spin{0};
 } Worker;
 
@@ -90,7 +72,7 @@ class ThreadPool {
 
   int SetProcessAffinity(BindMode bind_mode) const;
 
-  int ParallelLaunch(const Func &func, Contend contend, int task_num);
+  int ParallelLaunch(const Func &func, Content content, int task_num);
 
  protected:
   ThreadPool() = default;
@@ -103,7 +85,13 @@ class ThreadPool {
   virtual void ThreadAsyncRun(Worker *worker);
   void KernelThreadRun(Worker *worker);
 
+  void SyncRunTask(Task *task, int task_num) const;
+
   void DistributeTask(Task *task, int task_num);
+  void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
+  void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num) const;
+
+  Worker *CurrentWorker() const;
 
   std::mutex pool_mutex_;
 

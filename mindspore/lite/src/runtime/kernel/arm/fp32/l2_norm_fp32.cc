@@ -109,7 +109,7 @@ int L2NormCPUKernel::CalcL2NormTrailingAxis(int task_id) {
   return ThreadTrailingAxis(input_ptr_, output_ptr_, l2_norm_param_, begin, end);
 }
 
-int SquareSumRun(void *cdata, int task_id) {
+int SquareSumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<L2NormCPUKernel *>(cdata);
   auto ret = kernel->CalcSquareSum(task_id);
   if (ret != RET_OK) {
@@ -119,7 +119,7 @@ int SquareSumRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int L2NormRun(void *cdata, int task_id) {
+int L2NormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<L2NormCPUKernel *>(cdata);
   auto ret = kernel->DivSqrtSum(task_id);
   if (ret != RET_OK) {
@@ -129,7 +129,7 @@ int L2NormRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int L2NormTrailingAxisRun(void *cdata, int task_id) {
+int L2NormTrailingAxisRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<L2NormCPUKernel *>(cdata);
   auto ret = kernel->CalcL2NormTrailingAxis(task_id);
   if (ret != RET_OK) {

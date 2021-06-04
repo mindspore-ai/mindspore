@@ -85,7 +85,7 @@ int ROIPoolingCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int ROIPoolingRun(void *cdata, int task_id) {
+int ROIPoolingRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto Data = reinterpret_cast<ROIPoolingCPUKernel *>(cdata);
   auto ret = Data->DoExecute(task_id);
   if (ret != RET_OK) {

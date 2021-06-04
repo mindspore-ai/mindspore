@@ -109,7 +109,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   return RET_OK;
 }
 
-int SoftmaxRun(void *cdata, int task_id) {
+int SoftmaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto softmax_kernel = reinterpret_cast<SoftmaxInt8CPUKernel *>(cdata);
   auto error_code = softmax_kernel->DoSoftmax(task_id);
   if (error_code != RET_OK) {

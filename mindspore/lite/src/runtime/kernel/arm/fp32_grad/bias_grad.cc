@@ -70,7 +70,7 @@ int BiasGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int BiasGradRun(void *cdata, int task_id) {
+int BiasGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto bias_kernel = reinterpret_cast<BiasGradCPUKernel *>(cdata);
   auto error_code = bias_kernel->Execute(task_id);
   if (error_code != RET_OK) {

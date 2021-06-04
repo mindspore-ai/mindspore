@@ -50,7 +50,7 @@ class BatchnormCPUKernel : public InnerKernel {
   float default_momentum_ = -1.0f;
 };
 
-int BatchNormRun(void *cdata, int task_id);
+int BatchNormRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCHNORM_FP32_H_

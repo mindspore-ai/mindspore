@@ -57,7 +57,7 @@ int SmoothL1LossGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SmoothL1LossGradRun(void *cdata, int task_id) {
+int SmoothL1LossGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto smooth_l1_loss_kernel = reinterpret_cast<SmoothL1LossGradCPUKernel *>(cdata);
   auto error_code = smooth_l1_loss_kernel->Execute(task_id);
   if (error_code != RET_OK) {

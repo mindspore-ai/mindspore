@@ -110,7 +110,7 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int DeConvolutionGradFilterRun(void *cdata, int task_id) {
+int DeConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto convfilter_kernel = reinterpret_cast<DeConvolutionGradFilterCPUKernel *>(cdata);
   auto error_code = convfilter_kernel->Execute(task_id);
   if (error_code != RET_OK) {

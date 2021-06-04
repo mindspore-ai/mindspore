@@ -100,7 +100,7 @@ int DeConvolutionCPUKernel::InitParam() {
   return RET_OK;
 }
 
-int DeConvFp32Run(void *cdata, int task_id) {
+int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconv = reinterpret_cast<DeConvolutionCPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {

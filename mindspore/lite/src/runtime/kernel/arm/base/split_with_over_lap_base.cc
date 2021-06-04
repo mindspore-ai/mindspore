@@ -72,7 +72,7 @@ int SplitWithOverlapBaseCPUKernel::Split(int task_id) {
   return RET_OK;
 }
 
-int SplitWithOverlapRun(void *cdata, int task_id) {
+int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<SplitWithOverlapBaseCPUKernel *>(cdata);
   auto ret = g_kernel->Split(task_id);
   if (ret != RET_OK) {

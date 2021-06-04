@@ -184,9 +184,10 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
     code.CodeBaseStruct("DeConvFp32Args", kRunArgs, packed_input_, packed_weight_, packed_bias_, packed_output_,
                         output_ptr_, tmp_buffer_, "&matmul_parameter", "&conv_parameter");
     if (!support_parallel_) {
-      code.CodeFunction("DeConvFp32Run", kRunArgsAddr, kDefaultTaskId);
+      code.CodeFunction("DeConvFp32Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
     } else {
-      code.CodeFunction(kParallelLaunch, "DeConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
+      code.CodeFunction(kParallelLaunch, "DeConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_", kLhsScale,
+                        kRhsScale);
     }
   }
   context->AppendCode(code.str());

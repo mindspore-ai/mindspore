@@ -57,7 +57,7 @@ int ExpCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int ExpRun(void *cdata, int task_id) {
+int ExpRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto ExpData = reinterpret_cast<ExpCPUKernel *>(cdata);
   auto ret = ExpData->DoExcute(task_id);
   if (ret != RET_OK) {

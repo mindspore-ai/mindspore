@@ -68,7 +68,7 @@ int PowerFp16CPUKernel::GetExpData() {
   return RET_OK;
 }
 
-int PowerImplFp16(void *cdata, int task_id) {
+int PowerImplFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<PowerFp16CPUKernel *>(cdata);
   auto ret = kernel->RunImpl(task_id);
   if (ret != RET_OK) {

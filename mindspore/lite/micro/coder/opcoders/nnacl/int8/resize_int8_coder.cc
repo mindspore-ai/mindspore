@@ -92,9 +92,9 @@ int ResizeInt8Coder::DoCode(CoderContext *const context) {
         code.CodeBaseStruct("ResizeInt8Args", kRunArgs, input_tensor_, output_tensor_, "input_shape", "output_shape",
                             align_corners, gThreadNum);
         if (support_parallel_) {
-          code.CodeFunction(kParallelLaunch, "ResizeInt8Run", kRunArgsAddr, gThreadNum);
+          code.CodeFunction(kParallelLaunch, "ResizeInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
         } else {
-          code.CodeFunction("ResizeInt8Run", kRunArgsAddr, kDefaultTaskId);
+          code.CodeFunction("ResizeInt8Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
         }
       } else {
         MS_LOG(WARNING) << "unsupported parallel launch currently";

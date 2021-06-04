@@ -180,7 +180,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvolutionGradFilterRun(void *cdata, int task_id) {
+int ConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernel *>(cdata);
   auto error_code = convfilter_kernel->Execute(task_id);

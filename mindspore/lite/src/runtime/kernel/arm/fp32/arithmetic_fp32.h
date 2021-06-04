@@ -120,6 +120,6 @@ class ArithmeticCPUKernel : public InnerKernel {
   ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
   ArithmeticBoolRun arithmetic_run_bool_ = nullptr;
 };
-int ArithmeticsRun(void *cdata, int task_id);
+int ArithmeticsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_FP32_H_

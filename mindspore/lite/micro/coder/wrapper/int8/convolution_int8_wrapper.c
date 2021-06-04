@@ -16,7 +16,7 @@
 
 #include "wrapper/int8/convolution_int8_wrapper.h"
 
-int ConvolutionInt8Run(void *cdata, int task_id) {
+int ConvolutionInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   ConvolutionInt8Args *args = (ConvolutionInt8Args *)cdata;
   ConvInt8(args->input_data_, args->packed_input_, args->matmul_input_, args->packed_weight_, args->bias_data_,
            args->output_data_, args->filter_zp_, args->input_sum_, task_id, args->conv_param_, args->matmul_func_,

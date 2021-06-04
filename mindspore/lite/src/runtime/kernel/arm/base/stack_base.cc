@@ -81,7 +81,7 @@ void StackBaseCPUKernel::Execute(int task_id) {
   Stack(all_inputs_, output_data + input_num * start * copy_size_, input_num, copy_size_, start, end);
 }
 
-static int StackRun(void *cdata, int task_id) {
+static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto stack = reinterpret_cast<StackBaseCPUKernel *>(cdata);
   stack->Execute(task_id);
   return RET_OK;

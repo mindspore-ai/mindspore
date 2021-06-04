@@ -69,7 +69,7 @@ int DropoutGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int RunDropoutGrad(void *cdata, int task_id) {
+int RunDropoutGrad(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto dropout = reinterpret_cast<DropoutGradCPUKernel *>(cdata);
   auto error_code = dropout->Execute(task_id);
   if (error_code != RET_OK) {

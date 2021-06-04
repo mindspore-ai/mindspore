@@ -101,7 +101,7 @@ int ReverseCPUKernel::Init() {
   return ret;
 }
 
-int ReverseRun(void *cdata, int task_id) {
+int ReverseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<ReverseCPUKernel *>(cdata);
   auto ret = g_kernel->DoReverse(task_id);
   if (ret != RET_OK) {

@@ -54,7 +54,7 @@ int UnsortedSegmentSumCPUKernel::Init() {
 
 int UnsortedSegmentSumCPUKernel::ReSize() { return RET_OK; }
 
-int UnsortedSegmentSumRun(void *cdata, int task_id) {
+int UnsortedSegmentSumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<UnsortedSegmentSumCPUKernel *>(cdata);
   auto error_code = kernel->Execute(task_id);

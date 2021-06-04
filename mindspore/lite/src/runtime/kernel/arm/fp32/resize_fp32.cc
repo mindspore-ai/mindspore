@@ -155,7 +155,7 @@ void ResizeCPUKernel::FreeTmpBuffer() {
   }
 }
 
-int ResizeImpl(void *cdata, int task_id) {
+int ResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize = reinterpret_cast<ResizeCPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {

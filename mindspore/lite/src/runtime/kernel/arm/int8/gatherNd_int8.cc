@@ -120,7 +120,7 @@ int GatherNdInt8CPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdInt8Run(void *cdata, int task_id) {
+int GatherNdInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto g_kernel = reinterpret_cast<GatherNdInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {

@@ -289,7 +289,7 @@ int ResizeInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ResizeInt8Impl(void *cdata, int task_id) {
+int ResizeInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize = reinterpret_cast<ResizeInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {

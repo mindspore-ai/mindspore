@@ -177,7 +177,7 @@ int Convolution1x1CPUKernel::DoConv1x1(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Run(void *cdata, int task_id) {
+int Convolution1x1Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv1x1 = reinterpret_cast<Convolution1x1CPUKernel *>(cdata);
   auto error_code = conv1x1->DoConv1x1(task_id);
   if (error_code != RET_OK) {
@@ -212,7 +212,7 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1RunHw(void *cdata, int task_id) {
+int Convolution1x1RunHw(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv1x1 = reinterpret_cast<Convolution1x1CPUKernel *>(cdata);
   auto error_code = conv1x1->DoConv1x1Hw(task_id);
   if (error_code != RET_OK) {

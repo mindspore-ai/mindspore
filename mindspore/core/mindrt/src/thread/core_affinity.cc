@@ -27,7 +27,6 @@
 #include "thread/threadpool.h"
 
 namespace mindspore {
-
 #define MAX_PATH_SIZE (256)
 
 enum Arch {
@@ -215,8 +214,10 @@ int CoreAffinity::InitHardwareCoreInfo() {
   core_num_ = std::thread::hardware_concurrency();
   std::vector<CpuInfo> freq_set;
   freq_set.resize(core_num_);
+  core_freq_.resize(core_num_);
   for (size_t i = 0; i < core_num_; ++i) {
     int max_freq = GetMaxFrequency(i);
+    core_freq_[i] = max_freq;
     freq_set[i].core_id = i;
     freq_set[i].max_freq = max_freq;
     freq_set[i].arch = UnKnown_Arch;
@@ -329,6 +330,7 @@ int CoreAffinity::BindThreadsToCoreList(const std::vector<Worker *> &workers) co
       return THREAD_ERROR;
     }
     THREAD_INFO("set thread[%zu] affinity to core[%d] success", i, bind_id_[i % window]);
+    workers[i]->frequency = core_freq_[bind_id_[i]];
   }
 #endif  // BIND_CORE
   return THREAD_OK;

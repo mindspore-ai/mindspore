@@ -143,7 +143,7 @@ int QuantizedAddCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int AddInt8Run(void *cdata, int task_id) {
+int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto add = reinterpret_cast<QuantizedAddCPUKernel *>(cdata);
   add->DoExecute(task_id);
   return RET_OK;

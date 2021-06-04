@@ -66,7 +66,7 @@ int ActivationGradCPUKernelFp16::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ActivationGradRunFp16(void *cdata, int task_id) {
+int ActivationGradRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernelFp16 *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);

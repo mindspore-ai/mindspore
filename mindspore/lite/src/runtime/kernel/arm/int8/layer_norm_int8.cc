@@ -121,7 +121,7 @@ int LayerNormInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int LayerNormInt8Run(void *cdata, int task_id) {
+int LayerNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<LayerNormInt8CPUKernel *>(cdata);
   kernel->DoExecute(task_id);
   return RET_OK;

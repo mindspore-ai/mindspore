@@ -16,7 +16,7 @@
 
 #include "wrapper/int8/convolution_depthwise_int8_wrapper.h"
 
-int ConvDepthwiseInt8Run(void *cdata, int task_id) {
+int ConvDepthwiseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   ConvDepthwiseInt8Args *args = (ConvDepthwiseInt8Args *)cdata;
   int32_t *buffer = args->row_buffer_ + args->conv_param_->output_w_ * args->conv_param_->output_channel_ * task_id;
   ConvDwInt8(args->output_data_, buffer, args->input_data_, args->weight_data_, args->bias_data_, args->conv_param_,

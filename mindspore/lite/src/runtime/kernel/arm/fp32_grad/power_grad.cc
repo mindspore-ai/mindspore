@@ -64,7 +64,7 @@ int PowerGradCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int PowerGradRun(void *cdata, int task_id) {
+int PowerGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto power_kernel = reinterpret_cast<PowerGradCPUKernel *>(cdata);
   auto error_code = power_kernel->Execute(task_id);
   if (error_code != RET_OK) {

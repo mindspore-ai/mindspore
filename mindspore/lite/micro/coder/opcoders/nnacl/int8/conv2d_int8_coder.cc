@@ -237,9 +237,9 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
   }
 
   if (support_parallel_) {
-    code.CodeFunction(kParallelLaunch, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum);
+    code.CodeFunction(kParallelLaunch, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum, kLhsScale, kRhsScale);
   } else {
-    code.CodeFunction("ConvolutionInt8Run", kRunArgsAddr, kDefaultTaskId);
+    code.CodeFunction("ConvolutionInt8Run", kRunArgsAddr, kDefaultTaskId, kLhsScale, kRhsScale);
   }
   context->AppendCode(code.str());
   return RET_OK;

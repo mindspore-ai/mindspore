@@ -126,7 +126,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Execute(int task_id) {
   return RET_OK;
 }
 
-int ConvDwSWAvxRun(void *cdata, int task_id) {
+int ConvDwSWAvxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseSWCPUKernelX86 *>(cdata);
   auto ret = conv_dw->Execute(task_id);
   if (ret != RET_OK) {

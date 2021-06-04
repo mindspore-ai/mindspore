@@ -54,7 +54,7 @@ int WhereCPUKernel::DoExcute(int task_id) {
   return RET_OK;
 }
 
-int WhereRun(void *cdata, int task_id) {
+int WhereRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto wheredata = reinterpret_cast<WhereCPUKernel *>(cdata);
   auto ret = wheredata->DoExcute(task_id);
   if (ret != RET_OK) {

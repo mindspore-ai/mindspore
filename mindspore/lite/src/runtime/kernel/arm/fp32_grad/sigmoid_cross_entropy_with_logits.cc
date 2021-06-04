@@ -48,7 +48,7 @@ int SigmoidCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SigmoidCrossEntropyWithLogitsRun(void *cdata, int task_id) {
+int SigmoidCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto sig_crs_ent_kernel = reinterpret_cast<SigmoidCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = sig_crs_ent_kernel->Execute(task_id);
   if (error_code != RET_OK) {

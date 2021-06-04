@@ -64,7 +64,7 @@ int ApplyMomentumCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int ApplyMomentumRun(void *cdata, int task_id) {
+int ApplyMomentumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto applyMomentum_kernel = reinterpret_cast<ApplyMomentumCPUKernel *>(cdata);
   auto error_code = RET_OK;
