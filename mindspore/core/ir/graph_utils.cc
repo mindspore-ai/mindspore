@@ -35,9 +35,22 @@
 #include "mindspore/ccsrc/utils/utils.h"
 
 namespace mindspore {
+// Dump the circle from the strike node `next`.
+static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const AnfNodePtr &next, size_t seen) {
+  size_t pos = 0;
+  auto circle_node_it = std::find(todo.begin(), todo.end(), next);
+  for (; circle_node_it != todo.end(); circle_node_it++) {
+    auto circle_node = *circle_node_it;
+    if (circle_node->seen_ == seen) {
+      MS_LOG(ERROR) << "#" << pos << ": " << circle_node->DebugString();
+      pos++;
+    }
+  }
+  return pos;
+}
+
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
   std::vector<AnfNodePtr> res;
-  res.reserve(1024);
   if (root == nullptr) {
     return res;
   }
@@ -70,21 +83,13 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
         if (next->seen_ != seen) {
           return true;
         }
-        if (next->func_graph()->get_return() == next) {
+        if (next->func_graph() != nullptr && next->func_graph()->get_return() == next) {
           return false;
         }
         // To dump all nodes in a circle.
         MS_LOG(ERROR) << "Graph cycle exists. Circle is: ";
-        size_t pos = 0;
-        auto circle_node_it = std::find(todo.begin(), todo.end(), next);
-        for (; circle_node_it != todo.end(); circle_node_it++) {
-          auto circle_node = *circle_node_it;
-          if (circle_node->seen_ == seen) {
-            MS_LOG(ERROR) << "#" << pos << ": " << circle_node->DebugString();
-            pos++;
-          }
-        }
-        MS_LOG(EXCEPTION) << "Graph cycle exists, strike node: " << next->DebugString(2);
+        auto circle_len = DumpSortingCircleList(todo, next, seen);
+        MS_LOG(EXCEPTION) << "Graph cycle exists, size: " << circle_len << ", strike node: " << next->DebugString(2);
       });
     } else if (incl > EXCLUDE) {  // Not NOFOLLOW or EXCLUDE
       MS_LOG(EXCEPTION) << "The result of include(node) must be one of: \"follow\", \"nofollow\", \"exclude\"";
