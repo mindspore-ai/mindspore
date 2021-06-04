@@ -491,7 +491,18 @@ class Tensor(Tensor_):
             keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, has the same data type as input tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+            >>> output = input_x.mean()
+            >>> print(output)
+            2.0
         """
         self.init_check()
         if axis is None:
@@ -839,7 +850,7 @@ class Tensor(Tensor_):
             >>> import numpy as np
             >>> from mindspore import Tensor
             >>> a = Tensor(np.ones((3,3)).astype("float32"))
-            >>> output = a.cumsum()
+            >>> output = a.cumsum(axis=0)
             >>> print(output)
             [[1. 1. 1.]
             [2. 2. 2.]
@@ -1464,8 +1475,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
-                [20, 21, 22, 23], [30, 31, 32, 33]]
+            >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]]
             >>> x = Tensor(np.array([2, 3, 1, 0]))
             >>> print(x.choose(choices))
             [20 31 12  3]
@@ -1651,7 +1661,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> input_x = Tensor(np.array([1., 2., 3., 4.]))
+            >>> input_x = Tensor(np.array([1, 2, 3, 4], dtype=np.float32))
             >>> output = input_x.std()
             >>> print(output)
             1.118034
@@ -1697,10 +1707,10 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> input_x = Tensor(np.array([-1, 0, 1]).astype('int32'))
+            >>> input_x = Tensor(np.array([-1, 0, 1]).astype(np.float32))
             >>> print(input_x.sum())
-            0
-            >>> input_x = Tensor(np.arange(10).reshape(2, 5).astype('float32'))
+            0.0
+            >>> input_x = Tensor(np.arange(10).reshape(2, 5).astype(np.float32))
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """

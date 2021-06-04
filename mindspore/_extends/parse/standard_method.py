@@ -56,14 +56,23 @@ def mean(x, axis=(), keep_dims=False):
     Reduces a dimension of a tensor by averaging all elements in the dimension.
 
     Args:
-        axis (Union[None, int, tuple(int)]): Dimensions of reduction,
-            when axis is None or empty tuple, reduce all dimensions.
-            Default: (), reduce all dimensions.
-        keep_dims (bool): Whether to keep the reduced dimensions.
-            Default : False, don't keep these reduced dimensions.
+        axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
+            when axis is None or empty tuple, reduce all dimensions. Default: ().
+        keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
     Returns:
-        Tensor, has the same data type as x.
+        Tensor, has the same data type as input tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+        >>> output = input_x.mean()
+        >>> print(output)
+        2.0
     """
     if axis is None:
         axis = ()
@@ -501,7 +510,7 @@ def cumsum(x, axis=None, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> a = Tensor(np.ones((3,3)).astype("float32"))
-        >>> output = a.cumsum()
+        >>> output = a.cumsum(axis=0)
         >>> print(output)
         [[1. 1. 1.]
         [2. 2. 2.]
@@ -909,8 +918,7 @@ def choose(x, choices, mode='clip'):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
-            [20, 21, 22, 23], [30, 31, 32, 33]]
+        >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]]
         >>> x = np.array([2, 3, 1, 0])
         >>> print(x.choose(choices))
         [20 31 12  3]
