@@ -95,6 +95,49 @@ sh run_process_data.sh ./data cora
 sh run_process_data.sh ./data citeseer
 ```
 
+- Running on local with Ascend
+
+```bash
+# 在 cora 或 citeseer 数据集上训练, DATASET_NAME 设置为 cora 或 citeseer
+sh run_train.sh [DATASET_NAME]
+```
+
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+```bash
+# 在 ModelArts 上使用 单卡训练 cora 数据集
+# (1) 执行a或者b
+#       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 default_config.yaml 文件中设置 "data_dir='/cache/data/cora'"
+#          在 default_config.yaml 文件中设置 "train_nodes_num=140"
+#          在 default_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir='/cache/data/cora'"
+#          在网页上设置 "train_nodes_num=140"
+#          在网页上设置 其他参数
+# (2) 上传你的数据集到 S3 桶上
+# (3) 在网页上设置你的代码路径为 "/path/gcn"
+# (4) 在网页上设置启动文件为 "train.py"
+# (5) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (6) 创建训练作业
+#
+# 在 ModelArts 上使用 单卡训练 citeseer 数据集
+# (1) 执行a或者b
+#       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 default_config.yaml 文件中设置 "data_dir='/cache/data/citeseer'"
+#          在 default_config.yaml 文件中设置 "train_nodes_num=120"
+#          在 default_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir='/cache/data/citeseer'"
+#          在网页上设置 "train_nodes_num=120"
+#          在网页上设置 其他参数
+# (2) 上传你的数据集到 S3 桶上
+# (3) 在网页上设置你的代码路径为 "/path/gcn"
+# (4) 在网页上设置启动文件为 "train.py"
+# (5) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (6) 创建训练作业
+```
+
 ## 脚本说明
 
 ### 脚本及样例代码
@@ -103,7 +146,16 @@ sh run_process_data.sh ./data citeseer
 .
 └─gcn
   ├─README.md
+  ├─README_CN.md
+  ├─model_utils
+  | ├─__init__.py       # 初始化文件
+  | ├─config.py         # 参数配置
+  | ├─device_adapter.py # ModelArts的设备适配器
+  | ├─local_adapter.py  # 本地适配器
+  | └─moxing_adapter.py # ModelArts的模型适配器
+  |
   ├─scripts
+  | ├─run_infer_310.sh     # Ascend310 推理shell脚本
   | ├─run_process_data.sh  # 生成MindRecord格式的数据集
   | └─run_train.sh         # 启动训练，目前只支持Ascend后端
   |
@@ -113,6 +165,11 @@ sh run_process_data.sh ./data citeseer
   | ├─gcn.py               # GCN骨干
   | └─metrics.py           # 损失和准确率
   |
+  ├─default_config.py      # 配置文件
+  ├─export.py              # 导出脚本
+  ├─mindspore_hub_conf.py  # mindspore hub 脚本
+  ├─postprocess.py         # 后处理脚本
+  ├─preprocess.py          # 预处理脚本
   └─train.py               # 训练网络，每个训练轮次后评估验证结果收敛后，训练停止，然后进行测试。
 ```
 
