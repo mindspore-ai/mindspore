@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/msession.h"
 
 namespace mindspore::lite::micro {
-
-const char *session_header = R"RAW(
+const char session_header[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -103,9 +102,10 @@ class LiteSession : public session::LiteSession {
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_SESSION_H_
+
 )RAW";
 
-const char *session_source = R"RAW(
+const char session_source[] = R"RAW(
 int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   const void *inputs_data[inputs_.size()];
   for (size_t i = 0; i < inputs_.size(); ++i) {
@@ -189,6 +189,6 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const String &te
   return nullptr;
 }
 }  // namespace lite
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro

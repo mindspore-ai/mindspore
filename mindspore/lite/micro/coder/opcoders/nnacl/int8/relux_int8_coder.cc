@@ -22,7 +22,6 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 int ReluxInt8Coder::Prepare(CoderContext *const context) {
   MS_CHECK_PTR(parameter_);
   type_ = (reinterpret_cast<ActivationParameter *>(parameter_))->type_;
@@ -53,5 +52,4 @@ int ReluxInt8Coder::DoCode(CoderContext *const context) {
 
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl

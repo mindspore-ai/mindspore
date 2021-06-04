@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/load_input.h"
 
 namespace mindspore::lite::micro {
-
-const char *load_input_h = R"RAW(
+const char load_input_h[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -56,7 +55,7 @@ int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int input
 
 )RAW";
 
-const char *load_input_c = R"RAW(
+const char load_input_c[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -152,5 +151,4 @@ int ReadInputsFile(char *path, void **buffers, const int *inputs_size, int input
 }
 
 )RAW";
-
 }  // namespace mindspore::lite::micro

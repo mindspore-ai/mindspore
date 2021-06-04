@@ -252,5 +252,4 @@ void CodeInferenceState(std::ofstream &ofs) {
       << "void "
       << "Inference();\n\n";
 }
-
 }  // namespace mindspore::lite::micro

@@ -42,14 +42,14 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
                     "Null pointer reference: quant_concat_parm_->in_quant_args_.");
   for (int i = 0; i < static_cast<int>(input_num); i++) {
     auto *input_tensor = input_tensors().at(i);
-    auto quant_args = input_tensor->quant_params();
-    concat_param_->quant_arg_.in_args_[i].scale_ = quant_args.at(0).scale;
-    concat_param_->quant_arg_.in_args_[i].zp_ = quant_args.at(0).zeroPoint;
+    auto in_quant_args = input_tensor->quant_params();
+    concat_param_->quant_arg_.in_args_[i].scale_ = in_quant_args.at(0).scale;
+    concat_param_->quant_arg_.in_args_[i].zp_ = in_quant_args.at(0).zeroPoint;
   }
 
-  auto quant_args = output_tensor_->quant_params();
-  concat_param_->quant_arg_.out_args_.scale_ = quant_args.at(0).scale;
-  concat_param_->quant_arg_.out_args_.zp_ = quant_args.at(0).zeroPoint;
+  auto out_quant_args = output_tensor_->quant_params();
+  concat_param_->quant_arg_.out_args_.scale_ = out_quant_args.at(0).scale;
+  concat_param_->quant_arg_.out_args_.zp_ = out_quant_args.at(0).zeroPoint;
 
   concat_param_->quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
   concat_param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();

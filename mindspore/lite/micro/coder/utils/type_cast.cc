@@ -17,7 +17,6 @@
 #include <string>
 
 namespace mindspore::lite::micro {
-
 std::string EnumNameDataType(TypeId type) {
   switch (type) {
     case kNumberTypeInt:

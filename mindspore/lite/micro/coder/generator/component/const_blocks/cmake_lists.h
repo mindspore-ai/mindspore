@@ -19,8 +19,8 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *bench_cmake_lists_txt;
-extern const char *src_cmake_lists_txt;
+extern const char bench_cmake_lists_txt[];
+extern const char src_cmake_lists_txt[];
 
 }  // namespace mindspore::lite::micro
 

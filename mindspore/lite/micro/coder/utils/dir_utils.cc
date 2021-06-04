@@ -25,7 +25,6 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite::micro {
-
 #if defined(_WIN32) || defined(_WIN64)
 constexpr _mode_t kMicroDirMode = 0777;
 #else

@@ -25,7 +25,6 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
   matmul_param_ = new (std::nothrow) MatMulParameter();
   MS_CHECK_PTR(matmul_param_);
@@ -250,5 +249,4 @@ int Conv2D1x1Int8Coder::InitRunBuf() {
   MS_CHECK_PTR(packed_input_);
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl

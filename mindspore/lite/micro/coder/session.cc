@@ -36,7 +36,6 @@
 #include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 namespace mindspore::lite::micro {
-
 CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
 
 int CoderSession::InferShape() {
@@ -349,5 +348,4 @@ std::shared_ptr<CoderSession> CreateCoderSession() {
 }
 
 CoderSession::~CoderSession() { allocator_->Free(); }
-
 }  // namespace mindspore::lite::micro

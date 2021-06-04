@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/cmake_lists.h"
 
 namespace mindspore::lite::micro {
-
-const char *bench_cmake_lists_txt = R"RAW(
+const char bench_cmake_lists_txt[] = R"RAW(
 cmake_minimum_required(VERSION 3.14)
 project(benchmark)
 
@@ -76,9 +75,10 @@ set(SRC_FILES
 )
 add_executable(benchmark ${SRC_FILES})
 target_link_libraries(benchmark net -lm -pthread)
+
 )RAW";
 
-const char *src_cmake_lists_txt = R"RAW(
+const char src_cmake_lists_txt[] = R"RAW(
 cmake_minimum_required(VERSION 3.14)
 project(net)
 
@@ -177,6 +177,6 @@ function(create_library)
 endfunction(create_library)
 string(CONCAT library_name "lib" net ".a")
 create_library()
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro

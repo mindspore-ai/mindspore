@@ -18,8 +18,8 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *debug_utils_h;
-extern const char *debug_utils_c;
+extern const char debug_utils_h[];
+extern const char debug_utils_c[];
 
 }  // namespace mindspore::lite::micro
 
