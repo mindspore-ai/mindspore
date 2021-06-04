@@ -42,7 +42,7 @@ char *ReadFile(const char *file, size_t *size) {
 
   ifs.seekg(0, std::ios::end);
   *size = ifs.tellg();
-  std::unique_ptr<char[]> buf(new (std::nothrow) char[*size]);
+  auto buf = std::make_unique<char[]>(*size);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
     ifs.close();

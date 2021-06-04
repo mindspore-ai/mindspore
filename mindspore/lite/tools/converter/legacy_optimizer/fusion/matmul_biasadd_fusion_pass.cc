@@ -45,7 +45,7 @@ STATUS MatMulBiasAddFusionPass::DefinePattern() {
   baOp->types = {schema::PrimitiveType_BiasAdd};
   baOp->left = matMulOp;
 
-  std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern("MatMulBiasAddFusion"));
+  auto fusionPattern = std::make_unique<FusionPattern>("MatMulBiasAddFusion");
   if (fusionPattern == nullptr) {
     MS_LOG(ERROR) << "new fusionPattern failed";
     return RET_ERROR;
@@ -97,7 +97,7 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
 
   // 2. change matmul to full connection op
   matMulNode->name += "-fc";
-  std::unique_ptr<FullConnectionT> fcAttr(new (std::nothrow) FullConnectionT());
+  auto fcAttr = std::make_unique<FullConnectionT>();
   if (fcAttr == nullptr) {
     MS_LOG(ERROR) << "new FullConnectionT node failed";
     return RET_ERROR;
@@ -159,7 +159,7 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
   size_t index = graph->allTensors.size();
   graph->allTensors.push_back(std::move(perm_tensor));
   for (auto needInsertIdx : insertNodeIdxList) {
-    auto transNode = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
+    auto transNode = std::make_unique<CNodeT>();
     if (transNode == nullptr) {
       MS_LOG(ERROR) << "new TransNode failed";
       return RET_ERROR;

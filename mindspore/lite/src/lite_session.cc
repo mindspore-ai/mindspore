@@ -32,11 +32,11 @@
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
-#if GPU_OPENCL
+#if defined(GPU_OPENCL)
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #endif
 
@@ -395,7 +395,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
   // scheduler kernels
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   Scheduler scheduler(context_, model, &tensors_, npu_manager_, npu_pass_manager_);
 #else
   Scheduler scheduler(context_, model, &tensors_);
@@ -406,7 +406,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   if (this->context_->IsNpuEnabled()) {
     MS_ASSERT(npu_manager_ != nullptr);
     if (npu_manager_->LoadOMModel() != RET_OK) {
@@ -506,7 +506,7 @@ int LiteSession::Init(const Context *context) {
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   npu_manager_ = new (std::nothrow) NPUManager();
   if (npu_manager_ == nullptr) {
     MS_LOG(ERROR) << "New npu_manager_ failed";
@@ -525,7 +525,7 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return RET_NULL_PTR;
   }
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   this->context_ = new (std::nothrow) InnerContext(context, npu_manager_);
 #else
   this->context_ = new (std::nothrow) InnerContext(context);
@@ -599,7 +599,7 @@ LiteSession::~LiteSession() {
   delete this->context_;
   delete this->executor_;
   this->executor_ = nullptr;
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   MS_ASSERT(npu_manager_ != nullptr);
   MS_ASSERT(npu_pass_manager_ != nullptr);
   npu_pass_manager_->Clear();
@@ -607,7 +607,7 @@ LiteSession::~LiteSession() {
   npu_manager_->Reset();
   delete npu_manager_;
 #endif
-#if GPU_OPENCL && !SUPPORT_TRAIN
+#if defined(GPU_OPENCL) && !defined(SUPPORT_TRAIN)
   delete opencl_runtime_wrapper_;
 #endif
   delete (model_);
@@ -691,7 +691,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
     }
     auto ret = RET_OK;
     if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
-#if GPU_OPENCL
+#if defined(GPU_OPENCL)
       auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
       ret = sub_graph->ReSize(false);
 #endif
@@ -745,7 +745,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-#if GPU_OPENCL && !SUPPORT_TRAIN
+#if defined(GPU_OPENCL) && !defined(SUPPORT_TRAIN)
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
@@ -762,7 +762,7 @@ int LiteSession::InitGPURuntime() {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
     }
   }
-#elif GPU_VULKAN && !SUPPORT_TRAIN
+#elif defined(GPU_VULKAN) && !defined(SUPPORT_TRAIN)
   if (this->context_->IsGpuEnabled()) {
     auto gpu_device_info = this->context_->GetGpuInfo();
     vk_runtime_wrap_ = new (std::nothrow) gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime>;

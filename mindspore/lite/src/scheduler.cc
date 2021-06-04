@@ -31,11 +31,11 @@
 #include "src/common/prim_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/dequant.h"
-#if GPU_OPENCL
+#if defined(GPU_OPENCL)
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
@@ -213,7 +213,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     need_restore = false;
   }
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
-#if SUPPORT_GPU
+#if defined(SUPPORT_GPU)
   if (context_->IsGpuEnabled()) {
     // support more data type like int32
     kernel::KernelKey gpu_desc{kGPU, kNumberTypeFloat32, desc.type};
@@ -238,7 +238,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
 #endif
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   if (context_->IsNpuEnabled()) {
     if (desc.data_type == kNumberTypeFloat16) {
       desc.data_type = kNumberTypeFloat32;
@@ -561,7 +561,7 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
   if (type == kernel::kGpuSubGraph) {
-#if GPU_OPENCL
+#if defined(GPU_OPENCL)
     auto sub_kernel = new (std::nothrow)
       kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     if (sub_kernel == nullptr) {
@@ -569,14 +569,14 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
       return nullptr;
     }
     return sub_kernel;
-#elif GPU_VULKAN
+#elif defined(GPU_VULKAN)
     return nullptr;
 #else
     return nullptr;
 #endif
   }
   if (type == kernel::kNpuSubGraph) {
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
     auto sub_kernel = new (std::nothrow) kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels,
                                                                    output_kernels, kernels, context_, npu_manager_);
     if (sub_kernel == nullptr) {
@@ -686,7 +686,7 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
 
 int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int ret = RET_OK;
-#if SUPPORT_NPU
+#if defined(SUPPORT_NPU)
   if (!context_->IsNpuEnabled()) {
     return RET_OK;
   }

@@ -47,7 +47,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::CreateTensorImpl(const std::stri
     MS_LOG(ERROR) << "Failed to allocate lite tensor.";
     return nullptr;
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  auto impl = std::make_shared<MSTensor::Impl>(lite_tensor);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";
     return nullptr;
@@ -70,7 +70,7 @@ std::shared_ptr<MSTensor::Impl> MSTensor::Impl::StringsToTensorImpl(const std::s
     delete lite_tensor;
     return nullptr;
   }
-  auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) Impl(lite_tensor));
+  auto impl = std::make_shared<MSTensor::Impl>(lite_tensor);
   if (impl == nullptr) {
     delete lite_tensor;
     MS_LOG(ERROR) << "Failed to allocate tensor impl.";

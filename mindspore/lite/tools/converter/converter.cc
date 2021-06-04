@@ -91,7 +91,7 @@ MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
 
 int RunConverter(int argc, const char **argv) {
   std::ostringstream oss;
-  std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
+  auto flags = std::make_unique<converter::Flags>();
   if (flags == nullptr) {
     oss.clear();
     oss << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << " " << GetErrorInfo(RET_MEMORY_FAILED);
