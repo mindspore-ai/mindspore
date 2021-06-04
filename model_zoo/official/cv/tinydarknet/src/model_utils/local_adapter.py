@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +13,24 @@
 # limitations under the License.
 # ============================================================================
 
-abs_path=$(readlink -f "$0")
-cur_path=$(dirname $abs_path)
-cd $cur_path
+"""Local adapter"""
 
-rm -rf ./eval
-mkdir ./eval
-cp -r ../src ./eval
-cp ../eval.py ./eval
-cp ../*.yaml ./eval
-cd ./eval || exit
-env >env.log
-python ./eval.py > ./eval.log 2>&1 &
-cd ..
+import os
+
+def get_device_id():
+    device_id = os.getenv('DEVICE_ID', '0')
+    return int(device_id)
+
+
+def get_device_num():
+    device_num = os.getenv('RANK_SIZE', '1')
+    return int(device_num)
+
+
+def get_rank_id():
+    global_rank_id = os.getenv('RANK_ID', '0')
+    return int(global_rank_id)
+
+
+def get_job_id():
+    return "Local Job"

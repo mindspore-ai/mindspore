@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-abs_path=$(readlink -f "$0")
-cur_path=$(dirname $abs_path)
-cd $cur_path
+"""Device adapter for ModelArts"""
 
-rm -rf ./eval
-mkdir ./eval
-cp -r ../src ./eval
-cp ../eval.py ./eval
-cp ../*.yaml ./eval
-cd ./eval || exit
-env >env.log
-python ./eval.py > ./eval.log 2>&1 &
-cd ..
+from src.model_utils.config import config
+
+if config.enable_modelarts:
+    from src.model_utils.moxing_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+else:
+    from src.model_utils.local_adapter import get_device_id, get_device_num, get_rank_id, get_job_id
+
+__all__ = [
+    "get_device_id", "get_device_num", "get_rank_id", "get_job_id"
+]

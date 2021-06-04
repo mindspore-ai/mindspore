@@ -119,7 +119,7 @@ The dataset is self-generated using a third-party library called [captcha](https
 
     - running on ModelArts
       If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows
-        - 在ModelArt上使用8卡训练
+        - Training with 8 cards on ModelArts
 
           ```python
           # (1) Upload the code folder to S3 bucket.
@@ -138,10 +138,11 @@ The dataset is self-generated using a third-party library called [captcha](https
           # (6) Upload the dataset or the zip package of dataset to S3 bucket.
           # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
           # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
-          # (9) Create your job.
+          # (9) Under the item "resource pool selection", select the specification of 8 cards.
+          # (10) Create your job.
           ```
 
-        - 在ModelArts上使用单卡验证
+        - evaluating with single card on ModelArts
 
           ```python
           # (1) Upload the code folder to S3 bucket.
@@ -160,7 +161,8 @@ The dataset is self-generated using a third-party library called [captcha](https
           # (6)  Upload the dataset or the zip package of dataset to S3 bucket.
           # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
           # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
-          # (9) Create your job.
+          # (9) Under the item "resource pool selection", select the specification of a single card.
+          # (10) Create your job.
           ```
 
 ## [Script Description](#contents)

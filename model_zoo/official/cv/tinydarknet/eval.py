@@ -16,34 +16,82 @@
 ##############test tinydarknet example on cifar10#################
 python eval.py
 """
-import argparse
-
+import os
+import time
 
 from mindspore import context
-
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 
-from src.config import imagenet_cfg
 from src.dataset import create_dataset_imagenet
-
 from src.tinydarknet import TinyDarkNet
 from src.CrossEntropySmooth import CrossEntropySmooth
-
+from src.model_utils.config import config
+from src.model_utils.moxing_adapter import moxing_wrapper
+from src.model_utils.device_adapter import get_device_num
 set_seed(1)
 
-parser = argparse.ArgumentParser(description='tinydarknet')
-parser.add_argument('--dataset_name', type=str, default='imagenet', choices=['imagenet', 'cifar10'],
-                    help='dataset name.')
-parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
-args_opt = parser.parse_args()
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("Unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
 
-if __name__ == '__main__':
+    if config.modelarts_dataset_unzip_name:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
 
-    if args_opt.dataset_name == "imagenet":
-        cfg = imagenet_cfg
-        dataset = create_dataset_imagenet(cfg.val_data_path, 1, False)
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if config.device_id % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(config.device_id, zip_file_1, save_dir_1))
+    config.checkpoint_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), config.checkpoint_path)
+    if not os.path.exists(config.checkpoint_path):
+        raise ValueError("Check parameter 'checkpoint_path'. for more details, you can see README.md")
+    config.val_data_dir = config.data_path
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
+def run_eval():
+    if config.dataset_name == "imagenet":
+        cfg = config
+        dataset = create_dataset_imagenet(cfg.val_data_dir, 1, False)
         if not cfg.use_label_smooth:
             cfg.label_smooth_factor = 0.0
         loss = CrossEntropySmooth(sparse=True, reduction="mean",
@@ -52,20 +100,19 @@ if __name__ == '__main__':
         model = Model(net, loss_fn=loss, metrics={'top_1_accuracy', 'top_5_accuracy'})
 
     else:
-        raise ValueError("dataset is not support.")
+        raise ValueError("Dataset is not support.")
 
-    device_target = cfg.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-
-    if args_opt.checkpoint_path is not None:
-        param_dict = load_checkpoint(args_opt.checkpoint_path)
-        print("load checkpoint from [{}].".format(args_opt.checkpoint_path))
-    else:
-        param_dict = load_checkpoint(cfg.checkpoint_path)
-        print("load checkpoint from [{}].".format(cfg.checkpoint_path))
+    if config.device_target == "Ascend":
+        context.set_context(device_id=config.device_id)
+    param_dict = load_checkpoint(cfg.checkpoint_path)
+    print("Load checkpoint from [{}].".format(cfg.checkpoint_path))
 
     load_param_into_net(net, param_dict)
     net.set_train(False)
 
     acc = model.eval(dataset)
     print("accuracy: ", acc)
+
+if __name__ == '__main__':
+    run_eval()

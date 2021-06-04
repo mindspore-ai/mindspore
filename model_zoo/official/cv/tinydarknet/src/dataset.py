@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vision
-from src.config import imagenet_cfg
+from src.model_utils.config import config as imagenet_cfg
 
 def create_dataset_imagenet(dataset_path, repeat_num=1, training=True,
                             num_parallel_workers=None, shuffle=None):

@@ -49,15 +49,15 @@ def modelarts_pre_process():
                 fz = zipfile.ZipFile(zip_file, 'r')
                 data_num = len(fz.namelist())
                 print("Extract Start...")
-                print("unzip file num: {}".format(data_num))
+                print("Unzip file num: {}".format(data_num))
                 data_print = int(data_num / 100) if data_num > 100 else 1
                 i = 0
                 for file in fz.namelist():
                     if i % data_print == 0:
-                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
                     i += 1
                     fz.extract(file, save_dir)
-                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
                                                      int(int(time.time() - s_time) % 60)))
                 print("Extract Done.")
             else:
@@ -88,7 +88,7 @@ def modelarts_pre_process():
             time.sleep(1)
 
         print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
-    config.save_checkpoint_path = os.path.join(config.output_path, str(get_rank_id()), config.save_checkpoint_path)
+    config.save_checkpoint_path = os.path.join(config.output_path, config.save_checkpoint_path)
 
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
@@ -100,16 +100,22 @@ def train():
     lr_scale = 1
     if config.run_distribute:
         if config.device_target == 'Ascend':
-            device_num = int(os.environ.get("RANK_SIZE"))
-            rank = int(os.environ.get("RANK_ID"))
+            device_num = get_device_num()
+            rank = get_rank_id()
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+            init()
         else:
+            init()
             device_num = get_group_size()
             rank = get_rank()
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(device_num=device_num,
-                                          parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True)
-        init()
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(device_num=device_num,
+                                              parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True)
+
     else:
         device_num = 1
         rank = 0
@@ -149,7 +155,7 @@ def train():
     if config.save_checkpoint:
         config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
-        save_ckpt_path = config.save_checkpoint_path
+        save_ckpt_path = os.path.join(config.save_checkpoint_path, str(rank))
         ckpt_cb = ModelCheckpoint(prefix="warpctc", directory=save_ckpt_path, config=config_ck)
         callbacks.append(ckpt_cb)
     model.train(config.epoch_size, dataset, callbacks=callbacks)

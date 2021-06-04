@@ -42,15 +42,15 @@ def modelarts_pre_process():
                 fz = zipfile.ZipFile(zip_file, 'r')
                 data_num = len(fz.namelist())
                 print("Extract Start...")
-                print("unzip file num: {}".format(data_num))
+                print("Unzip file num: {}".format(data_num))
                 data_print = int(data_num / 100) if data_num > 100 else 1
                 i = 0
                 for file in fz.namelist():
                     if i % data_print == 0:
-                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                        print("Unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
                     i += 1
                     fz.extract(file, save_dir)
-                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                print("Cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
                                                      int(int(time.time() - s_time) % 60)))
                 print("Extract Done.")
             else:

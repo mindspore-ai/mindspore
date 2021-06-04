@@ -87,7 +87,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   bash ./scripts/run_standalone_train.sh 0
 
   # 分布式训练
-  bash ./scripts/run_distribute_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh /{path}/*.json
 
   # 评估
   python eval.py > eval.log 2>&1 &
@@ -95,11 +95,60 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   bash ./script/run_eval.sh
   ```
 
-  进行并行训练时, 需要提前创建JSON格式的hccl配置文件。
+  进行并行训练时, 需要提前创建JSON格式的hccl配置文件 [RANK_TABLE_FILE]。
 
   请按照以下链接的指导进行设置:
 
   <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.>
+
+- 在ModelArts上运行
+      如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/)
+
+    - 在ModelArt上使用8卡训练
+
+      ```python
+      # (1) 上传你的代码到 s3 桶上
+      # (2) 在ModelArts上创建训练任务
+      # (3) 选择代码目录 /{path}/tinydarknet
+      # (4) 选择启动文件 /{path}/tinydarknet/train.py
+      # (5) 执行a或b
+      #     a. 在 /{path}/tinydarknet/imagenet_config.yaml 文件中设置参数
+      #         1. 设置 ”batch_size: 64“ (非必须)
+      #         2. 设置 ”enable_modelarts: True“
+      #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name: {filenmae}"
+      #     b. 在 网页上设置
+      #         1. 添加 ”batch_size=True“
+      #         2. 添加 ”enable_modelarts=True“
+      #         3. 如果数据采用zip格式压缩包的形式上传，添加 ”modelarts_dataset_unzip_name={filenmae}"
+      # (6) 上传你的 数据/数据zip压缩包 到 s3 桶上
+      # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径（该路径下仅有 数据/数据zip压缩包）
+      # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+      # (9) 在网页上的’资源池选择‘项目下， 选择8卡规格的资源
+      # (10) 创建训练作业
+      ```
+
+    - 在ModelArts上使用单卡验证
+
+      ```python
+      # (1) 上传你的代码到 s3 桶上
+      # (2) 在ModelArts上创建训练任务
+      # (3) 选择代码目录 /{path}/tinydarknet
+      # (4) 选择启动文件 /{path}/tinydarknet/eval.py
+      # (5) 执行a或b
+      #     a. 在 /path/tinydarknet 下的imagenet_config.yaml 文件中设置参数
+      #         1. 设置 ”enable_modelarts: True“
+      #         2. 设置 “checkpoint_path: {checkpoint_path}”({checkpoint_path}表示待评估的 权重文件 相对于 eval.py 的路径,权重文件须包含在代码目录下。)
+      #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name: {filenmae}"
+      #     b. 在 网页上设置
+      #         1. 设置 ”enable_modelarts=True“
+      #         2. 设置 “checkpoint_path={checkpoint_path}”({checkpoint_path}表示待评估的 权重文件 相对于 eval.py 的路径,权重文件须包含在代码目录下。)
+      #         3. 如果数据采用zip格式压缩包的形式上传，设置 ”modelarts_dataset_unzip_name={filenmae}"
+      # (6) 上传你的 数据/数据zip压缩包 到 s3 桶上
+      # (7) 在网页上勾选数据存储位置，设置“训练数据集”路径（该路径下仅有 数据/数据zip压缩包）
+      # (8) 在网页上设置“训练输出文件路径”、“作业日志路径”
+      # (9) 在网页上的’资源池选择‘项目下， 选择单卡规格的资源
+      # (10) 创建训练作业
+      ```
 
 更多的细节请参考具体的script文件
 
@@ -110,68 +159,73 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 ```bash
 
 ├── tinydarknet
-    ├── README.md                     // Tiny-Darknet英文说明
-    ├── README_CN.md                  // Tiny-Darknet中文说明
-    ├── ascend310_infer               // 用于310推理
+├── README.md                           // Tiny-Darknet英文说明
+    ├── README_CN.md                    // Tiny-Darknet中文说明
+    ├── ascend310_infer                 // 用于310推理
     ├── scripts
-        ├──run_standalone_train.sh    // Ascend单卡训练shell脚本
-        ├──run_distribute_train.sh    // Ascend分布式训练shell脚本
-        ├──run_eval.sh                // Ascend评估shell脚本
-        ├──run_infer_310.sh           // Ascend310推理shell脚本
+        ├── run_standalone_train.sh     // Ascend单卡训练shell脚本
+        ├── run_distribute_train.sh     // Ascend分布式训练shell脚本
+        ├── run_eval.sh                 // Ascend评估shell脚本
+        └── run_infer_310.sh            // Ascend310推理shell脚本
     ├── src
-        ├─lr_scheduler    //学习率策略
-            ├─__init__.py    // 初始化文件
-            ├─linear_warmup.py    // linear_warmup策略
-            ├─warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr策略
-            ├─warmup_step_lr.py    // warmup_step_lr策略
-        ├──dataset.py                 // 创建数据集
-        ├──CrossEntropySmooth.py     // 损失函数
-        ├──tinydarknet.py             // Tiny-Darknet网络结构
-        ├──config.py                  // 参数配置
-    ├── train.py                       // 训练脚本
-    ├── eval.py                        //  评估脚本
-    ├── export.py                      // 导出checkpoint文件
-    ├── mindspore_hub_conf.py          // hub配置文件
-    ├── postprocess.py                 // 310推理后处理脚本
+        ├── lr_scheduler                // 学习率策略
+            ├── __init__.py             // 初始化文件
+            ├── linear_warmup.py        // linear_warmup策略
+            ├── warmup_cosine_annealing_lr.py     // warmup_cosine_annealing_lr策略
+            └── warmup_step_lr.py       // warmup_step_lr策略
+        ├── model_utils
+            ├── config.py               // 解析 *.yaml 参数配置文件
+            ├── device_adapter.py       // 区分本地/ModelArts训练
+            ├── local_adapter.py        // 本地训练获取相关环境变量
+            └── moxing_adapter.py       // ModelArts训练获取相关环境变量、交换数据
+        ├── dataset.py                  // 创建数据集
+        ├── CrossEntropySmooth.py       // 损失函数
+        └── tinydarknet.py              // Tiny-Darknet网络结构
+    ├── train.py                        // 训练脚本
+    ├── eval.py                         // 评估脚本
+    ├── export.py                       // 导出checkpoint文件
+    ├── imagenet_config.yaml            // 参数配置
+    ├── mindspore_hub_conf.py           // hub配置文件
+    └── postprocess.py                  // 310推理后处理脚本
 
 ```
 
 ## [脚本参数](#目录)
 
-训练和测试的参数可在 config.py 中进行设置
+训练和测试的参数可在 `imagenet_config.yaml` 中进行设置
 
-- Tiny-Darknet的配置文件
+- Tiny-Darknet的配置文件(仅列出部分参数)
 
   ```python
-  'pre_trained': 'False'    # 是否载入预训练模型
-  'num_classes': 1000       # 数据集中类的数量
-  'lr_init': 0.1            # 初始学习率
-  'batch_size': 128         # 训练的batch_size
-  'epoch_size': 500         # 总共的训练epoch
-  'momentum': 0.9           # 动量
-  'weight_decay': 1e-4      # 权重衰减率
-  'image_height': 224       # 输入图像的高度
-  'image_width': 224        # 输入图像的宽度
-  'data_path': './ImageNet_Original/train/'  # 训练数据集的绝对路径
-  'val_data_path': './ImageNet_Original/val/'  # 评估数据集的绝对路径
-  'device_target': 'Ascend' # 程序运行的设备
-  'keep_checkpoint_max': 10 # 仅仅保持最新的keep_checkpoint_max个checkpoint文件
-  'checkpoint_path': '/train_tinydarknet.ckpt'  # 保存checkpoint文件的绝对路径
-  'onnx_filename': 'tinydarknet.onnx' # 用于export.py 文件中的onnx模型的文件名
-  'air_filename': 'tinydarknet.air'   # 用于export.py 文件中的air模型的文件名
-  'lr_scheduler': 'exponential'     # 学习率策略
-  'lr_epochs': [70, 140, 210, 280]  # 学习率进行变化的epoch数
-  'lr_gamma': 0.3            # lr_scheduler为exponential时的学习率衰减因子
-  'eta_min': 0.0             # cosine_annealing策略中的eta_min
-  'T_max': 150               # cosine_annealing策略中的T-max
-  'warmup_epochs': 0         # 热启动的epoch数
-  'is_dynamic_loss_scale': 0 # 动态损失尺度
-  'loss_scale': 1024         # 损失尺度
-  'label_smooth_factor': 0.1 # 训练标签平滑因子
-  'use_label_smooth': True   # 是否采用训练标签平滑
+  pre_trained: False      # 是否载入预训练模型
+  num_classes: 1000       # 数据集中类的数量
+  lr_init: 0.1            # 初始学习率
+  batch_size: 128         # 训练的batch_size
+  epoch_size: 500         # 总共的训练epoch
+  momentum: 0.9           # 动量
+  weight_decay: 1e-4      # 权重衰减率
+  image_height: 224       # 输入图像的高度
+  image_width: 224        # 输入图像的宽度
+  train_data_dir: './ImageNet_Original/train/'    # 训练数据集的绝对路径
+  val_data_dir: './ImageNet_Original/val/'  # 评估数据集的绝对路径
+  device_target: 'Ascend' # 程序运行的设备
+  keep_checkpoint_max: 10 # 仅仅保持最新的keep_checkpoint_max个checkpoint文件
+  checkpoint_path: '/train_tinydarknet.ckpt'  # 保存checkpoint文件的绝对路径
+  onnx_filename: 'tinydarknet.onnx' # 用于export.py 文件中的onnx模型的文件名
+  air_filename: 'tinydarknet.air'   # 用于export.py 文件中的air模型的文件名
+  lr_scheduler: 'exponential'     # 学习率策略
+  lr_epochs: [70, 140, 210, 280]  # 学习率进行变化的epoch数
+  lr_gamma: 0.3            # lr_scheduler为exponential时的学习率衰减因子
+  eta_min: 0.0             # cosine_annealing策略中的eta_min
+  T_max: 150               # cosine_annealing策略中的T-max
+  warmup_epochs: 0         # 热启动的epoch数
+  is_dynamic_loss_scale: 0 # 动态损失尺度
+  loss_scale: 1024         # 损失尺度
+  label_smooth_factor: 0.1 # 训练标签平滑因子
+  use_label_smooth: True   # 是否采用训练标签平滑
   ```
 
-更多的细节, 请参考`config.py`.
+更多的细节, 请参考`imagenet_config.yaml`.
 
 ## [训练过程](#目录)
 
@@ -180,7 +234,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  bash ./scripts/run_standalone_train.sh 0
+  bash ./scripts/run_standalone_train.sh [DEVICE_ID]
   ```
 
   上述的命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
@@ -207,7 +261,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  bash scripts/run_distribute_train.sh rank_table.json
+  bash scripts/run_distribute_train.sh [RANK_TABLE_FILE]
   ```
 
   上述的脚本命令将在后台中进行分布式训练，可以通过`train_parallel[X]/log`文件查看运行结果. 训练的损失值将以如下的形式展示:
@@ -229,7 +283,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 - 在Ascend资源上进行评估:
 
-  在运行如下命令前,请确认用于评估的checkpoint文件的路径.请将checkpoint路径设置为绝对路径,例如:"/username/imagenet/train_tinydarknet.ckpt"
+  在运行如下命令前,请确认用于评估的checkpoint文件的路径.checkpoint文件须包含在tinydarknet文件夹内.请将checkpoint路径设置为相对于 eval.py文件 的路径,例如:"./ckpts/train_tinydarknet.ckpt"(ckpts 与 eval.py 同级).
 
   ```python
   python eval.py > eval.log 2>&1 &  
@@ -259,7 +313,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 python export.py --dataset [DATASET] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
 ```
 
-参数没有ckpt_file选项，ckpt文件请按照`config.py`中参数`checkpoint_path`的路径存放。
+参数没有ckpt_file选项，ckpt文件请按照`imagenet_config.yaml`中参数`checkpoint_path`的路径存放。
 `EXPORT_FORMAT` 可选 ["AIR", "MINDIR"].
 
 ### 在Ascend310执行推理

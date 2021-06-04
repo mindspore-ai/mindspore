@@ -79,7 +79,7 @@ After installing MindSpore via the official website, you can start training and 
   bash ./scripts/run_standalone_train.sh 0
 
   # run distributed training example
-  bash ./scripts/run_distribute_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh /{path}/*.json
 
   # run evaluation example
   python eval.py > eval.log 2>&1 &
@@ -87,11 +87,61 @@ After installing MindSpore via the official website, you can start training and 
   bash ./script/run_eval.sh
   ```
 
-  For distributed training, a hccl configuration file with JSON format needs to be created in advance.
+  For distributed training, a hccl configuration file [RANK_TABLE_FILE] with JSON format needs to be created in advance.
 
   Please follow the instructions in the link below:
 
   <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.>
+
+- Running on ModelArts
+
+  If you want to run in modelarts, please check the official documentation of [modelarts](https://support.huaweicloud.com/modelarts/), and you can start training as follows.
+
+    - Training with 8 cards on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/tinydarknet" on the website UI interface.
+    # (4) Set the startup file to /{path}/tinydarknet/train.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/tinydarknet/imagenet_config.yaml.
+    #         1. Set ”batch_size: 64“ (not necessary)
+    #         2. Set ”enable_modelarts: True“
+    #         3. Set ”modelarts_dataset_unzip_name: {filenmae}",if the data is uploaded in the form of zip package.
+    #     b. adding on the website UI interface.
+    #         1. Add ”batch_size=64“ (not necessary)
+    #         2. Add ”enable_modelarts=True“
+    #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+    # (6) Upload the dataset or the zip package of dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of 8 cards.
+    # (10) Create your job.
+    ```
+
+    - evaluating with single card on ModelArts
+
+    ```python
+    # (1) Upload the code folder to S3 bucket.
+    # (2) Click to "create training task" on the website UI interface.
+    # (3) Set the code directory to "/{path}/not necessary" on the website UI interface.
+    # (4) Set the startup file to /{path}/not necessary/eval.py" on the website UI interface.
+    # (5) Perform a or b.
+    #     a. setting parameters in /{path}/not necessary/imagenet_config.yaml.
+    #         1. Set ”enable_modelarts: True“
+    #         2. Set “checkpoint_path: {checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+    #         3. Add ”modelarts_dataset_unzip_name: {filenmae}",if the data is uploaded in the form of zip package.
+    #     b. adding on the website UI interface.
+    #         1. Set ”enable_modelarts=True“
+    #         2. Set “checkpoint_path={checkpoint_path}”({checkpoint_path} Indicates the path of the weight file to be evaluated relative to the file 'eval.py', and the weight file must be included in the code directory.)
+    #         3. Add ”modelarts_dataset_unzip_name={filenmae}",if the data is uploaded in the form of zip package.
+    # (6)  Upload the dataset or the zip package of dataset to S3 bucket.
+    # (7) Check the "data storage location" on the website UI interface and set the "Dataset path" path (there is only data or zip package under this path).
+    # (8) Set the "Output file path" and "Job log path" to your path on the website UI interface.
+    # (9) Under the item "resource pool selection", select the specification of a single card.
+    # (10) Create your job.
+    ```
 
 For more details, please refer the specify script.
 
@@ -106,64 +156,69 @@ For more details, please refer the specify script.
     ├── README_CN.md                    // descriptions about Tiny-Darknet in Chinese
     ├── ascend310_infer                 // application for 310 inference
     ├── scripts
-        ├──run_standalone_train.sh      // shell script for single on Ascend
-        ├──run_distribute_train.sh                // shell script for distributed on Ascend
-        ├──run_eval.sh                 // shell script for evaluation on Ascend
-        ├──run_infer_310.sh            // shell script for inference on Ascend310
+        ├── run_standalone_train.sh     // shell script for single on Ascend
+        ├── run_distribute_train.sh     // shell script for distributed on Ascend
+        ├── run_eval.sh                 // shell script for evaluation on Ascend
+        ├── run_infer_310.sh            // shell script for inference on Ascend310
     ├── src
-        ├─lr_scheduler    //learning rate scheduler
-            ├─__init__.py    // init
-            ├─linear_warmup.py    // linear_warmup
-            ├─warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr
-            ├─warmup_step_lr.py    // warmup_step_lr
-        ├──dataset.py                 // creating dataset
-        ├──CrossEntropySmooth.py     // loss function
-        ├──tinydarknet.py             // Tiny-Darknet architecture
-        ├──config.py                  // parameter configuration
-    ├── train.py                       // training script
-    ├── eval.py                        //  evaluation script
-    ├── export.py                      // export checkpoint file into air/onnx
-    ├── mindspore_hub_conf.py          // hub config
-    ├── postprocess.py                 // postprocess script
+        ├── lr_scheduler                //learning rate scheduler
+            ├── __init__.py             // init
+            ├── linear_warmup.py        // linear_warmup
+            ├── warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr
+            ├── warmup_step_lr.py       // warmup_step_lr
+        ├── model_utils
+            ├── config.py               // parsing parameter configuration file of "*.yaml"
+            ├── device_adapter.py       // local or ModelArts training
+            ├── local_adapter.py        // get related environment variables in local training
+            └── moxing_adapter.py       // get related environment variables in ModelArts training
+        ├── dataset.py                  // creating dataset
+        ├── CrossEntropySmooth.py       // loss function
+        ├── tinydarknet.py              // Tiny-Darknet architecture
+    ├── train.py                        // training script
+    ├── eval.py                         //  evaluation script
+    ├── export.py                       // export checkpoint file into air/onnx
+    ├── imagenet_config.yaml            // parameter configuration
+    ├── mindspore_hub_conf.py           // hub config
+    ├── postprocess.py                  // postprocess script
 
 ```
 
 ## [Script Parameters](#contents)
 
-Parameters for both training and evaluation can be set in config.py
+Parameters for both training and evaluation can be set in `imagenet_config.yaml`
 
-- config for Tiny-Darknet
+- config for Tiny-Darknet(only some parameters are listed)
 
   ```python
-  'pre_trained': 'False'    # whether training based on the pre-trained model
-  'num_classes': 1000       # the number of classes in the dataset
-  'lr_init': 0.1            # initial learning rate
-  'batch_size': 128         # training batch_size
-  'epoch_size': 500         # total training epoch
-  'momentum': 0.9           # momentum
-  'weight_decay': 1e-4      # weight decay value
-  'image_height': 224       # image height used as input to the model
-  'image_width': 224        # image width used as input to the model
-  'data_path': './ImageNet_Original/train/'  # absolute full path to the train datasets
-  'val_data_path': './ImageNet_Original/val/'  # absolute full path to the evaluation datasets
-  'device_target': 'Ascend' # device running the program
-  'keep_checkpoint_max': 10 # only keep the last keep_checkpoint_max checkpoint
-  'checkpoint_path': '/train_tinydarknet.ckpt'  # the absolute full path to save the checkpoint file
-  'onnx_filename': 'tinydarknet.onnx' # file name of the onnx model used in export.py
-  'air_filename': 'tinydarknet.air'   # file name of the air model used in export.py
-  'lr_scheduler': 'exponential'     # learning rate scheduler
-  'lr_epochs': [70, 140, 210, 280]  # epoch of lr changing
-  'lr_gamma': 0.3            # decrease lr by a factor of exponential lr_scheduler
-  'eta_min': 0.0             # eta_min in cosine_annealing scheduler
-  'T_max': 150               # T-max in cosine_annealing scheduler
-  'warmup_epochs': 0         # warmup epoch
-  'is_dynamic_loss_scale': 0 # dynamic loss scale
-  'loss_scale': 1024         # loss scale
-  'label_smooth_factor': 0.1 # label_smooth_factor
-  'use_label_smooth': True   # label smooth
+  pre_trained: False      # whether training based on the pre-trained model
+  num_classes: 1000       # the number of classes in the dataset
+  lr_init: 0.1            # initial learning rate
+  batch_size: 128         # training batch_size
+  epoch_size: 500         # total training epoch
+  momentum: 0.9           # momentum
+  weight_decay: 1e-4      # weight decay value
+  image_height: 224       # image height used as input to the model
+  image_width: 224        # image width used as input to the model
+  train_data_dir: './ImageNet_Original/train/'  # absolute full path to the train datasets
+  val_data_dir: './ImageNet_Original/val/'  # absolute full path to the evaluation datasets
+  device_target: 'Ascend' # device running the program
+  keep_checkpoint_max: 10 # only keep the last keep_checkpoint_max checkpoint
+  checkpoint_path: '/train_tinydarknet.ckpt'  # the absolute full path to save the checkpoint file
+  onnx_filename: 'tinydarknet.onnx' # file name of the onnx model used in export.py
+  air_filename: 'tinydarknet.air'   # file name of the air model used in export.py
+  lr_scheduler: 'exponential'     # learning rate scheduler
+  lr_epochs: [70, 140, 210, 280]  # epoch of lr changing
+  lr_gamma: 0.3            # decrease lr by a factor of exponential lr_scheduler
+  eta_min: 0.0             # eta_min in cosine_annealing scheduler
+  T_max: 150               # T-max in cosine_annealing scheduler
+  warmup_epochs: 0         # warmup epoch
+  is_dynamic_loss_scale: 0 # dynamic loss scale
+  loss_scale: 1024         # loss scale
+  label_smooth_factor: 0.1 # label_smooth_factor
+  use_label_smooth: True   # label smooth
   ```
 
-For more configuration details, please refer the script config.py.
+For more configuration details, please refer the script `imagenet_config.yaml`.
 
 ## [Training Process](#contents)
 
@@ -172,7 +227,7 @@ For more configuration details, please refer the script config.py.
 - running on Ascend：
 
   ```python
-  bash scripts/run_standalone_train.sh 0
+  bash scripts/run_standalone_train.sh [DEVICE_ID]
   ```
 
   The command above will run in the background, you can view the results through the file train.log.
@@ -199,7 +254,7 @@ For more configuration details, please refer the script config.py.
 - running on Ascend：
 
   ```python
-  bash ./scripts/run_distribute_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh [RANK_TABLE_FILE]
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file train_parallel[X]/log. The loss value will be achieved as follows:
@@ -252,7 +307,7 @@ For more configuration details, please refer the script config.py.
 python export.py --dataset [DATASET] --file_name [FILE_NAME] --file_format [EXPORT_FORMAT]
 ```
 
-The parameter does not have the ckpt_file option. Please store the ckpt file according to the path of the parameter `checkpoint_path` in `config.py`.
+The parameter does not have the ckpt_file option. Please store the ckpt file according to the path of the parameter `checkpoint_path` in `imagenet_config.yaml`.
 `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 ### Infer on Ascend310
