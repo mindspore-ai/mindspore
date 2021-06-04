@@ -32,7 +32,7 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "include/context.h"
-#include "src/kernel.h"
+#include "include/kernel.h"
 #include "src/inner_kernel.h"
 
 namespace mindspore::kernel {

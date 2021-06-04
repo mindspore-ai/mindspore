@@ -29,7 +29,7 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "include/context.h"
-#include "src/kernel.h"
+#include "include/kernel.h"
 
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {

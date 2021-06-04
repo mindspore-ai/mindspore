@@ -24,7 +24,7 @@
 #include "schema/model_generated.h"
 #include "include/context.h"
 #include "include/ms_tensor.h"
-#include "src/kernel.h"
+#include "include/kernel.h"
 
 namespace mindspore {
 namespace kernel {
