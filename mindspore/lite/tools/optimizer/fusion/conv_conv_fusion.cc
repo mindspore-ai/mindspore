@@ -15,7 +15,6 @@
  */
 
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
-#include <functional>
 #include <memory>
 #include <vector>
 #include "ops/fusion/conv2d_fusion.h"

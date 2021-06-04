@@ -456,6 +456,5 @@ TFNodeRegistrar g_tfLogParser("Log", new TFLogParser());
 TFNodeRegistrar g_tfSqrtParser("Sqrt", new TFSqrtParser());
 TFNodeRegistrar g_tfPowParser("Pow", new TFPowParser());
 TFNodeRegistrar g_tfAbsParser("Abs", new TFAbsParser());
-
 }  // namespace lite
 }  // namespace mindspore

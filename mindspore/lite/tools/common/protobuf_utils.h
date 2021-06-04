@@ -29,9 +29,9 @@ namespace lite {
 bool ReadProtoFromCodedInputStream(google::protobuf::io::CodedInputStream *coded_stream,
                                    google::protobuf::Message *proto);
 
-STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message);
+STATUS ReadProtoFromText(const std::string &file, google::protobuf::Message *message);
 
-STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *message);
+STATUS ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Message *message);
 }  // namespace lite
 }  // namespace mindspore
 

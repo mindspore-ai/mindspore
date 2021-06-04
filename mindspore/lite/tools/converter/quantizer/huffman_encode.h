@@ -63,7 +63,7 @@ class HuffmanEncode {
 
  private:
   std::map<int, std::string> huffman_table_;
-  std::string huffman_encoded_str_ = "";
+  std::string huffman_encoded_str_;
   std::vector<HuffmanNodePtr> huffman_nodes_;
 
   STATUS GetHuffmanPriorityQueue(const int8_t *input_datas, size_t input_data_size, HuffmanPriorityQueue *pq);

@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,8 @@ void FunctionalizeControlOpPass::InitNodeClusters(const FuncGraphPtr &func_graph
   }
   // sort node_clusters_
   std::sort(node_clusters_.begin(), node_clusters_.end(),
-            [](std::pair<std::string, std::vector<AnfNodePtr>> a, std::pair<std::string, std::vector<AnfNodePtr>> b) {
+            [](const std::pair<std::string, std::vector<AnfNodePtr>> &a,
+               const std::pair<std::string, std::vector<AnfNodePtr>> &b) {
               if (a.first.size() != b.first.size()) {
                 return a.first.size() > b.first.size();
               } else {
@@ -143,7 +144,7 @@ CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, con
     return node;
   }
   CNodePtr aim_node = nullptr;
-  std::deque<AnfNodePtr> todo(256);
+  std::deque<AnfNodePtr> todo(UINT8_MAX + 1);
   todo.clear();
   for (auto &input_node : node->inputs()) {
     if (aim_func(input_node)) {
@@ -158,11 +159,7 @@ CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, con
     AnfNodePtr todo_node = todo.front();
     todo.pop_front();
     if (aim_func(todo_node)) {
-      if (filter_func == nullptr) {
-        aim_node = utils::cast<CNodePtr>(todo_node);
-        todo.clear();
-        break;
-      } else if (filter_func(todo_node)) {
+      if (filter_func == nullptr || filter_func(todo_node)) {
         aim_node = utils::cast<CNodePtr>(todo_node);
         todo.clear();
         break;

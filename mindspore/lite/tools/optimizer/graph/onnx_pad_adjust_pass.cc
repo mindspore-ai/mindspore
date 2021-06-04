@@ -64,7 +64,7 @@ ParameterPtr OnnxPadAdjustPass::CreateNewParameter(const FuncGraphPtr &func_grap
   return parameter;
 }
 
-CNodePtr OnnxPadAdjustPass::NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
+CNodePtr OnnxPadAdjustPass::NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                              const std::vector<int> &shape) {
   auto reshape_prim = std::make_shared<ops::Reshape>();
   if (reshape_prim == nullptr) {
@@ -81,8 +81,8 @@ CNodePtr OnnxPadAdjustPass::NewReshapeOpNode(const FuncGraphPtr &func_graph, con
   return reshape;
 }
 
-CNodePtr OnnxPadAdjustPass::NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                               std::vector<int> perm) {
+CNodePtr OnnxPadAdjustPass::NewTransposeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                               const std::vector<int> &perm) {
   auto transpose_prim = std::make_shared<ops::Transpose>();
   if (transpose_prim == nullptr) {
     MS_LOG(ERROR) << "create transpose failed.";

@@ -28,7 +28,7 @@ class UpdateConv2DParamPass : public Pass {
   UpdateConv2DParamPass() : Pass("update_conv2d_param_pass") {}
   ~UpdateConv2DParamPass() override = default;
   lite::STATUS UpdateCommonConv2D(const CNodePtr &cnode);
-  lite::STATUS UpdateDepthWiseConv2D(const CNodePtr &cnode);
+  static lite::STATUS UpdateDepthWiseConv2D(const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &graph) override;
   void SetFmkType(FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 

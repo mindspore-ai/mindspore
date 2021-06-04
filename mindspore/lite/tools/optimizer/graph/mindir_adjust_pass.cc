@@ -163,15 +163,15 @@ void CheckQuantParams(const PrimitivePtr &prim) {
   auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
   auto input_quant_params = quant_param_holder->input_quant_params();
   bool is_quant = false;
-  for (size_t i = 0; i < input_quant_params.size(); ++i) {
-    if (!input_quant_params.at(i).empty() && input_quant_params.at(i).at(0).inited) {
+  for (auto &input_quant_param : input_quant_params) {
+    if (!input_quant_param.empty() && input_quant_param.at(0).inited) {
       is_quant = true;
       break;
     }
   }
   auto output_quant_params = quant_param_holder->output_quant_params();
-  for (size_t i = 0; i < output_quant_params.size(); ++i) {
-    if (!output_quant_params.at(i).empty() && output_quant_params.at(i).at(0).inited) {
+  for (auto &output_quant_param : output_quant_params) {
+    if (!output_quant_param.empty() && output_quant_param.at(0).inited) {
       is_quant = true;
     }
   }

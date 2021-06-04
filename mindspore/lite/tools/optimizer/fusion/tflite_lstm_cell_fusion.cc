@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
-#include <algorithm>
 #include <memory>
+#include <algorithm>
 #include <functional>
 #include "ops/lstm.h"
 #include "ops/squeeze.h"
@@ -51,7 +51,7 @@ bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
 }
 }  // namespace
 
-STATUS TfliteLstmCellFusion::GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) const {
+STATUS TfliteLstmCellFusion::GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) {
   if (param_value == nullptr || v == nullptr) {
     MS_LOG(ERROR) << "param_value or v is nullptr";
     return RET_ERROR;
@@ -72,7 +72,7 @@ STATUS TfliteLstmCellFusion::GetFloatScalarFromParamValueLite(const AnfNodePtr &
   }
   auto default_param_ptr = utils::cast<ParamValueLitePtr>(default_param);
   auto tensor_shape = default_param_ptr->tensor_shape();
-  if (!(tensor_shape.size() == 0 || (tensor_shape.size() == 1 && tensor_shape[0] == 1))) {
+  if (!(tensor_shape.empty() || (tensor_shape.size() == 1 && tensor_shape[0] == 1))) {
     MS_LOG(DEBUG) << "default param is not scalar";
     return RET_ERROR;
   }
@@ -108,7 +108,7 @@ TfliteLstmCellFusion::TfliteLstmCellFusion(const std::string &name, bool multigr
   hidden_zoneout_new_ = std::make_shared<Var>();
 }
 
-AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) {
   auto is_parameter1 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
@@ -217,7 +217,7 @@ EquivPtr TfliteLstmCellFusion::MatchGraph(const FuncGraphPtr &func_graph, const 
 }
 
 // make sure that only 3,4,5 output of while is referenced
-bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode) const {
+bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(while_cnode != nullptr);
   auto manager = func_graph->manager();
@@ -309,7 +309,7 @@ bool TfliteLstmCellFusion::CheckBodyGraph(const FuncGraphPtr &func_graph, const 
 }
 
 STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &params, const ParameterPtr &new_param,
-                                              bool is_bias) const {
+                                              bool is_bias) {
   MS_ASSERT(new_param != nullptr);
   MS_ASSERT(params.size() == 4);
   std::vector<float *> data_ptrs;
@@ -527,7 +527,7 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
 }
 
 STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode,
-                                                 const CNodePtr &lstm_cnode, const CNodePtr &output_get_item) const {
+                                                 const CNodePtr &lstm_cnode, const CNodePtr &output_get_item) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(while_cnode != nullptr);
   auto manager = func_graph->manager();
@@ -611,7 +611,7 @@ STATUS TfliteLstmCellFusion::SetAbstractTuple(const CNodePtr &cnode, const int o
 }
 
 CNodePtr TfliteLstmCellFusion::CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
-                                                 const std::vector<int> &axis) const {
+                                                 const std::vector<int> &axis) {
   MS_ASSERT(func_graph != nullptr);
   auto squeeze_prim = std::make_shared<ops::Squeeze>();
   std::vector<int64_t> axis_vec;

@@ -17,16 +17,16 @@
 #include <string>
 #include "tools/cropper/cropper.h"
 #include "tools/cropper/cropper_utils.h"
-#define BUF_SIZE 1024
 
 namespace mindspore {
 namespace lite {
 namespace cropper {
-static const char *DELIM_COMMA = ",";
+const char *DELIM_COMMA = ",";
+constexpr int BUF_SIZE = 1024;
 
 int Cropper::ReadPackage() {
   std::ifstream in_file(this->flags_->package_file_);
-  if (ValidFile(in_file, this->flags_->package_file_.c_str()) == RET_OK) {
+  if (ValidFile(in_file, this->flags_->package_file_) == RET_OK) {
     in_file.close();
 
     char buf[BUF_SIZE];
@@ -169,7 +169,7 @@ int Cropper::GetModelFiles() {
 
 int Cropper::GetOpMatchFiles() {
   std::ifstream in_file(this->flags_->config_file_);
-  if (ValidFile(in_file, this->flags_->config_file_.c_str()) == RET_OK) {
+  if (ValidFile(in_file, this->flags_->config_file_) == RET_OK) {
     MS_LOG(DEBUG) << this->flags_->config_file_.c_str();
     char buf[BUF_SIZE];
     while (!in_file.eof()) {

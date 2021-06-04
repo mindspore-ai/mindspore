@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,16 +133,7 @@ const BaseRef ConvBatchNormFusion::DefinePattern() const {
   auto bn_other_var = std::make_shared<SeqVar>();
   return VectorRef({bn_var, conv_var, bn_mean_var, bn_variable_var, bn_other_var});
 }
-// BatchNorm weight Tensor definition:
-// caffe
-//   mean  --0
-//   variance  --1
-//   scale_factor  --2
-// tensorflow
-//   scale    -- 0
-//   bias        --1
-//   estimated_mean  --2
-//   estimated_variance  --3
+
 void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
                                          float *trans_bias) const {
   MS_ASSERT(bn_node != nullptr);

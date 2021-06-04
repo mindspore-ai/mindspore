@@ -44,8 +44,12 @@
 #include "src/common/file_utils.h"
 
 namespace mindspore::lite::quant {
-static constexpr size_t UINT8_QUANTIZATION = 8;
-static constexpr size_t WEIGHT_INDEX = 1;
+constexpr size_t UINT8_QUANTIZATION = 8;
+constexpr size_t WEIGHT_INDEX = 1;
+constexpr size_t MAX_BIT = 8;
+constexpr size_t MAX_NUM_1024 = 1024;
+constexpr size_t PERCENT_BASE = 100;
+constexpr size_t MILLISECONDS_BASE = 10;
 
 const char kMethodMaxMin[] = "MAX_MIN";
 const char kMethodKL[] = "KL";
@@ -81,7 +85,7 @@ class QuantStrategy {
 
   bool CanConvOpQuantized(const CNodePtr &node) const;
   bool CanMulOpQuantized(const CNodePtr &node) const;
-  bool CanOpPostQuantized(AnfNodePtr &node) const;
+  static bool CanOpPostQuantized(const AnfNodePtr &node);
 
   size_t m_weight_size_;
   size_t m_conv_weight_quant_channel_threshold_;
@@ -108,7 +112,7 @@ std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 
-STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size);
+STATUS UpdateTensorDataAndSize(const ParamValueLitePtr &weight, void *quant_datas, int new_size);
 
 void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                          bool channel_at_first, float *desired_max, float *desired_min);

@@ -43,8 +43,8 @@ lite::STATUS GetTransposePerm(schema::Format src_format, schema::Format dst_form
     MS_LOG(ERROR) << "src_format or dst_format is error.";
     return lite::RET_ERROR;
   }
-  for (size_t i = 0; i < src_format_str.size(); ++i) {
-    auto pos = dst_format_str.find(src_format_str[i]);
+  for (char i : src_format_str) {
+    auto pos = dst_format_str.find(i);
     if (pos == std::string::npos) {
       MS_LOG(ERROR) << "src_format and dst_format don't match.";
       return lite::RET_ERROR;
@@ -60,7 +60,7 @@ void WeightFormatTransformPass::SetFmkType(FmkType type) { this->fmk_type = type
 void WeightFormatTransformPass::SetDstFormat(schema::Format format) { this->dst_format = format; }
 lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const FuncGraphPtr &graph,
                                                                         const ParameterPtr &weight_node,
-                                                                        std::vector<int> perm) {
+                                                                        const std::vector<int> &perm) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(weight_node != nullptr);
   auto node_list = TopoSort(graph->get_return());
@@ -148,7 +148,7 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     MS_ASSERT(weight_value->tensor_type() == TypeId::kNumberTypeFloat32 ||
               weight_value->tensor_type() == TypeId::kNumberTypeUInt8);
     lite::STATUS status;
-    schema::Format src_format = static_cast<schema::Format>(weight_value->format());
+    auto src_format = static_cast<schema::Format>(weight_value->format());
     schema::Format weight_dst_format = schema::Format::Format_KHWC;
     if (dst_format != schema::Format::Format_NUM_OF_FORMAT) {
       weight_dst_format = dst_format;

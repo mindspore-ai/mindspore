@@ -307,9 +307,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
     make_tuple_inputs.emplace_back(make_tuple_prim);
     for (auto outputNode : tflite_subgraph->outputs) {
-      outputNode = outputNode < 0 ? outputNode + tflite_subgraph->tensors.size() : outputNode;
-      auto cnode = nodes_.at(outputNode);
-      if (nullptr == cnode) {
+      auto output_node = outputNode < 0 ? outputNode + tflite_subgraph->tensors.size() : outputNode;
+      auto cnode = nodes_.at(output_node);
+      if (cnode == nullptr) {
         MS_LOG(ERROR) << "Can't find input node.";
         return RET_NOT_FIND_OP;
       }
@@ -336,13 +336,13 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
       MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
-    int outputNode = tflite_subgraph->outputs.front() < 0
-                       ? static_cast<int>(tflite_subgraph->outputs.front() + tflite_subgraph->tensors.size())
-                       : static_cast<int>(tflite_subgraph->outputs.front());
+    int output_node = tflite_subgraph->outputs.front() < 0
+                        ? static_cast<int>(tflite_subgraph->outputs.front() + tflite_subgraph->tensors.size())
+                        : static_cast<int>(tflite_subgraph->outputs.front());
     auto valueNode = NewValueNode(returnPrim);
     std::vector<AnfNodePtr> op_inputs{valueNode};
-    auto cnode = nodes_.at(outputNode);
-    if (nullptr == cnode) {
+    auto cnode = nodes_.at(output_node);
+    if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";
       return RET_NOT_FIND_OP;
     }
@@ -387,7 +387,11 @@ STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, Para
       MS_LOG(ERROR) << "new char[] failed";
       return RET_MEMORY_FAILED;
     }
-    std::memcpy(tensor_data, data.data(), size);
+    if (memcpy_s(tensor_data, size, data.data(), size) != EOK) {
+      MS_LOG(ERROR) << "memcpy data failed";
+      delete[] tensor_data;
+      return RET_ERROR;
+    }
     param_value->SetTensorData(tensor_data, size);
   }
   parameter->set_default_param(param_value);

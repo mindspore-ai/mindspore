@@ -32,10 +32,10 @@ class MindirAdjustPass : public Pass {
   ~MindirAdjustPass() override = default;
   void SetQuantType(QuantType quant_type) { quant_type_ = quant_type; }
   void SetFmkType(FmkType fmk_type) { fmk_type_ = fmk_type; }
-  int ValueNodeInt64Convert(AnfNodePtr anf_node);
+  static int ValueNodeInt64Convert(AnfNodePtr anf_node);
   void SetTrainFlag(bool train_flag) { train_flag_ = train_flag; }
-  int ParameterNodeConvert(AnfNodePtr anf_node);
-  int ComputeQuantParams(AnfNodePtr anf_node);
+  static int ParameterNodeConvert(AnfNodePtr anf_node);
+  static int ComputeQuantParams(AnfNodePtr anf_node);
   bool Run(const FuncGraphPtr &graph) override;
 
  protected:

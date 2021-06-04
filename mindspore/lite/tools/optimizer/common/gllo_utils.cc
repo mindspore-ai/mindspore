@@ -111,7 +111,7 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
       AnfNodePtr node = SexpToNode(x, std::make_shared<Var>("G"), primitive_vars, true);
       input_nodes.push_back(node);
     }
-    VarPtr var_ptr = utils::cast<VarPtr>(graph);
+    auto var_ptr = utils::cast<VarPtr>(graph);
     return std::make_shared<CNode>(input_nodes, var_ptr);
   }
 
@@ -146,9 +146,8 @@ std::vector<int> CastToInt(const ValuePtr &value) {
     if (!value->cast<ValueSequeuePtr>()->value().empty()) {
       if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
         auto origin_value = GetValue<std::vector<int64_t>>(value);
-        for (size_t index = 0; index < origin_value.size(); ++index) {
-          cur_value.push_back(static_cast<int>(origin_value[index]));
-        }
+        std::transform(origin_value.begin(), origin_value.end(), std::back_inserter(cur_value),
+                       [](int64_t index) { return static_cast<int>(index); });
       } else {
         cur_value = GetValue<std::vector<int>>(value);
       }
@@ -180,11 +179,10 @@ std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
           ->type()
           ->number_type() == kNumberTypeInt64) {
       auto origin_value = GetValue<std::vector<std::vector<int64_t>>>(value);
-      for (size_t i = 0; i < origin_value.size(); ++i) {
+      for (auto &i : origin_value) {
         std::vector<int> cur_value;
-        for (size_t j = 0; j < origin_value.at(i).size(); ++j) {
-          cur_value.push_back(static_cast<int>(origin_value[i][j]));
-        }
+        std::transform(i.begin(), i.end(), std::back_inserter(cur_value),
+                       [](int64_t j) { return static_cast<int>(j); });
         result_value.push_back(cur_value);
       }
     } else {
@@ -208,7 +206,7 @@ bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_ty
   return false;
 }
 
-bool AnfEqualPrimitive(AnfNodePtr a_node, AnfNodePtr b_node) {
+bool AnfEqualPrimitive(const AnfNodePtr &a_node, const AnfNodePtr &b_node) {
   auto a_value_node = a_node->cast<ValueNodePtr>();
   auto b_value_node = b_node->cast<ValueNodePtr>();
   if (a_value_node == nullptr || b_value_node == nullptr) {
@@ -232,7 +230,7 @@ bool AnfEqualPrimitive(AnfNodePtr a_node, AnfNodePtr b_node) {
   return a_prim->name() == b_prim->name();
 }
 
-bool AnfEqualValueNode(AnfNodePtr a_node, AnfNodePtr b_node) {
+bool AnfEqualValueNode(const AnfNodePtr &a_node, const AnfNodePtr &b_node) {
   auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
   auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
   if (a_value_node_ptr == nullptr || b_value_node_ptr == nullptr) {
@@ -476,7 +474,7 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     return nullptr;
   }
   auto inputs = cnode->inputs();
-  if (!(0 < index && index < inputs.size())) {
+  if (!(index > 0 && index < inputs.size())) {
     return nullptr;
   }
   auto input = inputs[index];
@@ -583,7 +581,7 @@ bool IsQuantNode(const BaseRef &n) {
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return 0;
+    return false;
   }
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
@@ -625,7 +623,7 @@ size_t GetOutputTensorNum(const AnfNodePtr &node) {
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   if (node == nullptr || graph == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return 0;
+    return false;
   }
   auto output_node_list = GetRealNodeUsedList(graph, node);
   if (output_node_list == nullptr) {

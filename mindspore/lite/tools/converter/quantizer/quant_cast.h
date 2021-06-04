@@ -27,7 +27,7 @@ class QuantCast {
  public:
   QuantCast() = default;
   ~QuantCast() = default;
-  STATUS Run(const FuncGraphPtr &graph);
+  static STATUS Run(const FuncGraphPtr &graph);
   void SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
 
  private:

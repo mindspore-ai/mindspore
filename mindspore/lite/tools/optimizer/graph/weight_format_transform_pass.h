@@ -36,10 +36,10 @@ class WeightFormatTransformPass : public Pass {
 
  private:
   lite::STATUS ConvWeightFormatTrans(const FuncGraphPtr &graph);
-  lite::STATUS TransposeInsertForWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
-                                               std::vector<int> perm);
-  lite::STATUS HandleWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
-                                   schema::Format src_format, schema::Format dst_format);
+  static lite::STATUS TransposeInsertForWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
+                                                      const std::vector<int> &perm);
+  static lite::STATUS HandleWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
+                                          schema::Format src_format, schema::Format dst_format);
 
  private:
   QuantType quant_type = schema::QuantType_QUANT_NONE;

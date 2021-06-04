@@ -42,25 +42,24 @@ class TfBidirectionGruFusion : public PatternProcessPass {
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
   CNodePtr CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const EquivPtr &equiv,
                                     const std::string &base_name, int var_offset) const;
-  CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
-                              const std::string base_name) const;
+  static CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
+                                     const std::string &base_name);
 
  private:
-  AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
+  static AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars);
 
-  ParamValueLitePtr GetDefaultParamValue(const AnfNodePtr &parameter_anf) const;
-  lite::STATUS GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf, const AnfNodePtr &bw_cand_kernel_anf,
-                                     int *input_size, int *hidden_size) const;
-  ParameterPtr AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
-                                   const std::vector<int> &shape, const TypeId type, void **tensor_data) const;
-  lite::STATUS ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight, const int input_size,
-                                 const int hidden_size, float *gate_tensor_data, float *recu_tensor_data) const;
-  lite::STATUS ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias, const int hidden_size,
-                               float *tensor_data) const;
-  void CopyFlattenMatData(const float *mat, const int R, const int C, const int r0, const int r1, const int c0,
-                          const int c1, float *data, bool t = false) const;
-  CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
-                                 const AnfNodePtr &bw_init_state, const std::string base_name) const;
+  static ParamValueLitePtr GetDefaultParamValue(const AnfNodePtr &parameter_anf);
+  static lite::STATUS GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf, const AnfNodePtr &bw_cand_kernel_anf,
+                                            int *input_size, int *hidden_size);
+  static ParameterPtr AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
+                                          const std::vector<int> &shape, TypeId type, void **tensor_data);
+  static lite::STATUS ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight, int input_size,
+                                        int hidden_size, float *gate_tensor_data, float *recu_tensor_data);
+  static lite::STATUS ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias, int hidden_size,
+                                      float *tensor_data);
+  static void CopyFlattenMatData(const float *mat, int C, int r0, int r1, int c0, int c1, float *data, bool t = false);
+  static CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
+                                        const AnfNodePtr &bw_init_state, const std::string &base_name);
 
  protected:
   std::vector<VarPtr> fw_vars_;

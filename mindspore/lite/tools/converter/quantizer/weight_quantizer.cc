@@ -17,6 +17,7 @@
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include <list>
 #include <string>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 #include "tools/optimizer/common/gllo_utils.h"
@@ -26,12 +27,12 @@ using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(graph) {
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(std::move(graph)) {
   quant_strategy_ = std::make_unique<QuantStrategy>(0, 0);
   config_param_ = config;
 }
 
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(graph) {
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config) : Quantizer(std::move(graph)) {
   this->config_file_ = config.configFile;
   auto quant_size = config.quantWeightSize;
   this->bit_num_ = config.bitNum;
@@ -40,9 +41,9 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
   quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
   quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
   // parse type_id_
-  if (this->bit_num_ > 0 && this->bit_num_ <= 8) {
+  if (this->bit_num_ > 0 && this->bit_num_ <= MAX_BIT) {
     type_id_ = kNumberTypeInt8;
-  } else if (this->bit_num_ <= 16) {
+  } else if (this->bit_num_ <= (MAX_BIT * 2)) {
     type_id_ = kNumberTypeInt16;
   } else {
     MS_LOG(ERROR) << "invalid input bits";
@@ -57,8 +58,8 @@ WeightQuantizer::~WeightQuantizer() {
   }
 }
 
-STATUS WeightQuantizer::SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node,
-                                    const PrimitivePtr &primitive) {
+STATUS WeightQuantizer::SetAbstract(const ParamValueLitePtr &param_value, const ParameterPtr &param_node,
+                                    const PrimitivePtr &primitive) const {
   // set dtype
   param_value->set_tensor_type(type_id_);
   auto abstract_base = param_node->abstract();
@@ -78,7 +79,7 @@ STATUS WeightQuantizer::SetAbstract(ParamValueLitePtr param_value, ParameterPtr 
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoConvQuantize(CNodePtr cnode) {
+STATUS WeightQuantizer::DoConvQuantize(const CNodePtr &cnode) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
@@ -125,7 +126,7 @@ STATUS WeightQuantizer::DoConvQuantize(CNodePtr cnode) {
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
+STATUS WeightQuantizer::DoMulQuantize(const CNodePtr &cnode) {
   auto already_quant = false;
   ParamValueLitePtr param_value = nullptr;
   ParameterPtr param_node = nullptr;
@@ -136,7 +137,8 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
       param_node = inputNode->cast<ParameterPtr>();
       if ((param_node != nullptr) && param_node->has_default()) {
         param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
-        if ((param_value == nullptr) || (param_value->tensor_size() == 0) || (param_value->tensor_addr() == nullptr)) {
+        if (param_value == nullptr || param_value->tensor_size() == 0 || param_value->tensor_addr() == nullptr ||
+            param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
           param_value = nullptr;
           continue;
         } else if (param_value->tensor_type() == mindspore::kNumberTypeInt8 ||
@@ -145,9 +147,6 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
                        << " quantized";
           already_quant = true;
           break;
-        } else if (param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
-          param_value = nullptr;
-          continue;
         } else {
           index = i;
           break;
@@ -194,7 +193,7 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoLstmQuantize(CNodePtr cnode) {
+STATUS WeightQuantizer::DoLstmQuantize(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto op_name = cnode->fullname_with_scope();
 
@@ -227,7 +226,7 @@ STATUS WeightQuantizer::DoLstmQuantize(CNodePtr cnode) {
   return status;
 }
 
-STATUS WeightQuantizer::DoGatherQuantize(CNodePtr cnode) {
+STATUS WeightQuantizer::DoGatherQuantize(const CNodePtr &cnode) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_ASSERT(primitive != nullptr);
 
@@ -320,7 +319,6 @@ float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor:
 
   float total_mean_error = 0.0f;
   int tensor_cnt = expected_tensor.size();
-
   if (tensor_cnt <= 0) {
     MS_LOG(ERROR) << "unexpected tensor_cnt: " << tensor_cnt;
     return RET_ERROR;
@@ -379,7 +377,7 @@ float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor:
   return total_mean_error / tensor_cnt;
 }
 
-STATUS WeightQuantizer::RunFp32Graph(FuncGraphPtr func_graph) {
+STATUS WeightQuantizer::RunFp32Graph(const FuncGraphPtr &func_graph) {
   auto image_cnt = images_.at(0).size();
   if (!config_param_.input_shapes.empty()) {
     if (config_param_.input_shapes.size() != image_cnt) {
@@ -551,7 +549,8 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
       // copy origin data in case to recover
       auto *raw_data = static_cast<float *>(param_value->tensor_addr());
       auto elem_count = param_value->tensor_shape_size();
-      std::unique_ptr<float[]> origin_data(new (std::nothrow) float[elem_count]);
+      auto val = std::make_unique<float>(elem_count);
+      std::unique_ptr<float[]> origin_data(val.release());
       auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, param_value->tensor_size());
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy fail: "
@@ -559,7 +558,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
         return RET_ERROR;
       }
       // 1. try quant
-      for (int bit_num_t = 2; bit_num_t <= 8; bit_num_t++) {
+      for (size_t bit_num_t = 2; bit_num_t <= MAX_BIT; bit_num_t++) {
         status = TryQuant(bit_num_t, param_node, param_value, primitive);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "TryQuant failed.";
@@ -613,7 +612,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
           MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
           opname_bit_[op_name] = bit_num_t;
           break;
-        } else if (bit_num_t != 8) {
+        } else if (bit_num_t != MAX_BIT) {
           MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
                         << " [recover]";
           // recover
@@ -632,7 +631,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
   return status;
 }
 
-STATUS WeightQuantizer::DoMixedQuant(FuncGraphPtr func_graph) {
+STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
   // 0.2 Parse input calib files
   auto status = CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
   if (status != RET_OK) {
@@ -670,7 +669,7 @@ STATUS WeightQuantizer::DoMixedQuant(FuncGraphPtr func_graph) {
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoFixedQuant(FuncGraphPtr func_graph) {
+STATUS WeightQuantizer::DoFixedQuant(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
@@ -723,7 +722,7 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   if (config_param_.mixed) {
-    bit_num_ = 8;
+    bit_num_ = MAX_BIT;
     quant_max_ = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
     quant_min_ = -(1 << (unsigned int)(this->bit_num_ - 1));
     type_id_ = kNumberTypeInt8;

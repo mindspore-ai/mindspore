@@ -30,8 +30,8 @@ class TfliteInputsAdjustPass : public Pass {
 
   bool Run(const FuncGraphPtr &graph) override;
 
-  STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
-  STATUS AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
+  static STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
+  static STATUS AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::opt
 #endif  // LITE_TFLITE_INPUTS_ADJUST_PASS_H

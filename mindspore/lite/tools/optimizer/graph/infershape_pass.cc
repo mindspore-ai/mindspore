@@ -51,7 +51,7 @@ bool IsSpecialType(const CNodePtr &cnode) {
 }  // namespace
 
 abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor) {
-  MS_ASSERT(nullptr != tensor);
+  MS_ASSERT(tensor != nullptr);
   std::vector<int> shape(tensor->shape());
   auto type_id = static_cast<TypeId>(tensor->data_type());
   auto type_ptr = TypeIdToType(type_id);
@@ -281,7 +281,7 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
 STATUS InferShapePass::SetCNodeAbstract(const std::vector<lite::Tensor *> &output_tensors,
                                         const std::shared_ptr<CNode> &cnode) {
   MS_ASSERT(cnode != nullptr);
-  if (output_tensors.size() == 0) {
+  if (output_tensors.empty()) {
     MS_LOG(ERROR) << "empty output_tensors";
     return RET_ERROR;
   }

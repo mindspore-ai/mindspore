@@ -39,9 +39,9 @@ class TfliteLstmCellFusion : public PatternProcessPass {
                              const AnfNodePtr &pattern);
   static EquivPtr CheckSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &pattern,
                                 const PrimitiveVarMapPtr &primitive_vars, const AnfNodePtr &anf_sub_graph,
-                                const size_t cnode_num, const size_t all_node_num);
-  static lite::STATUS SetAbstractTuple(const CNodePtr &cnode, const int output_num);
-  static CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, const int item_index);
+                                size_t cnode_num, size_t all_node_num);
+  static lite::STATUS SetAbstractTuple(const CNodePtr &cnode, int output_num);
+  static CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, int item_index);
 
  protected:
   VarPtr cell_zoneout_old_ = nullptr;
@@ -50,24 +50,23 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   VarPtr hidden_zoneout_new_ = nullptr;
   std::vector<VarPtr> while_input_vars_;
 
-  lite::STATUS GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) const;
-  CNodePtr CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
-                             const std::vector<int> &axis) const;
-  lite::STATUS AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode,
-                                   const CNodePtr &lstm_cnode, const CNodePtr &output_get_item) const;
-  AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
+  static lite::STATUS GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v);
+  static CNodePtr CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
+                                    const std::vector<int> &axis);
+  static lite::STATUS AdjustOtherGetItems(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode,
+                                          const CNodePtr &lstm_cnode, const CNodePtr &output_get_item);
+  static AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars);
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
   virtual CNodePtr CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const EquivPtr &body_equiv,
-                                  const std::string &base_name, const float zoneout_cell,
-                                  const float zoneout_hidden) const;
+                                  const std::string &base_name, float zoneout_cell, float zoneout_hidden) const;
 
  private:
   bool CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const CNodePtr &while_cnode,
                       float *zoneout_cell, float *zoneout_hidden) const;
-  bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode) const;
+  static bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode);
 
-  lite::STATUS GetConcatedParam(const std::vector<AnfNodePtr> &params, const ParameterPtr &new_param,
-                                bool is_bias) const;
+  static lite::STATUS GetConcatedParam(const std::vector<AnfNodePtr> &params, const ParameterPtr &new_param,
+                                       bool is_bias);
 
  private:
   size_t while_input_var_num_ = 0;

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
-#include <algorithm>
 #include <vector>
 #include <string>
 #include <functional>
 #include <memory>
+#include <algorithm>
 #include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/resize.h"
 #include "include/errorcode.h"
 

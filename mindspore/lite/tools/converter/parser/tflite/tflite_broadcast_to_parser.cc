@@ -42,6 +42,5 @@ ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::Op
 
   return prim.release();
 }
-
 }  // namespace lite
 }  // namespace mindspore

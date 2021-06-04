@@ -69,7 +69,6 @@
 #include "ops/resize_bilinear.h"
 #include "ops/resize_nearest_neighbor.h"
 #include "ops/sigmoid.h"
-#include "ops/stack.h"
 #include "ops/tanh.h"
 #include "ops/sparse_softmax_cross_entropy_with_logits.h"
 

@@ -245,6 +245,5 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
   params->emplace_back(padRight);
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

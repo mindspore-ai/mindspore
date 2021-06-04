@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
   if (axis < -4 || axis >= 4) {
     MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";

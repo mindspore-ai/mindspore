@@ -6,7 +6,7 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *conv_activation_fusion.h
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUNCTIONALIZE_WHILE_H_
 #include <string>
 #include <set>
+#include <utility>
 #include <vector>
 #include <map>
 #include "backend/optimizer/common/pass.h"
@@ -32,8 +33,10 @@ constexpr const int POS_INVALID = -1;
 
 class FunctionalizeWhile {
  public:
-  FunctionalizeWhile(std::vector<AnfNodePtr> node_cluster, const CNodePtr &loop_cond_node, FuncGraphPtr fg)
-      : node_cluster_(node_cluster), loop_cond_node_(loop_cond_node), fg_(fg) {}
+  FunctionalizeWhile(std::vector<AnfNodePtr> node_cluster, CNodePtr loop_cond_node, FuncGraphPtr fg)
+      : node_cluster_(std::move(std::move(std::move(std::move(node_cluster))))),
+        loop_cond_node_(std::move(loop_cond_node)),
+        fg_(std::move(fg)) {}
 
   // while
   STATUS BuildWhileNode();
@@ -57,9 +60,9 @@ class FunctionalizeWhile {
   STATUS IdentifyBodySubgraphInput();
   STATUS IdentifyBodySubgraphOutput();
 
-  CNodePtr BlongToWhichSwitch(const CNodePtr &node);
-  CNodePtr BlongToWhichMerge(const CNodePtr &node);
-  CNodePtr BlongToWhichEnter(const CNodePtr &node);
+  static CNodePtr BlongToWhichSwitch(const CNodePtr &node);
+  static CNodePtr BlongToWhichMerge(const CNodePtr &node);
+  static CNodePtr BlongToWhichEnter(const CNodePtr &node);
   CNodePtr BlongToWhichExternalEnter(const CNodePtr &node);
   int PosInInputEnterNodes(const CNodePtr &node);
   STATUS DropUselessNodesInMainGraph();
