@@ -21,7 +21,6 @@
 #include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 namespace {
 std::string wrap_void(const std::string &a) { return "(void *)(" + a + ")"; }
 std::string wrap_uint8(const std::string &a) { return "(uint8_t *)(" + a + ")"; }
@@ -370,7 +369,6 @@ int ArithmeticFP32Coder::BatchScalarCalc(int task_id, CoderContext *const contex
   int out_offset = out_stride * start_batch;
 
   arithmetic_wrapper_info_ = {offset0, stride0, offset1, stride1, out_offset, out_stride, arithmetic_func_type_};
-
   code->CodeStruct("arithmetic_wrapper_info", arithmetic_wrapper_info_);
   code->CodeStruct("arithmetic_parameter", *arithmetic_parameter_);
   code->CodeFunction("BatchScalarCalc", wrap_uint8(input0_ptr_str_), wrap_uint8(input1_ptr_str_),

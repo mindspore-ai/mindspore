@@ -26,6 +26,7 @@
 using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::lite::micro::nnacl {
+constexpr int kLeftShift = 20;
 
 int AddInt8Coder::Prepare(CoderContext *const context) {
   input0 = input_tensors().at(0);
@@ -49,7 +50,7 @@ int AddInt8Coder::Init() {
   const double in1_scale = input1->quant_params().front().scale;
   const double out_scale = output_tensor_->quant_params().front().scale;
 
-  para_.left_shift_ = 20;
+  para_.left_shift_ = kLeftShift;
   const double twice_max_input_scale = 2 * std::max(in0_scale, in1_scale);
   const double in0_multiplier = in0_scale / twice_max_input_scale;
   const double in1_multiplier = in1_scale / twice_max_input_scale;

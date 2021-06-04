@@ -19,9 +19,9 @@
 #include <vector>
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
-static constexpr int kPerTensor = 1;
-static constexpr size_t kPerBatch = 3;
 namespace mindspore::lite::micro::nnacl {
+constexpr int kPerTensor = 1;
+constexpr size_t kPerBatch = 3;
 
 void Dequant::set_de_quant_buffer_str(const std::string &dequant_buffer_str) {
   de_quant_buffer_str_ = "(float *)(" + dequant_buffer_str + ")";

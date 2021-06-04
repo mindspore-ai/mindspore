@@ -22,7 +22,6 @@
 
 using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
-
 int TransposeFp32Coder::Resize() {
   if (input_tensors_.size() == 2) {
     param_->num_axes_ = input_tensors_.at(1)->ElementsNum();
@@ -31,7 +30,7 @@ int TransposeFp32Coder::Resize() {
     return RET_OK;
   }
   // get perm data
-  MS_ASSERT(input_tensors_.size() == 2);
+  MS_ASSERT(input_tensors_.size() == DIMENSION_2D);
   auto perm_tensor = input_tensors_.at(1);
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
   MS_ASSERT(perm_data != nullptr);

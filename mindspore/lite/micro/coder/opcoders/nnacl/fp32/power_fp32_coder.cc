@@ -24,7 +24,6 @@
 using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int PowerFP32Coder::DoCode(CoderContext *const context) {
   scale_ = reinterpret_cast<PowerParameter *>(parameter_)->scale_;
   shift_ = reinterpret_cast<PowerParameter *>(parameter_)->shift_;
@@ -37,13 +36,13 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   int len = MSMIN(stride, size - stride * kDefaultTaskId);
   std::string exp_addr;
   bool broadcast = true;
-  if (input_tensors_.size() == 2) {
+  if (input_tensors_.size() == DIMENSION_2D) {
     exp_addr = allocator_->GetRuntimeAddr(filter_tensor, true);
     broadcast = !(input_tensor_->shape() == filter_tensor->shape());
   }
   std::string cur_exp_str;
   if (broadcast) {
-    cur_exp_str = input_tensors_.size() == 2 ? exp_addr : "&power";
+    cur_exp_str = input_tensors_.size() == DIMENSION_2D ? exp_addr : "&power";
   } else {
     cur_exp_str = exp_addr;
   }

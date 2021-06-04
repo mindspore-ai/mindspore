@@ -23,7 +23,6 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 int ArithmeticSelfFP32Coder::ReSize() {
   data_size_ = input_tensor_->ElementsNum();
   thread_sz_count_ = MSMIN(thread_num_, static_cast<int>(data_size_));
@@ -109,5 +108,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Round, CPUOpCo
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Neg, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Erf, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
-
 }  // namespace mindspore::lite::micro::nnacl

@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::lite::micro::nnacl {
-
 int MatMulFP32Coder::InitShapeA() {
   std::vector<int> a_shape = input_tensor_->shape();
   int a_shape_size = static_cast<int>(a_shape.size());
@@ -32,12 +31,12 @@ int MatMulFP32Coder::InitShapeA() {
     return RET_ERROR;
   }
   int batch = 1;
-  for (int i = 0; i < a_shape_size - 2; ++i) {
+  for (int i = 0; i < a_shape_size - DIMENSION_2D; ++i) {
     batch *= a_shape.at(i);
   }
   params_->batch = batch;
-  params_->row_ = params_->a_transpose_ ? a_shape.at(a_shape_size - 1) : a_shape.at(a_shape_size - 2);
-  params_->deep_ = params_->a_transpose_ ? a_shape.at(a_shape_size - 2) : a_shape.at(a_shape_size - 1);
+  params_->row_ = params_->a_transpose_ ? a_shape.at(a_shape_size - 1) : a_shape.at(a_shape_size - DIMENSION_2D);
+  params_->deep_ = params_->a_transpose_ ? a_shape.at(a_shape_size - DIMENSION_2D) : a_shape.at(a_shape_size - 1);
   return RET_OK;
 }
 
@@ -49,12 +48,12 @@ int MatMulFP32Coder::InitShapeB() {
     return RET_ERROR;
   }
   int batch = 1;
-  for (int i = 0; i < b_shape_size - 2; ++i) {
+  for (int i = 0; i < b_shape_size - DIMENSION_2D; ++i) {
     batch *= b_shape.at(i);
   }
   params_->batch = batch;
-  params_->col_ = params_->b_transpose_ ? b_shape.at(b_shape_size - 2) : b_shape.at(b_shape_size - 1);
-  params_->deep_ = params_->b_transpose_ ? b_shape.at(b_shape_size - 1) : b_shape.at(b_shape_size - 2);
+  params_->col_ = params_->b_transpose_ ? b_shape.at(b_shape_size - DIMENSION_2D) : b_shape.at(b_shape_size - 1);
+  params_->deep_ = params_->b_transpose_ ? b_shape.at(b_shape_size - 1) : b_shape.at(b_shape_size - DIMENSION_2D);
   return RET_OK;
 }
 
