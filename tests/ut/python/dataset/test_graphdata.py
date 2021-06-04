@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset.engine import SamplingStrategy
+from mindspore.dataset.engine import OutputFormat
 
 DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
 SOCIAL_DATA_FILE = "../data/mindrecord/testGraphData/sns"
@@ -35,6 +36,23 @@ def test_graphdata_getfullneighbor():
     assert neighbor.shape == (10, 6)
     row_tensor = g.get_node_feature(neighbor.tolist(), [2, 3])
     assert row_tensor[0].shape == (10, 6)
+
+
+def test_graphdata_getallneighbors_special_format():
+    """
+    Test get all neighbors with special format
+    """
+    logger.info('test get all neighbors with special format.\n')
+    g = ds.GraphData(DATASET_FILE, 2)
+    nodes = g.get_all_nodes(1)
+    assert len(nodes) == 10
+
+    neighbor_coo = g.get_all_neighbors(nodes, 2, OutputFormat.COO)
+    assert neighbor_coo.shape == (20, 2)
+
+    offset_table, neighbor_csr = g.get_all_neighbors(nodes, 2, OutputFormat.CSR)
+    assert offset_table.shape == (10,)
+    assert neighbor_csr.shape == (20,)
 
 
 def test_graphdata_getnodefeature_input_check():

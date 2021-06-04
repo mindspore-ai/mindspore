@@ -21,6 +21,7 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset.engine import SamplingStrategy
+from mindspore.dataset.engine import OutputFormat
 
 DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
 
@@ -104,6 +105,14 @@ def test_graphdata_distributed():
                                       [1, 1, 0, 1, 0], [0, 0, 0, 0, 1], [0, 1, 0, 0, 0], [0, 0, 0, 1, 1],
                                       [0, 1, 1, 0, 0], [0, 1, 0, 1, 0]]
     assert row_tensor[2].tolist() == [1, 2, 3, 1, 4, 3, 5, 3, 5, 4]
+
+    neighbor_normal = g.get_all_neighbors(nodes, 2, OutputFormat.NORMAL)
+    assert neighbor_normal.shape == (10, 6)
+    neighbor_coo = g.get_all_neighbors(nodes, 2, OutputFormat.COO)
+    assert neighbor_coo.shape == (20, 2)
+    offset_table, neighbor_csr = g.get_all_neighbors(nodes, 2, OutputFormat.CSR)
+    assert offset_table.shape == (10,)
+    assert neighbor_csr.shape == (20,)
 
     edges = g.get_all_edges(0)
     assert edges.tolist() == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,

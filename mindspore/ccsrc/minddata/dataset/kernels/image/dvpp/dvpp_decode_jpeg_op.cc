@@ -104,7 +104,7 @@ Status DvppDecodeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     uint32_t decoded_heightStride = DecodeOut->heightStride;
     uint32_t decoded_width = DecodeOut->width;
     uint32_t decoded_widthStride = DecodeOut->widthStride;
-    // std::cout << "Decoded size: " << decoded_width << ", " << decoded_height << std::endl;
+
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output);

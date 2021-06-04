@@ -132,7 +132,7 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
     }
   }
   std::shared_ptr<Tensor> neighbors;
-  s = graph.GetAllNeighbors(node_list, meta_info.node_type[1], &neighbors);
+  s = graph.GetAllNeighbors(node_list, meta_info.node_type[1], OutputFormat::kNormal, &neighbors);
   EXPECT_TRUE(s.IsOk());
   EXPECT_TRUE(neighbors->shape().ToString() == "<10,6>");
   TensorRow features;
@@ -149,6 +149,47 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
               "Tensor (shape: <10>, Type: float32)\n[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]");
   EXPECT_TRUE(features[2]->shape().ToString() == "<10>");
   EXPECT_TRUE(features[2]->ToString() == "Tensor (shape: <10>, Type: int32)\n[1,2,3,1,4,3,5,3,5,4]");
+}
+
+TEST_F(MindDataTestGNNGraph, TestGetAllNeighborsSpecialFormat) {
+  std::string path = "data/mindrecord/testGraphData/testdata";
+  GraphDataImpl graph(path, 1);
+  Status s = graph.Init();
+  EXPECT_TRUE(s.IsOk());
+
+  MetaInfo meta_info;
+  s = graph.GetMetaInfo(&meta_info);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(meta_info.node_type.size() == 2);
+
+  std::shared_ptr<Tensor> nodes;
+  s = graph.GetAllNodes(meta_info.node_type[0], &nodes);
+  EXPECT_TRUE(s.IsOk());
+  std::vector<NodeIdType> node_list;
+  for (auto itr = nodes->begin<NodeIdType>(); itr != nodes->end<NodeIdType>(); ++itr) {
+    node_list.push_back(*itr);
+    if (node_list.size() >= 10) {
+      break;
+    }
+  }
+  // Check COO format
+  std::shared_ptr<Tensor> neighbors_coo;
+  s = graph.GetAllNeighbors(node_list, meta_info.node_type[1], OutputFormat::kCoo, &neighbors_coo);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(neighbors_coo->shape().ToString() == "<20,2>");
+  EXPECT_TRUE(neighbors_coo->ToString() ==
+              "Tensor (shape: <20,2>, Type: int32)\n"
+              "[[101,201],[101,205],[101,206],[102,201],[102,202],[103,203],[103,205],[103,206],[103,207],[103,208],"
+              "[105,204],[106,202],[106,203],[107,201],[107,203],[107,207],[108,208],[109,210],[110,201],[110,210]]");
+  // Check CSR format
+  std::shared_ptr<Tensor> neighbors_csr;
+  s = graph.GetAllNeighbors(node_list, meta_info.node_type[1], OutputFormat::kCsr, &neighbors_csr);
+  EXPECT_TRUE(s.IsOk());
+  EXPECT_TRUE(neighbors_csr->shape().ToString() == "<30>");
+  EXPECT_TRUE(
+    neighbors_csr->ToString() ==
+    "Tensor (shape: <30>, Type: int32)\n"
+    "[0,3,5,10,10,11,13,16,17,18,201,205,206,201,202,203,205,206,207,208,204,202,203,201,203,207,208,210,201,210]");
 }
 
 TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {

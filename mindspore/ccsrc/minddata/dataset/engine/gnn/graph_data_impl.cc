@@ -153,23 +153,68 @@ Status GraphDataImpl::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType, 
 }
 
 Status GraphDataImpl::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
-                                      std::shared_ptr<Tensor> *out) {
+                                      const OutputFormat &format, std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
   RETURN_IF_NOT_OK(CheckNeighborType(neighbor_type));
 
   std::vector<std::vector<NodeIdType>> neighbors;
-  size_t max_neighbor_num = 0;
+
+  size_t max_neighbor_num = 0;                                // Special parameter for normal format
+  size_t total_edge_num = 0;                                  // Special parameter for coo and csr format
+  std::vector<NodeIdType> offset_table(node_list.size(), 0);  // Special parameter for csr format
+
+  // Collect information of adjacent table
   neighbors.resize(node_list.size());
   for (size_t i = 0; i < node_list.size(); ++i) {
     std::shared_ptr<Node> node;
     RETURN_IF_NOT_OK(GetNodeByNodeId(node_list[i], &node));
-    RETURN_IF_NOT_OK(node->GetAllNeighbors(neighbor_type, &neighbors[i]));
-    max_neighbor_num = max_neighbor_num > neighbors[i].size() ? max_neighbor_num : neighbors[i].size();
+    if (format == OutputFormat::kNormal) {
+      RETURN_IF_NOT_OK(node->GetAllNeighbors(neighbor_type, &neighbors[i]));
+      max_neighbor_num = max_neighbor_num > neighbors[i].size() ? max_neighbor_num : neighbors[i].size();
+    } else if (format == OutputFormat::kCoo) {
+      RETURN_IF_NOT_OK(node->GetAllNeighbors(neighbor_type, &neighbors[i], true));
+      total_edge_num += neighbors[i].size();
+    } else {
+      RETURN_IF_NOT_OK(node->GetAllNeighbors(neighbor_type, &neighbors[i], true));
+      total_edge_num += neighbors[i].size();
+      if (i < node_list.size() - 1) {
+        offset_table[i + 1] = total_edge_num;
+      }
+    }
   }
 
-  RETURN_IF_NOT_OK(ComplementVector<NodeIdType>(&neighbors, max_neighbor_num, kDefaultNodeId));
-  RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>(neighbors, DataType(DataType::DE_INT32), out));
-
+  // By applying those information we obtained above, deal with the output with corresponding to
+  // output format
+  if (format == OutputFormat::kNormal) {
+    RETURN_IF_NOT_OK(ComplementVector<NodeIdType>(&neighbors, max_neighbor_num, kDefaultNodeId));
+    RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>(neighbors, DataType(DataType::DE_INT32), out));
+  } else if (format == OutputFormat::kCoo) {
+    std::vector<std::vector<NodeIdType>> coo_result;
+    coo_result.resize(total_edge_num);
+    size_t k = 0;
+    for (size_t i = 0; i < neighbors.size(); ++i) {
+      NodeIdType src = node_list[i];
+      for (auto &dst : neighbors[i]) {
+        coo_result[k] = {src, dst};
+        k++;
+      }
+    }
+    RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>(coo_result, DataType(DataType::DE_INT32), out));
+  } else {
+    std::vector<std::vector<NodeIdType>> csr_result;
+    csr_result.resize(node_list.size() + total_edge_num);
+    for (size_t i = 0; i < offset_table.size(); ++i) {
+      csr_result[i] = {offset_table[i]};
+    }
+    size_t edge_index = 0;
+    for (auto &neighbor : neighbors) {
+      for (auto &dst : neighbor) {
+        csr_result[node_list.size() + edge_index] = {dst};
+        edge_index++;
+      }
+    }
+    RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>(csr_result, DataType(DataType::DE_INT32), out));
+  }
   return Status::OK();
 }
 

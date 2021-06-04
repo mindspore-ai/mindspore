@@ -220,8 +220,10 @@ Status GraphDataServiceImpl::GetAllNeighbors(const GnnGraphDataRequestPb *reques
   node_list.resize(request->id().size());
   std::transform(request->id().begin(), request->id().end(), node_list.begin(),
                  [](const google::protobuf::int32 id) { return static_cast<NodeIdType>(id); });
+  OutputFormat format = static_cast<OutputFormat>(request->format());
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(graph_data_impl_->GetAllNeighbors(node_list, static_cast<NodeType>(request->type()[0]), &tensor));
+  RETURN_IF_NOT_OK(
+    graph_data_impl_->GetAllNeighbors(node_list, static_cast<NodeType>(request->type()[0]), format, &tensor));
   TensorPb *result = response->add_result_data();
   RETURN_IF_NOT_OK(TensorToPb(tensor, result));
   return Status::OK();

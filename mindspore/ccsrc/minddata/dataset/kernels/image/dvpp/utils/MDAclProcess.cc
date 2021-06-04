@@ -172,7 +172,7 @@ APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tenso
 
   RawData imageinfo;
   uint32_t filesize = input->SizeInBytes();
-  // MS_LOG(INFO) << "Filesize on host is: " << filesize;
+
   imageinfo.lenOfByte = filesize;
   unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
   imageinfo.data = static_cast<void *>(buffer);
@@ -188,7 +188,7 @@ APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tenso
     return ret;
   }
   auto deviceInputData = dvppCommon_->GetInputImage();
-  // std::cout << "[DEBUG]Sink data sunccessfully, Filesize on device is: " << deviceInputData->dataSize << std::endl;
+
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
   const mindspore::dataset::TensorShape dvpp_shape({1, 1, 1});
   mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, &device_input);

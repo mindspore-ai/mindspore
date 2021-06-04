@@ -76,11 +76,12 @@ class GraphDataImpl : public GraphData {
   // All neighbors of the acquisition node.
   // @param std::vector<NodeType> node_list - List of nodes
   // @param NodeType neighbor_type - The type of neighbor. If the type does not exist, an error will be reported
+  // @param OutputFormat format - The storage format for output, normal, COO or CSR are valid
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id. Because the number of neighbors at different nodes is
   // different, the returned tensor is output according to the maximum number of neighbors. If the number of neighbors
   // is not enough, fill in tensor as -1.
   // @return Status The status code returned
-  Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
+  Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type, const OutputFormat &format,
                          std::shared_ptr<Tensor> *out) override;
 
   // Get sampled neighbors.

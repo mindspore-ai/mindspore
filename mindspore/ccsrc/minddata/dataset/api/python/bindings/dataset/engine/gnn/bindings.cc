@@ -63,9 +63,10 @@ PYBIND_REGISTER(
              return out;
            })
       .def("get_all_neighbors",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeType neighbor_type) {
+           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeType neighbor_type,
+              OutputFormat format) {
              std::shared_ptr<Tensor> out;
-             THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, &out));
+             THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, format, &out));
              return out;
            })
       .def("get_sampled_neighbors",
@@ -126,6 +127,14 @@ PYBIND_REGISTER(SamplingStrategy, 0, ([](const py::module *m) {
                   (void)py::enum_<SamplingStrategy>(*m, "SamplingStrategy", py::arithmetic())
                     .value("DE_SAMPLING_RANDOM", SamplingStrategy::kRandom)
                     .value("DE_SAMPLING_EDGE_WEIGHT", SamplingStrategy::kEdgeWeight)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(OutputFormat, 0, ([](const py::module *m) {
+                  (void)py::enum_<OutputFormat>(*m, "OutputFormat", py::arithmetic())
+                    .value("DE_FORMAT_NORMAL", OutputFormat::kNormal)
+                    .value("DE_FORMAT_COO", OutputFormat::kCoo)
+                    .value("DE_FORMAT_CSR", OutputFormat::kCsr)
                     .export_values();
                 }));
 
