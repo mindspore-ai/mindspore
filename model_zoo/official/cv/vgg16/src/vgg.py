@@ -142,9 +142,5 @@ def vgg16(num_classes=1000, args=None, phase="train", **kwargs):
     Examples:
         >>> vgg16(num_classes=1000, args=args, **kwargs)
     """
-
-    if args is None:
-        from .config import cifar_cfg
-        args = cifar_cfg
     net = Vgg(cfg['16'], num_classes=num_classes, args=args, batch_norm=args.batch_norm, phase=phase, **kwargs)
     return net

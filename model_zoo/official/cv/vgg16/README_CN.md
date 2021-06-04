@@ -109,13 +109,13 @@ VGG 16网络主要由几个基本模块（包括卷积层和池化层）和三�
 
 ```python
 # 训练示例
-python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
+python train.py  --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
+sh scripts/run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
-python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
+python eval.py --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
 ```
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -126,13 +126,118 @@ python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[D
 
 ```python
 # 训练示例
-python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
+python train.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH] > output.train.log 2>&1 &
 
 # 分布式训练示例
-sh run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
+sh scripts/run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # 评估示例
-python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+python eval.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+```
+
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+```bash
+# 在 ModelArts 上使用 单卡训练 cifar10 数据集
+# (1) 在网页上设置 "config_path=/path_to_code/cifar10_config.yaml"
+# (2) 执行a或者b
+#       a. 在 cifar10_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 cifar10_config.yaml 文件中设置 "data_dir='/cache/data/cifar10'"
+#          在 cifar10_config.yaml 文件中设置 "is_distributed=0"
+#          在 cifar10_config.yaml 文件中设置 "dataset='cifar10'"
+#          在 cifar10_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir=/cache/data/cifar10"
+#          在网页上设置 "is_distributed=0"
+#          在网页上设置 "dataset=cifar10"
+#          在网页上设置 其他参数
+# (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (4) 在网页上设置你的代码路径为 "/path/vgg16"
+# (5) 在网页上设置启动文件为 "train.py"
+# (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (7) 创建训练作业
+#
+# 在 ModelArts 上使用8卡训练 cifar10 数据集
+# (1) 在网页上设置 "config_path=/path_to_code/cifar10_config.yaml"
+# (2) 执行a或者b
+#       a. 在 cifar10_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 cifar10_config.yaml 文件中设置 "data_dir='/cache/data/cifar10'"
+#          在 cifar10_config.yaml 文件中设置 "is_distributed=1"
+#          在 cifar10_config.yaml 文件中设置 "dataset='cifar10'"
+#          在 cifar10_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir=/cache/data/cifar10"
+#          在网页上设置 "is_distributed=1"
+#          在网页上设置 "dataset=cifar10"
+#          在网页上设置 其他参数
+# (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (4) 在网页上设置你的代码路径为 "/path/vgg16"
+# (5) 在网页上设置启动文件为 "train.py"
+# (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (7) 创建训练作业
+#
+# 在 ModelArts 上使用8卡训练 ImageNet 数据集
+# (1) 在网页上设置 "config_path=/path_to_code/imagenet2012_config.yaml"
+# (2) 执行a或者b
+#       a. 在 imagenet2012_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 imagenet2012_config.yaml 文件中设置 "data_dir='/cache/data/ImageNet/train'"
+#          在 imagenet2012_config.yaml 文件中设置 "is_distributed=1"
+#          在 imagenet2012_config.yaml 文件中设置 "dataset='imagenet2012'"
+#          在 imagenet2012_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir=/cache/data/ImageNet/train"
+#          在网页上设置 "is_distributed=1"
+#          在网页上设置 "dataset=imagenet2012"
+#          在网页上设置 其他参数
+# (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (4) 在网页上设置你的代码路径为 "/path/vgg16"
+# (5) 在网页上设置启动文件为 "train.py"
+# (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (7) 创建训练作业
+#
+# 在 ModelArts 上使用 单卡验证 Cifar10 数据集
+# (1) 在网页上设置 "config_path=/path_to_code/cifar10_config.yaml"
+# (2) 执行a或者b
+#       a. 在 cifar10_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 cifar10_config.yaml 文件中设置 "data_dir='/cache/data/cifar10'"
+#          在 cifar10_config.yaml 文件中设置 "dataset='cifar10'"
+#          在 cifar10_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+#          在 cifar10_config.yaml 文件中设置 "pre_trained='/cache/checkpoint_path/model.ckpt'"
+#          在 cifar10_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir=/cache/data/cifar10"
+#          在网页上设置 "dataset=cifar10"
+#          在网页上设置 "checkpoint_url=s3://dir_to_your_trained_model/"
+#          在网页上设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+#          在网页上设置 其他参数
+# (3) 上传你的预训练模型到 S3 桶上
+# (4) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (5) 在网页上设置你的代码路径为 "/path/vgg16"
+# (6) 在网页上设置启动文件为 "eval.py"
+# (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (8) 创建训练作业
+#
+# 在 ModelArts 上使用 单卡验证 ImageNet 数据集
+# (1) 在网页上设置 "config_path=/path_to_code/imagenet2012_config.yaml"
+# (2) 执行a或者b
+#       a. 在 imagenet2012_config.yaml 文件中设置 "enable_modelarts=True"
+#          在 imagenet2012_config.yaml 文件中设置 "data_dir='/cache/data/ImageNet/validation_preprocess'"
+#          在 imagenet2012_config.yaml 文件中设置 "dataset='imagenet2012'"
+#          在 imagenet2012_config.yaml 文件中设置 "checkpoint_url='s3://dir_to_your_trained_model/'"
+#          在 imagenet2012_config.yaml 文件中设置 "pre_trained='/cache/checkpoint_path/model.ckpt'"
+#          在 imagenet2012_config.yaml 文件中设置 其他参数
+#       b. 在网页上设置 "enable_modelarts=True"
+#          在网页上设置 "data_dir=/cache/data/ImageNet/validation_preprocess"
+#          在网页上设置 "dataset=imagenet2012"
+#          在网页上设置 "checkpoint_url=s3://dir_to_your_trained_model/"
+#          在网页上设置 "pre_trained=/cache/checkpoint_path/model.ckpt"
+#          在网页上设置 其他参数
+# (3) 上传你的预训练模型到 S3 桶上
+# (4) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+# (5) 在网页上设置你的代码路径为 "/path/vgg16"
+# (6) 在网页上设置启动文件为 "eval.py"
+# (7) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+# (8) 创建训练作业
 ```
 
 ## 脚本说明
@@ -143,17 +248,25 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 ├── model_zoo
     ├── README.md                                 // 所有模型相关说明
     ├── vgg16
-        ├── README.md                             // GoogLeNet相关说明
+        ├── README.md                             // VGG 相关说明
+        ├── README_CN.md                          // VGG 相关中文说明
+        ├── model_utils
+            ├── __init__.py                 // 初始化文件
+            ├── config.py                   // 参数配置
+            ├── device_adapter.py           // ModelArts的设备适配器
+            ├── local_adapter.py            // 本地适配器
+            └── moxing_adapter.py           // ModelArts的模型适配器
         ├── scripts
-        │   ├── run_distribute_train.sh           // Ascend分布式训练shell脚本
-        │   ├── run_distribute_train_gpu.sh       // GPU分布式训练shell脚本
+        │   ├── run_distribute_train.sh           // Ascend 分布式训练shell脚本
+        │   ├── run_distribute_train_gpu.sh       // GPU 分布式训练shell脚本
+        │   ├── run_eval.sh                       // Ascend 验证shell脚本
+        │   ├── run_infer_310.sh                  // Ascend310 推理shell脚本
         ├── src
         │   ├── utils
         │   │   ├── logging.py                    // 日志格式设置
         │   │   ├── sampler.py                    // 为数据集创建采样器
         │   │   ├── util.py                       // 工具函数
         │   │   ├── var_init.py                   // 网络参数init方法
-        │   ├── config.py                         // 参数配置
         │   ├── crossentropy.py                   // 损失计算
         │   ├── dataset.py                        // 创建数据集
         │   ├── linear_warmup.py                  // 线性学习率
@@ -162,6 +275,11 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
         │   ├──vgg.py                             // VGG架构
         ├── train.py                              // 训练脚本
         ├── eval.py                               // 评估脚本
+        ├── postprocess.py                        // 后处理脚本
+        ├── preprocess.py                         // 预处理脚本
+        ├── mindspore_hub_conf.py                 // mindspore hub 脚本
+        ├── cifar10_config.yaml                   // cifar10 配置文件
+        ├── imagenet2012_config.yaml              // imagenet2012 配置文件
 ```
 
 ### 脚本参数
@@ -169,17 +287,18 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 #### 训练
 
 ```bash
-用法：train.py [--device_target TARGET][--data_path DATA_PATH]
-                [--dataset  DATASET_TYPE][--is_distributed VALUE]
-                [--device_id DEVICE_ID][--pre_trained PRE_TRAINED]
-                [--ckpt_path CHECKPOINT_PATH][--ckpt_interval INTERVAL_STEP]
+用法：train.py [--config_path YAML_CONFIG_PATH]
+              [--device_target TARGET][--data_dir DATA_PATH]
+              [--dataset  DATASET_TYPE][--is_distributed VALUE]
+              [--pre_trained PRE_TRAINED]
+              [--ckpt_path CHECKPOINT_PATH][--ckpt_interval INTERVAL_STEP]
 
 选项：
+  --config_path         yaml配置文件路径
   --device_target       训练后端类型，Ascend或GPU，默认为Ascend。
   --dataset             数据集类型，cifar10或imagenet2012。
   --is_distributed      训练方式，是否为分布式训练，值可以是0或1。
-  --data_path           数据集存储路径
-  --device_id           用于训练模型的设备。
+  --data_dir            数据集存储路径
   --pre_trained         预训练检查点文件路径。
   --ckpt_path           存放检查点的路径。
   --ckpt_interval       保存检查点的轮次间隔。
@@ -189,76 +308,76 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 #### 评估
 
 ```bash
-用法：eval.py [--device_target TARGET][--data_path DATA_PATH]
-               [--dataset  DATASET_TYPE][--pre_trained PRE_TRAINED]
-               [--device_id DEVICE_ID]
+用法：eval.py [--config_path YAML_CONFIG_PATH]
+             [--device_target TARGET][--data_dir DATA_PATH]
+             [--dataset  DATASET_TYPE][--pre_trained PRE_TRAINED]
 
 选项：
+  --config_path         yaml配置文件路径
   --device_target       评估后端类型，Ascend或GPU，默认为Ascend。
   --dataset             数据集类型，cifar10或imagenet2012。
-  --data_path           数据集存储路径。
-  --device_id           用于评估模型的设备。
+  --data_dir           数据集存储路径。
   --pre_trained         用于评估模型的检查点文件路径。
 ```
 
 ### 参数配置
 
-在config.py中可以同时配置训练参数和评估参数。
+在 cifar10_config.yaml/cifar10_config.yaml 中可以同时配置训练参数和评估参数。
 
 - 配置VGG16，CIFAR-10数据集
 
 ```bash
-"num_classes": 10,                   # 数据集类数
-"lr": 0.01,                          # 学习率
-"lr_init": 0.01,                     # 初始学习率
-"lr_max": 0.1,                       # 最大学习率
-"lr_epochs": '30,60,90,120',         # 基于变化lr的轮次
-"lr_scheduler": "step",              # 学习率模式
-"warmup_epochs": 5,                  # 热身轮次数
-"batch_size": 64,                    # 输入张量批次大小
-"max_epoch": 70,                     # 只对训练有效，推理固定值为1
-"momentum": 0.9,                     # 动量
-"weight_decay": 5e-4,                # 权重衰减
-"loss_scale": 1.0,                   # 损失放大
-"label_smooth": 0,                   # 标签平滑
-"label_smooth_factor": 0,            # 标签平滑因子
-"buffer_size": 10,                   # 混洗缓冲区大小
-"image_size": '224,224',             # 图像大小
-"pad_mode": 'same',                  # conv2d的填充方式
-"padding": 0,                        # conv2d的填充值
-"has_bias": False,                   # conv2d是否有偏差
-"batch_norm": True,                  # 在conv2d中是否有batch_norm
-"keep_checkpoint_max": 10,           # 只保留最后一个keep_checkpoint_max检查点
-"initialize_mode": "XavierUniform",  # conv2d init模式
-"has_dropout": True                  # 是否使用Dropout层
+num_classes: 10                   # 数据集类数
+lr: 0.01                          # 学习率
+lr_init: 0.01                     # 初始学习率
+lr_max: 0.1                       # 最大学习率
+lr_epochs: '30,60,90,120'         # 基于变化lr的轮次
+lr_scheduler: "step"              # 学习率模式
+warmup_epochs: 5                  # 热身轮次数
+batch_size: 64                    # 输入张量批次大小
+max_epoch: 70                     # 只对训练有效，推理固定值为1
+momentum: 0.9                     # 动量
+weight_decay: 5e-4                # 权重衰减
+loss_scale: 1.0                   # 损失放大
+label_smooth: 0                   # 标签平滑
+label_smooth_factor: 0            # 标签平滑因子
+buffer_size: 10                   # 混洗缓冲区大小
+image_size: '224,224'             # 图像大小
+pad_mode: 'same'                  # conv2d的填充方式
+padding: 0                        # conv2d的填充值
+has_bias: False                   # conv2d是否有偏差
+batch_norm: True                  # 在conv2d中是否有batch_norm
+keep_checkpoint_max: 10           # 只保留最后一个keep_checkpoint_max检查点
+initialize_mode: "XavierUniform"  # conv2d init模式
+has_dropout: True                 # 是否使用Dropout层
 ```
 
 - VGG16配置，ImageNet2012数据集
 
 ```bash
-"num_classes": 1000,                 # 数据集类数
-"lr": 0.01,                          # 学习率
-"lr_init": 0.01,                     # 初始学习率
-"lr_max": 0.1,                       # 最大学习率
-"lr_epochs": '30,60,90,120',         # 基于变化lr的轮次
-"lr_scheduler": "cosine_annealing",  # 学习率模式
-"warmup_epochs": 0,                  # 热身轮次数
-"batch_size": 32,                    # 输入张量的批次大小
-"max_epoch": 150,                    # 只对训练有效，推理固定值为1
-"momentum": 0.9,                     # 动量
-"weight_decay": 1e-4,                # 权重衰减
-"loss_scale": 1024,                  # 损失放大
-"label_smooth": 1,                   # 标签平滑
-"label_smooth_factor": 0.1,          # 标签平滑因子
-"buffer_size": 10,                   # 混洗缓冲区大小
-"image_size": '224,224',             # 图像大小
-"pad_mode": 'pad',                   # conv2d的填充方式
-"padding": 1,                        # conv2d的填充值
-"has_bias": True,                    # conv2d是否有偏差
-"batch_norm": False,                 # 在conv2d中是否有batch_norm
-"keep_checkpoint_max": 10,           # 只保留最后一个keep_checkpoint_max检查点
-"initialize_mode": "KaimingNormal",  # conv2d init模式
-"has_dropout": True                  # 是否使用Dropout层
+num_classes: 1000                   # 数据集类数
+lr: 0.01                            # 学习率
+lr_init: 0.01                       # 初始学习率
+lr_max: 0.1                         # 最大学习率
+lr_epochs: '30,60,90,120'           # 基于变化lr的轮次
+lr_scheduler: "cosine_annealing"    # 学习率模式
+warmup_epochs: 0                    # 热身轮次数
+batch_size: 32                      # 输入张量的批次大小
+max_epoch: 150                      # 只对训练有效，推理固定值为1
+momentum: 0.9                       # 动量
+weight_decay: 1e-4                  # 权重衰减
+loss_scale: 1024                    # 损失放大
+label_smooth: 1                     # 标签平滑
+label_smooth_factor: 0.1            # 标签平滑因子
+buffer_size: 10                     # 混洗缓冲区大小
+image_size: '224,224'               # 图像大小
+pad_mode: 'pad'                     # conv2d的填充方式
+padding: 1                          # conv2d的填充值
+has_bias: True                      # conv2d是否有偏差
+batch_norm: False                   # 在conv2d中是否有batch_norm
+keep_checkpoint_max: 10             # 只保留最后一个keep_checkpoint_max检查点
+initialize_mode: "KaimingNormal"    # conv2d init模式
+has_dropout: True                   # 是否使用Dropout层
 ```
 
 ### 训练过程
@@ -270,7 +389,7 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 - 使用单设备（1p）训练，默认使用CIFAR-10数据集
 
 ```bash
-python train.py --data_path=your_data_path --device_id=6 > out.train.log 2>&1 &
+python train.py --config_path=/dir_to_code/cifar10_config.yaml --data_dir=your_data_path > out.train.log 2>&1 &
 ```
 
 上述python命令在后台运行，可通过`out.train.log`文件查看结果。
@@ -289,7 +408,7 @@ epcoh: 2 step: 781, loss is 1.827582
 - 分布式训练
 
 ```bash
-sh run_distribute_train.sh rank_table.json your_data_path
+sh scripts/run_distribute_train.sh rank_table.json your_data_path
 ```
 
 上述shell脚本会在后台进行分布式训练，可通过`train_parallel[X]/log`文件查看结果。
@@ -316,7 +435,7 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 - 单设备训练（1p）
 
 ```bash
-python train.py  --device_target="GPU" --dataset="imagenet2012" --is_distributed=0 --data_path=$DATA_PATH  > output.train.log 2>&1 &
+python train.py --config_path=/dir_to_code/imagenet2012_config.yaml --device_target="GPU" --dataset="imagenet2012" --is_distributed=0 --data_dir=$DATA_PATH  > output.train.log 2>&1 &
 ```
 
 - 分布式训练
@@ -334,10 +453,10 @@ bash scripts/run_distribute_train_gpu.sh /path/ImageNet2012/train"
 
 ```bash
 # 使用CIFAR-10数据集
-python eval.py --data_path=your_data_path --dataset="cifar10" --device_target="Ascend" --pre_trained=./*-70-781.ckpt > output.eval.log 2>&1 &
+python eval.py --config_path=/dir_to_code/cifar10_config.yaml --data_dir=your_data_path --dataset="cifar10" --device_target="Ascend" --pre_trained=./*-70-781.ckpt > output.eval.log 2>&1 &
 
 # 使用ImageNet2012数据集
-python eval.py --data_path=your_data_path --dataset="imagenet2012" --device_target="GPU" --pre_trained=./*-150-5004.ckpt > output.eval.log 2>&1 &
+python eval.py --config_path=/dir_to_code/cifar10_config.yaml --data_dir=your_data_path --dataset="imagenet2012" --device_target="GPU" --pre_trained=./*-150-5004.ckpt > output.eval.log 2>&1 &
 ```
 
 - 上述python命令在后台运行，可通过`output.eval.log`文件查看结果。准确率如下：
@@ -357,7 +476,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 ### [导出MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [YMAL_CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 参数ckpt_file为必填项，

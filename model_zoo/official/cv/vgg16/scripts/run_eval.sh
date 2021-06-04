@@ -25,8 +25,20 @@ DATASET_TYPE=$2
 DEVICE_TYPE=$3
 CHECKPOINT_PATH=$4
 
+get_real_path(){
+    if [ "${1:0:1}" == "/" ]; then
+        echo "$1"
+    else
+        echo "$(realpath -m $PWD/$1)"
+    fi
+}
+
+config_path=$(get_real_path "./${DATASET_TYPE}_config.yaml")
+echo "config path is : ${config_path}"
+
 python eval.py \
-    --data_path=$DATA_PATH \
+    --config_path=$config_path \
+    --data_dir=$DATA_PATH \
     --dataset=$DATASET_TYPE \
     --device_target=$DEVICE_TYPE \
     --pre_trained=$CHECKPOINT_PATH > output.eval.log 2>&1 &

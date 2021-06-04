@@ -106,13 +106,13 @@ After installing MindSpore via the official website, you can start training and 
 
 ```python
 # run training example
-python train.py  --data_path=[DATA_PATH] --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
+python train.py --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH] --dataset=[DATASET_TYPE] > output.train.log 2>&1 &
 
 # run distributed training example
-sh run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
+sh scripts/run_distribute_train.sh [RANL_TABLE_JSON] [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # run evaluation example
-python eval.py --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
+python eval.py --config_path=[YAML_CONFIG_PATH] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] --dataset=[DATASET_TYPE] > output.eval.log 2>&1 &
 ```
 
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
@@ -123,13 +123,118 @@ Please follow the instructions in the link below:
 
 ```bash
 # run training example
-python train.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH] > output.train.log 2>&1 &
+python train.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH] > output.train.log 2>&1 &
 
 # run distributed training example
-sh run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
+sh scripts/run_distribute_train_gpu.sh [DATA_PATH] --dataset=[DATASET_TYPE]
 
 # run evaluation example
-python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_TYPE] --data_path=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+python eval.py --config_path=[YAML_CONFIG_PATH] --device_target="GPU" --dataset=[DATASET_TYPE] --data_dir=[DATA_PATH]  --pre_trained=[PRE_TRAINED] > output.eval.log 2>&1 &
+```
+
+- Running on [ModelArts](https://support.huaweicloud.com/modelarts/)
+
+```bash
+# Train Cifar10 1p on ModelArts
+# (1) Add "config_path=/path_to_code/cifar10_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on cifar10_config.yaml file.
+#          Set "data_dir='/cache/data/cifar10'" on cifar10_config.yaml file.
+#          Set "is_distributed=0" on cifar10_config.yaml file.
+#          Set "dataset='cifar10'" on cifar10_config.yaml file.
+#          Set other parameters on cifar10_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir=/cache/data/cifar10" on the website UI interface.
+#          Add "is_distributed=0" on the website UI interface.
+#          Add "dataset=cifar10" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (4) Set the code directory to "/path/vgg16" on the website UI interface.
+# (5) Set the startup file to "train.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+#
+# Train Cifar10 8p on ModelArts
+# (1) Add "config_path=/path_to_code/cifar10_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on cifar10_config.yaml file.
+#          Set "data_dir='/cache/data/cifar10'" on cifar10_config.yaml file.
+#          Set "is_distributed=1" on cifar10_config.yaml file.
+#          Set "dataset='cifar10'" on cifar10_config.yaml file.
+#          Set other parameters on cifar10_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir=/cache/data/cifar10" on the website UI interface.
+#          Add "is_distributed=1" on the website UI interface.
+#          Add "dataset=cifar10" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (4) Set the code directory to "/path/vgg16" on the website UI interface.
+# (5) Set the startup file to "train.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+#
+# Train Imagenet 8p on ModelArts
+# (1) Add "config_path=/path_to_code/imagenet2012_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on imagenet2012_config.yaml file.
+#          Set "data_dir='/cache/data/ImageNet/train'" on imagenet2012_config.yaml file.
+#          Set "is_distributed=1" on imagenet2012_config.yaml file.
+#          Set "dataset='imagenet2012'" on imagenet2012_config.yaml file.
+#          Set other parameters on imagenet2012_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir=/cache/data/ImageNet/train" on the website UI interface.
+#          Add "is_distributed=1" on the website UI interface.
+#          Add "dataset=imagenet2012" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (4) Set the code directory to "/path/vgg16" on the website UI interface.
+# (5) Set the startup file to "train.py" on the website UI interface.
+# (6) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (7) Create your job.
+#
+# Eval Cifar10 1p on ModelArts
+# (1) Add "config_path=/path_to_code/cifar10_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on cifar10_config.yaml file.
+#          Set "data_dir='/cache/data/cifar10'" on cifar10_config.yaml file.
+#          Set "dataset='cifar10'" on cifar10_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on cifar10_config.yaml file.
+#          Set "pre_trained='/cache/checkpoint_path/model.ckpt'" on cifar10_config.yaml file.
+#          Set other parameters on cifar10_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir=/cache/data/cifar10" on the website UI interface.
+#          Add "dataset=cifar10" on the website UI interface.
+#          Add "checkpoint_url=s3://dir_to_your_trained_model/" on the website UI interface.
+#          Add "pre_trained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload or copy your pretrained model to S3 bucket.
+# (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (5) Set the code directory to "/path/vgg16" on the website UI interface.
+# (6) Set the startup file to "eval.py" on the website UI interface.
+# (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (8) Create your job.
+#
+# Eval ImageNet 1p on ModelArts
+# (1) Add "config_path=/path_to_code/imagenet2012_config.yaml" on the website UI interface.
+# (2) Perform a or b.
+#       a. Set "enable_modelarts=True" on imagenet2012_config.yaml file.
+#          Set "data_dir='/cache/data/ImageNet/validation_preprocess'" on imagenet2012_config.yaml file.
+#          Set "dataset='imagenet2012'" on imagenet2012_config.yaml file.
+#          Set "checkpoint_url='s3://dir_to_your_trained_model/'" on imagenet2012_config.yaml file.
+#          Set "pre_trained='/cache/checkpoint_path/model.ckpt'" on imagenet2012_config.yaml file.
+#          Set other parameters on imagenet2012_config.yaml file you need.
+#       b. Add "enable_modelarts=True" on the website UI interface.
+#          Add "data_dir=/cache/data/ImageNet/validation_preprocess" on the website UI interface.
+#          Add "dataset=imagenet2012" on the website UI interface.
+#          Add "checkpoint_url=s3://dir_to_your_trained_model/" on the website UI interface.
+#          Add "pre_trained=/cache/checkpoint_path/model.ckpt" on the website UI interface.
+#          Add other parameters on the website UI interface.
+# (3) Upload or copy your pretrained model to S3 bucket.
+# (4) Upload a zip dataset to S3 bucket. (you could also upload the origin dataset, but it can be so slow.)
+# (5) Set the code directory to "/path/vgg16" on the website UI interface.
+# (6) Set the startup file to "eval.py" on the website UI interface.
+# (7) Set the "Dataset path" and "Output file path" and "Job log path" to your path on the website UI interface.
+# (8) Create your job.
 ```
 
 ## [Script Description](#contents)
@@ -140,17 +245,25 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 ├── model_zoo
     ├── README.md                                 // descriptions about all the models
     ├── vgg16
-        ├── README.md                             // descriptions about googlenet
+        ├── README.md                             // descriptions about vgg
+        ├── README_CN.md                          // descriptions about vgg with Chinese
+        ├── model_utils
+        │   ├── __init__.py                       // init file
+        │   ├── config.py                         // Parse arguments
+        │   ├── device_adapter.py                 // Device adapter for ModelArts
+        │   ├── local_adapter.py                  // Local adapter
+        │   ├── moxing_adapter.py                 // Moxing adapter for ModelArts
         ├── scripts
         │   ├── run_distribute_train.sh           // shell script for distributed training on Ascend
         │   ├── run_distribute_train_gpu.sh       // shell script for distributed training on GPU
+        │   ├── run_eval.sh                       // shell script for eval on Ascend
+        │   ├── run_infer_310.sh                  // shell script for infer on Ascend 310
         ├── src
         │   ├── utils
         │   │   ├── logging.py                    // logging format setting
         │   │   ├── sampler.py                    // create sampler for dataset
         │   │   ├── util.py                       // util function
         │   │   ├── var_init.py                   // network parameter init method
-        │   ├── config.py                         // parameter configuration
         │   ├── crossentropy.py                   // loss calculation
         │   ├── dataset.py                        // creating dataset
         │   ├── linear_warmup.py                  // linear leanring rate
@@ -159,6 +272,11 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
         │   ├──vgg.py                             // vgg architecture
         ├── train.py                              // training script
         ├── eval.py                               // evaluation script
+        ├── postprocess.py                        // postprocess script
+        ├── preprocess.py                         // preprocess script
+        ├── mindspore_hub_conf.py                 // mindspore_hub_conf script
+        ├── cifar10_config.yaml                   // Configurations for cifar10
+        ├── imagenet2012_config.yaml              // Configurations for imagenet2012
 ```
 
 ### [Script Parameters](#contents)
@@ -166,17 +284,18 @@ python eval.py --device_target="GPU" --device_id=[DEVICE_ID] --dataset=[DATASET_
 #### Training
 
 ```bash
-usage: train.py [--device_target TARGET][--data_path DATA_PATH]
+usage: train.py [--config_path YAML_CONFIG_PATH]
+                [--device_target TARGET][--data_dir DATA_PATH]
                 [--dataset  DATASET_TYPE][--is_distributed VALUE]
-                [--device_id DEVICE_ID][--pre_trained PRE_TRAINED]
+                [--pre_trained PRE_TRAINED]
                 [--ckpt_path CHECKPOINT_PATH][--ckpt_interval INTERVAL_STEP]
 
 parameters/options:
+  --config_path         the storage path of YAML_CONFIG_FILE
   --device_target       the training backend type, Ascend or GPU, default is Ascend.
   --dataset             the dataset type, cifar10 or imagenet2012.
   --is_distributed      the  way of traing, whether do distribute traing, value can be 0 or 1.
-  --data_path           the storage path of dataset
-  --device_id           the device which used to train model.
+  --data_dir            the storage path of dataset
   --pre_trained         the pretrained checkpoint file path.
   --ckpt_path           the path to save checkpoint.
   --ckpt_interval       the epoch interval for saving checkpoint.
@@ -186,76 +305,76 @@ parameters/options:
 #### Evaluation
 
 ```bash
-usage: eval.py [--device_target TARGET][--data_path DATA_PATH]
+usage: eval.py [--config_path YAML_CONFIG_PATH]
+               [--device_target TARGET][--data_dir DATA_PATH]
                [--dataset  DATASET_TYPE][--pre_trained PRE_TRAINED]
-               [--device_id DEVICE_ID]
 
 parameters/options:
+  --config_path         the storage path of YAML_CONFIG_FILE
   --device_target       the evaluation backend type, Ascend or GPU, default is Ascend.
   --dataset             the dataset type, cifar10 or imagenet2012.
-  --data_path           the storage path of dataset.
-  --device_id           the device which used to evaluate model.
+  --data_dir            the storage path of dataset.
   --pre_trained         the checkpoint file path used to evaluate model.
 ```
 
 ### [Parameter configuration](#contents)
 
-Parameters for both training and evaluation can be set in config.py.
+Parameters for both training and evaluation can be set in cifar10_config.yaml/cifar10_config.yaml.
 
 - config for vgg16, CIFAR-10 dataset
 
 ```bash
-"num_classes": 10,                   # dataset class num
-"lr": 0.01,                          # learning rate
-"lr_init": 0.01,                     # initial learning rate
-"lr_max": 0.1,                       # max learning rate
-"lr_epochs": '30,60,90,120',         # lr changing based epochs
-"lr_scheduler": "step",              # learning rate mode
-"warmup_epochs": 5,                  # number of warmup epoch
-"batch_size": 64,                    # batch size of input tensor
-"max_epoch": 70,                     # only valid for taining, which is always 1 for inference
-"momentum": 0.9,                     # momentum
-"weight_decay": 5e-4,                # weight decay
-"loss_scale": 1.0,                   # loss scale
-"label_smooth": 0,                   # label smooth
-"label_smooth_factor": 0,            # label smooth factor
-"buffer_size": 10,                   # shuffle buffer size
-"image_size": '224,224',             # image size
-"pad_mode": 'same',                  # pad mode for conv2d
-"padding": 0,                        # padding value for conv2d
-"has_bias": False,                   # whether has bias in conv2d
-"batch_norm": True,                  # whether has batch_norm in conv2d
-"keep_checkpoint_max": 10,           # only keep the last keep_checkpoint_max checkpoint
-"initialize_mode": "XavierUniform",  # conv2d init mode
-"has_dropout": True                  # whether using Dropout layer
+num_classes: 10                      # dataset class num
+lr: 0.01                             # learning rate
+lr_init: 0.01                        # initial learning rate
+lr_max: 0.1                          # max learning rate
+lr_epochs: '30,60,90,120'            # lr changing based epochs
+lr_scheduler: "step"                 # learning rate mode
+warmup_epochs: 5                     # number of warmup epoch
+batch_size: 64                       # batch size of input tensor
+max_epoch: 70                        # only valid for taining, which is always 1 for inference
+momentum: 0.9                        # momentum
+weight_decay: 0.0005                 # weight decay
+loss_scale: 1.0                      # loss scale
+label_smooth: 0                      # label smooth
+label_smooth_factor: 0               # label smooth factor
+buffer_size: 10                      # shuffle buffer size
+image_size: '224,224'                # image size
+pad_mode: 'same'                     # pad mode for conv2d
+padding: 0                           # padding value for conv2d
+has_bias: False                      # whether has bias in conv2d
+batch_norm: True                     # whether has batch_norm in conv2d
+keep_checkpoint_max: 10              # only keep the last keep_checkpoint_max checkpoint
+initialize_mode: "XavierUniform"     # conv2d init mode
+has_dropout: True                    # whether using Dropout layer
 ```
 
 - config for vgg16, ImageNet2012 dataset
 
 ```bash
-"num_classes": 1000,                 # dataset class num
-"lr": 0.01,                          # learning rate
-"lr_init": 0.01,                     # initial learning rate
-"lr_max": 0.1,                       # max learning rate
-"lr_epochs": '30,60,90,120',         # lr changing based epochs
-"lr_scheduler": "cosine_annealing",  # learning rate mode
-"warmup_epochs": 0,                  # number of warmup epoch
-"batch_size": 32,                    # batch size of input tensor
-"max_epoch": 150,                    # only valid for taining, which is always 1 for inference
-"momentum": 0.9,                     # momentum
-"weight_decay": 1e-4,                # weight decay
-"loss_scale": 1024,                  # loss scale
-"label_smooth": 1,                   # label smooth
-"label_smooth_factor": 0.1,          # label smooth factor
-"buffer_size": 10,                   # shuffle buffer size
-"image_size": '224,224',             # image size
-"pad_mode": 'pad',                   # pad mode for conv2d
-"padding": 1,                        # padding value for conv2d
-"has_bias": True,                    # whether has bias in conv2d
-"batch_norm": False,                 # whether has batch_norm in conv2d
-"keep_checkpoint_max": 10,           # only keep the last keep_checkpoint_max checkpoint
-"initialize_mode": "KaimingNormal",  # conv2d init mode
-"has_dropout": True                  # whether using Dropout layer
+num_classes: 1000                   # dataset class num
+lr: 0.01                            # learning rate
+lr_init: 0.01                       # initial learning rate
+lr_max: 0.1                         # max learning rate
+lr_epochs: '30,60,90,120'           # lr changing based epochs
+lr_scheduler: "cosine_annealing"    # learning rate mode
+warmup_epochs: 0                    # number of warmup epoch
+batch_size: 32                      # batch size of input tensor
+max_epoch: 150                      # only valid for taining, which is always 1 for inference
+momentum: 0.9                       # momentum
+weight_decay: 0.0001                # weight decay
+loss_scale: 1024                    # loss scale
+label_smooth: 1                     # label smooth
+label_smooth_factor: 0.1            # label smooth factor
+buffer_size: 10                     # shuffle buffer size
+image_size: '224,224'               # image size
+pad_mode: 'pad'                     # pad mode for conv2d
+padding: 1                          # padding value for conv2d
+has_bias: True                      # whether has bias in conv2d
+batch_norm: False                   # whether has batch_norm in conv2d
+keep_checkpoint_max: 10             # only keep the last keep_checkpoint_max checkpoint
+initialize_mode: "KaimingNormal"    # conv2d init mode
+has_dropout: True                   # whether using Dropout layer
 ```
 
 ### [Training Process](#contents)
@@ -267,7 +386,7 @@ Parameters for both training and evaluation can be set in config.py.
 - Training using single device(1p), using CIFAR-10 dataset in default
 
 ```bash
-python train.py --data_path=your_data_path --device_id=6 > out.train.log 2>&1 &
+python train.py --config_path=/dir_to_code/cifar10_config.yaml --data_dir=your_data_path > out.train.log 2>&1 &
 ```
 
 The python command above will run in the background, you can view the results through the file `out.train.log`.
@@ -312,7 +431,7 @@ train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
 - Training using single device(1p)
 
 ```bash
-python train.py  --device_target="GPU" --dataset="imagenet2012" --is_distributed=0 --data_path=$DATA_PATH  > output.train.log 2>&1 &
+python train.py  --config_path=/dir_to_code/imagenet2012_config.yaml --device_target="GPU" --dataset="imagenet2012" --is_distributed=0 --data_dir=$DATA_PATH  > output.train.log 2>&1 &
 ```
 
 - Distributed Training
@@ -330,10 +449,10 @@ bash scripts/run_distribute_train_gpu.sh /path/ImageNet2012/train"
 
 ```bash
 # when using cifar10 dataset
-python eval.py --data_path=your_data_path --dataset="cifar10" --device_target="Ascend" --pre_trained=./*-70-781.ckpt > output.eval.log 2>&1 &
+python eval.py --config_path=/dir_to_code/cifar10_config.yaml --data_dir=your_data_path --dataset="cifar10" --device_target="Ascend" --pre_trained=./*-70-781.ckpt > output.eval.log 2>&1 &
 
 # when using imagenet2012 dataset
-python eval.py --data_path=your_data_path --dataset="imagenet2012" --device_target="GPU" --pre_trained=./*-150-5004.ckpt > output.eval.log 2>&1 &
+python eval.py --config_path=/dir_to_code/imagenet2012.yaml --data_dir=your_data_path --dataset="imagenet2012" --device_target="GPU" --pre_trained=./*-150-5004.ckpt > output.eval.log 2>&1 &
 ```
 
 - The above python command will run in the background, you can view the results through the file `output.eval.log`. You will get the accuracy as following:
@@ -353,7 +472,7 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 ### [Export MindIR](#contents)
 
 ```shell
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+python export.py --config_path [YMAL_CONFIG_PATH] --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,

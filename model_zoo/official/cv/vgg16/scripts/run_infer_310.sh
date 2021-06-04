@@ -36,6 +36,8 @@ else
   echo "DATASET_NAME can choose from ['cifar10', 'imagenet2012']"
   exit 1
 fi
+config_path=$(get_real_path "../${dataset_name}_config.yaml")
+echo "config path is : ${config_path}"
 
 dataset_path=$(get_real_path $3)
 
@@ -77,7 +79,7 @@ function preprocess_data()
         rm -rf ./preprocess_Result
     fi
     mkdir preprocess_Result
-    python3.7 ../preprocess.py --dataset=$dataset_name --data_path=$dataset_path --result_path=./preprocess_Result/
+    python3.7 ../preprocess.py --config_path=$config_path --dataset=$dataset_name --data_dir=$dataset_path --result_path=./preprocess_Result/
 }
 
 function compile_app()
@@ -108,9 +110,9 @@ function infer()
 function cal_acc()
 {
     if [ "$dataset_name" == "cifar10" ]; then
-        python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/cifar10_label_ids.npy --dataset_name=$dataset_name  &> acc.log
+        python3.7 ../postprocess.py --config_path=$config_path --result_dir=./result_Files --label_dir=./preprocess_Result/cifar10_label_ids.npy --dataset_name=$dataset_name  &> acc.log
     else
-        python3.7 ../postprocess.py --result_dir=./result_Files --label_dir=./preprocess_Result/imagenet_label.json --dataset_name=$dataset_name  &> acc.log
+        python3.7 ../postprocess.py --config_path=$config_path --result_dir=./result_Files --label_dir=./preprocess_Result/imagenet_label.json --dataset_name=$dataset_name  &> acc.log
     fi
 }
 
