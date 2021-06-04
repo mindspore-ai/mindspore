@@ -59,10 +59,10 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
                             anchor_tensor->ElementsNum());
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeFloat32 || anchor_tensor->data_type() == kNumberTypeFloat) {
-    params_->anchors_ = static_cast<float *>(
-      allocator_->Malloc(kNumberTypeFloat, anchor_tensor->ElementsNum() * sizeof(float), kOfflinePackWeight));
+    params_->anchors_ =
+      static_cast<float *>(allocator_->Malloc(kNumberTypeFloat, anchor_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(params_->anchors_);
-    memcpy(params_->anchors_, anchor_tensor->data_c(), anchor_tensor->Size());
+    memcpy_s(params_->anchors_, anchor_tensor->Size(), anchor_tensor->data_c(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
