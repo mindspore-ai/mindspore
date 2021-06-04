@@ -23,11 +23,12 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
+constexpr auto int8_range = 256;
 
 void CalculateTableList(int8_t *table, const float input_scale, const int32_t input_zp) {
   int32_t min_value = std::numeric_limits<int8_t>::min();
   int32_t max_value = std::numeric_limits<int8_t>::max();
-  const float output_scale = 1.0f / 256;
+  const float output_scale = 1.0f / int8_range;
   const int32_t output_zp = -128;
 
   for (int i = min_value; i < max_value; ++i) {
@@ -41,7 +42,6 @@ void CalculateTableList(int8_t *table, const float input_scale, const int32_t in
 }
 
 int SigmodInt8Coder::Prepare(CoderContext *const context) {
-  size_t int8_range = 256;
   table_list_ = static_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, int8_range, kOfflinePackWeight));
   MS_CHECK_PTR(table_list_);
 
@@ -49,8 +49,8 @@ int SigmodInt8Coder::Prepare(CoderContext *const context) {
   const int32_t input_zp = input_tensor_->quant_params().at(0).zeroPoint;
   const float output_scale = output_tensor_->quant_params().at(0).scale;
   const int32_t output_zp = output_tensor_->quant_params().at(0).zeroPoint;
-  if (output_scale != (1.0f / 256) || output_zp != -128) {
-    MS_LOG(ERROR) << "Output scale is : " << output_scale << ", should be 1/256. Output zp is : " << output_zp
+  if (output_scale != (1.0f / int8_range) || output_zp != -128) {
+    MS_LOG(ERROR) << "Output scale is : " << output_scale << ", should be 1/int8_range. Output zp is : " << output_zp
                   << ", should be -128.";
     return RET_ERROR;
   }
@@ -76,5 +76,4 @@ int SigmodInt8Coder::DoCode(CoderContext *const context) {
 
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro::nnacl

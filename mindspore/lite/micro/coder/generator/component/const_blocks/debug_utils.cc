@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/debug_utils.h"
 
 namespace mindspore::lite::micro {
-
-const char *debug_utils_h = R"RAW(
+const char debug_utils_h[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -94,7 +93,7 @@ void PrintTensorData(MicroTensor *tensor);
 
 )RAW";
 
-const char *debug_utils_c = R"RAW(
+const char debug_utils_c[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -300,5 +299,4 @@ void PrintTensor(MicroTensor *tensor, FILE *output_file, const char *is_input) {
 }
 
 )RAW";
-
 }  // namespace mindspore::lite::micro

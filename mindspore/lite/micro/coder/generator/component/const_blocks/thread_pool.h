@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *thread_header;
+extern const char thread_header[];
 
 }  // namespace mindspore::lite::micro
 

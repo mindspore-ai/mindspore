@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/thread_pool.h"
 
 namespace mindspore::lite::micro {
-
-const char *thread_header = R"RAW(
+const char thread_header[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -57,6 +56,6 @@ void ClearThreadPool();
 #endif
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_THREAD_WRAPPER_H
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro

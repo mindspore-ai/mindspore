@@ -19,9 +19,8 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *session_header;
-
-extern const char *session_source;
+extern const char session_header[];
+extern const char session_source[];
 
 }  // namespace mindspore::lite::micro
 

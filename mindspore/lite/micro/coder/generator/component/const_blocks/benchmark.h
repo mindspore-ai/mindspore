@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *benchmark_source;
+extern const char benchmark_source[];
 
 }  // namespace mindspore::lite::micro
 

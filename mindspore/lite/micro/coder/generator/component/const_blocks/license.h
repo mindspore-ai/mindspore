@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *g_hwLicense;
+extern const char g_hwLicense[];
 
 }  // namespace mindspore::lite::micro
 

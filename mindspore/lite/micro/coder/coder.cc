@@ -31,7 +31,6 @@
 #include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
-
 class CoderFlags : public virtual FlagParser {
  public:
   CoderFlags() {
@@ -220,5 +219,4 @@ int RunCoder(int argc, const char **argv) {
   MS_LOG(INFO) << "end of Coder";
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro

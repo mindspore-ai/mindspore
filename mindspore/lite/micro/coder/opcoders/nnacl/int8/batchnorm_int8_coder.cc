@@ -24,7 +24,6 @@
 using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::lite::micro::nnacl {
-
 int BatchNormInt8Coder::Prepare(CoderContext *const context) {
   std::vector<int> input_shapes = input_tensor_->shape();
   size_t n_dim = input_shapes.size();

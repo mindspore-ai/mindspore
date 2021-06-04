@@ -24,7 +24,6 @@
 using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::lite::micro::nnacl {
-
 int ReshapeInt8Coder::DoCode(CoderContext *const context) {
   Tensor *input = OperatorCoder::input_tensors().at(kInputIndex);
   Tensor *output = OperatorCoder::output_tensors().at(kOutputIndex);

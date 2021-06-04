@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/mmodel.h"
 
 namespace mindspore::lite::micro {
-
-const char *model_header = R"RAW(
+const char model_header[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -82,6 +81,6 @@ Model *Model::Import(const char *model_buf, size_t size) {
 }
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_LIBRARY_SOURCE_MODEL_H_
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro

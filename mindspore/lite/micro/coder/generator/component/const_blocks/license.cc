@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/license.h"
 
 namespace mindspore::lite::micro {
-
-const char *g_hwLicense = R"RAW(
+const char g_hwLicense[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -36,5 +35,4 @@ const char *g_hwLicense = R"RAW(
  */
 
 )RAW";
-
 }  // namespace mindspore::lite::micro

@@ -21,7 +21,6 @@
 #include "nnacl/pooling_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
   CodeBaseStruct("PoolingParameter", name,
                  // Primitive parameter

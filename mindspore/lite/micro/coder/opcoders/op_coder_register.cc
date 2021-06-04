@@ -18,7 +18,6 @@
 #include <string>
 #include "coder/utils/type_cast.h"
 namespace mindspore::lite::micro {
-
 bool CoderKey::operator<(const CoderKey rhs) const {
   return std::tie(this->target_, this->data_type_, this->op_type_) <
          std::tie(rhs.target_, rhs.data_type_, rhs.op_type_);
@@ -67,5 +66,4 @@ OpCoderRegister::OpCoderRegister(Target target, TypeId data_type, schema::Primit
                                  const CoderCreatorFunc &creatorFunc) {
   OpCoderFactory::GetInstance()->RegistOpCoder(target, data_type, operator_type, creatorFunc);
 }
-
 }  // namespace mindspore::lite::micro

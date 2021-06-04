@@ -19,7 +19,6 @@
 #include <memory>
 
 namespace mindspore::lite::micro {
-
 void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
   if (config->target() == kARM32M) {
@@ -60,5 +59,4 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
          "     )\n"
          "add_library(net STATIC ${NET_SRC})\n";
 }
-
 }  // namespace mindspore::lite::micro

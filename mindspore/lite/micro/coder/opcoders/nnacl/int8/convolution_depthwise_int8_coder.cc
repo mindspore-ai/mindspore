@@ -23,7 +23,6 @@
 #include "nnacl/int8/conv_depthwise_int8.h"
 
 namespace mindspore::lite::micro {
-
 int ConvolutionDepthwiseINT8Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
   // init sliding window param
@@ -130,5 +129,4 @@ int ConvolutionDepthwiseINT8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::micro
