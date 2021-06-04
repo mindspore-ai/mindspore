@@ -29,6 +29,7 @@ import mindspore.context as context
 from .normalization import BatchNorm2d
 from .activation import get_activation
 from ..cell import Cell
+from ... import nn
 from ...ops.operations import _quant_ops as Q
 
 __all__ = [
@@ -1494,6 +1495,8 @@ class ActQuant(_QuantActivation):
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(ActQuant, self).__init__()
+        act_class = activation.__class__
+        act_list = [nn.ReLU, nn.ReLU6]
         self.act = Validator.check_isinstance("activation", activation, Cell)
         self.fake_before = Validator.check_bool(fake_before, "fake_before")
         if self.fake_before:
@@ -1502,12 +1505,21 @@ class ActQuant(_QuantActivation):
                                                                  ema=ema,
                                                                  ema_decay=ema_decay,
                                                                  quant_dtype=quant_dtype)
+        self.neg_trunc = False
+        self.narrow_range = False
+        preset_dict = quant_config.activation.p.keywords
+        if 'mode' in preset_dict and preset_dict['mode'] == "LEARNED_SCALE" and act_class in act_list:
+            self.neg_trunc = True
+        elif 'narrow_range' in preset_dict:
+            self.narrow_range = preset_dict['narrow_range']
+
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,
                                                       ema=ema,
                                                       ema_decay=ema_decay,
-                                                      quant_dtype=quant_dtype)
-
+                                                      quant_dtype=quant_dtype,
+                                                      neg_trunc=self.neg_trunc,
+                                                      narrow_range=self.narrow_range)
     def construct(self, x):
         if self.fake_before:
             x = self.fake_quant_act_before(x)
