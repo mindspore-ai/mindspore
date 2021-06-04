@@ -41,45 +41,29 @@ class SpecializeTransform {
   SpecializeTransform() : cache_() {}
   ~SpecializeTransform() = default;
 
-  FuncGraphPtr operator()(const FuncGraphPtr &func_graph, std::vector<FuncGraphPtr> graph_args,
-                          std::vector<PrimitivePtr> prim_args, std::vector<tensor::TensorPtr> tensor_value_args) {
+  FuncGraphPtr operator()(const FuncGraphPtr &func_graph, const std::vector<ValuePtr> &need_eliminate_args) {
     if (cache_.count(func_graph) == 0) {
       cache_[func_graph] = {};
     }
-
     auto &cache = cache_[func_graph];
-    auto key = std::make_tuple(graph_args, prim_args, tensor_value_args);
+    const auto &key = need_eliminate_args;
     if (cache.count(key) == 0) {
       auto mng = func_graph->manager();
       MS_EXCEPTION_IF_NULL(mng);
-
       FuncGraphPtr new_fg = TransformableClone(func_graph, std::make_shared<TraceTransform>("sp"));
       mng->AddFuncGraph(new_fg);
-
       std::vector<AnfNodePtr> params = new_fg->parameters();
       std::vector<AnfNodePtr> new_params;
-      size_t n = graph_args.size();
+      size_t n = need_eliminate_args.size();
       for (size_t i = 0; i < n; i++) {
-        if (graph_args[i] != nullptr) {
-          auto arg = NewValueNode(graph_args[i]);
-          (void)mng->Replace(params[i], arg);
+        // keep the parameter
+        if (need_eliminate_args[i] == nullptr) {
+          new_params.push_back(params[i]);
           continue;
         }
-        if (prim_args[i] != nullptr) {
-          auto arg = NewValueNode(prim_args[i]);
-          (void)mng->Replace(params[i], arg);
-          continue;
-        }
-        if (tensor_value_args[i] != nullptr) {
-          auto &const_tensor = *tensor_value_args[i];
-          auto const_tensor_ptr = std::make_shared<tensor::Tensor>(const_tensor);
-          AnfNodePtr arg = NewValueNode(const_tensor_ptr);
-          (void)mng->Replace(params[i], arg);
-          continue;
-        }
-        new_params.push_back(params[i]);
+        // replace the parameter with arg.
+        mng->Replace(params[i], NewReplaceValueNode(need_eliminate_args[i]));
       }
-
       mng->SetParameters(new_fg, new_params);
       cache[key] = new_fg;
     }
@@ -87,11 +71,19 @@ class SpecializeTransform {
   }
 
  private:
-  std::unordered_map<
-    FuncGraphPtr,
-    std::map<std::tuple<std::vector<FuncGraphPtr>, std::vector<PrimitivePtr>, std::vector<tensor::TensorPtr>>,
-             FuncGraphPtr>>
-    cache_;
+  std::unordered_map<FuncGraphPtr, std::map<std::vector<ValuePtr>, FuncGraphPtr>> cache_;
+  static ValueNodePtr NewReplaceValueNode(const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<FuncGraph>() || value->isa<Primitive>() || value->isa<parse::NameSpace>()) {
+      return NewValueNode(value);
+    }
+    if (value->isa<tensor::Tensor>()) {
+      auto &const_tensor = *(value->cast<tensor::TensorPtr>());
+      auto const_tensor_ptr = std::make_shared<tensor::Tensor>(const_tensor);
+      return NewValueNode(const_tensor_ptr);
+    }
+    MS_LOG(EXCEPTION) << "Unexpected value:" << value->ToString();
+  }
 };
 }  // namespace internal
 
@@ -115,44 +107,23 @@ class SpecializeOnGraphArguments : public AnfVisitor {
     if (inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
       return nullptr;
     }
-
-    std::vector<FuncGraphPtr> graph_args;
-    std::vector<PrimitivePtr> prim_args;
-    std::vector<tensor::TensorPtr> tensor_value_args;
+    std::vector<ValuePtr> need_eliminated_args;
     std::vector<AnfNodePtr> new_xs;
     bool hasVNode = false;
     for (size_t i = 1; i < inputs.size(); i++) {
-      if (IsValueNode<FuncGraph>(inputs[i])) {
-        auto fg_vnode = GetValueNode<FuncGraphPtr>(inputs[i]);
-        graph_args.push_back(fg_vnode);
-        prim_args.emplace_back(nullptr);
-        tensor_value_args.emplace_back(nullptr);
-        hasVNode = true;
-      } else if (IsValueNode<Primitive>(inputs[i])) {
-        auto p_vnode = GetValueNode<PrimitivePtr>(inputs[i]);
-        graph_args.emplace_back(nullptr);
-        prim_args.push_back(p_vnode);
-        tensor_value_args.emplace_back(nullptr);
-        hasVNode = true;
-      } else if (IsValueNode<tensor::Tensor>(inputs[i])) {
-        tensor::TensorPtr t_vnode = GetValueNode<tensor::TensorPtr>(inputs[i]);
-        graph_args.emplace_back(nullptr);
-        prim_args.emplace_back(nullptr);
-        tensor_value_args.emplace_back(t_vnode);
+      if (IsValueNode<FuncGraph>(inputs[i]) || IsValueNode<Primitive>(inputs[i]) ||
+          IsValueNode<tensor::Tensor>(inputs[i]) || IsValueNode<parse::NameSpace>(inputs[i])) {
+        need_eliminated_args.push_back(GetValueNode(inputs[i]));
         hasVNode = true;
       } else {
-        graph_args.emplace_back(nullptr);
-        prim_args.emplace_back(nullptr);
-        tensor_value_args.emplace_back(nullptr);
+        need_eliminated_args.emplace_back(nullptr);
         new_xs.push_back(inputs[i]);
       }
     }
-
     if (!hasVNode) {
       return nullptr;
     }
-
-    auto new_fg = specialize_transform_(inp0_fg, graph_args, prim_args, tensor_value_args);
+    auto new_fg = specialize_transform_(inp0_fg, need_eliminated_args);
     (void)new_xs.insert(new_xs.begin(), NewValueNode(new_fg));
 
     return node->func_graph()->NewCNode(new_xs);

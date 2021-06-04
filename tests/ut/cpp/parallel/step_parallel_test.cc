@@ -80,8 +80,7 @@ CNodePtr Make_Node(Shape x, Shape y, Shape out, int64_t condition = 0) {
       break;
     }
     case 1: {
-      abstract1->set_shape(nullptr);
-      param1->set_abstract(abstract1);
+      // Don't set abstract of param1, expecting a exception raised.
       param2->set_abstract(abstract2);
       break;
     }
@@ -272,15 +271,6 @@ TEST_F(TestStepParallel, ExtractShape3) {
   std::vector<Shapes> shape_expect = {inputs_shape, inputs_shape};
   std::vector<Shapes> shape_test = ExtractShape(node);
   ASSERT_EQ(shape_test, shape_expect);
-}
-
-TEST_F(TestStepParallel, ExtractShape4) {
-  Shape inputs_x_dims = {64, 32};
-  Shape inputs_y_dims = {32, 64};
-  Shape outputs_dims = {64, 64};
-  CNodePtr node = Make_Node(inputs_x_dims, inputs_y_dims, outputs_dims, 2);
-  Shapes inputs_shape = std::vector<Shape>{inputs_x_dims, inputs_y_dims};
-  EXPECT_THROW({ ExtractShape(node); }, std::runtime_error);
 }
 
 TEST_F(TestStepParallel, CreatOpInstance) {

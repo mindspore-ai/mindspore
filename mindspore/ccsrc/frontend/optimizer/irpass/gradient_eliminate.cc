@@ -86,7 +86,7 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
 void ExpandJPrim::GetJPrim(const FuncGraphManagerPtr &manager) {
   j_nodes_.clear();
   for (auto &fg : manager->func_graphs()) {
-    std::vector<AnfNodePtr> &&toposet = TopoSort(fg->get_return());
+    std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
     for (const auto &node : toposet) {
       if (IsPrimitiveCNode(node, prim::kPrimJ)) {
         j_nodes_.push_back(node->cast<CNodePtr>());

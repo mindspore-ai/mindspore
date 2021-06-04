@@ -44,6 +44,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/optimizer/irpass/parameter_eliminate.h"
 #if (ENABLE_CPU && !_WIN32)
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -227,8 +228,8 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
   }
 }
 
-OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig a_1 = opt::OptPassConfig({
+opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
+  return opt::OptPassConfig({
     irpass.switch_defer_inline_,
     irpass.switch_layer_defer_inline_,
     irpass.switch_simplify_,
@@ -277,6 +278,10 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.stopgrad_eliminater_,
     irpass.sparse_tensor_eliminate_,
   });
+}
+
+OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
     {
       irpass.specialize_transform_,
@@ -293,6 +298,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.all_reduce_const_elim_,
     },
     false, true);
+
   opt::OptPassConfig a_after_grad = opt::OptPassConfig({
     irpass.inline_without_move_,
   });
@@ -321,6 +327,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"a_1", a_1},
+                         {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"a_2", a_2},
                          {"accelerated_algorithm", accelerated_algorithm},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
@@ -342,7 +349,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  OptPassGroupMap a1_a2({opt_a[0], opt_a[1]});
+  OptPassGroupMap a1_a2({opt_a[0], opt_a[1], opt_a[2]});
   return a1_a2;
 }
 
