@@ -19,8 +19,8 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *tensor_header;
-extern const char *tensor_source;
+extern const char tensor_header[];
+extern const char tensor_source[];
 
 }  // namespace mindspore::lite::micro
 

@@ -25,7 +25,6 @@
 using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int SubInt8Coder::Prepare(CoderContext *const context) {
   input0 = input_tensors_.at(0);
   input1 = input_tensors_.at(1);

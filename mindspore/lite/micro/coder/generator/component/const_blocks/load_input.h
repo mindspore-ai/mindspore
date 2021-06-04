@@ -19,8 +19,8 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *load_input_h;
-extern const char *load_input_c;
+extern const char load_input_h[];
+extern const char load_input_c[];
 
 }  // namespace mindspore::lite::micro
 

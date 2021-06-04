@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro {
 
-extern const char *model_header;
+extern const char model_header[];
 
 }  // namespace mindspore::lite::micro
 

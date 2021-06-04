@@ -21,7 +21,6 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
 namespace mindspore::lite::micro::nnacl {
-
 int MatMulBaseInt8Coder::ReSize(CoderContext *const context) {
   ResizeParameter();
   if (InitTmpBuffer() != RET_OK) {

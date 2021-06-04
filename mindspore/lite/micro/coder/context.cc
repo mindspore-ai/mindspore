@@ -28,5 +28,4 @@ CoderContext::CoderContext() {
 void CoderContext::AppendCode(const std::string &codeBlock) { this->code_blocks_.emplace_back(codeBlock); }
 
 void CoderContext::AppendInitCode(const std::string &codeBlock) { this->initialContent_.push_back(codeBlock); }
-
 }  // namespace mindspore::lite::micro

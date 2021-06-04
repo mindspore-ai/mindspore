@@ -19,8 +19,7 @@
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {
-
-static constexpr size_t kDefaultMemAlignSize = 8;
+constexpr auto kDefaultMemAlignSize = 8;
 
 static size_t AlignMemorySize(size_t size) {
   return ((size + kDefaultMemAlignSize - 1) / kDefaultMemAlignSize) * kDefaultMemAlignSize;

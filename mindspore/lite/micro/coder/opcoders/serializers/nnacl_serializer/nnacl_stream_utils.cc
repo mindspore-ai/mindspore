@@ -25,7 +25,6 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_stream_utils.h"
 
 namespace mindspore::lite::micro {
-
 std::ostream &operator<<(std::ostream &code, const ::QuantArg &quant_arg) {
   code << "{" << static_cast<float>(quant_arg.scale_) << ", " << quant_arg.zp_ << "}";
   return code;
@@ -87,5 +86,4 @@ std::ostream &operator<<(std::ostream &code, DataOrder data_order) {
   }
   return code;
 }
-
 }  // namespace mindspore::lite::micro

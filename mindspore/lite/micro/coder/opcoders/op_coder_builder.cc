@@ -23,7 +23,6 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-
 std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
   MS_CHECK_PTR_RET_NULL(node_->primitive_);
   int primitive_type = GetPrimitiveType(node_->primitive_);
@@ -121,5 +120,4 @@ OpCoderBuilder &OpCoderBuilder::support_parallel(bool parallel) {
 }
 
 void OpCoderBuilder::Reset() {}
-
 }  // namespace mindspore::lite::micro

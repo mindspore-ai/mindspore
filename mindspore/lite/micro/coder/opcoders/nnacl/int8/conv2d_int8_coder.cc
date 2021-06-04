@@ -33,7 +33,6 @@
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::nnacl {
-
 int Conv2DINT8Coder::InitTmpBuffer(CoderContext *const context) {
   int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
   int tmp_size;

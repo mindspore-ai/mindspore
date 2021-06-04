@@ -231,5 +231,4 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReluXQuantAr
                  relu_quant_arg.input_multiplier_, relu_quant_arg.left_shift_, relu_quant_arg.right_shift_,
                  relu_quant_arg.quantized_output_min, relu_quant_arg.quantized_output_max);
 }
-
 }  // namespace mindspore::lite::micro::nnacl

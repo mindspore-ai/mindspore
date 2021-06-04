@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/benchmark.h"
 
 namespace mindspore::lite::micro {
-
-const char *benchmark_source = R"RAW(
+const char benchmark_source[] = R"RAW(
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -206,6 +205,6 @@ int main(int argc, const char **argv) {
   }
   return lite::RET_OK;
 }
-)RAW";
 
+)RAW";
 }  // namespace mindspore::lite::micro
