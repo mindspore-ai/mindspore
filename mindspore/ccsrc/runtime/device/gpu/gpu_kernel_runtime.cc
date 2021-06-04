@@ -1248,13 +1248,11 @@ DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, 
   if (now_addr == nullptr) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
     now_addr = device_address;
-    addr_state_[now_addr] = true;
   } else {
-    auto addr_state_iter = addr_state_.find(now_addr);
-    if (addr_state_iter != addr_state_.end() && addr_state_iter->second == false) {
+    if (addr_state_.count(now_addr) > 0) {
+      addr_state_.erase(now_addr);
       auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
       now_addr = device_address;
-      addr_state_[now_addr] = true;
     }
   }
 
