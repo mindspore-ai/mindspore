@@ -24,7 +24,7 @@ class SparseToDense(Cell):
     Not yet supported by any backend at the moment.
 
     Inputs:
-        - **sparse_tensor** (SparseTensor): the sparse tensor to convert.
+        - **sparse_tensor** (:class:`mindspore.SparseTensor`): the sparse tensor to convert.
 
     Outputs:
         Tensor, converted from sparse tensor.
@@ -69,21 +69,21 @@ class SparseTensorDenseMatmul(Cell):
     The rank of sparse matrix and dense matrix must equal to `2`.
 
     Args:
-        - *adjoint_st** (bool) - If true, sparse tensor is transposed before multiplication. Default: False.
-        - *adjoint_dt** (bool) - If true, dense tensor is transposed before multiplication. Default: False.
+        adjoint_st (bool): If true, sparse tensor is transposed before multiplication. Default: False.
+        adjoint_dt (bool): If true, dense tensor is transposed before multiplication. Default: False.
 
     Inputs:
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
-            Support int32, int64, each element value should be non-negative. The shape is :math:`(n, 2)`.
+          Support int32, int64, each element value should be non-negative. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
-            Support float16, float32, float64, int32, int64. The shape should be :math:`(n,).
+          Support float16, float32, float64, int32, int64. The shape should be :math:`(n,)`.
         - **sparse_shape** (tuple) - A positive int tuple which specifies the shape of sparse tensor,
-            should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
         - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
-            If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
-            If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
-            If `adjoint_st` is True and `adjoint_dt` is False, the shape must be :math:`(N, M)`.
-            If `adjoint_st` is True and `adjoint_dt` is True, the shape must be :math:`(M, N)`.
+          If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
+          If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
+          If `adjoint_st` is True and `adjoint_dt` is False, the shape must be :math:`(N, M)`.
+          If `adjoint_st` is True and `adjoint_dt` is True, the shape must be :math:`(M, N)`.
 
     Outputs:
         Tensor, the dtype is the same as `values`.
