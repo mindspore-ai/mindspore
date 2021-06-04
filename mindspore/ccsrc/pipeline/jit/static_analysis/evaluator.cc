@@ -252,7 +252,9 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
     (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broaded_list),
                          [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                            MS_EXCEPTION_IF_NULL(arg);
-                           if (arg->isa<AbstractScalar>()) {
+                           // Only broaden scalar that data type is number, such as float16,int32 and so on.
+                           auto type = arg->BuildType()->type_id();
+                           if (arg->isa<AbstractScalar>() && type > kNumberTypeBegin && type < kNumberTypeEnd) {
                              auto config = abstract::AbstractBase::kBroadenScalarParameterOnly;
                              return arg->Broaden(config);
                            } else if (arg->GetValueTrack() != kAnyValue) {
