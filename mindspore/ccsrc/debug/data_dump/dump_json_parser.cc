@@ -179,9 +179,7 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t device_id) {
   }
 }
 
-bool DumpJsonParser::GetIterDumpFlag() {
-  return e2e_dump_enabled_ && (iteration_ == 0 || cur_dump_iter_ == iteration_);
-}
+bool DumpJsonParser::GetIterDumpFlag() { return e2e_dump_enabled_ && IsDumpIter(cur_dump_iter_); }
 
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                                 TypeId type) {
@@ -224,6 +222,11 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     async_dump_enabled_ = true;
+  } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+    if (!e2e_dump_enabled_) {
+      e2e_dump_enabled_ = true;
+      trans_flag_ = true;
+    }
   }
 
   ParseDumpMode(*dump_mode);
@@ -241,12 +244,8 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (e2e_dump_setting == content.end()) {
-    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-      MS_LOG(EXCEPTION) << "e2e_dump_settings needed for GPU dump";
-    } else {
-      MS_LOG(INFO) << "No e2e_dump_settings";
-      return;
-    }
+    MS_LOG(INFO) << "No e2e_dump_settings";
+    return;
   }
 
   auto e2e_dump_enable = CheckJsonKeyExist(*e2e_dump_setting, kEnable);
@@ -311,17 +310,9 @@ void DumpJsonParser::ParseNetName(const nlohmann::json &content) {
 
 void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   CheckJsonStringType(content, kIteration);
-  if (e2e_dump_enabled_) {
-    std::string temp_iter = content;
-    // is this a single iteration
-    if (temp_iter != "all" && temp_iter.find("-") == std::string::npos && temp_iter.find("|") == std::string::npos) {
-      iteration_ = std::stoul(temp_iter);
-    } else {
-      MS_LOG(EXCEPTION) << "Can only use a single value for the iteration in sync mode.";
-    }
-  } else if (async_dump_enabled_) {
-    async_iteration_ = content;
-    if (async_iteration_.empty()) {
+  if (e2e_dump_enabled_ || async_dump_enabled_) {
+    iteration_ = content;
+    if (iteration_.empty()) {
       MS_LOG(EXCEPTION) << "In async dump settings json file, iteration is empty";
     }
   } else {
@@ -331,13 +322,13 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
 
 bool DumpJsonParser::IsDumpIter(uint32_t iteration) {
   // bool DumpJsonParser::IsDumpIter(uint32_t iteration) --> checks if iteration should be dumped or not.
-  if (async_iteration_ == "all") {
+  if (iteration_ == "all") {
     return true;
   }
   int start = 0;
-  int end = async_iteration_.find("|");
+  int end = iteration_.find("|");
   while (end != -1) {
-    std::string temp = async_iteration_.substr(start, end - start);
+    std::string temp = iteration_.substr(start, end - start);
     int range_idx = temp.find("-");
     if (range_idx != -1) {
       uint32_t low_range = std::stoul(temp.substr(0, range_idx));
@@ -349,9 +340,9 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) {
       return true;
     }
     start = end + 1;
-    end = async_iteration_.find("|", start);
+    end = iteration_.find("|", start);
   }
-  std::string temp = async_iteration_.substr(start, end - start);
+  std::string temp = iteration_.substr(start, end - start);
   int range_idx = temp.find("-");
   if (range_idx != -1) {
     uint32_t low_range = std::stoul(temp.substr(0, range_idx));
@@ -367,8 +358,7 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) {
 
 bool DumpJsonParser::IsSingleIter() {
   // bool DumpJsonParser::IsSingleIter() --> checks if iteration in json dump file is single or not.
-  if (async_iteration_ != "all" && async_iteration_.find("-") == std::string::npos &&
-      async_iteration_.find("|") == std::string::npos) {
+  if (iteration_ != "all" && iteration_.find("-") == std::string::npos && iteration_.find("|") == std::string::npos) {
     return true;
   }
   return false;
@@ -434,7 +424,7 @@ void DumpJsonParser::JsonConfigToString() {
   cur_config.append(" net_name:");
   cur_config.append(net_name_);
   cur_config.append(" iteration:");
-  cur_config.append(std::to_string(iteration_));
+  cur_config.append(iteration_);
   cur_config.append(" input_output:");
   cur_config.append(std::to_string(input_output_));
   cur_config.append("e2e_enable:");
@@ -504,16 +494,14 @@ std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t dev
   std::string bin_path;
   bin_path.append(path_);
   bin_path.append("/");
-  bin_path.append("device_");
+  bin_path.append("rank_");
   bin_path.append(std::to_string(device_id));
   bin_path.append("/");
   bin_path.append(net_name_);
-  bin_path.append("_graph_");
+  bin_path.append("/");
   bin_path.append(std::to_string(graph_id));
   bin_path.append("/");
-  bin_path.append(std::to_string(dump_mode_));
-  bin_path.append("/");
-  bin_path.append(std::to_string(iteration_));
+  bin_path.append(iteration_);
   bin_path.append("/");
 
   return bin_path;

@@ -18,13 +18,16 @@ Read tensor test script for offline debugger APIs.
 
 import mindspore.offline_debug.dbg_services as d
 import numpy as np
-from dump_test_utils import compare_actual_with_expected
+from dump_test_utils import compare_actual_with_expected, skip_test
 
 GENERATE_GOLDEN = False
 test_name = "sync_trans_true_read_tensors"
 
 
 def test_sync_trans_read_tensors():
+
+    if skip_test():
+        return
 
     debugger_backend = d.DbgServices(
         dump_file_path="../data/dump/gpu_dumps/sync_trans_true/alexnet")

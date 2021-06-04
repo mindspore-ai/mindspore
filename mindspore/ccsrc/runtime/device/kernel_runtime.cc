@@ -122,11 +122,11 @@ bool KernelRuntime::DumpDataEnabledIteration() {
     return false;
   }
 
-  auto cur_iter = dump_json_parser.cur_dump_iter() + 1;
-  if (dump_json_parser.iteration() != 0) {
-    return cur_iter == dump_json_parser.iteration();
+  auto cur_iter = dump_json_parser.cur_dump_iter();
+  if (dump_json_parser.IsDumpIter(cur_iter)) {
+    return true;
   }
-  return true;
+  return false;
 }
 
 void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {

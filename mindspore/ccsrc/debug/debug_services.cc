@@ -285,16 +285,6 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
 }
 
 #ifdef OFFLINE_DBG_MODE
-void DebugServices::GetSlotInfo(const std::string &file_name, const std::string &dump_name,
-                                const std::string &specific_dump_dir, std::vector<size_t> *slot_list) {
-  // get the slot from the name
-  std::string delimiter = "_";
-  unsigned int start_pos = dump_name.length();
-  unsigned int end_pos = file_name.find(delimiter, start_pos);
-  std::string item = file_name.substr(start_pos, end_pos - start_pos);
-  slot_list->push_back(std::stoul(item));
-}
-
 void DebugServices::ReadTensorFromNpy(const std::string &file_name, std::string *tensor_type, std::size_t *size,
                                       std::vector<int64_t> *shape, std::vector<char> **data_buffer) {
   std::ifstream infile;
@@ -421,9 +411,8 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
 
     std::string prefix_dump_file_name = dump_style_kernel_name;
 
-    std::string specific_dump_dir = dump_dir + "/device_" + std::to_string(device_id[i]) + "/" + net_name + "_graph_" +
-                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(root_graph_id[i]) + "/" +
-                                    std::to_string(iteration[i]);
+    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
+                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
     DIR *d;
@@ -523,42 +512,6 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
   }
 }
 
-std::size_t DebugServices::GetShapeTypeInfo(const std::string &specific_dump_dir, std::size_t slot,
-                                            const std::string &prefix_dump_file_name, std::string *file_name,
-                                            std::string *type_name, std::string *out_dir, std::vector<int64_t> *shape) {
-  std::size_t found = 0;
-  found = file_name->rfind(prefix_dump_file_name, 0);
-
-  if (found != 0) {
-    return found;
-  }
-
-  // found a file, now get the shape and type
-  // find "_shape_" in the filename
-  std::string shape_delimiter = "_shape_";
-  unsigned int str_pos = file_name->find(shape_delimiter) + shape_delimiter.length();
-
-  // read numbers with '_' delimter until you read a non-number, that will be the type name
-  bool number_found = true;
-  std::string delimiter = "_";
-  while (number_found) {
-    unsigned int end_pos = file_name->find(delimiter, str_pos);
-    std::string item = file_name->substr(str_pos, end_pos - str_pos);
-    bool is_number = !item.empty() && std::find_if(item.begin(), item.end(),
-                                                   [](unsigned char c) { return !std::isdigit(c); }) == item.end();
-
-    if (is_number) {
-      shape->push_back(std::stoul(item));
-      str_pos = end_pos + 1;
-    } else {
-      *type_name = item;
-      number_found = false;
-    }
-  }
-
-  return 0;
-}
-
 void DebugServices::AddToTensorData(const std::string &backend_name, const std::size_t slot,
                                     const unsigned int iteration, const unsigned int device_id,
                                     const unsigned int root_graph_id, const std::size_t data_size,
@@ -620,11 +573,11 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
 
     std::string prefix_dump_file_name = dump_style_kernel_name;
     if (is_sync_mode) {
-      prefix_dump_file_name += "_output_" + std::to_string(slot[i]) + "_";
+      prefix_dump_file_name += ".output." + std::to_string(slot[i]);
     }
 
-    std::string specific_dump_dir =
-      dump_dir + "/device_" + std::to_string(device_id[i]) + "/iteration_" + std::to_string(iteration[i]);
+    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id[i]) + "/" + net_name + "/" +
+                                    std::to_string(root_graph_id[i]) + "/" + std::to_string(iteration[i]);
 
     // search files in dir for the one that meets the filename prefix and read the file into memory
     std::vector<char> *buffer = NULL;
@@ -640,31 +593,27 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
         while ((dir = readdir(d)) != NULL) {
           if (dir->d_type == DT_REG) {
             std::string file_name = dir->d_name;
-            std::string out_dir;
-            std::size_t found = GetShapeTypeInfo(specific_dump_dir, slot[i], prefix_dump_file_name, &file_name,
-                                                 &type_name, &out_dir, &shape);
+
+            // strip off the task_id, stream_id, and timestamp, then compare
+            size_t first_dot = file_name.find(".");
+            size_t second_dot = file_name.find(".", first_dot + 1);
+            size_t seventh_dot = file_name.rfind(".", file_name.rfind(".") - 1);
+            size_t fifth_dot = file_name.rfind(".", file_name.rfind(".", seventh_dot - 1) - 1);
+            if (fifth_dot == std::string::npos) {
+              continue;
+            }
+            std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
+            std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
+            std::string stripped_file_name = start_string + end_string;
+            std::size_t found = stripped_file_name.rfind(prefix_dump_file_name, 0);
+
             if (found != 0) {
               continue;
             }
 
-            // read the tensor data from the file
-            std::string file_path = specific_dump_dir + "/" + file_name;
-
-            std::ifstream infile;
-            infile.open(file_path.c_str(), std::ios::binary | std::ios::ate);
-            if (!infile.is_open()) {
-              MS_LOG(ERROR) << "Failed to open bin file " << file_name;
-              break;
-            }
-            uint64_t file_size = infile.tellg();
-            infile.seekg(0, std::ios::beg);
-            buffer = new std::vector<char>(file_size);
-            if (!infile.read(buffer->data(), file_size)) {
-              MS_LOG(ERROR) << "Failed to read in bin file " << file_name;
-              break;
-            }
-            data_size = file_size;
-            infile.close();
+            shape.clear();
+            std::string full_path = specific_dump_dir + "/" + file_name;
+            ReadTensorFromNpy(full_path, &type_name, &data_size, &shape, &buffer);
             AddToTensorData(backend_name[i], slot[i], iteration[i], device_id[i], root_graph_id[i], data_size,
                             type_name, shape, buffer, result_list);
             found_file = true;
@@ -758,14 +707,8 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
     std::unordered_set<std::string> wp_nodes = device_and_graph_item.second;
     std::vector<std::tuple<std::string, std::string>> proto_to_dump;
 
-    std::string specific_dump_dir;
-    if (is_sync_mode) {
-      specific_dump_dir = dump_dir + "/device_" + std::to_string(device_id) + "/iteration_" + std::to_string(iteration);
-    } else {
-      specific_dump_dir = dump_dir + "/device_" + std::to_string(device_id) + "/" + net_name + "_graph_" +
-                          std::to_string(root_graph_id) + "/" + std::to_string(root_graph_id) + "/" +
-                          std::to_string(iteration);
-    }
+    std::string specific_dump_dir = dump_dir + "/rank_" + std::to_string(device_id) + "/" + net_name + "/" +
+                                    std::to_string(root_graph_id) + "/" + std::to_string(iteration);
 
     // convert node names to dump style
     for (auto node : wp_nodes) {
@@ -774,7 +717,7 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       ReplaceSrcFileName(is_sync_mode, &dump_style_name);
 
       if (is_sync_mode) {
-        dump_style_name.append("_output_");
+        dump_style_name.append(".output.");
       }
 
       proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
@@ -795,31 +738,26 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
             std::string file_name = dir->d_name;
             for (auto &node : proto_to_dump) {
               std::string dump_name = std::get<1>(node);
-              std::size_t found = 0;
 
-              found = file_name.rfind(dump_name, 0);
+              // strip off the task_id, stream_id, and timestamp, then compare
+              size_t first_dot = file_name.find(".");
+              size_t second_dot = file_name.find(".", first_dot + 1);
+              size_t seventh_dot = file_name.rfind(".", file_name.rfind(".") - 1);
+              size_t fifth_dot = file_name.rfind(".", file_name.rfind(".", seventh_dot - 1) - 1);
+              if (fifth_dot == std::string::npos) {
+                continue;
+              }
+
+              std::string start_string = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
+              std::string end_string = file_name.substr(fifth_dot, seventh_dot - fifth_dot);
+              std::string stripped_file_name = start_string + end_string;
+              std::size_t found = stripped_file_name.rfind(dump_name, 0);
 
               if (found == 0) {
-                std::vector<size_t> slot_list;
-                GetSlotInfo(file_name, dump_name, specific_dump_dir, &slot_list);
-                for (auto slot : slot_list) {
-                  // add a TensorData entry (data will be read when needed)
-                  std::vector<int64_t> shape;
-                  std::string orig_name = std::get<0>(node);
-                  auto tensor_data = std::make_shared<TensorData>();
-                  tensor_data->SetName(orig_name);
-                  tensor_data->SetExecutionOrder(0);
-                  tensor_data->SetSlot(slot);
-                  tensor_data->SetIteration(iteration);
-                  tensor_data->SetDeviceId(device_id);
-                  tensor_data->SetRootGraphId(root_graph_id);
-                  tensor_data->SetDataPtr(NULL);
-                  tensor_data->SetByteSize(0);
-                  tensor_data->SetType("");
-                  tensor_data->SetShape(shape);
-
-                  tensor_list.push_back(tensor_data);
-                }
+                size_t slot = std::stoul(stripped_file_name.substr(dump_name.length()));
+                std::vector<int64_t> shape;
+                std::string orig_name = std::get<0>(node);
+                AddToTensorData(orig_name, slot, iteration, device_id, root_graph_id, 0, "", shape, NULL, &tensor_list);
                 break;
               }
             }

@@ -29,6 +29,7 @@ test_name = "async_sink_mode_true_read_tensors"
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="needs updating")
 def test_async_sink_mode_true_read_tensors():
     debugger_backend = d.DbgServices(
         dump_file_path="/home/workspace/mindspore_dataset/dumps/async_sink_true/")

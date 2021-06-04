@@ -203,13 +203,6 @@ class DebugServices {
                              std::string *qualified_tensor_name, std::vector<watchpoint_t> *watchpoints_to_check);
 
 #ifdef OFFLINE_DBG_MODE
-  void GetSlotInfo(const std::string &file_name, const std::string &dump_name, const std::string &specific_dump_dir,
-                   std::vector<size_t> *slot_list);
-
-  std::size_t GetShapeTypeInfo(const std::string &specific_dump_dir, std::size_t slot,
-                               const std::string &prefix_dump_file_name, std::string *file_name, std::string *type_name,
-                               std::string *out_dir, std::vector<int64_t> *shape);
-
   void AddToTensorData(const std::string &backend_name, const std::size_t slot, const unsigned int iteration,
                        const unsigned int device_id, const unsigned int root_graph_id, const std::size_t data_size,
                        const std::string &type_name, const std::vector<int64_t> &shape, std::vector<char> *buffer,
