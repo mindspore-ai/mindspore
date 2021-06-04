@@ -27,7 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListGetItem;
 
 namespace mindspore::kernel {
-
 int TensorListGetItemCPUKernel::Init() { return RET_OK; }
 
 int TensorListGetItemCPUKernel::Run() {

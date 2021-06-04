@@ -27,7 +27,6 @@ OpParameter *PopulateDivParameter(const void *prim) {
 
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_DivFusion, PopulateDivParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

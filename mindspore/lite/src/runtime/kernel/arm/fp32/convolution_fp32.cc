@@ -30,7 +30,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 #ifdef ENABLE_AVX
 #define OC_BLOCK C16NUM
-#elif ENABLE_ARM32
+#elif defined(ENABLE_ARM32)
 #define OC_BLOCK C4NUM
 #else
 #define OC_BLOCK C8NUM
@@ -54,7 +54,7 @@ int ConvolutionCPUKernel::InitWeightBias() {
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane);
-#elif ENABLE_ARM32
+#elif defined(ENABLE_ARM32)
   RowMajor2Col4Major(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane);
 #else
   RowMajor2Col8Major(origin_weight_, packed_weight_, out_channel, in_channel * kernel_plane);
@@ -80,7 +80,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
 
 #ifdef ENABLE_AVX
   int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C6NUM * thread_count_;
-#elif ENABLE_SSE
+#elif defined(ENABLE_SSE)
   int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C4NUM * thread_count_;
 #else
   int unit_size =
@@ -173,7 +173,7 @@ void ConvolutionCPUKernel::PackWeight() {
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
-#elif ENABLE_ARM32
+#elif defined(ENABLE_ARM32)
   RowMajor2Col4Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
 #else
   RowMajor2Col8Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);

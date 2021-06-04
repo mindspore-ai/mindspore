@@ -50,7 +50,6 @@ OpParameter *PopulateSliceParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_SliceFusion, PopulateSliceParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

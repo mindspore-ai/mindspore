@@ -43,7 +43,6 @@ OpParameter *PopulateStridedSliceGradParameter(const void *prim) {
   param->shrinkAxisMask_ = value->shrink_axis_mask();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_StridedSliceGrad, PopulateStridedSliceGradParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -93,7 +93,6 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Conv2dTransposeFusion, PopulateDeconvParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

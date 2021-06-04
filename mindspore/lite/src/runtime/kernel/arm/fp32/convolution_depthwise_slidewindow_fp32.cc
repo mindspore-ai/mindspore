@@ -200,5 +200,4 @@ int ConvolutionDepthwiseSWCPUKernel::Eval() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

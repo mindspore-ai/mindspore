@@ -311,5 +311,4 @@ int MatmulBaseFP16CPUKernel::Run() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

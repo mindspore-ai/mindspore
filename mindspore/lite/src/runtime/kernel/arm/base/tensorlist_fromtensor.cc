@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListFromTensor;
 
 namespace mindspore::kernel {
-
 int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   if (input1_->data_type() != kNumberTypeInt && input1_->data_type() != kNumberTypeInt32) {  // element_shape
     MS_LOG(ERROR) << "in_tensors_[1] data type is must be int";
@@ -35,7 +34,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   int in1_ele_num = input1_->ElementsNum();
   std::vector<int> tensor_shape = input0_->shape();
   if (static_cast<int>(tensor_shape.size() - 1) != in1_ele_num) {
-    MS_LOG(ERROR) << "in_tensors_[0].shape().size() - 1:" << tensor_shape.size() - 1
+    MS_LOG(ERROR) << "in_tensors_[0].shape().size() - 1:" << (tensor_shape.size() - 1)
                   << " must be equal in_tensors_[1].ElementsNum():" << in1_ele_num;
     return RET_ERROR;
   }
@@ -44,7 +43,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
     int dim0 = tensor_shape[i + 1];
     int dim1 = elements_shape[i];
     if (dim0 >= 0 && dim1 >= 0 && dim0 != dim1) {
-      MS_LOG(ERROR) << "input0_->shape()[" << i + 1 << "]:" << dim0 << " is not equal input1_->data_c()[" << i
+      MS_LOG(ERROR) << "input0_->shape()[" << (i + 1) << "]:" << dim0 << " is not equal input1_->data_c()[" << i
                     << "]:" << dim1;
       return RET_ERROR;
     }

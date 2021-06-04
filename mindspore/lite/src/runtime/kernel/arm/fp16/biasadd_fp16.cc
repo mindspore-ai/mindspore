@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
-
 int BiasAddCPUFp16Kernel::ReSize() {
   auto dims = in_tensors_.at(0)->shape();
   bias_param_->ndim_ = dims.size();

@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_RandomStandardNormal;
 
 namespace mindspore::kernel {
-
 int RandomStandardNormalCPUKernel::Init() { return RET_OK; }
 
 int RandomStandardNormalCPUKernel::ReSize() { return RET_OK; }
@@ -51,6 +50,5 @@ int RandomStandardNormalCPUKernel::Run() {
   }
   return RET_OK;
 }
-
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_RandomStandardNormal, LiteKernelCreator<RandomStandardNormalCPUKernel>)
 }  // namespace mindspore::kernel

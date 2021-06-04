@@ -18,12 +18,12 @@ using mindspore::schema::PrimitiveType_While;
 
 namespace mindspore {
 namespace lite {
-typedef struct WhileParemeter {
+struct WhileParemeter {
   OpParameter op_parameter_;
-  int body_subgraph_index;
-  int cond_subgraph_index;
-} WhileParemeter;
-
+  int body_subgraph_index = 0;
+  int cond_subgraph_index = 0;
+};
+using WhileParemeter = WhileParemeter;
 OpParameter *PopulateWhileParemeter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);

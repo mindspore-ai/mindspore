@@ -160,7 +160,6 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
         MS_LOG(ERROR) << "tmp_buffer_ error!";
         return RET_NULL_PTR;
       }
-
     } else {
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * deconv_param_->oc_div4_ * unit.w_size_ * unit.h_size_ *
                                 DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float));
@@ -170,7 +169,6 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
       }
     }
   }
-
   return RET_OK;
 }
 
@@ -270,7 +268,7 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   float *nhwc_weight = reinterpret_cast<float *>(weight_tensor->data_c());
 
-  /* unit data : weight & winograd data*/
+  /* unit data : weight & winograd data */
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
     int ret = PackDeConvWgDataFp32(nhwc_weight, unit, conv_param_, deconv_param_);
@@ -414,7 +412,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
     static_cast<const lite::InnerContext *>(this->context_)
       ->thread_pool_->ParallelLaunch(DeConvWgFp32Run, this, deconv_param_->thread_num_);
 
-    /*post bias activate and nhwc */
+    /* post bias activate and nhwc */
     static_cast<const lite::InnerContext *>(this->context_)
       ->thread_pool_->ParallelLaunch(DeConvWgPostFp32Run, this, thread_num_hw_);
   }

@@ -45,7 +45,6 @@ OpParameter *PopulateTileParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_TileFusion, PopulateTileParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

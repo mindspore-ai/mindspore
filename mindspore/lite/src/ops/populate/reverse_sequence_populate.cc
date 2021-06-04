@@ -40,7 +40,6 @@ OpParameter *PopulateReverseSequenceParameter(const void *prim) {
   param->batch_axis_ = static_cast<int>(value->batch_dim());
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

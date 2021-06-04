@@ -32,7 +32,6 @@ OpParameter *PopulateClipParameter(const void *prim) {
   param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

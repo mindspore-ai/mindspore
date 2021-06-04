@@ -39,9 +39,7 @@ OpParameter *PopulateTensorListReserveParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(reserve_param);
 }
 }  // namespace
-
 Registry g_tensorListReserveV0ParameterRegistry(schema::v0::PrimitiveType_TensorListReserve,
                                                 PopulateTensorListReserveParameter, SCHEMA_V0);
-
 }  // namespace lite
 }  // namespace mindspore

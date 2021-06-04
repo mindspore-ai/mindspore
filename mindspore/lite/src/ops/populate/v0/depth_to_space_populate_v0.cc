@@ -41,9 +41,7 @@ OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(depth_space_param);
 }
 }  // namespace
-
 Registry g_depthToSpaceV0ParameterRegistry(schema::v0::PrimitiveType_DepthToSpace, PopulateDepthToSpaceParameter,
                                            SCHEMA_V0);
 }  // namespace lite
-
 }  // namespace mindspore

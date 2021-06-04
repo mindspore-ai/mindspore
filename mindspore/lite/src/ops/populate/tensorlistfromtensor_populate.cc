@@ -41,7 +41,6 @@ OpParameter *PopulateTensorListFromTensorParameter(const void *prim) {
   param->element_dtype_ = value->element_dtype();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_TensorListFromTensor, PopulateTensorListFromTensorParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

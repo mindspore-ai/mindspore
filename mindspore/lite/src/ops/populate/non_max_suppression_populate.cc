@@ -40,6 +40,5 @@ OpParameter *PopulateNonMaxSuppressionParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_NonMaxSuppression, PopulateNonMaxSuppressionParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

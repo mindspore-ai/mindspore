@@ -40,7 +40,6 @@ OpParameter *PopulateTensorListStackParameter(const void *prim) {
   param->num_element_ = value->num_elements();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_TensorListStack, PopulateTensorListStackParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

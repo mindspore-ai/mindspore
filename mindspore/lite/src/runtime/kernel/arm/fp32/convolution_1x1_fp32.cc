@@ -156,7 +156,7 @@ int Convolution1x1CPUKernel::Init() {
 }
 
 void Convolution1x1CPUKernel::PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col) {
-#if ENABLE_AVX
+#ifdef ENABLE_AVX
   RowMajor2Col6Major(src_ptr, dst_ptr, row, col);
 #elif defined(ENABLE_SSE)
   RowMajor2Col4Major(src_ptr, dst_ptr, row, col);
@@ -290,5 +290,4 @@ int Convolution1x1CPUKernel::Eval() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

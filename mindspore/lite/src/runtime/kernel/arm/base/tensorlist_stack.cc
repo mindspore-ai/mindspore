@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListStack;
 
 namespace mindspore::kernel {
-
 int TensorListStackCPUKernel::CheckParam() {
   if (num_element_ != -1 && input0_->ElementsNum() != num_element_) {
     MS_LOG(ERROR) << "in_tensors_[0].ElementsNum():[" << input0_->ElementsNum() << "] must be equal "

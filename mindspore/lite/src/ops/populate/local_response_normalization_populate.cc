@@ -42,8 +42,6 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   param->beta_ = value->beta();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_LRN, PopulateLocalResponseNormParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

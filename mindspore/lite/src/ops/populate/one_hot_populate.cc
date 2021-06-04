@@ -39,7 +39,6 @@ OpParameter *PopulateOneHotParameter(const void *prim) {
   param->axis_ = value->axis();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_OneHot, PopulateOneHotParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

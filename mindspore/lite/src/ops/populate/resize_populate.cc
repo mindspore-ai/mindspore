@@ -44,7 +44,6 @@ OpParameter *PopulateResizeParameter(const void *prim) {
   param->cubic_coeff_ = value->cubic_coeff();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -44,8 +44,6 @@ OpParameter *PopulateEmbeddingLookupParameter(const void *prim) {
   }
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_EmbeddingLookupFusion, PopulateEmbeddingLookupParameter, SCHEMA_CUR);
-
 }  // namespace lite
 }  // namespace mindspore

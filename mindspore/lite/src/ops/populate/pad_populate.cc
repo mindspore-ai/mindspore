@@ -40,7 +40,6 @@ OpParameter *PopulatePadParameter(const void *prim) {
   param->constant_value_ = value->constant_value();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_PadFusion, PopulatePadParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -51,7 +51,6 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   offset_ = malloc(offset->Size());
   mean_ = malloc(mean->Size());
   variance_ = malloc(variance->Size());
-
   if (scale_ == nullptr || offset_ == nullptr || mean_ == nullptr || variance_ == nullptr) {
     FreeMeanAndVariance();
     FreeScaleAndOffset();
@@ -62,7 +61,6 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   memcpy(offset_, offset->MutableData(), offset->Size());
   memcpy(mean_, mean->MutableData(), mean->Size());
   memcpy(variance_, variance->MutableData(), variance->Size());
-
   return RET_OK;
 }
 
@@ -98,7 +96,6 @@ int FusedBatchnormCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
   }
-
   return ret;
 }
 

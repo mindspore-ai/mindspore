@@ -24,7 +24,7 @@
 #include "src/common/file_utils.h"
 
 namespace mindspore::lite {
-#define MAX_MODEL_NUM 20
+const int max_model_num = 20;
 int NPUManager::CompareVersion(const string &version1, const string &version2) {
   std::istringstream iss1(version1);
   std::istringstream iss2(version2);
@@ -172,7 +172,7 @@ int NPUManager::LoadOMModel() {
   std::unordered_map<std::shared_ptr<hiai::AiModelBuilder>, hiai::MemBuffer *> builder_buffer_map;
   int total = 0;
   for (const auto &model_map : models_) {
-    if (total % MAX_MODEL_NUM == 0) {
+    if (total % max_model_num == 0) {
       client = CreateAiModelMngerClient();
       if (client == nullptr) {
         MS_LOG(ERROR) << "Create Client failed.";
@@ -198,7 +198,7 @@ int NPUManager::LoadOMModel() {
     }
     builder_buffer_map.insert({mc_builder, buffer});
     model->desc_->SetModelBuffer(buffer->GetMemBufferData(), buffer->GetMemBufferSize());
-    if (models_desc.size() == MAX_MODEL_NUM) {
+    if (models_desc.size() == max_model_num) {
       auto ret = LoadModel(client, models_desc);
       if (ret != RET_ERROR) {
         MS_LOG(ERROR) << "Client load model failed.";

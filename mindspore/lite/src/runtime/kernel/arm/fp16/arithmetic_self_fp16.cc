@@ -24,10 +24,11 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 namespace {
-typedef struct {
-  int primitive_type_;
-  ArithmeticSelfFp16Func func_;
-} TYPE_FUNC_INFO;
+struct TYPE_FUNC_INFO {
+  int primitive_type_ = 0;
+  ArithmeticSelfFp16Func func_ = nullptr;
+};
+using TYPE_FUNC_INFO = TYPE_FUNC_INFO;
 }  // namespace
 
 ArithmeticSelfFp16Func ArithmeticSelfFp16CPUKernel::GetArithmeticSelfFp16Fun(int primitive_type) {

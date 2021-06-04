@@ -40,8 +40,6 @@ OpParameter *PopulateCommonParameter(const void *prim) {
   return common_parameter;
 }
 }  // namespace
-
 Registry g_zerosLikeV0ParameterRegistry(schema::v0::PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_V0);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -40,7 +40,6 @@ OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
   param->dstT = value->dst_t();
   return reinterpret_cast<OpParameter *>(param);
 }
-
 REG_POPULATE(PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

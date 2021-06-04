@@ -65,20 +65,17 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   int ret = 0;
-
   ret = GenerateInTensorC(parameter, inputs, outputs, &in_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     return RET_ERROR;
   }
-
   ret = GenerateOutTensorC(parameter, inputs, outputs, &out_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     FreeAllTensorC(&out_tensors);
     return RET_ERROR;
   }
-
   auto infer_shape_func = GetInferFunc(parameter->type_);
   if (infer_shape_func == nullptr) {
     MS_LOG(ERROR) << "Get infershape func failed! type:" << PrimitiveCurVersionTypeName(parameter->type_);
@@ -86,7 +83,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
   }
   ret = infer_shape_func(static_cast<TensorC **>(in_tensors.data()), in_tensors.size(), out_tensors.data(),
                          out_tensors.size(), parameter);
-
   for (size_t i = 0; i < out_tensors.size(); i++) {
     if (out_tensors.at(i) == nullptr) {
       continue;
@@ -108,7 +104,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
       outputs.at(i)->set_shape({-1});
     }
   }
-
   FreeAllTensorC(&in_tensors);
   FreeAllTensorC(&out_tensors);
   if (ret == NNACL_INFER_INVALID) {
