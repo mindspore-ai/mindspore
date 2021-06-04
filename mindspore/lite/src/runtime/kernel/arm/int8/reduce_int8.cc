@@ -34,7 +34,7 @@ using mindspore::schema::ReduceMode_ReduceProd;
 using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 
 namespace mindspore::kernel {
 void ReduceInt8CPUKernel::OneAxis() {

@@ -22,7 +22,7 @@
 #include "nnacl/fp16/cast_fp16.h"
 #include "src/runtime/infer_manager.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
