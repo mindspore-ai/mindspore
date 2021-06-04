@@ -42,6 +42,7 @@ from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
+from mindspore.profiler.parser.hccl_parser import HcclParser
 from mindspore.nn.cell import Cell
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -66,6 +67,7 @@ class Profiler:
             and analysed,will deal with all op if null; Different op types should be separated by comma.
         ascend_job_id (str): (Ascend only) The directory where the profiling files to be parsed are located;
             This parameter is used to support offline parsing.
+        profile_communication(bool): Whether to collect communication performance data, collect when True.
 
     Examples:
         >>> import numpy as np
@@ -119,6 +121,7 @@ class Profiler:
         # get device_id and device_target
         self._get_devid_and_devtarget()
         self._get_output_path(kwargs)
+        self._profile_communication = False
 
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
@@ -151,6 +154,12 @@ class Profiler:
                     logger.error(msg)
                     raise ValueError(msg)
                 self._output_path, _ = os.path.split(job_dir)
+            self._profile_communication = kwargs.pop("profile_communication", False)
+            if not isinstance(self._profile_communication, bool):
+                raise TypeError("The parameter profile_communication must be bool.")
+            if self._profile_communication:
+                hccl_option = {"output": self._output_path, "task_trace": "on"}
+                os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
             if kwargs:
                 logger.warning("There are invalid params which don't work.")
 
@@ -288,6 +297,13 @@ class Profiler:
             self._analyse_memory_usage(points)
         except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
             logger.warning(err.message)
+
+        # analyse hccl profiler info
+        if self._profile_communication:
+            try:
+                self._analyse_hccl_info()
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
 
         os.environ['PROFILING_MODE'] = str("false")
         context.set_context(enable_profiling=False)
@@ -629,6 +645,24 @@ class Profiler:
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewrote in the end.")
+
+    def _analyse_hccl_info(self):
+        """Analyse hccl info."""
+        hccl_path = os.path.join(self._output_path, "hccl_info")
+        if not os.path.exists(hccl_path):
+            os.makedirs(hccl_path, exist_ok=True)
+            os.chmod(hccl_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        # Call the interface HCCLParseOP parsing hccl info.
+        try:
+            from hccl_parser.entry import hccl_parse_op
+            hccl_parse_op(self._dev_id, self._output_path, hccl_path, op_type='all')
+        except ImportError as err:
+            logger.error("%s,please check if the hccl_parser-{version}-py3-none-any.whl is installed."
+                         "The hccl_parser-{version}-py3-none-any.whl package is usually located "
+                         "in the /usr/local/Ascend/tools Directory", err)
+            raise ImportError(err)
+        hccl_parse = HcclParser(hccl_path, self._dev_id, self._output_path)
+        hccl_parse.parse()
 
     @staticmethod
     def profile(network=None, profile_option=None):
