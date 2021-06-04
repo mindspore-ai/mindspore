@@ -21,7 +21,6 @@
 #include "src/inner_kernel.h"
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/split_base.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::InnerContext;
 

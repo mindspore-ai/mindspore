@@ -21,7 +21,6 @@
 #include "src/inner_kernel.h"
 #include "include/context.h"
 #include "nnacl/reshape_parameter.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::InnerContext;
 

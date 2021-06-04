@@ -19,7 +19,6 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "nnacl/int8/div_int8.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class DivInt8CPUKernel : public InnerKernel {

@@ -27,7 +27,6 @@
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
-#include "src/runtime/runtime_api.h"
 #include "include/version.h"
 #include "include/model.h"
 #include "include/train/train_cfg.h"

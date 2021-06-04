@@ -20,7 +20,6 @@
 #include "src/kernel_registry.h"
 #include "nnacl/fp32/reverse_fp32.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

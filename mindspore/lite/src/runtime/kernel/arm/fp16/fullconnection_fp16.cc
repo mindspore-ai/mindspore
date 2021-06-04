@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/fullconnection_fp16.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;

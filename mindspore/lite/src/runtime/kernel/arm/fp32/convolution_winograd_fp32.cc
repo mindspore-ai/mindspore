@@ -18,7 +18,6 @@
 #include "nnacl/fp32/conv_winograd_fp32.h"
 #include "nnacl/pack.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;

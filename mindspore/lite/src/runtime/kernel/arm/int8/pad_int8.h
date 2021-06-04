@@ -20,7 +20,6 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/inner_kernel.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/pad_parameter.h"
 #include "nnacl/int8/pad_int8.h"

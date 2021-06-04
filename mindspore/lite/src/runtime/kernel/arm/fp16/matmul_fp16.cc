@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/matmul_fp16.h"
-#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 

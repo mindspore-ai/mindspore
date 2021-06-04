@@ -21,7 +21,6 @@
 #include "nnacl/base/concat_base.h"
 #include "nnacl/concat_parameter.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "include/context.h"
 
 using mindspore::lite::InnerContext;

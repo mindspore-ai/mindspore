@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp16/crop_fp16.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;

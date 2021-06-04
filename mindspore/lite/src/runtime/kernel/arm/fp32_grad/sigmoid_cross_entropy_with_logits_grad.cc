@@ -18,7 +18,6 @@
 #include <cmath>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

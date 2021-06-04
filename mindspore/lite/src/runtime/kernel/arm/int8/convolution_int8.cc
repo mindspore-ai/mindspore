@@ -19,7 +19,6 @@
 #include "nnacl/int8/conv_int8.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #ifdef ENABLE_ARM64
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 #endif

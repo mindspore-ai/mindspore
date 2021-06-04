@@ -22,7 +22,6 @@
 #include "nnacl/fp32_grad/strided_slice_grad.h"
 #include "src/ops/populate/strided_slice_populate.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

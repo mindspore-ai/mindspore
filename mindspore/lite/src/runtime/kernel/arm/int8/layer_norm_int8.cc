@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/int8/layer_norm_int8.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

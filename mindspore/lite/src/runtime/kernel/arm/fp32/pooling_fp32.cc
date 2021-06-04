@@ -18,7 +18,6 @@
 #include <cfloat>
 #include "nnacl/fp32/pooling_fp32.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 

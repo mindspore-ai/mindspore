@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

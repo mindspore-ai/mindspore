@@ -21,7 +21,6 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/inner_kernel.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/int8/squeeze_int8.h"
 #include "nnacl/squeeze_parameter.h"
 

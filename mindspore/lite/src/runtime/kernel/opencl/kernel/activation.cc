@@ -22,7 +22,6 @@
 #include "src/runtime/kernel/opencl/kernel/activation.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"

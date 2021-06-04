@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp32/crop_and_resize_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/resize_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;

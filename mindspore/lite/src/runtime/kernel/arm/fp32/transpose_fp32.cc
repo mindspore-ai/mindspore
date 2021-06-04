@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/pack.h"
 
 using mindspore::lite::KernelRegistrar;

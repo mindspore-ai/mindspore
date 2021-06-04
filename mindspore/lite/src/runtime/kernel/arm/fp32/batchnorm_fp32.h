@@ -22,7 +22,6 @@
 #include "include/context.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "nnacl/batchnorm_parameter.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::lite::InnerContext;
 

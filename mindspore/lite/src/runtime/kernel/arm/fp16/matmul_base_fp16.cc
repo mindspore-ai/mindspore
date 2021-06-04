@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/matmul_base_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
-#include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;

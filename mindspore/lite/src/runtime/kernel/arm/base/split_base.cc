@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/base/split_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

@@ -23,7 +23,6 @@
 #include "nnacl/int8/quantize.h"
 #include "src/inner_kernel.h"
 #include "nnacl/int8/sub_int8.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class SubInt8CPUKernel : public InnerKernel {

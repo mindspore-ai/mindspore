@@ -18,7 +18,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/fp16/reduce_fp16.h"
 #include "src/runtime/kernel/arm/base/reduce_base.h"
 #include "nnacl/fp16/cast_fp16.h"

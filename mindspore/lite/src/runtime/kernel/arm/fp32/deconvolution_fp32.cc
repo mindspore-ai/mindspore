@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp32/deconvolution_fp32.h"
 #include "src/runtime/kernel/arm/fp32/deconvolution_winograd_fp32.h"
 #include "src/runtime/kernel/arm/fp32/deconvolution_depthwise_fp32.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

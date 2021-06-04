@@ -18,7 +18,6 @@
 #include <algorithm>
 #include "src/runtime/kernel/arm/fp32_grad/dropout.h"
 #include "schema/model_generated.h"
-#include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"

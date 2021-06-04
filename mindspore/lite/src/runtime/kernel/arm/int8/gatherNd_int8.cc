@@ -21,7 +21,6 @@
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 #include "nnacl/int8/gatherNd_int8.h"
 
 using mindspore::kernel::KERNEL_ARCH;

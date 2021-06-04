@@ -18,7 +18,6 @@
 #include <limits>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

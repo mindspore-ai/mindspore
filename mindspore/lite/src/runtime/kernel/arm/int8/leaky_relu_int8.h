@@ -24,7 +24,6 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/int8/leaky_relu_int8.h"
 #include "src/inner_kernel.h"
-#include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
 class LeakyReluInt8CPUKernel : public InnerKernel {
