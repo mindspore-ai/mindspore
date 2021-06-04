@@ -334,14 +334,14 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   constexpr int32_t kMinBufDataSize = 3;
   CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data_size() >= kMinBufDataSize, "Incomplete data");
   // First one is cookie, followed by data address and then size.
-  enum { kCookieIdx = 0, kAddrIdx = 1, kSizeIdx = 2 };
+  enum BufDataIndex : uint8_t { kCookie = 0, kAddr = 1, kSize = 2 };
   // First piece of data is the cookie and is required
-  auto &cookie = rq->buf_data(kCookieIdx);
+  auto &cookie = rq->buf_data(BufDataIndex::kCookie);
   // Second piece of data is the address where we can find the serialized data
-  auto addr = strtoll(rq->buf_data(kAddrIdx).data(), nullptr, kDecimal);
+  auto addr = strtoll(rq->buf_data(BufDataIndex::kAddr).data(), nullptr, kDecimal);
   auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
   // Third piece of data is the size of the serialized data that we need to transfer
-  auto sz = strtoll(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal);
+  auto sz = strtoll(rq->buf_data(BufDataIndex::kSize).data(), nullptr, kDecimal);
   // Successful or not, we need to free the memory on exit.
   Status rc;
   if (cs == nullptr) {
@@ -411,12 +411,12 @@ Status CacheServer::InternalFetchRow(CacheRequest *rq) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
   }
   // First piece is a flatbuffer containing row fetch information, second piece is the address of the BatchWait ptr
-  enum { kFetchRowMsgIdx = 0, kBatchWaitIdx = 1 };
-  rc = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq->buf_data(kFetchRowMsgIdx).data()));
+  enum BufDataIndex : uint8_t { kFetchRowMsg = 0, kBatchWait = 1 };
+  rc = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq->buf_data(BufDataIndex::kFetchRowMsg).data()));
   // This is an internal request and is not tied to rpc. But need to post because there
   // is a thread waiting on the completion of this request.
   try {
-    int64_t addr = strtol(rq->buf_data(kBatchWaitIdx).data(), nullptr, kDecimal);
+    int64_t addr = strtol(rq->buf_data(BufDataIndex::kBatchWait).data(), nullptr, kDecimal);
     auto *bw = reinterpret_cast<BatchWait *>(addr);
     // Check if the object is still around.
     auto bwObj = bw->GetBatchWait();
@@ -755,19 +755,19 @@ Status CacheServer::ConnectReset(CacheRequest *rq) {
 
 Status CacheServer::BatchCacheRows(CacheRequest *rq) {
   // First one is cookie, followed by address and then size.
-  enum { kCookieIdx = 0, kAddrIdx = 1, kSizeIdx = 2 };
+  enum BufDataIndex : uint8_t { kCookie = 0, kAddr = 1, kSize = 2 };
   constexpr int32_t kExpectedBufDataSize = 3;
   CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data().size() == kExpectedBufDataSize, "Expect three pieces of data");
   try {
-    auto &cookie = rq->buf_data(kCookieIdx);
+    auto &cookie = rq->buf_data(BufDataIndex::kCookie);
     auto connection_id = rq->connection_id();
     auto client_id = rq->client_id();
     int64_t offset_addr;
     int32_t num_elem;
     auto *base = SharedMemoryBaseAddr();
-    offset_addr = strtoll(rq->buf_data(kAddrIdx).data(), nullptr, kDecimal);
+    offset_addr = strtoll(rq->buf_data(BufDataIndex::kAddr).data(), nullptr, kDecimal);
     auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
-    num_elem = static_cast<int32_t>(strtol(rq->buf_data(kSizeIdx).data(), nullptr, kDecimal));
+    num_elem = static_cast<int32_t>(strtol(rq->buf_data(BufDataIndex::kSize).data(), nullptr, kDecimal));
     auto batch_wait = std::make_shared<BatchWait>(num_elem);
     // Get a set of free request and push into the queues.
     for (auto i = 0; i < num_elem; ++i) {
