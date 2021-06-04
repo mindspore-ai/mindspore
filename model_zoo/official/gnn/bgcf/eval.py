@@ -15,6 +15,8 @@
 """
 BGCF evaluation script.
 """
+import os
+import time
 import datetime
 
 import mindspore.context as context
@@ -23,38 +25,117 @@ from mindspore.common import set_seed
 
 from src.bgcf import BGCF
 from src.utils import BGCFLogger
-from src.config import parser_args
 from src.metrics import BGCFEvaluate
 from src.callback import ForwardBGCF, TestBGCF
 from src.dataset import TestGraphDataset, load_graph
 
+from model_utils.config import config
+from model_utils.moxing_adapter import moxing_wrapper
+from model_utils.device_adapter import get_device_id, get_device_num
+
 set_seed(1)
 
+def modelarts_pre_process():
+    '''modelarts pre process function.'''
+    def unzip(zip_file, save_dir):
+        import zipfile
+        s_time = time.time()
+        if not os.path.exists(os.path.join(save_dir, config.modelarts_dataset_unzip_name)):
+            zip_isexist = zipfile.is_zipfile(zip_file)
+            if zip_isexist:
+                fz = zipfile.ZipFile(zip_file, 'r')
+                data_num = len(fz.namelist())
+                print("Extract Start...")
+                print("unzip file num: {}".format(data_num))
+                data_print = int(data_num / 100) if data_num > 100 else 1
+                i = 0
+                for file in fz.namelist():
+                    if i % data_print == 0:
+                        print("unzip percent: {}%".format(int(i * 100 / data_num)), flush=True)
+                    i += 1
+                    fz.extract(file, save_dir)
+                print("cost time: {}min:{}s.".format(int((time.time() - s_time) / 60),
+                                                     int(int(time.time() - s_time) % 60)))
+                print("Extract Done.")
+            else:
+                print("This is not zip.")
+        else:
+            print("Zip has been extracted.")
+
+    if config.need_modelarts_dataset_unzip:
+        zip_file_1 = os.path.join(config.data_path, config.modelarts_dataset_unzip_name + ".zip")
+        save_dir_1 = os.path.join(config.data_path)
+
+        sync_lock = "/tmp/unzip_sync.lock"
+
+        # Each server contains 8 devices as most.
+        if get_device_id() % min(get_device_num(), 8) == 0 and not os.path.exists(sync_lock):
+            print("Zip file path: ", zip_file_1)
+            print("Unzip file save dir: ", save_dir_1)
+            unzip(zip_file_1, save_dir_1)
+            print("===Finish extract data synchronization===")
+            try:
+                os.mknod(sync_lock)
+            except IOError:
+                pass
+
+        while True:
+            if os.path.exists(sync_lock):
+                break
+            time.sleep(1)
+
+        print("Device: {}, Finish sync unzip data from {} to {}.".format(get_device_id(), zip_file_1, save_dir_1))
+
+
+@moxing_wrapper(pre_process=modelarts_pre_process)
 def evaluation():
     """evaluation"""
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=config.device_target,
+                        save_graphs=False)
+    if config.device_target == "Ascend":
+        context.set_context(device_id=get_device_id())
+
+    train_graph, test_graph, sampled_graph_list = load_graph(config.datapath)
+    test_graph_dataset = TestGraphDataset(train_graph, sampled_graph_list, num_samples=config.raw_neighs,
+                                          num_bgcn_neigh=config.gnew_neighs,
+                                          num_neg=config.num_neg)
+
+    if config.log_name:
+        now = datetime.datetime.now().strftime("%b_%d_%H_%M_%S")
+        name = "bgcf" + '-' + config.log_name + '-' + config.dataset
+        log_save_path = './log-files/' + name + '/' + now
+        log = BGCFLogger(logname=name, now=now, foldername='log-files', copy=False)
+        log.open(log_save_path + '/log.train.txt', mode='a')
+        for arg in vars(config):
+            log.write(arg + '=' + str(getattr(config, arg)) + '\n')
+    else:
+        for arg in vars(config):
+            print(arg + '=' + str(getattr(config, arg)))
+
     num_user = train_graph.graph_info()["node_num"][0]
     num_item = train_graph.graph_info()["node_num"][1]
 
-    eval_class = BGCFEvaluate(parser, train_graph, test_graph, parser.Ks)
-    for _epoch in range(parser.eval_interval, parser.num_epoch+1, parser.eval_interval) \
-                  if parser.device_target == "Ascend" else range(parser.num_epoch, parser.num_epoch+1):
-        bgcfnet_test = BGCF([parser.input_dim, num_user, num_item],
-                            parser.embedded_dimension,
-                            parser.activation,
+    eval_class = BGCFEvaluate(config, train_graph, test_graph, config.Ks)
+    for _epoch in range(config.eval_interval, config.num_epoch+1, config.eval_interval) \
+                  if config.device_target == "Ascend" else range(config.num_epoch, config.num_epoch+1):
+        bgcfnet_test = BGCF([config.input_dim, num_user, num_item],
+                            config.embedded_dimension,
+                            config.activation,
                             [0.0, 0.0, 0.0],
                             num_user,
                             num_item,
-                            parser.input_dim)
+                            config.input_dim)
 
-        load_checkpoint(parser.ckptpath + "/bgcf_epoch{}.ckpt".format(_epoch), net=bgcfnet_test)
+        load_checkpoint(config.ckptpath + "/bgcf_epoch{}.ckpt".format(_epoch), net=bgcfnet_test)
 
         forward_net = ForwardBGCF(bgcfnet_test)
-        user_reps, item_reps = TestBGCF(forward_net, num_user, num_item, parser.input_dim, test_graph_dataset)
+        user_reps, item_reps = TestBGCF(forward_net, num_user, num_item, config.input_dim, test_graph_dataset)
 
         test_recall_bgcf, test_ndcg_bgcf, \
-        test_sedp, test_nov = eval_class.eval_with_rep(user_reps, item_reps, parser)
+        test_sedp, test_nov = eval_class.eval_with_rep(user_reps, item_reps, config)
 
-        if parser.log_name:
+        if config.log_name:
             log.write(
                 'epoch:%03d,      recall_@10:%.5f,     recall_@20:%.5f,     ndcg_@10:%.5f,    ndcg_@20:%.5f,   '
                 'sedp_@10:%.5f,     sedp_@20:%.5f,    nov_@10:%.5f,    nov_@20:%.5f\n' % (_epoch,
@@ -80,28 +161,4 @@ def evaluation():
 
 
 if __name__ == "__main__":
-    parser = parser_args()
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target=parser.device_target,
-                        save_graphs=False)
-    if parser.device_target == "Ascend":
-        context.set_context(device_id=int(parser.device))
-
-    train_graph, test_graph, sampled_graph_list = load_graph(parser.datapath)
-    test_graph_dataset = TestGraphDataset(train_graph, sampled_graph_list, num_samples=parser.raw_neighs,
-                                          num_bgcn_neigh=parser.gnew_neighs,
-                                          num_neg=parser.num_neg)
-
-    if parser.log_name:
-        now = datetime.datetime.now().strftime("%b_%d_%H_%M_%S")
-        name = "bgcf" + '-' + parser.log_name + '-' + parser.dataset
-        log_save_path = './log-files/' + name + '/' + now
-        log = BGCFLogger(logname=name, now=now, foldername='log-files', copy=False)
-        log.open(log_save_path + '/log.train.txt', mode='a')
-        for arg in vars(parser):
-            log.write(arg + '=' + str(getattr(parser, arg)) + '\n')
-    else:
-        for arg in vars(parser):
-            print(arg + '=' + str(getattr(parser, arg)))
-
     evaluation()

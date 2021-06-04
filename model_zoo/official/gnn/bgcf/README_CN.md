@@ -104,10 +104,10 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
   ```text
 
   # 使用Amazon-Beauty数据集运行训练示例
-  sh run_train_ascend.sh
+  sh run_train_ascend.sh dataset_path
 
   # 使用Amazon-Beauty数据集运行评估示例
-  sh run_eval_ascend.sh
+  sh run_eval_ascend.sh dataset_path
 
   ```
 
@@ -123,37 +123,96 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
+- 在 ModelArts 进行训练 (如果你想在modelarts上运行，可以参考以下文档 [modelarts](https://support.huaweicloud.com/modelarts/))
+
+    - 在 ModelArts 上使用单卡训练（GPU or Ascend）
+
+      ```python
+      # (1) 执行a或者b
+      #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 default_config.yaml 文件中设置 "datapath='/cache/data/amazon_beauty/data_mr'"
+      #          在 default_config.yaml 文件中设置 "ckptpath='./ckpts'"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "device_target='GPU'"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "num_epoch=680"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "dist_reg=0"
+      #          在 default_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "datapath=/cache/data/amazon_beauty/data_mr"
+      #          在网页上设置 "ckptpath=./ckpts"
+      #          (可选)如果选择GPU运行，在网页上设置 "device_target=GPU"
+      #          (可选)如果选择GPU运行，在网页上设置 "num_epoch=680"
+      #          (可选)如果选择GPU运行，在网页上设置 "dist_reg=0"
+      #          在网页上设置 其他参数
+      # (2) 在本地准备转换好的数据集并将其压缩为一个文件，如："amazon_beauty.zip" (数据集转换代码可以参考上面的Dataset章节)
+      # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+      # (4) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (5) 在网页上设置启动文件为 "train.py"
+      # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (7) 创建训练作业
+      ```
+
+    - 在 ModelArts 上使用单卡验证（GPU or Ascend）
+
+      ```python
+      # (1) 执行a或者b
+      #       a. 在 default_config.yaml 文件中设置 "enable_modelarts=True"
+      #          在 default_config.yaml 文件中设置 "datapath='/cache/data/amazon_beauty/data_mr'"
+      #          在 default_config.yaml 文件中设置 "ckptpath='./ckpts'"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "device_target='GPU'"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "num_epoch=680"
+      #          (可选)如果选择GPU运行，在 default_config.yaml 文件中设置 "dist_reg=0"
+      #          在 default_config.yaml 文件中设置 其他参数
+      #       b. 在网页上设置 "enable_modelarts=True"
+      #          在网页上设置 "datapath=/cache/data/amazon_beauty/data_mr"
+      #          在网页上设置 "ckptpath=./ckpts"
+      #          (可选)如果选择GPU运行，在网页上设置 "device_target=GPU"
+      #          (可选)如果选择GPU运行，在网页上设置 "num_epoch=680"
+      #          (可选)如果选择GPU运行，在网页上设置 "dist_reg=0"
+      #          在网页上设置 其他参数
+      # (2) 在本地准备转换好的数据集并将其压缩为一个文件，如："amazon_beauty.zip" (数据集转换代码可以参考上面的Dataset章节)
+      # (3) 上传你的压缩数据集到 S3 桶上 (你也可以上传原始的数据集，但那可能会很慢。)
+      # (4) 在网页上设置你的代码路径为 "/path/googlenet"
+      # (5) 在网页上设置启动文件为 "eval.py"
+      # (6) 在网页上设置"训练数据集"、"训练输出文件路径"、"作业日志路径"等
+      # (7) 创建训练作业
+      ```
+
 ## 脚本说明
 
 ### 脚本及样例代码
 
 ```shell
-
 └─bgcf
   ├─README.md
+  ├─README_CN.md
+  ├─model_utils
+  | ├─__init__.py           # 初始化文件
+  | ├─config.py             # 参数获取文件
+  | ├─device_adapter.py     # modelarts 设备适配文件
+  | ├─local_adapter.py      # 本地适配文件
+  | └─moxing_adapter.py     # modelarts 模型适配文件
   ├─scripts
   | ├─run_eval_ascend.sh          # Ascend启动评估
   | ├─run_eval_gpu.sh             # GPU启动评估
   | ├─run_process_data_ascend.sh  # 生成MindRecord格式的数据集
   | └─run_train_ascend.sh         # Ascend启动训练
   | └─run_train_gpu.sh            # GPU启动训练
-  |
   ├─src
   | ├─bgcf.py              # BGCF模型
   | ├─callback.py          # 回调函数
-  | ├─config.py            # 训练配置
   | ├─dataset.py           # 数据预处理
   | ├─metrics.py           # 推荐指标
   | └─utils.py             # 训练BGCF的工具
-  |
+  ├─default_config.yaml    # 参数配置文件
+  ├─mindspore_hub_conf.py  # Mindspore hub文件
+  ├─export.py              # 导出网络
   ├─eval.py                # 评估网络
   └─train.py               # 训练网络
-
 ```
 
 ### 脚本参数
 
-在config.py中可以同时配置训练参数和评估参数。
+在 default_config.yaml 中可以同时配置训练参数和评估参数。
 
 - BGCF数据集配置
 
@@ -171,7 +230,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```
 
-  在config.py中以获取更多配置。
+  在 default_config.yaml 中以获取更多配置。
 
 ### 训练过程
 
@@ -181,7 +240,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_train_ascend.sh
+  sh run_train_ascend.sh dataset_path
 
   ```
 
@@ -229,7 +288,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
   ```python
 
-  sh run_eval_ascend.sh
+  sh run_eval_ascend.sh dataset_path
 
   ```
 
@@ -305,7 +364,7 @@ BGCF包含两个主要模块。首先是抽样，它生成基于节点复制的�
 
 ## 随机情况说明
 
-BGCF模型中有很多的dropout操作，如果想关闭dropout，可以在src/config.py中将neighbor_dropout设置为[0.0, 0.0, 0.0] 。
+BGCF模型中有很多的dropout操作，如果想关闭dropout，可以在 ./default_config.yaml 中将neighbor_dropout设置为[0.0, 0.0, 0.0] 。
 
 ## ModelZoo主页
 

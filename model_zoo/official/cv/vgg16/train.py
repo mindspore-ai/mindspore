@@ -82,6 +82,7 @@ def modelarts_pre_process():
 
         # Each server contains 8 devices as most.
         if config.device_target == "GPU":
+            init()
             device_id = get_rank()
             device_num = get_group_size()
         elif config.device_target == "Ascend":
@@ -129,7 +130,11 @@ def run_train():
             init()
             context.set_context(device_id=config.device_id)
         elif config.device_target == "GPU":
-            init()
+            if not config.enable_modelarts:
+                init()
+            else:
+                if not config.need_modelarts_dataset_unzip:
+                    init()
 
         device_num = config.group_size
         context.reset_auto_parallel_context()

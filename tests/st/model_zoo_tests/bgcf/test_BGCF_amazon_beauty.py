@@ -29,10 +29,10 @@ def test_BGCF_amazon_beauty():
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
 
-    old_list = ["default=600,"]
-    new_list = ["default=50,"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/config.py"))
-    old_list = ["context.set_context(device_id=int(parser.device))",
+    old_list = ["num_epoch: 600"]
+    new_list = ["num_epoch: 50"]
+    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "default_config.yaml"))
+    old_list = ["context.set_context(device_id=get_device_id())",
                 "save_checkpoint("]
     new_list = ["context.set_context()",
                 "pass \\# save_checkpoint("]

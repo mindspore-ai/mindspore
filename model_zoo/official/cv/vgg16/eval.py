@@ -21,7 +21,7 @@ import numpy as np
 import mindspore.nn as nn
 
 from mindspore import Tensor, context
-from mindspore.communication.management import get_rank, get_group_size
+from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -95,6 +95,7 @@ def modelarts_pre_process():
 
         # Each server contains 8 devices as most.
         if config.device_target == "GPU":
+            init()
             device_id = get_rank()
             device_num = get_group_size()
         elif config.device_target == "Ascend":

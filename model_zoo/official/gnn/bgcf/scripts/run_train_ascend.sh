@@ -14,6 +14,13 @@
 # limitations under the License.
 # ============================================================================
 
+if [ $# != 1 ]
+then
+    echo "Usage: sh run_train_ascend.sh [DATASET_PATH]"
+    exit 1
+fi
+DATASET_PATH=$1
+
 ulimit -u unlimited
 export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
@@ -32,12 +39,14 @@ fi
 mkdir ./ckpts
 
 cp ../*.py ./train
+cp ../*.yaml ./train
 cp *.sh ./train
 cp -r ../src ./train
+cp -r ../model_utils ./train
 cd ./train || exit
 env > env.log
 echo "start training"
 
-python train.py --datapath=../data_mr --ckptpath=../ckpts &> log &
+python train.py --datapath=$DATASET_PATH --ckptpath=../ckpts &> log &
 
 cd ..
