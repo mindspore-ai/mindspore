@@ -72,7 +72,7 @@ Status GPUGraphImpl::InitEnv() {
   if (gpu_info == nullptr) {
     return kMCDeviceError;
   }
-  ms_context->set_param<bool>(MS_CTX_ENABLE_INFER_OPT, gpu_info->GetGpuTrtInferMode());
+  ms_context->set_param<bool>(MS_CTX_ENABLE_INFER_OPT, true);
   ms_context->set_param<std::string>(MS_CTX_INFER_PRECISION_MODE, gpu_info->GetPrecisionMode());
 
   session_impl_ = session::SessionFactory::Get().Create(kGpuInferenceDevice);
