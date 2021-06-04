@@ -55,28 +55,15 @@ Status SlidingWindowHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr
   return Status::OK();
 }
 
-Status TokenizerHelper(std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
-                       std::vector<uint32_t> *offsets_limit, bool with_offsets, TensorRow *output) {
-  if (splits == nullptr || offsets_start == nullptr || offsets_limit == nullptr) {
-    RETURN_STATUS_SYNTAX_ERROR("There is NullPtr in parameters.");
-  }
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
-  if (splits->empty()) {
-    splits->emplace_back("");
-    offsets_start->push_back(0);
-    offsets_limit->push_back(0);
-  }
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(*splits, &token_tensor));
-  output->push_back(token_tensor);
-  if (with_offsets) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(*offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(*offsets_limit, &offsets_limit_tensor));
+Status AppendOffsetsHelper(const std::vector<uint32_t> &offsets_start, const std::vector<uint32_t> &offsets_limit,
+                           TensorRow *output) {
+  std::shared_ptr<Tensor> offsets_start_tensor, offsets_limit_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
 
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
-  }
+  output->push_back(offsets_start_tensor);
+  output->push_back(offsets_limit_tensor);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

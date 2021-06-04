@@ -73,14 +73,16 @@ def _init_device_info():
         # Ascend is a special scenario, we'd better get rank info from env
         env_rank_size = os.getenv("RANK_SIZE", None)
         env_rank_id = os.getenv("RANK_ID", None)
+        rank_size = 0
+        rank_id = 0
         if env_rank_size and env_rank_id:
             # Ascend only support multi-process scenario
             rank_size = int(env_rank_size.strip())
             rank_id = int(env_rank_id.strip())
-            if rank_size > 1:
-                if numa_enable:
-                    _config.set_numa_enable(True)
-                _config.set_rank_id(rank_id)
+        if rank_size > 1:
+            if numa_enable:
+                _config.set_numa_enable(True)
+            _config.set_rank_id(rank_id)
 
 
 def set_seed(seed):

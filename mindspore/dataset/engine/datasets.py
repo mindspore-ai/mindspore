@@ -2425,12 +2425,7 @@ class _PythonCallable:
             self.next_queue = 0
 
     def __call__(self, *args):
-
-        # note here: the RUN state of python3.7 and python3.8 is different:
-        # python3.7: RUN = 0
-        # python3.8: RUN = "RUN"
-        # so we use self.pool._state == RUN instead and we can't use _state == 0 any more.
-        if self.pool is not None and self.pool._state == RUN and check_iterator_cleanup() is False:  # pylint: disable=W0212
+        if self._pool_is_running() and check_iterator_cleanup() is False:
             # arg_q will have 0 size if we are not using shared memory
             # if using multi-processing shared queue instead of multiprocess arg passing
             if self.arg_q != []:
@@ -2475,6 +2470,15 @@ class _PythonCallable:
             return (None,)
         # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
+
+    def _pool_is_running(self):
+        # note here: the RUN state of python3.7 and python3.8 is different:
+        # python3.7: RUN = 0
+        # python3.8: RUN = "RUN"
+        # so we use self.pool._state == RUN instead and we can't use _state == 0 any more.
+        if self.pool is not None and self.pool._state == RUN:  # pylint: disable=W0212
+            return True
+        return False
 
 
 def _mp_pool_exit_preprocess():

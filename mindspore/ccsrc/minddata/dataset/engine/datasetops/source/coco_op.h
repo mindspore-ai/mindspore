@@ -200,7 +200,7 @@ class CocoOp : public MappableLeafOp {
   // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
-  // Load a tensor row with vector which a vector to a tensor
+  // Load a tensor row with vector which a vector to a tensor, for "Detection" task
   // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor
@@ -210,7 +210,7 @@ class CocoOp : public MappableLeafOp {
   Status LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
-  // Load a tensor row with vector which a vector to a tensor
+  // Load a tensor row with vector which a vector to a tensor, for "Stuff/Keypoint" task
   // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor
@@ -220,7 +220,7 @@ class CocoOp : public MappableLeafOp {
   Status LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                              std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
-  // Load a tensor row with vector which a vector to multi-tensor
+  // Load a tensor row with vector which a vector to multi-tensor, for "Panoptic" task
   // @param row_id_type row_id - id for this tensor row
   // @param const std::string &image_id - image is
   // @param std::shared_ptr<Tensor> image - image tensor

@@ -15,6 +15,9 @@
  */
 
 #include "minddata/dataset/text/kernels/wordpiece_tokenizer_op.h"
+#include <algorithm>
+#include <utility>
+#include "minddata/dataset/text/kernels/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -120,7 +123,7 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
   dsize_t count = 0;
   std::vector<std::string> out_tokens;
   std::vector<uint32_t> offsets_start, offsets_limit;
-  std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;
+  std::shared_ptr<Tensor> token_tensor;
   for (auto iter = input[0]->begin<std::string_view>(); iter != input[0]->end<std::string_view>(); iter++) {
     uint32_t basic_start = 0;
     std::vector<std::string> temp_tokens;
@@ -139,11 +142,7 @@ Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) 
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_tokens, &token_tensor));
   output->push_back(token_tensor);
   if (with_offsets_) {
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_start, &offsets_start_tensor));
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(offsets_limit, &offsets_limit_tensor));
-
-    output->push_back(offsets_start_tensor);
-    output->push_back(offsets_limit_tensor);
+    RETURN_IF_NOT_OK(AppendOffsetsHelper(offsets_start, offsets_limit, output));
   }
   return Status::OK();
 }

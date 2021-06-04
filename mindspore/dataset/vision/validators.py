@@ -313,7 +313,7 @@ def check_normalize_py(method):
 
 
 def check_normalizepad_c(method):
-    """A wrapper that wraps a parameter checker around the original function(normalizepad operation written in C++)."""
+    """A wrapper that wraps a parameter checker around the original function(normalizepad written in C++)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -330,7 +330,7 @@ def check_normalizepad_c(method):
 
 
 def check_normalizepad_py(method):
-    """A wrapper that wraps a parameter checker around the original function(normalizepad operation written in Python)."""
+    """A wrapper that wraps a parameter checker around the original function(normalizepad written in Python)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

@@ -24,6 +24,7 @@
 #include "unicode/errorcode.h"
 #include "unicode/uchar.h"
 #include "unicode/uscript.h"
+#include "minddata/dataset/text/kernels/data_utils.h"
 
 using cppjieba::DecodeRunesInString;
 using cppjieba::RuneStrArray;
