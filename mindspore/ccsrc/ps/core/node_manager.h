@@ -54,7 +54,7 @@ class NodeManager {
 
   // When initializing nodes, the initial number of nodes will be assigned to the total number of nodes.
   void InitNode();
-  int NextRankId(const RegisterMessage &register_message);
+  uint32_t NextRankId(const RegisterMessage &register_message);
 
   void UpdateHeartbeat(const std::string &node_id);
   bool CheckNodesScaluOutState();

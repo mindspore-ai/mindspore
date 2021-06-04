@@ -99,7 +99,7 @@ void AbstractNode::set_ready_for_scale_in() {
     connected_nodes_.clear();
   } else {
     current_cluster_state_ = ClusterState::CLUSTER_SCALE_IN;
-    node_info_.rank_id_ = UINT_MAX;
+    node_info_.rank_id_ = UINT32_MAX;
     MS_LOG(WARNING) << "Trigger cluster scale in done event.";
     OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
@@ -635,7 +635,7 @@ bool AbstractNode::InitClientToScheduler() {
   return client_to_scheduler_->WaitConnected();
 }
 
-const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const int &rank_id) {
+const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id) {
   std::lock_guard<std::mutex> lock(client_mutex_);
   if (connected_nodes_.find(rank_id) != connected_nodes_.end()) {
     return connected_nodes_[rank_id];
