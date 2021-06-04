@@ -30,7 +30,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-
 int SplitInt8CPUKernel::Init() {
   auto ret = SplitBaseCPUKernel::Init();
   if (ret != RET_OK) {

@@ -27,6 +27,10 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kBaseShift = 20;
+}  // namespace
+
 QuantizedAddCPUKernel::~QuantizedAddCPUKernel() {
   if (para_ != nullptr) {
     free(para_);
@@ -52,7 +56,7 @@ int QuantizedAddCPUKernel::Init() {
   const double in1_scale = input1->quant_params().front().scale;
   const double out_scale = output->quant_params().front().scale;
 
-  para_->left_shift_ = 20;
+  para_->left_shift_ = kBaseShift;
   const double twice_max_input_scale = 2 * std::max(in0_scale, in1_scale);
   const double in0_multiplier = in0_scale / twice_max_input_scale;
   const double in1_multiplier = in1_scale / twice_max_input_scale;

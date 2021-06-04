@@ -22,6 +22,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void MatMulOptR4Int8Neon64(const int8_t *a, const int8_t *b, int *dst, int row4, int col4, int deep16,
+                           const int *input_sum, const int *bias);
+void MatmulInt8DpNeon64(const int8_t *a, const int8_t *b, int8_t *dst, int row8, int col8, int deep4, const int *a_sums,
+                        const int *bias, int act_min, int act_max, int out_zp, int *multiplier, int *left_shift,
+                        int *right_shift, int row, int col, int stride, size_t peroc);
+void MatmulInt8DpOpt(const int8_t *a, const int8_t *b, int8_t *dst, size_t row8, size_t col8, size_t deep4,
+                     const int *a_sums, const int *bias, int act_min, int act_max, int out_zp, int *multiplier,
+                     int *left_shift, int *right_shift, size_t stride, size_t peroc, int *filter_zp);
 #ifdef ENABLE_ARM64
 void IndirectGemmInt8_optimize_handler(int8_t *dst, const int8_t *src, const int8_t *weight, const int32_t *bias,
                                        size_t ksize, size_t ic4, size_t output_channel, size_t offset,

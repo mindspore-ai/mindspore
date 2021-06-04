@@ -25,12 +25,20 @@ using mindspore::schema::Format_NHWC;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int DIMS_4D = 4;
+constexpr int BIAS_INDEX = 2;
+constexpr size_t NONE_BIAS_SIZE = 2;
+constexpr int RELU_MODE = 1;
+constexpr int RELU6_MODE = 14;
+}  // namespace
 int ScaleNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *opParameter) {
   if (scale_parameter_->axis_ < 0) {
     scale_parameter_->axis_ = scale_parameter_->axis_ + inputs[0]->shape().size();
   }
-  if (inputs.size() > 1 && inputs[0]->shape().size() == 4 && inputs[0]->format() == schema::Format_NHWC) {
+  if (inputs.size() > 1 && inputs[0]->shape().size() == DIMS_4D && inputs[0]->format() == schema::Format_NHWC) {
+    // scale now only supports on axis 3
     if (scale_parameter_->axis_ != 3) {
       MS_LOG(ERROR) << "Npu scale axis attr only support on channel, now is " << scale_parameter_->axis_;
       return RET_ERROR;
@@ -56,7 +64,7 @@ int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
 
   MS_ASSERT(inputs.size() > 1);
   auto scale_shape = inputs.at(1)->shape();
-  std::shared_ptr<ge::Tensor> scale_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  std::shared_ptr<ge::Tensor> scale_tensor = std::make_shared<ge::Tensor>();
   if (scale_tensor == nullptr) {
     MS_LOG(ERROR) << "new scale_tensor failed.";
     return RET_ERROR;
@@ -73,17 +81,19 @@ int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
   scale_->set_attr_value(scale_tensor);
   op_->set_input_scale(*scale_);
 
-  if (inputs.size() > 2 && inputs[2] != nullptr) {
-    auto bias_shape = inputs[2]->shape();
-    std::shared_ptr<ge::Tensor> bias_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  // inputs size can be larger than 2 when optional bias is provided.
+  // bias index 2
+  if (inputs.size() > NONE_BIAS_SIZE && inputs[BIAS_INDEX] != nullptr) {
+    auto bias_shape = inputs[BIAS_INDEX]->shape();
+    std::shared_ptr<ge::Tensor> bias_tensor = std::make_shared<ge::Tensor>();
     if (bias_tensor == nullptr) {
       MS_LOG(ERROR) << "new bias_tensor failed.";
       return RET_ERROR;
     }
     ge::TensorDesc bias_tensor_desc(lite::ConverterToNPUShape({1, bias_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                    lite::ConverterToNPUDataType(inputs[2]->data_type()));
+                                    lite::ConverterToNPUDataType(inputs[BIAS_INDEX]->data_type()));
     bias_tensor->SetTensorDesc(bias_tensor_desc);
-    bias_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data_c()), inputs[2]->Size());
+    bias_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[BIAS_INDEX]->data_c()), inputs[BIAS_INDEX]->Size());
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
     if (bias_ == nullptr) {
       MS_LOG(ERROR) << "New beta_ const failed.";
@@ -120,9 +130,9 @@ int ScaleNPUKernel::SetActivation(const ge::Operator *input, int act_type) {
   }
   act_->set_input_x(*input);
   if (act_type == schema::ActivationType_RELU) {
-    act_->set_attr_mode(1);
+    act_->set_attr_mode(RELU_MODE);
   } else if (act_type == schema::ActivationType_RELU6) {
-    act_->set_attr_mode(14);
+    act_->set_attr_mode(RELU6_MODE);
   } else {
     MS_LOG(ERROR) << "Unsupported activation type for scale.";
     return RET_ERROR;

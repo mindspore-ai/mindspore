@@ -94,7 +94,7 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   const int k_h = conv_param_->kernel_h_;
   const int k_w = conv_param_->kernel_w_;
   const int batch = conv_param_->output_batch_;
-  const int out_ch = conv_param_->output_channel_;  // out_y->shape()[3];
+  const int out_ch = conv_param_->output_channel_;
   const int groups = conv_param_->group_;
   const int out_h = conv_param_->output_h_;
   const int out_w = conv_param_->output_w_;
@@ -103,18 +103,22 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   const int k = k_h * k_w * in_ch / groups;
   float *workspace_temp = static_cast<float *>(workspace());
   float *mat_workspace = workspace_temp + ws_size_;
-
+  int real_chunk;
+  float *mat_a = nullptr;
+  float *im = nullptr;
+  const float *mat_b = nullptr;
+  float *mat_c = nullptr;
   if (do_dw_) {
     const int kernel_spatial = k_h * k_w;
     for (int i = 0; i < batch; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
-        int real_chunk = MSMIN(m - ci, chunk_);
-        float *mat_a = workspace_temp;
-        float *im = x_addr + (i * in_ch * in_h * in_w);
+        real_chunk = MSMIN(m - ci, chunk_);
+        mat_a = workspace_temp;
+        im = x_addr + (i * in_ch * in_h * in_w);
         RollingIm2ColPackDwUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
         for (int j = 0; j < groups; ++j) {
-          const float *mat_b = w_addr + j * nweights / groups;
-          float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
+          mat_b = w_addr + j * nweights / groups;
+          mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
           GemmMatmul(0, 1, real_chunk, n, k, 1, mat_a + (j * kernel_spatial), k * groups, mat_b, k, 0, mat_c, out_ch,
                      mat_workspace);
         }
@@ -124,24 +128,24 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
     for (int i = 0; i < batch; ++i) {
       for (int j = 0; j < groups; ++j) {
         for (int ci = 0; ci < m; ci += chunk_) {
-          int real_chunk = MSMIN(m - ci, chunk_);
-          float *mat_a = workspace_temp;
-          const float *mat_b = w_addr + j * nweights / groups;
-          float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
-          float *im = x_addr + i * in_ch * in_h * in_w + j * (in_ch / groups);
+          real_chunk = MSMIN(m - ci, chunk_);
+          mat_a = workspace_temp;
+          mat_b = w_addr + j * nweights / groups;
+          mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
+          im = x_addr + i * in_ch * in_h * in_w + j * (in_ch / groups);
           RollingIm2ColPackUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
           GemmMatmul(0, 1, real_chunk, n, k, 1, mat_a, k, mat_b, k, 0, mat_c, out_ch, mat_workspace);
         }
       }
     }
   } else {
-    const float *mat_b = w_addr;
+    mat_b = w_addr;
     const size_t in_plane_size = in_ch * in_h * in_w;
     for (int i = 0; i < batch; ++i) {
-      float *im = x_addr + i * in_plane_size;
+      im = x_addr + i * in_plane_size;
       for (int ci = 0; ci < m; ci += chunk_) {
-        int real_chunk = MSMIN(m - ci, chunk_);
-        float *mat_c = y_addr + i * n * m + ci * out_ch;
+        real_chunk = MSMIN(m - ci, chunk_);
+        mat_c = y_addr + i * n * m + ci * out_ch;
         int input_height = ci / out_w * conv_param_->stride_h_;
         int input_width = ci % out_w * conv_param_->stride_w_;
         int offset = (input_height * in_w + input_width) * in_ch;

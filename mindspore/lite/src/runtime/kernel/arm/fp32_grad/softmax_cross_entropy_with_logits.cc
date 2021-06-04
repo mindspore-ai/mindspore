@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <math.h>
+#include <cmath>
 #include "src/kernel_registry.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/fp32/softmax_fp32.h"
@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() { return ReSize(); }
 
 void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,

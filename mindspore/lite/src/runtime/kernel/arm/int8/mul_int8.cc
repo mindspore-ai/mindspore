@@ -70,12 +70,12 @@ int MulInt8CPUKernel::Init() {
 }
 
 void MulInt8CPUKernel::CheckSameShapeSize(std::vector<int> in_tensor0_shape, std::vector<int> in_tensor1_shape) {
-  bool condition1 = in_tensor0_shape[0] == in_tensor1_shape[0];
-  bool condition2 = in_tensor0_shape[1] == 1;
-  bool condition3 = in_tensor0_shape[2] == 1;
-  bool condition4 = in_tensor0_shape[3] == in_tensor1_shape[3];
-  bool condition5 = in_tensor1_shape[1] == 1;
-  bool condition6 = in_tensor1_shape[2] == 1;
+  bool condition1 = in_tensor0_shape[kNHWC_N] == in_tensor1_shape[kNHWC_N];
+  bool condition2 = in_tensor0_shape[kNHWC_H] == 1;
+  bool condition3 = in_tensor0_shape[kNHWC_W] == 1;
+  bool condition4 = in_tensor0_shape[kNHWC_C] == in_tensor1_shape[kNHWC_C];
+  bool condition5 = in_tensor1_shape[kNHWC_H] == 1;
+  bool condition6 = in_tensor1_shape[kNHWC_W] == 1;
   if (condition1 && condition2 && condition3 && condition4) {
     fast_hw_broadcast_ = true;
   } else if (condition1 && condition4 && condition5 && condition6) {
@@ -91,11 +91,11 @@ void MulInt8CPUKernel::CheckIfFastImpl() {
     if (in_tensor0->shape().size() == COMM_SHAPE_SIZE && in_tensor1->shape().size() == COMM_SHAPE_SIZE) {
       CheckSameShapeSize(in_tensor0->shape(), in_tensor1->shape());
     } else if (in_tensor0->shape().size() == 1 && in_tensor1->shape().size() == COMM_SHAPE_SIZE) {
-      if (in_tensor0->ElementsNum() == in_tensor1->shape()[3]) {
+      if (in_tensor0->ElementsNum() == in_tensor1->shape()[kNHWC_C]) {
         fast_hw_broadcast_ = true;
       }
     } else if (in_tensor0->shape().size() == COMM_SHAPE_SIZE && in_tensor1->shape().size() == 1) {
-      if (in_tensor1->ElementsNum() == in_tensor0->shape()[3]) {
+      if (in_tensor1->ElementsNum() == in_tensor0->shape()[kNHWC_C]) {
         fast_hw_broadcast_ = true;
         input1_hw_broadcast_ = true;
       }
@@ -162,6 +162,7 @@ int MulInt8CPUKernel::Run() {
 
   elements_num_ = out_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
+  int ret = RET_ERROR;
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (input0_data_ == nullptr) {
@@ -176,15 +177,15 @@ int MulInt8CPUKernel::Run() {
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),
                        static_cast<int8_t *>(in_tensors_.at(1)->MutableData()), input0_data_, input1_data_, tile_para);
-    auto ret = static_cast<const lite::InnerContext *>(this->context_)
-                 ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
+    ret = static_cast<const lite::InnerContext *>(this->context_)
+            ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
     ctx_->allocator->Free(input0_data_);
     ctx_->allocator->Free(input1_data_);
     return ret;
   }
 
-  auto ret = static_cast<const lite::InnerContext *>(this->context_)
-               ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
+  ret = static_cast<const lite::InnerContext *>(this->context_)
+          ->thread_pool_->ParallelLaunch(MulInt8Run, this, thread_count_);
   return ret;
 }
 

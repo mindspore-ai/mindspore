@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -35,10 +35,15 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNormGrad;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int kWsMultiplier = 2;
+constexpr int kMaxTaskNum = 4;
+}  // namespace
+
 int BNGradCPUKernel::ReSize() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  ws_size_ = 2 * channels;
+  ws_size_ = kWsMultiplier * channels;
   set_workspace_size(ws_size_ * sizeof(float));
   return RET_OK;
 }
@@ -85,7 +90,7 @@ int BNGradCPUKernel::Execute(int task_id) {
   count = (count < 0) ? 0 : count;
   switch (stage) {
     case 0: {
-      for (int job = task_id; job < 4; job += thread_num) {
+      for (int job = task_id; job < kMaxTaskNum; job += thread_num) {
         switch (job) {
           case 0:
             var2Invar(save_var, input_var->ElementsNum(), bn_param->epsilon_);
@@ -134,9 +139,10 @@ int BNGradRun(void *cdata, int task_id) {
 int BNGradCPUKernel::Run() {
   stage_ = 0;
   thread_num_ = context_->thread_num_;
+  int error_code;
   if (thread_num_ == 1) {
-    int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                       ->thread_pool_->ParallelLaunch(BNGradRun, this, thread_num_);
+    error_code = static_cast<const lite::InnerContext *>(this->context_)
+                   ->thread_pool_->ParallelLaunch(BNGradRun, this, thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
       return RET_ERROR;
@@ -145,8 +151,8 @@ int BNGradCPUKernel::Run() {
     const std::vector<int> threads = {thread_num_, 1, thread_num_};
     for (size_t stage = 0; stage < threads.size(); stage++) {
       stage_ = static_cast<int>(stage);
-      int error_code = static_cast<const lite::InnerContext *>(this->context_)
-                         ->thread_pool_->ParallelLaunch(BNGradRun, this, threads.at(stage));
+      error_code = static_cast<const lite::InnerContext *>(this->context_)
+                     ->thread_pool_->ParallelLaunch(BNGradRun, this, threads.at(stage));
       if (error_code != RET_OK) {
         MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
         return RET_ERROR;

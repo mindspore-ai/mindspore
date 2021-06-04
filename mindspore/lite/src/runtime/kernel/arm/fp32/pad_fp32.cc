@@ -85,7 +85,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   int cur_input = 1;
   int cur_output = 1;
   for (size_t i = 0; i < COMM_SHAPE_SIZE; ++i) {
-    if (1 < cur_input) {
+    if (cur_input > 1) {
       input_separate_dims.emplace_back(cur_input);
       output_separate_dims.emplace_back(cur_output);
       separate_offset.emplace_back(0);
@@ -355,20 +355,21 @@ void PadCPUKernel::CalculateStrides() {
 }
 
 int PadCPUKernel::HandleMirrorPad() {
+  int ret;
   if (in_tensors_.size() == 1) {
     auto input_shape = in_tensors_.at(0)->shape();
     int rank = static_cast<int>(input_shape.size());
-    auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
+    ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
   } else {
-    auto ret = CopyPaddingFromInput();
+    ret = CopyPaddingFromInput();
     if (ret != RET_OK) {
       return ret;
     }
   }
-  auto ret = CheckPaddings(pad_param_->paddings_, COMM_SHAPE_SIZE, in_, pad_param_->pad_mode_);
+  ret = CheckPaddings(pad_param_->paddings_, COMM_SHAPE_SIZE, in_, pad_param_->pad_mode_);
   if (ret != RET_OK) {
     return ret;
   }

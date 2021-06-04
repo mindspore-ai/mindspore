@@ -47,10 +47,11 @@ int PadNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
+  // padding shape is spatial_dim x 2.
   int size = static_cast<int>(param_->padding_length / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(param_->paddings_), 2 * size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(param_->paddings_), param_->padding_length * sizeof(int));
   hiai_paddings_ = new hiai::op::Const(name_ + "paddings");
   hiai_paddings_->set_attr_value(padding_tensor);
 

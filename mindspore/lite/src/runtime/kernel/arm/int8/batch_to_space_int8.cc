@@ -63,7 +63,7 @@ int BatchToSpaceInt8CPUKernel::Init() {
 }
 
 int BatchToSpaceInt8CPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.at(0)->shape().size() == 4);
+  MS_ASSERT(in_tensors_.at(0)->shape().size() == DIMENSION_4D);
   return RET_OK;
 }
 

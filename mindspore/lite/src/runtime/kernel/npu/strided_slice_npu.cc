@@ -22,14 +22,20 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int INPUT_INDEX = 0;
+constexpr int BEGIN_INDEX = 1;
+constexpr int END_INDEX = 2;
+constexpr int AXES_INDEX = 3;
+}  // namespace
 int StridedSliceNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
   // Only onnx StridedSlice has 5 inputs, of which the 4th input is axes and the 5th input is strides.
   if (inputs.size() == 5) {
     vector<int> axes;
-    size_t size = inputs[3]->shape()[0];
+    size_t size = inputs[AXES_INDEX]->shape()[0];
     axes.resize(size);
-    memcpy(axes.data(), inputs[3]->data_c(), sizeof(int) * size);
+    memcpy(axes.data(), inputs[AXES_INDEX]->data_c(), sizeof(int) * size);
     for (int i = 0; i < axes.size(); ++i) {
       if (i != axes[i]) {
         MS_LOG(ERROR) << "Does not support setting axis, so the axis must be continuous.";
@@ -49,14 +55,16 @@ int StridedSliceNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_begin(*npu_inputs[1]);
-  op_->set_input_end(*npu_inputs[2]);
+  op_->set_input_x(*npu_inputs[INPUT_INDEX]);
+  op_->set_input_begin(*npu_inputs[BEGIN_INDEX]);
+  op_->set_input_end(*npu_inputs[END_INDEX]);
 
-  // The strides position of onnx is the 5th, and the others are the 4th.
+  // For onnx models, input size 5.
   if (npu_inputs.size() == 5) {
+    // The strides position of onnx models is the 5th, index 4.
     op_->set_input_strides(*npu_inputs[4]);
   } else {
+    // The strides position of other models are the 4th, index 3.
     op_->set_input_strides(*npu_inputs[3]);
   }
   op_->set_attr_begin_mask(param_->begins_mask_);

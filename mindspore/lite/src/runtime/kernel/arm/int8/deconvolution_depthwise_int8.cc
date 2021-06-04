@@ -37,7 +37,7 @@ DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
 
 int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight: int8 -> int16
-  // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
+  // o, h, w, i -> o/8, h, w, i, 8; o equals to group, i equals to 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
@@ -87,7 +87,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitSlideParam() {
 
 int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
   int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM *
-                        UP_DIV(conv_param_->input_channel_, 4);
+                        UP_DIV(conv_param_->input_channel_, C4NUM);
   packed_input_ = reinterpret_cast<int16_t *>(context_->allocator->Malloc(pack_input_size * sizeof(int16_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

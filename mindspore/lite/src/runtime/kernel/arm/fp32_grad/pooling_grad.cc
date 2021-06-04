@@ -68,7 +68,6 @@ int PoolingGradCPUKernel::Execute(int task_id) {
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
-
   if (count > 0) {
     int in_batch_size = pool_param->input_h_ * pool_param->input_w_ * pool_param->input_channel_;
     int out_batch_size = pool_param->output_h_ * pool_param->output_w_ * pool_param->input_channel_;

@@ -132,7 +132,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, size);
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     memcpy(bias_data_, in_tensors_.at(0)->MutableData(), conv_param_->output_channel_ * sizeof(int32_t));
   }
 

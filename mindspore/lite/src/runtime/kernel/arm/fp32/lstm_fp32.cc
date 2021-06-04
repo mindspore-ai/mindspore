@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/lstm_fp32.h"
-#include <float.h>
+#include <cfloat>
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

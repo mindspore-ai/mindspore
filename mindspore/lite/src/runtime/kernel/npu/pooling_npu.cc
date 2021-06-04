@@ -23,6 +23,13 @@ using mindspore::schema::PrimitiveType_AvgPoolFusion;
 using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::kernel {
+namespace {
+constexpr int MAX_MODE = 0;
+constexpr int AVG_MODE = 1;
+constexpr int L2_MODE = 2;
+constexpr int PAD_MODE_SAME = 6;
+constexpr int PAD_MODE_VALID = 5;
+}  // namespace
 int PoolingNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
   if (pooling_param_->pad_l_ > pooling_param_->stride_w_ || pooling_param_->pad_u_ > pooling_param_->stride_h_) {
@@ -34,20 +41,20 @@ int PoolingNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const
 
 int PoolingNPUKernel::SetPoolingParam() {
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
-    pooling_->set_attr_mode(0);
+    pooling_->set_attr_mode(MAX_MODE);
   } else if (pooling_param_->pool_mode_ == PoolMode_AvgPool) {
-    pooling_->set_attr_mode(1);
+    pooling_->set_attr_mode(AVG_MODE);
   } else {
-    pooling_->set_attr_mode(2);
+    pooling_->set_attr_mode(L2_MODE);
   }
   pooling_->set_attr_global_pooling(pooling_param_->global_);
   pooling_->set_attr_window({pooling_param_->window_h_, pooling_param_->window_w_});
   pooling_->set_attr_stride({pooling_param_->stride_h_, pooling_param_->stride_w_});
   if (pooling_param_->pad_mode_ == Pad_same) {
-    pooling_->set_attr_pad_mode(6);
+    pooling_->set_attr_pad_mode(PAD_MODE_SAME);
     pooling_->set_attr_pad({0, 0, 0, 0});
   } else if (pooling_param_->pad_mode_ == Pad_valid) {
-    pooling_->set_attr_pad_mode(5);
+    pooling_->set_attr_pad_mode(PAD_MODE_VALID);
     pooling_->set_attr_pad({0, 0, 0, 0});
   } else {
     pooling_->set_attr_pad_mode(0);

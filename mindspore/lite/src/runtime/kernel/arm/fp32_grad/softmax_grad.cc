@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/softmax_grad.h"
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "schema/model_generated.h"

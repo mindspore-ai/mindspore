@@ -19,6 +19,16 @@
 #include "nnacl/pack.h"
 
 namespace mindspore::kernel {
+namespace {
+constexpr int BATCH_INDEX = 0;
+constexpr int HEIGHT_INDEX = 1;
+constexpr int WIDTH_INDEX = 2;
+constexpr int CHANNEL_INDEX = 3;
+constexpr size_t WITH_BIAS_SIZE = 3;
+constexpr int BIAS_INDEX = 2;
+constexpr int RELU_MODE = 1;
+constexpr int RELU6_MODE = 14;
+}  // namespace
 ConvolutionBaseNPUKernel::~ConvolutionBaseNPUKernel() {
   if (act_ != nullptr) {
     delete act_;
@@ -47,14 +57,16 @@ int ConvolutionBaseNPUKernel::InitWeightConst(const std::vector<lite::Tensor *> 
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNHWCToNCHWFp32(nhwc_data, nchw_data, w_shape[0], w_shape[1] * w_shape[2], w_shape[3], 0, 0);
+  PackNHWCToNCHWFp32(nhwc_data, nchw_data, w_shape[BATCH_INDEX], w_shape[HEIGHT_INDEX] * w_shape[WIDTH_INDEX],
+                     w_shape[CHANNEL_INDEX], 0, 0);
 
-  std::shared_ptr<ge::Tensor> weight_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
+  std::shared_ptr<ge::Tensor> weight_tensor = std::make_shared<ge::Tensor>();
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "new weight_tensor failed.";
     return RET_ERROR;
   }
-  ge::TensorDesc tensor_desc(lite::ConverterToNPUShape({w_shape[0], w_shape[3], w_shape[1], w_shape[2]}),
+  ge::TensorDesc tensor_desc(lite::ConverterToNPUShape({w_shape[BATCH_INDEX], w_shape[CHANNEL_INDEX],
+                                                        w_shape[HEIGHT_INDEX], w_shape[WIDTH_INDEX]}),
                              ge::FORMAT_NCHW, lite::ConverterToNPUDataType(inputs[1]->data_type()));
   weight_tensor->SetTensorDesc(tensor_desc);
   weight_tensor->SetData(reinterpret_cast<const uint8_t *>(nchw_data), inputs[1]->Size());
@@ -65,16 +77,16 @@ int ConvolutionBaseNPUKernel::InitWeightConst(const std::vector<lite::Tensor *> 
 }
 
 int ConvolutionBaseNPUKernel::InitBiasConst(const std::vector<lite::Tensor *> &inputs) {
-  if (inputs.size() >= 3) {
+  if (inputs.size() >= WITH_BIAS_SIZE) {
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_b");
     if (bias_ == nullptr) {
       MS_LOG(ERROR) << "New bias const failed.";
       return RET_ERROR;
     }
-    inputs[2]->set_format(schema::Format_NCHW);
-    auto bias_tensor = mindspore::lite::ConverterToNPUTensor(inputs[2]);
+    inputs[BIAS_INDEX]->set_format(schema::Format_NCHW);
+    auto bias_tensor = mindspore::lite::ConverterToNPUTensor(inputs[BIAS_INDEX]);
     bias_->set_attr_value(bias_tensor);
-    inputs[2]->set_format(schema::Format_NHWC);
+    inputs[BIAS_INDEX]->set_format(schema::Format_NHWC);
   }
   return RET_OK;
 }
@@ -87,9 +99,9 @@ int ConvolutionBaseNPUKernel::SetActivation(const ge::Operator *input, ActType a
   }
   act_->set_input_x(*input);
   if (act_type == ActType_Relu) {
-    act_->set_attr_mode(1);
+    act_->set_attr_mode(RELU_MODE);
   } else if (act_type == ActType_Relu6) {
-    act_->set_attr_mode(14);
+    act_->set_attr_mode(RELU6_MODE);
   } else {
     MS_LOG(ERROR) << "Unsupported activation type for convolution.";
     return RET_ERROR;

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/sigmoid_cross_entropy_with_logits.h"
-#include <math.h>
+#include <cmath>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SigmoidCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-
 int SigmoidCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 
 int SigmoidCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
