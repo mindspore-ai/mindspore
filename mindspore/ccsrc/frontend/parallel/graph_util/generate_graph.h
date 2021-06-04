@@ -45,7 +45,8 @@ std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {
  public:
-  GenerateGraph() : name_idx_(0) {}
+  explicit GenerateGraph(std::unordered_map<std::string, ValuePtr> origin_attrs)
+      : name_idx_(0), origin_attrs_(origin_attrs) {}
   Status Init(const CNodePtr &cnode);
   ~GenerateGraph() = default;
   AnfNodePtr virtual_input_node() { return virtual_input_node_; }
@@ -61,6 +62,7 @@ class GenerateGraph {
   AnfNodePtr virtual_input_node_;
   std::string instance_name_base_;
   int64_t name_idx_;
+  std::unordered_map<std::string, ValuePtr> origin_attrs_;
 };
 }  // namespace parallel
 }  // namespace mindspore
