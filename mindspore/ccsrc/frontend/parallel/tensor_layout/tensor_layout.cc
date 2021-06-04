@@ -421,7 +421,7 @@ Status TensorLayout::GenerateOptShardSliceShape() {
   Shape tensor_map = tensor_map_.array();
   Shape repeated_dev;
   for (size_t i = 0; i < dev_max.size(); i++) {
-    if (tensor_map_.GetIndexByValue(i) == MAP_NONE) {
+    if (tensor_map_.GetIndexByValue(static_cast<int64_t>(i)) == MAP_NONE) {
       repeated_dev.push_back(dev_max[dev_max.size() - 1 - i]);
       dev_max[dev_max.size() - 1 - i] = 1;
     }
@@ -440,7 +440,7 @@ Status TensorLayout::GenerateOptShardSliceShape() {
   if (tensor_map[0] == MAP_NONE) {
     split_num = repeated_num;
   } else {
-    split_num = dev_max[dev_max.size() - 1 - tensor_map[0]] * repeated_num;
+    split_num = dev_max[dev_max.size() - 1 - static_cast<size_t>(tensor_map[0])] * repeated_num;
   }
   if (tensor_shape_.array()[0] % split_num != 0) {
     MS_LOG(INFO) << "Tensor could not be shard on the first dimension.";
