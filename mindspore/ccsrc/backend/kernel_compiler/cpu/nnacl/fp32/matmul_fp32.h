@@ -71,7 +71,6 @@ void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float 
 void MatmulFloatNeon32Opt12x4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                               int row, int col, int stride, int write_mode);
 #elif ENABLE_SSE
-#include <x86intrin.h>
 void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                       int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,

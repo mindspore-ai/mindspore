@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-int LogSoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int LogSoftmaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter);
 
 #ifdef __cplusplus

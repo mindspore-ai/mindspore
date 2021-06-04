@@ -28,8 +28,8 @@
 
 namespace mindspore {
 namespace kernel {
-static const char *const kArchCPU __attribute__((unused)) = "CPU";
-static const char *const kArchGPU __attribute__((unused)) = "GPU";
+extern const char *const kArchCPU;
+extern const char *const kArchGPU;
 
 /// \brief KernelDesc defined kernel's basic attribute.
 struct MS_API KernelDesc {
@@ -59,7 +59,7 @@ struct MS_API KernelDesc {
 /// \param[in] ctx Define for holding environment variables during runtime.
 ///
 /// \return Smart Pointer of kernel.
-using CreateKernel MS_API = std::function<std::shared_ptr<kernel::Kernel>(
+using CreateKernel = std::function<std::shared_ptr<kernel::Kernel>(
   const std::vector<tensor::MSTensor *> &inputs, const std::vector<tensor::MSTensor *> &outputs,
   const schema::Primitive *primitive, const lite::Context *ctx)>;
 

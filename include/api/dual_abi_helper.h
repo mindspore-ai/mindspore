@@ -17,6 +17,7 @@
 #define MINDSPORE_INCLUDE_API_DUAL_ABI_HELPER_H_
 
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>

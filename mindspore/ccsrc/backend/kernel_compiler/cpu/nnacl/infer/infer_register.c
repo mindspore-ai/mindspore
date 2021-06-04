@@ -15,43 +15,17 @@
  */
 #include "nnacl/infer/infer_register.h"
 
-InferShape *g_infer_func = NULL;
-#ifdef MS_COMPILE_IOS
-void InitInferFuncBuf() {
-#else
-__attribute__((constructor(101))) void InitInferFuncBuf() {
-#endif
-  if (g_infer_func != NULL) {
-    return;
-  }
-  g_infer_func = malloc(PrimType_MAX * sizeof(InferShape));
-  if (g_infer_func != NULL) {
-    memset(g_infer_func, 0, PrimType_MAX * sizeof(InferShape));
-  }
-}
-
-__attribute__((destructor)) void DestroyInferFuncBuf() {
-  if (g_infer_func == NULL) {
-    return;
-  }
-  free(g_infer_func);
-  g_infer_func = NULL;
-}
+__attribute__((init_priority(101))) InferShape g_infer_func[PrimType_MAX * sizeof(InferShape)];
 
 InferShape GetInferFunc(int prim_type) {
-  if (g_infer_func != NULL && prim_type < PrimType_MAX) {
+  if (prim_type < PrimType_MAX) {
     return g_infer_func[prim_type];
   }
   return NULL;
 }
 
 void RegInfer(int prim_type, InferShape func) {
-#ifdef MS_COMPILE_IOS
-  if (g_infer_func == NULL) {
-    InitInferFuncBuf();
-  }
-#endif
-  if (g_infer_func != NULL && prim_type < PrimType_MAX) {
+  if (prim_type < PrimType_MAX) {
     g_infer_func[prim_type] = func;
   }
 }

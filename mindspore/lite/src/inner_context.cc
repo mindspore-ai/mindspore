@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/inner_context.h"
+#include <algorithm>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"

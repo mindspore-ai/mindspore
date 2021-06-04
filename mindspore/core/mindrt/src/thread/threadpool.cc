@@ -15,7 +15,6 @@
  */
 
 #include "thread/threadpool.h"
-#include <unistd.h>
 #include <algorithm>
 #include "thread/core_affinity.h"
 
