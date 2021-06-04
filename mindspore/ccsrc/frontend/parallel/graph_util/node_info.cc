@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
+const std::vector<std::string> filter_attrs = {RECOMPUTE, TARGET};
 std::string ParameterName(const AnfNodePtr &node_ptr) {
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para_ptr);
@@ -396,5 +397,17 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
   }
   return false;
 }
+
+void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, PrimitivePtr self_prim) {
+  MS_EXCEPTION_IF_NULL(self_prim);
+  for (auto attr_name : filter_attrs) {
+    auto iter = origin_prim_attrs.find(attr_name);
+    if (iter != origin_prim_attrs.cend()) {
+      self_prim->set_attr(attr_name, iter->second);
+      MS_LOG(INFO) << "The new prim " << self_prim << " add attr " << attr_name;
+    }
+  }
+}
+
 }  // namespace parallel
 }  // namespace mindspore

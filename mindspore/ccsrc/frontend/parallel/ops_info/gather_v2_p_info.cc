@@ -746,7 +746,7 @@ Status GatherPInfo::InferForwardCommunication() {
 }
 
 Status GatherPInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
-  GenerateGraph gen_g = GenerateGraph();
+  GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
