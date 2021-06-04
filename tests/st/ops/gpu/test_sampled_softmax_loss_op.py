@@ -142,7 +142,7 @@ def test_sampledsoftmaxloss_reduction_invalid():
     with pytest.raises(ValueError):
         nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="invalid")
 
-    # reduction can be None, as defined in _Loss
+    # reduction can be None, as defined in Loss
     # with pytest.raises(ValueError):
     #     nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction=None)  #
 

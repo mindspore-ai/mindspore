@@ -15,11 +15,11 @@
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from mindspore.common import dtype as mstype
 
 
-class JointsMSELoss(_Loss):
+class JointsMSELoss(Loss):
     def __init__(self, use_target_weight):
         super(JointsMSELoss, self).__init__()
         self.criterion = nn.MSELoss(reduction='mean')

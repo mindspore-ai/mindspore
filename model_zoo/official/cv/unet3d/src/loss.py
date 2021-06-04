@@ -16,10 +16,10 @@
 import mindspore.nn as nn
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from src.model_utils.config import config
 
-class SoftmaxCrossEntropyWithLogits(_Loss):
+class SoftmaxCrossEntropyWithLogits(Loss):
     def __init__(self):
         super(SoftmaxCrossEntropyWithLogits, self).__init__()
         self.transpose = P.Transpose()

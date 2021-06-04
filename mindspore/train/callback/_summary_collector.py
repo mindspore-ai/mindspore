@@ -34,7 +34,7 @@ from mindspore.train.callback import Callback, ModelCheckpoint
 from mindspore.train import lineage_pb2
 from mindspore.train.callback._dataset_graph import DatasetGraph
 from mindspore.nn.optim.optimizer import Optimizer
-from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.loss.loss import Loss
 from mindspore.train._utils import check_value_type
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
@@ -907,7 +907,7 @@ class SummaryCollector(Callback):
             network = cb_params.eval_network
 
         for _, cell in network.cells_and_names():
-            if isinstance(cell, _Loss):
+            if isinstance(cell, Loss):
                 loss_fn = cell
                 break
         return loss_fn
