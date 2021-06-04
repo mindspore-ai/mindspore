@@ -115,13 +115,17 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   return true;
 }
 
-bool HttpServer::Start() {
+bool HttpServer::Start(bool is_detach) {
   MS_LOG(INFO) << "Start http server!";
   for (size_t i = 0; i < thread_num_; i++) {
     auto http_request_handler = std::make_shared<HttpRequestHandler>();
     http_request_handler->Initialize(fd_, request_handlers_);
     http_request_handlers.push_back(http_request_handler);
-    worker_threads_.emplace_back(std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler));
+    auto thread = std::make_shared<std::thread>(&HttpRequestHandler::Run, http_request_handler);
+    if (is_detach) {
+      thread->detach();
+    }
+    worker_threads_.emplace_back(thread);
   }
   return true;
 }

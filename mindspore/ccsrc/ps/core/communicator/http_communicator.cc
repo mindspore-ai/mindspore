@@ -31,10 +31,8 @@ bool HttpCommunicator::Start() {
   MS_LOG(INFO) << "Http communicator started.";
 
   running_thread_ = std::thread([&]() {
-    try {
-      http_server_->Wait();
-    } catch (const std::exception &e) {
-      MsException::Instance().SetException();
+    while (running_) {
+      std::this_thread::yield();
     }
   });
   return true;
@@ -42,7 +40,9 @@ bool HttpCommunicator::Start() {
 
 bool HttpCommunicator::Stop() {
   MS_EXCEPTION_IF_NULL(http_server_);
-  return http_server_->Stop();
+  bool res = http_server_->Stop();
+  running_ = false;
+  return res;
 }
 
 void HttpCommunicator::RegisterMsgCallBack(const std::string &msg_type, const MessageCallback &cb) {

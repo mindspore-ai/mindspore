@@ -65,7 +65,6 @@ class TcpCommunicator : public CommunicatorBase {
  public:
   explicit TcpCommunicator(const std::shared_ptr<TaskExecutor> &task_executor, ServerNode *node)
       : task_executor_(task_executor),
-        running_(false),
         server_num_(0),
         worker_num_(0),
         scheduler_ip_(""),
@@ -109,7 +108,6 @@ class TcpCommunicator : public CommunicatorBase {
 
  private:
   std::shared_ptr<TaskExecutor> task_executor_;
-  bool running_;
 
   TcpMsgCallback tcp_msg_callback_;
   OnNodeEventCallback event_callback_;
